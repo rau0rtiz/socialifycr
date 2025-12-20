@@ -8,17 +8,18 @@ import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
 import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
+import { useKPIData } from '@/hooks/use-kpi-data';
 import { 
-  getClientKPIs, 
   getClientCampaigns, 
   getClientDailyMetrics, 
-  getClientSocialMetrics,
   getClientAlerts 
 } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
-import { Download, Share2, Building2, Plus } from 'lucide-react';
+import { Download, Share2, Building2, Plus, Radio } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Dashboard = () => {
   const { selectedClient, clientBrands, clients, clientsLoading } = useBrand();
@@ -73,10 +74,9 @@ const Dashboard = () => {
   const primaryColor = clientBrand?.primaryColor || selectedClient.primary_color || '220 70% 50%';
   const accentColor = clientBrand?.accentColor || selectedClient.accent_color || '262 83% 58%';
 
-  const kpis = getClientKPIs(selectedClient.id);
+  const { kpis, socialMetrics, isLoading: kpisLoading, isLiveData: kpisIsLive } = useKPIData(selectedClient.id);
   const campaigns = getClientCampaigns(selectedClient.id);
   const dailyMetrics = getClientDailyMetrics(selectedClient.id);
-  const socialMetrics = getClientSocialMetrics(selectedClient.id);
   const { content, isLoading: contentLoading, isLiveData: contentIsLive, refetch: refetchContent } = useContentData(selectedClient.id);
   const alerts = getClientAlerts(selectedClient.id);
 
@@ -133,16 +133,40 @@ const Dashboard = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 mb-4 md:mb-6">
-        {kpis.map((kpi, index) => (
-          <KPICard key={index} data={kpi} accentColor={accentColor} />
-        ))}
+      <div className="mb-4 md:mb-6">
+        {kpisIsLive && (
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600">
+              <Radio className="h-2.5 w-2.5 animate-pulse" />
+              Datos en vivo de Meta
+            </Badge>
+          </div>
+        )}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
+          {kpisLoading ? (
+            Array.from({ length: 6 }).map((_, index) => (
+              <Card key={index} className="p-3 md:p-5">
+                <Skeleton className="h-3 w-20 mb-2" />
+                <Skeleton className="h-6 w-16 mb-3" />
+                <Skeleton className="h-8 w-full" />
+              </Card>
+            ))
+          ) : (
+            kpis.map((kpi, index) => (
+              <KPICard key={index} data={kpi} accentColor={accentColor} />
+            ))
+          )}
+        </div>
       </div>
 
       {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
         <ReachChart data={dailyMetrics} accentColor={accentColor} />
-        <SocialPerformanceChart data={socialMetrics} />
+        <SocialPerformanceChart 
+          data={socialMetrics} 
+          isLoading={kpisLoading}
+          isLiveData={kpisIsLive}
+        />
       </div>
 
       {/* Campaigns Table */}
