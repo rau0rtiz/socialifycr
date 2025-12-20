@@ -191,6 +191,101 @@ serve(async (req) => {
         break;
       }
 
+      case 'instagram-media-with-insights': {
+        if (!instagramId) {
+          return new Response(JSON.stringify({ error: 'No Instagram account connected' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Get recent Instagram media with basic info
+        const limit = params.limit || 6;
+        const mediaResponse = await fetch(
+          `https://graph.facebook.com/v18.0/${instagramId}/media?` +
+          `fields=id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count` +
+          `&limit=${limit}&access_token=${accessToken}`
+        );
+        const mediaData = await mediaResponse.json();
+
+        if (mediaData.error) {
+          console.error('Error fetching media:', mediaData.error);
+          result = mediaData;
+          break;
+        }
+
+        // Enrich each media item with insights
+        const enrichedMedia = await Promise.all(
+          (mediaData.data || []).map(async (media: any) => {
+            let insights = { views: null, avgViewDuration: null };
+
+            // Only fetch insights for VIDEO and REELS
+            if (media.media_type === 'VIDEO') {
+              try {
+                // Determine metrics based on media product type
+                const isReel = media.media_product_type === 'REELS';
+                const metrics = isReel 
+                  ? 'plays,ig_reels_avg_watch_time' 
+                  : 'video_views';
+
+                const insightsResponse = await fetch(
+                  `https://graph.facebook.com/v18.0/${media.id}/insights?` +
+                  `metric=${metrics}&access_token=${accessToken}`
+                );
+                const insightsData = await insightsResponse.json();
+
+                if (insightsData.data) {
+                  insightsData.data.forEach((metric: any) => {
+                    if (metric.name === 'plays' || metric.name === 'video_views') {
+                      insights.views = metric.values?.[0]?.value || 0;
+                    }
+                    if (metric.name === 'ig_reels_avg_watch_time') {
+                      insights.avgViewDuration = metric.values?.[0]?.value || 0;
+                    }
+                  });
+                }
+              } catch (err) {
+                console.log(`Could not fetch insights for media ${media.id}:`, err);
+              }
+            }
+
+            // Determine content type
+            let contentType = 'post';
+            if (media.media_type === 'CAROUSEL_ALBUM') {
+              contentType = 'carousel';
+            } else if (media.media_type === 'VIDEO') {
+              contentType = media.media_product_type === 'REELS' ? 'reel' : 'video';
+            } else if (media.media_type === 'IMAGE') {
+              contentType = 'image';
+            }
+
+            return {
+              id: media.id,
+              caption: media.caption || '',
+              mediaType: media.media_type,
+              mediaProductType: media.media_product_type,
+              contentType,
+              mediaUrl: media.media_url,
+              thumbnailUrl: media.thumbnail_url || media.media_url,
+              permalink: media.permalink,
+              timestamp: media.timestamp,
+              likes: media.like_count || 0,
+              comments: media.comments_count || 0,
+              views: insights.views,
+              avgViewDuration: insights.avgViewDuration,
+            };
+          })
+        );
+
+        // Sort by timestamp descending (most recent first)
+        enrichedMedia.sort((a: any, b: any) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+
+        result = { data: enrichedMedia };
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({ error: 'Unknown endpoint' }), {
           status: 400,

@@ -7,12 +7,12 @@ import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
 import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
 import { useBrand } from '@/contexts/BrandContext';
+import { useContentData } from '@/hooks/use-content-data';
 import { 
   getClientKPIs, 
   getClientCampaigns, 
   getClientDailyMetrics, 
   getClientSocialMetrics,
-  getClientContent,
   getClientAlerts 
 } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
@@ -77,7 +77,7 @@ const Dashboard = () => {
   const campaigns = getClientCampaigns(selectedClient.id);
   const dailyMetrics = getClientDailyMetrics(selectedClient.id);
   const socialMetrics = getClientSocialMetrics(selectedClient.id);
-  const content = getClientContent(selectedClient.id);
+  const { content, isLoading: contentLoading, isLiveData: contentIsLive, refetch: refetchContent } = useContentData(selectedClient.id);
   const alerts = getClientAlerts(selectedClient.id);
 
   // Apply client brand colors as CSS custom properties
@@ -153,7 +153,12 @@ const Dashboard = () => {
       {/* Bottom Row */}
       <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
         <div className="lg:col-span-2">
-          <ContentGrid data={content} />
+          <ContentGrid 
+            data={content} 
+            isLoading={contentLoading} 
+            isLiveData={contentIsLive}
+            onRefresh={refetchContent}
+          />
         </div>
         <AlertsPanel data={alerts} />
       </div>
