@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import BrandSettings from "./pages/BrandSettings";
 import Clientes from "./pages/Clientes";
+import Contenido from "./pages/Contenido";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { MetaOAuthCallback } from "./pages/MetaOAuthCallback";
@@ -30,6 +31,7 @@ const App = () => (
                 <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/brand-settings" element={<ProtectedRoute><BrandSettings /></ProtectedRoute>} />
                 <Route path="/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
+                <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                 <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

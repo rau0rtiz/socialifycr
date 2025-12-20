@@ -7,12 +7,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ContentPost } from '@/data/mockData';
 import { ContentTag, ContentModel, ContentMetadata } from '@/hooks/use-content-metadata';
 import { ContentDetailModal } from './ContentDetailModal';
-import { Calendar, Clock, Eye, Heart, Play, Film, LayoutGrid, ImageIcon, RefreshCw, Wifi } from 'lucide-react';
+import { Calendar, Clock, Eye, Heart, Play, Film, LayoutGrid, ImageIcon, RefreshCw, Wifi, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateRange } from 'react-day-picker';
+import { Link } from 'react-router-dom';
 
 interface ContentGridProps {
   data: ContentPost[];
@@ -103,12 +104,17 @@ export const ContentGrid = ({
     dateRange ? { from: dateRange.from, to: dateRange.to } : undefined
   );
 
-  // Filter by date range, sort by date (most recent first) and limit to 6 posts (2x3 grid)
+  // Filter by date range using internal state, sort by date (most recent first) and limit to 6 posts (2x3 grid)
   const filteredData = [...data]
     .filter((post) => {
-      if (!dateRange?.from || !dateRange?.to) return true;
+      if (!internalDateRange?.from || !internalDateRange?.to) return true;
       const postDate = new Date(post.date);
-      return postDate >= dateRange.from && postDate <= dateRange.to;
+      // Normalize dates for proper comparison
+      const fromDate = new Date(internalDateRange.from);
+      fromDate.setHours(0, 0, 0, 0);
+      const toDate = new Date(internalDateRange.to);
+      toDate.setHours(23, 59, 59, 999);
+      return postDate >= fromDate && postDate <= toDate;
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 6);
@@ -196,6 +202,15 @@ export const ContentGrid = ({
                   )}
                 </PopoverContent>
               </Popover>
+              
+              {/* Ver todo button */}
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" asChild>
+                <Link to="/contenido">
+                  Ver todo
+                  <ExternalLink className="h-3 w-3" />
+                </Link>
+              </Button>
+
               {onRefresh && (
                 <Button 
                   variant="ghost" 
