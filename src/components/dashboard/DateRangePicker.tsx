@@ -20,29 +20,41 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-type PresetKey = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
+export type DatePresetKey = 'last_7d' | 'last_14d' | 'last_30d' | 'last_90d' | 'this_month' | 'last_month' | 'custom';
 
 interface Preset {
   label: string;
   getValue: () => DateRange;
 }
 
-const presets: Record<PresetKey, Preset> = {
-  today: {
-    label: 'Hoy',
-    getValue: () => ({ from: new Date(), to: new Date() }),
+const presets: Record<DatePresetKey, Preset> = {
+  last_7d: {
+    label: 'Últimos 7 días',
+    getValue: () => ({ from: subDays(new Date(), 7), to: new Date() }),
   },
-  yesterday: {
-    label: 'Ayer',
-    getValue: () => ({ from: subDays(new Date(), 1), to: subDays(new Date(), 1) }),
+  last_14d: {
+    label: 'Últimos 14 días',
+    getValue: () => ({ from: subDays(new Date(), 14), to: new Date() }),
   },
-  week: {
-    label: 'Esta semana',
-    getValue: () => ({ from: startOfWeek(new Date(), { weekStartsOn: 1 }), to: endOfWeek(new Date(), { weekStartsOn: 1 }) }),
+  last_30d: {
+    label: 'Últimos 30 días',
+    getValue: () => ({ from: subDays(new Date(), 30), to: new Date() }),
   },
-  month: {
+  last_90d: {
+    label: 'Últimos 90 días',
+    getValue: () => ({ from: subDays(new Date(), 90), to: new Date() }),
+  },
+  this_month: {
     label: 'Este mes',
     getValue: () => ({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) }),
+  },
+  last_month: {
+    label: 'Mes pasado',
+    getValue: () => {
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
+    },
   },
   custom: {
     label: 'Personalizado',
@@ -50,13 +62,26 @@ const presets: Record<PresetKey, Preset> = {
   },
 };
 
-export const DateRangePicker = () => {
-  const [selectedPreset, setSelectedPreset] = React.useState<PresetKey>('month');
-  const [date, setDate] = React.useState<DateRange | undefined>(presets.month.getValue());
+interface DateRangePickerProps {
+  value?: DatePresetKey;
+  onChange?: (preset: DatePresetKey) => void;
+}
+
+export const DateRangePicker = ({ value, onChange }: DateRangePickerProps) => {
+  const [selectedPreset, setSelectedPreset] = React.useState<DatePresetKey>(value || 'last_30d');
+  const [date, setDate] = React.useState<DateRange | undefined>(presets[value || 'last_30d'].getValue());
   const [isCustomOpen, setIsCustomOpen] = React.useState(false);
 
-  const handlePresetChange = (value: string) => {
-    const preset = value as PresetKey;
+  // Sync with external value
+  React.useEffect(() => {
+    if (value && value !== selectedPreset) {
+      setSelectedPreset(value);
+      setDate(presets[value].getValue());
+    }
+  }, [value]);
+
+  const handlePresetChange = (newValue: string) => {
+    const preset = newValue as DatePresetKey;
     setSelectedPreset(preset);
     
     if (preset === 'custom') {
@@ -64,6 +89,7 @@ export const DateRangePicker = () => {
     } else {
       setDate(presets[preset].getValue());
       setIsCustomOpen(false);
+      onChange?.(preset);
     }
   };
 
@@ -76,7 +102,7 @@ export const DateRangePicker = () => {
   return (
     <div className="flex items-center gap-2">
       <Select value={selectedPreset} onValueChange={handlePresetChange}>
-        <SelectTrigger className="w-28 md:w-36 bg-background text-xs md:text-sm">
+        <SelectTrigger className="w-32 md:w-40 bg-background text-xs md:text-sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="bg-popover z-50">

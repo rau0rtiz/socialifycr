@@ -441,6 +441,42 @@ serve(async (req) => {
 
       case 'account-insights': {
         // Get comprehensive account insights for KPIs
+        const datePreset = params.datePreset || 'last_30d';
+        
+        // Convert datePreset to since/until timestamps
+        const now = Math.floor(Date.now() / 1000);
+        let since = now - (30 * 24 * 60 * 60); // default last 30 days
+        
+        switch (datePreset) {
+          case 'last_7d':
+            since = now - (7 * 24 * 60 * 60);
+            break;
+          case 'last_14d':
+            since = now - (14 * 24 * 60 * 60);
+            break;
+          case 'last_30d':
+            since = now - (30 * 24 * 60 * 60);
+            break;
+          case 'last_90d':
+            since = now - (90 * 24 * 60 * 60);
+            break;
+          case 'this_month':
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+            since = Math.floor(startOfMonth.getTime() / 1000);
+            break;
+          case 'last_month':
+            const lastMonth = new Date();
+            lastMonth.setMonth(lastMonth.getMonth() - 1);
+            lastMonth.setDate(1);
+            lastMonth.setHours(0, 0, 0, 0);
+            since = Math.floor(lastMonth.getTime() / 1000);
+            break;
+        }
+
+        console.log(`Fetching account-insights with datePreset: ${datePreset}, since: ${since}, until: ${now}`);
+
         const results: any = {
           reach: 0,
           impressions: 0,
@@ -450,6 +486,7 @@ serve(async (req) => {
           profileViews: 0,
           websiteClicks: 0,
           connectedPlatforms: ['meta'],
+          datePreset,
         };
 
         // Fetch Instagram insights if connected
@@ -466,7 +503,7 @@ serve(async (req) => {
               results.followers = accountData.followers_count;
             }
 
-            // Get recent insights (last 30 days)
+            // Get insights for the specified date range
             const insightsMetrics = [
               'reach',
               'impressions',
@@ -477,29 +514,35 @@ serve(async (req) => {
 
             const insightsResponse = await fetch(
               `https://graph.facebook.com/v18.0/${instagramId}/insights?` +
-              `metric=${insightsMetrics}&period=day&metric_type=total_value&access_token=${accessToken}`
+              `metric=${insightsMetrics}&period=day&since=${since}&until=${now}&access_token=${accessToken}`
             );
             const insightsData = await insightsResponse.json();
 
             if (insightsData.data) {
               insightsData.data.forEach((metric: any) => {
-                const value = metric.total_value?.value || 0;
+                // Sum all values in the date range instead of using total_value
+                const totalValue = metric.values 
+                  ? metric.values.reduce((sum: number, v: any) => sum + (v.value || 0), 0)
+                  : (metric.total_value?.value || 0);
+                  
                 switch (metric.name) {
                   case 'reach':
-                    results.reach = value;
+                    results.reach = totalValue;
                     break;
                   case 'impressions':
-                    results.impressions = value;
+                    results.impressions = totalValue;
                     break;
                   case 'profile_views':
-                    results.profileViews = value;
+                    results.profileViews = totalValue;
                     break;
                   case 'website_clicks':
-                    results.websiteClicks = value;
+                    results.websiteClicks = totalValue;
                     break;
                 }
               });
             }
+
+            console.log(`Instagram insights for period ${datePreset}: reach=${results.reach}, impressions=${results.impressions}`);
 
             // Calculate engagement from recent media
             const mediaResponse = await fetch(
@@ -544,14 +587,11 @@ serve(async (req) => {
               name: pageData.name,
             };
 
-            // Get page insights
-            const now = Math.floor(Date.now() / 1000);
-            const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
-            
+            // Get page insights using the same date range
             const pageInsightsResponse = await fetch(
               `https://graph.facebook.com/v18.0/${pageId}/insights?` +
               `metric=page_impressions,page_post_engagements,page_fans&period=day` +
-              `&since=${thirtyDaysAgo}&until=${now}&access_token=${accessToken}`
+              `&since=${since}&until=${now}&access_token=${accessToken}`
             );
             const pageInsightsData = await pageInsightsResponse.json();
 
