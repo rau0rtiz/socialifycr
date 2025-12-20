@@ -25,11 +25,42 @@ const Dashboard = () => {
   const [platform, setPlatform] = useState('all');
   const [selectedKPIs, setSelectedKPIs] = useState<string[]>(DEFAULT_SELECTED_KPIS);
 
+  // All hooks must be called before any conditional returns
+  const clientId = selectedClient?.id || null;
+
+  const {
+    kpis,
+    socialMetrics,
+    isLoading: kpisLoading,
+    isLiveData: kpisIsLive,
+    availablePlatforms,
+  } = useKPIData(clientId, platform);
+
+  const {
+    dailyMetrics,
+    isLoading: dailyLoading,
+    isLiveData: dailyIsLive,
+    source: dailySource,
+  } = useDailyMetrics(clientId);
+
+  const {
+    content,
+    isLoading: contentLoading,
+    isLiveData: contentIsLive,
+    refetch: refetchContent,
+  } = useContentData(clientId);
+
+  const { data: metaConnection } = useMetaConnection(clientId);
+
   // Reset KPI selection when client changes
   useEffect(() => {
     setSelectedKPIs(DEFAULT_SELECTED_KPIS);
     setPlatform('all');
-  }, [selectedClient?.id]);
+  }, [clientId]);
+
+  // Derived values (not hooks)
+  const hasAdAccount = !!metaConnection?.ad_account_id;
+  const alerts = selectedClient ? getClientAlerts(selectedClient.id) : [];
 
   // Show loading state while clients are being fetched
   if (clientsLoading) {
@@ -80,32 +111,6 @@ const Dashboard = () => {
   const clientBrand = clientBrands[selectedClient.id];
   const primaryColor = clientBrand?.primaryColor || selectedClient.primary_color || '220 70% 50%';
   const accentColor = clientBrand?.accentColor || selectedClient.accent_color || '262 83% 58%';
-
-  const {
-    kpis,
-    socialMetrics,
-    isLoading: kpisLoading,
-    isLiveData: kpisIsLive,
-    availablePlatforms,
-  } = useKPIData(selectedClient.id, platform);
-
-  const {
-    dailyMetrics,
-    isLoading: dailyLoading,
-    isLiveData: dailyIsLive,
-    source: dailySource,
-  } = useDailyMetrics(selectedClient.id);
-
-  const {
-    content,
-    isLoading: contentLoading,
-    isLiveData: contentIsLive,
-    refetch: refetchContent,
-  } = useContentData(selectedClient.id);
-
-  const { data: metaConnection } = useMetaConnection(selectedClient.id);
-  const hasAdAccount = !!metaConnection?.ad_account_id;
-  const alerts = getClientAlerts(selectedClient.id);
 
   // Apply client brand colors as CSS custom properties
   const brandStyle = {
