@@ -286,6 +286,145 @@ serve(async (req) => {
         break;
       }
 
+      case 'account-insights': {
+        // Get comprehensive account insights for KPIs
+        const results: any = {
+          reach: 0,
+          impressions: 0,
+          engagement: 0,
+          followers: 0,
+          followersGrowth: 0,
+          profileViews: 0,
+          websiteClicks: 0,
+          connectedPlatforms: ['meta'],
+        };
+
+        // Fetch Instagram insights if connected
+        if (instagramId) {
+          try {
+            // Get basic account info
+            const accountResponse = await fetch(
+              `https://graph.facebook.com/v18.0/${instagramId}?` +
+              `fields=followers_count,follows_count,media_count,username&access_token=${accessToken}`
+            );
+            const accountData = await accountResponse.json();
+            
+            if (accountData.followers_count) {
+              results.followers = accountData.followers_count;
+            }
+
+            // Get recent insights (last 30 days)
+            const insightsMetrics = [
+              'reach',
+              'impressions',
+              'profile_views',
+              'website_clicks',
+              'follower_count'
+            ].join(',');
+
+            const insightsResponse = await fetch(
+              `https://graph.facebook.com/v18.0/${instagramId}/insights?` +
+              `metric=${insightsMetrics}&period=day&metric_type=total_value&access_token=${accessToken}`
+            );
+            const insightsData = await insightsResponse.json();
+
+            if (insightsData.data) {
+              insightsData.data.forEach((metric: any) => {
+                const value = metric.total_value?.value || 0;
+                switch (metric.name) {
+                  case 'reach':
+                    results.reach = value;
+                    break;
+                  case 'impressions':
+                    results.impressions = value;
+                    break;
+                  case 'profile_views':
+                    results.profileViews = value;
+                    break;
+                  case 'website_clicks':
+                    results.websiteClicks = value;
+                    break;
+                }
+              });
+            }
+
+            // Calculate engagement from recent media
+            const mediaResponse = await fetch(
+              `https://graph.facebook.com/v18.0/${instagramId}/media?` +
+              `fields=like_count,comments_count&limit=20&access_token=${accessToken}`
+            );
+            const mediaData = await mediaResponse.json();
+
+            if (mediaData.data && mediaData.data.length > 0) {
+              const totalEngagement = mediaData.data.reduce((sum: number, post: any) => {
+                return sum + (post.like_count || 0) + (post.comments_count || 0);
+              }, 0);
+              
+              if (results.followers > 0) {
+                results.engagement = ((totalEngagement / mediaData.data.length) / results.followers) * 100;
+              }
+            }
+
+            results.instagram = {
+              followers: results.followers,
+              engagement: results.engagement,
+              posts: accountData.media_count || 0,
+              username: accountData.username,
+            };
+          } catch (err) {
+            console.error('Error fetching Instagram insights:', err);
+          }
+        }
+
+        // Fetch Facebook Page insights if connected
+        if (pageId) {
+          try {
+            const pageResponse = await fetch(
+              `https://graph.facebook.com/v18.0/${pageId}?` +
+              `fields=fan_count,followers_count,name&access_token=${accessToken}`
+            );
+            const pageData = await pageResponse.json();
+
+            results.facebook = {
+              followers: pageData.followers_count || pageData.fan_count || 0,
+              fans: pageData.fan_count || 0,
+              name: pageData.name,
+            };
+
+            // Get page insights
+            const now = Math.floor(Date.now() / 1000);
+            const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
+            
+            const pageInsightsResponse = await fetch(
+              `https://graph.facebook.com/v18.0/${pageId}/insights?` +
+              `metric=page_impressions,page_post_engagements,page_fans&period=day` +
+              `&since=${thirtyDaysAgo}&until=${now}&access_token=${accessToken}`
+            );
+            const pageInsightsData = await pageInsightsResponse.json();
+
+            if (pageInsightsData.data) {
+              pageInsightsData.data.forEach((metric: any) => {
+                if (metric.name === 'page_impressions' && metric.values) {
+                  const totalImpressions = metric.values.reduce((sum: number, v: any) => sum + (v.value || 0), 0);
+                  results.reach += Math.round(totalImpressions * 0.6); // Approximate reach from impressions
+                }
+                if (metric.name === 'page_post_engagements' && metric.values) {
+                  const totalEngagements = metric.values.reduce((sum: number, v: any) => sum + (v.value || 0), 0);
+                  if (results.facebook.followers > 0) {
+                    results.facebook.engagement = (totalEngagements / results.facebook.followers) * 100;
+                  }
+                }
+              });
+            }
+          } catch (err) {
+            console.error('Error fetching Facebook insights:', err);
+          }
+        }
+
+        result = results;
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({ error: 'Unknown endpoint' }), {
           status: 400,
