@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Select,
   SelectContent,
@@ -11,6 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   ChevronRight,
   ChevronLeft,
@@ -22,6 +30,7 @@ import {
   TrendingUp,
   Image as ImageIcon,
   RefreshCw,
+  CalendarIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -32,6 +41,7 @@ import {
   AdSetInsights,
   AdInsights,
   DatePresetKey,
+  DateRange,
 } from '@/hooks/use-ads-data';
 
 interface CampaignsDrilldownProps {
@@ -234,6 +244,7 @@ const datePresetLabels: Record<DatePresetKey, string> = {
   last_90d: 'Últimos 90 días',
   this_month: 'Este mes',
   last_month: 'Mes pasado',
+  custom: 'Personalizado',
 };
 
 export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldownProps) => {
@@ -241,28 +252,30 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
   const [selectedCampaign, setSelectedCampaign] = useState<CampaignInsights | null>(null);
   const [selectedAdSet, setSelectedAdSet] = useState<AdSetInsights | null>(null);
   const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
+  const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const {
     data: campaigns,
     isLoading: campaignsLoading,
     error: campaignsError,
     refetch: refetchCampaigns,
-  } = useCampaigns(clientId, hasAdAccount, datePreset);
+  } = useCampaigns(clientId, hasAdAccount, datePreset, customRange);
 
   const {
     data: adsets,
     isLoading: adsetsLoading,
     error: adsetsError,
     refetch: refetchAdsets,
-  } = useAdSets(clientId, selectedCampaign?.id || null, selectedCampaign?.objective || '', datePreset);
+  } = useAdSets(clientId, selectedCampaign?.id || null, selectedCampaign?.objective || '', datePreset, customRange);
 
   const {
     data: ads,
     isLoading: adsLoading,
     error: adsError,
     refetch: refetchAds,
-  } = useAds(clientId, selectedAdSet?.id || null, selectedCampaign?.objective || '', datePreset);
+  } = useAds(clientId, selectedAdSet?.id || null, selectedCampaign?.objective || '', datePreset, customRange);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -273,6 +286,21 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
     } finally {
       setIsRefreshing(false);
     }
+  };
+
+  const handleDatePresetChange = (value: string) => {
+    const preset = value as DatePresetKey;
+    setDatePreset(preset);
+    if (preset !== 'custom') {
+      setCustomRange({ from: undefined, to: undefined });
+    }
+  };
+
+  const getDateDisplayText = () => {
+    if (datePreset === 'custom' && customRange.from && customRange.to) {
+      return `${format(customRange.from, 'dd MMM', { locale: es })} - ${format(customRange.to, 'dd MMM', { locale: es })}`;
+    }
+    return datePresetLabels[datePreset];
   };
 
   const handleCampaignClick = (campaign: CampaignInsights) => {
@@ -343,9 +371,9 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
           </div>
           
           <div className="flex items-center gap-2">
-            <Select value={datePreset} onValueChange={(value) => setDatePreset(value as DatePresetKey)}>
+            <Select value={datePreset} onValueChange={handleDatePresetChange}>
               <SelectTrigger className="w-36 md:w-44 bg-background h-8 text-xs md:text-sm">
-                <SelectValue placeholder="Período" />
+                <SelectValue>{getDateDisplayText()}</SelectValue>
               </SelectTrigger>
               <SelectContent className="bg-popover z-50">
                 {Object.entries(datePresetLabels).map(([key, label]) => (
@@ -353,6 +381,43 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
                 ))}
               </SelectContent>
             </Select>
+            
+            {datePreset === 'custom' && (
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-8 text-xs md:text-sm gap-1",
+                      !customRange.from && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {customRange.from && customRange.to
+                      ? `${format(customRange.from, 'dd/MM/yy')} - ${format(customRange.to, 'dd/MM/yy')}`
+                      : 'Seleccionar fechas'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    selected={customRange.from ? { from: customRange.from, to: customRange.to } : undefined}
+                    onSelect={(range) => {
+                      setCustomRange({ from: range?.from, to: range?.to });
+                      if (range?.from && range?.to) {
+                        setIsCalendarOpen(false);
+                      }
+                    }}
+                    numberOfMonths={2}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                    locale={es}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
             
             <Button
               variant="outline"

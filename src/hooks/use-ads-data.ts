@@ -152,19 +152,37 @@ const extractCostPerResult = (costPerAction: any[], objective: string): number =
   return 0;
 };
 
-export type DatePresetKey = 'last_7d' | 'last_14d' | 'last_30d' | 'last_90d' | 'this_month' | 'last_month';
+export type DatePresetKey = 'last_7d' | 'last_14d' | 'last_30d' | 'last_90d' | 'this_month' | 'last_month' | 'custom';
 
-export const useCampaigns = (clientId: string | null, hasAdAccount: boolean, datePreset: DatePresetKey = 'last_30d') => {
+export interface DateRange {
+  from?: Date;
+  to?: Date;
+}
+
+export const useCampaigns = (
+  clientId: string | null, 
+  hasAdAccount: boolean, 
+  datePreset: DatePresetKey = 'last_30d',
+  customRange?: DateRange
+) => {
   return useQuery({
-    queryKey: ['meta-campaigns', clientId, datePreset],
+    queryKey: ['meta-campaigns', clientId, datePreset, customRange?.from?.toISOString(), customRange?.to?.toISOString()],
     queryFn: async (): Promise<CampaignInsights[]> => {
       if (!clientId || !hasAdAccount) return [];
+
+      const params: Record<string, string> = {};
+      if (datePreset === 'custom' && customRange?.from && customRange?.to) {
+        params.since = customRange.from.toISOString().split('T')[0];
+        params.until = customRange.to.toISOString().split('T')[0];
+      } else {
+        params.datePreset = datePreset === 'custom' ? 'last_30d' : datePreset;
+      }
 
       const { data, error } = await supabase.functions.invoke('meta-api', {
         body: {
           clientId,
           endpoint: 'campaigns',
-          params: { datePreset },
+          params,
         },
       });
 
@@ -205,17 +223,31 @@ export const useCampaigns = (clientId: string | null, hasAdAccount: boolean, dat
   });
 };
 
-export const useAdSets = (clientId: string | null, campaignId: string | null, objective: string, datePreset: DatePresetKey = 'last_30d') => {
+export const useAdSets = (
+  clientId: string | null, 
+  campaignId: string | null, 
+  objective: string, 
+  datePreset: DatePresetKey = 'last_30d',
+  customRange?: DateRange
+) => {
   return useQuery({
-    queryKey: ['meta-adsets', clientId, campaignId, datePreset],
+    queryKey: ['meta-adsets', clientId, campaignId, datePreset, customRange?.from?.toISOString(), customRange?.to?.toISOString()],
     queryFn: async (): Promise<AdSetInsights[]> => {
       if (!clientId || !campaignId) return [];
+
+      const params: Record<string, string> = { campaignId };
+      if (datePreset === 'custom' && customRange?.from && customRange?.to) {
+        params.since = customRange.from.toISOString().split('T')[0];
+        params.until = customRange.to.toISOString().split('T')[0];
+      } else {
+        params.datePreset = datePreset === 'custom' ? 'last_30d' : datePreset;
+      }
 
       const { data, error } = await supabase.functions.invoke('meta-api', {
         body: {
           clientId,
           endpoint: 'adsets',
-          params: { campaignId, datePreset },
+          params,
         },
       });
 
@@ -251,17 +283,31 @@ export const useAdSets = (clientId: string | null, campaignId: string | null, ob
   });
 };
 
-export const useAds = (clientId: string | null, adsetId: string | null, objective: string, datePreset: DatePresetKey = 'last_30d') => {
+export const useAds = (
+  clientId: string | null, 
+  adsetId: string | null, 
+  objective: string, 
+  datePreset: DatePresetKey = 'last_30d',
+  customRange?: DateRange
+) => {
   return useQuery({
-    queryKey: ['meta-ads', clientId, adsetId, datePreset],
+    queryKey: ['meta-ads', clientId, adsetId, datePreset, customRange?.from?.toISOString(), customRange?.to?.toISOString()],
     queryFn: async (): Promise<AdInsights[]> => {
       if (!clientId || !adsetId) return [];
+
+      const params: Record<string, string> = { adsetId };
+      if (datePreset === 'custom' && customRange?.from && customRange?.to) {
+        params.since = customRange.from.toISOString().split('T')[0];
+        params.until = customRange.to.toISOString().split('T')[0];
+      } else {
+        params.datePreset = datePreset === 'custom' ? 'last_30d' : datePreset;
+      }
 
       const { data, error } = await supabase.functions.invoke('meta-api', {
         body: {
           clientId,
           endpoint: 'ads',
-          params: { adsetId, datePreset },
+          params,
         },
       });
 
