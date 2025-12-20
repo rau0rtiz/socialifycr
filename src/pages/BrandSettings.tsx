@@ -2,8 +2,8 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { useBrand } from '@/contexts/BrandContext';
 import { clients } from '@/data/mockData';
 import { Palette, Building2 } from 'lucide-react';
@@ -15,49 +15,45 @@ const BrandSettings = () => {
     <DashboardLayout>
       <div className="max-w-4xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-foreground">Configuración de Marca</h1>
-          <p className="text-muted-foreground">Personaliza la apariencia de Socialify y de cada cliente</p>
+          <h1 className="text-xl md:text-2xl font-semibold text-foreground">Configuración de Marca</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Personaliza la apariencia de Socialify y de cada cliente</p>
         </div>
 
         <Tabs defaultValue="platform" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="platform" className="gap-2">
+            <TabsTrigger value="platform" className="gap-2 text-xs md:text-sm">
               <Palette className="h-4 w-4" />
-              Plataforma
+              <span className="hidden sm:inline">Plataforma</span>
+              <span className="sm:hidden">Platform</span>
             </TabsTrigger>
-            <TabsTrigger value="clients" className="gap-2">
+            <TabsTrigger value="clients" className="gap-2 text-xs md:text-sm">
               <Building2 className="h-4 w-4" />
-              Clientes
+              <span className="hidden sm:inline">Clientes</span>
+              <span className="sm:hidden">Clients</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="platform">
             <Card>
               <CardHeader>
-                <CardTitle>Marca de Socialify</CardTitle>
-                <CardDescription>Colores y estilo general de la plataforma</CardDescription>
+                <CardTitle className="text-base md:text-lg">Marca de Socialify</CardTitle>
+                <CardDescription className="text-xs md:text-sm">Colores y estilo general de la plataforma</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Nombre de la plataforma</Label>
+                    <Label className="text-sm">Nombre de la plataforma</Label>
                     <Input 
                       value={platformBrand.name} 
                       onChange={(e) => setPlatformBrand({ ...platformBrand, name: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Color primario (HSL)</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        value={platformBrand.accentColor} 
-                        onChange={(e) => setPlatformBrand({ ...platformBrand, accentColor: e.target.value })}
-                      />
-                      <div 
-                        className="w-10 h-10 rounded border border-border flex-shrink-0"
-                        style={{ backgroundColor: `hsl(${platformBrand.accentColor})` }}
-                      />
-                    </div>
+                    <Label className="text-sm">Color primario</Label>
+                    <ColorPicker 
+                      value={platformBrand.accentColor} 
+                      onChange={(color) => setPlatformBrand({ ...platformBrand, accentColor: color })}
+                    />
                   </div>
                 </div>
 
@@ -93,38 +89,26 @@ const BrandSettings = () => {
                           {client.name.charAt(0)}
                         </div>
                         <div>
-                          <CardTitle className="text-base">{client.name}</CardTitle>
-                          <CardDescription>{client.industry}</CardDescription>
+                          <CardTitle className="text-sm md:text-base">{client.name}</CardTitle>
+                          <CardDescription className="text-xs md:text-sm">{client.industry}</CardDescription>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                          <Label>Color de acento (HSL)</Label>
-                          <div className="flex gap-2">
-                            <Input 
-                              value={brand.accentColor} 
-                              onChange={(e) => updateClientBrand(client.id, { ...brand, accentColor: e.target.value })}
-                            />
-                            <div 
-                              className="w-10 h-10 rounded border border-border flex-shrink-0"
-                              style={{ backgroundColor: `hsl(${brand.accentColor})` }}
-                            />
-                          </div>
+                          <Label className="text-sm">Color de acento</Label>
+                          <ColorPicker 
+                            value={brand.accentColor} 
+                            onChange={(color) => updateClientBrand(client.id, { ...brand, accentColor: color })}
+                          />
                         </div>
                         <div className="space-y-2">
-                          <Label>Color secundario (HSL)</Label>
-                          <div className="flex gap-2">
-                            <Input 
-                              value={brand.secondaryColor} 
-                              onChange={(e) => updateClientBrand(client.id, { ...brand, secondaryColor: e.target.value })}
-                            />
-                            <div 
-                              className="w-10 h-10 rounded border border-border flex-shrink-0"
-                              style={{ backgroundColor: `hsl(${brand.secondaryColor})` }}
-                            />
-                          </div>
+                          <Label className="text-sm">Color secundario</Label>
+                          <ColorPicker 
+                            value={brand.secondaryColor} 
+                            onChange={(color) => updateClientBrand(client.id, { ...brand, secondaryColor: color })}
+                          />
                         </div>
                       </div>
                     </CardContent>
