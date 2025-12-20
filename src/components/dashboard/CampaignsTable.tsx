@@ -17,12 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MoreHorizontal, ExternalLink } from 'lucide-react';
+import { MoreHorizontal, Radio } from 'lucide-react';
 import { CampaignData } from '@/data/mockData';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CampaignsTableProps {
   data: CampaignData[];
+  isLoading?: boolean;
+  isLiveData?: boolean;
+  hasAdAccount?: boolean;
 }
 
 const networkColors: Record<string, string> = {
@@ -39,7 +43,7 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   scheduled: { label: 'Programada', class: 'bg-violet-500/10 text-violet-600 border-violet-200' },
 };
 
-export const CampaignsTable = ({ data }: CampaignsTableProps) => {
+export const CampaignsTable = ({ data, isLoading, isLiveData, hasAdAccount }: CampaignsTableProps) => {
   const [networkFilter, setNetworkFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -58,7 +62,20 @@ export const CampaignsTable = ({ data }: CampaignsTableProps) => {
     <Card>
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="text-sm md:text-base font-medium">Campañas Activas</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-sm md:text-base font-medium">Campañas Activas</CardTitle>
+            {isLiveData && (
+              <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600">
+                <Radio className="h-2.5 w-2.5 animate-pulse" />
+                En vivo
+              </Badge>
+            )}
+            {!isLiveData && !isLoading && !hasAdAccount && (
+              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                Demo
+              </Badge>
+            )}
+          </div>
           
           <div className="flex items-center gap-2">
             <Select value={networkFilter} onValueChange={setNetworkFilter}>
@@ -104,36 +121,56 @@ export const CampaignsTable = ({ data }: CampaignsTableProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.map((campaign) => (
-                <TableRow key={campaign.id} className="hover:bg-muted/30">
-                  <TableCell className="font-medium text-xs md:text-sm max-w-[120px] md:max-w-none truncate">{campaign.name}</TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge 
-                      variant="outline" 
-                      className={cn("capitalize text-xs", networkColors[campaign.network])}
-                    >
-                      {campaign.network}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right text-xs md:text-sm">{formatNumber(campaign.reach)}</TableCell>
-                  <TableCell className="text-right text-xs md:text-sm hidden md:table-cell">{formatNumber(campaign.engagement)}</TableCell>
-                  <TableCell className="text-right text-xs md:text-sm hidden lg:table-cell">{campaign.leads}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant="outline" 
-                      className={cn("text-xs", statusConfig[campaign.status].class)}
-                    >
-                      <span className="hidden sm:inline">{statusConfig[campaign.status].label}</span>
-                      <span className="sm:hidden">{statusConfig[campaign.status].label.slice(0, 3)}</span>
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                    <TableCell className="text-right hidden md:table-cell"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                    <TableCell className="text-right hidden lg:table-cell"><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-7 w-7" /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    No hay campañas que coincidan con los filtros
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredData.map((campaign) => (
+                  <TableRow key={campaign.id} className="hover:bg-muted/30">
+                    <TableCell className="font-medium text-xs md:text-sm max-w-[120px] md:max-w-none truncate">{campaign.name}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge 
+                        variant="outline" 
+                        className={cn("capitalize text-xs", networkColors[campaign.network])}
+                      >
+                        {campaign.network}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-xs md:text-sm">{formatNumber(campaign.reach)}</TableCell>
+                    <TableCell className="text-right text-xs md:text-sm hidden md:table-cell">{formatNumber(campaign.engagement)}</TableCell>
+                    <TableCell className="text-right text-xs md:text-sm hidden lg:table-cell">{campaign.leads}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="outline" 
+                        className={cn("text-xs", statusConfig[campaign.status]?.class)}
+                      >
+                        <span className="hidden sm:inline">{statusConfig[campaign.status]?.label || campaign.status}</span>
+                        <span className="sm:hidden">{(statusConfig[campaign.status]?.label || campaign.status).slice(0, 3)}</span>
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
