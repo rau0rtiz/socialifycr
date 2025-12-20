@@ -232,66 +232,6 @@ export const ContentDetailModal = ({
 
             <Separator />
 
-            {/* First 48h Metrics */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">Métricas 48h</p>
-                {canCapture48h && (
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={handleCapture48hMetrics}
-                    disabled={isCapturing}
-                  >
-                    <Save className="h-3 w-3 mr-1" />
-                    {isCapturing ? 'Guardando...' : 'Capturar ahora'}
-                  </Button>
-                )}
-              </div>
-              
-              {has48hMetrics ? (
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-primary/5 border border-primary/20">
-                    <Eye className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Vistas 48h</p>
-                      <p className="text-sm font-medium">{formatNumber(metadata?.first_48h_views)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-primary/5 border border-primary/20">
-                    <Heart className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Likes 48h</p>
-                      <p className="text-sm font-medium">{formatNumber(metadata?.first_48h_likes)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-primary/5 border border-primary/20">
-                    <MessageCircle className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Comentarios 48h</p>
-                      <p className="text-sm font-medium">{formatNumber(metadata?.first_48h_comments)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-primary/5 border border-primary/20">
-                    <Bookmark className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Guardados 48h</p>
-                      <p className="text-sm font-medium">{formatNumber(metadata?.first_48h_saves)}</p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-xs text-muted-foreground p-3 rounded-md bg-muted/30 text-center">
-                  {hoursSincePost < 48 
-                    ? `Disponible en ${Math.ceil(48 - hoursSincePost)} horas`
-                    : 'No se han capturado métricas de las primeras 48h'
-                  }
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
             {/* Tag & Model Selection */}
             <div className="space-y-4">
               <TagSelector

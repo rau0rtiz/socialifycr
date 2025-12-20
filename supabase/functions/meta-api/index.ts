@@ -436,36 +436,56 @@ serve(async (req) => {
         // Enrich each media item with insights
         const enrichedMedia = await Promise.all(
           (mediaData.data || []).map(async (media: any) => {
-            let insights = { views: null, avgViewDuration: null };
+            let insights = { views: null as number | null, saves: null as number | null, shares: null as number | null, avgViewDuration: null as number | null };
 
-            // Only fetch insights for VIDEO and REELS
-            if (media.media_type === 'VIDEO') {
-              try {
-                // Determine metrics based on media product type
+            try {
+              // Determine metrics based on media type
+              let metrics: string[] = [];
+              
+              if (media.media_type === 'VIDEO') {
                 const isReel = media.media_product_type === 'REELS';
-                const metrics = isReel 
-                  ? 'plays,ig_reels_avg_watch_time' 
-                  : 'video_views';
+                if (isReel) {
+                  metrics = ['plays', 'saved', 'shares', 'ig_reels_avg_watch_time'];
+                } else {
+                  metrics = ['video_views', 'saved', 'shares'];
+                }
+              } else if (media.media_type === 'IMAGE' || media.media_type === 'CAROUSEL_ALBUM') {
+                metrics = ['saved', 'shares', 'impressions'];
+              }
 
+              if (metrics.length > 0) {
                 const insightsResponse = await fetch(
                   `https://graph.facebook.com/v18.0/${media.id}/insights?` +
-                  `metric=${metrics}&access_token=${accessToken}`
+                  `metric=${metrics.join(',')}&access_token=${accessToken}`
                 );
                 const insightsData = await insightsResponse.json();
 
+                console.log(`Media ${media.id} (${media.media_type}) insights:`, JSON.stringify(insightsData));
+
                 if (insightsData.data) {
                   insightsData.data.forEach((metric: any) => {
+                    const value = metric.values?.[0]?.value || 0;
                     if (metric.name === 'plays' || metric.name === 'video_views') {
-                      insights.views = metric.values?.[0]?.value || 0;
+                      insights.views = value;
+                    }
+                    if (metric.name === 'saved') {
+                      insights.saves = value;
+                    }
+                    if (metric.name === 'shares') {
+                      insights.shares = value;
                     }
                     if (metric.name === 'ig_reels_avg_watch_time') {
-                      insights.avgViewDuration = metric.values?.[0]?.value || 0;
+                      insights.avgViewDuration = value;
+                    }
+                    // For images, use impressions as a proxy for "views"
+                    if (metric.name === 'impressions' && media.media_type !== 'VIDEO') {
+                      insights.views = value;
                     }
                   });
                 }
-              } catch (err) {
-                console.log(`Could not fetch insights for media ${media.id}:`, err);
               }
+            } catch (err) {
+              console.log(`Could not fetch insights for media ${media.id}:`, err);
             }
 
             // Determine content type
@@ -491,6 +511,8 @@ serve(async (req) => {
               likes: media.like_count || 0,
               comments: media.comments_count || 0,
               views: insights.views,
+              saves: insights.saves,
+              shares: insights.shares,
               avgViewDuration: insights.avgViewDuration,
             };
           })
@@ -570,15 +592,17 @@ serve(async (req) => {
               `fields=followers_count,follows_count,media_count,username&access_token=${accessToken}`
             );
             const accountData = await accountResponse.json();
+            console.log('Instagram account data:', JSON.stringify(accountData));
             
             if (accountData.followers_count) {
               results.followers = accountData.followers_count;
             }
 
             // Get insights for the specified date range
+            // Note: Instagram API only returns last 30 days for these metrics with period=day
             const insightsMetrics = [
               'reach',
-              'impressions',
+              'impressions', 
               'profile_views',
               'website_clicks',
               'follower_count'
@@ -589,6 +613,7 @@ serve(async (req) => {
               `metric=${insightsMetrics}&period=day&since=${since}&until=${now}&access_token=${accessToken}`
             );
             const insightsData = await insightsResponse.json();
+            console.log('Instagram insights raw response:', JSON.stringify(insightsData));
 
             if (insightsData.data) {
               insightsData.data.forEach((metric: any) => {
@@ -620,12 +645,20 @@ serve(async (req) => {
                     break;
                   case 'follower_count':
                     results.dailyFollowers = dailyValues;
+                    // Calculate follower growth from daily data
+                    if (dailyValues.length >= 2) {
+                      const firstValue = dailyValues[0];
+                      const lastValue = dailyValues[dailyValues.length - 1];
+                      if (firstValue > 0) {
+                        results.followersGrowth = ((lastValue - firstValue) / firstValue) * 100;
+                      }
+                    }
                     break;
                 }
               });
             }
 
-            console.log(`Instagram insights for period ${datePreset}: reach=${results.reach}, impressions=${results.impressions}`);
+            console.log(`Instagram insights for period ${datePreset}: reach=${results.reach}, impressions=${results.impressions}, followersGrowth=${results.followersGrowth}`);
 
             // Calculate engagement from recent media
             const mediaResponse = await fetch(
