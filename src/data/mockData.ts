@@ -22,11 +22,19 @@ export interface ContentPost {
   id: string;
   title: string;
   network: 'instagram' | 'facebook' | 'tiktok' | 'linkedin';
-  type: 'image' | 'video' | 'carousel' | 'story';
+  type: 'image' | 'video' | 'carousel' | 'story' | 'reel';
   status: 'published' | 'scheduled' | 'draft';
   engagement: number;
   date: string;
   thumbnail?: string;
+  // New fields for real data
+  views?: number;
+  likes?: number;
+  avgViewDuration?: number; // In seconds (Reels only)
+  thumbnailUrl?: string;
+  permalink?: string;
+  mediaUrl?: string;
+  isLiveData?: boolean;
 }
 
 export interface DailyMetric {
