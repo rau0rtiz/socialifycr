@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { KPISection } from '@/components/dashboard/KPISection';
 import { ReachChart } from '@/components/dashboard/ReachChart';
@@ -6,7 +6,7 @@ import { SocialPerformanceChart } from '@/components/dashboard/SocialPerformance
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
-import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
+import { DateRangePicker, DatePresetKey } from '@/components/dashboard/DateRangePicker';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useKPIData } from '@/hooks/use-kpi-data';
@@ -14,7 +14,7 @@ import { useDailyMetrics } from '@/hooks/use-daily-metrics';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { getClientAlerts } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
-import { Download, Share2, Building2, Plus } from 'lucide-react';
+import { Download, Share2, Building2, Plus, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
@@ -24,6 +24,8 @@ const Dashboard = () => {
   const { selectedClient, clientBrands, clients, clientsLoading } = useBrand();
   const [platform, setPlatform] = useState('all');
   const [selectedKPIs, setSelectedKPIs] = useState<string[]>(DEFAULT_SELECTED_KPIS);
+  const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // All hooks must be called before any conditional returns
   const clientId = selectedClient?.id || null;
@@ -34,13 +36,15 @@ const Dashboard = () => {
     isLoading: kpisLoading,
     isLiveData: kpisIsLive,
     availablePlatforms,
-  } = useKPIData(clientId, platform);
+    refetch: refetchKPIs,
+  } = useKPIData(clientId, platform, datePreset);
 
   const {
     dailyMetrics,
     isLoading: dailyLoading,
     isLiveData: dailyIsLive,
     source: dailySource,
+    refetch: refetchDailyMetrics,
   } = useDailyMetrics(clientId);
 
   const {
@@ -50,12 +54,25 @@ const Dashboard = () => {
     refetch: refetchContent,
   } = useContentData(clientId);
 
-  const { data: metaConnection } = useMetaConnection(clientId);
+  const { data: metaConnection, refetch: refetchConnection } = useMetaConnection(clientId);
+
+  // Refresh all dashboard data
+  const handleRefreshAll = useCallback(async () => {
+    setIsRefreshing(true);
+    await Promise.all([
+      refetchKPIs(),
+      refetchDailyMetrics(),
+      refetchContent(),
+      refetchConnection(),
+    ]);
+    setIsRefreshing(false);
+  }, [refetchKPIs, refetchDailyMetrics, refetchContent, refetchConnection]);
 
   // Reset KPI selection when client changes
   useEffect(() => {
     setSelectedKPIs(DEFAULT_SELECTED_KPIS);
     setPlatform('all');
+    setDatePreset('last_30d');
   }, [clientId]);
 
   // Derived values (not hooks)
@@ -147,7 +164,17 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <DateRangePicker />
+            <DateRangePicker value={datePreset} onChange={setDatePreset} />
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs md:text-sm h-8"
+              onClick={handleRefreshAll}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Actualizar</span>
+            </Button>
             <Button variant="outline" size="sm" className="text-xs md:text-sm h-8">
               <Download className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Exportar PDF</span>

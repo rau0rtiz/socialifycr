@@ -35,7 +35,7 @@ interface UseKPIDataResult {
   refetch: () => void;
 }
 
-export function useKPIData(clientId: string | null, platform: string = 'all'): UseKPIDataResult {
+export function useKPIData(clientId: string | null, platform: string = 'all', datePreset: string = 'last_30d'): UseKPIDataResult {
   const [kpis, setKpis] = useState<KPIItem[]>([]);
   const [socialMetrics, setSocialMetrics] = useState<SocialMetric[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -106,11 +106,12 @@ export function useKPIData(clientId: string | null, platform: string = 'all'): U
       }
       setAvailablePlatforms(platforms);
 
-      // Fetch real data from Meta API
+      // Fetch real data from Meta API with date range
       const { data, error } = await supabase.functions.invoke('meta-api', {
         body: {
           clientId,
           endpoint: 'account-insights',
+          params: { datePreset },
         },
       });
 
@@ -247,7 +248,7 @@ export function useKPIData(clientId: string | null, platform: string = 'all'): U
     } finally {
       setIsLoading(false);
     }
-  }, [clientId, platform]);
+  }, [clientId, platform, datePreset]);
 
   useEffect(() => {
     fetchData();
