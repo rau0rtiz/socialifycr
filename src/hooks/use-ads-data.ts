@@ -56,24 +56,39 @@ export interface AdInsights {
   costPerResult: number;
 }
 
+const getMetaErrorMessage = (err: unknown) => {
+  if (!err) return 'Unknown error';
+  if (typeof err === 'string') return err;
+  if (typeof err === 'object') {
+    const anyErr = err as any;
+    return (
+      anyErr.message ||
+      anyErr.error?.message ||
+      (typeof anyErr.error === 'string' ? anyErr.error : null) ||
+      JSON.stringify(anyErr)
+    );
+  }
+  return String(err);
+};
+
 // Map Meta objective to result type name
 const getResultTypeFromObjective = (objective: string): string => {
   const objectiveMap: Record<string, string> = {
-    'OUTCOME_LEADS': 'Leads',
-    'LEAD_GENERATION': 'Leads',
-    'OUTCOME_SALES': 'Compras',
-    'CONVERSIONS': 'Conversiones',
-    'OUTCOME_TRAFFIC': 'Clics en enlace',
-    'LINK_CLICKS': 'Clics en enlace',
-    'OUTCOME_ENGAGEMENT': 'Interacciones',
-    'POST_ENGAGEMENT': 'Interacciones',
-    'OUTCOME_AWARENESS': 'Alcance',
-    'REACH': 'Alcance',
-    'BRAND_AWARENESS': 'Alcance',
-    'VIDEO_VIEWS': 'Reproducciones',
-    'OUTCOME_APP_PROMOTION': 'Instalaciones',
-    'APP_INSTALLS': 'Instalaciones',
-    'MESSAGES': 'Mensajes',
+    OUTCOME_LEADS: 'Leads',
+    LEAD_GENERATION: 'Leads',
+    OUTCOME_SALES: 'Compras',
+    CONVERSIONS: 'Conversiones',
+    OUTCOME_TRAFFIC: 'Clics en enlace',
+    LINK_CLICKS: 'Clics en enlace',
+    OUTCOME_ENGAGEMENT: 'Interacciones',
+    POST_ENGAGEMENT: 'Interacciones',
+    OUTCOME_AWARENESS: 'Alcance',
+    REACH: 'Alcance',
+    BRAND_AWARENESS: 'Alcance',
+    VIDEO_VIEWS: 'Reproducciones',
+    OUTCOME_APP_PROMOTION: 'Instalaciones',
+    APP_INSTALLS: 'Instalaciones',
+    MESSAGES: 'Mensajes',
   };
   return objectiveMap[objective] || 'Resultados';
 };
@@ -85,24 +100,24 @@ const extractResults = (actions: any[], objective: string): { count: number; typ
   }
 
   const resultType = getResultTypeFromObjective(objective);
-  
+
   // Map objective to action types
   const actionTypeMap: Record<string, string[]> = {
-    'OUTCOME_LEADS': ['lead', 'leadgen_grouped', 'onsite_conversion.lead_grouped'],
-    'LEAD_GENERATION': ['lead', 'leadgen_grouped'],
-    'OUTCOME_SALES': ['purchase', 'omni_purchase', 'onsite_conversion.purchase'],
-    'CONVERSIONS': ['purchase', 'complete_registration', 'add_to_cart'],
-    'OUTCOME_TRAFFIC': ['link_click'],
-    'LINK_CLICKS': ['link_click'],
-    'OUTCOME_ENGAGEMENT': ['post_engagement', 'page_engagement', 'post_reaction'],
-    'POST_ENGAGEMENT': ['post_engagement', 'page_engagement'],
-    'VIDEO_VIEWS': ['video_view'],
-    'MESSAGES': ['onsite_conversion.messaging_conversation_started_7d'],
-    'APP_INSTALLS': ['app_install', 'mobile_app_install'],
+    OUTCOME_LEADS: ['lead', 'leadgen_grouped', 'onsite_conversion.lead_grouped'],
+    LEAD_GENERATION: ['lead', 'leadgen_grouped'],
+    OUTCOME_SALES: ['purchase', 'omni_purchase', 'onsite_conversion.purchase'],
+    CONVERSIONS: ['purchase', 'complete_registration', 'add_to_cart'],
+    OUTCOME_TRAFFIC: ['link_click'],
+    LINK_CLICKS: ['link_click'],
+    OUTCOME_ENGAGEMENT: ['post_engagement', 'page_engagement', 'post_reaction'],
+    POST_ENGAGEMENT: ['post_engagement', 'page_engagement'],
+    VIDEO_VIEWS: ['video_view'],
+    MESSAGES: ['onsite_conversion.messaging_conversation_started_7d'],
+    APP_INSTALLS: ['app_install', 'mobile_app_install'],
   };
 
   const targetActionTypes = actionTypeMap[objective] || [];
-  
+
   let totalResults = 0;
   for (const action of actions) {
     if (targetActionTypes.includes(action.action_type)) {
@@ -118,12 +133,12 @@ const extractCostPerResult = (costPerAction: any[], objective: string): number =
   if (!costPerAction || !Array.isArray(costPerAction)) return 0;
 
   const actionTypeMap: Record<string, string[]> = {
-    'OUTCOME_LEADS': ['lead', 'leadgen_grouped'],
-    'LEAD_GENERATION': ['lead', 'leadgen_grouped'],
-    'OUTCOME_SALES': ['purchase', 'omni_purchase'],
-    'CONVERSIONS': ['purchase'],
-    'OUTCOME_TRAFFIC': ['link_click'],
-    'LINK_CLICKS': ['link_click'],
+    OUTCOME_LEADS: ['lead', 'leadgen_grouped'],
+    LEAD_GENERATION: ['lead', 'leadgen_grouped'],
+    OUTCOME_SALES: ['purchase', 'omni_purchase'],
+    CONVERSIONS: ['purchase'],
+    OUTCOME_TRAFFIC: ['link_click'],
+    LINK_CLICKS: ['link_click'],
   };
 
   const targetActionTypes = actionTypeMap[objective] || [];
@@ -147,12 +162,12 @@ export const useCampaigns = (clientId: string | null, hasAdAccount: boolean) => 
         body: {
           clientId,
           endpoint: 'campaigns',
-          params: { datePreset: 'last_30d' }
-        }
+          params: { datePreset: 'last_30d' },
+        },
       });
 
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(getMetaErrorMessage(data.error));
 
       return (data?.data || []).map((campaign: any) => {
         const insights = campaign.insights?.data?.[0] || {};
@@ -198,12 +213,12 @@ export const useAdSets = (clientId: string | null, campaignId: string | null, ob
         body: {
           clientId,
           endpoint: 'adsets',
-          params: { campaignId, datePreset: 'last_30d' }
-        }
+          params: { campaignId, datePreset: 'last_30d' },
+        },
       });
 
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(getMetaErrorMessage(data.error));
 
       return (data?.data || []).map((adset: any) => {
         const insights = adset.insights?.data?.[0] || {};
@@ -244,12 +259,12 @@ export const useAds = (clientId: string | null, adsetId: string | null, objectiv
         body: {
           clientId,
           endpoint: 'ads',
-          params: { adsetId, datePreset: 'last_30d' }
-        }
+          params: { adsetId, datePreset: 'last_30d' },
+        },
       });
 
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(getMetaErrorMessage(data.error));
 
       return (data?.data || []).map((ad: any) => {
         const insights = ad.insights?.data?.[0] || {};

@@ -1,27 +1,28 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  ChevronRight, 
-  ChevronLeft, 
+import {
+  ChevronRight,
+  ChevronLeft,
   Radio,
   Target,
   DollarSign,
   Eye,
   MousePointerClick,
   TrendingUp,
-  Image as ImageIcon
+  Image as ImageIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { 
-  useCampaigns, 
-  useAdSets, 
+import {
+  useCampaigns,
+  useAdSets,
   useAds,
   CampaignInsights,
   AdSetInsights,
-  AdInsights
+  AdInsights,
 } from '@/hooks/use-ads-data';
 
 interface CampaignsDrilldownProps {
@@ -53,10 +54,15 @@ const formatNumber = (num: number) => {
 };
 
 // Metric Card Component
-const MetricCard = ({ icon: Icon, label, value, subValue }: { 
-  icon: React.ElementType; 
-  label: string; 
-  value: string; 
+const MetricCard = ({
+  icon: Icon,
+  label,
+  value,
+  subValue,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
   subValue?: string;
 }) => (
   <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -73,7 +79,7 @@ const MetricCard = ({ icon: Icon, label, value, subValue }: {
 
 // Campaign Row Component
 const CampaignRow = ({ campaign, onClick }: { campaign: CampaignInsights; onClick: () => void }) => (
-  <div 
+  <div
     className="p-4 border border-border rounded-lg hover:bg-muted/30 cursor-pointer transition-colors"
     onClick={onClick}
   >
@@ -81,42 +87,39 @@ const CampaignRow = ({ campaign, onClick }: { campaign: CampaignInsights; onClic
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <h3 className="font-medium text-sm truncate">{campaign.name}</h3>
-          <Badge variant="outline" className={cn("text-xs shrink-0", statusConfig[campaign.effectiveStatus]?.class)}>
+          <Badge variant="outline" className={cn('text-xs shrink-0', statusConfig[campaign.effectiveStatus]?.class)}>
             {statusConfig[campaign.effectiveStatus]?.label || campaign.effectiveStatus}
           </Badge>
         </div>
         <p className="text-xs text-muted-foreground">
-          {campaign.dailyBudget 
+          {campaign.dailyBudget
             ? `Presupuesto diario: ${formatCurrency(campaign.dailyBudget)}`
-            : campaign.lifetimeBudget 
+            : campaign.lifetimeBudget
               ? `Presupuesto total: ${formatCurrency(campaign.lifetimeBudget)}`
-              : 'Sin presupuesto definido'
-          }
+              : 'Sin presupuesto definido'}
         </p>
       </div>
       <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
     </div>
-    
+
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
       <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(campaign.spend)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(campaign.reach)} />
       <MetricCard icon={Target} label={campaign.resultType} value={formatNumber(campaign.results)} />
       <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(campaign.clicks)} />
-      <MetricCard 
-        icon={TrendingUp} 
-        label="Costo por resultado" 
-        value={campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult) : '-'} 
+      <MetricCard
+        icon={TrendingUp}
+        label="Costo por resultado"
+        value={campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult) : '-'}
       />
-      {campaign.roas !== null && (
-        <MetricCard icon={TrendingUp} label="ROAS" value={`${campaign.roas.toFixed(2)}x`} />
-      )}
+      {campaign.roas !== null && <MetricCard icon={TrendingUp} label="ROAS" value={`${campaign.roas.toFixed(2)}x`} />}
     </div>
   </div>
 );
 
 // AdSet Row Component
 const AdSetRow = ({ adset, onClick }: { adset: AdSetInsights; onClick: () => void }) => (
-  <div 
+  <div
     className="p-4 border border-border rounded-lg hover:bg-muted/30 cursor-pointer transition-colors"
     onClick={onClick}
   >
@@ -124,31 +127,30 @@ const AdSetRow = ({ adset, onClick }: { adset: AdSetInsights; onClick: () => voi
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <h3 className="font-medium text-sm truncate">{adset.name}</h3>
-          <Badge variant="outline" className={cn("text-xs shrink-0", statusConfig[adset.effectiveStatus]?.class)}>
+          <Badge variant="outline" className={cn('text-xs shrink-0', statusConfig[adset.effectiveStatus]?.class)}>
             {statusConfig[adset.effectiveStatus]?.label || adset.effectiveStatus}
           </Badge>
         </div>
         <p className="text-xs text-muted-foreground">
-          {adset.dailyBudget 
+          {adset.dailyBudget
             ? `Presupuesto diario: ${formatCurrency(adset.dailyBudget)}`
-            : adset.lifetimeBudget 
+            : adset.lifetimeBudget
               ? `Presupuesto total: ${formatCurrency(adset.lifetimeBudget)}`
-              : 'Presupuesto a nivel de campaña'
-          }
+              : 'Presupuesto a nivel de campaña'}
         </p>
       </div>
       <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
     </div>
-    
+
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
       <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(adset.spend)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(adset.reach)} />
       <MetricCard icon={Target} label={adset.resultType} value={formatNumber(adset.results)} />
       <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(adset.clicks)} />
-      <MetricCard 
-        icon={TrendingUp} 
-        label="Costo por resultado" 
-        value={adset.costPerResult > 0 ? formatCurrency(adset.costPerResult) : '-'} 
+      <MetricCard
+        icon={TrendingUp}
+        label="Costo por resultado"
+        value={adset.costPerResult > 0 ? formatCurrency(adset.costPerResult) : '-'}
       />
     </div>
   </div>
@@ -159,10 +161,11 @@ const AdRow = ({ ad }: { ad: AdInsights }) => (
   <div className="p-4 border border-border rounded-lg">
     <div className="flex items-start gap-4 mb-3">
       {ad.thumbnailUrl ? (
-        <img 
-          src={ad.thumbnailUrl} 
-          alt={ad.name} 
+        <img
+          src={ad.thumbnailUrl}
+          alt={ad.name}
           className="w-16 h-16 object-cover rounded-md border border-border"
+          loading="lazy"
         />
       ) : (
         <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
@@ -172,22 +175,22 @@ const AdRow = ({ ad }: { ad: AdInsights }) => (
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <h3 className="font-medium text-sm truncate">{ad.name}</h3>
-          <Badge variant="outline" className={cn("text-xs shrink-0", statusConfig[ad.effectiveStatus]?.class)}>
+          <Badge variant="outline" className={cn('text-xs shrink-0', statusConfig[ad.effectiveStatus]?.class)}>
             {statusConfig[ad.effectiveStatus]?.label || ad.effectiveStatus}
           </Badge>
         </div>
       </div>
     </div>
-    
+
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
       <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(ad.spend)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(ad.reach)} />
       <MetricCard icon={Target} label={ad.resultType} value={formatNumber(ad.results)} />
       <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(ad.clicks)} />
-      <MetricCard 
-        icon={TrendingUp} 
-        label="Costo por resultado" 
-        value={ad.costPerResult > 0 ? formatCurrency(ad.costPerResult) : '-'} 
+      <MetricCard
+        icon={TrendingUp}
+        label="Costo por resultado"
+        value={ad.costPerResult > 0 ? formatCurrency(ad.costPerResult) : '-'}
       />
     </div>
   </div>
@@ -220,17 +223,23 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
   const [selectedCampaign, setSelectedCampaign] = useState<CampaignInsights | null>(null);
   const [selectedAdSet, setSelectedAdSet] = useState<AdSetInsights | null>(null);
 
-  const { data: campaigns, isLoading: campaignsLoading } = useCampaigns(clientId, hasAdAccount);
-  const { data: adsets, isLoading: adsetsLoading } = useAdSets(
-    clientId, 
-    selectedCampaign?.id || null,
-    selectedCampaign?.objective || ''
-  );
-  const { data: ads, isLoading: adsLoading } = useAds(
-    clientId, 
-    selectedAdSet?.id || null,
-    selectedCampaign?.objective || ''
-  );
+  const {
+    data: campaigns,
+    isLoading: campaignsLoading,
+    error: campaignsError,
+  } = useCampaigns(clientId, hasAdAccount);
+
+  const {
+    data: adsets,
+    isLoading: adsetsLoading,
+    error: adsetsError,
+  } = useAdSets(clientId, selectedCampaign?.id || null, selectedCampaign?.objective || '');
+
+  const {
+    data: ads,
+    isLoading: adsLoading,
+    error: adsError,
+  } = useAds(clientId, selectedAdSet?.id || null, selectedCampaign?.objective || '');
 
   const handleCampaignClick = (campaign: CampaignInsights) => {
     setSelectedCampaign(campaign);
@@ -259,11 +268,13 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
     return parts;
   };
 
-  const isLoading = viewLevel === 'campaigns' ? campaignsLoading : 
-                    viewLevel === 'adsets' ? adsetsLoading : adsLoading;
+  const isLoading = viewLevel === 'campaigns' ? campaignsLoading : viewLevel === 'adsets' ? adsetsLoading : adsLoading;
 
-  const currentData = viewLevel === 'campaigns' ? campaigns :
-                      viewLevel === 'adsets' ? adsets : ads;
+  const currentData = viewLevel === 'campaigns' ? campaigns : viewLevel === 'adsets' ? adsets : ads;
+
+  const currentError = viewLevel === 'campaigns' ? campaignsError : viewLevel === 'adsets' ? adsetsError : adsError;
+
+  const currentErrorMessage = currentError instanceof Error ? currentError.message : currentError ? String(currentError) : '';
 
   return (
     <Card>
@@ -278,10 +289,13 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className="text-sm md:text-base font-medium">
-                  {viewLevel === 'campaigns' ? 'Campañas Activas' : 
-                   viewLevel === 'adsets' ? 'Conjuntos de Anuncios' : 'Anuncios'}
+                  {viewLevel === 'campaigns'
+                    ? 'Campañas Activas'
+                    : viewLevel === 'adsets'
+                      ? 'Conjuntos de Anuncios'
+                      : 'Anuncios'}
                 </CardTitle>
-                {hasAdAccount && !isLoading && (
+                {hasAdAccount && !isLoading && !currentError && (
                   <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600">
                     <Radio className="h-2.5 w-2.5 animate-pulse" />
                     En vivo
@@ -289,9 +303,7 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
                 )}
               </div>
               {viewLevel !== 'campaigns' && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {getBreadcrumb().join(' → ')}
-                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">{getBreadcrumb().join(' → ')}</p>
               )}
             </div>
           </div>
@@ -302,6 +314,15 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
           <div className="text-center py-8 text-muted-foreground">
             <p>No hay cuenta de anuncios conectada</p>
             <p className="text-sm mt-1">Conecta una cuenta de Meta Ads para ver tus campañas</p>
+          </div>
+        ) : currentError ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No se pudieron cargar los datos de Meta Ads.</p>
+            <p className="text-sm mt-1">Vuelve a conectar la cuenta publicitaria del cliente.</p>
+            {currentErrorMessage && <p className="text-xs mt-2">{currentErrorMessage}</p>}
+            <Button asChild variant="outline" className="mt-4">
+              <Link to="/clientes">Ir a Conexiones</Link>
+            </Button>
           </div>
         ) : isLoading ? (
           <LoadingSkeleton />
@@ -314,18 +335,10 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
         ) : (
           <div className="space-y-4">
             {viewLevel === 'campaigns' && (campaigns || []).map((campaign) => (
-              <CampaignRow 
-                key={campaign.id} 
-                campaign={campaign} 
-                onClick={() => handleCampaignClick(campaign)} 
-              />
+              <CampaignRow key={campaign.id} campaign={campaign} onClick={() => handleCampaignClick(campaign)} />
             ))}
             {viewLevel === 'adsets' && (adsets || []).map((adset) => (
-              <AdSetRow 
-                key={adset.id} 
-                adset={adset} 
-                onClick={() => handleAdSetClick(adset)} 
-              />
+              <AdSetRow key={adset.id} adset={adset} onClick={() => handleAdSetClick(adset)} />
             ))}
             {viewLevel === 'ads' && (ads || []).map((ad) => (
               <AdRow key={ad.id} ad={ad} />
