@@ -33,36 +33,39 @@ export const ReachChart = ({ data, accentColor }: ReachChartProps) => {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">Alcance e Impresiones</CardTitle>
+        <CardTitle className="text-sm md:text-base font-medium">Alcance e Impresiones</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="h-[280px]">
+      <CardContent className="px-2 md:px-6">
+        <div className="h-[200px] md:h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+            <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis 
                 dataKey="dateFormatted" 
-                tick={{ fontSize: 11 }} 
+                tick={{ fontSize: 10 }} 
                 tickLine={false}
                 axisLine={false}
                 className="text-muted-foreground"
+                interval="preserveStartEnd"
               />
               <YAxis 
-                tick={{ fontSize: 11 }} 
+                tick={{ fontSize: 10 }} 
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
                 className="text-muted-foreground"
+                width={35}
               />
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: 'hsl(var(--popover))', 
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
+                  fontSize: '12px',
                 }}
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
               />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
               <Line 
                 type="monotone" 
                 dataKey="reach" 

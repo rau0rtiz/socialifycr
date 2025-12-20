@@ -32,40 +32,41 @@ export const ContentGrid = ({ data }: ContentGridProps) => {
   return (
     <Card>
       <CardHeader className="pb-4">
-        <CardTitle className="text-base font-medium">Contenido Reciente</CardTitle>
+        <CardTitle className="text-sm md:text-base font-medium">Contenido Reciente</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <CardContent className="px-3 md:px-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
           {data.map((post) => {
             const TypeIcon = typeIcons[post.type] || Image;
             
             return (
               <div 
                 key={post.id}
-                className="group relative rounded-lg border border-border bg-muted/30 p-4 hover:shadow-md transition-all cursor-pointer"
+                className="group relative rounded-lg border border-border bg-muted/30 p-2 md:p-4 hover:shadow-md transition-all cursor-pointer"
               >
                 {/* Thumbnail placeholder */}
-                <div className="aspect-square rounded-md bg-muted flex items-center justify-center mb-3">
-                  <TypeIcon className="h-8 w-8 text-muted-foreground" />
+                <div className="aspect-square rounded-md bg-muted flex items-center justify-center mb-2 md:mb-3">
+                  <TypeIcon className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
                 </div>
                 
                 {/* Content info */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-foreground line-clamp-1">
+                <div className="space-y-1 md:space-y-2">
+                  <p className="text-xs md:text-sm font-medium text-foreground line-clamp-1">
                     {post.title}
                   </p>
                   
-                  <div className="flex items-center justify-between">
-                    <span className={cn("text-xs font-medium capitalize", networkColors[post.network])}>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className={cn("text-[10px] md:text-xs font-medium capitalize", networkColors[post.network])}>
                       {post.network}
                     </span>
-                    <Badge variant="secondary" className={cn("text-xs", statusConfig[post.status].class)}>
-                      {statusConfig[post.status].label}
+                    <Badge variant="secondary" className={cn("text-[10px] md:text-xs px-1 md:px-2", statusConfig[post.status].class)}>
+                      <span className="hidden sm:inline">{statusConfig[post.status].label}</span>
+                      <span className="sm:hidden">{statusConfig[post.status].label.slice(0, 3)}</span>
                     </Badge>
                   </div>
                   
                   {post.engagement > 0 && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">
                       {post.engagement.toLocaleString()} interacciones
                     </p>
                   )}

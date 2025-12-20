@@ -57,13 +57,13 @@ export const CampaignsTable = ({ data }: CampaignsTableProps) => {
   return (
     <Card>
       <CardHeader className="pb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <CardTitle className="text-base font-medium">Campañas Activas</CardTitle>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <CardTitle className="text-sm md:text-base font-medium">Campañas Activas</CardTitle>
           
           <div className="flex items-center gap-2">
             <Select value={networkFilter} onValueChange={setNetworkFilter}>
-              <SelectTrigger className="w-32 bg-background h-8 text-sm">
-                <SelectValue placeholder="Red social" />
+              <SelectTrigger className="w-24 md:w-32 bg-background h-8 text-xs md:text-sm">
+                <SelectValue placeholder="Red" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50">
                 <SelectItem value="all">Todas</SelectItem>
@@ -75,7 +75,7 @@ export const CampaignsTable = ({ data }: CampaignsTableProps) => {
             </Select>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32 bg-background h-8 text-sm">
+              <SelectTrigger className="w-24 md:w-32 bg-background h-8 text-xs md:text-sm">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50">
@@ -89,45 +89,46 @@ export const CampaignsTable = ({ data }: CampaignsTableProps) => {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-md border border-border overflow-hidden">
+      <CardContent className="px-3 md:px-6">
+        <div className="rounded-md border border-border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="font-medium">Campaña</TableHead>
-                <TableHead className="font-medium">Red</TableHead>
-                <TableHead className="font-medium text-right">Alcance</TableHead>
-                <TableHead className="font-medium text-right">Engagement</TableHead>
-                <TableHead className="font-medium text-right">Leads</TableHead>
-                <TableHead className="font-medium">Estado</TableHead>
+                <TableHead className="font-medium text-xs md:text-sm">Campaña</TableHead>
+                <TableHead className="font-medium text-xs md:text-sm hidden sm:table-cell">Red</TableHead>
+                <TableHead className="font-medium text-xs md:text-sm text-right">Alcance</TableHead>
+                <TableHead className="font-medium text-xs md:text-sm text-right hidden md:table-cell">Engagement</TableHead>
+                <TableHead className="font-medium text-xs md:text-sm text-right hidden lg:table-cell">Leads</TableHead>
+                <TableHead className="font-medium text-xs md:text-sm">Estado</TableHead>
                 <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredData.map((campaign) => (
                 <TableRow key={campaign.id} className="hover:bg-muted/30">
-                  <TableCell className="font-medium">{campaign.name}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium text-xs md:text-sm max-w-[120px] md:max-w-none truncate">{campaign.name}</TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <Badge 
                       variant="outline" 
-                      className={cn("capitalize", networkColors[campaign.network])}
+                      className={cn("capitalize text-xs", networkColors[campaign.network])}
                     >
                       {campaign.network}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">{formatNumber(campaign.reach)}</TableCell>
-                  <TableCell className="text-right">{formatNumber(campaign.engagement)}</TableCell>
-                  <TableCell className="text-right">{campaign.leads}</TableCell>
+                  <TableCell className="text-right text-xs md:text-sm">{formatNumber(campaign.reach)}</TableCell>
+                  <TableCell className="text-right text-xs md:text-sm hidden md:table-cell">{formatNumber(campaign.engagement)}</TableCell>
+                  <TableCell className="text-right text-xs md:text-sm hidden lg:table-cell">{campaign.leads}</TableCell>
                   <TableCell>
                     <Badge 
                       variant="outline" 
-                      className={statusConfig[campaign.status].class}
+                      className={cn("text-xs", statusConfig[campaign.status].class)}
                     >
-                      {statusConfig[campaign.status].label}
+                      <span className="hidden sm:inline">{statusConfig[campaign.status].label}</span>
+                      <span className="sm:hidden">{statusConfig[campaign.status].label.slice(0, 3)}</span>
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </TableCell>
