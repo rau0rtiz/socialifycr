@@ -425,6 +425,119 @@ serve(async (req) => {
         break;
       }
 
+      case 'daily-insights': {
+        // Get daily metrics for the last 30 days
+        const days = params.days || 30;
+        const dailyData: any[] = [];
+
+        // Fetch Instagram daily insights if connected
+        if (instagramId) {
+          try {
+            const insightsResponse = await fetch(
+              `https://graph.facebook.com/v18.0/${instagramId}/insights?` +
+              `metric=reach,impressions,profile_views&period=day&access_token=${accessToken}`
+            );
+            const insightsData = await insightsResponse.json();
+
+            if (insightsData.data) {
+              // Process reach data
+              const reachMetric = insightsData.data.find((m: any) => m.name === 'reach');
+              const impressionsMetric = insightsData.data.find((m: any) => m.name === 'impressions');
+              const profileViewsMetric = insightsData.data.find((m: any) => m.name === 'profile_views');
+
+              // Combine all metrics by date
+              const dateMap = new Map<string, any>();
+
+              if (reachMetric?.values) {
+                reachMetric.values.forEach((v: any) => {
+                  const date = v.end_time.split('T')[0];
+                  if (!dateMap.has(date)) {
+                    dateMap.set(date, { date, reach: 0, impressions: 0, engagement: 0 });
+                  }
+                  dateMap.get(date).reach = v.value || 0;
+                });
+              }
+
+              if (impressionsMetric?.values) {
+                impressionsMetric.values.forEach((v: any) => {
+                  const date = v.end_time.split('T')[0];
+                  if (!dateMap.has(date)) {
+                    dateMap.set(date, { date, reach: 0, impressions: 0, engagement: 0 });
+                  }
+                  dateMap.get(date).impressions = v.value || 0;
+                });
+              }
+
+              if (profileViewsMetric?.values) {
+                profileViewsMetric.values.forEach((v: any) => {
+                  const date = v.end_time.split('T')[0];
+                  if (dateMap.has(date)) {
+                    // Use profile views as a proxy for engagement activity
+                    dateMap.get(date).engagement = v.value || 0;
+                  }
+                });
+              }
+
+              // Convert to array and sort by date
+              dateMap.forEach((value) => dailyData.push(value));
+            }
+          } catch (err) {
+            console.error('Error fetching Instagram daily insights:', err);
+          }
+        }
+
+        // If no Instagram data, try Facebook Page insights
+        if (dailyData.length === 0 && pageId) {
+          try {
+            const now = Math.floor(Date.now() / 1000);
+            const daysAgo = now - (days * 24 * 60 * 60);
+
+            const pageInsightsResponse = await fetch(
+              `https://graph.facebook.com/v18.0/${pageId}/insights?` +
+              `metric=page_impressions,page_impressions_unique,page_post_engagements&period=day` +
+              `&since=${daysAgo}&until=${now}&access_token=${accessToken}`
+            );
+            const pageInsightsData = await pageInsightsResponse.json();
+
+            if (pageInsightsData.data) {
+              const dateMap = new Map<string, any>();
+
+              pageInsightsData.data.forEach((metric: any) => {
+                if (metric.values) {
+                  metric.values.forEach((v: any) => {
+                    const date = v.end_time.split('T')[0];
+                    if (!dateMap.has(date)) {
+                      dateMap.set(date, { date, reach: 0, impressions: 0, engagement: 0 });
+                    }
+                    
+                    if (metric.name === 'page_impressions_unique') {
+                      dateMap.get(date).reach = v.value || 0;
+                    } else if (metric.name === 'page_impressions') {
+                      dateMap.get(date).impressions = v.value || 0;
+                    } else if (metric.name === 'page_post_engagements') {
+                      dateMap.get(date).engagement = v.value || 0;
+                    }
+                  });
+                }
+              });
+
+              dateMap.forEach((value) => dailyData.push(value));
+            }
+          } catch (err) {
+            console.error('Error fetching Facebook daily insights:', err);
+          }
+        }
+
+        // Sort by date ascending
+        dailyData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Limit to requested days
+        const limitedData = dailyData.slice(-days);
+
+        result = { data: limitedData, source: instagramId ? 'instagram' : 'facebook' };
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({ error: 'Unknown endpoint' }), {
           status: 400,
