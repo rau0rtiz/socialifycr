@@ -63,8 +63,8 @@ export const TagSelector = ({
       
       <div className="flex items-center gap-2">
         <Select 
-          value={selectedTagId || ''} 
-          onValueChange={(val) => onSelect(val || null)}
+          value={selectedTagId || '__none__'} 
+          onValueChange={(val) => onSelect(val === '__none__' ? null : val)}
           disabled={disabled}
         >
           <SelectTrigger className="flex-1 h-9">
@@ -81,7 +81,7 @@ export const TagSelector = ({
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">
+            <SelectItem value="__none__">
               <span className="text-muted-foreground">Sin etiqueta</span>
             </SelectItem>
             {tags.map((tag) => (
