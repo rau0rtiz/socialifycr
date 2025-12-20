@@ -10,10 +10,8 @@ import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useKPIData } from '@/hooks/use-kpi-data';
 import { useDailyMetrics } from '@/hooks/use-daily-metrics';
-import { 
-  getClientCampaigns, 
-  getClientAlerts 
-} from '@/data/mockData';
+import { useCampaignsData } from '@/hooks/use-campaigns-data';
+import { getClientAlerts } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Building2, Plus, Radio } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,7 +74,7 @@ const Dashboard = () => {
 
   const { kpis, socialMetrics, isLoading: kpisLoading, isLiveData: kpisIsLive } = useKPIData(selectedClient.id);
   const { dailyMetrics, isLoading: dailyLoading, isLiveData: dailyIsLive, source: dailySource } = useDailyMetrics(selectedClient.id);
-  const campaigns = getClientCampaigns(selectedClient.id);
+  const { campaigns, isLoading: campaignsLoading, isLiveData: campaignsIsLive, hasAdAccount } = useCampaignsData(selectedClient.id);
   const { content, isLoading: contentLoading, isLiveData: contentIsLive, refetch: refetchContent } = useContentData(selectedClient.id);
   const alerts = getClientAlerts(selectedClient.id);
 
@@ -177,7 +175,12 @@ const Dashboard = () => {
 
       {/* Campaigns Table */}
       <div className="mb-4 md:mb-6">
-        <CampaignsTable data={campaigns} />
+        <CampaignsTable 
+          data={campaigns} 
+          isLoading={campaignsLoading}
+          isLiveData={campaignsIsLive}
+          hasAdAccount={hasAdAccount}
+        />
       </div>
 
       {/* Bottom Row */}
