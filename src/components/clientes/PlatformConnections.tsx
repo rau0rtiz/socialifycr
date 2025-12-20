@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Facebook, Instagram, Youtube, Linkedin, Twitter, Plus, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { MetaAccountSelector } from './MetaAccountSelector';
 
 interface PlatformConnection {
   id: string;
@@ -12,6 +13,14 @@ interface PlatformConnection {
   platform_page_name: string | null;
   connected_by: string | null;
   created_at: string;
+}
+
+interface MetaAccountsData {
+  pages: { id: string; name: string; access_token: string }[];
+  instagramAccounts: { pageId: string; pageName: string; instagramId: string; pageAccessToken: string }[];
+  adAccounts: { id: string; name: string }[];
+  accessToken: string;
+  tokenExpiresAt: string;
 }
 
 interface PlatformConnectionsProps {
@@ -57,6 +66,8 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const [connections, setConnections] = useState<PlatformConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [showAccountSelector, setShowAccountSelector] = useState(false);
+  const [metaAccountsData, setMetaAccountsData] = useState<MetaAccountsData | null>(null);
   const { toast } = useToast();
 
   const fetchConnections = useCallback(async () => {
@@ -80,7 +91,12 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   // Listen for OAuth callback messages
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'META_OAUTH_SUCCESS') {
+      if (event.data?.type === 'META_OAUTH_ACCOUNTS') {
+        // Received accounts data - show selector dialog
+        setMetaAccountsData(event.data.accounts);
+        setShowAccountSelector(true);
+        setConnecting(null);
+      } else if (event.data?.type === 'META_OAUTH_SUCCESS') {
         toast({
           title: 'Conexión exitosa',
           description: `Conectado a Meta: ${event.data.connection?.pageName || 'Cuenta conectada'}`,
@@ -100,6 +116,57 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [toast, fetchConnections]);
+
+  const handleSaveMetaConnection = async (selectedAccounts: {
+    pageId: string;
+    pageName: string;
+    pageAccessToken: string;
+    instagramId: string | null;
+    adAccountId: string | null;
+  }) => {
+    if (!metaAccountsData) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=save-connection`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientId,
+            pageId: selectedAccounts.pageId,
+            pageName: selectedAccounts.pageName,
+            pageAccessToken: selectedAccounts.pageAccessToken,
+            instagramId: selectedAccounts.instagramId,
+            adAccountId: selectedAccounts.adAccountId,
+            tokenExpiresAt: metaAccountsData.tokenExpiresAt
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      toast({
+        title: 'Conexión exitosa',
+        description: `Conectado a: ${selectedAccounts.pageName}`,
+      });
+      
+      setShowAccountSelector(false);
+      setMetaAccountsData(null);
+      fetchConnections();
+    } catch (err) {
+      console.error('Error saving connection:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Error al guardar la conexión',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleConnectMeta = async () => {
     setConnecting('meta');
@@ -252,6 +319,20 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
           </p>
         )}
       </div>
+
+      {/* Meta Account Selector Dialog */}
+      <MetaAccountSelector
+        open={showAccountSelector}
+        onOpenChange={(open) => {
+          setShowAccountSelector(open);
+          if (!open) {
+            setMetaAccountsData(null);
+          }
+        }}
+        accountsData={metaAccountsData}
+        clientId={clientId}
+        onSave={handleSaveMetaConnection}
+      />
     </div>
   );
 };

@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export const MetaOAuthCallback = () => {
@@ -53,9 +52,9 @@ export const MetaOAuthCallback = () => {
         const clientId = stateData.clientId;
         const redirectUri = `${window.location.origin}/oauth/meta/callback`;
 
-        // Call the callback endpoint
+        // Call fetch-accounts to get available accounts (without saving)
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=callback`,
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=fetch-accounts`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -69,17 +68,18 @@ export const MetaOAuthCallback = () => {
           throw new Error(result.error);
         }
 
-        // Notify opener and close popup
+        // Send accounts data to parent window for selection
         if (window.opener) {
           window.opener.postMessage({ 
-            type: 'META_OAUTH_SUCCESS', 
-            connection: result.connection 
+            type: 'META_OAUTH_ACCOUNTS', 
+            accounts: result.accounts,
+            clientId
           }, '*');
           window.close();
         } else {
           toast({
-            title: 'Conexión exitosa',
-            description: `Conectado a Meta: ${result.connection?.pageName || 'Cuenta conectada'}`,
+            title: 'Error',
+            description: 'Por favor usa la ventana emergente para conectar',
           });
           navigate('/clientes');
         }
@@ -110,7 +110,7 @@ export const MetaOAuthCallback = () => {
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
         <h1 className="text-xl font-semibold text-foreground">Conectando con Meta...</h1>
-        <p className="text-muted-foreground mt-2">Por favor espera mientras completamos la autorización.</p>
+        <p className="text-muted-foreground mt-2">Por favor espera mientras obtenemos tus cuentas.</p>
       </div>
     </div>
   );
