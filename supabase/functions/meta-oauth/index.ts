@@ -62,8 +62,198 @@ serve(async (req) => {
       });
     }
 
+    // Fetch accounts without saving - returns available accounts for user selection
+    if (action === 'fetch-accounts') {
+      const body = await req.json();
+      const { code, redirectUri, clientId } = body;
+
+      if (!code || !redirectUri || !clientId) {
+        return new Response(JSON.stringify({ error: 'Missing code, redirectUri, or clientId' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.log('Fetching accounts for client:', clientId);
+
+      // Exchange code for short-lived token
+      const tokenResponse = await fetch(
+        `https://graph.facebook.com/v18.0/oauth/access_token?` +
+        `client_id=${META_APP_ID}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&client_secret=${META_APP_SECRET}` +
+        `&code=${code}`
+      );
+
+      const tokenData = await tokenResponse.json();
+      console.log('Token exchange completed');
+
+      if (tokenData.error) {
+        console.error('Token exchange error:', tokenData.error);
+        return new Response(JSON.stringify({ error: tokenData.error.message }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Exchange for long-lived token
+      const longLivedResponse = await fetch(
+        `https://graph.facebook.com/v18.0/oauth/access_token?` +
+        `grant_type=fb_exchange_token` +
+        `&client_id=${META_APP_ID}` +
+        `&client_secret=${META_APP_SECRET}` +
+        `&fb_exchange_token=${tokenData.access_token}`
+      );
+
+      const longLivedData = await longLivedResponse.json();
+      console.log('Long-lived token received');
+
+      if (longLivedData.error) {
+        console.error('Long-lived token error:', longLivedData.error);
+        return new Response(JSON.stringify({ error: longLivedData.error.message }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const accessToken = longLivedData.access_token;
+      const expiresIn = longLivedData.expires_in || 5184000; // Default 60 days
+
+      // Get user's pages
+      const pagesResponse = await fetch(
+        `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}&limit=100`
+      );
+      const pagesData = await pagesResponse.json();
+      console.log('Pages fetched:', pagesData.data?.length || 0);
+
+      // Get Instagram accounts linked to pages
+      const instagramAccounts: any[] = [];
+      if (pagesData.data) {
+        for (const page of pagesData.data) {
+          const igResponse = await fetch(
+            `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
+          );
+          const igData = await igResponse.json();
+          if (igData.instagram_business_account) {
+            instagramAccounts.push({
+              pageId: page.id,
+              pageName: page.name,
+              instagramId: igData.instagram_business_account.id,
+              pageAccessToken: page.access_token
+            });
+          }
+        }
+      }
+      console.log('Instagram accounts found:', instagramAccounts.length);
+
+      // Get ad accounts with names
+      const adAccountsResponse = await fetch(
+        `https://graph.facebook.com/v18.0/me/adaccounts?fields=id,name,account_status&access_token=${accessToken}&limit=100`
+      );
+      const adAccountsData = await adAccountsResponse.json();
+      console.log('Ad accounts fetched:', adAccountsData.data?.length || 0);
+
+      const tokenExpiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+
+      // Return accounts data for user selection (don't save yet)
+      return new Response(JSON.stringify({
+        success: true,
+        accounts: {
+          pages: pagesData.data?.map((p: any) => ({ 
+            id: p.id, 
+            name: p.name, 
+            access_token: p.access_token 
+          })) || [],
+          instagramAccounts,
+          adAccounts: adAccountsData.data?.map((a: any) => ({ 
+            id: a.id, 
+            name: a.name || `Ad Account ${a.id}` 
+          })) || [],
+          accessToken,
+          tokenExpiresAt
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Save selected accounts to database
+    if (action === 'save-connection') {
+      const body = await req.json();
+      const { clientId, pageId, pageName, pageAccessToken, instagramId, adAccountId, tokenExpiresAt } = body;
+
+      if (!clientId || !pageId || !pageName || !pageAccessToken) {
+        return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.log('Saving connection for client:', clientId, 'page:', pageName);
+
+      // Check if connection already exists
+      const { data: existingConnection } = await supabase
+        .from('platform_connections')
+        .select('id')
+        .eq('client_id', clientId)
+        .eq('platform', 'meta')
+        .maybeSingle();
+
+      const connectionData = {
+        client_id: clientId,
+        platform: 'meta',
+        access_token: pageAccessToken,
+        status: 'active',
+        platform_page_id: pageId,
+        platform_page_name: pageName,
+        instagram_account_id: instagramId || null,
+        ad_account_id: adAccountId || null,
+        token_expires_at: tokenExpiresAt,
+        updated_at: new Date().toISOString()
+      };
+
+      let result;
+      if (existingConnection) {
+        result = await supabase
+          .from('platform_connections')
+          .update(connectionData)
+          .eq('id', existingConnection.id)
+          .select()
+          .single();
+      } else {
+        result = await supabase
+          .from('platform_connections')
+          .insert(connectionData)
+          .select()
+          .single();
+      }
+
+      if (result.error) {
+        console.error('Database error:', result.error);
+        return new Response(JSON.stringify({ error: 'Failed to save connection' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.log('Connection saved successfully');
+
+      return new Response(JSON.stringify({
+        success: true,
+        connection: {
+          id: result.data.id,
+          platform: 'meta',
+          pageName,
+          instagramId,
+          adAccountId
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Legacy callback action (kept for backwards compatibility)
     if (action === 'callback') {
-      // Exchange code for access token
       const body = await req.json();
       const { code, redirectUri, clientId } = body;
 
