@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuditLog } from '@/hooks/use-audit-log';
 
 export interface Client {
   id: string;
@@ -29,6 +30,7 @@ const Clientes = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
 
   const fetchClients = async () => {
     setLoading(true);
@@ -88,6 +90,18 @@ const Clientes = () => {
         variant: 'destructive',
       });
     } else {
+      // Log the deletion action
+      await logAction({
+        action: 'client.delete',
+        entityType: 'client',
+        entityId: clientToDelete.id,
+        entityName: clientToDelete.name,
+        details: {
+          industry: clientToDelete.industry,
+          deleted_at: new Date().toISOString(),
+        },
+      });
+
       toast({
         title: 'Cliente eliminado',
         description: 'El cliente ha sido eliminado correctamente.',
