@@ -9,7 +9,7 @@ import {
   LogOut,
   ChevronLeft
 } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { useBrand } from '@/contexts/BrandContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const mainMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -36,17 +37,24 @@ const mainMenuItems = [
 ];
 
 const managementMenuItems = [
-  { title: 'Clientes', url: '/clients', icon: Users },
+  { title: 'Clientes', url: '/clientes', icon: Users },
   { title: 'Configuración de Marca', url: '/brand-settings', icon: Palette },
 ];
 
 export const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const { platformBrand } = useBrand();
+  const { signOut } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">
@@ -125,7 +133,10 @@ export const Sidebar = () => {
       <SidebarFooter className="p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="text-muted-foreground hover:text-foreground">
+            <SidebarMenuButton 
+              className="text-muted-foreground hover:text-foreground"
+              onClick={handleSignOut}
+            >
               <LogOut className="h-4 w-4" />
               <span>Cerrar sesión</span>
             </SidebarMenuButton>
