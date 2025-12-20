@@ -43,12 +43,20 @@ const Dashboard = () => {
       <div className="flex flex-col gap-3 mb-4 md:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div 
-              className="h-8 w-8 md:h-10 md:w-10 rounded-lg flex items-center justify-center text-white font-bold text-sm md:text-base"
-              style={{ backgroundColor: `hsl(${accentColor})` }}
-            >
-              {selectedClient.name.charAt(0)}
-            </div>
+            {clientBrand?.logoUrl ? (
+              <img 
+                src={clientBrand.logoUrl} 
+                alt={selectedClient.name} 
+                className="h-8 w-8 md:h-10 md:w-10 rounded-lg flex-shrink-0 object-contain"
+              />
+            ) : (
+              <div 
+                className="h-8 w-8 md:h-10 md:w-10 rounded-lg flex items-center justify-center text-white font-bold text-sm md:text-base"
+                style={{ backgroundColor: `hsl(${accentColor})` }}
+              >
+                {selectedClient.name.charAt(0)}
+              </div>
+            )}
             <div>
               <h1 className="text-lg md:text-xl font-semibold text-foreground">{selectedClient.name}</h1>
               <p className="text-xs md:text-sm text-muted-foreground">{selectedClient.industry}</p>
