@@ -52,12 +52,20 @@ export const Sidebar = () => {
     <SidebarComponent collapsible="icon" className="border-r border-border">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div 
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-sm"
-            style={{ backgroundColor: `hsl(${platformBrand.accentColor})` }}
-          >
-            S
-          </div>
+          {platformBrand.logoUrl ? (
+            <img 
+              src={platformBrand.logoUrl} 
+              alt={platformBrand.name} 
+              className="w-8 h-8 rounded-lg object-contain"
+            />
+          ) : (
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-sm overflow-hidden"
+              style={{ backgroundColor: `hsl(${platformBrand.primaryColor})` }}
+            >
+              {platformBrand.name.charAt(0)}
+            </div>
+          )}
           {!collapsed && (
             <span className="font-semibold text-foreground text-lg">{platformBrand.name}</span>
           )}
