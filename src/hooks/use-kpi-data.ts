@@ -12,6 +12,12 @@ interface AccountInsights {
   profileViews: number;
   websiteClicks: number;
   connectedPlatforms: string[];
+  // Daily sparkline data (last 30 days)
+  dailyReach?: number[];
+  dailyImpressions?: number[];
+  dailyEngagement?: number[];
+  dailyFollowers?: number[];
+  dailyProfileViews?: number[];
   instagram?: {
     followers: number;
     engagement: number;
@@ -136,15 +142,26 @@ export function useKPIData(clientId: string | null, platform: string = 'all', da
 
       const insights = data as AccountInsights;
 
-      // Build KPIs from real data with IDs
+      // Helper function to get sparkline data or generate placeholder
+      const getSparkline = (dailyData: number[] | undefined, fallback: number[]): number[] => {
+        if (dailyData && dailyData.length > 0) {
+          // Reduce to ~12 points for display
+          const step = Math.max(1, Math.floor(dailyData.length / 12));
+          const sampled = dailyData.filter((_, i) => i % step === 0).slice(-12);
+          return sampled.length > 0 ? sampled : fallback;
+        }
+        return fallback;
+      };
+
+      // Build KPIs from real data with IDs and real sparkline data
       const realKpis: KPIItem[] = [
         {
           id: 'reach',
-          label: 'Alcance Total',
+          label: 'Alcance Total (últimos 30 días)',
           value: formatNumber(insights.reach || 0),
           change: 12,
           changeLabel: 'vs. período anterior',
-          sparkline: [40, 45, 42, 50, 55, 60, 58, 65, 70, 75, 72, 80],
+          sparkline: getSparkline(insights.dailyReach, [40, 45, 42, 50, 55, 60, 58, 65, 70, 75, 72, 80]),
         },
         {
           id: 'engagement',
@@ -152,7 +169,7 @@ export function useKPIData(clientId: string | null, platform: string = 'all', da
           value: `${(insights.engagement || 0).toFixed(1)}%`,
           change: 0.5,
           changeLabel: 'promedio del período',
-          sparkline: [3.5, 3.8, 3.6, 4.0, 4.2, 4.1, 4.3, 4.5, 4.2, 4.4, 4.6, 4.8],
+          sparkline: getSparkline(insights.dailyEngagement, [3.5, 3.8, 3.6, 4.0, 4.2, 4.1, 4.3, 4.5, 4.2, 4.4, 4.6, 4.8]),
         },
         {
           id: 'followers',
@@ -160,23 +177,23 @@ export function useKPIData(clientId: string | null, platform: string = 'all', da
           value: formatNumber(insights.followers || 0),
           change: insights.followersGrowth || 0,
           changeLabel: 'crecimiento del período',
-          sparkline: [60, 65, 58, 70, 75, 80, 72, 85, 90, 88, 95, 100],
+          sparkline: getSparkline(insights.dailyFollowers, [60, 65, 58, 70, 75, 80, 72, 85, 90, 88, 95, 100]),
         },
         {
           id: 'impressions',
-          label: 'Impresiones',
+          label: 'Impresiones (últimos 30 días)',
           value: formatNumber(insights.impressions || insights.reach * 1.5 || 0),
           change: 8,
           changeLabel: 'vs. período anterior',
-          sparkline: [20, 25, 30, 28, 35, 40, 38, 45, 50, 48, 55, 60],
+          sparkline: getSparkline(insights.dailyImpressions, [20, 25, 30, 28, 35, 40, 38, 45, 50, 48, 55, 60]),
         },
         {
           id: 'profile_views',
-          label: 'Visitas al Perfil',
+          label: 'Visitas al Perfil (últimos 30 días)',
           value: formatNumber(insights.profileViews || 0),
           change: 15,
           changeLabel: 'vs. período anterior',
-          sparkline: [5, 8, 6, 10, 12, 11, 15, 14, 18, 16, 20, 22],
+          sparkline: getSparkline(insights.dailyProfileViews, [5, 8, 6, 10, 12, 11, 15, 14, 18, 16, 20, 22]),
         },
         {
           id: 'website_clicks',

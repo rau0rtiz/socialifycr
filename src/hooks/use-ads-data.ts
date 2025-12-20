@@ -22,6 +22,11 @@ export interface CampaignInsights {
   roas: number | null;
 }
 
+export interface CampaignsResult {
+  campaigns: CampaignInsights[];
+  currency: string;
+}
+
 export interface AdSetInsights {
   id: string;
   name: string;
@@ -167,8 +172,8 @@ export const useCampaigns = (
 ) => {
   return useQuery({
     queryKey: ['meta-campaigns', clientId, datePreset, customRange?.from?.toISOString(), customRange?.to?.toISOString()],
-    queryFn: async (): Promise<CampaignInsights[]> => {
-      if (!clientId || !hasAdAccount) return [];
+    queryFn: async (): Promise<CampaignsResult> => {
+      if (!clientId || !hasAdAccount) return { campaigns: [], currency: 'USD' };
 
       const params: Record<string, string> = {};
       if (datePreset === 'custom' && customRange?.from && customRange?.to) {
@@ -189,7 +194,7 @@ export const useCampaigns = (
       if (error) throw error;
       if (data?.error) throw new Error(getMetaErrorMessage(data.error));
 
-      return (data?.data || []).map((campaign: any) => {
+      const campaigns = (data?.data || []).map((campaign: any) => {
         const insights = campaign.insights?.data?.[0] || {};
         const objective = campaign.objective || '';
         const { count: results, type: resultType } = extractResults(insights.actions, objective);
@@ -217,6 +222,11 @@ export const useCampaigns = (
           roas: roas ? parseFloat(roas) : null,
         };
       });
+
+      return {
+        campaigns,
+        currency: data?.currency || 'USD',
+      };
     },
     enabled: !!clientId && hasAdAccount,
     staleTime: 5 * 60 * 1000,
