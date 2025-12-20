@@ -30,10 +30,14 @@ export interface ContentPost {
   // New fields for real data
   views?: number;
   likes?: number;
+  comments?: number;
+  shares?: number;
+  saves?: number;
   avgViewDuration?: number; // In seconds (Reels only)
   thumbnailUrl?: string;
   permalink?: string;
   mediaUrl?: string;
+  caption?: string; // Full post caption/description
   isLiveData?: boolean;
 }
 

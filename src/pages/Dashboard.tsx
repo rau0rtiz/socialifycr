@@ -9,6 +9,7 @@ import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
 import { DateRangePicker, DatePresetKey } from '@/components/dashboard/DateRangePicker';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
+import { useContentMetadata } from '@/hooks/use-content-metadata';
 import { useKPIData } from '@/hooks/use-kpi-data';
 import { useDailyMetrics } from '@/hooks/use-daily-metrics';
 import { useMetaConnection } from '@/hooks/use-meta-api';
@@ -54,6 +55,17 @@ const Dashboard = () => {
     refetch: refetchContent,
   } = useContentData(clientId);
 
+  const {
+    tags,
+    models,
+    metadata,
+    createTag,
+    createModel,
+    updateMetadata,
+    capture48hMetrics,
+    refetch: refetchMetadata,
+  } = useContentMetadata(clientId);
+
   const { data: metaConnection, refetch: refetchConnection } = useMetaConnection(clientId);
 
   // Refresh all dashboard data
@@ -64,9 +76,10 @@ const Dashboard = () => {
       refetchDailyMetrics(),
       refetchContent(),
       refetchConnection(),
+      refetchMetadata(),
     ]);
     setIsRefreshing(false);
-  }, [refetchKPIs, refetchDailyMetrics, refetchContent, refetchConnection]);
+  }, [refetchKPIs, refetchDailyMetrics, refetchContent, refetchConnection, refetchMetadata]);
 
   // Reset KPI selection when client changes
   useEffect(() => {
@@ -204,6 +217,23 @@ const Dashboard = () => {
         />
       </div>
 
+      {/* Content Grid - 2x5 Grid below KPIs */}
+      <div className="mb-4 md:mb-6">
+        <ContentGrid
+          data={content}
+          isLoading={contentLoading}
+          isLiveData={contentIsLive}
+          onRefresh={refetchContent}
+          tags={tags}
+          models={models}
+          metadata={metadata}
+          onCreateTag={createTag}
+          onCreateModel={createModel}
+          onUpdateMetadata={updateMetadata}
+          onCapture48hMetrics={capture48hMetrics}
+        />
+      </div>
+
       {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
         <ReachChart
@@ -225,21 +255,14 @@ const Dashboard = () => {
         <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
       </div>
 
-      {/* Bottom Row */}
+      {/* Alerts */}
       <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
-        <div className="lg:col-span-2">
-          <ContentGrid
-            data={content}
-            isLoading={contentLoading}
-            isLiveData={contentIsLive}
-            onRefresh={refetchContent}
-          />
+        <div className="lg:col-span-3">
+          <AlertsPanel data={alerts} />
         </div>
-        <AlertsPanel data={alerts} />
       </div>
     </DashboardLayout>
   );
 };
 
 export default Dashboard;
-
