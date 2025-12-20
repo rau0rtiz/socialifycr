@@ -28,10 +28,14 @@ export const TopBar = () => {
             <BreadcrumbItem>
               <BreadcrumbLink href="/">Socialify</BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="truncate max-w-[120px] md:max-w-none">{selectedClient.name}</BreadcrumbPage>
-            </BreadcrumbItem>
+            {selectedClient && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="truncate max-w-[120px] md:max-w-none">{selectedClient.name}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </>
+            )}
           </BreadcrumbList>
         </Breadcrumb>
       </div>
