@@ -9,9 +9,9 @@ import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useKPIData } from '@/hooks/use-kpi-data';
+import { useDailyMetrics } from '@/hooks/use-daily-metrics';
 import { 
   getClientCampaigns, 
-  getClientDailyMetrics, 
   getClientAlerts 
 } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
@@ -75,8 +75,8 @@ const Dashboard = () => {
   const accentColor = clientBrand?.accentColor || selectedClient.accent_color || '262 83% 58%';
 
   const { kpis, socialMetrics, isLoading: kpisLoading, isLiveData: kpisIsLive } = useKPIData(selectedClient.id);
+  const { dailyMetrics, isLoading: dailyLoading, isLiveData: dailyIsLive, source: dailySource } = useDailyMetrics(selectedClient.id);
   const campaigns = getClientCampaigns(selectedClient.id);
-  const dailyMetrics = getClientDailyMetrics(selectedClient.id);
   const { content, isLoading: contentLoading, isLiveData: contentIsLive, refetch: refetchContent } = useContentData(selectedClient.id);
   const alerts = getClientAlerts(selectedClient.id);
 
@@ -161,7 +161,13 @@ const Dashboard = () => {
 
       {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-        <ReachChart data={dailyMetrics} accentColor={accentColor} />
+        <ReachChart 
+          data={dailyMetrics} 
+          accentColor={accentColor}
+          isLoading={dailyLoading}
+          isLiveData={dailyIsLive}
+          source={dailySource}
+        />
         <SocialPerformanceChart 
           data={socialMetrics} 
           isLoading={kpisLoading}
