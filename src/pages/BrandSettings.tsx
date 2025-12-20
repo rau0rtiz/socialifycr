@@ -4,19 +4,35 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { Button } from '@/components/ui/button';
 import { useBrand } from '@/contexts/BrandContext';
 import { clients } from '@/data/mockData';
-import { Palette, Building2, ImageIcon } from 'lucide-react';
+import { Palette, Building2, ImageIcon, Save } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const BrandSettings = () => {
-  const { platformBrand, setPlatformBrand, clientBrands, updateClientBrand } = useBrand();
+  const { platformBrand, setPlatformBrand, clientBrands, updateClientBrand, saveBrandSettings, hasUnsavedChanges } = useBrand();
+
+  const handleSave = () => {
+    saveBrandSettings();
+    toast({
+      title: "Configuración guardada",
+      description: "Los cambios de marca se han guardado correctamente.",
+    });
+  };
 
   return (
     <DashboardLayout>
       <div className="max-w-4xl">
-        <div className="mb-6">
-          <h1 className="text-xl md:text-2xl font-semibold text-foreground">Configuración de Marca</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Personaliza la apariencia de Socialify y de cada cliente</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl md:text-2xl font-semibold text-foreground">Configuración de Marca</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Personaliza la apariencia de Socialify y de cada cliente</p>
+          </div>
+          <Button onClick={handleSave} disabled={!hasUnsavedChanges} className="gap-2">
+            <Save className="h-4 w-4" />
+            <span className="hidden sm:inline">Guardar</span>
+          </Button>
         </div>
 
         <Tabs defaultValue="platform" className="space-y-6">

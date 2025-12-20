@@ -21,6 +21,7 @@ import { Download, Share2 } from 'lucide-react';
 const Dashboard = () => {
   const { selectedClient, clientBrands } = useBrand();
   const clientBrand = clientBrands[selectedClient.id];
+  const primaryColor = clientBrand?.primaryColor || selectedClient.accentColor;
   const accentColor = clientBrand?.accentColor || selectedClient.accentColor;
 
   const kpis = getClientKPIs(selectedClient.id);
@@ -30,8 +31,14 @@ const Dashboard = () => {
   const content = getClientContent(selectedClient.id);
   const alerts = getClientAlerts(selectedClient.id);
 
+  // Apply client brand colors as CSS custom properties
+  const brandStyle = {
+    '--client-primary': `hsl(${primaryColor})`,
+    '--client-accent': `hsl(${accentColor})`,
+  } as React.CSSProperties;
+
   return (
-    <DashboardLayout>
+    <DashboardLayout style={brandStyle}>
       {/* Client Header */}
       <div className="flex flex-col gap-3 mb-4 md:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
