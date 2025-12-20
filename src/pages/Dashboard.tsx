@@ -23,8 +23,19 @@ import { Link } from 'react-router-dom';
 const Dashboard = () => {
   const { selectedClient, clientBrands, clients, clientsLoading } = useBrand();
 
+  // Show loading state while clients are being fetched
+  if (clientsLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-muted-foreground">Cargando clientes...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   // Show empty state if no clients or no selected client
-  if (!clientsLoading && (clients.length === 0 || !selectedClient)) {
+  if (clients.length === 0 || !selectedClient) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
