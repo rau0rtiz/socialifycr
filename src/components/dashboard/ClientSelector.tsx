@@ -32,12 +32,20 @@ export const ClientSelector = () => {
           className="w-48 justify-between bg-background"
         >
           <div className="flex items-center gap-2 truncate">
-            <div 
-              className="h-5 w-5 rounded flex-shrink-0 flex items-center justify-center"
-              style={{ backgroundColor: `hsl(${clientBrands[selectedClient.id]?.accentColor || selectedClient.accentColor})` }}
-            >
-              <Building2 className="h-3 w-3 text-white" />
-            </div>
+            {clientBrands[selectedClient.id]?.logoUrl ? (
+              <img 
+                src={clientBrands[selectedClient.id].logoUrl} 
+                alt={selectedClient.name} 
+                className="h-5 w-5 rounded flex-shrink-0 object-contain"
+              />
+            ) : (
+              <div 
+                className="h-5 w-5 rounded flex-shrink-0 flex items-center justify-center"
+                style={{ backgroundColor: `hsl(${clientBrands[selectedClient.id]?.accentColor || selectedClient.accentColor})` }}
+              >
+                <Building2 className="h-3 w-3 text-white" />
+              </div>
+            )}
             <span className="truncate">{selectedClient.name}</span>
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -59,12 +67,20 @@ export const ClientSelector = () => {
                   }}
                   className="flex items-center gap-2"
                 >
-                  <div 
-                    className="h-5 w-5 rounded flex-shrink-0 flex items-center justify-center"
-                    style={{ backgroundColor: `hsl(${clientBrands[client.id]?.accentColor || client.accentColor})` }}
-                  >
-                    <Building2 className="h-3 w-3 text-white" />
-                  </div>
+                  {clientBrands[client.id]?.logoUrl ? (
+                    <img 
+                      src={clientBrands[client.id].logoUrl} 
+                      alt={client.name} 
+                      className="h-5 w-5 rounded flex-shrink-0 object-contain"
+                    />
+                  ) : (
+                    <div 
+                      className="h-5 w-5 rounded flex-shrink-0 flex items-center justify-center"
+                      style={{ backgroundColor: `hsl(${clientBrands[client.id]?.accentColor || client.accentColor})` }}
+                    >
+                      <Building2 className="h-3 w-3 text-white" />
+                    </div>
+                  )}
                   <div className="flex flex-col">
                     <span>{client.name}</span>
                     <span className="text-xs text-muted-foreground">{client.industry}</span>
