@@ -5,6 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   ChevronRight,
   ChevronLeft,
   Radio,
@@ -14,6 +21,7 @@ import {
   MousePointerClick,
   TrendingUp,
   Image as ImageIcon,
+  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -23,6 +31,7 @@ import {
   CampaignInsights,
   AdSetInsights,
   AdInsights,
+  DatePresetKey,
 } from '@/hooks/use-ads-data';
 
 interface CampaignsDrilldownProps {
@@ -218,28 +227,53 @@ const LoadingSkeleton = () => (
   </div>
 );
 
+const datePresetLabels: Record<DatePresetKey, string> = {
+  last_7d: 'Últimos 7 días',
+  last_14d: 'Últimos 14 días',
+  last_30d: 'Últimos 30 días',
+  last_90d: 'Últimos 90 días',
+  this_month: 'Este mes',
+  last_month: 'Mes pasado',
+};
+
 export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldownProps) => {
   const [viewLevel, setViewLevel] = useState<ViewLevel>('campaigns');
   const [selectedCampaign, setSelectedCampaign] = useState<CampaignInsights | null>(null);
   const [selectedAdSet, setSelectedAdSet] = useState<AdSetInsights | null>(null);
+  const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const {
     data: campaigns,
     isLoading: campaignsLoading,
     error: campaignsError,
-  } = useCampaigns(clientId, hasAdAccount);
+    refetch: refetchCampaigns,
+  } = useCampaigns(clientId, hasAdAccount, datePreset);
 
   const {
     data: adsets,
     isLoading: adsetsLoading,
     error: adsetsError,
-  } = useAdSets(clientId, selectedCampaign?.id || null, selectedCampaign?.objective || '');
+    refetch: refetchAdsets,
+  } = useAdSets(clientId, selectedCampaign?.id || null, selectedCampaign?.objective || '', datePreset);
 
   const {
     data: ads,
     isLoading: adsLoading,
     error: adsError,
-  } = useAds(clientId, selectedAdSet?.id || null, selectedCampaign?.objective || '');
+    refetch: refetchAds,
+  } = useAds(clientId, selectedAdSet?.id || null, selectedCampaign?.objective || '', datePreset);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      if (viewLevel === 'campaigns') await refetchCampaigns();
+      else if (viewLevel === 'adsets') await refetchAdsets();
+      else await refetchAds();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleCampaignClick = (campaign: CampaignInsights) => {
     setSelectedCampaign(campaign);
@@ -306,6 +340,29 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
                 <p className="text-xs text-muted-foreground mt-0.5">{getBreadcrumb().join(' → ')}</p>
               )}
             </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Select value={datePreset} onValueChange={(value) => setDatePreset(value as DatePresetKey)}>
+              <SelectTrigger className="w-36 md:w-44 bg-background h-8 text-xs md:text-sm">
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                {Object.entries(datePresetLabels).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
+            >
+              <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+            </Button>
           </div>
         </div>
       </CardHeader>

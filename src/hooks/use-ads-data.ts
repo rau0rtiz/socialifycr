@@ -152,9 +152,11 @@ const extractCostPerResult = (costPerAction: any[], objective: string): number =
   return 0;
 };
 
-export const useCampaigns = (clientId: string | null, hasAdAccount: boolean) => {
+export type DatePresetKey = 'last_7d' | 'last_14d' | 'last_30d' | 'last_90d' | 'this_month' | 'last_month';
+
+export const useCampaigns = (clientId: string | null, hasAdAccount: boolean, datePreset: DatePresetKey = 'last_30d') => {
   return useQuery({
-    queryKey: ['meta-campaigns', clientId],
+    queryKey: ['meta-campaigns', clientId, datePreset],
     queryFn: async (): Promise<CampaignInsights[]> => {
       if (!clientId || !hasAdAccount) return [];
 
@@ -162,7 +164,7 @@ export const useCampaigns = (clientId: string | null, hasAdAccount: boolean) => 
         body: {
           clientId,
           endpoint: 'campaigns',
-          params: { datePreset: 'last_30d' },
+          params: { datePreset },
         },
       });
 
@@ -203,9 +205,9 @@ export const useCampaigns = (clientId: string | null, hasAdAccount: boolean) => 
   });
 };
 
-export const useAdSets = (clientId: string | null, campaignId: string | null, objective: string) => {
+export const useAdSets = (clientId: string | null, campaignId: string | null, objective: string, datePreset: DatePresetKey = 'last_30d') => {
   return useQuery({
-    queryKey: ['meta-adsets', clientId, campaignId],
+    queryKey: ['meta-adsets', clientId, campaignId, datePreset],
     queryFn: async (): Promise<AdSetInsights[]> => {
       if (!clientId || !campaignId) return [];
 
@@ -213,7 +215,7 @@ export const useAdSets = (clientId: string | null, campaignId: string | null, ob
         body: {
           clientId,
           endpoint: 'adsets',
-          params: { campaignId, datePreset: 'last_30d' },
+          params: { campaignId, datePreset },
         },
       });
 
@@ -249,9 +251,9 @@ export const useAdSets = (clientId: string | null, campaignId: string | null, ob
   });
 };
 
-export const useAds = (clientId: string | null, adsetId: string | null, objective: string) => {
+export const useAds = (clientId: string | null, adsetId: string | null, objective: string, datePreset: DatePresetKey = 'last_30d') => {
   return useQuery({
-    queryKey: ['meta-ads', clientId, adsetId],
+    queryKey: ['meta-ads', clientId, adsetId, datePreset],
     queryFn: async (): Promise<AdInsights[]> => {
       if (!clientId || !adsetId) return [];
 
@@ -259,7 +261,7 @@ export const useAds = (clientId: string | null, adsetId: string | null, objectiv
         body: {
           clientId,
           endpoint: 'ads',
-          params: { adsetId, datePreset: 'last_30d' },
+          params: { adsetId, datePreset },
         },
       });
 
