@@ -76,7 +76,7 @@ export const DateRangePicker = () => {
   return (
     <div className="flex items-center gap-2">
       <Select value={selectedPreset} onValueChange={handlePresetChange}>
-        <SelectTrigger className="w-36 bg-background">
+        <SelectTrigger className="w-28 md:w-36 bg-background text-xs md:text-sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="bg-popover z-50">
@@ -92,13 +92,15 @@ export const DateRangePicker = () => {
         <PopoverTrigger asChild>
           <Button
             variant="outline"
+            size="sm"
             className={cn(
-              "justify-start text-left font-normal bg-background",
+              "justify-start text-left font-normal bg-background text-xs md:text-sm hidden md:flex",
               !date && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {formatDateRange()}
+            <span className="hidden lg:inline">{formatDateRange()}</span>
+            <span className="lg:hidden">Fechas</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-popover z-50" align="end">
@@ -113,7 +115,7 @@ export const DateRangePicker = () => {
                 setSelectedPreset('custom');
               }
             }}
-            numberOfMonths={2}
+            numberOfMonths={1}
             locale={es}
             className="pointer-events-auto"
           />

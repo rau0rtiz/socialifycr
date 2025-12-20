@@ -23,9 +23,9 @@ export const AlertsPanel = ({ data }: AlertsPanelProps) => {
   return (
     <Card>
       <CardHeader className="pb-4">
-        <CardTitle className="text-base font-medium">Alertas e Insights</CardTitle>
+        <CardTitle className="text-sm md:text-base font-medium">Alertas e Insights</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2 md:space-y-3 px-3 md:px-6">
         {data.map((alert) => {
           const config = alertConfig[alert.type];
           const Icon = config.icon;
@@ -34,15 +34,15 @@ export const AlertsPanel = ({ data }: AlertsPanelProps) => {
             <div
               key={alert.id}
               className={cn(
-                "border-l-4 rounded-r-lg p-3 transition-colors hover:opacity-80 cursor-pointer",
+                "border-l-4 rounded-r-lg p-2 md:p-3 transition-colors hover:opacity-80 cursor-pointer",
                 config.class
               )}
             >
-              <div className="flex items-start gap-3">
-                <Icon className={cn("h-5 w-5 flex-shrink-0 mt-0.5", iconColors[alert.type])} />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{alert.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{alert.description}</p>
+              <div className="flex items-start gap-2 md:gap-3">
+                <Icon className={cn("h-4 w-4 md:h-5 md:w-5 flex-shrink-0 mt-0.5", iconColors[alert.type])} />
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm font-medium text-foreground">{alert.title}</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1 line-clamp-2">{alert.description}</p>
                 </div>
               </div>
             </div>
