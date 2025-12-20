@@ -1,0 +1,338 @@
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  ChevronRight, 
+  ChevronLeft, 
+  Radio,
+  Target,
+  DollarSign,
+  Eye,
+  MousePointerClick,
+  TrendingUp,
+  Image as ImageIcon
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { 
+  useCampaigns, 
+  useAdSets, 
+  useAds,
+  CampaignInsights,
+  AdSetInsights,
+  AdInsights
+} from '@/hooks/use-ads-data';
+
+interface CampaignsDrilldownProps {
+  clientId: string | null;
+  hasAdAccount: boolean;
+}
+
+type ViewLevel = 'campaigns' | 'adsets' | 'ads';
+
+const statusConfig: Record<string, { label: string; class: string }> = {
+  ACTIVE: { label: 'Activa', class: 'bg-emerald-500/10 text-emerald-600 border-emerald-200' },
+  PAUSED: { label: 'Pausada', class: 'bg-amber-500/10 text-amber-600 border-amber-200' },
+  DELETED: { label: 'Eliminada', class: 'bg-destructive/10 text-destructive border-destructive/20' },
+  ARCHIVED: { label: 'Archivada', class: 'bg-muted text-muted-foreground border-border' },
+};
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    minimumFractionDigits: 2,
+  }).format(value);
+};
+
+const formatNumber = (num: number) => {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num.toString();
+};
+
+// Metric Card Component
+const MetricCard = ({ icon: Icon, label, value, subValue }: { 
+  icon: React.ElementType; 
+  label: string; 
+  value: string; 
+  subValue?: string;
+}) => (
+  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+    <div className="p-2 bg-background rounded-md">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+    </div>
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-semibold">{value}</p>
+      {subValue && <p className="text-xs text-muted-foreground">{subValue}</p>}
+    </div>
+  </div>
+);
+
+// Campaign Row Component
+const CampaignRow = ({ campaign, onClick }: { campaign: CampaignInsights; onClick: () => void }) => (
+  <div 
+    className="p-4 border border-border rounded-lg hover:bg-muted/30 cursor-pointer transition-colors"
+    onClick={onClick}
+  >
+    <div className="flex items-start justify-between mb-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-medium text-sm truncate">{campaign.name}</h3>
+          <Badge variant="outline" className={cn("text-xs shrink-0", statusConfig[campaign.effectiveStatus]?.class)}>
+            {statusConfig[campaign.effectiveStatus]?.label || campaign.effectiveStatus}
+          </Badge>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {campaign.dailyBudget 
+            ? `Presupuesto diario: ${formatCurrency(campaign.dailyBudget)}`
+            : campaign.lifetimeBudget 
+              ? `Presupuesto total: ${formatCurrency(campaign.lifetimeBudget)}`
+              : 'Sin presupuesto definido'
+          }
+        </p>
+      </div>
+      <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+    </div>
+    
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+      <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(campaign.spend)} />
+      <MetricCard icon={Eye} label="Alcance" value={formatNumber(campaign.reach)} />
+      <MetricCard icon={Target} label={campaign.resultType} value={formatNumber(campaign.results)} />
+      <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(campaign.clicks)} />
+      <MetricCard 
+        icon={TrendingUp} 
+        label="Costo por resultado" 
+        value={campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult) : '-'} 
+      />
+      {campaign.roas !== null && (
+        <MetricCard icon={TrendingUp} label="ROAS" value={`${campaign.roas.toFixed(2)}x`} />
+      )}
+    </div>
+  </div>
+);
+
+// AdSet Row Component
+const AdSetRow = ({ adset, onClick }: { adset: AdSetInsights; onClick: () => void }) => (
+  <div 
+    className="p-4 border border-border rounded-lg hover:bg-muted/30 cursor-pointer transition-colors"
+    onClick={onClick}
+  >
+    <div className="flex items-start justify-between mb-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-medium text-sm truncate">{adset.name}</h3>
+          <Badge variant="outline" className={cn("text-xs shrink-0", statusConfig[adset.effectiveStatus]?.class)}>
+            {statusConfig[adset.effectiveStatus]?.label || adset.effectiveStatus}
+          </Badge>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {adset.dailyBudget 
+            ? `Presupuesto diario: ${formatCurrency(adset.dailyBudget)}`
+            : adset.lifetimeBudget 
+              ? `Presupuesto total: ${formatCurrency(adset.lifetimeBudget)}`
+              : 'Presupuesto a nivel de campaña'
+          }
+        </p>
+      </div>
+      <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+    </div>
+    
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+      <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(adset.spend)} />
+      <MetricCard icon={Eye} label="Alcance" value={formatNumber(adset.reach)} />
+      <MetricCard icon={Target} label={adset.resultType} value={formatNumber(adset.results)} />
+      <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(adset.clicks)} />
+      <MetricCard 
+        icon={TrendingUp} 
+        label="Costo por resultado" 
+        value={adset.costPerResult > 0 ? formatCurrency(adset.costPerResult) : '-'} 
+      />
+    </div>
+  </div>
+);
+
+// Ad Row Component
+const AdRow = ({ ad }: { ad: AdInsights }) => (
+  <div className="p-4 border border-border rounded-lg">
+    <div className="flex items-start gap-4 mb-3">
+      {ad.thumbnailUrl ? (
+        <img 
+          src={ad.thumbnailUrl} 
+          alt={ad.name} 
+          className="w-16 h-16 object-cover rounded-md border border-border"
+        />
+      ) : (
+        <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
+          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-medium text-sm truncate">{ad.name}</h3>
+          <Badge variant="outline" className={cn("text-xs shrink-0", statusConfig[ad.effectiveStatus]?.class)}>
+            {statusConfig[ad.effectiveStatus]?.label || ad.effectiveStatus}
+          </Badge>
+        </div>
+      </div>
+    </div>
+    
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+      <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(ad.spend)} />
+      <MetricCard icon={Eye} label="Alcance" value={formatNumber(ad.reach)} />
+      <MetricCard icon={Target} label={ad.resultType} value={formatNumber(ad.results)} />
+      <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(ad.clicks)} />
+      <MetricCard 
+        icon={TrendingUp} 
+        label="Costo por resultado" 
+        value={ad.costPerResult > 0 ? formatCurrency(ad.costPerResult) : '-'} 
+      />
+    </div>
+  </div>
+);
+
+// Loading Skeleton
+const LoadingSkeleton = () => (
+  <div className="space-y-4">
+    {Array.from({ length: 3 }).map((_, i) => (
+      <div key={i} className="p-4 border border-border rounded-lg">
+        <div className="flex items-center justify-between mb-3">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+          <Skeleton className="h-5 w-5" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {Array.from({ length: 4 }).map((_, j) => (
+            <Skeleton key={j} className="h-16 w-full" />
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldownProps) => {
+  const [viewLevel, setViewLevel] = useState<ViewLevel>('campaigns');
+  const [selectedCampaign, setSelectedCampaign] = useState<CampaignInsights | null>(null);
+  const [selectedAdSet, setSelectedAdSet] = useState<AdSetInsights | null>(null);
+
+  const { data: campaigns, isLoading: campaignsLoading } = useCampaigns(clientId, hasAdAccount);
+  const { data: adsets, isLoading: adsetsLoading } = useAdSets(
+    clientId, 
+    selectedCampaign?.id || null,
+    selectedCampaign?.objective || ''
+  );
+  const { data: ads, isLoading: adsLoading } = useAds(
+    clientId, 
+    selectedAdSet?.id || null,
+    selectedCampaign?.objective || ''
+  );
+
+  const handleCampaignClick = (campaign: CampaignInsights) => {
+    setSelectedCampaign(campaign);
+    setViewLevel('adsets');
+  };
+
+  const handleAdSetClick = (adset: AdSetInsights) => {
+    setSelectedAdSet(adset);
+    setViewLevel('ads');
+  };
+
+  const handleBack = () => {
+    if (viewLevel === 'ads') {
+      setSelectedAdSet(null);
+      setViewLevel('adsets');
+    } else if (viewLevel === 'adsets') {
+      setSelectedCampaign(null);
+      setViewLevel('campaigns');
+    }
+  };
+
+  const getBreadcrumb = () => {
+    const parts = ['Campañas'];
+    if (selectedCampaign) parts.push(selectedCampaign.name);
+    if (selectedAdSet) parts.push(selectedAdSet.name);
+    return parts;
+  };
+
+  const isLoading = viewLevel === 'campaigns' ? campaignsLoading : 
+                    viewLevel === 'adsets' ? adsetsLoading : adsLoading;
+
+  const currentData = viewLevel === 'campaigns' ? campaigns :
+                      viewLevel === 'adsets' ? adsets : ads;
+
+  return (
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {viewLevel !== 'campaigns' && (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBack}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm md:text-base font-medium">
+                  {viewLevel === 'campaigns' ? 'Campañas Activas' : 
+                   viewLevel === 'adsets' ? 'Conjuntos de Anuncios' : 'Anuncios'}
+                </CardTitle>
+                {hasAdAccount && !isLoading && (
+                  <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600">
+                    <Radio className="h-2.5 w-2.5 animate-pulse" />
+                    En vivo
+                  </Badge>
+                )}
+              </div>
+              {viewLevel !== 'campaigns' && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {getBreadcrumb().join(' → ')}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="px-3 md:px-6">
+        {!hasAdAccount ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No hay cuenta de anuncios conectada</p>
+            <p className="text-sm mt-1">Conecta una cuenta de Meta Ads para ver tus campañas</p>
+          </div>
+        ) : isLoading ? (
+          <LoadingSkeleton />
+        ) : !currentData || currentData.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {viewLevel === 'campaigns' && 'No hay campañas activas'}
+            {viewLevel === 'adsets' && 'No hay conjuntos de anuncios en esta campaña'}
+            {viewLevel === 'ads' && 'No hay anuncios en este conjunto'}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {viewLevel === 'campaigns' && (campaigns || []).map((campaign) => (
+              <CampaignRow 
+                key={campaign.id} 
+                campaign={campaign} 
+                onClick={() => handleCampaignClick(campaign)} 
+              />
+            ))}
+            {viewLevel === 'adsets' && (adsets || []).map((adset) => (
+              <AdSetRow 
+                key={adset.id} 
+                adset={adset} 
+                onClick={() => handleAdSetClick(adset)} 
+              />
+            ))}
+            {viewLevel === 'ads' && (ads || []).map((ad) => (
+              <AdRow key={ad.id} ad={ad} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
