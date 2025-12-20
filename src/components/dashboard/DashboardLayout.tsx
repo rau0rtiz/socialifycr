@@ -11,11 +11,15 @@ export interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
   const { platformBrand, selectedClient, clientBrands } = useBrand();
-  const clientBrand = clientBrands[selectedClient.id];
+  
+  // Handle case when no client is selected
+  const clientBrand = selectedClient ? clientBrands[selectedClient.id] : null;
+  const clientAccentColor = clientBrand?.accentColor || selectedClient?.accent_color || '217 91% 60%';
+  const clientSecondaryColor = clientBrand?.secondaryColor || '199 89% 48%';
 
   const combinedStyle = {
-    '--client-accent': clientBrand?.accentColor || selectedClient.accentColor,
-    '--client-secondary': clientBrand?.secondaryColor || selectedClient.secondaryColor,
+    '--client-accent': clientAccentColor,
+    '--client-secondary': clientSecondaryColor,
     '--platform-accent': platformBrand.accentColor,
     ...style,
   } as CSSProperties;
