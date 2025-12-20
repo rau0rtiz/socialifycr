@@ -50,7 +50,10 @@ export function useKPIData(clientId: string | null, platform: string = 'all', da
     { id: 'all', name: 'Todas' },
   ]);
 
-  const formatNumber = (num: number): string => {
+  const formatNumber = (num: number, abbreviated: boolean = true): string => {
+    if (!abbreviated) {
+      return num.toLocaleString('es-ES');
+    }
     if (num >= 1000000) {
       return `${(num / 1000000).toFixed(1)}M`;
     }
@@ -174,8 +177,8 @@ export function useKPIData(clientId: string | null, platform: string = 'all', da
         {
           id: 'followers',
           label: 'Seguidores',
-          value: formatNumber(insights.followers || 0),
-          change: insights.followersGrowth || 0,
+          value: formatNumber(insights.followers || 0, false),
+          change: Number((insights.followersGrowth || 0).toFixed(2)),
           changeLabel: 'crecimiento del período',
           sparkline: getSparkline(insights.dailyFollowers, [60, 65, 58, 70, 75, 80, 72, 85, 90, 88, 95, 100]),
         },
