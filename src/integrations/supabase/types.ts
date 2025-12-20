@@ -121,10 +121,13 @@ export type Database = {
       platform_connections: {
         Row: {
           access_token: string | null
+          ad_account_id: string | null
           client_id: string
           connected_by: string | null
           created_at: string | null
           id: string
+          instagram_account_id: string | null
+          permissions: Json | null
           platform: Database["public"]["Enums"]["platform_type"]
           platform_page_id: string | null
           platform_page_name: string | null
@@ -136,10 +139,13 @@ export type Database = {
         }
         Insert: {
           access_token?: string | null
+          ad_account_id?: string | null
           client_id: string
           connected_by?: string | null
           created_at?: string | null
           id?: string
+          instagram_account_id?: string | null
+          permissions?: Json | null
           platform: Database["public"]["Enums"]["platform_type"]
           platform_page_id?: string | null
           platform_page_name?: string | null
@@ -151,10 +157,13 @@ export type Database = {
         }
         Update: {
           access_token?: string | null
+          ad_account_id?: string | null
           client_id?: string
           connected_by?: string | null
           created_at?: string | null
           id?: string
+          instagram_account_id?: string | null
+          permissions?: Json | null
           platform?: Database["public"]["Enums"]["platform_type"]
           platform_page_id?: string | null
           platform_page_name?: string | null

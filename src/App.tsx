@@ -12,6 +12,7 @@ import BrandSettings from "./pages/BrandSettings";
 import Clientes from "./pages/Clientes";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import { MetaOAuthCallback } from "./pages/MetaOAuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
                 <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/brand-settings" element={<ProtectedRoute><BrandSettings /></ProtectedRoute>} />
                 <Route path="/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
+                <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

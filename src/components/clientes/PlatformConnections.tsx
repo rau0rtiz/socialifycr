@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Facebook, Instagram, Youtube, Linkedin, Twitter, Plus, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Linkedin, Twitter, Plus, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react';
 
 interface PlatformConnection {
   id: string;
@@ -56,13 +56,10 @@ const statusConfig = {
 export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const [connections, setConnections] = useState<PlatformConnection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchConnections();
-  }, [clientId]);
-
-  const fetchConnections = async () => {
+  const fetchConnections = useCallback(async () => {
     const { data, error } = await supabase
       .from('platform_connections')
       .select('*')
@@ -74,13 +71,107 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       setConnections(data || []);
     }
     setLoading(false);
+  }, [clientId]);
+
+  useEffect(() => {
+    fetchConnections();
+  }, [fetchConnections]);
+
+  // Listen for OAuth callback messages
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'META_OAUTH_SUCCESS') {
+        toast({
+          title: 'Conexión exitosa',
+          description: `Conectado a Meta: ${event.data.connection?.pageName || 'Cuenta conectada'}`,
+        });
+        setConnecting(null);
+        fetchConnections();
+      } else if (event.data?.type === 'META_OAUTH_ERROR') {
+        toast({
+          title: 'Error de conexión',
+          description: event.data.error || 'Error al conectar con Meta',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [toast, fetchConnections]);
+
+  const handleConnectMeta = async () => {
+    setConnecting('meta');
+    
+    try {
+      const redirectUri = `${window.location.origin}/oauth/meta/callback`;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=authorize&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`
+      );
+      
+      const data = await response.json();
+
+      if (data.error) {
+        toast({
+          title: 'Error',
+          description: data.error,
+          variant: 'destructive',
+        });
+        setConnecting(null);
+        return;
+      }
+
+      // Open OAuth popup
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const popup = window.open(
+        data.authUrl,
+        'meta-oauth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!popup) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      }
+
+      // Check if popup was closed without completing
+      const checkPopup = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkPopup);
+          setConnecting(null);
+        }
+      }, 1000);
+
+    } catch (err) {
+      console.error('Error initiating OAuth:', err);
+      toast({
+        title: 'Error',
+        description: 'Error al iniciar la conexión con Meta',
+        variant: 'destructive',
+      });
+      setConnecting(null);
+    }
   };
 
   const handleConnect = (platform: string) => {
-    toast({
-      title: 'Conexión OAuth',
-      description: `Para conectar ${platform}, necesitas configurar las credenciales de desarrollador en Meta/TikTok/LinkedIn primero. Ve a la configuración de la plataforma.`,
-    });
+    if (platform === 'Meta (Facebook/Instagram)') {
+      handleConnectMeta();
+    } else {
+      toast({
+        title: 'Próximamente',
+        description: `La conexión con ${platform} estará disponible pronto.`,
+      });
+    }
   };
 
   const connectedPlatforms = connections.map(c => c.platform);
@@ -132,6 +223,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
               {availablePlatforms.map((platform) => {
                 const config = platformConfig[platform];
                 const PlatformIcon = config.icon;
+                const isConnecting = connecting === platform;
                 return (
                   <Button
                     key={platform}
@@ -139,8 +231,13 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
                     size="sm"
                     className="gap-1"
                     onClick={() => handleConnect(config.name)}
+                    disabled={isConnecting}
                   >
-                    <PlatformIcon className="h-3 w-3" />
+                    {isConnecting ? (
+                      <RefreshCw className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <PlatformIcon className="h-3 w-3" />
+                    )}
                     {config.name.split(' ')[0]}
                   </Button>
                 );
