@@ -3,8 +3,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Facebook, Instagram, Youtube, Linkedin, Twitter, Plus, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Linkedin, Twitter, Plus, CheckCircle2, XCircle, Clock, RefreshCw, Trash2 } from 'lucide-react';
 import { MetaAccountSelector } from './MetaAccountSelector';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface PlatformConnection {
   id: string;
@@ -68,6 +78,9 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [metaAccountsData, setMetaAccountsData] = useState<MetaAccountsData | null>(null);
+  const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
+  const [connectionToDisconnect, setConnectionToDisconnect] = useState<PlatformConnection | null>(null);
   const { toast } = useToast();
 
   const fetchConnections = useCallback(async () => {
@@ -241,6 +254,39 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     }
   };
 
+  const handleDisconnect = async () => {
+    if (!connectionToDisconnect) return;
+    
+    setDisconnectingId(connectionToDisconnect.id);
+    
+    try {
+      const { error } = await supabase
+        .from('platform_connections')
+        .delete()
+        .eq('id', connectionToDisconnect.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Plataforma desconectada',
+        description: `${platformConfig[connectionToDisconnect.platform].name} ha sido desconectada.`,
+      });
+      
+      fetchConnections();
+    } catch (err) {
+      console.error('Error disconnecting platform:', err);
+      toast({
+        title: 'Error',
+        description: 'No se pudo desconectar la plataforma',
+        variant: 'destructive',
+      });
+    } finally {
+      setDisconnectingId(null);
+      setShowDisconnectDialog(false);
+      setConnectionToDisconnect(null);
+    }
+  };
+
   const connectedPlatforms = connections.map(c => c.platform);
   const availablePlatforms = Object.keys(platformConfig).filter(
     p => !connectedPlatforms.includes(p as any)
@@ -275,10 +321,28 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
                   )}
                 </div>
               </div>
-              <Badge variant={status.variant} className="gap-1">
-                <StatusIcon className="h-3 w-3" />
-                {status.label}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant={status.variant} className="gap-1">
+                  <StatusIcon className="h-3 w-3" />
+                  {status.label}
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  onClick={() => {
+                    setConnectionToDisconnect(connection);
+                    setShowDisconnectDialog(true);
+                  }}
+                  disabled={disconnectingId === connection.id}
+                >
+                  {disconnectingId === connection.id ? (
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
             </div>
           );
         })}
@@ -333,6 +397,32 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         clientId={clientId}
         onSave={handleSaveMetaConnection}
       />
+
+      {/* Disconnect Confirmation Dialog */}
+      <AlertDialog open={showDisconnectDialog} onOpenChange={setShowDisconnectDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Desconectar plataforma?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas desconectar{' '}
+              {connectionToDisconnect && platformConfig[connectionToDisconnect.platform].name}
+              {connectionToDisconnect?.platform_page_name && ` (${connectionToDisconnect.platform_page_name})`}
+              ? Esta acción no se puede deshacer y tendrás que volver a conectar la cuenta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConnectionToDisconnect(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDisconnect}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Desconectar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
