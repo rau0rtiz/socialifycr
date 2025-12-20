@@ -180,7 +180,7 @@ serve(async (req) => {
     // Save selected accounts to database
     if (action === 'save-connection') {
       const body = await req.json();
-      const { clientId, pageId, pageName, pageAccessToken, instagramId, adAccountId, tokenExpiresAt } = body;
+      const { clientId, pageId, pageName, pageAccessToken, instagramId, adAccountId, tokenExpiresAt, accessToken } = body;
 
       if (!clientId || !pageId || !pageName || !pageAccessToken) {
         return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -202,7 +202,10 @@ serve(async (req) => {
       const connectionData = {
         client_id: clientId,
         platform: 'meta',
-        access_token: pageAccessToken,
+        // Store the long-lived USER token (required for Ads Manager / ad account endpoints)
+        access_token: accessToken || pageAccessToken,
+        // Store the selected PAGE token (useful for page/IG endpoints)
+        refresh_token: pageAccessToken,
         status: 'active',
         platform_page_id: pageId,
         platform_page_name: pageName,
@@ -361,7 +364,10 @@ serve(async (req) => {
       const connectionData = {
         client_id: clientId,
         platform: 'meta',
-        access_token: firstPage?.access_token || accessToken,
+        // Store the long-lived USER token (required for Ads Manager / ad account endpoints)
+        access_token: accessToken,
+        // Store a PAGE token for page/IG endpoints when available
+        refresh_token: firstPage?.access_token || null,
         status: 'active',
         platform_page_id: firstPage?.id || null,
         platform_page_name: firstPage?.name || null,

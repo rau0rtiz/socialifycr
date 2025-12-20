@@ -147,12 +147,15 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             clientId,
+            // Long-lived USER token (required for Ads Manager / ad account endpoints)
+            accessToken: metaAccountsData.accessToken,
             pageId: selectedAccounts.pageId,
             pageName: selectedAccounts.pageName,
+            // Selected PAGE token (useful for page/IG endpoints)
             pageAccessToken: selectedAccounts.pageAccessToken,
             instagramId: selectedAccounts.instagramId,
             adAccountId: selectedAccounts.adAccountId,
-            tokenExpiresAt: metaAccountsData.tokenExpiresAt
+            tokenExpiresAt: metaAccountsData.tokenExpiresAt,
           })
         }
       );

@@ -43,10 +43,20 @@ serve(async (req) => {
       });
     }
 
-    const accessToken = connection.access_token;
+    const userAccessToken = connection.access_token;
+    const pageAccessToken = connection.refresh_token;
+
+    // Use the page token for page/IG endpoints when available.
+    // Use the user token for Ads Manager endpoints (campaigns/adsets/ads/insights).
+    const accessToken = pageAccessToken || userAccessToken;
+
     const pageId = connection.platform_page_id;
     const instagramId = connection.instagram_account_id;
-    const adAccountId = connection.ad_account_id;
+
+    const rawAdAccountId = connection.ad_account_id;
+    const adAccountId = rawAdAccountId
+      ? (rawAdAccountId.startsWith('act_') ? rawAdAccountId : `act_${rawAdAccountId}`)
+      : null;
 
     console.log(`Fetching ${endpoint} for client ${clientId}`);
 
@@ -145,7 +155,7 @@ serve(async (req) => {
         const response = await fetch(
           `https://graph.facebook.com/v18.0/${adAccountId}/insights?` +
           `fields=impressions,reach,spend,cpc,cpm,clicks,actions` +
-          `&date_preset=${datePreset}&access_token=${accessToken}`
+          `&date_preset=${datePreset}&access_token=${userAccessToken}`
         );
         result = await response.json();
         break;
@@ -164,8 +174,8 @@ serve(async (req) => {
         const campaignsResponse = await fetch(
           `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?` +
           `fields=id,name,status,effective_status,objective,daily_budget,lifetime_budget,start_time,stop_time` +
-          `&filtering=[{"field":"effective_status","operator":"IN","value":["ACTIVE","PAUSED"]}]` +
-          `&limit=50&access_token=${accessToken}`
+          `&filtering=[{"field":"effective_status","operator":"IN","value":["ACTIVE"]}]` +
+          `&limit=50&access_token=${userAccessToken}`
         );
         const campaignsData = await campaignsResponse.json();
 
@@ -182,7 +192,7 @@ serve(async (req) => {
               const insightsResponse = await fetch(
                 `https://graph.facebook.com/v18.0/${campaign.id}/insights?` +
                 `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type,purchase_roas` +
-                `&date_preset=${datePreset}&access_token=${accessToken}`
+                `&date_preset=${datePreset}&access_token=${userAccessToken}`
               );
               const insightsData = await insightsResponse.json();
               return {
@@ -221,7 +231,7 @@ serve(async (req) => {
         const adsetsResponse = await fetch(
           `https://graph.facebook.com/v18.0/${campaignId}/adsets?` +
           `fields=id,name,status,effective_status,daily_budget,lifetime_budget,start_time,end_time,optimization_goal,billing_event` +
-          `&limit=50&access_token=${accessToken}`
+          `&limit=50&access_token=${userAccessToken}`
         );
         const adsetsData = await adsetsResponse.json();
 
@@ -238,7 +248,7 @@ serve(async (req) => {
               const insightsResponse = await fetch(
                 `https://graph.facebook.com/v18.0/${adset.id}/insights?` +
                 `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type` +
-                `&date_preset=${datePreset}&access_token=${accessToken}`
+                `&date_preset=${datePreset}&access_token=${userAccessToken}`
               );
               const insightsData = await insightsResponse.json();
               return {
@@ -277,7 +287,7 @@ serve(async (req) => {
         const adsResponse = await fetch(
           `https://graph.facebook.com/v18.0/${adsetId}/ads?` +
           `fields=id,name,status,effective_status,creative{id,name,thumbnail_url}` +
-          `&limit=50&access_token=${accessToken}`
+          `&limit=50&access_token=${userAccessToken}`
         );
         const adsData = await adsResponse.json();
 
@@ -294,7 +304,7 @@ serve(async (req) => {
               const insightsResponse = await fetch(
                 `https://graph.facebook.com/v18.0/${ad.id}/insights?` +
                 `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type` +
-                `&date_preset=${datePreset}&access_token=${accessToken}`
+                `&date_preset=${datePreset}&access_token=${userAccessToken}`
               );
               const insightsData = await insightsResponse.json();
               return {
