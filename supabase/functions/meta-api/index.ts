@@ -169,8 +169,30 @@ serve(async (req) => {
           });
         }
 
+        // Build time range params - support custom date ranges
+        let timeRangeParam = '';
+        if (params.since && params.until) {
+          timeRangeParam = `&time_range={"since":"${params.since}","until":"${params.until}"}`;
+        } else {
+          const datePreset = params.datePreset || 'last_30d';
+          timeRangeParam = `&date_preset=${datePreset}`;
+        }
+
+        // Get ad account info for currency
+        let currency = 'USD';
+        try {
+          const accountResponse = await fetch(
+            `https://graph.facebook.com/v18.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
+          );
+          const accountData = await accountResponse.json();
+          if (accountData.currency) {
+            currency = accountData.currency;
+          }
+        } catch (err) {
+          console.log('Could not fetch ad account currency:', err);
+        }
+
         // Get campaigns first
-        const datePreset = params.datePreset || 'last_30d';
         const campaignsResponse = await fetch(
           `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?` +
           `fields=id,name,status,effective_status,objective,daily_budget,lifetime_budget,start_time,stop_time` +
@@ -192,7 +214,7 @@ serve(async (req) => {
               const insightsResponse = await fetch(
                 `https://graph.facebook.com/v18.0/${campaign.id}/insights?` +
                 `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type,purchase_roas` +
-                `&date_preset=${datePreset}&access_token=${userAccessToken}`
+                `${timeRangeParam}&access_token=${userAccessToken}`
               );
               const insightsData = await insightsResponse.json();
               return {
@@ -206,7 +228,7 @@ serve(async (req) => {
           })
         );
 
-        result = { data: campaignsWithInsights };
+        result = { data: campaignsWithInsights, currency };
         break;
       }
 
@@ -226,8 +248,30 @@ serve(async (req) => {
           });
         }
 
+        // Build time range params - support custom date ranges
+        let timeRangeParam = '';
+        if (params.since && params.until) {
+          timeRangeParam = `&time_range={"since":"${params.since}","until":"${params.until}"}`;
+        } else {
+          const datePreset = params.datePreset || 'last_30d';
+          timeRangeParam = `&date_preset=${datePreset}`;
+        }
+
+        // Get ad account currency
+        let currency = 'USD';
+        try {
+          const accountResponse = await fetch(
+            `https://graph.facebook.com/v18.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
+          );
+          const accountData = await accountResponse.json();
+          if (accountData.currency) {
+            currency = accountData.currency;
+          }
+        } catch (err) {
+          console.log('Could not fetch ad account currency:', err);
+        }
+
         // Get ad sets for a specific campaign
-        const datePreset = params.datePreset || 'last_30d';
         const adsetsResponse = await fetch(
           `https://graph.facebook.com/v18.0/${campaignId}/adsets?` +
           `fields=id,name,status,effective_status,daily_budget,lifetime_budget,start_time,end_time,optimization_goal,billing_event` +
@@ -248,7 +292,7 @@ serve(async (req) => {
               const insightsResponse = await fetch(
                 `https://graph.facebook.com/v18.0/${adset.id}/insights?` +
                 `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type` +
-                `&date_preset=${datePreset}&access_token=${userAccessToken}`
+                `${timeRangeParam}&access_token=${userAccessToken}`
               );
               const insightsData = await insightsResponse.json();
               return {
@@ -262,7 +306,7 @@ serve(async (req) => {
           })
         );
 
-        result = { data: adsetsWithInsights };
+        result = { data: adsetsWithInsights, currency };
         break;
       }
 
@@ -282,8 +326,30 @@ serve(async (req) => {
           });
         }
 
+        // Build time range params - support custom date ranges
+        let timeRangeParam = '';
+        if (params.since && params.until) {
+          timeRangeParam = `&time_range={"since":"${params.since}","until":"${params.until}"}`;
+        } else {
+          const datePreset = params.datePreset || 'last_30d';
+          timeRangeParam = `&date_preset=${datePreset}`;
+        }
+
+        // Get ad account currency
+        let currency = 'USD';
+        try {
+          const accountResponse = await fetch(
+            `https://graph.facebook.com/v18.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
+          );
+          const accountData = await accountResponse.json();
+          if (accountData.currency) {
+            currency = accountData.currency;
+          }
+        } catch (err) {
+          console.log('Could not fetch ad account currency:', err);
+        }
+
         // Get ads for a specific ad set with creative info
-        const datePreset = params.datePreset || 'last_30d';
         const adsResponse = await fetch(
           `https://graph.facebook.com/v18.0/${adsetId}/ads?` +
           `fields=id,name,status,effective_status,creative{id,name,thumbnail_url}` +
@@ -304,7 +370,7 @@ serve(async (req) => {
               const insightsResponse = await fetch(
                 `https://graph.facebook.com/v18.0/${ad.id}/insights?` +
                 `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type` +
-                `&date_preset=${datePreset}&access_token=${userAccessToken}`
+                `${timeRangeParam}&access_token=${userAccessToken}`
               );
               const insightsData = await insightsResponse.json();
               return {
@@ -318,7 +384,7 @@ serve(async (req) => {
           })
         );
 
-        result = { data: adsWithInsights };
+        result = { data: adsWithInsights, currency };
         break;
       }
 
@@ -487,6 +553,12 @@ serve(async (req) => {
           websiteClicks: 0,
           connectedPlatforms: ['meta'],
           datePreset,
+          // Daily sparkline data for graphs (last 30 days)
+          dailyReach: [] as number[],
+          dailyImpressions: [] as number[],
+          dailyEngagement: [] as number[],
+          dailyFollowers: [] as number[],
+          dailyProfileViews: [] as number[],
         };
 
         // Fetch Instagram insights if connected
@@ -520,7 +592,12 @@ serve(async (req) => {
 
             if (insightsData.data) {
               insightsData.data.forEach((metric: any) => {
-                // Sum all values in the date range instead of using total_value
+                // Extract daily values for sparkline (last 30 data points)
+                const dailyValues = metric.values 
+                  ? metric.values.slice(-30).map((v: any) => v.value || 0)
+                  : [];
+                
+                // Sum all values in the date range
                 const totalValue = metric.values 
                   ? metric.values.reduce((sum: number, v: any) => sum + (v.value || 0), 0)
                   : (metric.total_value?.value || 0);
@@ -528,15 +605,21 @@ serve(async (req) => {
                 switch (metric.name) {
                   case 'reach':
                     results.reach = totalValue;
+                    results.dailyReach = dailyValues;
                     break;
                   case 'impressions':
                     results.impressions = totalValue;
+                    results.dailyImpressions = dailyValues;
                     break;
                   case 'profile_views':
                     results.profileViews = totalValue;
+                    results.dailyProfileViews = dailyValues;
                     break;
                   case 'website_clicks':
                     results.websiteClicks = totalValue;
+                    break;
+                  case 'follower_count':
+                    results.dailyFollowers = dailyValues;
                     break;
                 }
               });

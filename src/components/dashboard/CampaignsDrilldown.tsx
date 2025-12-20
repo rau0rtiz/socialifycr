@@ -257,11 +257,14 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const {
-    data: campaigns,
+    data: campaignsResult,
     isLoading: campaignsLoading,
     error: campaignsError,
     refetch: refetchCampaigns,
   } = useCampaigns(clientId, hasAdAccount, datePreset, customRange);
+
+  const campaigns = campaignsResult?.campaigns || [];
+  const currency = campaignsResult?.currency || 'MXN';
 
   const {
     data: adsets,
@@ -448,7 +451,7 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
           </div>
         ) : isLoading ? (
           <LoadingSkeleton />
-        ) : !currentData || currentData.length === 0 ? (
+        ) : (viewLevel === 'campaigns' ? campaigns.length === 0 : !currentData || (currentData as any[]).length === 0) ? (
           <div className="text-center py-8 text-muted-foreground">
             {viewLevel === 'campaigns' && 'No hay campañas activas'}
             {viewLevel === 'adsets' && 'No hay conjuntos de anuncios en esta campaña'}
