@@ -159,11 +159,70 @@ serve(async (req) => {
           });
         }
 
-        // Get active campaigns
+        // Get campaigns with comprehensive insights
+        const datePreset = params.datePreset || 'last_30d';
+        const statusFilter = params.statusFilter || "['ACTIVE','PAUSED']";
         const response = await fetch(
           `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?` +
-          `fields=id,name,status,objective,daily_budget,lifetime_budget,start_time,stop_time,insights{impressions,reach,spend,clicks}` +
-          `&effective_status=['ACTIVE','PAUSED']&access_token=${accessToken}`
+          `fields=id,name,status,effective_status,objective,daily_budget,lifetime_budget,start_time,stop_time,` +
+          `insights.date_preset(${datePreset}){impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type,purchase_roas}` +
+          `&effective_status=${statusFilter}&limit=50&access_token=${accessToken}`
+        );
+        result = await response.json();
+        break;
+      }
+
+      case 'adsets': {
+        if (!adAccountId) {
+          return new Response(JSON.stringify({ error: 'No Ad account connected' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const campaignId = params.campaignId;
+        if (!campaignId) {
+          return new Response(JSON.stringify({ error: 'Missing campaignId parameter' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Get ad sets for a specific campaign
+        const datePreset = params.datePreset || 'last_30d';
+        const response = await fetch(
+          `https://graph.facebook.com/v18.0/${campaignId}/adsets?` +
+          `fields=id,name,status,effective_status,daily_budget,lifetime_budget,start_time,end_time,targeting,optimization_goal,billing_event,` +
+          `insights.date_preset(${datePreset}){impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type}` +
+          `&limit=50&access_token=${accessToken}`
+        );
+        result = await response.json();
+        break;
+      }
+
+      case 'ads': {
+        if (!adAccountId) {
+          return new Response(JSON.stringify({ error: 'No Ad account connected' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const adsetId = params.adsetId;
+        if (!adsetId) {
+          return new Response(JSON.stringify({ error: 'Missing adsetId parameter' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Get ads for a specific ad set with creative info
+        const datePreset = params.datePreset || 'last_30d';
+        const response = await fetch(
+          `https://graph.facebook.com/v18.0/${adsetId}/ads?` +
+          `fields=id,name,status,effective_status,creative{id,name,thumbnail_url,object_story_spec},` +
+          `insights.date_preset(${datePreset}){impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type}` +
+          `&limit=50&access_token=${accessToken}`
         );
         result = await response.json();
         break;

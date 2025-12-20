@@ -2,7 +2,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { ReachChart } from '@/components/dashboard/ReachChart';
 import { SocialPerformanceChart } from '@/components/dashboard/SocialPerformanceChart';
-import { CampaignsTable } from '@/components/dashboard/CampaignsTable';
+import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
 import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
@@ -10,7 +10,7 @@ import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useKPIData } from '@/hooks/use-kpi-data';
 import { useDailyMetrics } from '@/hooks/use-daily-metrics';
-import { useCampaignsData } from '@/hooks/use-campaigns-data';
+import { useMetaConnection } from '@/hooks/use-meta-api';
 import { getClientAlerts } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Building2, Plus, Radio } from 'lucide-react';
@@ -74,8 +74,9 @@ const Dashboard = () => {
 
   const { kpis, socialMetrics, isLoading: kpisLoading, isLiveData: kpisIsLive } = useKPIData(selectedClient.id);
   const { dailyMetrics, isLoading: dailyLoading, isLiveData: dailyIsLive, source: dailySource } = useDailyMetrics(selectedClient.id);
-  const { campaigns, isLoading: campaignsLoading, isLiveData: campaignsIsLive, hasAdAccount } = useCampaignsData(selectedClient.id);
   const { content, isLoading: contentLoading, isLiveData: contentIsLive, refetch: refetchContent } = useContentData(selectedClient.id);
+  const { data: metaConnection } = useMetaConnection(selectedClient.id);
+  const hasAdAccount = !!metaConnection?.ad_account_id;
   const alerts = getClientAlerts(selectedClient.id);
 
   // Apply client brand colors as CSS custom properties
@@ -173,12 +174,10 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Campaigns Table */}
+      {/* Campaigns Drilldown */}
       <div className="mb-4 md:mb-6">
-        <CampaignsTable 
-          data={campaigns} 
-          isLoading={campaignsLoading}
-          isLiveData={campaignsIsLive}
+        <CampaignsDrilldown 
+          clientId={selectedClient.id}
           hasAdAccount={hasAdAccount}
         />
       </div>
