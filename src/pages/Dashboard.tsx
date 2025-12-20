@@ -16,13 +16,51 @@ import {
   getClientAlerts 
 } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
-import { Download, Share2 } from 'lucide-react';
+import { Download, Share2, Building2, Plus } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { selectedClient, clientBrands } = useBrand();
+  const { selectedClient, clientBrands, clients, clientsLoading } = useBrand();
+
+  // Show empty state if no clients or no selected client
+  if (!clientsLoading && (clients.length === 0 || !selectedClient)) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Building2 className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <CardTitle>
+                {clients.length === 0 ? 'Sin clientes' : 'Selecciona un cliente'}
+              </CardTitle>
+              <CardDescription>
+                {clients.length === 0 
+                  ? 'Crea tu primer cliente para comenzar a ver su dashboard.'
+                  : 'Selecciona un cliente del menú superior para ver su dashboard.'}
+              </CardDescription>
+            </CardHeader>
+            {clients.length === 0 && (
+              <CardContent className="text-center">
+                <Button asChild>
+                  <Link to="/clientes">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear Cliente
+                  </Link>
+                </Button>
+              </CardContent>
+            )}
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const clientBrand = clientBrands[selectedClient.id];
-  const primaryColor = clientBrand?.primaryColor || selectedClient.accentColor;
-  const accentColor = clientBrand?.accentColor || selectedClient.accentColor;
+  const primaryColor = clientBrand?.primaryColor || selectedClient.primary_color || '220 70% 50%';
+  const accentColor = clientBrand?.accentColor || selectedClient.accent_color || '262 83% 58%';
 
   const kpis = getClientKPIs(selectedClient.id);
   const campaigns = getClientCampaigns(selectedClient.id);
@@ -43,9 +81,9 @@ const Dashboard = () => {
       <div className="flex flex-col gap-3 mb-4 md:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            {clientBrand?.logoUrl ? (
+            {clientBrand?.logoUrl || selectedClient.logo_url ? (
               <img 
-                src={clientBrand.logoUrl} 
+                src={clientBrand?.logoUrl || selectedClient.logo_url || ''} 
                 alt={selectedClient.name} 
                 className="h-8 w-8 md:h-10 md:w-10 rounded-lg flex-shrink-0 object-contain"
               />

@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { clients, Client } from '@/data/mockData';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface Client {
+  id: string;
+  name: string;
+  industry: string | null;
+  logo_url: string | null;
+  primary_color: string | null;
+  accent_color: string | null;
+}
 
 interface PlatformBrand {
   name: string;
@@ -19,12 +28,15 @@ interface ClientBrand {
 interface BrandContextType {
   platformBrand: PlatformBrand;
   setPlatformBrand: (brand: PlatformBrand) => void;
-  selectedClient: Client;
-  setSelectedClient: (client: Client) => void;
+  clients: Client[];
+  clientsLoading: boolean;
+  selectedClient: Client | null;
+  setSelectedClient: (client: Client | null) => void;
   clientBrands: Record<string, ClientBrand>;
   updateClientBrand: (clientId: string, brand: ClientBrand) => void;
   saveBrandSettings: () => void;
   hasUnsavedChanges: boolean;
+  refetchClients: () => Promise<void>;
 }
 
 const BrandContext = createContext<BrandContextType | undefined>(undefined);
@@ -37,16 +49,7 @@ const getInitialClientBrands = (): Record<string, ClientBrand> => {
     const parsed = JSON.parse(stored);
     if (parsed.clientBrands) return parsed.clientBrands;
   }
-  const initialBrands: Record<string, ClientBrand> = {};
-  clients.forEach(client => {
-    initialBrands[client.id] = {
-      logoUrl: '',
-      primaryColor: client.accentColor,
-      accentColor: client.accentColor,
-      secondaryColor: client.secondaryColor,
-    };
-  });
-  return initialBrands;
+  return {};
 };
 
 const getInitialPlatformBrand = (): PlatformBrand => {
@@ -66,13 +69,43 @@ const getInitialPlatformBrand = (): PlatformBrand => {
 
 export const BrandProvider = ({ children }: { children: ReactNode }) => {
   const [platformBrand, setPlatformBrand] = useState<PlatformBrand>(getInitialPlatformBrand);
-  const [selectedClient, setSelectedClient] = useState<Client>(clients[0]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [clientsLoading, setClientsLoading] = useState(true);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientBrands, setClientBrands] = useState<Record<string, ClientBrand>>(getInitialClientBrands);
   const [savedState, setSavedState] = useState<string>(() => 
     JSON.stringify({ platformBrand: getInitialPlatformBrand(), clientBrands: getInitialClientBrands() })
   );
 
   const hasUnsavedChanges = JSON.stringify({ platformBrand, clientBrands }) !== savedState;
+
+  const fetchClients = async () => {
+    setClientsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, industry, logo_url, primary_color, accent_color')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching clients:', error);
+        return;
+      }
+
+      setClients(data || []);
+      
+      // Auto-select first client if none selected
+      if (data && data.length > 0 && !selectedClient) {
+        setSelectedClient(data[0]);
+      }
+    } finally {
+      setClientsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClients();
+  }, []);
 
   const updateClientBrand = (clientId: string, brand: ClientBrand) => {
     setClientBrands(prev => ({
@@ -92,12 +125,15 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
       value={{
         platformBrand,
         setPlatformBrand,
+        clients,
+        clientsLoading,
         selectedClient,
         setSelectedClient,
         clientBrands,
         updateClientBrand,
         saveBrandSettings,
         hasUnsavedChanges,
+        refetchClients: fetchClients,
       }}
     >
       {children}

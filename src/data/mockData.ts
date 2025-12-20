@@ -1,12 +1,3 @@
-export interface Client {
-  id: string;
-  name: string;
-  logo?: string;
-  industry: string;
-  accentColor: string;
-  secondaryColor: string;
-}
-
 export interface KPIData {
   label: string;
   value: string;
@@ -53,41 +44,20 @@ export interface SocialMetric {
   color: string;
 }
 
-export const clients: Client[] = [
-  {
-    id: 'roberto-olivas',
-    name: 'Roberto Olivas',
-    industry: 'Coaching Personal',
-    accentColor: '217 91% 60%',
-    secondaryColor: '199 89% 48%',
-  },
-  {
-    id: 'cafe-aurora',
-    name: 'Café Aurora',
-    industry: 'Restaurante/Cafetería',
-    accentColor: '25 95% 53%',
-    secondaryColor: '43 96% 56%',
-  },
-  {
-    id: 'techstart-mx',
-    name: 'TechStart MX',
-    industry: 'Tecnología/Startup',
-    accentColor: '142 71% 45%',
-    secondaryColor: '172 66% 50%',
-  },
-  {
-    id: 'bella-estetica',
-    name: 'Bella Estética',
-    industry: 'Belleza/Spa',
-    accentColor: '330 81% 60%',
-    secondaryColor: '280 65% 60%',
-  },
-];
+// Generate a consistent multiplier based on client ID
+const getMultiplier = (clientId: string): number => {
+  let hash = 0;
+  for (let i = 0; i < clientId.length; i++) {
+    const char = clientId.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  // Return a value between 0.6 and 1.4
+  return 0.6 + (Math.abs(hash) % 80) / 100;
+};
 
 export const getClientKPIs = (clientId: string): KPIData[] => {
-  const baseMultiplier = clientId === 'roberto-olivas' ? 1 : 
-    clientId === 'cafe-aurora' ? 0.7 : 
-    clientId === 'techstart-mx' ? 1.3 : 0.85;
+  const baseMultiplier = getMultiplier(clientId);
 
   return [
     {
@@ -136,36 +106,18 @@ export const getClientKPIs = (clientId: string): KPIData[] => {
 };
 
 export const getClientCampaigns = (clientId: string): CampaignData[] => {
-  const campaigns: Record<string, CampaignData[]> = {
-    'roberto-olivas': [
-      { id: '1', name: 'Lanzamiento Curso Online', network: 'instagram', reach: 45000, engagement: 2800, leads: 89, status: 'active', startDate: '2024-12-01', endDate: '2024-12-31' },
-      { id: '2', name: 'Webinar Gratuito', network: 'facebook', reach: 32000, engagement: 1500, leads: 156, status: 'active', startDate: '2024-12-10', endDate: '2024-12-20' },
-      { id: '3', name: 'Testimonios Clientes', network: 'tiktok', reach: 78000, engagement: 5200, leads: 45, status: 'completed', startDate: '2024-11-15', endDate: '2024-12-05' },
-      { id: '4', name: 'LinkedIn Thought Leadership', network: 'linkedin', reach: 15000, engagement: 890, leads: 67, status: 'scheduled', startDate: '2024-12-22', endDate: '2025-01-15' },
-    ],
-    'cafe-aurora': [
-      { id: '1', name: 'Nuevo Menú Navideño', network: 'instagram', reach: 28000, engagement: 3200, leads: 45, status: 'active', startDate: '2024-12-01', endDate: '2024-12-25' },
-      { id: '2', name: 'Happy Hour Promo', network: 'facebook', reach: 18000, engagement: 1100, leads: 78, status: 'active', startDate: '2024-12-05', endDate: '2024-12-20' },
-      { id: '3', name: 'Behind the Scenes', network: 'tiktok', reach: 55000, engagement: 4800, leads: 23, status: 'completed', startDate: '2024-11-20', endDate: '2024-12-10' },
-    ],
-    'techstart-mx': [
-      { id: '1', name: 'Product Launch', network: 'linkedin', reach: 65000, engagement: 4500, leads: 234, status: 'active', startDate: '2024-12-01', endDate: '2024-12-31' },
-      { id: '2', name: 'Tech Tips Series', network: 'instagram', reach: 42000, engagement: 2800, leads: 89, status: 'active', startDate: '2024-12-10', endDate: '2025-01-10' },
-      { id: '3', name: 'Startup Culture', network: 'tiktok', reach: 98000, engagement: 7200, leads: 56, status: 'scheduled', startDate: '2024-12-20', endDate: '2025-01-20' },
-    ],
-    'bella-estetica': [
-      { id: '1', name: 'Tratamientos Navideños', network: 'instagram', reach: 35000, engagement: 2900, leads: 67, status: 'active', startDate: '2024-12-01', endDate: '2024-12-24' },
-      { id: '2', name: 'Antes/Después', network: 'facebook', reach: 22000, engagement: 1800, leads: 45, status: 'active', startDate: '2024-12-05', endDate: '2024-12-25' },
-      { id: '3', name: 'Tips de Belleza', network: 'tiktok', reach: 68000, engagement: 5500, leads: 34, status: 'completed', startDate: '2024-11-15', endDate: '2024-12-15' },
-    ],
-  };
-  return campaigns[clientId] || campaigns['roberto-olivas'];
+  const multiplier = getMultiplier(clientId);
+  
+  return [
+    { id: '1', name: 'Campaña Principal', network: 'instagram', reach: Math.round(45000 * multiplier), engagement: Math.round(2800 * multiplier), leads: Math.round(89 * multiplier), status: 'active', startDate: '2024-12-01', endDate: '2024-12-31' },
+    { id: '2', name: 'Promoción Especial', network: 'facebook', reach: Math.round(32000 * multiplier), engagement: Math.round(1500 * multiplier), leads: Math.round(156 * multiplier), status: 'active', startDate: '2024-12-10', endDate: '2024-12-20' },
+    { id: '3', name: 'Contenido Viral', network: 'tiktok', reach: Math.round(78000 * multiplier), engagement: Math.round(5200 * multiplier), leads: Math.round(45 * multiplier), status: 'completed', startDate: '2024-11-15', endDate: '2024-12-05' },
+    { id: '4', name: 'Thought Leadership', network: 'linkedin', reach: Math.round(15000 * multiplier), engagement: Math.round(890 * multiplier), leads: Math.round(67 * multiplier), status: 'scheduled', startDate: '2024-12-22', endDate: '2025-01-15' },
+  ];
 };
 
 export const getClientDailyMetrics = (clientId: string): DailyMetric[] => {
-  const baseMultiplier = clientId === 'roberto-olivas' ? 1 : 
-    clientId === 'cafe-aurora' ? 0.7 : 
-    clientId === 'techstart-mx' ? 1.3 : 0.85;
+  const baseMultiplier = getMultiplier(clientId);
 
   return Array.from({ length: 30 }, (_, i) => {
     const date = new Date();
@@ -180,9 +132,7 @@ export const getClientDailyMetrics = (clientId: string): DailyMetric[] => {
 };
 
 export const getClientSocialMetrics = (clientId: string): SocialMetric[] => {
-  const baseMultiplier = clientId === 'roberto-olivas' ? 1 : 
-    clientId === 'cafe-aurora' ? 0.7 : 
-    clientId === 'techstart-mx' ? 1.3 : 0.85;
+  const baseMultiplier = getMultiplier(clientId);
 
   return [
     { network: 'Instagram', followers: Math.round(12500 * baseMultiplier), engagement: 4.2, posts: 45, color: 'hsl(330, 81%, 60%)' },
@@ -213,7 +163,7 @@ export interface Alert {
 export const getClientAlerts = (clientId: string): Alert[] => {
   return [
     { id: '1', type: 'warning', title: 'Engagement bajo en Instagram', description: 'Esta semana el engagement bajó un 15% comparado con la anterior.' },
-    { id: '2', type: 'info', title: 'Campaña terminando', description: 'La campaña "Webinar Gratuito" termina en 3 días.' },
-    { id: '3', type: 'success', title: 'Mejor post del mes', description: 'El video de testimonios tuvo +45% más interacción que el promedio.' },
+    { id: '2', type: 'info', title: 'Campaña terminando', description: 'La campaña "Promoción Especial" termina en 3 días.' },
+    { id: '3', type: 'success', title: 'Mejor post del mes', description: 'El video viral tuvo +45% más interacción que el promedio.' },
   ];
 };
