@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { ClientSelector } from './ClientSelector';
 import { DateRangePicker } from './DateRangePicker';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useBrand } from '@/contexts/BrandContext';
 import {
   Breadcrumb,
@@ -48,6 +49,8 @@ export const TopBar = () => {
             className="pl-9 w-48 lg:w-64 bg-background"
           />
         </div>
+
+        <ThemeToggle />
 
         <Button variant="ghost" size="icon" className="relative h-8 w-8 md:h-9 md:w-9">
           <Bell className="h-4 w-4" />
