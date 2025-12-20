@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { KPICard } from '@/components/dashboard/KPICard';
+import { KPISection } from '@/components/dashboard/KPISection';
 import { ReachChart } from '@/components/dashboard/ReachChart';
 import { SocialPerformanceChart } from '@/components/dashboard/SocialPerformanceChart';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
@@ -13,14 +14,22 @@ import { useDailyMetrics } from '@/hooks/use-daily-metrics';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { getClientAlerts } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
-import { Download, Share2, Building2, Plus, Radio } from 'lucide-react';
+import { Download, Share2, Building2, Plus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+
+const DEFAULT_SELECTED_KPIS = ['reach', 'engagement', 'followers', 'impressions'];
 
 const Dashboard = () => {
   const { selectedClient, clientBrands, clients, clientsLoading } = useBrand();
+  const [platform, setPlatform] = useState('all');
+  const [selectedKPIs, setSelectedKPIs] = useState<string[]>(DEFAULT_SELECTED_KPIS);
+
+  // Reset KPI selection when client changes
+  useEffect(() => {
+    setSelectedKPIs(DEFAULT_SELECTED_KPIS);
+    setPlatform('all');
+  }, [selectedClient?.id]);
 
   // Show loading state while clients are being fetched
   if (clientsLoading) {
@@ -47,7 +56,7 @@ const Dashboard = () => {
                 {clients.length === 0 ? 'Sin clientes' : 'Selecciona un cliente'}
               </CardTitle>
               <CardDescription>
-                {clients.length === 0 
+                {clients.length === 0
                   ? 'Crea tu primer cliente para comenzar a ver su dashboard.'
                   : 'Selecciona un cliente del menú superior para ver su dashboard.'}
               </CardDescription>
@@ -72,9 +81,28 @@ const Dashboard = () => {
   const primaryColor = clientBrand?.primaryColor || selectedClient.primary_color || '220 70% 50%';
   const accentColor = clientBrand?.accentColor || selectedClient.accent_color || '262 83% 58%';
 
-  const { kpis, socialMetrics, isLoading: kpisLoading, isLiveData: kpisIsLive } = useKPIData(selectedClient.id);
-  const { dailyMetrics, isLoading: dailyLoading, isLiveData: dailyIsLive, source: dailySource } = useDailyMetrics(selectedClient.id);
-  const { content, isLoading: contentLoading, isLiveData: contentIsLive, refetch: refetchContent } = useContentData(selectedClient.id);
+  const {
+    kpis,
+    socialMetrics,
+    isLoading: kpisLoading,
+    isLiveData: kpisIsLive,
+    availablePlatforms,
+  } = useKPIData(selectedClient.id, platform);
+
+  const {
+    dailyMetrics,
+    isLoading: dailyLoading,
+    isLiveData: dailyIsLive,
+    source: dailySource,
+  } = useDailyMetrics(selectedClient.id);
+
+  const {
+    content,
+    isLoading: contentLoading,
+    isLiveData: contentIsLive,
+    refetch: refetchContent,
+  } = useContentData(selectedClient.id);
+
   const { data: metaConnection } = useMetaConnection(selectedClient.id);
   const hasAdAccount = !!metaConnection?.ad_account_id;
   const alerts = getClientAlerts(selectedClient.id);
@@ -92,13 +120,13 @@ const Dashboard = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {clientBrand?.logoUrl || selectedClient.logo_url ? (
-              <img 
-                src={clientBrand?.logoUrl || selectedClient.logo_url || ''} 
-                alt={selectedClient.name} 
+              <img
+                src={clientBrand?.logoUrl || selectedClient.logo_url || ''}
+                alt={selectedClient.name}
                 className="h-8 w-8 md:h-10 md:w-10 rounded-lg flex-shrink-0 object-contain"
               />
             ) : (
-              <div 
+              <div
                 className="h-8 w-8 md:h-10 md:w-10 rounded-lg flex items-center justify-center text-white font-bold text-sm md:text-base"
                 style={{ backgroundColor: `hsl(${accentColor})` }}
               >
@@ -106,12 +134,15 @@ const Dashboard = () => {
               </div>
             )}
             <div>
-              <h1 className="text-lg md:text-xl font-semibold text-foreground">{selectedClient.name}</h1>
+              <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                {selectedClient.name}
+              </h1>
               <p className="text-xs md:text-sm text-muted-foreground">{selectedClient.industry}</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
+            <DateRangePicker />
             <Button variant="outline" size="sm" className="text-xs md:text-sm h-8">
               <Download className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Exportar PDF</span>
@@ -124,51 +155,34 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
-        
-        {/* Mobile date picker */}
-        <div className="lg:hidden">
-          <DateRangePicker />
-        </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Section - 2x2 Grid with Platform Selector */}
       <div className="mb-4 md:mb-6">
-        {kpisIsLive && (
-          <div className="flex items-center gap-2 mb-2">
-            <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600">
-              <Radio className="h-2.5 w-2.5 animate-pulse" />
-              Datos en vivo de Meta
-            </Badge>
-          </div>
-        )}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
-          {kpisLoading ? (
-            Array.from({ length: 6 }).map((_, index) => (
-              <Card key={index} className="p-3 md:p-5">
-                <Skeleton className="h-3 w-20 mb-2" />
-                <Skeleton className="h-6 w-16 mb-3" />
-                <Skeleton className="h-8 w-full" />
-              </Card>
-            ))
-          ) : (
-            kpis.map((kpi, index) => (
-              <KPICard key={index} data={kpi} accentColor={accentColor} />
-            ))
-          )}
-        </div>
+        <KPISection
+          kpis={kpis}
+          isLoading={kpisLoading}
+          isLiveData={kpisIsLive}
+          accentColor={accentColor}
+          platform={platform}
+          onPlatformChange={setPlatform}
+          selectedKPIs={selectedKPIs}
+          onSelectedKPIsChange={setSelectedKPIs}
+          availablePlatforms={availablePlatforms}
+        />
       </div>
 
       {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-        <ReachChart 
-          data={dailyMetrics} 
+        <ReachChart
+          data={dailyMetrics}
           accentColor={accentColor}
           isLoading={dailyLoading}
           isLiveData={dailyIsLive}
           source={dailySource}
         />
-        <SocialPerformanceChart 
-          data={socialMetrics} 
+        <SocialPerformanceChart
+          data={socialMetrics}
           isLoading={kpisLoading}
           isLiveData={kpisIsLive}
         />
@@ -176,18 +190,15 @@ const Dashboard = () => {
 
       {/* Campaigns Drilldown */}
       <div className="mb-4 md:mb-6">
-        <CampaignsDrilldown 
-          clientId={selectedClient.id}
-          hasAdAccount={hasAdAccount}
-        />
+        <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
       </div>
 
       {/* Bottom Row */}
       <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
         <div className="lg:col-span-2">
-          <ContentGrid 
-            data={content} 
-            isLoading={contentLoading} 
+          <ContentGrid
+            data={content}
+            isLoading={contentLoading}
             isLiveData={contentIsLive}
             onRefresh={refetchContent}
           />
@@ -199,3 +210,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
