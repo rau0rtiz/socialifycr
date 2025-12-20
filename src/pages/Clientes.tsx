@@ -3,6 +3,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ClientsTable } from '@/components/clientes/ClientsTable';
 import { ClientFormDialog } from '@/components/clientes/ClientFormDialog';
 import { ClientDetailPanel } from '@/components/clientes/ClientDetailPanel';
+import { DeleteConfirmDialog } from '@/components/clientes/DeleteConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +26,8 @@ const Clientes = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const { toast } = useToast();
 
   const fetchClients = async () => {
@@ -62,11 +65,21 @@ const Clientes = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteClient = async (clientId: string) => {
+  const handleRequestDelete = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setClientToDelete(client);
+      setDeleteConfirmOpen(true);
+    }
+  };
+
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
+
     const { error } = await supabase
       .from('clients')
       .delete()
-      .eq('id', clientId);
+      .eq('id', clientToDelete.id);
 
     if (error) {
       toast({
@@ -80,10 +93,11 @@ const Clientes = () => {
         description: 'El cliente ha sido eliminado correctamente.',
       });
       fetchClients();
-      if (selectedClient?.id === clientId) {
+      if (selectedClient?.id === clientToDelete.id) {
         setSelectedClient(null);
       }
     }
+    setClientToDelete(null);
   };
 
   return (
@@ -108,30 +122,37 @@ const Clientes = () => {
               onSelectClient={setSelectedClient}
               selectedClientId={selectedClient?.id}
               onEditClient={handleEditClient}
-              onDeleteClient={handleDeleteClient}
-            />
-          </div>
-
-          {selectedClient && (
-            <div className="lg:col-span-1">
-              <ClientDetailPanel
-                client={selectedClient}
-                onClose={() => setSelectedClient(null)}
-                onUpdate={fetchClients}
+                onDeleteClient={handleRequestDelete}
               />
             </div>
-          )}
-        </div>
-      </div>
 
-      <ClientFormDialog
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        onSuccess={handleClientCreated}
-        client={editingClient}
-      />
-    </DashboardLayout>
-  );
-};
+            {selectedClient && (
+              <div className="lg:col-span-1">
+                <ClientDetailPanel
+                  client={selectedClient}
+                  onClose={() => setSelectedClient(null)}
+                  onUpdate={fetchClients}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <ClientFormDialog
+          open={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          onSuccess={handleClientCreated}
+          client={editingClient}
+        />
+
+        <DeleteConfirmDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          clientName={clientToDelete?.name || ''}
+          onConfirm={handleDeleteClient}
+        />
+      </DashboardLayout>
+    );
+  };
 
 export default Clientes;
