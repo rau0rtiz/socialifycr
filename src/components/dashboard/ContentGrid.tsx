@@ -1,19 +1,26 @@
 import { useState } from 'react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContentPost } from '@/data/mockData';
 import { ContentTag, ContentModel, ContentMetadata } from '@/hooks/use-content-metadata';
 import { ContentDetailModal } from './ContentDetailModal';
-import { Clock, Eye, Heart, Play, Film, LayoutGrid, ImageIcon, RefreshCw, Wifi } from 'lucide-react';
+import { Calendar, Clock, Eye, Heart, Play, Film, LayoutGrid, ImageIcon, RefreshCw, Wifi } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DateRange } from 'react-day-picker';
 
 interface ContentGridProps {
   data: ContentPost[];
   isLoading?: boolean;
   isLiveData?: boolean;
   onRefresh?: () => void;
+  dateRange?: { from: Date; to: Date } | null;
+  onDateRangeChange?: (range: { from: Date; to: Date } | null) => void;
   // Metadata props
   tags?: ContentTag[];
   models?: ContentModel[];
@@ -55,12 +62,14 @@ const formatNumber = (num: number): string => {
 };
 
 const ContentSkeleton = () => (
-  <div className="group relative rounded-lg border border-border bg-muted/30 p-2 md:p-3">
-    <Skeleton className="aspect-square rounded-md mb-2" />
-    <div className="space-y-2">
-      <Skeleton className="h-3 w-3/4" />
-      <Skeleton className="h-3 w-full" />
-      <Skeleton className="h-3 w-1/2" />
+  <div className="group relative rounded-lg border border-border bg-muted/30 p-3">
+    <div className="flex gap-3">
+      <Skeleton className="w-20 h-20 rounded-md flex-shrink-0" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-3 w-3/4" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-1/2" />
+      </div>
     </div>
   </div>
 );
@@ -77,6 +86,8 @@ export const ContentGrid = ({
   isLoading, 
   isLiveData, 
   onRefresh,
+  dateRange,
+  onDateRangeChange,
   tags = [],
   models = [],
   metadata = {},
@@ -87,11 +98,38 @@ export const ContentGrid = ({
 }: ContentGridProps) => {
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [internalDateRange, setInternalDateRange] = useState<DateRange | undefined>(
+    dateRange ? { from: dateRange.from, to: dateRange.to } : undefined
+  );
 
-  // Sort by date (most recent first) and limit to 10 posts
-  const sortedData = [...data]
+  // Filter by date range, sort by date (most recent first) and limit to 6 posts (2x3 grid)
+  const filteredData = [...data]
+    .filter((post) => {
+      if (!dateRange?.from || !dateRange?.to) return true;
+      const postDate = new Date(post.date);
+      return postDate >= dateRange.from && postDate <= dateRange.to;
+    })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 10);
+    .slice(0, 6);
+
+  const handleDateSelect = (range: DateRange | undefined) => {
+    setInternalDateRange(range);
+    if (range?.from && range?.to && onDateRangeChange) {
+      onDateRangeChange({ from: range.from, to: range.to });
+    }
+  };
+
+  const clearDateRange = () => {
+    setInternalDateRange(undefined);
+    onDateRangeChange?.(null);
+  };
+
+  const formatDateRange = () => {
+    if (!internalDateRange?.from) return 'Filtrar por fecha';
+    if (!internalDateRange.to) return format(internalDateRange.from, 'dd MMM yyyy', { locale: es });
+    return `${format(internalDateRange.from, 'dd MMM', { locale: es })} - ${format(internalDateRange.to, 'dd MMM yyyy', { locale: es })}`;
+  };
 
   const handlePostClick = (post: ContentPost) => {
     setSelectedPost(post);
@@ -109,7 +147,7 @@ export const ContentGrid = ({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-sm md:text-base font-medium">Contenido Reciente</CardTitle>
+              <CardTitle className="text-sm md:text-base font-medium">Contenido</CardTitle>
               {isLiveData && (
                 <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                   <Wifi className="h-2.5 w-2.5" />
@@ -117,26 +155,72 @@ export const ContentGrid = ({
                 </Badge>
               )}
             </div>
-            {onRefresh && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7" 
-                onClick={onRefresh}
-                disabled={isLoading}
-              >
-                <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Date Range Picker */}
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-7 text-xs gap-1.5",
+                      internalDateRange?.from && "text-primary"
+                    )}
+                  >
+                    <Calendar className="h-3 w-3" />
+                    <span className="hidden sm:inline">{formatDateRange()}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <CalendarComponent
+                    initialFocus
+                    mode="range"
+                    defaultMonth={internalDateRange?.from}
+                    selected={internalDateRange}
+                    onSelect={handleDateSelect}
+                    numberOfMonths={1}
+                    locale={es}
+                    className="pointer-events-auto"
+                  />
+                  {internalDateRange?.from && (
+                    <div className="p-2 border-t border-border">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={clearDateRange}
+                      >
+                        Limpiar filtro
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+              {onRefresh && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7" 
+                  onClick={onRefresh}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="px-3 md:px-6">
-          {/* 2x5 Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-3">
+          {/* 2x3 Grid with horizontal cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {isLoading ? (
-              Array.from({ length: 10 }).map((_, i) => <ContentSkeleton key={i} />)
+              Array.from({ length: 6 }).map((_, i) => <ContentSkeleton key={i} />)
+            ) : filteredData.length === 0 ? (
+              <div className="col-span-full text-center py-8 text-muted-foreground text-sm">
+                No hay contenido en el rango seleccionado
+              </div>
             ) : (
-              sortedData.map((post) => {
+              filteredData.map((post) => {
                 const typeInfo = typeConfig[post.type] || typeConfig.image;
                 const TypeIcon = typeInfo.icon;
                 const postMetadata = metadata[post.id];
@@ -150,92 +234,95 @@ export const ContentGrid = ({
                   <div 
                     key={post.id}
                     onClick={() => handlePostClick(post)}
-                    className="group relative rounded-lg border border-border bg-muted/30 p-2 md:p-3 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer"
+                    className="group relative rounded-lg border border-border bg-muted/30 p-3 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer"
                   >
-                    {/* Type Tag */}
-                    <div className="absolute top-3 md:top-4 left-3 md:left-4 z-10">
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          "text-[10px] px-1.5 py-0.5 gap-0.5 backdrop-blur-sm",
-                          typeInfo.class
+                    <div className="flex gap-3">
+                      {/* Thumbnail - Left side */}
+                      <div className="relative w-20 h-20 flex-shrink-0 rounded-md bg-muted overflow-hidden">
+                        {post.thumbnailUrl || post.thumbnail ? (
+                          <img 
+                            src={post.thumbnailUrl || post.thumbnail} 
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <TypeIcon className="h-6 w-6 text-muted-foreground" />
+                          </div>
                         )}
-                      >
-                        <TypeIcon className="h-2.5 w-2.5" />
-                      </Badge>
-                    </div>
-
-                    {/* Content Tag (if assigned) */}
-                    {postTag && (
-                      <div className="absolute top-3 md:top-4 right-3 md:right-4 z-10">
-                        <Badge 
-                          variant="outline" 
-                          className="text-[10px] px-1.5 py-0.5 backdrop-blur-sm"
-                          style={{
-                            backgroundColor: `${postTag.color}20`,
-                            color: postTag.color,
-                            borderColor: `${postTag.color}40`
-                          }}
-                        >
-                          {postTag.name}
-                        </Badge>
+                        {/* Type badge on thumbnail */}
+                        <div className="absolute top-1 left-1">
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm",
+                              typeInfo.class
+                            )}
+                          >
+                            <TypeIcon className="h-2 w-2" />
+                          </Badge>
+                        </div>
                       </div>
-                    )}
+                      
+                      {/* Content info - Right side */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        {/* Top: Tags */}
+                        <div className="flex items-center gap-1 flex-wrap mb-1">
+                          {postTag && (
+                            <Badge 
+                              variant="outline" 
+                              className="text-[9px] px-1.5 py-0"
+                              style={{
+                                backgroundColor: `${postTag.color}20`,
+                                color: postTag.color,
+                                borderColor: `${postTag.color}40`
+                              }}
+                            >
+                              {postTag.name}
+                            </Badge>
+                          )}
+                          <Badge 
+                            variant="secondary" 
+                            className={cn("text-[9px] px-1 py-0", statusConfig[post.status].class)}
+                          >
+                            {statusConfig[post.status].label}
+                          </Badge>
+                        </div>
 
-                    {/* Thumbnail */}
-                    <div className="aspect-square rounded-md bg-muted flex items-center justify-center mb-2 overflow-hidden">
-                      {post.thumbnailUrl || post.thumbnail ? (
-                        <img 
-                          src={post.thumbnailUrl || post.thumbnail} 
-                          alt={post.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <TypeIcon className="h-6 w-6 text-muted-foreground" />
-                      )}
-                    </div>
-                    
-                    {/* Content info */}
-                    <div className="space-y-1.5">
-                      {/* Caption/Description */}
-                      <div className="min-h-[2.5rem]">
-                        <p className="text-xs text-foreground leading-tight">
+                        {/* Caption */}
+                        <p className="text-xs text-foreground leading-tight line-clamp-2 mb-1">
                           {truncatedCaption}
                           {isTruncated && (
                             <span className="text-primary ml-1 font-medium">ver más</span>
                           )}
                         </p>
-                      </div>
-                      
-                      {/* Metrics Row */}
-                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-1 border-t border-border/50">
-                        {post.views !== undefined && post.views !== null && (
-                          <div className="flex items-center gap-0.5">
-                            <Eye className="h-2.5 w-2.5" />
-                            <span>{formatNumber(post.views)}</span>
-                          </div>
-                        )}
                         
-                        {post.likes !== undefined && post.likes !== null ? (
-                          <div className="flex items-center gap-0.5">
-                            <Heart className="h-2.5 w-2.5" />
-                            <span>{formatNumber(post.likes)}</span>
-                          </div>
-                        ) : post.engagement > 0 && (
-                          <div className="flex items-center gap-0.5">
-                            <Heart className="h-2.5 w-2.5" />
-                            <span>{formatNumber(post.engagement)}</span>
-                          </div>
-                        )}
+                        {/* Metrics Row */}
+                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                          {post.views !== undefined && post.views !== null && (
+                            <div className="flex items-center gap-0.5">
+                              <Eye className="h-2.5 w-2.5" />
+                              <span>{formatNumber(post.views)}</span>
+                            </div>
+                          )}
+                          
+                          {post.likes !== undefined && post.likes !== null ? (
+                            <div className="flex items-center gap-0.5">
+                              <Heart className="h-2.5 w-2.5" />
+                              <span>{formatNumber(post.likes)}</span>
+                            </div>
+                          ) : post.engagement > 0 && (
+                            <div className="flex items-center gap-0.5">
+                              <Heart className="h-2.5 w-2.5" />
+                              <span>{formatNumber(post.engagement)}</span>
+                            </div>
+                          )}
 
-                        {/* Status badge */}
-                        <Badge 
-                          variant="secondary" 
-                          className={cn("text-[9px] px-1 py-0 ml-auto", statusConfig[post.status].class)}
-                        >
-                          {statusConfig[post.status].label.slice(0, 3)}
-                        </Badge>
+                          <span className="text-muted-foreground/60 ml-auto">
+                            {format(new Date(post.date), 'dd MMM', { locale: es })}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

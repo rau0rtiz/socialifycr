@@ -6,7 +6,7 @@ import { SocialPerformanceChart } from '@/components/dashboard/SocialPerformance
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
-import { DateRangePicker, DatePresetKey } from '@/components/dashboard/DateRangePicker';
+import { DatePresetKey } from '@/components/dashboard/DateRangePicker';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
@@ -177,7 +177,6 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <DateRangePicker value={datePreset} onChange={setDatePreset} />
             <Button
               variant="outline"
               size="sm"
