@@ -118,6 +118,146 @@ export type Database = {
         }
         Relationships: []
       }
+      content_metadata: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          first_48h_captured_at: string | null
+          first_48h_comments: number | null
+          first_48h_likes: number | null
+          first_48h_saves: number | null
+          first_48h_shares: number | null
+          first_48h_views: number | null
+          id: string
+          model_id: string | null
+          post_id: string
+          tag_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          first_48h_captured_at?: string | null
+          first_48h_comments?: number | null
+          first_48h_likes?: number | null
+          first_48h_saves?: number | null
+          first_48h_shares?: number | null
+          first_48h_views?: number | null
+          id?: string
+          model_id?: string | null
+          post_id: string
+          tag_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          first_48h_captured_at?: string | null
+          first_48h_comments?: number | null
+          first_48h_likes?: number | null
+          first_48h_saves?: number | null
+          first_48h_shares?: number | null
+          first_48h_views?: number | null
+          id?: string
+          model_id?: string | null
+          post_id?: string
+          tag_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_metadata_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_metadata_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "content_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_metadata_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "content_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_models: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          photo_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          photo_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          photo_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_models_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_tags: {
+        Row: {
+          client_id: string
+          color: string | null
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          client_id: string
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          client_id?: string
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_tags_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_connections: {
         Row: {
           access_token: string | null

@@ -46,12 +46,12 @@ export const useContentData = (clientId: string | null): UseContentDataResult =>
         return;
       }
 
-      // Fetch real Instagram media with insights
+      // Fetch real Instagram media with insights (10 for 2x5 grid)
       const { data, error: functionError } = await supabase.functions.invoke('meta-api', {
         body: {
           clientId,
           endpoint: 'instagram-media-with-insights',
-          params: { limit: 6 }
+          params: { limit: 10 }
         }
       });
 
@@ -73,6 +73,7 @@ export const useContentData = (clientId: string | null): UseContentDataResult =>
       const transformedContent: ContentPost[] = (data.data || []).map((item: any) => ({
         id: item.id,
         title: item.caption ? item.caption.substring(0, 50) + (item.caption.length > 50 ? '...' : '') : 'Sin descripción',
+        caption: item.caption || 'Sin descripción',
         network: 'instagram' as const,
         type: item.contentType as ContentPost['type'],
         status: 'published' as const,
@@ -81,6 +82,9 @@ export const useContentData = (clientId: string | null): UseContentDataResult =>
         thumbnail: item.thumbnailUrl || item.mediaUrl,
         views: item.views,
         likes: item.likes,
+        comments: item.comments,
+        shares: item.shares,
+        saves: item.saves,
         avgViewDuration: item.avgViewDuration,
         thumbnailUrl: item.thumbnailUrl || item.mediaUrl,
         permalink: item.permalink,
