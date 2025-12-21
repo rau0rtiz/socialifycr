@@ -418,24 +418,61 @@ serve(async (req) => {
           });
         }
 
-        // Get recent Instagram media with basic info
-        const limit = params.limit || 6;
-        const mediaResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${instagramId}/media?` +
-          `fields=id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count` +
-          `&limit=${limit}&access_token=${accessToken}`
-        );
-        const mediaData = await mediaResponse.json();
+        // Get Instagram media with pagination support for fetching all posts
+        const targetLimit = params.limit || 6;
+        const perPageLimit = Math.min(targetLimit, 50); // Instagram API max is ~100, use 50 for safety
+        let allMedia: any[] = [];
+        let nextCursor: string | null = null;
+        let pagesProcessed = 0;
+        const maxPages = Math.ceil(targetLimit / perPageLimit);
 
-        if (mediaData.error) {
-          console.error('Error fetching media:', mediaData.error);
-          result = mediaData;
-          break;
+        console.log(`Fetching instagram-media-with-insights for client ${clientId}, target: ${targetLimit} posts`);
+
+        // Fetch pages until we have enough posts or no more pages
+        while (allMedia.length < targetLimit && pagesProcessed < maxPages) {
+          let url = `https://graph.facebook.com/v18.0/${instagramId}/media?` +
+            `fields=id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count` +
+            `&limit=${perPageLimit}&access_token=${accessToken}`;
+          
+          if (nextCursor) {
+            url += `&after=${nextCursor}`;
+          }
+
+          const mediaResponse = await fetch(url);
+          const mediaData = await mediaResponse.json();
+
+          if (mediaData.error) {
+            console.error('Error fetching media:', mediaData.error);
+            if (allMedia.length === 0) {
+              result = mediaData;
+              break;
+            }
+            // If we already have some media, continue with what we have
+            break;
+          }
+
+          if (mediaData.data && mediaData.data.length > 0) {
+            allMedia = allMedia.concat(mediaData.data);
+          }
+
+          // Check for next page
+          nextCursor = mediaData.paging?.cursors?.after || null;
+          pagesProcessed++;
+
+          // No more pages available
+          if (!nextCursor || !mediaData.data || mediaData.data.length === 0) {
+            break;
+          }
         }
 
-        // Enrich each media item with insights
+        console.log(`Fetched ${allMedia.length} posts in ${pagesProcessed} pages`);
+
+        // Trim to requested limit
+        const mediaToProcess = allMedia.slice(0, targetLimit);
+
+        // Enrich each media item with insights (process in batches to avoid rate limits)
         const enrichedMedia = await Promise.all(
-          (mediaData.data || []).map(async (media: any) => {
+          mediaToProcess.map(async (media: any) => {
             let insights = { views: null as number | null, saves: null as number | null, shares: null as number | null, avgViewDuration: null as number | null };
 
             try {
@@ -459,8 +496,6 @@ serve(async (req) => {
                   `metric=${metrics.join(',')}&access_token=${accessToken}`
                 );
                 const insightsData = await insightsResponse.json();
-
-                console.log(`Media ${media.id} (${media.media_type}) insights:`, JSON.stringify(insightsData));
 
                 if (insightsData.data) {
                   insightsData.data.forEach((metric: any) => {
@@ -523,6 +558,7 @@ serve(async (req) => {
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
 
+        console.log(`Successfully fetched instagram-media-with-insights`);
         result = { data: enrichedMedia };
         break;
       }

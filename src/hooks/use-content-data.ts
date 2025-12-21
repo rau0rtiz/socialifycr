@@ -11,7 +11,7 @@ interface UseContentDataResult {
   refetch: () => void;
 }
 
-export const useContentData = (clientId: string | null): UseContentDataResult => {
+export const useContentData = (clientId: string | null, limit: number = 10): UseContentDataResult => {
   const [content, setContent] = useState<ContentPost[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLiveData, setIsLiveData] = useState(false);
@@ -46,12 +46,12 @@ export const useContentData = (clientId: string | null): UseContentDataResult =>
         return;
       }
 
-      // Fetch real Instagram media with insights (10 for 2x5 grid)
+      // Fetch real Instagram media with insights
       const { data, error: functionError } = await supabase.functions.invoke('meta-api', {
         body: {
           clientId,
           endpoint: 'instagram-media-with-insights',
-          params: { limit: 10 }
+          params: { limit }
         }
       });
 
@@ -111,7 +111,7 @@ export const useContentData = (clientId: string | null): UseContentDataResult =>
     } finally {
       setIsLoading(false);
     }
-  }, [clientId, toast]);
+  }, [clientId, limit, toast]);
 
   useEffect(() => {
     fetchContent();
