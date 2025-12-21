@@ -4,6 +4,7 @@ import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSe
 import { TopPostsSection } from '@/components/dashboard/TopPostsSection';
 import { VideoIdeasSection } from '@/components/dashboard/VideoIdeasSection';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
+import { FunnelModule } from '@/components/dashboard/FunnelModule';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
@@ -235,6 +236,11 @@ const Dashboard = () => {
           onDeleteIdea={deleteIdea}
           clientId={selectedClient.id}
         />
+      </div>
+
+      {/* Funnel Module */}
+      <div className="mb-4 md:mb-6">
+        <FunnelModule clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
       </div>
 
       {/* Campaigns Drilldown */}
