@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { AIReportGenerator } from '@/components/reports/AIReportGenerator';
+import { SavedReportsList } from '@/components/reports/SavedReportsList';
 import { useBrand } from '@/contexts/BrandContext';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Sparkles } from 'lucide-react';
+import { BarChart3, Sparkles, FileText } from 'lucide-react';
 
 const Reports = () => {
   const { selectedClient } = useBrand();
@@ -23,14 +24,18 @@ const Reports = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="campaigns" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Campañas
+              <span className="hidden sm:inline">Campañas</span>
             </TabsTrigger>
             <TabsTrigger value="ai-reports" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              Reportes IA
+              <span className="hidden sm:inline">Generar</span>
+            </TabsTrigger>
+            <TabsTrigger value="saved-reports" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Guardados</span>
             </TabsTrigger>
           </TabsList>
 
@@ -40,6 +45,10 @@ const Reports = () => {
 
           <TabsContent value="ai-reports" className="mt-6">
             <AIReportGenerator clientId={clientId} hasAdAccount={hasAdAccount} />
+          </TabsContent>
+
+          <TabsContent value="saved-reports" className="mt-6">
+            <SavedReportsList clientId={clientId} />
           </TabsContent>
         </Tabs>
       </div>
