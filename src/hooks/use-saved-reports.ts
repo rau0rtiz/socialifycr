@@ -91,3 +91,38 @@ export function useDeleteReport() {
     },
   });
 }
+
+export function useUpdateReport() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      reportId,
+      clientId,
+      title,
+      content,
+    }: {
+      reportId: string;
+      clientId: string;
+      title?: string;
+      content?: string;
+    }) => {
+      const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (title !== undefined) updates.title = title;
+      if (content !== undefined) updates.content = content;
+
+      const { data, error } = await supabase
+        .from('saved_reports')
+        .update(updates)
+        .eq('id', reportId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, clientId };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['saved-reports', result.clientId] });
+    },
+  });
+}
