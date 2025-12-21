@@ -3,18 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, Plus, Trash2, GripVertical, Filter } from 'lucide-react';
-import { useCampaigns, CampaignInsights } from '@/hooks/use-ads-data';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RefreshCw, Plus, Trash2, Filter, CalendarIcon, Settings2 } from 'lucide-react';
+import { useCampaigns, DatePresetKey, DateRange } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface FunnelStep {
   id: string;
   name: string;
   value: number;
   isManual: boolean;
-  color?: string;
+  enabled: boolean;
 }
 
 interface FunnelModuleProps {
@@ -22,13 +27,23 @@ interface FunnelModuleProps {
   hasAdAccount: boolean;
 }
 
-const defaultColors = [
-  'hsl(var(--primary))',
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
+const datePresetLabels: Record<DatePresetKey, string> = {
+  last_7d: 'Últimos 7 días',
+  last_14d: 'Últimos 14 días',
+  last_30d: 'Últimos 30 días',
+  last_90d: 'Últimos 90 días',
+  this_month: 'Este mes',
+  last_month: 'Mes pasado',
+  custom: 'Personalizado',
+};
+
+const funnelColors = [
+  'from-primary to-primary/80',
+  'from-chart-1 to-chart-1/80',
+  'from-chart-2 to-chart-2/80',
+  'from-chart-3 to-chart-3/80',
+  'from-chart-4 to-chart-4/80',
+  'from-chart-5 to-chart-5/80',
 ];
 
 const formatNumber = (num: number): string => {
@@ -43,11 +58,29 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
   const [newStepName, setNewStepName] = useState('');
   const [newStepValue, setNewStepValue] = useState('');
   const [isAddingStep, setIsAddingStep] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // Date range state
+  const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
+  const [customRange, setCustomRange] = useState<DateRange>({});
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
-  const { data, isLoading, refetch, isFetching } = useCampaigns(clientId, hasAdAccount);
+  // Step visibility state
+  const [enabledSteps, setEnabledSteps] = useState<Record<string, boolean>>({
+    impressions: true,
+    reach: true,
+    clicks: true,
+    results: true,
+  });
+
+  const { data, isLoading, refetch, isFetching } = useCampaigns(
+    clientId, 
+    hasAdAccount, 
+    datePreset,
+    datePreset === 'custom' ? customRange : undefined
+  );
 
   const campaigns = data?.campaigns || [];
-  const currency = data?.currency || 'USD';
 
   // Calculate funnel steps from campaign data
   const autoSteps = useMemo((): FunnelStep[] => {
@@ -69,25 +102,24 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
       { impressions: 0, reach: 0, clicks: 0, results: 0 }
     );
 
-    // Get result type from first campaign with results
     const resultType = filteredCampaigns.find(c => c.resultType)?.resultType || 'Conversiones';
 
     return [
-      { id: 'impressions', name: 'Impresiones', value: totals.impressions, isManual: false, color: defaultColors[0] },
-      { id: 'reach', name: 'Alcance', value: totals.reach, isManual: false, color: defaultColors[1] },
-      { id: 'clicks', name: 'Clics', value: totals.clicks, isManual: false, color: defaultColors[2] },
-      { id: 'results', name: resultType, value: totals.results, isManual: false, color: defaultColors[3] },
+      { id: 'impressions', name: 'Impresiones', value: totals.impressions, isManual: false, enabled: enabledSteps.impressions },
+      { id: 'reach', name: 'Alcance', value: totals.reach, isManual: false, enabled: enabledSteps.reach },
+      { id: 'clicks', name: 'Clics', value: totals.clicks, isManual: false, enabled: enabledSteps.clicks },
+      { id: 'results', name: resultType, value: totals.results, isManual: false, enabled: enabledSteps.results },
     ];
-  }, [campaigns, selectedCampaignId]);
+  }, [campaigns, selectedCampaignId, enabledSteps]);
 
-  // Combine auto and manual steps
-  const allSteps = useMemo(() => {
-    const combined = [...autoSteps, ...manualSteps];
-    // Sort by value descending for proper funnel visualization
-    return combined.sort((a, b) => b.value - a.value);
+  // Combine auto and manual steps, filter by enabled, sort by value
+  const visibleSteps = useMemo(() => {
+    const enabledAutoSteps = autoSteps.filter(s => s.enabled);
+    const enabledManualSteps = manualSteps.filter(s => s.enabled);
+    return [...enabledAutoSteps, ...enabledManualSteps].sort((a, b) => b.value - a.value);
   }, [autoSteps, manualSteps]);
 
-  const maxValue = allSteps.length > 0 ? Math.max(...allSteps.map(s => s.value)) : 1;
+  const maxValue = visibleSteps.length > 0 ? Math.max(...visibleSteps.map(s => s.value)) : 1;
 
   const handleAddManualStep = () => {
     if (!newStepName.trim() || !newStepValue) return;
@@ -97,7 +129,7 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
       name: newStepName.trim(),
       value: parseInt(newStepValue) || 0,
       isManual: true,
-      color: defaultColors[(autoSteps.length + manualSteps.length) % defaultColors.length],
+      enabled: true,
     };
     
     setManualSteps(prev => [...prev, newStep]);
@@ -110,17 +142,47 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
     setManualSteps(prev => prev.filter(s => s.id !== stepId));
   };
 
-  const handleRefresh = () => {
-    refetch();
+  const toggleStep = (stepId: string, isManual: boolean) => {
+    if (isManual) {
+      setManualSteps(prev => prev.map(s => 
+        s.id === stepId ? { ...s, enabled: !s.enabled } : s
+      ));
+    } else {
+      setEnabledSteps(prev => ({ ...prev, [stepId]: !prev[stepId] }));
+    }
   };
 
-  // Calculate conversion rates between steps
+  const handleDatePresetChange = (value: string) => {
+    const preset = value as DatePresetKey;
+    setDatePreset(preset);
+    if (preset !== 'custom') {
+      setCustomRange({});
+    }
+  };
+
+  const handleCustomRangeSelect = (range: { from?: Date; to?: Date } | undefined) => {
+    if (range) {
+      setCustomRange(range);
+      if (range.from && range.to) {
+        setIsCalendarOpen(false);
+      }
+    }
+  };
+
   const getConversionRate = (currentIndex: number): string | null => {
     if (currentIndex === 0) return null;
-    const prevValue = allSteps[currentIndex - 1]?.value || 0;
-    const currentValue = allSteps[currentIndex]?.value || 0;
+    const prevValue = visibleSteps[currentIndex - 1]?.value || 0;
+    const currentValue = visibleSteps[currentIndex]?.value || 0;
     if (prevValue === 0) return '0%';
     return `${((currentValue / prevValue) * 100).toFixed(1)}%`;
+  };
+
+  const getOverallConversion = (): string => {
+    if (visibleSteps.length < 2) return '—';
+    const first = visibleSteps[0]?.value || 0;
+    const last = visibleSteps[visibleSteps.length - 1]?.value || 0;
+    if (first === 0) return '0%';
+    return `${((last / first) * 100).toFixed(2)}%`;
   };
 
   if (!hasAdAccount) {
@@ -144,98 +206,183 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Embudo de Conversión
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Select value={selectedCampaignId} onValueChange={setSelectedCampaignId}>
-              <SelectTrigger className="w-[200px] h-8 text-xs">
-                <SelectValue placeholder="Seleccionar campaña" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las campañas</SelectItem>
-                {campaigns.map(campaign => (
-                  <SelectItem key={campaign.id} value={campaign.id}>
-                    {campaign.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh}
-              disabled={isFetching}
-              className="h-8"
-            >
-              <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} />
-            </Button>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Embudo de Conversión
+            </CardTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Date Range Selector */}
+              <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                <SelectTrigger className="w-[140px] h-8 text-xs">
+                  <CalendarIcon className="h-3 w-3 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(datePresetLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Custom Date Range Picker */}
+              {datePreset === 'custom' && (
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs">
+                      {customRange.from && customRange.to ? (
+                        `${format(customRange.from, 'dd/MM', { locale: es })} - ${format(customRange.to, 'dd/MM', { locale: es })}`
+                      ) : (
+                        'Seleccionar fechas'
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="range"
+                      selected={customRange.from && customRange.to ? { from: customRange.from, to: customRange.to } : undefined}
+                      onSelect={handleCustomRangeSelect}
+                      numberOfMonths={2}
+                      locale={es}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+
+              {/* Campaign Selector */}
+              <Select value={selectedCampaignId} onValueChange={setSelectedCampaignId}>
+                <SelectTrigger className="w-[160px] h-8 text-xs">
+                  <SelectValue placeholder="Campaña" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las campañas</SelectItem>
+                  {campaigns.map(campaign => (
+                    <SelectItem key={campaign.id} value={campaign.id}>
+                      {campaign.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Settings Toggle */}
+              <Button 
+                variant={showSettings ? "secondary" : "outline"}
+                size="sm" 
+                onClick={() => setShowSettings(!showSettings)}
+                className="h-8"
+              >
+                <Settings2 className="h-4 w-4" />
+              </Button>
+
+              {/* Refresh Button */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="h-8"
+              >
+                <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} />
+              </Button>
+            </div>
           </div>
+
+          {/* Step Selection Panel */}
+          {showSettings && (
+            <div className="flex flex-wrap gap-3 p-3 bg-muted/50 rounded-lg">
+              <span className="text-xs text-muted-foreground font-medium self-center">Pasos visibles:</span>
+              {autoSteps.map(step => (
+                <label key={step.id} className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox 
+                    checked={enabledSteps[step.id]} 
+                    onCheckedChange={() => toggleStep(step.id, false)}
+                  />
+                  <span className="text-xs">{step.name}</span>
+                </label>
+              ))}
+              {manualSteps.map(step => (
+                <label key={step.id} className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox 
+                    checked={step.enabled} 
+                    onCheckedChange={() => toggleStep(step.id, true)}
+                  />
+                  <span className="text-xs">{step.name}</span>
+                  <Badge variant="outline" className="text-[9px] px-1">Manual</Badge>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="flex items-center gap-4">
-                <Skeleton className="h-12 flex-1" />
-              </div>
+          <div className="flex flex-col items-center gap-2 py-8">
+            {[100, 80, 60, 40].map((w, i) => (
+              <Skeleton key={i} className="h-14" style={{ width: `${w}%` }} />
             ))}
           </div>
-        ) : allSteps.length === 0 ? (
+        ) : visibleSteps.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>No hay datos de campañas disponibles</p>
+            <p>No hay datos disponibles. Selecciona al menos un paso.</p>
           </div>
         ) : (
-          <div className="space-y-1">
-            {allSteps.map((step, index) => {
+          <div className="flex flex-col items-center gap-0 py-4">
+            {visibleSteps.map((step, index) => {
               const widthPercent = maxValue > 0 ? (step.value / maxValue) * 100 : 0;
+              const minWidth = 25;
+              const displayWidth = Math.max(widthPercent, minWidth);
               const conversionRate = getConversionRate(index);
+              const colorClass = funnelColors[index % funnelColors.length];
               
               return (
-                <div key={step.id} className="group relative">
-                  {/* Conversion rate arrow */}
+                <div key={step.id} className="w-full flex flex-col items-center group">
+                  {/* Conversion rate connector */}
                   {conversionRate && (
-                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                        ↓ {conversionRate}
+                    <div className="flex items-center gap-2 py-1">
+                      <div className="h-3 w-px bg-border" />
+                      <Badge 
+                        variant="secondary" 
+                        className="text-[10px] px-2 py-0 font-mono bg-muted"
+                      >
+                        {conversionRate}
                       </Badge>
+                      <div className="h-3 w-px bg-border" />
                     </div>
                   )}
                   
+                  {/* Funnel step - trapezoid shape */}
                   <div
                     className={cn(
-                      "relative flex items-center justify-between px-4 py-3 rounded-md transition-all duration-500 cursor-pointer hover:opacity-90",
-                      step.isManual && "border border-dashed border-border"
+                      "relative flex items-center justify-between px-4 py-4 transition-all duration-500 cursor-pointer",
+                      "hover:brightness-110 hover:shadow-lg",
+                      step.isManual 
+                        ? "border-2 border-dashed border-primary/30 bg-muted/50" 
+                        : `bg-gradient-to-r ${colorClass}`
                     )}
                     style={{
-                      width: `${Math.max(widthPercent, 30)}%`,
-                      marginLeft: 'auto',
-                      marginRight: 'auto',
-                      background: step.isManual 
-                        ? `hsl(var(--muted))` 
-                        : step.color,
+                      width: `${displayWidth}%`,
+                      clipPath: index === visibleSteps.length - 1 
+                        ? 'polygon(5% 0, 95% 0, 100% 100%, 0% 100%)'
+                        : 'polygon(2% 0, 98% 0, 95% 100%, 5% 100%)',
+                      borderRadius: index === 0 ? '8px 8px 0 0' : index === visibleSteps.length - 1 ? '0 0 8px 8px' : '0',
                     }}
                   >
-                    <div className="flex items-center gap-2">
-                      {step.isManual && (
-                        <GripVertical className="h-4 w-4 text-muted-foreground opacity-50" />
-                      )}
+                    <div className="flex items-center gap-2 z-10">
                       <span className={cn(
-                        "font-medium text-sm",
+                        "font-semibold text-sm",
                         step.isManual ? "text-foreground" : "text-primary-foreground"
                       )}>
                         {step.name}
                       </span>
                       {step.isManual && (
-                        <Badge variant="outline" className="text-[10px]">Manual</Badge>
+                        <Badge variant="outline" className="text-[9px] bg-background/80">Manual</Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 z-10">
                       <span className={cn(
-                        "font-bold text-sm",
+                        "font-bold text-lg tabular-nums",
                         step.isManual ? "text-foreground" : "text-primary-foreground"
                       )}>
                         {formatNumber(step.value)}
@@ -244,8 +391,11 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleRemoveManualStep(step.id)}
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveManualStep(step.id);
+                          }}
                         >
                           <Trash2 className="h-3 w-3 text-destructive" />
                         </Button>
@@ -255,11 +405,19 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
                 </div>
               );
             })}
+
+            {/* Overall conversion summary */}
+            {visibleSteps.length >= 2 && (
+              <div className="mt-4 pt-4 border-t border-border w-full text-center">
+                <span className="text-xs text-muted-foreground">Conversión total: </span>
+                <span className="text-sm font-bold text-primary">{getOverallConversion()}</span>
+              </div>
+            )}
           </div>
         )}
 
         {/* Add manual step section */}
-        <div className="mt-6 pt-4 border-t border-border">
+        <div className="mt-4 pt-4 border-t border-border">
           {isAddingStep ? (
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
