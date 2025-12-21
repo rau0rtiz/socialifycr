@@ -37,13 +37,14 @@ const datePresetLabels: Record<DatePresetKey, string> = {
   custom: 'Personalizado',
 };
 
+// HSL colors for funnel steps - using actual color values for gradients
 const funnelColors = [
-  'from-primary to-primary/80',
-  'from-chart-1 to-chart-1/80',
-  'from-chart-2 to-chart-2/80',
-  'from-chart-3 to-chart-3/80',
-  'from-chart-4 to-chart-4/80',
-  'from-chart-5 to-chart-5/80',
+  { from: '222 47% 11%', to: '222 47% 20%' },      // Primary dark blue
+  { from: '210 80% 50%', to: '210 80% 60%' },      // Blue
+  { from: '173 80% 40%', to: '173 80% 50%' },      // Teal
+  { from: '142 70% 45%', to: '142 70% 55%' },      // Green
+  { from: '38 92% 50%', to: '38 92% 60%' },        // Orange
+  { from: '280 65% 60%', to: '280 65% 70%' },      // Purple
 ];
 
 const formatNumber = (num: number): string => {
@@ -334,7 +335,7 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
               const minWidth = 25;
               const displayWidth = Math.max(widthPercent, minWidth);
               const conversionRate = getConversionRate(index);
-              const colorClass = funnelColors[index % funnelColors.length];
+              const colorSet = funnelColors[index % funnelColors.length];
               
               return (
                 <div key={step.id} className="w-full flex flex-col items-center group">
@@ -357,9 +358,7 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
                     className={cn(
                       "relative flex items-center justify-between px-4 py-4 transition-all duration-500 cursor-pointer",
                       "hover:brightness-110 hover:shadow-lg",
-                      step.isManual 
-                        ? "border-2 border-dashed border-primary/30 bg-muted/50" 
-                        : `bg-gradient-to-r ${colorClass}`
+                      step.isManual && "border-2 border-dashed border-primary/30"
                     )}
                     style={{
                       width: `${displayWidth}%`,
@@ -367,12 +366,15 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
                         ? 'polygon(5% 0, 95% 0, 100% 100%, 0% 100%)'
                         : 'polygon(2% 0, 98% 0, 95% 100%, 5% 100%)',
                       borderRadius: index === 0 ? '8px 8px 0 0' : index === visibleSteps.length - 1 ? '0 0 8px 8px' : '0',
+                      background: step.isManual 
+                        ? 'hsl(var(--muted))' 
+                        : `linear-gradient(to right, hsl(${colorSet.from}), hsl(${colorSet.to}))`,
                     }}
                   >
                     <div className="flex items-center gap-2 z-10">
                       <span className={cn(
                         "font-semibold text-sm",
-                        step.isManual ? "text-foreground" : "text-primary-foreground"
+                        step.isManual ? "text-foreground" : "text-white"
                       )}>
                         {step.name}
                       </span>
@@ -383,7 +385,7 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
                     <div className="flex items-center gap-2 z-10">
                       <span className={cn(
                         "font-bold text-lg tabular-nums",
-                        step.isManual ? "text-foreground" : "text-primary-foreground"
+                        step.isManual ? "text-foreground" : "text-white"
                       )}>
                         {formatNumber(step.value)}
                       </span>
