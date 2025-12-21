@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import BrandSettings from "./pages/BrandSettings";
 import Clientes from "./pages/Clientes";
 import Contenido from "./pages/Contenido";
+import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { MetaOAuthCallback } from "./pages/MetaOAuthCallback";
@@ -28,10 +29,11 @@ const App = () => (
               <Sonner />
               <Routes>
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/brand-settings" element={<ProtectedRoute><BrandSettings /></ProtectedRoute>} />
                 <Route path="/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
                 <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
                 <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
