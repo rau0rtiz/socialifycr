@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RefreshCw, Plus, Trash2, Filter, CalendarIcon, Settings2 } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, Filter, CalendarIcon, Settings2, BarChart3, Triangle } from 'lucide-react';
 import { useCampaigns, DatePresetKey, DateRange } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -60,6 +60,7 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
   const [newStepValue, setNewStepValue] = useState('');
   const [isAddingStep, setIsAddingStep] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [accurateMode, setAccurateMode] = useState(true); // true = accurate widths, false = visual funnel
   
   // Date range state
   const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
@@ -267,6 +268,17 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
                 </SelectContent>
               </Select>
 
+              {/* Accurate vs Visual Toggle */}
+              <Button 
+                variant={accurateMode ? "secondary" : "outline"}
+                size="sm" 
+                onClick={() => setAccurateMode(!accurateMode)}
+                className="h-8"
+                title={accurateMode ? "Modo preciso (anchos proporcionales)" : "Modo visual (embudo decorativo)"}
+              >
+                {accurateMode ? <BarChart3 className="h-4 w-4" /> : <Triangle className="h-4 w-4" />}
+              </Button>
+
               {/* Settings Toggle */}
               <Button 
                 variant={showSettings ? "secondary" : "outline"}
@@ -333,7 +345,17 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
             {visibleSteps.map((step, index) => {
               const widthPercent = maxValue > 0 ? (step.value / maxValue) * 100 : 0;
               const minWidth = 25;
-              const displayWidth = Math.max(widthPercent, minWidth);
+              
+              // Calculate width based on mode
+              let displayWidth: number;
+              if (accurateMode) {
+                displayWidth = Math.max(widthPercent, minWidth);
+              } else {
+                // Visual mode: create a smooth funnel shape regardless of values
+                const totalSteps = visibleSteps.length;
+                displayWidth = 100 - (index * (70 / Math.max(totalSteps - 1, 1)));
+              }
+              
               const conversionRate = getConversionRate(index);
               const colorSet = funnelColors[index % funnelColors.length];
               
@@ -356,7 +378,7 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
                   {/* Funnel step - trapezoid shape */}
                   <div
                     className={cn(
-                      "relative flex items-center justify-between px-4 py-4 transition-all duration-500 cursor-pointer",
+                      "relative flex flex-col items-center justify-center px-4 py-4 transition-all duration-500 cursor-pointer",
                       "hover:brightness-110 hover:shadow-lg",
                       step.isManual && "border-2 border-dashed border-primary/30"
                     )}
@@ -371,6 +393,7 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
                         : `linear-gradient(to right, hsl(${colorSet.from}), hsl(${colorSet.to}))`,
                     }}
                   >
+                    {/* Centered content */}
                     <div className="flex items-center gap-2 z-10">
                       <span className={cn(
                         "font-semibold text-sm",
@@ -382,7 +405,7 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
                         <Badge variant="outline" className="text-[9px] bg-background/80">Manual</Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 z-10">
+                    <div className="flex items-center gap-1 z-10 mt-0.5">
                       <span className={cn(
                         "font-bold text-lg tabular-nums",
                         step.isManual ? "text-foreground" : "text-white"
