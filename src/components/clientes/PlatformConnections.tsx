@@ -187,6 +187,32 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const handleConnectMeta = async () => {
     setConnecting('meta');
     
+    // Open popup IMMEDIATELY on user click to avoid browser blocking
+    // We'll redirect it to the auth URL after fetching
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    
+    const popup = window.open(
+      'about:blank',
+      'meta-oauth',
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+
+    if (!popup) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
+        variant: 'destructive',
+      });
+      setConnecting(null);
+      return;
+    }
+
+    // Show loading message in popup
+    popup.document.write('<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:system-ui,sans-serif;"><p>Cargando...</p></body></html>');
+
     try {
       const redirectUri = `${window.location.origin}/oauth/meta/callback`;
       
@@ -197,6 +223,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       const data = await response.json();
 
       if (data.error) {
+        popup.close();
         toast({
           title: 'Error',
           description: data.error,
@@ -206,26 +233,8 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         return;
       }
 
-      // Open OAuth popup
-      const width = 600;
-      const height = 700;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-      
-      const popup = window.open(
-        data.authUrl,
-        'meta-oauth',
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
-
-      if (!popup) {
-        toast({
-          title: 'Error',
-          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
-          variant: 'destructive',
-        });
-        setConnecting(null);
-      }
+      // Redirect the popup to the auth URL
+      popup.location.href = data.authUrl;
 
       // Check if popup was closed without completing
       const checkPopup = setInterval(() => {
@@ -237,6 +246,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
 
     } catch (err) {
       console.error('Error initiating OAuth:', err);
+      popup.close();
       toast({
         title: 'Error',
         description: 'Error al iniciar la conexión con Meta',
