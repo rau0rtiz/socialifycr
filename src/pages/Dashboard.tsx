@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
-import { ReachChart } from '@/components/dashboard/ReachChart';
+import { TopPostsSection } from '@/components/dashboard/TopPostsSection';
+import { VideoIdeasSection } from '@/components/dashboard/VideoIdeasSection';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
@@ -9,7 +10,7 @@ import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
 import { useSocialFollowers } from '@/hooks/use-social-followers';
-import { useDailyMetrics } from '@/hooks/use-daily-metrics';
+import { useVideoIdeas } from '@/hooks/use-video-ideas';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { getClientAlerts } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
@@ -32,12 +33,13 @@ const Dashboard = () => {
   } = useSocialFollowers(clientId);
 
   const {
-    dailyMetrics,
-    isLoading: dailyLoading,
-    isLiveData: dailyIsLive,
-    source: dailySource,
-    refetch: refetchDailyMetrics,
-  } = useDailyMetrics(clientId);
+    ideas: videoIdeas,
+    isLoading: ideasLoading,
+    addIdea,
+    updateIdea,
+    deleteIdea,
+    refetch: refetchIdeas,
+  } = useVideoIdeas(clientId);
 
   const {
     content,
@@ -64,13 +66,13 @@ const Dashboard = () => {
     setIsRefreshing(true);
     await Promise.all([
       refetchSocial(),
-      refetchDailyMetrics(),
       refetchContent(),
       refetchConnection(),
       refetchMetadata(),
+      refetchIdeas(),
     ]);
     setIsRefreshing(false);
-  }, [refetchSocial, refetchDailyMetrics, refetchContent, refetchConnection, refetchMetadata]);
+  }, [refetchSocial, refetchContent, refetchConnection, refetchMetadata, refetchIdeas]);
 
   // Derived values (not hooks)
   const hasAdAccount = !!metaConnection?.ad_account_id;
@@ -213,14 +215,22 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Charts Row */}
+      {/* Top Posts & Video Ideas Row */}
       <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-        <ReachChart
-          data={dailyMetrics}
-          accentColor={accentColor}
-          isLoading={dailyLoading}
-          isLiveData={dailyIsLive}
-          source={dailySource}
+        <TopPostsSection
+          content={content}
+          isLoading={contentLoading}
+          isLiveData={contentIsLive}
+        />
+        <VideoIdeasSection
+          ideas={videoIdeas}
+          isLoading={ideasLoading}
+          tags={tags}
+          models={models}
+          onAddIdea={addIdea}
+          onUpdateIdea={updateIdea}
+          onDeleteIdea={deleteIdea}
+          clientId={selectedClient.id}
         />
       </div>
 
