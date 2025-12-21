@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { 
   FileText, 
   Trash2, 
@@ -14,13 +15,20 @@ import {
   Clock,
   TrendingUp,
   Target,
-  Sparkles
+  Sparkles,
+  Link2,
+  Printer,
+  Pencil,
+  RefreshCw,
+  Share2,
+  Check,
+  X
 } from 'lucide-react';
-import { useSavedReports, useDeleteReport, SavedReport } from '@/hooks/use-saved-reports';
+import { useSavedReports, useDeleteReport, useUpdateReport, SavedReport } from '@/hooks/use-saved-reports';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 interface SavedReportsListProps {
   clientId: string | null;
@@ -35,7 +43,11 @@ const templateIcons: Record<string, typeof TrendingUp> = {
 export const SavedReportsList = ({ clientId }: SavedReportsListProps) => {
   const { data: reports, isLoading } = useSavedReports(clientId);
   const deleteReport = useDeleteReport();
+  const updateReport = useUpdateReport();
   const [selectedReport, setSelectedReport] = useState<SavedReport | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const printRef = useRef<HTMLDivElement>(null);
 
   const handleDelete = async (report: SavedReport) => {
     if (!clientId) return;
@@ -53,6 +65,12 @@ export const SavedReportsList = ({ clientId }: SavedReportsListProps) => {
     toast.success('Copiado al portapapeles');
   };
 
+  const copyShareableLink = async (reportId: string) => {
+    const url = `${window.location.origin}/reports?view=${reportId}`;
+    await navigator.clipboard.writeText(url);
+    toast.success('Enlace copiado al portapapeles');
+  };
+
   const downloadReport = (report: SavedReport) => {
     const blob = new Blob([report.content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
@@ -62,6 +80,72 @@ export const SavedReportsList = ({ clientId }: SavedReportsListProps) => {
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Reporte descargado');
+  };
+
+  const exportToPdf = (report: SavedReport) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('No se pudo abrir la ventana de impresión');
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${report.title}</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              max-width: 800px;
+              margin: 40px auto;
+              padding: 0 20px;
+              line-height: 1.6;
+              color: #333;
+            }
+            h1 { margin-bottom: 8px; }
+            .meta { color: #666; font-size: 14px; margin-bottom: 24px; }
+            pre { background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; }
+            @media print {
+              body { margin: 20px; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${report.title}</h1>
+          <p class="meta">Generado el ${format(new Date(report.created_at), "d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}</p>
+          <div style="white-space: pre-wrap;">${report.content}</div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  const startEditing = (report: SavedReport) => {
+    setEditingId(report.id);
+    setEditTitle(report.title);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditTitle('');
+  };
+
+  const saveTitle = async (report: SavedReport) => {
+    if (!clientId || !editTitle.trim()) return;
+
+    try {
+      await updateReport.mutateAsync({
+        reportId: report.id,
+        clientId,
+        title: editTitle.trim(),
+      });
+      toast.success('Título actualizado');
+      setEditingId(null);
+    } catch (error) {
+      toast.error('Error al actualizar');
+    }
   };
 
   const getTemplateIcon = (templateType: string | null) => {
@@ -121,6 +205,8 @@ export const SavedReportsList = ({ clientId }: SavedReportsListProps) => {
               <div className="space-y-3">
                 {reports.map((report) => {
                   const Icon = getTemplateIcon(report.template_type);
+                  const isEditing = editingId === report.id;
+
                   return (
                     <div
                       key={report.id}
@@ -130,7 +216,39 @@ export const SavedReportsList = ({ clientId }: SavedReportsListProps) => {
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{report.title}</p>
+                        {isEditing ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              className="h-7 text-sm"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') saveTitle(report);
+                                if (e.key === 'Escape') cancelEditing();
+                              }}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => saveTitle(report)}
+                              disabled={updateReport.isPending}
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={cancelEditing}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <p className="font-medium text-sm truncate">{report.title}</p>
+                        )}
                         <div className="flex items-center gap-2 mt-1">
                           <Clock className="h-3 w-3 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">
@@ -156,18 +274,36 @@ export const SavedReportsList = ({ clientId }: SavedReportsListProps) => {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => copyToClipboard(report.content)}
+                          onClick={() => startEditing(report)}
                         >
-                          <Copy className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => downloadReport(report)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Share2 className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => copyShareableLink(report.id)}>
+                              <Link2 className="h-4 w-4 mr-2" />
+                              Copiar enlace
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => copyToClipboard(report.content)}>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copiar contenido
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => downloadReport(report)}>
+                              <Download className="h-4 w-4 mr-2" />
+                              Descargar Markdown
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => exportToPdf(report)}>
+                              <Printer className="h-4 w-4 mr-2" />
+                              Exportar a PDF
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -204,20 +340,28 @@ export const SavedReportsList = ({ clientId }: SavedReportsListProps) => {
             {selectedReport && format(new Date(selectedReport.created_at), "d MMMM yyyy, HH:mm", { locale: es })}
           </div>
           <ScrollArea className="h-[50vh] mt-4">
-            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap pr-4">
+            <div ref={printRef} className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap pr-4">
               {selectedReport?.content}
             </div>
           </ScrollArea>
-          <div className="flex justify-end gap-2 mt-4">
+          <DialogFooter className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => selectedReport && copyShareableLink(selectedReport.id)}>
+              <Link2 className="h-4 w-4 mr-2" />
+              Enlace
+            </Button>
             <Button variant="outline" onClick={() => selectedReport && copyToClipboard(selectedReport.content)}>
               <Copy className="h-4 w-4 mr-2" />
               Copiar
             </Button>
             <Button variant="outline" onClick={() => selectedReport && downloadReport(selectedReport)}>
               <Download className="h-4 w-4 mr-2" />
-              Descargar
+              Markdown
             </Button>
-          </div>
+            <Button variant="outline" onClick={() => selectedReport && exportToPdf(selectedReport)}>
+              <Printer className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
