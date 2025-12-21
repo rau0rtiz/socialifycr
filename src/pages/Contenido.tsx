@@ -97,14 +97,17 @@ const Contenido = () => {
   const filteredContent = useMemo(() => {
     return [...content]
       .filter((post) => {
-        // Date range filter
-        if (dateRange?.from && dateRange?.to) {
+        // Date range filter - works with just 'from' or both 'from' and 'to'
+        if (dateRange?.from) {
           const postDate = new Date(post.date);
-          // Normalize dates to start/end of day for proper comparison
+          // Normalize from date to start of day
           const fromDate = new Date(dateRange.from);
           fromDate.setHours(0, 0, 0, 0);
-          const toDate = new Date(dateRange.to);
+          
+          // If we have a 'to' date, use it; otherwise use 'from' as both boundaries (single day)
+          const toDate = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
           toDate.setHours(23, 59, 59, 999);
+          
           if (postDate < fromDate || postDate > toDate) return false;
         }
         
