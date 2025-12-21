@@ -1,16 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { KPISection } from '@/components/dashboard/KPISection';
+import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
 import { ReachChart } from '@/components/dashboard/ReachChart';
-import { SocialPerformanceChart } from '@/components/dashboard/SocialPerformanceChart';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
-import { DatePresetKey } from '@/components/dashboard/DateRangePicker';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
-import { useKPIData } from '@/hooks/use-kpi-data';
+import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { useDailyMetrics } from '@/hooks/use-daily-metrics';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { getClientAlerts } from '@/data/mockData';
@@ -19,26 +17,19 @@ import { Download, Share2, Building2, Plus, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
-const DEFAULT_SELECTED_KPIS = ['reach', 'engagement', 'followers', 'impressions'];
-
 const Dashboard = () => {
   const { selectedClient, clientBrands, clients, clientsLoading } = useBrand();
-  const [platform, setPlatform] = useState('all');
-  const [selectedKPIs, setSelectedKPIs] = useState<string[]>(DEFAULT_SELECTED_KPIS);
-  const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // All hooks must be called before any conditional returns
   const clientId = selectedClient?.id || null;
 
   const {
-    kpis,
-    socialMetrics,
-    isLoading: kpisLoading,
-    isLiveData: kpisIsLive,
-    availablePlatforms,
-    refetch: refetchKPIs,
-  } = useKPIData(clientId, platform, datePreset);
+    platforms: socialPlatforms,
+    isLoading: socialLoading,
+    isLiveData: socialIsLive,
+    refetch: refetchSocial,
+  } = useSocialFollowers(clientId);
 
   const {
     dailyMetrics,
@@ -72,21 +63,14 @@ const Dashboard = () => {
   const handleRefreshAll = useCallback(async () => {
     setIsRefreshing(true);
     await Promise.all([
-      refetchKPIs(),
+      refetchSocial(),
       refetchDailyMetrics(),
       refetchContent(),
       refetchConnection(),
       refetchMetadata(),
     ]);
     setIsRefreshing(false);
-  }, [refetchKPIs, refetchDailyMetrics, refetchContent, refetchConnection, refetchMetadata]);
-
-  // Reset KPI selection when client changes
-  useEffect(() => {
-    setSelectedKPIs(DEFAULT_SELECTED_KPIS);
-    setPlatform('all');
-    setDatePreset('last_30d');
-  }, [clientId]);
+  }, [refetchSocial, refetchDailyMetrics, refetchContent, refetchConnection, refetchMetadata]);
 
   // Derived values (not hooks)
   const hasAdAccount = !!metaConnection?.ad_account_id;
@@ -201,22 +185,18 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* KPI Section - 2x2 Grid with Platform Selector */}
-      <div className="mb-4 md:mb-6">
-        <KPISection
-          kpis={kpis}
-          isLoading={kpisLoading}
-          isLiveData={kpisIsLive}
-          accentColor={accentColor}
-          platform={platform}
-          onPlatformChange={setPlatform}
-          selectedKPIs={selectedKPIs}
-          onSelectedKPIsChange={setSelectedKPIs}
-          availablePlatforms={availablePlatforms}
-        />
-      </div>
+      {/* Social Followers Section */}
+      {(socialLoading || socialPlatforms.length > 0) && (
+        <div className="mb-4 md:mb-6">
+          <SocialFollowersSection
+            platforms={socialPlatforms}
+            isLoading={socialLoading}
+            isLiveData={socialIsLive}
+          />
+        </div>
+      )}
 
-      {/* Content Grid - 2x5 Grid below KPIs */}
+      {/* Content Grid - 2x3 Grid below Social */}
       <div className="mb-4 md:mb-6">
         <ContentGrid
           data={content}
@@ -241,11 +221,6 @@ const Dashboard = () => {
           isLoading={dailyLoading}
           isLiveData={dailyIsLive}
           source={dailySource}
-        />
-        <SocialPerformanceChart
-          data={socialMetrics}
-          isLoading={kpisLoading}
-          isLiveData={kpisIsLive}
         />
       </div>
 
