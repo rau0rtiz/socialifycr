@@ -109,5 +109,54 @@ export const DateRangePicker = ({
       locale: es
     })}`;
   };
-  return;
+  return (
+    <div className="flex items-center gap-2">
+      <Select value={selectedPreset} onValueChange={handlePresetChange}>
+        <SelectTrigger className="w-[180px]">
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          <SelectValue placeholder="Seleccionar período" />
+        </SelectTrigger>
+        <SelectContent>
+          {Object.entries(presets).map(([key, preset]) => (
+            <SelectItem key={key} value={key}>
+              {preset.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {selectedPreset === 'custom' && (
+        <Popover open={isCustomOpen} onOpenChange={setIsCustomOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+            >
+              {formatDateRange()}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={date?.from}
+              selected={date}
+              onSelect={(newDate) => {
+                setDate(newDate);
+                if (newDate?.from && newDate?.to) {
+                  onChange?.('custom');
+                }
+              }}
+              numberOfMonths={2}
+              locale={es}
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+      )}
+    </div>
+  );
 };
