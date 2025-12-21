@@ -53,10 +53,7 @@ serve(async (req) => {
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scopes)}` +
         `&state=${encodedState}` +
-        `&response_type=code` +
-        `&display=popup` +
-        `&auth_type=reauthenticate` +
-        `&enable_profile_selector=true`;
+        `&response_type=code`;
 
       console.log('Generated auth URL for client:', clientId);
 
