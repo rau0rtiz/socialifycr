@@ -349,12 +349,12 @@ export const VideoIdeasSection = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Etiqueta</Label>
-                    <Select value={editTagId} onValueChange={setEditTagId}>
+                    <Select value={editTagId || "none"} onValueChange={(val) => setEditTagId(val === "none" ? "" : val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar etiqueta" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Sin etiqueta</SelectItem>
+                        <SelectItem value="none">Sin etiqueta</SelectItem>
                         {tags.map(tag => (
                           <SelectItem key={tag.id} value={tag.id}>
                             <div className="flex items-center gap-2">
@@ -372,12 +372,12 @@ export const VideoIdeasSection = ({
 
                   <div className="space-y-2">
                     <Label>Modelo</Label>
-                    <Select value={editModelId} onValueChange={setEditModelId}>
+                    <Select value={editModelId || "none"} onValueChange={(val) => setEditModelId(val === "none" ? "" : val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar modelo" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Sin modelo</SelectItem>
+                        <SelectItem value="none">Sin modelo</SelectItem>
                         {models.map(model => (
                           <SelectItem key={model.id} value={model.id}>
                             {model.name}
