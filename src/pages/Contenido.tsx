@@ -69,7 +69,7 @@ const Contenido = () => {
     isLoading: contentLoading,
     isLiveData: contentIsLive,
     refetch: refetchContent,
-  } = useContentData(clientId);
+  } = useContentData(clientId, 500); // Fetch up to 500 posts for full content view
 
   const {
     tags,
