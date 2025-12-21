@@ -5,6 +5,7 @@ import { TopPostsSection } from '@/components/dashboard/TopPostsSection';
 import { VideoIdeasSection } from '@/components/dashboard/VideoIdeasSection';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
+import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
@@ -12,7 +13,7 @@ import { useContentMetadata } from '@/hooks/use-content-metadata';
 import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { useVideoIdeas } from '@/hooks/use-video-ideas';
 import { useMetaConnection } from '@/hooks/use-meta-api';
-import { getClientAlerts } from '@/data/mockData';
+import { getClientAlerts, ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Building2, Plus, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +22,7 @@ import { Link } from 'react-router-dom';
 const Dashboard = () => {
   const { selectedClient, clientBrands, clients, clientsLoading } = useBrand();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
 
   // All hooks must be called before any conditional returns
   const clientId = selectedClient?.id || null;
@@ -221,6 +223,7 @@ const Dashboard = () => {
           content={content}
           isLoading={contentLoading}
           isLiveData={contentIsLive}
+          onPostClick={setSelectedPost}
         />
         <VideoIdeasSection
           ideas={videoIdeas}
@@ -245,6 +248,20 @@ const Dashboard = () => {
           <AlertsPanel data={alerts} />
         </div>
       </div>
+
+      {/* Content Detail Modal for Top Posts */}
+      <ContentDetailModal
+        post={selectedPost}
+        isOpen={!!selectedPost}
+        onClose={() => setSelectedPost(null)}
+        tags={tags}
+        models={models}
+        metadata={selectedPost ? metadata[selectedPost.id] : undefined}
+        onCreateTag={createTag}
+        onCreateModel={createModel}
+        onUpdateMetadata={updateMetadata}
+        onCapture48hMetrics={capture48hMetrics}
+      />
     </DashboardLayout>
   );
 };
