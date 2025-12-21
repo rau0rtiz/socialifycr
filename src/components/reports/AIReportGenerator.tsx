@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Copy, Download, RefreshCw, Wand2, FileText, TrendingUp, Target } from 'lucide-react';
+import { Sparkles, Copy, Download, RefreshCw, Wand2, FileText, TrendingUp, Target, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCampaigns } from '@/hooks/use-ads-data';
+import { useSaveReport } from '@/hooks/use-saved-reports';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +47,9 @@ export const AIReportGenerator = ({ clientId, hasAdAccount }: AIReportGeneratorP
   const [generatedReport, setGeneratedReport] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [reportTitle, setReportTitle] = useState('');
+
+  const saveReport = useSaveReport();
 
   const { data: campaignsResult, isLoading: campaignsLoading } = useCampaigns(
     clientId,
@@ -123,14 +128,37 @@ export const AIReportGenerator = ({ clientId, hasAdAccount }: AIReportGeneratorP
   };
 
   const downloadReport = () => {
+    const filename = reportTitle.trim() 
+      ? `${reportTitle.replace(/\s+/g, '-').toLowerCase()}.md`
+      : `reporte-${new Date().toISOString().split('T')[0]}.md`;
     const blob = new Blob([generatedReport], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `reporte-${new Date().toISOString().split('T')[0]}.md`;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Reporte descargado');
+  };
+
+  const handleSaveReport = async () => {
+    if (!clientId || !generatedReport) return;
+    
+    const title = reportTitle.trim() || `Reporte ${new Date().toLocaleDateString('es')}`;
+    
+    try {
+      await saveReport.mutateAsync({
+        clientId,
+        title,
+        templateType: selectedTemplate || undefined,
+        prompt: customPrompt,
+        content: generatedReport,
+      });
+      toast.success('Reporte guardado');
+      setReportTitle('');
+    } catch (error) {
+      toast.error('Error al guardar el reporte');
+    }
   };
 
   if (!hasAdAccount) {
@@ -237,20 +265,20 @@ export const AIReportGenerator = ({ clientId, hasAdAccount }: AIReportGeneratorP
 
       {/* Right Panel - Output */}
       <Card className="flex flex-col">
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex-row items-center justify-between space-y-0 gap-2">
           <CardTitle className="text-base">Reporte Generado</CardTitle>
           {generatedReport && (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+              <Button variant="ghost" size="icon" onClick={copyToClipboard} title="Copiar">
                 <Copy className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={downloadReport}>
+              <Button variant="ghost" size="icon" onClick={downloadReport} title="Descargar">
                 <Download className="h-4 w-4" />
               </Button>
             </div>
           )}
         </CardHeader>
-        <CardContent className="flex-1 min-h-[400px]">
+        <CardContent className="flex-1 min-h-[400px] flex flex-col">
           {isGenerating ? (
             <div className="space-y-3">
               <Skeleton className="h-4 w-full" />
@@ -260,11 +288,31 @@ export const AIReportGenerator = ({ clientId, hasAdAccount }: AIReportGeneratorP
               <Skeleton className="h-4 w-full" />
             </div>
           ) : generatedReport ? (
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                {generatedReport}
+            <>
+              <ScrollArea className="h-[320px] pr-4 flex-1">
+                <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                  {generatedReport}
+                </div>
+              </ScrollArea>
+              {/* Save Section */}
+              <div className="mt-4 pt-4 border-t border-border space-y-2">
+                <Input
+                  placeholder="Nombre del reporte (opcional)"
+                  value={reportTitle}
+                  onChange={(e) => setReportTitle(e.target.value)}
+                  className="h-9"
+                />
+                <Button
+                  onClick={handleSaveReport}
+                  disabled={saveReport.isPending}
+                  className="w-full"
+                  variant="secondary"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {saveReport.isPending ? 'Guardando...' : 'Guardar Reporte'}
+                </Button>
               </div>
-            </ScrollArea>
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
               <FileText className="h-12 w-12 mb-4 opacity-50" />
