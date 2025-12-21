@@ -58,10 +58,19 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   ARCHIVED: { label: 'Archivada', class: 'bg-muted text-muted-foreground border-border' },
 };
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-MX', {
+const formatCurrency = (value: number, currency: string = 'USD') => {
+  // Map currency codes to locale for proper formatting
+  const localeMap: Record<string, string> = {
+    USD: 'en-US',
+    CRC: 'es-CR',
+    MXN: 'es-MX',
+    EUR: 'es-ES',
+  };
+  const locale = localeMap[currency] || 'en-US';
+  
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'MXN',
+    currency: currency,
     minimumFractionDigits: 2,
   }).format(value);
 };
@@ -97,7 +106,7 @@ const MetricCard = ({
 );
 
 // Campaign Row Component
-const CampaignRow = ({ campaign, onClick }: { campaign: CampaignInsights; onClick: () => void }) => (
+const CampaignRow = ({ campaign, currency, onClick }: { campaign: CampaignInsights; currency: string; onClick: () => void }) => (
   <div
     className="p-4 border border-border rounded-lg hover:bg-muted/30 cursor-pointer transition-colors"
     onClick={onClick}
@@ -112,9 +121,9 @@ const CampaignRow = ({ campaign, onClick }: { campaign: CampaignInsights; onClic
         </div>
         <p className="text-xs text-muted-foreground">
           {campaign.dailyBudget
-            ? `Presupuesto diario: ${formatCurrency(campaign.dailyBudget)}`
+            ? `Presupuesto diario: ${formatCurrency(campaign.dailyBudget, currency)}`
             : campaign.lifetimeBudget
-              ? `Presupuesto total: ${formatCurrency(campaign.lifetimeBudget)}`
+              ? `Presupuesto total: ${formatCurrency(campaign.lifetimeBudget, currency)}`
               : 'Sin presupuesto definido'}
         </p>
       </div>
@@ -122,14 +131,14 @@ const CampaignRow = ({ campaign, onClick }: { campaign: CampaignInsights; onClic
     </div>
 
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-      <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(campaign.spend)} />
+      <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(campaign.spend, currency)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(campaign.reach)} />
       <MetricCard icon={Target} label={campaign.resultType} value={formatNumber(campaign.results)} />
       <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(campaign.clicks)} />
       <MetricCard
         icon={TrendingUp}
         label="Costo por resultado"
-        value={campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult) : '-'}
+        value={campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult, currency) : '-'}
       />
       {campaign.roas !== null && <MetricCard icon={TrendingUp} label="ROAS" value={`${campaign.roas.toFixed(2)}x`} />}
     </div>
@@ -137,7 +146,7 @@ const CampaignRow = ({ campaign, onClick }: { campaign: CampaignInsights; onClic
 );
 
 // AdSet Row Component
-const AdSetRow = ({ adset, onClick }: { adset: AdSetInsights; onClick: () => void }) => (
+const AdSetRow = ({ adset, currency, onClick }: { adset: AdSetInsights; currency: string; onClick: () => void }) => (
   <div
     className="p-4 border border-border rounded-lg hover:bg-muted/30 cursor-pointer transition-colors"
     onClick={onClick}
@@ -152,9 +161,9 @@ const AdSetRow = ({ adset, onClick }: { adset: AdSetInsights; onClick: () => voi
         </div>
         <p className="text-xs text-muted-foreground">
           {adset.dailyBudget
-            ? `Presupuesto diario: ${formatCurrency(adset.dailyBudget)}`
+            ? `Presupuesto diario: ${formatCurrency(adset.dailyBudget, currency)}`
             : adset.lifetimeBudget
-              ? `Presupuesto total: ${formatCurrency(adset.lifetimeBudget)}`
+              ? `Presupuesto total: ${formatCurrency(adset.lifetimeBudget, currency)}`
               : 'Presupuesto a nivel de campaña'}
         </p>
       </div>
@@ -162,21 +171,21 @@ const AdSetRow = ({ adset, onClick }: { adset: AdSetInsights; onClick: () => voi
     </div>
 
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-      <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(adset.spend)} />
+      <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(adset.spend, currency)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(adset.reach)} />
       <MetricCard icon={Target} label={adset.resultType} value={formatNumber(adset.results)} />
       <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(adset.clicks)} />
       <MetricCard
         icon={TrendingUp}
         label="Costo por resultado"
-        value={adset.costPerResult > 0 ? formatCurrency(adset.costPerResult) : '-'}
+        value={adset.costPerResult > 0 ? formatCurrency(adset.costPerResult, currency) : '-'}
       />
     </div>
   </div>
 );
 
 // Ad Row Component
-const AdRow = ({ ad }: { ad: AdInsights }) => (
+const AdRow = ({ ad, currency }: { ad: AdInsights; currency: string }) => (
   <div className="p-4 border border-border rounded-lg">
     <div className="flex items-start gap-4 mb-3">
       {ad.thumbnailUrl ? (
@@ -202,14 +211,14 @@ const AdRow = ({ ad }: { ad: AdInsights }) => (
     </div>
 
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-      <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(ad.spend)} />
+      <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(ad.spend, currency)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(ad.reach)} />
       <MetricCard icon={Target} label={ad.resultType} value={formatNumber(ad.results)} />
       <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(ad.clicks)} />
       <MetricCard
         icon={TrendingUp}
         label="Costo por resultado"
-        value={ad.costPerResult > 0 ? formatCurrency(ad.costPerResult) : '-'}
+        value={ad.costPerResult > 0 ? formatCurrency(ad.costPerResult, currency) : '-'}
       />
     </div>
   </div>
@@ -460,13 +469,13 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
         ) : (
           <div className="space-y-4">
             {viewLevel === 'campaigns' && (campaigns || []).map((campaign) => (
-              <CampaignRow key={campaign.id} campaign={campaign} onClick={() => handleCampaignClick(campaign)} />
+              <CampaignRow key={campaign.id} campaign={campaign} currency={currency} onClick={() => handleCampaignClick(campaign)} />
             ))}
             {viewLevel === 'adsets' && (adsets || []).map((adset) => (
-              <AdSetRow key={adset.id} adset={adset} onClick={() => handleAdSetClick(adset)} />
+              <AdSetRow key={adset.id} adset={adset} currency={currency} onClick={() => handleAdSetClick(adset)} />
             ))}
             {viewLevel === 'ads' && (ads || []).map((ad) => (
-              <AdRow key={ad.id} ad={ad} />
+              <AdRow key={ad.id} ad={ad} currency={currency} />
             ))}
           </div>
         )}
