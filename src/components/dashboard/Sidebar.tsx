@@ -30,10 +30,9 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const mainMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
-  { title: 'Campañas', url: '/campaigns', icon: Megaphone },
+  { title: 'Campañas y Reportes', url: '/reports', icon: BarChart3 },
   { title: 'Redes Sociales', url: '/social', icon: Share2 },
   { title: 'Contenido', url: '/content', icon: FileText },
-  { title: 'Reportes', url: '/reports', icon: BarChart3 },
 ];
 
 const managementMenuItems = [
