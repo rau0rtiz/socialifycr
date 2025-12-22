@@ -351,7 +351,8 @@ const Dashboard = () => {
           industry={selectedClient.industry || 'general'}
           content={content}
           hasAdAccount={hasAdAccount}
-          hasAIContext={!!selectedClient.ai_context}
+          aiContext={selectedClient.ai_context}
+          onEditContext={() => navigate('/clientes')}
           onAddVideoIdea={addIdea}
         />
       </div>
