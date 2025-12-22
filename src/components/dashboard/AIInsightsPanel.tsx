@@ -21,7 +21,6 @@ import {
   Megaphone,
   ChevronDown,
   ChevronUp,
-  Link2,
   Play,
   Image as ImageIcon,
   LayoutGrid,
@@ -549,18 +548,6 @@ export const AIInsightsPanel = ({
                                     <span className="font-medium">Justificación: </span>
                                     {result.justifications[result.insights.length + idx]}
                                   </div>
-                                )}
-                                {/* Source link if available */}
-                                {result.sources?.[idx] && (
-                                  <a 
-                                    href={result.sources[idx]} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                                  >
-                                    <Link2 className="h-3 w-3" />
-                                    Ver fuente
-                                  </a>
                                 )}
                               </div>
                             </div>
