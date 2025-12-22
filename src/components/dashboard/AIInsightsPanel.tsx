@@ -42,6 +42,7 @@ interface AIInsightsPanelProps {
   industry: string;
   content: ContentPost[];
   hasAdAccount?: boolean;
+  hasAIContext?: boolean;
   onAddVideoIdea?: (idea: Omit<VideoIdea, 'id' | 'created_at' | 'updated_at' | 'todos'>) => Promise<VideoIdea | null>;
 }
 
@@ -92,6 +93,7 @@ export const AIInsightsPanel = ({
   industry, 
   content,
   hasAdAccount = false,
+  hasAIContext = false,
   onAddVideoIdea
 }: AIInsightsPanelProps) => {
   const [activeTab, setActiveTab] = useState<InsightType>('content-ideas');
@@ -224,6 +226,13 @@ export const AIInsightsPanel = ({
               {showContextInput ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
               Contexto adicional
             </Button>
+
+            {hasAIContext && (
+              <Badge variant="secondary" className="text-xs gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                <Sparkles className="h-3 w-3" />
+                Contexto IA activo
+              </Badge>
+            )}
 
             {hasAdAccount && (
               <Badge variant="secondary" className="text-xs gap-1">
