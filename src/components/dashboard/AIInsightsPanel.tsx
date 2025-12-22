@@ -48,7 +48,9 @@ interface AIInsightsPanelProps {
   onAddVideoIdea?: (idea: Omit<VideoIdea, 'id' | 'created_at' | 'updated_at' | 'todos'>) => Promise<VideoIdea | null>;
 }
 
-const COUNTRIES = [
+const REGIONS = [
+  { value: '', label: 'Sin región', flag: '🌐' },
+  { value: 'LATAM', label: 'Latinoamérica', flag: '🌎' },
   { value: 'CR', label: 'Costa Rica', flag: '🇨🇷' },
   { value: 'MX', label: 'México', flag: '🇲🇽' },
   { value: 'CO', label: 'Colombia', flag: '🇨🇴' },
@@ -167,7 +169,7 @@ export const AIInsightsPanel = ({
     return 'bg-muted text-muted-foreground border-border';
   };
 
-  const countryInfo = COUNTRIES.find(c => c.value === selectedCountry);
+  const regionInfo = REGIONS.find(c => c.value === selectedCountry);
 
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
@@ -205,15 +207,15 @@ export const AIInsightsPanel = ({
             <div className="flex items-center gap-2">
               <Globe className="h-4 w-4 text-muted-foreground" />
               <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                <SelectTrigger className="w-[160px] h-8 text-sm">
+                <SelectTrigger className="w-[180px] h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {COUNTRIES.map(country => (
-                    <SelectItem key={country.value} value={country.value}>
+                  {REGIONS.map(region => (
+                    <SelectItem key={region.value || 'none'} value={region.value}>
                       <span className="flex items-center gap-2">
-                        <span>{country.flag}</span>
-                        {country.label}
+                        <span>{region.flag}</span>
+                        {region.label}
                       </span>
                     </SelectItem>
                   ))}
@@ -321,7 +323,7 @@ export const AIInsightsPanel = ({
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-primary" />
-                        Tendencias Actuales {countryInfo && `en ${countryInfo.label}`}
+                        Tendencias Actuales {regionInfo && regionInfo.value && `en ${regionInfo.label}`}
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {result.trendingTopics.map((topic, idx) => (
@@ -563,7 +565,7 @@ export const AIInsightsPanel = ({
                     Haz clic en "Generar" para obtener insights con IA
                   </p>
                   <p className="text-xs mt-1 text-muted-foreground/70">
-                    Región: {countryInfo?.flag} {countryInfo?.label}
+                    Región: {regionInfo?.flag} {regionInfo?.label || 'Sin región'}
                   </p>
                 </div>
               )}
