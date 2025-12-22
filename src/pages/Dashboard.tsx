@@ -355,7 +355,6 @@ const Dashboard = () => {
           hasAdAccount={hasAdAccount}
           aiContext={selectedClient.ai_context}
           preferredRegion={selectedClient.preferred_region}
-          onEditContext={() => navigate('/clientes')}
           onRegionChange={async (region) => {
             await supabase
               .from('clients')
