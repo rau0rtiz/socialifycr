@@ -19,7 +19,7 @@ import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
-import { Download, Share2, Building2, Plus, RefreshCw, X } from 'lucide-react';
+import { Download, Share2, Building2, Plus, RefreshCw, X, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
@@ -241,6 +241,19 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Ver Dashboard button - only for agency when not in preview mode */}
+            {isAgency && !isPreviewMode && (
+              <Button
+                variant="default"
+                size="sm"
+                className="text-xs md:text-sm h-8"
+                onClick={() => navigate(`/?preview=${selectedClient.id}`)}
+              >
+                <Eye className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Ver Dashboard</span>
+                <span className="sm:hidden">Ver</span>
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
