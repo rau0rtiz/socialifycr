@@ -4,10 +4,8 @@ import { ClientsTable } from '@/components/clientes/ClientsTable';
 import { ClientFormDialog } from '@/components/clientes/ClientFormDialog';
 import { ClientDetailDialog } from '@/components/clientes/ClientDetailDialog';
 import { DeleteConfirmDialog } from '@/components/clientes/DeleteConfirmDialog';
-import { ClientBrandSettings } from '@/components/clientes/ClientBrandSettings';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Users, Palette } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuditLog } from '@/hooks/use-audit-log';
@@ -121,7 +119,7 @@ const Clientes = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
-            <p className="text-muted-foreground">Gestiona tus clientes, conexiones y configuración de marca</p>
+            <p className="text-muted-foreground">Gestiona tus clientes y conexiones</p>
           </div>
           <Button onClick={() => setIsFormOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -129,33 +127,14 @@ const Clientes = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="clients" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="clients" className="gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Clientes</span>
-            </TabsTrigger>
-            <TabsTrigger value="brand" className="gap-2">
-              <Palette className="h-4 w-4" />
-              <span className="hidden sm:inline">Marca</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="clients">
-            <ClientsTable
-              clients={clients}
-              loading={loading}
-              onSelectClient={setSelectedClient}
-              selectedClientId={selectedClient?.id}
-              onEditClient={handleEditClient}
-              onDeleteClient={handleRequestDelete}
-            />
-          </TabsContent>
-
-          <TabsContent value="brand">
-            <ClientBrandSettings clients={clients} loading={loading} />
-          </TabsContent>
-        </Tabs>
+        <ClientsTable
+          clients={clients}
+          loading={loading}
+          onSelectClient={setSelectedClient}
+          selectedClientId={selectedClient?.id}
+          onEditClient={handleEditClient}
+          onDeleteClient={handleRequestDelete}
+        />
 
         <ClientDetailDialog
           client={selectedClient}

@@ -185,6 +185,48 @@ export const ClientDetailDialog = ({
               </TabsContent>
 
               <TabsContent value="brand" className="mt-0 space-y-4">
+                {/* Live Preview */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Vista previa en tiempo real</Label>
+                  <div 
+                    className="rounded-xl p-4 border overflow-hidden transition-all duration-300"
+                    style={{ 
+                      background: `linear-gradient(135deg, hsl(${brand.primaryColor}) 0%, hsl(${brand.accentColor}) 100%)` 
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-lg bg-background/90 backdrop-blur-sm p-1.5 shadow-lg flex items-center justify-center">
+                        {brand.logoUrl ? (
+                          <img 
+                            src={brand.logoUrl} 
+                            alt="Preview" 
+                            className="h-full w-full object-contain"
+                          />
+                        ) : (
+                          <span className="text-lg font-bold">{client.name.charAt(0)}</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white drop-shadow-sm">{client.name}</p>
+                        <div className="flex gap-1.5 mt-1">
+                          <div 
+                            className="h-4 w-4 rounded border border-white/30"
+                            style={{ backgroundColor: `hsl(${brand.primaryColor})` }}
+                          />
+                          <div 
+                            className="h-4 w-4 rounded border border-white/30"
+                            style={{ backgroundColor: `hsl(${brand.accentColor})` }}
+                          />
+                          <div 
+                            className="h-4 w-4 rounded border border-white/30"
+                            style={{ backgroundColor: `hsl(${brand.secondaryColor})` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Logo */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Logo del cliente</Label>
