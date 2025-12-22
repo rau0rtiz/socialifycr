@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContentPost } from '@/data/mockData';
-import { Eye, Heart, MessageCircle, Play, Film, LayoutGrid, ImageIcon, Wifi, TrendingUp, Crown, Medal, Award } from 'lucide-react';
+import { Eye, Heart, MessageCircle, Play, Film, LayoutGrid, ImageIcon, Wifi, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TopPostsSectionProps {
@@ -29,11 +29,48 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
+// Podium heights for 5 positions (left to right: 4, 2, 1, 3, 5)
+const podiumConfig = {
+  1: {
+    height: 'h-32',
+    bgColor: 'bg-amber-500',
+    textColor: 'text-amber-500',
+    borderColor: 'border-amber-500/30',
+  },
+  2: {
+    height: 'h-28',
+    bgColor: 'bg-slate-400',
+    textColor: 'text-slate-400',
+    borderColor: 'border-slate-400/30',
+  },
+  3: {
+    height: 'h-24',
+    bgColor: 'bg-amber-700',
+    textColor: 'text-amber-700',
+    borderColor: 'border-amber-700/30',
+  },
+  4: {
+    height: 'h-20',
+    bgColor: 'bg-slate-500',
+    textColor: 'text-slate-500',
+    borderColor: 'border-slate-500/30',
+  },
+  5: {
+    height: 'h-16',
+    bgColor: 'bg-slate-600',
+    textColor: 'text-slate-600',
+    borderColor: 'border-slate-600/30',
+  },
+};
+
 const PodiumSkeleton = () => (
-  <div className="flex items-end justify-center gap-3 h-48">
-    <Skeleton className="w-24 h-28 rounded-t-lg" />
-    <Skeleton className="w-28 h-36 rounded-t-lg" />
-    <Skeleton className="w-24 h-24 rounded-t-lg" />
+  <div className="flex items-end justify-center gap-2">
+    {[4, 2, 1, 3, 5].map((rank) => (
+      <div key={rank} className="flex flex-col items-center flex-1">
+        <Skeleton className="w-full aspect-square rounded-lg mb-2" />
+        <Skeleton className={cn("w-full rounded-t-lg", podiumConfig[rank as keyof typeof podiumConfig].height)} />
+      </div>
+    ))}
   </div>
 );
 
@@ -43,54 +80,27 @@ const PodiumPost = ({
   onClick 
 }: { 
   post: ContentPost; 
-  rank: 1 | 2 | 3; 
+  rank: 1 | 2 | 3 | 4 | 5; 
   onClick?: (post: ContentPost) => void;
 }) => {
   const typeInfo = typeConfig[post.type] || typeConfig.image;
   const TypeIcon = typeInfo.icon;
   const engagement = (post.likes || 0) + (post.comments || 0);
-
-  const podiumConfig = {
-    1: {
-      height: 'h-36',
-      order: 'order-2',
-      icon: Crown,
-      iconColor: 'text-amber-400',
-      bgGradient: 'from-amber-500/20 to-amber-500/5',
-      borderColor: 'border-amber-500/30',
-      badgeBg: 'bg-amber-500',
-    },
-    2: {
-      height: 'h-28',
-      order: 'order-1',
-      icon: Medal,
-      iconColor: 'text-slate-400',
-      bgGradient: 'from-slate-400/20 to-slate-400/5',
-      borderColor: 'border-slate-400/30',
-      badgeBg: 'bg-slate-400',
-    },
-    3: {
-      height: 'h-24',
-      order: 'order-3',
-      icon: Award,
-      iconColor: 'text-amber-700',
-      bgGradient: 'from-amber-700/20 to-amber-700/5',
-      borderColor: 'border-amber-700/30',
-      badgeBg: 'bg-amber-700',
-    },
-  };
-
   const config = podiumConfig[rank];
-  const RankIcon = config.icon;
 
   return (
     <div 
-      className={cn(
-        "flex flex-col items-center cursor-pointer group flex-1 max-w-[140px]",
-        config.order
-      )}
+      className="flex flex-col items-center cursor-pointer group flex-1 min-w-0"
       onClick={() => onClick?.(post)}
     >
+      {/* Rank number at top */}
+      <div className={cn(
+        "w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold mb-2 shadow-md",
+        config.bgColor
+      )}>
+        {rank}
+      </div>
+
       {/* Thumbnail */}
       <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-muted mb-2 group-hover:ring-2 ring-primary/50 transition-all">
         {post.thumbnailUrl || post.thumbnail ? (
@@ -102,7 +112,7 @@ const PodiumPost = ({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <TypeIcon className="h-8 w-8 text-muted-foreground" />
+            <TypeIcon className="h-6 w-6 text-muted-foreground" />
           </div>
         )}
         <div className="absolute top-1 left-1">
@@ -113,37 +123,61 @@ const PodiumPost = ({
             <TypeIcon className="h-2.5 w-2.5" />
           </Badge>
         </div>
-        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
-          <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg", config.badgeBg)}>
-            {rank}
-          </div>
-        </div>
       </div>
 
       {/* Podium stand */}
       <div 
         className={cn(
-          "w-full rounded-t-lg bg-gradient-to-t border-x border-t flex flex-col items-center justify-end pb-2 pt-4",
+          "w-full rounded-t-lg border-x border-t flex flex-col items-center justify-center",
           config.height,
-          config.bgGradient,
-          config.borderColor
+          config.borderColor,
+          "bg-gradient-to-t from-muted/50 to-transparent"
         )}
       >
-        <RankIcon className={cn("h-5 w-5 mb-1", config.iconColor)} />
-        <div className="text-center px-1">
-          <p className="text-lg font-bold text-foreground">{formatNumber(engagement)}</p>
-          <p className="text-[10px] text-muted-foreground">engagement</p>
-        </div>
-        <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
+        <p className="text-sm font-bold text-foreground">{formatNumber(engagement)}</p>
+        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
           <span className="flex items-center gap-0.5">
-            <Heart className="h-2.5 w-2.5" />
+            <Heart className="h-2 w-2" />
             {formatNumber(post.likes || 0)}
           </span>
           <span className="flex items-center gap-0.5">
-            <MessageCircle className="h-2.5 w-2.5" />
+            <MessageCircle className="h-2 w-2" />
             {formatNumber(post.comments || 0)}
           </span>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const EmptyPodiumSlot = ({ rank }: { rank: 1 | 2 | 3 | 4 | 5 }) => {
+  const config = podiumConfig[rank];
+  
+  return (
+    <div className="flex flex-col items-center flex-1 min-w-0 opacity-40">
+      {/* Rank number at top */}
+      <div className={cn(
+        "w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold mb-2",
+        config.bgColor
+      )}>
+        {rank}
+      </div>
+
+      {/* Empty thumbnail */}
+      <div className="w-full aspect-square rounded-lg bg-muted/50 mb-2 flex items-center justify-center border border-dashed border-muted-foreground/30">
+        <span className="text-xs text-muted-foreground">-</span>
+      </div>
+
+      {/* Podium stand */}
+      <div 
+        className={cn(
+          "w-full rounded-t-lg border-x border-t flex items-center justify-center",
+          config.height,
+          config.borderColor,
+          "bg-gradient-to-t from-muted/30 to-transparent"
+        )}
+      >
+        <span className="text-xs text-muted-foreground">-</span>
       </div>
     </div>
   );
@@ -155,7 +189,7 @@ export const TopPostsSection = ({
   isLiveData,
   onPostClick,
 }: TopPostsSectionProps) => {
-  // Get top 3 posts from this month sorted by engagement
+  // Get top 5 posts from this month sorted by engagement
   const topPosts = useMemo(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -167,8 +201,11 @@ export const TopPostsSection = ({
         const engagementB = (b.likes || 0) + (b.comments || 0) + (b.views || 0);
         return engagementB - engagementA;
       })
-      .slice(0, 3);
+      .slice(0, 5);
   }, [content]);
+
+  // Order for display: 4, 2, 1, 3, 5 (podium style left to right)
+  const displayOrder = [4, 2, 1, 3, 5] as const;
 
   return (
     <Card className="h-full">
@@ -197,10 +234,14 @@ export const TopPostsSection = ({
             No hay posts este mes
           </div>
         ) : (
-          <div className="flex items-end justify-center gap-2 pt-4 pb-2">
-            {topPosts[1] && <PodiumPost post={topPosts[1]} rank={2} onClick={onPostClick} />}
-            {topPosts[0] && <PodiumPost post={topPosts[0]} rank={1} onClick={onPostClick} />}
-            {topPosts[2] && <PodiumPost post={topPosts[2]} rank={3} onClick={onPostClick} />}
+          <div className="flex items-end justify-center gap-2 pt-2 pb-2">
+            {displayOrder.map((rank) => {
+              const post = topPosts[rank - 1];
+              if (post) {
+                return <PodiumPost key={post.id} post={post} rank={rank} onClick={onPostClick} />;
+              }
+              return <EmptyPodiumSlot key={`empty-${rank}`} rank={rank} />;
+            })}
           </div>
         )}
       </CardContent>
