@@ -18,10 +18,12 @@ export interface CampaignData {
   endDate: string;
 }
 
+export type NetworkType = 'instagram' | 'facebook' | 'tiktok' | 'linkedin' | 'youtube';
+
 export interface ContentPost {
   id: string;
   title: string;
-  network: 'instagram' | 'facebook' | 'tiktok' | 'linkedin';
+  network: NetworkType;
   type: 'image' | 'video' | 'carousel' | 'story' | 'reel';
   status: 'published' | 'scheduled' | 'draft';
   engagement: number;
@@ -39,6 +41,9 @@ export interface ContentPost {
   mediaUrl?: string;
   caption?: string; // Full post caption/description
   isLiveData?: boolean;
+  // Multi-platform fields
+  platforms?: NetworkType[];
+  crossPostedGroup?: string;
 }
 
 export interface DailyMetric {

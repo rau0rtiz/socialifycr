@@ -6,7 +6,7 @@ import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
-import { ContentPost } from '@/data/mockData';
+import { ContentPost, NetworkType } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,38 @@ const statusConfig: Record<string, { label: string; class: string }> = {
   draft: { label: 'Borrador', class: 'bg-muted text-muted-foreground' },
 };
 
+const platformConfig: Record<NetworkType, { 
+  label: string; 
+  class: string;
+  icon: string;
+}> = {
+  instagram: { 
+    label: 'Instagram', 
+    class: 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-pink-600 border-pink-500/30',
+    icon: '📷'
+  },
+  youtube: { 
+    label: 'YouTube', 
+    class: 'bg-red-500/10 text-red-600 border-red-500/20',
+    icon: '▶️'
+  },
+  facebook: { 
+    label: 'Facebook', 
+    class: 'bg-blue-600/10 text-blue-600 border-blue-600/20',
+    icon: '👤'
+  },
+  tiktok: { 
+    label: 'TikTok', 
+    class: 'bg-slate-900/10 text-slate-700 border-slate-500/20 dark:bg-slate-100/10 dark:text-slate-300',
+    icon: '🎵'
+  },
+  linkedin: { 
+    label: 'LinkedIn', 
+    class: 'bg-sky-600/10 text-sky-600 border-sky-600/20',
+    icon: '💼'
+  },
+};
+
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
@@ -68,6 +100,7 @@ const Contenido = () => {
     content,
     isLoading: contentLoading,
     isLiveData: contentIsLive,
+    availablePlatforms,
     refetch: refetchContent,
   } = useContentData(clientId, 500); // Fetch up to 500 posts for full content view
 
@@ -89,10 +122,23 @@ const Contenido = () => {
   const [selectedType, setSelectedType] = useState<string>('__all__');
   const [selectedTagId, setSelectedTagId] = useState<string>('__all__');
   const [selectedModelId, setSelectedModelId] = useState<string>('__all__');
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('__all__');
 
   // Modal state
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Get unique platforms from content
+  const uniquePlatforms = useMemo(() => {
+    const platforms = new Set<NetworkType>();
+    content.forEach(post => {
+      platforms.add(post.network);
+      if (post.platforms) {
+        post.platforms.forEach(p => platforms.add(p));
+      }
+    });
+    return Array.from(platforms);
+  }, [content]);
 
   // Filter content
   const filteredContent = useMemo(() => {
@@ -122,6 +168,12 @@ const Contenido = () => {
         // Type filter
         if (selectedType !== '__all__' && post.type !== selectedType) return false;
         
+        // Platform filter
+        if (selectedPlatform !== '__all__') {
+          const postPlatforms = post.platforms || [post.network];
+          if (!postPlatforms.includes(selectedPlatform as NetworkType)) return false;
+        }
+        
         // Tag filter
         if (selectedTagId !== '__all__') {
           const postMetadata = metadata[post.id];
@@ -137,7 +189,7 @@ const Contenido = () => {
         return true;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [content, dateRange, searchQuery, selectedType, selectedTagId, selectedModelId, metadata]);
+  }, [content, dateRange, searchQuery, selectedType, selectedPlatform, selectedTagId, selectedModelId, metadata]);
 
   const handlePostClick = (post: ContentPost) => {
     setSelectedPost(post);
@@ -155,9 +207,10 @@ const Contenido = () => {
     setSelectedType('__all__');
     setSelectedTagId('__all__');
     setSelectedModelId('__all__');
+    setSelectedPlatform('__all__');
   };
 
-  const hasActiveFilters = searchQuery || dateRange?.from || selectedType !== '__all__' || selectedTagId !== '__all__' || selectedModelId !== '__all__';
+  const hasActiveFilters = searchQuery || dateRange?.from || selectedType !== '__all__' || selectedTagId !== '__all__' || selectedModelId !== '__all__' || selectedPlatform !== '__all__';
 
   const formatDateRange = () => {
     if (!dateRange?.from) return 'Filtrar por fecha';
@@ -202,6 +255,18 @@ const Contenido = () => {
               En vivo
             </Badge>
           )}
+          {/* Platform badges */}
+          <div className="flex gap-1">
+            {availablePlatforms.map(platform => (
+              <Badge 
+                key={platform}
+                variant="outline" 
+                className={cn("text-[9px] px-1.5", platformConfig[platform]?.class)}
+              >
+                {platformConfig[platform]?.icon} {platformConfig[platform]?.label}
+              </Badge>
+            ))}
+          </div>
         </div>
         <Button
           variant="outline"
@@ -231,7 +296,7 @@ const Contenido = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -282,6 +347,24 @@ const Contenido = () => {
                 )}
               </PopoverContent>
             </Popover>
+
+            {/* Platform filter */}
+            <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Plataforma" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas las plataformas</SelectItem>
+                {uniquePlatforms.map((platform) => (
+                  <SelectItem key={platform} value={platform}>
+                    <span className="flex items-center gap-2">
+                      <span>{platformConfig[platform]?.icon}</span>
+                      {platformConfig[platform]?.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Type filter */}
             <Select value={selectedType} onValueChange={setSelectedType}>
@@ -359,6 +442,7 @@ const Contenido = () => {
             const postMetadata = metadata[post.id];
             const postTag = postMetadata?.tag || tags.find(t => t.id === postMetadata?.tag_id);
             const caption = post.caption || post.title;
+            const postPlatform = platformConfig[post.network];
             
             return (
               <div 
@@ -381,6 +465,18 @@ const Contenido = () => {
                         <TypeIcon className="h-8 w-8 text-muted-foreground" />
                       </div>
                     )}
+                    {/* Platform badge on thumbnail */}
+                    <div className="absolute bottom-1 left-1">
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "text-[8px] px-1 py-0 gap-0.5 backdrop-blur-sm",
+                          postPlatform?.class
+                        )}
+                      >
+                        {postPlatform?.icon}
+                      </Badge>
+                    </div>
                     <div className="absolute top-1 left-1">
                       <Badge 
                         variant="outline" 
@@ -438,14 +534,14 @@ const Contenido = () => {
                           <Heart className="h-2.5 w-2.5" />
                           <span>{formatNumber(post.likes)}</span>
                         </div>
-                      ) : post.engagement > 0 && (
+                      ) : (
                         <div className="flex items-center gap-0.5">
                           <Heart className="h-2.5 w-2.5" />
                           <span>{formatNumber(post.engagement)}</span>
                         </div>
                       )}
-
-                      <span className="text-muted-foreground/60 ml-auto">
+                      
+                      <span className="ml-auto">
                         {format(new Date(post.date), 'dd MMM yyyy', { locale: es })}
                       </span>
                     </div>
@@ -457,20 +553,22 @@ const Contenido = () => {
         )}
       </div>
 
-      {/* Detail Modal */}
-      <ContentDetailModal
-        post={selectedPost}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        tags={tags}
-        models={models}
-        metadata={selectedPost ? metadata[selectedPost.id] : undefined}
-        onCreateTag={createTag}
-        onCreateModel={createModel}
-        onUpdateMetadata={updateMetadata}
-        onUpdateMetadataMultiple={updateMetadataMultiple}
-        onCapture48hMetrics={capture48hMetrics}
-      />
+      {/* Content Detail Modal */}
+      {selectedPost && (
+        <ContentDetailModal
+          isOpen={isModalOpen}
+          post={selectedPost}
+          onClose={handleCloseModal}
+          tags={tags}
+          models={models}
+          metadata={metadata[selectedPost.id]}
+          onCreateTag={createTag}
+          onCreateModel={createModel}
+          onUpdateMetadata={updateMetadata}
+          onUpdateMetadataMultiple={updateMetadataMultiple}
+          onCapture48hMetrics={capture48hMetrics}
+        />
+      )}
     </DashboardLayout>
   );
 };
