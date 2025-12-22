@@ -7,7 +7,7 @@ import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { FunnelModule } from '@/components/dashboard/FunnelModule';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
-import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
+
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
@@ -16,7 +16,7 @@ import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { useVideoIdeas } from '@/hooks/use-video-ideas';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
-import { getClientAlerts, ContentPost } from '@/data/mockData';
+import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Building2, Plus, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -93,7 +93,6 @@ const Dashboard = () => {
 
   // Derived values (not hooks)
   const hasAdAccount = !!metaConnection?.ad_account_id;
-  const alerts = selectedClient ? getClientAlerts(selectedClient.id) : [];
 
   // Show loading state while clients are being fetched or role is loading
   if (clientsLoading || roleLoading) {
@@ -296,13 +295,6 @@ const Dashboard = () => {
       {/* Campaigns Drilldown */}
       <div className="mb-4 md:mb-6">
         <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
-      </div>
-
-      {/* Alerts */}
-      <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
-        <div className="lg:col-span-3">
-          <AlertsPanel data={alerts} />
-        </div>
       </div>
 
       {/* Content Detail Modal for Top Posts */}
