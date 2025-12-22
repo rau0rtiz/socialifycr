@@ -146,22 +146,27 @@ export const ContentDetailModal = ({
           {/* Left: Preview */}
           <div className="space-y-4">
             {/* Media Preview */}
-            <div className="aspect-square rounded-lg bg-muted overflow-hidden">
+            <div className="aspect-square rounded-lg bg-muted overflow-hidden relative group">
               {post.thumbnailUrl || post.thumbnail ? (
-                post.type === 'video' || post.type === 'reel' ? (
-                  <video 
-                    src={post.mediaUrl || post.thumbnailUrl || post.thumbnail}
-                    poster={post.thumbnailUrl || post.thumbnail}
-                    controls
-                    className="w-full h-full object-contain bg-black"
-                  />
-                ) : (
+                <>
                   <img 
                     src={post.thumbnailUrl || post.thumbnail} 
                     alt={post.title}
                     className="w-full h-full object-cover"
                   />
-                )
+                  {(post.type === 'video' || post.type === 'reel') && post.permalink && (
+                    <a 
+                      href={post.permalink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+                        <Play className="h-8 w-8 text-black ml-1" />
+                      </div>
+                    </a>
+                  )}
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <TypeIcon className="h-16 w-16 text-muted-foreground" />
