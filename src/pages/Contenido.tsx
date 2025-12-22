@@ -465,35 +465,34 @@ const Contenido = () => {
                         <TypeIcon className="h-8 w-8 text-muted-foreground" />
                       </div>
                     )}
-                    {/* Platform badge on thumbnail */}
-                    <div className="absolute bottom-1 left-1">
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          "text-[8px] px-1 py-0 gap-0.5 backdrop-blur-sm",
-                          postPlatform?.class
-                        )}
-                      >
-                        {postPlatform?.icon}
-                      </Badge>
-                    </div>
-                    <div className="absolute top-1 left-1">
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          "text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm",
-                          typeInfo.class
-                        )}
-                      >
-                        <TypeIcon className="h-2 w-2" />
-                      </Badge>
-                    </div>
+                    {/* Video/Reel indicator */}
+                    {(post.type === 'video' || post.type === 'reel') && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <Play className="h-6 w-6 text-white drop-shadow-md" />
+                      </div>
+                    )}
                   </div>
                   
                   {/* Content info */}
                   <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    {/* Tags row */}
+                    {/* Platform & Type tags row */}
                     <div className="flex items-center gap-1 flex-wrap mb-1">
+                      {/* Platform badge */}
+                      <Badge 
+                        variant="outline" 
+                        className={cn("text-[9px] px-1.5 py-0 gap-1", postPlatform?.class)}
+                      >
+                        <span>{postPlatform?.icon}</span>
+                        {postPlatform?.label}
+                      </Badge>
+                      {/* Content type badge */}
+                      <Badge 
+                        variant="outline" 
+                        className={cn("text-[9px] px-1.5 py-0 gap-1", typeInfo.class)}
+                      >
+                        <TypeIcon className="h-2.5 w-2.5" />
+                        {typeInfo.label}
+                      </Badge>
                       {postTag && (
                         <Badge 
                           variant="outline" 
@@ -507,12 +506,6 @@ const Contenido = () => {
                           {postTag.name}
                         </Badge>
                       )}
-                      <Badge 
-                        variant="secondary" 
-                        className={cn("text-[9px] px-1 py-0", statusConfig[post.status].class)}
-                      >
-                        {statusConfig[post.status].label}
-                      </Badge>
                     </div>
 
                     {/* Caption */}
