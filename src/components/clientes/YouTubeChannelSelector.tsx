@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Youtube, Users, Video } from 'lucide-react';
+import { Youtube, Users, Video, Crown, Shield } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface YouTubeChannel {
   id: string;
@@ -12,6 +13,7 @@ interface YouTubeChannel {
   thumbnail?: string;
   subscriberCount?: string;
   videoCount?: string;
+  isOwned?: boolean;
 }
 
 interface YouTubeChannelSelectorProps {
@@ -90,7 +92,21 @@ export function YouTubeChannelSelector({
                   htmlFor={channel.id}
                   className="flex-1 cursor-pointer"
                 >
-                  <div className="font-medium">{channel.name}</div>
+                  <div className="flex items-center gap-2 font-medium">
+                    {channel.name}
+                    {channel.isOwned !== undefined && (
+                      <Badge 
+                        variant={channel.isOwned ? "default" : "secondary"} 
+                        className="text-[10px] px-1.5 py-0 h-4"
+                      >
+                        {channel.isOwned ? (
+                          <><Crown className="h-2.5 w-2.5 mr-0.5" /> Tu canal</>
+                        ) : (
+                          <><Shield className="h-2.5 w-2.5 mr-0.5" /> Administras</>
+                        )}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
