@@ -9,6 +9,7 @@ export interface Client {
   primary_color: string | null;
   accent_color: string | null;
   ai_context: string | null;
+  preferred_region: string | null;
 }
 
 interface PlatformBrand {
@@ -85,7 +86,7 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name, industry, logo_url, primary_color, accent_color, ai_context')
+        .select('id, name, industry, logo_url, primary_color, accent_color, ai_context, preferred_region')
         .order('name');
 
       if (error) {
