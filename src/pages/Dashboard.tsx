@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
 import { TopPostsSection } from '@/components/dashboard/TopPostsSection';
@@ -14,6 +14,7 @@ import { useContentMetadata } from '@/hooks/use-content-metadata';
 import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { useVideoIdeas } from '@/hooks/use-video-ideas';
 import { useMetaConnection } from '@/hooks/use-meta-api';
+import { useUserRole } from '@/hooks/use-user-role';
 import { getClientAlerts, ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Building2, Plus, RefreshCw } from 'lucide-react';
@@ -21,9 +22,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { selectedClient, clientBrands, clients, clientsLoading } = useBrand();
+  const { selectedClient, clientBrands, clients, clientsLoading, setSelectedClient } = useBrand();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
+  const { isAgency, isClient, clientAccess, loading: roleLoading } = useUserRole();
+
+  // Auto-select client for client users based on their access
+  useEffect(() => {
+    if (!roleLoading && isClient && clientAccess.length > 0 && clients.length > 0) {
+      const assignedClientId = clientAccess[0].clientId;
+      const assignedClient = clients.find(c => c.id === assignedClientId);
+      if (assignedClient && (!selectedClient || selectedClient.id !== assignedClientId)) {
+        setSelectedClient(assignedClient);
+      }
+    }
+  }, [isClient, clientAccess, clients, selectedClient, setSelectedClient, roleLoading]);
 
   // All hooks must be called before any conditional returns
   const clientId = selectedClient?.id || null;
@@ -81,12 +94,12 @@ const Dashboard = () => {
   const hasAdAccount = !!metaConnection?.ad_account_id;
   const alerts = selectedClient ? getClientAlerts(selectedClient.id) : [];
 
-  // Show loading state while clients are being fetched
-  if (clientsLoading) {
+  // Show loading state while clients are being fetched or role is loading
+  if (clientsLoading || roleLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-muted-foreground">Cargando clientes...</div>
+          <div className="text-muted-foreground">Cargando...</div>
         </div>
       </DashboardLayout>
     );
@@ -94,6 +107,27 @@ const Dashboard = () => {
 
   // Show empty state if no clients or no selected client
   if (clients.length === 0 || !selectedClient) {
+    // For client users without access, show a different message
+    if (isClient && clientAccess.length === 0) {
+      return (
+        <DashboardLayout>
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <Card className="max-w-md w-full">
+              <CardHeader className="text-center">
+                <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Building2 className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <CardTitle>Sin acceso asignado</CardTitle>
+                <CardDescription>
+                  No tienes acceso a ningún cliente. Contacta a tu agencia para obtener acceso.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </DashboardLayout>
+      );
+    }
+
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -111,7 +145,7 @@ const Dashboard = () => {
                   : 'Selecciona un cliente del menú superior para ver su dashboard.'}
               </CardDescription>
             </CardHeader>
-            {clients.length === 0 && (
+            {clients.length === 0 && isAgency && (
               <CardContent className="text-center">
                 <Button asChild>
                   <Link to="/clientes">
@@ -176,16 +210,21 @@ const Dashboard = () => {
               <RefreshCw className={`h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Actualizar</span>
             </Button>
-            <Button variant="outline" size="sm" className="text-xs md:text-sm h-8">
-              <Download className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Exportar PDF</span>
-              <span className="sm:hidden">PDF</span>
-            </Button>
-            <Button variant="outline" size="sm" className="text-xs md:text-sm h-8">
-              <Share2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Compartir</span>
-              <span className="sm:hidden">Share</span>
-            </Button>
+            {/* Only show export/share buttons for agency users */}
+            {isAgency && (
+              <>
+                <Button variant="outline" size="sm" className="text-xs md:text-sm h-8">
+                  <Download className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Exportar PDF</span>
+                  <span className="sm:hidden">PDF</span>
+                </Button>
+                <Button variant="outline" size="sm" className="text-xs md:text-sm h-8">
+                  <Share2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Compartir</span>
+                  <span className="sm:hidden">Share</span>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

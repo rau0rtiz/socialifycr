@@ -5,6 +5,7 @@ import { AIReportGenerator } from '@/components/reports/AIReportGenerator';
 import { SavedReportsList } from '@/components/reports/SavedReportsList';
 import { useBrand } from '@/contexts/BrandContext';
 import { useMetaConnection } from '@/hooks/use-meta-api';
+import { useUserRole } from '@/hooks/use-user-role';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, Sparkles, FileText } from 'lucide-react';
 
@@ -13,39 +14,68 @@ const Reports = () => {
   const clientId = selectedClient?.id || null;
   const { data: connection } = useMetaConnection(clientId);
   const hasAdAccount = !!connection?.ad_account_id;
-  const [activeTab, setActiveTab] = useState('campaigns');
+  const { isAgency, loading: roleLoading } = useUserRole();
+  
+  // Default to saved-reports for client users, campaigns for agency
+  const [activeTab, setActiveTab] = useState(() => 
+    roleLoading ? 'campaigns' : (isAgency ? 'campaigns' : 'saved-reports')
+  );
+
+  // Update default tab once role is loaded
+  useState(() => {
+    if (!roleLoading && !isAgency && activeTab === 'campaigns') {
+      setActiveTab('saved-reports');
+    }
+  });
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Campañas y Reportes</h1>
-          <p className="text-muted-foreground">Visualiza tus campañas y genera reportes personalizados con IA</p>
+          <h1 className="text-2xl font-bold text-foreground">
+            {isAgency ? 'Campañas y Reportes' : 'Mis Reportes'}
+          </h1>
+          <p className="text-muted-foreground">
+            {isAgency 
+              ? 'Visualiza tus campañas y genera reportes personalizados con IA'
+              : 'Visualiza los reportes compartidos por tu agencia'
+            }
+          </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-lg grid-cols-3">
-            <TabsTrigger value="campaigns" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Campañas</span>
-            </TabsTrigger>
-            <TabsTrigger value="ai-reports" className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              <span className="hidden sm:inline">Generar</span>
-            </TabsTrigger>
+          <TabsList className={`grid w-full max-w-lg ${isAgency ? 'grid-cols-3' : 'grid-cols-1'}`}>
+            {/* Only show campaigns tab for agency users */}
+            {isAgency && (
+              <TabsTrigger value="campaigns" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                <span className="hidden sm:inline">Campañas</span>
+              </TabsTrigger>
+            )}
+            {/* Only show AI generator tab for agency users */}
+            {isAgency && (
+              <TabsTrigger value="ai-reports" className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                <span className="hidden sm:inline">Generar</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger value="saved-reports" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Guardados</span>
+              <span className="hidden sm:inline">{isAgency ? 'Guardados' : 'Reportes'}</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="campaigns" className="mt-6">
-            <CampaignsDrilldown clientId={clientId} hasAdAccount={hasAdAccount} />
-          </TabsContent>
+          {isAgency && (
+            <TabsContent value="campaigns" className="mt-6">
+              <CampaignsDrilldown clientId={clientId} hasAdAccount={hasAdAccount} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="ai-reports" className="mt-6">
-            <AIReportGenerator clientId={clientId} hasAdAccount={hasAdAccount} />
-          </TabsContent>
+          {isAgency && (
+            <TabsContent value="ai-reports" className="mt-6">
+              <AIReportGenerator clientId={clientId} hasAdAccount={hasAdAccount} />
+            </TabsContent>
+          )}
 
           <TabsContent value="saved-reports" className="mt-6">
             <SavedReportsList clientId={clientId} />

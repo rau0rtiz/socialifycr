@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { BrandProvider } from "@/contexts/BrandContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import BrandSettings from "./pages/BrandSettings";
 import Clientes from "./pages/Clientes";
@@ -29,10 +30,25 @@ const App = () => (
               <Sonner />
               <Routes>
                 <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/brand-settings" element={<ProtectedRoute><BrandSettings /></ProtectedRoute>} />
-                <Route path="/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
+                <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                {/* Agency-only routes */}
+                <Route path="/brand-settings" element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requireAgency>
+                      <BrandSettings />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } />
+                <Route path="/clientes" element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requireAgency>
+                      <Clientes />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } />
+                {/* Shared routes (with conditional content based on role) */}
                 <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
+                <Route path="/content" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                 <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
                 <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
