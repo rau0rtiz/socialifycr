@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContentPost } from '@/data/mockData';
-import { Eye, Heart, MessageCircle, Play, Film, LayoutGrid, ImageIcon, Wifi, TrendingUp } from 'lucide-react';
+import { Eye, Heart, MessageCircle, Play, Film, LayoutGrid, ImageIcon, Wifi, TrendingUp, Crown, Medal, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TopPostsSectionProps {
@@ -29,16 +29,125 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-const PostSkeleton = () => (
-  <div className="flex items-center gap-3 p-2">
-    <Skeleton className="w-12 h-12 rounded-md flex-shrink-0" />
-    <div className="flex-1 space-y-1.5">
-      <Skeleton className="h-3 w-3/4" />
-      <Skeleton className="h-3 w-1/2" />
-    </div>
-    <Skeleton className="h-5 w-12" />
+const PodiumSkeleton = () => (
+  <div className="flex items-end justify-center gap-3 h-48">
+    <Skeleton className="w-24 h-28 rounded-t-lg" />
+    <Skeleton className="w-28 h-36 rounded-t-lg" />
+    <Skeleton className="w-24 h-24 rounded-t-lg" />
   </div>
 );
+
+const PodiumPost = ({ 
+  post, 
+  rank, 
+  onClick 
+}: { 
+  post: ContentPost; 
+  rank: 1 | 2 | 3; 
+  onClick?: (post: ContentPost) => void;
+}) => {
+  const typeInfo = typeConfig[post.type] || typeConfig.image;
+  const TypeIcon = typeInfo.icon;
+  const engagement = (post.likes || 0) + (post.comments || 0);
+
+  const podiumConfig = {
+    1: {
+      height: 'h-36',
+      order: 'order-2',
+      icon: Crown,
+      iconColor: 'text-amber-400',
+      bgGradient: 'from-amber-500/20 to-amber-500/5',
+      borderColor: 'border-amber-500/30',
+      badgeBg: 'bg-amber-500',
+    },
+    2: {
+      height: 'h-28',
+      order: 'order-1',
+      icon: Medal,
+      iconColor: 'text-slate-400',
+      bgGradient: 'from-slate-400/20 to-slate-400/5',
+      borderColor: 'border-slate-400/30',
+      badgeBg: 'bg-slate-400',
+    },
+    3: {
+      height: 'h-24',
+      order: 'order-3',
+      icon: Award,
+      iconColor: 'text-amber-700',
+      bgGradient: 'from-amber-700/20 to-amber-700/5',
+      borderColor: 'border-amber-700/30',
+      badgeBg: 'bg-amber-700',
+    },
+  };
+
+  const config = podiumConfig[rank];
+  const RankIcon = config.icon;
+
+  return (
+    <div 
+      className={cn(
+        "flex flex-col items-center cursor-pointer group flex-1 max-w-[140px]",
+        config.order
+      )}
+      onClick={() => onClick?.(post)}
+    >
+      {/* Thumbnail */}
+      <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-muted mb-2 group-hover:ring-2 ring-primary/50 transition-all">
+        {post.thumbnailUrl || post.thumbnail ? (
+          <img
+            src={post.thumbnailUrl || post.thumbnail}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <TypeIcon className="h-8 w-8 text-muted-foreground" />
+          </div>
+        )}
+        <div className="absolute top-1 left-1">
+          <Badge 
+            variant="outline" 
+            className={cn("text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm", typeInfo.class)}
+          >
+            <TypeIcon className="h-2.5 w-2.5" />
+          </Badge>
+        </div>
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
+          <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg", config.badgeBg)}>
+            {rank}
+          </div>
+        </div>
+      </div>
+
+      {/* Podium stand */}
+      <div 
+        className={cn(
+          "w-full rounded-t-lg bg-gradient-to-t border-x border-t flex flex-col items-center justify-end pb-2 pt-4",
+          config.height,
+          config.bgGradient,
+          config.borderColor
+        )}
+      >
+        <RankIcon className={cn("h-5 w-5 mb-1", config.iconColor)} />
+        <div className="text-center px-1">
+          <p className="text-lg font-bold text-foreground">{formatNumber(engagement)}</p>
+          <p className="text-[10px] text-muted-foreground">engagement</p>
+        </div>
+        <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-0.5">
+            <Heart className="h-2.5 w-2.5" />
+            {formatNumber(post.likes || 0)}
+          </span>
+          <span className="flex items-center gap-0.5">
+            <MessageCircle className="h-2.5 w-2.5" />
+            {formatNumber(post.comments || 0)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const TopPostsSection = ({
   content,
@@ -46,7 +155,7 @@ export const TopPostsSection = ({
   isLiveData,
   onPostClick,
 }: TopPostsSectionProps) => {
-  // Get top 5 posts from this month sorted by engagement
+  // Get top 3 posts from this month sorted by engagement
   const topPosts = useMemo(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -54,12 +163,11 @@ export const TopPostsSection = ({
     return [...content]
       .filter(post => new Date(post.date) >= startOfMonth)
       .sort((a, b) => {
-        // Sort by engagement (likes + comments + views)
         const engagementA = (a.likes || 0) + (a.comments || 0) + (a.views || 0);
         const engagementB = (b.likes || 0) + (b.comments || 0) + (b.views || 0);
         return engagementB - engagementA;
       })
-      .slice(0, 5);
+      .slice(0, 3);
   }, [content]);
 
   return (
@@ -68,7 +176,7 @@ export const TopPostsSection = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
-            <CardTitle className="text-sm font-medium">Top Posts del Mes</CardTitle>
+            <CardTitle className="text-base font-medium">Top Posts del Mes</CardTitle>
           </div>
           {isLiveData && !isLoading && (
             <Badge
@@ -82,100 +190,19 @@ export const TopPostsSection = ({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="space-y-1">
-          {isLoading ? (
-            Array.from({ length: 5 }).map((_, i) => <PostSkeleton key={i} />)
-          ) : topPosts.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              No hay posts este mes
-            </div>
-          ) : (
-            topPosts.map((post, index) => {
-              const typeInfo = typeConfig[post.type] || typeConfig.image;
-              const TypeIcon = typeInfo.icon;
-              const engagement = (post.likes || 0) + (post.comments || 0);
-
-              return (
-                <div
-                  key={post.id}
-                  onClick={() => onPostClick?.(post)}
-                  className={cn(
-                    "flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer",
-                    index === 0 && "bg-primary/5 border border-primary/10"
-                  )}
-                >
-                  {/* Rank */}
-                  <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0",
-                    index === 0 ? "bg-amber-500 text-white" :
-                    index === 1 ? "bg-slate-400 text-white" :
-                    index === 2 ? "bg-amber-700 text-white" :
-                    "bg-muted text-muted-foreground"
-                  )}>
-                    {index + 1}
-                  </div>
-
-                  {/* Thumbnail */}
-                  <div className="relative w-10 h-10 rounded-md bg-muted overflow-hidden flex-shrink-0">
-                    {post.thumbnailUrl || post.thumbnail ? (
-                      <img
-                        src={post.thumbnailUrl || post.thumbnail}
-                        alt=""
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <TypeIcon className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="absolute bottom-0.5 right-0.5">
-                      <Badge 
-                        variant="outline" 
-                        className={cn("text-[8px] px-0.5 py-0 gap-0 backdrop-blur-sm", typeInfo.class)}
-                      >
-                        <TypeIcon className="h-2 w-2" />
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-foreground line-clamp-1">
-                      {post.caption || post.title || 'Sin descripción'}
-                    </p>
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                      {post.views !== undefined && post.views !== null && (
-                        <span className="flex items-center gap-0.5">
-                          <Eye className="h-2.5 w-2.5" />
-                          {formatNumber(post.views)}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-0.5">
-                        <Heart className="h-2.5 w-2.5" />
-                        {formatNumber(post.likes || 0)}
-                      </span>
-                      <span className="flex items-center gap-0.5">
-                        <MessageCircle className="h-2.5 w-2.5" />
-                        {formatNumber(post.comments || 0)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Engagement score */}
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-sm font-semibold text-foreground">
-                      {formatNumber(engagement)}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      engagement
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+        {isLoading ? (
+          <PodiumSkeleton />
+        ) : topPosts.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            No hay posts este mes
+          </div>
+        ) : (
+          <div className="flex items-end justify-center gap-2 pt-4 pb-2">
+            {topPosts[1] && <PodiumPost post={topPosts[1]} rank={2} onClick={onPostClick} />}
+            {topPosts[0] && <PodiumPost post={topPosts[0]} rank={1} onClick={onPostClick} />}
+            {topPosts[2] && <PodiumPost post={topPosts[2]} rank={3} onClick={onPostClick} />}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

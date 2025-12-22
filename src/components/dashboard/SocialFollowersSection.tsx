@@ -100,9 +100,9 @@ export const SocialFollowersSection = ({
 
   return (
     <Card className="h-full">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-sm font-semibold text-foreground">
+      <CardContent className="p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-base font-semibold text-foreground">
             Redes Sociales
           </h2>
           {isLiveData && (
@@ -116,7 +116,7 @@ export const SocialFollowersSection = ({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {platforms.map((platform) => {
             const config = platformConfig[platform.platform];
             const Icon = config.icon;
@@ -124,20 +124,21 @@ export const SocialFollowersSection = ({
             return (
               <div 
                 key={platform.platform} 
-                className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
               >
                 <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${config.bgClass}`}
+                  className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${config.bgClass}`}
                 >
-                  <Icon className={`h-4 w-4 ${config.textClass}`} />
+                  <Icon className={`h-6 w-6 ${config.textClass}`} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {config.label}
                   </p>
-                  <p className="text-lg font-bold text-foreground leading-tight">
+                  <p className="text-2xl font-bold text-foreground leading-tight">
                     {formatNumber(platform.followers)}
                   </p>
+                  <p className="text-xs text-muted-foreground">{config.metric}</p>
                 </div>
               </div>
             );

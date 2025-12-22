@@ -229,15 +229,19 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Social Followers & Top Posts Row */}
-      <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-        {(socialLoading || socialPlatforms.length > 0) && (
+      {/* Social Followers - Full Width */}
+      {(socialLoading || socialPlatforms.length > 0) && (
+        <div className="mb-4 md:mb-6">
           <SocialFollowersSection
             platforms={socialPlatforms}
             isLoading={socialLoading}
             isLiveData={socialIsLive}
           />
-        )}
+        </div>
+      )}
+
+      {/* Top Posts Podium - Below Followers */}
+      <div className="mb-4 md:mb-6">
         <TopPostsSection
           content={content}
           isLoading={contentLoading}

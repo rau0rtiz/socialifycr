@@ -97,11 +97,20 @@ async function getTrendingTopics(industry: string, country: string, perplexityKe
   }
 }
 
+interface ContentIdea {
+  idea: string;
+  contentType: string;
+  description: string;
+  goal: string;
+  justification: string;
+}
+
 interface InsightResult {
   insights: string[];
   recommendations: string[];
   justifications: string[];
   sources: string[];
+  contentIdeas?: ContentIdea[];
   goalRecommendations?: {
     growth: string[];
     sales: string[];
@@ -116,12 +125,20 @@ async function generateInsights(
   lovableKey: string
 ): Promise<InsightResult> {
   console.log('Generating insights with Lovable AI');
+  console.log('Additional context received:', request.additionalContext);
   const countryName = COUNTRY_NAMES[request.country] || 'Costa Rica';
 
-  const systemPrompt = `Eres un experto estratega de redes sociales especializado en el mercado de ${countryName} y Centroamérica.
+  const systemPrompt = `Eres un experto estratega de redes sociales especializado en el mercado de ${countryName} y Latinoamérica.
 Analiza los datos proporcionados y da insights específicos y accionables.
 SIEMPRE responde en español. Sé conciso, específico y SIEMPRE justifica tus recomendaciones con razones claras.
-Considera las particularidades culturales, festividades, y preferencias de ${countryName}.
+Considera las particularidades culturales, festividades, eventos locales, y preferencias de ${countryName}.
+
+IMPORTANTE - Para ${countryName}:
+- NO te enfoques en temas genéricos como ecología, tropical o naturaleza a menos que sea relevante para el negocio.
+- Enfócate en lo que REALMENTE le importa a la audiencia local: entretenimiento, economía, deportes, cultura pop, eventos actuales, noticias locales, comida, tradiciones, humor local.
+- Las ideas deben ser PRÁCTICAS y aplicables, no genéricas.
+- Si el cliente da contexto adicional, ESE CONTEXTO ES PRIORIDAD y debe guiar todas las recomendaciones.
+
 ${request.hasAdAccount ? 'IMPORTANTE: El cliente tiene una cuenta de anuncios conectada, incluye recomendaciones específicas para optimizar campañas publicitarias.' : ''}`;
 
   let userPrompt = '';
@@ -129,19 +146,35 @@ ${request.hasAdAccount ? 'IMPORTANTE: El cliente tiene una cuenta de anuncios co
   
   switch (request.insightType) {
     case 'content-ideas':
-      responseFormat = '{"insights": ["idea1 con descripción detallada", ...], "justifications": ["por qué esta idea funcionará en el mercado local", ...], "recommendations": ["tip implementación 1", ...]}';
+      responseFormat = '{"contentIdeas": [{"idea": "título corto", "contentType": "Reel|Post|Carrusel|Story|TikTok|Tweet", "description": "descripción de 2-3 oraciones", "goal": "Venta|Seguidores|Autoridad|Engagement|Awareness", "justification": "razón breve con dato estadístico si aplica"}, ...]}';
       userPrompt = `Datos de rendimiento para "${request.clientName}" (${request.industry}) en ${countryName}:
 - Total posts: ${request.contentSummary.totalPosts}
 - Plataforma principal: ${request.contentSummary.topPlatform}
 - Engagement promedio: ${request.contentSummary.avgEngagement}
 - Tipos de contenido top: ${request.contentSummary.topPostTypes.join(', ')}
 
-${trendingTopics.length > 0 ? `Tendencias actuales en ${request.industry} para ${countryName}: ${trendingTopics.join(', ')}` : ''}
+${trendingTopics.length > 0 ? `Tendencias actuales: ${trendingTopics.join(', ')}` : ''}
 
-${request.additionalContext ? `Contexto adicional del cliente: ${request.additionalContext}` : ''}
+${request.additionalContext ? `
+CONTEXTO ADICIONAL DEL CLIENTE (PRIORIDAD MÁXIMA - basa las ideas en esto):
+${request.additionalContext}
+` : ''}
 
-Genera 5 ideas de contenido específicas que resonarán con la audiencia de ${countryName}. 
-Para CADA idea, proporciona una justificación de por qué funcionará (datos culturales, tendencias locales, o estadísticas relevantes).
+Genera 5 ideas de contenido ESPECÍFICAS y PRÁCTICAS para esta cuenta.
+NO generes ideas genéricas sobre ecología, sostenibilidad o "tropical" a menos que el negocio lo requiera.
+Las ideas deben ser:
+- Relevantes para la audiencia de ${countryName}
+- Basadas en el contexto del cliente si se proporcionó
+- Accionables y específicas al negocio
+- Con formatos que funcionen según los datos de rendimiento
+
+Para CADA idea incluye:
+- idea: título corto y descriptivo
+- contentType: formato específico (Reel, Post, Carrusel, Story, TikTok, Tweet)
+- description: qué incluir en el contenido (2-3 oraciones)
+- goal: objetivo principal (Venta, Seguidores, Autoridad, Engagement, Awareness)
+- justification: por qué funcionará, con datos si los hay
+
 Retorna como JSON: ${responseFormat}`;
       break;
 
@@ -150,7 +183,7 @@ Retorna como JSON: ${responseFormat}`;
       userPrompt = `Para la marca "${request.clientName}" en ${request.industry} operando en ${countryName}, analiza estas tendencias actuales:
 ${trendingTopics.length > 0 ? trendingTopics.join('\n') : 'No hay tendencias específicas disponibles'}
 
-${request.additionalContext ? `Contexto adicional: ${request.additionalContext}` : ''}
+${request.additionalContext ? `Contexto del cliente que DEBES considerar: ${request.additionalContext}` : ''}
 
 Sugiere cómo pueden aprovechar estas tendencias para su contenido en redes sociales.
 Para cada sugerencia, justifica por qué es relevante para el mercado de ${countryName}.
@@ -167,7 +200,7 @@ Retorna como JSON: ${responseFormat}`;
 - Tendencias recientes: ${request.contentSummary.recentTrends.join(', ')}
 
 ${request.hasAdAccount ? 'NOTA: Tienen cuenta de anuncios conectada - incluye análisis de oportunidades publicitarias.' : ''}
-${request.additionalContext ? `Contexto adicional: ${request.additionalContext}` : ''}
+${request.additionalContext ? `Contexto del cliente que DEBES considerar: ${request.additionalContext}` : ''}
 
 Proporciona un análisis ESPECÍFICO a esta cuenta (no genérico como "IG es efectivo").
 Incluye recomendaciones separadas por objetivo:
@@ -188,7 +221,7 @@ Retorna como JSON: ${responseFormat}`;
 - Tendencias recientes: ${request.contentSummary.recentTrends.join(', ')}
 
 ${request.hasAdAccount ? 'Tienen cuenta de anuncios conectada - incluye tips de optimización de campañas.' : ''}
-${request.additionalContext ? `Contexto adicional: ${request.additionalContext}` : ''}
+${request.additionalContext ? `Contexto del cliente que DEBES considerar: ${request.additionalContext}` : ''}
 
 Proporciona tips de optimización ESPECÍFICOS basados en los datos de esta cuenta.
 IMPORTANTE: Para CADA recomendación, incluye:
@@ -235,6 +268,7 @@ Retorna como JSON: ${responseFormat}`;
         justifications: parsed.justifications || [],
         sources: [...(parsed.sources || []), ...trendingSources].filter(Boolean),
         goalRecommendations: parsed.goalRecommendations,
+        contentIdeas: parsed.contentIdeas,
       };
     }
 
