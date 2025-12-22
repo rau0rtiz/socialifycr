@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,6 +6,15 @@ import { ContentPost } from '@/data/mockData';
 import { Instagram, Heart, MessageCircle, Play, Film, LayoutGrid, ImageIcon, Wifi, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PodiumSkeleton, PodiumPost, EmptyPodiumSlot, displayOrder } from './TopPostsSection';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+type PeriodFilter = 'this_month' | 'last_30_days' | 'all_time';
 
 interface InstagramTopPostsProps {
   content: ContentPost[];
@@ -15,6 +24,20 @@ interface InstagramTopPostsProps {
   onPostClick?: (post: ContentPost) => void;
 }
 
+const getDateFilter = (period: PeriodFilter): Date | null => {
+  const now = new Date();
+  switch (period) {
+    case 'this_month':
+      return new Date(now.getFullYear(), now.getMonth(), 1);
+    case 'last_30_days':
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return thirtyDaysAgo;
+    case 'all_time':
+      return null;
+  }
+};
+
 export const InstagramTopPosts = ({
   content,
   isLoading,
@@ -22,25 +45,32 @@ export const InstagramTopPosts = ({
   isConnected,
   onPostClick,
 }: InstagramTopPostsProps) => {
-  // Get top 5 posts from this month sorted by engagement
+  const [period, setPeriod] = useState<PeriodFilter>('this_month');
+
+  // Get top 5 posts sorted by engagement
   const topPosts = useMemo(() => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const dateFilter = getDateFilter(period);
     
     return [...content]
-      .filter(post => new Date(post.date) >= startOfMonth)
+      .filter(post => dateFilter === null || new Date(post.date) >= dateFilter)
       .sort((a, b) => {
         const engagementA = (a.likes || 0) + (a.comments || 0) + (a.views || 0);
         const engagementB = (b.likes || 0) + (b.comments || 0) + (b.views || 0);
         return engagementB - engagementA;
       })
       .slice(0, 5);
-  }, [content]);
+  }, [content, period]);
 
   // Don't render if not connected
   if (!isConnected && !isLoading && content.length === 0) {
     return null;
   }
+
+  const emptyMessage = period === 'this_month' 
+    ? 'No hay posts este mes' 
+    : period === 'last_30_days' 
+      ? 'No hay posts en los últimos 30 días' 
+      : 'No hay posts';
 
   return (
     <Card className="h-full">
@@ -52,15 +82,27 @@ export const InstagramTopPosts = ({
             </div>
             <CardTitle className="text-base font-medium">Top Posts Instagram</CardTitle>
           </div>
-          {isLiveData && !isLoading && (
-            <Badge
-              variant="outline"
-              className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600"
-            >
-              <Wifi className="h-2.5 w-2.5" />
-              En vivo
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
+              <SelectTrigger className="h-7 text-xs w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="this_month">Este mes</SelectItem>
+                <SelectItem value="last_30_days">30 días</SelectItem>
+                <SelectItem value="all_time">Todo</SelectItem>
+              </SelectContent>
+            </Select>
+            {isLiveData && !isLoading && (
+              <Badge
+                variant="outline"
+                className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600"
+              >
+                <Wifi className="h-2.5 w-2.5" />
+                En vivo
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
@@ -68,7 +110,7 @@ export const InstagramTopPosts = ({
           <PodiumSkeleton />
         ) : topPosts.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
-            No hay posts este mes
+            {emptyMessage}
           </div>
         ) : (
           <div className="flex items-end justify-center gap-2 pt-2 pb-2">
