@@ -29,7 +29,8 @@ import {
   ShoppingCart,
   Users,
   Award,
-  Eye
+  Eye,
+  Settings
 } from 'lucide-react';
 import { useAIInsights, InsightType, ContentIdea } from '@/hooks/use-ai-insights';
 import { ContentPost } from '@/data/mockData';
@@ -42,7 +43,8 @@ interface AIInsightsPanelProps {
   industry: string;
   content: ContentPost[];
   hasAdAccount?: boolean;
-  hasAIContext?: boolean;
+  aiContext?: string | null;
+  onEditContext?: () => void;
   onAddVideoIdea?: (idea: Omit<VideoIdea, 'id' | 'created_at' | 'updated_at' | 'todos'>) => Promise<VideoIdea | null>;
 }
 
@@ -93,14 +95,16 @@ export const AIInsightsPanel = ({
   industry, 
   content,
   hasAdAccount = false,
-  hasAIContext = false,
+  aiContext,
+  onEditContext,
   onAddVideoIdea
 }: AIInsightsPanelProps) => {
   const [activeTab, setActiveTab] = useState<InsightType>('content-ideas');
   const [selectedCountry, setSelectedCountry] = useState<string>('CR');
-  const [additionalContext, setAdditionalContext] = useState<string>('');
-  const [showContextInput, setShowContextInput] = useState(false);
+  const [showContext, setShowContext] = useState(false);
   const [addingIdeaIndex, setAddingIdeaIndex] = useState<number | null>(null);
+  
+  const hasAIContext = !!aiContext;
   
   const { isLoading, result, error, generateInsights } = useAIInsights(
     clientId,
@@ -108,7 +112,7 @@ export const AIInsightsPanel = ({
     industry,
     content,
     selectedCountry,
-    additionalContext,
+    '', // No additional context - using aiContext from client
     hasAdAccount
   );
 
@@ -217,21 +221,27 @@ export const AIInsightsPanel = ({
               </Select>
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs gap-1"
-              onClick={() => setShowContextInput(!showContextInput)}
-            >
-              {showContextInput ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              Contexto adicional
-            </Button>
-
-            {hasAIContext && (
-              <Badge variant="secondary" className="text-xs gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+            {hasAIContext ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
+                onClick={() => setShowContext(!showContext)}
+              >
                 <Sparkles className="h-3 w-3" />
                 Contexto IA activo
-              </Badge>
+                {showContext ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1"
+                onClick={onEditContext}
+              >
+                <Plus className="h-3 w-3" />
+                Agregar contexto
+              </Button>
             )}
 
             {hasAdAccount && (
@@ -242,20 +252,29 @@ export const AIInsightsPanel = ({
             )}
           </div>
 
-          {/* Optional context input */}
-          <Collapsible open={showContextInput}>
+          {/* Show current AI context */}
+          <Collapsible open={showContext && hasAIContext}>
             <CollapsibleContent>
               <div className="space-y-2 pt-2">
-                <Label className="text-xs text-muted-foreground">
-                  Proporciona contexto adicional para obtener insights más precisos (opcional)
-                </Label>
-                <Textarea
-                  placeholder="Ej: Estamos lanzando un nuevo producto en enero, queremos enfocarnos en el segmento de 25-35 años, nuestro objetivo principal es aumentar las ventas online..."
-                  value={additionalContext}
-                  onChange={(e) => setAdditionalContext(e.target.value)}
-                  rows={2}
-                  className="text-sm"
-                />
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">
+                    Contexto configurado para este cliente
+                  </Label>
+                  {onEditContext && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-xs gap-1"
+                      onClick={onEditContext}
+                    >
+                      <Settings className="h-3 w-3" />
+                      Editar
+                    </Button>
+                  )}
+                </div>
+                <div className="text-sm text-foreground bg-muted/50 border border-border/50 p-3 rounded-lg whitespace-pre-wrap">
+                  {aiContext}
+                </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
