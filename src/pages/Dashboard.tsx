@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
 import { InstagramTopPosts } from '@/components/dashboard/InstagramTopPosts';
@@ -352,7 +353,14 @@ const Dashboard = () => {
           content={content}
           hasAdAccount={hasAdAccount}
           aiContext={selectedClient.ai_context}
+          preferredRegion={selectedClient.preferred_region}
           onEditContext={() => navigate('/clientes')}
+          onRegionChange={async (region) => {
+            await supabase
+              .from('clients')
+              .update({ preferred_region: region })
+              .eq('id', selectedClient.id);
+          }}
           onAddVideoIdea={addIdea}
         />
       </div>

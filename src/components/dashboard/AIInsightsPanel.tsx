@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,7 +44,9 @@ interface AIInsightsPanelProps {
   content: ContentPost[];
   hasAdAccount?: boolean;
   aiContext?: string | null;
+  preferredRegion?: string | null;
   onEditContext?: () => void;
+  onRegionChange?: (region: string) => void;
   onAddVideoIdea?: (idea: Omit<VideoIdea, 'id' | 'created_at' | 'updated_at' | 'todos'>) => Promise<VideoIdea | null>;
 }
 
@@ -98,15 +100,27 @@ export const AIInsightsPanel = ({
   content,
   hasAdAccount = false,
   aiContext,
+  preferredRegion,
   onEditContext,
+  onRegionChange,
   onAddVideoIdea
 }: AIInsightsPanelProps) => {
   const [activeTab, setActiveTab] = useState<InsightType>('content-ideas');
-  const [selectedCountry, setSelectedCountry] = useState<string>('CR');
+  const [selectedCountry, setSelectedCountry] = useState<string>(preferredRegion || 'CR');
   const [showContext, setShowContext] = useState(false);
   const [addingIdeaIndex, setAddingIdeaIndex] = useState<number | null>(null);
   
+  // Update selected region when client changes
+  useEffect(() => {
+    setSelectedCountry(preferredRegion || 'CR');
+  }, [clientId, preferredRegion]);
+  
   const hasAIContext = !!aiContext;
+
+  const handleRegionChange = (region: string) => {
+    setSelectedCountry(region);
+    onRegionChange?.(region);
+  };
   
   const { isLoading, result, error, generateInsights } = useAIInsights(
     clientId,
@@ -206,7 +220,7 @@ export const AIInsightsPanel = ({
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <Globe className="h-4 w-4 text-muted-foreground" />
-              <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+              <Select value={selectedCountry} onValueChange={handleRegionChange}>
                 <SelectTrigger className="w-[180px] h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>

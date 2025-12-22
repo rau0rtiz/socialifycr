@@ -148,6 +148,7 @@ export type Database = {
           industry: string | null
           logo_url: string | null
           name: string
+          preferred_region: string | null
           primary_color: string | null
           updated_at: string | null
         }
@@ -159,6 +160,7 @@ export type Database = {
           industry?: string | null
           logo_url?: string | null
           name: string
+          preferred_region?: string | null
           primary_color?: string | null
           updated_at?: string | null
         }
@@ -170,6 +172,7 @@ export type Database = {
           industry?: string | null
           logo_url?: string | null
           name?: string
+          preferred_region?: string | null
           primary_color?: string | null
           updated_at?: string | null
         }
