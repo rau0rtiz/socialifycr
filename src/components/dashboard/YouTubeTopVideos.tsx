@@ -1,10 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { YouTubeVideo } from '@/hooks/use-youtube-videos';
 import { Youtube, Eye, ThumbsUp, MessageCircle, Wifi, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface YouTubeTopVideosProps {
   videos: YouTubeVideo[];
@@ -12,10 +19,26 @@ interface YouTubeTopVideosProps {
   isConnected: boolean;
 }
 
+type PeriodFilter = 'this_month' | 'last_30_days' | 'all_time';
+
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
   return num.toString();
+};
+
+const getDateFilter = (period: PeriodFilter): Date | null => {
+  const now = new Date();
+  switch (period) {
+    case 'this_month':
+      return new Date(now.getFullYear(), now.getMonth(), 1);
+    case 'last_30_days':
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return thirtyDaysAgo;
+    case 'all_time':
+      return null;
+  }
 };
 
 // Podium heights for 5 positions (left to right: 4, 2, 1, 3, 5)
@@ -68,7 +91,7 @@ const VideoPodiumPost = ({
   rank: 1 | 2 | 3 | 4 | 5; 
 }) => {
   const config = podiumConfig[rank];
-  const engagement = video.viewCount;
+  const engagement = video.viewCount + video.likeCount;
 
   const openVideo = () => {
     window.open(`https://youtube.com/watch?v=${video.id}`, '_blank');
@@ -172,21 +195,28 @@ export const YouTubeTopVideos = ({
   isLoading,
   isConnected,
 }: YouTubeTopVideosProps) => {
-  // Get top 5 videos from this month sorted by views
+  const [period, setPeriod] = useState<PeriodFilter>('this_month');
+
+  // Get top 5 videos sorted by views
   const topVideos = useMemo(() => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const dateFilter = getDateFilter(period);
     
     return [...videos]
-      .filter(video => new Date(video.publishedAt) >= startOfMonth)
+      .filter(video => dateFilter === null || new Date(video.publishedAt) >= dateFilter)
       .sort((a, b) => b.viewCount - a.viewCount)
       .slice(0, 5);
-  }, [videos]);
+  }, [videos, period]);
 
   // Don't render if not connected
   if (!isConnected) {
     return null;
   }
+
+  const emptyMessage = period === 'this_month' 
+    ? 'No hay videos este mes' 
+    : period === 'last_30_days' 
+      ? 'No hay videos en los últimos 30 días' 
+      : 'No hay videos';
 
   return (
     <Card className="h-full">
@@ -198,15 +228,27 @@ export const YouTubeTopVideos = ({
             </div>
             <CardTitle className="text-base font-medium">Top Videos YouTube</CardTitle>
           </div>
-          {!isLoading && (
-            <Badge
-              variant="outline"
-              className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600"
-            >
-              <Wifi className="h-2.5 w-2.5" />
-              En vivo
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
+              <SelectTrigger className="h-7 text-xs w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="this_month">Este mes</SelectItem>
+                <SelectItem value="last_30_days">30 días</SelectItem>
+                <SelectItem value="all_time">Todo</SelectItem>
+              </SelectContent>
+            </Select>
+            {!isLoading && (
+              <Badge
+                variant="outline"
+                className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600"
+              >
+                <Wifi className="h-2.5 w-2.5" />
+                En vivo
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
@@ -214,7 +256,7 @@ export const YouTubeTopVideos = ({
           <PodiumSkeleton />
         ) : topVideos.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
-            No hay videos este mes
+            {emptyMessage}
           </div>
         ) : (
           <div className="flex items-end justify-center gap-2 pt-2 pb-2">
