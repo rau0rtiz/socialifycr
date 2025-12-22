@@ -176,12 +176,14 @@ serve(async (req) => {
       </html>
     `;
 
-    const { error: emailError } = await resend.emails.send({
-      from: "Socialify <onboarding@resend.dev>",
+    const { data: emailData, error: emailError } = await resend.emails.send({
+      from: "Socialify <invitaciones@socialifycr.com>",
       to: [email],
       subject: `Invitación a ${client.name} - Socialify`,
       html: emailHtml,
     });
+
+    console.log("Resend response:", { emailData, emailError });
 
     if (emailError) {
       console.error("Email send error:", emailError);
