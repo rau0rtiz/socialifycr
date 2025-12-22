@@ -29,8 +29,10 @@ export function useSocialFollowers(clientId: string | null): UseSocialFollowersR
     setIsLoading(true);
 
     try {
+      const connectedPlatforms: PlatformFollowers[] = [];
+
       // Check for active Meta connection
-      const { data: connection } = await supabase
+      const { data: metaConnection } = await supabase
         .from('platform_connections')
         .select('*')
         .eq('client_id', clientId)
@@ -38,72 +40,63 @@ export function useSocialFollowers(clientId: string | null): UseSocialFollowersR
         .eq('status', 'active')
         .maybeSingle();
 
-      if (!connection) {
-        // No Meta connection
-        setPlatforms([]);
-        setIsLiveData(false);
-        setIsLoading(false);
-        return;
-      }
-
-      // Fetch real data from Meta API
-      const { data, error } = await supabase.functions.invoke('meta-api', {
-        body: {
-          clientId,
-          endpoint: 'account-insights',
-          params: { datePreset: 'last_30d' },
-        },
-      });
-
-      if (error || data?.error) {
-        console.error('Error fetching account insights:', error || data?.error);
-        setPlatforms([]);
-        setIsLiveData(false);
-        setIsLoading(false);
-        return;
-      }
-
-      const connectedPlatforms: PlatformFollowers[] = [];
-
-      // Add Instagram if connected
-      if (data.instagram && connection.instagram_account_id) {
-        connectedPlatforms.push({
-          platform: 'instagram',
-          followers: data.instagram.followers || 0,
-          name: data.instagram.username,
+      if (metaConnection) {
+        // Fetch real data from Meta API
+        const { data, error } = await supabase.functions.invoke('meta-api', {
+          body: {
+            clientId,
+            endpoint: 'account-insights',
+            params: { datePreset: 'last_30d' },
+          },
         });
+
+        if (!error && !data?.error) {
+          // Add Instagram if connected
+          if (data.instagram && metaConnection.instagram_account_id) {
+            connectedPlatforms.push({
+              platform: 'instagram',
+              followers: data.instagram.followers || 0,
+              name: data.instagram.username,
+            });
+          }
+
+          // Add Facebook if connected
+          if (data.facebook && metaConnection.platform_page_id) {
+            connectedPlatforms.push({
+              platform: 'facebook',
+              followers: data.facebook.fans || data.facebook.followers || 0,
+              name: data.facebook.name,
+            });
+          }
+        }
       }
 
-      // Add Facebook if connected
-      if (data.facebook && connection.platform_page_id) {
-        connectedPlatforms.push({
-          platform: 'facebook',
-          followers: data.facebook.fans || data.facebook.followers || 0,
-          name: data.facebook.name,
-        });
-      }
-
-      // TikTok and YouTube would be added here when those integrations exist
-      // For now, check for those platform connections
-      const { data: tiktokConnection } = await supabase
+      // Check for active YouTube connection
+      const { data: youtubeConnection } = await supabase
         .from('platform_connections')
         .select('*')
         .eq('client_id', clientId)
-        .eq('platform', 'tiktok')
+        .eq('platform', 'youtube')
         .eq('status', 'active')
         .maybeSingle();
 
-      // TikTok integration would go here if available
+      if (youtubeConnection) {
+        // Fetch YouTube channel stats
+        const { data: ytData, error: ytError } = await supabase.functions.invoke('youtube-api', {
+          body: {
+            clientId,
+            endpoint: 'channel-stats',
+          },
+        });
 
-      const { data: googleConnection } = await supabase
-        .from('platform_connections')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('platform', 'google')
-        .eq('status', 'active')
-        .maybeSingle();
-
-      // YouTube integration would go here if available
+        if (!ytError && !ytData?.error && ytData?.subscriberCount !== undefined) {
+          connectedPlatforms.push({
+            platform: 'youtube',
+            followers: ytData.subscriberCount,
+            name: ytData.name,
+          });
+        }
+      }
 
       setPlatforms(connectedPlatforms);
       setIsLiveData(connectedPlatforms.length > 0);
