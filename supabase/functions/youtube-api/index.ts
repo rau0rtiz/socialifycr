@@ -118,6 +118,128 @@ serve(async (req) => {
       return formatChannelResponse(channelData, corsHeaders);
     }
 
+    if (endpoint === 'channel-videos') {
+      const { params } = await req.json().catch(() => ({ params: {} }));
+      const limit = params?.limit || 10;
+
+      // First get the uploads playlist ID
+      const channelResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${channelId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!channelResponse.ok) {
+        // Try token refresh on 401
+        if (channelResponse.status === 401) {
+          const refreshResult = await refreshYouTubeToken(supabase, connection);
+          if (refreshResult.error) {
+            return new Response(
+              JSON.stringify({ error: 'Token expired and refresh failed' }),
+              { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          // Just return error, we'll handle retry in client
+          return new Response(
+            JSON.stringify({ error: 'Token refreshed, please retry', videos: [] }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch channel data' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const channelData = await channelResponse.json();
+      if (!channelData.items || channelData.items.length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'Channel not found', videos: [] }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const uploadsPlaylistId = channelData.items[0].contentDetails?.relatedPlaylists?.uploads;
+      if (!uploadsPlaylistId) {
+        return new Response(
+          JSON.stringify({ error: 'No uploads playlist found', videos: [] }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Fetch videos from uploads playlist
+      const playlistResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${uploadsPlaylistId}&maxResults=${limit}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!playlistResponse.ok) {
+        console.error('Failed to fetch playlist:', await playlistResponse.text());
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch videos', videos: [] }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const playlistData = await playlistResponse.json();
+      const videoIds = (playlistData.items || [])
+        .map((item: any) => item.contentDetails?.videoId)
+        .filter(Boolean)
+        .join(',');
+
+      if (!videoIds) {
+        return new Response(
+          JSON.stringify({ videos: [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Fetch video statistics
+      const videosResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!videosResponse.ok) {
+        console.error('Failed to fetch video stats:', await videosResponse.text());
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch video statistics', videos: [] }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const videosData = await videosResponse.json();
+      const videos = (videosData.items || []).map((video: any) => ({
+        id: video.id,
+        title: video.snippet?.title || '',
+        description: video.snippet?.description || '',
+        publishedAt: video.snippet?.publishedAt || '',
+        thumbnailUrl: video.snippet?.thumbnails?.high?.url || video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.default?.url || '',
+        viewCount: parseInt(video.statistics?.viewCount) || 0,
+        likeCount: parseInt(video.statistics?.likeCount) || 0,
+        commentCount: parseInt(video.statistics?.commentCount) || 0,
+        duration: video.contentDetails?.duration || '',
+      }));
+
+      console.log(`Fetched ${videos.length} YouTube videos for channel ${channelId}`);
+
+      return new Response(
+        JSON.stringify({ videos }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: 'Unknown endpoint' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
