@@ -29,6 +29,7 @@ interface ContentGridProps {
   onCreateTag?: (name: string, color: string) => Promise<ContentTag | null>;
   onCreateModel?: (name: string, photoUrl?: string, notes?: string) => Promise<ContentModel | null>;
   onUpdateMetadata?: (postId: string, updates: Partial<Pick<ContentMetadata, 'tag_id' | 'model_id'>>) => Promise<void>;
+  onUpdateMetadataMultiple?: (postId: string, updates: { tag_ids?: string[]; model_ids?: string[] }) => Promise<void>;
   onCapture48hMetrics?: (postId: string, metrics: {
     views?: number;
     likes?: number;
@@ -359,6 +360,7 @@ export const ContentGrid = ({
         onCreateTag={onCreateTag || (async () => null)}
         onCreateModel={onCreateModel || (async () => null)}
         onUpdateMetadata={onUpdateMetadata || (async () => {})}
+        onUpdateMetadataMultiple={onUpdateMetadataMultiple || (async () => {})}
         onCapture48hMetrics={onCapture48hMetrics || (async () => {})}
       />
     </>
