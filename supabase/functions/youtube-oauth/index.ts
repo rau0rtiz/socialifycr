@@ -34,7 +34,8 @@ serve(async (req) => {
       
       const scopes = [
         'https://www.googleapis.com/auth/youtube.readonly',
-        'https://www.googleapis.com/auth/yt-analytics.readonly'
+        'https://www.googleapis.com/auth/yt-analytics.readonly',
+        'https://www.googleapis.com/auth/youtube.force-ssl'
       ];
       
       const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
@@ -85,30 +86,79 @@ serve(async (req) => {
       
       console.log('Successfully obtained YouTube tokens');
       
-      // Fetch user's YouTube channels
-      const channelsResponse = await fetch(
+      // Fetch user's own YouTube channels
+      const ownChannelsResponse = await fetch(
         'https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true',
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
       
-      const channelsData = await channelsResponse.json();
+      const ownChannelsData = await ownChannelsResponse.json();
       
-      if (channelsData.error) {
-        console.error('Channels fetch error:', channelsData);
-        throw new Error(channelsData.error.message || 'Error fetching channels');
+      if (ownChannelsData.error) {
+        console.error('Own channels fetch error:', ownChannelsData);
+        throw new Error(ownChannelsData.error.message || 'Error fetching channels');
       }
       
-      const channels = (channelsData.items || []).map((channel: any) => ({
+      const ownChannels = (ownChannelsData.items || []).map((channel: any) => ({
         id: channel.id,
         name: channel.snippet.title,
         thumbnail: channel.snippet.thumbnails?.default?.url,
         subscriberCount: channel.statistics?.subscriberCount,
         videoCount: channel.statistics?.videoCount,
+        isOwned: true,
       }));
       
-      console.log(`Found ${channels.length} YouTube channels`);
+      console.log(`Found ${ownChannels.length} own YouTube channels`);
+      
+      // Try to fetch managed/Brand Account channels using channel memberships
+      let managedChannels: any[] = [];
+      try {
+        // Get the list of channels the user has access to via delegated credentials
+        // This works for Brand Accounts where user is a manager
+        const managedResponse = await fetch(
+          'https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&managedByMe=true',
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+        
+        const managedData = await managedResponse.json();
+        
+        if (!managedData.error && managedData.items) {
+          managedChannels = managedData.items.map((channel: any) => ({
+            id: channel.id,
+            name: channel.snippet.title,
+            thumbnail: channel.snippet.thumbnails?.default?.url,
+            subscriberCount: channel.statistics?.subscriberCount,
+            videoCount: channel.statistics?.videoCount,
+            isOwned: false,
+          }));
+          console.log(`Found ${managedChannels.length} managed YouTube channels`);
+        }
+      } catch (managedError) {
+        console.log('Could not fetch managed channels:', managedError);
+      }
+      
+      // Combine and deduplicate channels by ID
+      const channelMap = new Map();
+      
+      // Add own channels first (they take priority)
+      for (const channel of ownChannels) {
+        channelMap.set(channel.id, channel);
+      }
+      
+      // Add managed channels (won't overwrite if already exists)
+      for (const channel of managedChannels) {
+        if (!channelMap.has(channel.id)) {
+          channelMap.set(channel.id, channel);
+        }
+      }
+      
+      const channels = Array.from(channelMap.values());
+      
+      console.log(`Total unique channels: ${channels.length}`);
       
       return new Response(JSON.stringify({
         accounts: channels,
