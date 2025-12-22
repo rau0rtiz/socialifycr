@@ -582,7 +582,13 @@ export type Database = {
     Enums: {
       client_role: "account_manager" | "editor" | "viewer"
       connection_status: "active" | "expired" | "revoked" | "pending"
-      platform_type: "meta" | "tiktok" | "linkedin" | "twitter" | "google"
+      platform_type:
+        | "meta"
+        | "tiktok"
+        | "linkedin"
+        | "twitter"
+        | "google"
+        | "youtube"
       system_role: "owner" | "admin" | "manager" | "analyst" | "viewer"
     }
     CompositeTypes: {
@@ -713,7 +719,14 @@ export const Constants = {
     Enums: {
       client_role: ["account_manager", "editor", "viewer"],
       connection_status: ["active", "expired", "revoked", "pending"],
-      platform_type: ["meta", "tiktok", "linkedin", "twitter", "google"],
+      platform_type: [
+        "meta",
+        "tiktok",
+        "linkedin",
+        "twitter",
+        "google",
+        "youtube",
+      ],
       system_role: ["owner", "admin", "manager", "analyst", "viewer"],
     },
   },

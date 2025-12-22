@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Facebook, Instagram, Youtube, Linkedin, Twitter, Plus, CheckCircle2, XCircle, Clock, RefreshCw, Trash2 } from 'lucide-react';
 import { MetaAccountSelector } from './MetaAccountSelector';
+import { YouTubeChannelSelector } from './YouTubeChannelSelector';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +19,7 @@ import {
 
 interface PlatformConnection {
   id: string;
-  platform: 'meta' | 'tiktok' | 'linkedin' | 'twitter' | 'google';
+  platform: 'meta' | 'tiktok' | 'linkedin' | 'twitter' | 'google' | 'youtube';
   status: 'active' | 'expired' | 'revoked' | 'pending';
   platform_page_name: string | null;
   connected_by: string | null;
@@ -33,6 +34,14 @@ interface MetaAccountsData {
   tokenExpiresAt: string;
 }
 
+interface YouTubeAccountsData {
+  accounts: { id: string; name: string; thumbnail?: string; subscriberCount?: string; videoCount?: string }[];
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  clientId: string;
+}
+
 interface PlatformConnectionsProps {
   clientId: string;
 }
@@ -42,6 +51,11 @@ const platformConfig = {
     name: 'Meta (Facebook/Instagram)',
     icon: Facebook,
     color: 'bg-blue-500',
+  },
+  youtube: {
+    name: 'YouTube',
+    icon: Youtube,
+    color: 'bg-red-500',
   },
   tiktok: {
     name: 'TikTok',
@@ -78,6 +92,9 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [metaAccountsData, setMetaAccountsData] = useState<MetaAccountsData | null>(null);
+  const [showYouTubeSelector, setShowYouTubeSelector] = useState(false);
+  const [youtubeAccountsData, setYoutubeAccountsData] = useState<YouTubeAccountsData | null>(null);
+  const [savingYouTube, setSavingYouTube] = useState(false);
   const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [connectionToDisconnect, setConnectionToDisconnect] = useState<PlatformConnection | null>(null);
@@ -105,7 +122,6 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'META_OAUTH_ACCOUNTS') {
-        // Received accounts data - show selector dialog
         setMetaAccountsData(event.data.accounts);
         setShowAccountSelector(true);
         setConnecting(null);
@@ -120,6 +136,23 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         toast({
           title: 'Error de conexión',
           description: event.data.error || 'Error al conectar con Meta',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      } else if (event.data?.type === 'YOUTUBE_OAUTH_ACCOUNTS') {
+        setYoutubeAccountsData({
+          accounts: event.data.accounts,
+          accessToken: event.data.accessToken,
+          refreshToken: event.data.refreshToken,
+          expiresIn: event.data.expiresIn,
+          clientId: event.data.clientId,
+        });
+        setShowYouTubeSelector(true);
+        setConnecting(null);
+      } else if (event.data?.type === 'YOUTUBE_OAUTH_ERROR') {
+        toast({
+          title: 'Error de conexión',
+          description: event.data.error || 'Error al conectar con YouTube',
           variant: 'destructive',
         });
         setConnecting(null);
@@ -246,9 +279,124 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     }
   };
 
+  const handleConnectYouTube = async () => {
+    setConnecting('youtube');
+    
+    try {
+      const redirectUri = `${window.location.origin}/oauth/youtube/callback`;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-oauth?action=authorize`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ redirectUri, clientId }),
+        }
+      );
+      
+      const data = await response.json();
+
+      if (data.error) {
+        toast({
+          title: 'Error',
+          description: data.error,
+          variant: 'destructive',
+        });
+        setConnecting(null);
+        return;
+      }
+
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const popup = window.open(
+        data.authUrl,
+        'youtube-oauth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!popup) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      }
+
+      const checkPopup = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkPopup);
+          setConnecting(null);
+        }
+      }, 1000);
+
+    } catch (err) {
+      console.error('Error initiating YouTube OAuth:', err);
+      toast({
+        title: 'Error',
+        description: 'Error al iniciar la conexión con YouTube',
+        variant: 'destructive',
+      });
+      setConnecting(null);
+    }
+  };
+
+  const handleSaveYouTubeConnection = async (channel: { id: string; name: string }) => {
+    if (!youtubeAccountsData) return;
+    
+    setSavingYouTube(true);
+    
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-oauth?action=save-connection`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientId,
+            channelId: channel.id,
+            channelName: channel.name,
+            accessToken: youtubeAccountsData.accessToken,
+            refreshToken: youtubeAccountsData.refreshToken,
+            expiresIn: youtubeAccountsData.expiresIn,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      toast({
+        title: 'Conexión exitosa',
+        description: `Conectado a YouTube: ${channel.name}`,
+      });
+      
+      setShowYouTubeSelector(false);
+      setYoutubeAccountsData(null);
+      fetchConnections();
+    } catch (err) {
+      console.error('Error saving YouTube connection:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Error al guardar la conexión',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingYouTube(false);
+    }
+  };
+
   const handleConnect = (platform: string) => {
     if (platform === 'Meta (Facebook/Instagram)') {
       handleConnectMeta();
+    } else if (platform === 'YouTube') {
+      handleConnectYouTube();
     } else {
       toast({
         title: 'Próximamente',
@@ -399,6 +547,20 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         accountsData={metaAccountsData}
         clientId={clientId}
         onSave={handleSaveMetaConnection}
+      />
+
+      {/* YouTube Channel Selector Dialog */}
+      <YouTubeChannelSelector
+        open={showYouTubeSelector}
+        onOpenChange={(open) => {
+          setShowYouTubeSelector(open);
+          if (!open) {
+            setYoutubeAccountsData(null);
+          }
+        }}
+        channels={youtubeAccountsData?.accounts || []}
+        onSelect={handleSaveYouTubeConnection}
+        loading={savingYouTube}
       />
 
       {/* Disconnect Confirmation Dialog */}

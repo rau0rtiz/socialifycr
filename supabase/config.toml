@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.send-client-invitation]
 verify_jwt = true
+
+[functions.youtube-oauth]
+verify_jwt = false
