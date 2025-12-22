@@ -2,9 +2,15 @@ import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { YouTubeVideo } from '@/hooks/use-youtube-videos';
-import { Youtube, Eye, ThumbsUp, MessageCircle, Wifi, Play } from 'lucide-react';
+import { Youtube, Eye, ThumbsUp, Wifi, Play, CalendarIcon, Film, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
 import {
   Select,
   SelectContent,
@@ -19,7 +25,8 @@ interface YouTubeTopVideosProps {
   isConnected: boolean;
 }
 
-type PeriodFilter = 'this_month' | 'last_30_days' | 'all_time';
+type PeriodFilter = 'this_month' | 'last_30_days' | 'all_time' | 'custom';
+type VideoTypeFilter = 'all' | 'videos' | 'shorts';
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -37,8 +44,25 @@ const getDateFilter = (period: PeriodFilter): Date | null => {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       return thirtyDaysAgo;
     case 'all_time':
+    case 'custom':
       return null;
   }
+};
+
+// Parse ISO 8601 duration to seconds
+const parseDuration = (duration: string): number => {
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return 0;
+  const hours = parseInt(match[1] || '0', 10);
+  const minutes = parseInt(match[2] || '0', 10);
+  const seconds = parseInt(match[3] || '0', 10);
+  return hours * 3600 + minutes * 60 + seconds;
+};
+
+// Shorts are typically under 60 seconds
+const isShort = (video: YouTubeVideo): boolean => {
+  const durationSeconds = parseDuration(video.duration);
+  return durationSeconds > 0 && durationSeconds <= 60;
 };
 
 // Podium heights for 5 positions (left to right: 4, 2, 1, 3, 5)
@@ -92,6 +116,7 @@ const VideoPodiumPost = ({
 }) => {
   const config = podiumConfig[rank];
   const engagement = video.viewCount + video.likeCount;
+  const videoIsShort = isShort(video);
 
   const openVideo = () => {
     window.open(`https://youtube.com/watch?v=${video.id}`, '_blank');
@@ -130,9 +155,14 @@ const VideoPodiumPost = ({
         <div className="absolute top-1 left-1">
           <Badge 
             variant="outline" 
-            className="text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm bg-red-500/10 text-red-600 border-red-500/20"
+            className={cn(
+              "text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm",
+              videoIsShort 
+                ? "bg-pink-500/10 text-pink-600 border-pink-500/20" 
+                : "bg-red-500/10 text-red-600 border-red-500/20"
+            )}
           >
-            <Play className="h-2.5 w-2.5" />
+            {videoIsShort ? <Smartphone className="h-2.5 w-2.5" /> : <Film className="h-2.5 w-2.5" />}
           </Badge>
         </div>
       </div>
@@ -196,49 +226,130 @@ export const YouTubeTopVideos = ({
   isConnected,
 }: YouTubeTopVideosProps) => {
   const [period, setPeriod] = useState<PeriodFilter>('this_month');
+  const [videoType, setVideoType] = useState<VideoTypeFilter>('all');
+  const [customRange, setCustomRange] = useState<DateRange | undefined>();
 
   // Get top 5 videos sorted by views
   const topVideos = useMemo(() => {
-    const dateFilter = getDateFilter(period);
+    let filtered = [...videos];
     
-    return [...videos]
-      .filter(video => dateFilter === null || new Date(video.publishedAt) >= dateFilter)
+    // Apply date filter
+    if (period === 'custom' && customRange?.from) {
+      const from = customRange.from;
+      const to = customRange.to || new Date();
+      filtered = filtered.filter(video => {
+        const date = new Date(video.publishedAt);
+        return date >= from && date <= to;
+      });
+    } else {
+      const dateFilter = getDateFilter(period);
+      if (dateFilter) {
+        filtered = filtered.filter(video => new Date(video.publishedAt) >= dateFilter);
+      }
+    }
+    
+    // Apply video type filter
+    if (videoType === 'shorts') {
+      filtered = filtered.filter(video => isShort(video));
+    } else if (videoType === 'videos') {
+      filtered = filtered.filter(video => !isShort(video));
+    }
+    
+    return filtered
       .sort((a, b) => b.viewCount - a.viewCount)
       .slice(0, 5);
-  }, [videos, period]);
+  }, [videos, period, videoType, customRange]);
 
   // Don't render if not connected
   if (!isConnected) {
     return null;
   }
 
-  const emptyMessage = period === 'this_month' 
-    ? 'No hay videos este mes' 
-    : period === 'last_30_days' 
-      ? 'No hay videos en los últimos 30 días' 
-      : 'No hay videos';
+  const getEmptyMessage = () => {
+    const typeLabel = videoType === 'shorts' ? 'shorts' : videoType === 'videos' ? 'videos' : 'contenido';
+    if (period === 'custom') return `No hay ${typeLabel} en el rango seleccionado`;
+    if (period === 'this_month') return `No hay ${typeLabel} este mes`;
+    if (period === 'last_30_days') return `No hay ${typeLabel} en los últimos 30 días`;
+    return `No hay ${typeLabel}`;
+  };
+
+  const handlePeriodChange = (value: string) => {
+    setPeriod(value as PeriodFilter);
+    if (value !== 'custom') {
+      setCustomRange(undefined);
+    }
+  };
 
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-md bg-red-500">
               <Youtube className="h-3.5 w-3.5 text-white" />
             </div>
             <CardTitle className="text-base font-medium">Top Videos YouTube</CardTitle>
           </div>
-          <div className="flex items-center gap-2">
-            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
-              <SelectTrigger className="h-7 text-xs w-[120px]">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Video Type Filter */}
+            <Select value={videoType} onValueChange={(v) => setVideoType(v as VideoTypeFilter)}>
+              <SelectTrigger className="h-7 text-xs w-[90px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="videos">Videos</SelectItem>
+                <SelectItem value="shorts">Shorts</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {/* Period Filter */}
+            <Select value={period} onValueChange={handlePeriodChange}>
+              <SelectTrigger className="h-7 text-xs w-[110px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="this_month">Este mes</SelectItem>
                 <SelectItem value="last_30_days">30 días</SelectItem>
                 <SelectItem value="all_time">Todo</SelectItem>
+                <SelectItem value="custom">Personalizado</SelectItem>
               </SelectContent>
             </Select>
+            
+            {/* Custom Date Range Picker */}
+            {period === 'custom' && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
+                    <CalendarIcon className="h-3 w-3" />
+                    {customRange?.from ? (
+                      customRange.to ? (
+                        <>
+                          {format(customRange.from, 'dd/MM', { locale: es })} - {format(customRange.to, 'dd/MM', { locale: es })}
+                        </>
+                      ) : (
+                        format(customRange.from, 'dd/MM/yy', { locale: es })
+                      )
+                    ) : (
+                      'Rango'
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={customRange?.from}
+                    selected={customRange}
+                    onSelect={setCustomRange}
+                    numberOfMonths={2}
+                    locale={es}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+            
             {!isLoading && (
               <Badge
                 variant="outline"
@@ -256,7 +367,7 @@ export const YouTubeTopVideos = ({
           <PodiumSkeleton />
         ) : topVideos.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
-            {emptyMessage}
+            {getEmptyMessage()}
           </div>
         ) : (
           <div className="flex items-end justify-center gap-2 pt-2 pb-2">

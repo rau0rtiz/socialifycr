@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ContentPost } from '@/data/mockData';
-import { Instagram, Heart, MessageCircle, Play, Film, LayoutGrid, ImageIcon, Wifi, TrendingUp } from 'lucide-react';
+import { Instagram, Wifi, CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PodiumSkeleton, PodiumPost, EmptyPodiumSlot, displayOrder } from './TopPostsSection';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
 import {
   Select,
   SelectContent,
@@ -14,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-type PeriodFilter = 'this_month' | 'last_30_days' | 'all_time';
+type PeriodFilter = 'this_month' | 'last_30_days' | 'all_time' | 'custom';
 
 interface InstagramTopPostsProps {
   content: ContentPost[];
@@ -34,6 +39,7 @@ const getDateFilter = (period: PeriodFilter): Date | null => {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       return thirtyDaysAgo;
     case 'all_time':
+    case 'custom':
       return null;
   }
 };
@@ -46,53 +52,113 @@ export const InstagramTopPosts = ({
   onPostClick,
 }: InstagramTopPostsProps) => {
   const [period, setPeriod] = useState<PeriodFilter>('this_month');
+  const [customRange, setCustomRange] = useState<DateRange | undefined>();
 
   // Get top 5 posts sorted by engagement
   const topPosts = useMemo(() => {
-    const dateFilter = getDateFilter(period);
+    let filtered = [...content];
     
-    return [...content]
-      .filter(post => dateFilter === null || new Date(post.date) >= dateFilter)
+    // Apply date filter
+    if (period === 'custom' && customRange?.from) {
+      const from = customRange.from;
+      const to = customRange.to || new Date();
+      filtered = filtered.filter(post => {
+        const date = new Date(post.date);
+        return date >= from && date <= to;
+      });
+    } else {
+      const dateFilter = getDateFilter(period);
+      if (dateFilter) {
+        filtered = filtered.filter(post => new Date(post.date) >= dateFilter);
+      }
+    }
+    
+    return filtered
       .sort((a, b) => {
         const engagementA = (a.likes || 0) + (a.comments || 0) + (a.views || 0);
         const engagementB = (b.likes || 0) + (b.comments || 0) + (b.views || 0);
         return engagementB - engagementA;
       })
       .slice(0, 5);
-  }, [content, period]);
+  }, [content, period, customRange]);
 
   // Don't render if not connected
   if (!isConnected && !isLoading && content.length === 0) {
     return null;
   }
 
-  const emptyMessage = period === 'this_month' 
-    ? 'No hay posts este mes' 
-    : period === 'last_30_days' 
-      ? 'No hay posts en los últimos 30 días' 
-      : 'No hay posts';
+  const getEmptyMessage = () => {
+    if (period === 'custom') return 'No hay posts en el rango seleccionado';
+    if (period === 'this_month') return 'No hay posts este mes';
+    if (period === 'last_30_days') return 'No hay posts en los últimos 30 días';
+    return 'No hay posts';
+  };
+
+  const handlePeriodChange = (value: string) => {
+    setPeriod(value as PeriodFilter);
+    if (value !== 'custom') {
+      setCustomRange(undefined);
+    }
+  };
 
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-md bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400">
               <Instagram className="h-3.5 w-3.5 text-white" />
             </div>
             <CardTitle className="text-base font-medium">Top Posts Instagram</CardTitle>
           </div>
-          <div className="flex items-center gap-2">
-            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
-              <SelectTrigger className="h-7 text-xs w-[120px]">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Period Filter */}
+            <Select value={period} onValueChange={handlePeriodChange}>
+              <SelectTrigger className="h-7 text-xs w-[110px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="this_month">Este mes</SelectItem>
                 <SelectItem value="last_30_days">30 días</SelectItem>
                 <SelectItem value="all_time">Todo</SelectItem>
+                <SelectItem value="custom">Personalizado</SelectItem>
               </SelectContent>
             </Select>
+            
+            {/* Custom Date Range Picker */}
+            {period === 'custom' && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
+                    <CalendarIcon className="h-3 w-3" />
+                    {customRange?.from ? (
+                      customRange.to ? (
+                        <>
+                          {format(customRange.from, 'dd/MM', { locale: es })} - {format(customRange.to, 'dd/MM', { locale: es })}
+                        </>
+                      ) : (
+                        format(customRange.from, 'dd/MM/yy', { locale: es })
+                      )
+                    ) : (
+                      'Rango'
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={customRange?.from}
+                    selected={customRange}
+                    onSelect={setCustomRange}
+                    numberOfMonths={2}
+                    locale={es}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+            
             {isLiveData && !isLoading && (
               <Badge
                 variant="outline"
@@ -110,7 +176,7 @@ export const InstagramTopPosts = ({
           <PodiumSkeleton />
         ) : topPosts.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
-            {emptyMessage}
+            {getEmptyMessage()}
           </div>
         ) : (
           <div className="flex items-end justify-center gap-2 pt-2 pb-2">
