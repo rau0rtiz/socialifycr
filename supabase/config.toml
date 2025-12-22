@@ -23,3 +23,12 @@ verify_jwt = false
 
 [functions.youtube-api]
 verify_jwt = true
+
+[functions.generate-copy]
+verify_jwt = true
+
+[functions.detect-crosspost]
+verify_jwt = true
+
+[functions.polish-context]
+verify_jwt = true
