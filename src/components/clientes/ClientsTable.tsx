@@ -17,7 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Trash2, Eye } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Eye, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface ClientsTableProps {
@@ -37,6 +38,13 @@ export const ClientsTable = ({
   onEditClient,
   onDeleteClient,
 }: ClientsTableProps) => {
+  const navigate = useNavigate();
+
+  const handlePreviewDashboard = (client: Client, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Navigate to dashboard with preview mode and client ID
+    navigate(`/?preview=${client.id}`);
+  };
   if (loading) {
     return (
       <Card>
@@ -134,6 +142,10 @@ export const ClientsTable = ({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => handlePreviewDashboard(client, e)}>
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Ver Dashboard
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSelectClient(client); }}>
                         <Eye className="h-4 w-4 mr-2" />
                         Ver detalles

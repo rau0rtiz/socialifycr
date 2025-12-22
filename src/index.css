@@ -41,6 +41,10 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
+    /* Client brand colors - can be overridden dynamically */
+    --client-primary: 222.2 47.4% 11.2%;
+    --client-accent: 217 91% 60%;
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -103,6 +107,10 @@ All colors MUST be HSL.
     --font-sans: Poppins, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
     --font-serif: "Cormorant Garamond", ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
     --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+
+    /* Client brand colors - dark mode defaults */
+    --client-primary: 210 40% 98%;
+    --client-accent: 217 91% 60%;
   }
 }
 
