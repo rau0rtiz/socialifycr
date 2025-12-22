@@ -45,7 +45,7 @@ const clientMenuItems = [
 
 const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
-  { title: 'Configuración de Marca', url: '/brand-settings', icon: Palette },
+  { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
 ];
 
 export const Sidebar = () => {
