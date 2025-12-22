@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ClientsTable } from '@/components/clientes/ClientsTable';
 import { ClientFormDialog } from '@/components/clientes/ClientFormDialog';
-import { ClientDetailPanel } from '@/components/clientes/ClientDetailPanel';
+import { ClientDetailDialog } from '@/components/clientes/ClientDetailDialog';
 import { DeleteConfirmDialog } from '@/components/clientes/DeleteConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -128,29 +128,21 @@ const Clientes = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className={selectedClient ? 'lg:col-span-2' : 'lg:col-span-3'}>
-            <ClientsTable
-              clients={clients}
-              loading={loading}
-              onSelectClient={setSelectedClient}
-              selectedClientId={selectedClient?.id}
-              onEditClient={handleEditClient}
-                onDeleteClient={handleRequestDelete}
-              />
-            </div>
+        <ClientsTable
+          clients={clients}
+          loading={loading}
+          onSelectClient={setSelectedClient}
+          selectedClientId={selectedClient?.id}
+          onEditClient={handleEditClient}
+          onDeleteClient={handleRequestDelete}
+        />
 
-            {selectedClient && (
-              <div className="lg:col-span-1">
-                <ClientDetailPanel
-                  client={selectedClient}
-                  onClose={() => setSelectedClient(null)}
-                  onUpdate={fetchClients}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        <ClientDetailDialog
+          client={selectedClient}
+          open={!!selectedClient}
+          onOpenChange={(open) => !open && setSelectedClient(null)}
+          onUpdate={fetchClients}
+        />
 
         <ClientFormDialog
           open={isFormOpen}
@@ -165,7 +157,8 @@ const Clientes = () => {
           clientName={clientToDelete?.name || ''}
           onConfirm={handleDeleteClient}
         />
-      </DashboardLayout>
+      </div>
+    </DashboardLayout>
     );
   };
 
