@@ -18,6 +18,7 @@ import AcceptInvite from "./pages/AcceptInvite";
 import Invitacion from "./pages/Invitacion";
 import NotFound from "./pages/NotFound";
 import { MetaOAuthCallback } from "./pages/MetaOAuthCallback";
+import { YouTubeOAuthCallback } from "./pages/YouTubeOAuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="/content" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                 <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
                 <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
+                <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
