@@ -234,19 +234,27 @@ export const YouTubeTopVideos = ({
     let filtered = [...videos];
     
     // Apply date filter
-    if (period === 'custom' && customRange?.from) {
-      const from = customRange.from;
-      const to = customRange.to || new Date();
-      filtered = filtered.filter(video => {
-        const date = new Date(video.publishedAt);
-        return date >= from && date <= to;
-      });
-    } else {
+    if (period === 'custom') {
+      // If custom is selected but no range yet, show all videos
+      if (customRange?.from) {
+        const from = new Date(customRange.from);
+        from.setHours(0, 0, 0, 0);
+        const to = customRange.to ? new Date(customRange.to) : new Date();
+        to.setHours(23, 59, 59, 999);
+        
+        filtered = filtered.filter(video => {
+          const date = new Date(video.publishedAt);
+          return date >= from && date <= to;
+        });
+      }
+      // If no range selected yet, show all videos (no filtering)
+    } else if (period !== 'all_time') {
       const dateFilter = getDateFilter(period);
       if (dateFilter) {
         filtered = filtered.filter(video => new Date(video.publishedAt) >= dateFilter);
       }
     }
+    // 'all_time' shows everything - no filtering needed
     
     // Apply video type filter
     if (videoType === 'shorts') {
@@ -267,7 +275,8 @@ export const YouTubeTopVideos = ({
 
   const getEmptyMessage = () => {
     const typeLabel = videoType === 'shorts' ? 'shorts' : videoType === 'videos' ? 'videos' : 'contenido';
-    if (period === 'custom') return `No hay ${typeLabel} en el rango seleccionado`;
+    if (period === 'custom' && customRange?.from) return `No hay ${typeLabel} en el rango seleccionado`;
+    if (period === 'custom') return 'Selecciona un rango de fechas';
     if (period === 'this_month') return `No hay ${typeLabel} este mes`;
     if (period === 'last_30_days') return `No hay ${typeLabel} en los últimos 30 días`;
     return `No hay ${typeLabel}`;

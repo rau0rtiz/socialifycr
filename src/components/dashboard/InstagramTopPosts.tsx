@@ -59,19 +59,27 @@ export const InstagramTopPosts = ({
     let filtered = [...content];
     
     // Apply date filter
-    if (period === 'custom' && customRange?.from) {
-      const from = customRange.from;
-      const to = customRange.to || new Date();
-      filtered = filtered.filter(post => {
-        const date = new Date(post.date);
-        return date >= from && date <= to;
-      });
-    } else {
+    if (period === 'custom') {
+      // If custom is selected but no range yet, show all posts
+      if (customRange?.from) {
+        const from = new Date(customRange.from);
+        from.setHours(0, 0, 0, 0);
+        const to = customRange.to ? new Date(customRange.to) : new Date();
+        to.setHours(23, 59, 59, 999);
+        
+        filtered = filtered.filter(post => {
+          const date = new Date(post.date);
+          return date >= from && date <= to;
+        });
+      }
+      // If no range selected yet, show all posts (no filtering)
+    } else if (period !== 'all_time') {
       const dateFilter = getDateFilter(period);
       if (dateFilter) {
         filtered = filtered.filter(post => new Date(post.date) >= dateFilter);
       }
     }
+    // 'all_time' shows everything - no filtering needed
     
     return filtered
       .sort((a, b) => {
@@ -88,7 +96,8 @@ export const InstagramTopPosts = ({
   }
 
   const getEmptyMessage = () => {
-    if (period === 'custom') return 'No hay posts en el rango seleccionado';
+    if (period === 'custom' && customRange?.from) return 'No hay posts en el rango seleccionado';
+    if (period === 'custom') return 'Selecciona un rango de fechas';
     if (period === 'this_month') return 'No hay posts este mes';
     if (period === 'last_30_days') return 'No hay posts en los últimos 30 días';
     return 'No hay posts';
