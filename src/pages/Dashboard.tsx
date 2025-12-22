@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
 import { TopPostsSection } from '@/components/dashboard/TopPostsSection';
@@ -18,15 +19,31 @@ import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
-import { Download, Share2, Building2, Plus, RefreshCw } from 'lucide-react';
+import { Download, Share2, Building2, Plus, RefreshCw, X } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
 
 const Dashboard = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const previewClientId = searchParams.get('preview');
+  const isPreviewMode = !!previewClientId;
+  
   const { selectedClient, clientBrands, clients, clientsLoading, setSelectedClient } = useBrand();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const { isAgency, isClient, clientAccess, loading: roleLoading } = useUserRole();
+
+  // Handle preview mode - select the client from URL param
+  useEffect(() => {
+    if (previewClientId && clients.length > 0) {
+      const previewClient = clients.find(c => c.id === previewClientId);
+      if (previewClient && (!selectedClient || selectedClient.id !== previewClientId)) {
+        setSelectedClient(previewClient);
+      }
+    }
+  }, [previewClientId, clients, selectedClient, setSelectedClient]);
 
   // Auto-select client for client users based on their access
   useEffect(() => {
@@ -167,12 +184,36 @@ const Dashboard = () => {
 
   // Apply client brand colors as CSS custom properties
   const brandStyle = {
-    '--client-primary': `hsl(${primaryColor})`,
-    '--client-accent': `hsl(${accentColor})`,
+    '--client-primary': primaryColor,
+    '--client-accent': accentColor,
+    '--primary': primaryColor,
+    '--accent': accentColor,
   } as React.CSSProperties;
+
+  const handleExitPreview = () => {
+    navigate('/clientes');
+  };
 
   return (
     <DashboardLayout style={brandStyle}>
+      {/* Preview Mode Banner */}
+      {isPreviewMode && (
+        <div className="mb-4 p-3 rounded-lg border flex items-center justify-between" style={{ backgroundColor: `hsl(${accentColor} / 0.1)`, borderColor: `hsl(${accentColor} / 0.3)` }}>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" style={{ borderColor: `hsl(${accentColor})`, color: `hsl(${accentColor})` }}>
+              Modo Vista Previa
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              Viendo el dashboard como lo ve el cliente
+            </span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={handleExitPreview}>
+            <X className="h-4 w-4 mr-1" />
+            Salir
+          </Button>
+        </div>
+      )}
+
       {/* Client Header */}
       <div className="flex flex-col gap-3 mb-4 md:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
