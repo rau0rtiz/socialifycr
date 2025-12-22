@@ -96,6 +96,7 @@ export const ContentGrid = ({
   onCreateTag,
   onCreateModel,
   onUpdateMetadata,
+  onUpdateMetadataMultiple,
   onCapture48hMetrics,
 }: ContentGridProps) => {
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
