@@ -35,6 +35,7 @@ import { useAIInsights, InsightType, ContentIdea } from '@/hooks/use-ai-insights
 import { ContentPost } from '@/data/mockData';
 import { VideoIdea } from '@/hooks/use-video-ideas';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { AIContextDialog } from './AIContextDialog';
 
 interface AIInsightsPanelProps {
   clientId: string;
@@ -44,8 +45,8 @@ interface AIInsightsPanelProps {
   hasAdAccount?: boolean;
   aiContext?: string | null;
   preferredRegion?: string | null;
-  onEditContext?: () => void;
   onRegionChange?: (region: string) => void;
+  onContextUpdate?: (newContext: string) => void;
   onAddVideoIdea?: (idea: Omit<VideoIdea, 'id' | 'created_at' | 'updated_at' | 'todos'>) => Promise<VideoIdea | null>;
 }
 
@@ -100,21 +101,33 @@ export const AIInsightsPanel = ({
   hasAdAccount = false,
   aiContext,
   preferredRegion,
-  onEditContext,
   onRegionChange,
+  onContextUpdate,
   onAddVideoIdea
 }: AIInsightsPanelProps) => {
   const [activeTab, setActiveTab] = useState<InsightType>('content-ideas');
   const [selectedCountry, setSelectedCountry] = useState<string>(preferredRegion || 'CR');
   const [showContext, setShowContext] = useState(false);
   const [addingIdeaIndex, setAddingIdeaIndex] = useState<number | null>(null);
+  const [isContextDialogOpen, setIsContextDialogOpen] = useState(false);
+  const [currentContext, setCurrentContext] = useState(aiContext);
   
   // Update selected region when client changes
   useEffect(() => {
     setSelectedCountry(preferredRegion || 'CR');
   }, [clientId, preferredRegion]);
+
+  // Update context when prop changes
+  useEffect(() => {
+    setCurrentContext(aiContext);
+  }, [aiContext, clientId]);
   
-  const hasAIContext = !!aiContext;
+  const hasAIContext = !!currentContext;
+
+  const handleContextUpdate = (newContext: string) => {
+    setCurrentContext(newContext);
+    onContextUpdate?.(newContext);
+  };
 
   const handleRegionChange = (region: string) => {
     setSelectedCountry(region);
@@ -252,7 +265,7 @@ export const AIInsightsPanel = ({
                 variant="outline"
                 size="sm"
                 className="h-8 text-xs gap-1"
-                onClick={onEditContext}
+                onClick={() => setIsContextDialogOpen(true)}
               >
                 <Plus className="h-3 w-3" />
                 Agregar contexto
@@ -275,20 +288,18 @@ export const AIInsightsPanel = ({
                   <Label className="text-xs text-muted-foreground">
                     Contexto configurado para este cliente
                   </Label>
-                  {onEditContext && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 text-xs gap-1"
-                      onClick={onEditContext}
-                    >
-                      <Settings className="h-3 w-3" />
-                      Editar
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs gap-1"
+                    onClick={() => setIsContextDialogOpen(true)}
+                  >
+                    <Settings className="h-3 w-3" />
+                    Editar
+                  </Button>
                 </div>
                 <div className="text-sm text-foreground bg-muted/50 border border-border/50 p-3 rounded-lg whitespace-pre-wrap">
-                  {aiContext}
+                  {currentContext}
                 </div>
               </div>
             </CollapsibleContent>
@@ -574,6 +585,17 @@ export const AIInsightsPanel = ({
           ))}
         </Tabs>
       </CardContent>
+
+      {/* AI Context Dialog */}
+      <AIContextDialog
+        isOpen={isContextDialogOpen}
+        onClose={() => setIsContextDialogOpen(false)}
+        clientId={clientId}
+        clientName={clientName}
+        industry={industry}
+        initialContext={currentContext || null}
+        onUpdate={handleContextUpdate}
+      />
     </Card>
   );
 };
