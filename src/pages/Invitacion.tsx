@@ -14,11 +14,11 @@ const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'La contraseña debe tener al menos 6 caracteres');
 
 interface InvitationData {
-  id: string;
   email: string;
   role: string;
   client_id: string;
-  client_name?: string;
+  client_name: string;
+  invitee_name: string | null;
 }
 
 const Invitacion = () => {
@@ -48,19 +48,10 @@ const Invitacion = () => {
 
   const validateToken = async () => {
     try {
-      const { data, error } = await supabase
-        .from('client_invitations')
-        .select(`
-          id,
-          email,
-          role,
-          client_id,
-          clients:client_id (name)
-        `)
-        .eq('token', token)
-        .is('accepted_at', null)
-        .gt('expires_at', new Date().toISOString())
-        .maybeSingle();
+      // Use the public function that works without authentication
+      const { data, error } = await supabase.rpc('get_client_invitation_public', {
+        _token: token,
+      });
 
       if (error) {
         console.error('Error fetching invitation:', error);
@@ -68,19 +59,26 @@ const Invitacion = () => {
         return;
       }
 
-      if (!data) {
+      if (!data || data.length === 0) {
         setError('Esta invitación no es válida o ha expirado.');
         return;
       }
 
+      const inviteData = data[0];
       setInvitation({
-        id: data.id,
-        email: data.email,
-        role: data.role,
-        client_id: data.client_id,
-        client_name: (data.clients as any)?.name,
+        email: inviteData.email,
+        role: inviteData.role,
+        client_id: inviteData.client_id,
+        client_name: inviteData.client_name,
+        invitee_name: inviteData.invitee_name,
       });
-      setEmail(data.email);
+      
+      // Pre-fill email (locked to invitation email)
+      setEmail(inviteData.email);
+      // Pre-fill name if provided
+      if (inviteData.invitee_name) {
+        setFullName(inviteData.invitee_name);
+      }
     } catch (err) {
       console.error('Error validating token:', err);
       setError('Error al validar la invitación.');
@@ -120,11 +118,21 @@ const Invitacion = () => {
       
       if (error) {
         console.error('Error accepting invitation:', error);
-        toast({
-          title: 'Error',
-          description: 'No se pudo aceptar la invitación. Puede que ya haya sido usada.',
-          variant: 'destructive',
-        });
+        
+        // Handle specific errors
+        if (error.message.includes('Email mismatch')) {
+          toast({
+            title: 'Error de email',
+            description: 'Esta invitación fue enviada a un email diferente. Debes usar el email correcto.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Error',
+            description: 'No se pudo aceptar la invitación. Puede que ya haya sido usada.',
+            variant: 'destructive',
+          });
+        }
         return false;
       }
       
@@ -139,6 +147,12 @@ const Invitacion = () => {
     e.preventDefault();
     
     if (!validateForm(true)) return;
+    
+    // Verify email matches invitation
+    if (email.toLowerCase() !== invitation?.email.toLowerCase()) {
+      setFormErrors({ email: 'Debes usar el email al que fue enviada la invitación' });
+      return;
+    }
     
     setSubmitting(true);
     try {
@@ -197,6 +211,12 @@ const Invitacion = () => {
     
     if (!validateForm(false)) return;
     
+    // Verify email matches invitation
+    if (email.toLowerCase() !== invitation?.email.toLowerCase()) {
+      setFormErrors({ email: 'Debes usar el email al que fue enviada la invitación' });
+      return;
+    }
+    
     setSubmitting(true);
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -238,6 +258,12 @@ const Invitacion = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const roleLabels: Record<string, string> = {
+    account_manager: 'Account Manager',
+    editor: 'Editor',
+    viewer: 'Viewer',
   };
 
   if (loading) {
@@ -286,12 +312,18 @@ const Invitacion = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center space-y-2">
+          <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <Mail className="h-6 w-6 text-primary" />
+          </div>
           <CardTitle className="text-2xl font-bold">
             Invitación a {invitation?.client_name || 'Cliente'}
           </CardTitle>
           <CardDescription>
-            Crea una cuenta o inicia sesión para acceder
+            {invitation?.invitee_name && (
+              <span className="block">Hola {invitation.invitee_name},</span>
+            )}
+            Has sido invitado como <strong>{roleLabels[invitation?.role || 'viewer']}</strong>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -328,11 +360,14 @@ const Invitacion = () => {
                       type="email"
                       placeholder="tu@email.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
+                      readOnly
+                      className="pl-10 bg-muted"
                     />
                   </div>
                   {formErrors.email && <p className="text-sm text-destructive">{formErrors.email}</p>}
+                  <p className="text-xs text-muted-foreground">
+                    El email está vinculado a esta invitación
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
@@ -369,11 +404,14 @@ const Invitacion = () => {
                       type="email"
                       placeholder="tu@email.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
+                      readOnly
+                      className="pl-10 bg-muted"
                     />
                   </div>
                   {formErrors.email && <p className="text-sm text-destructive">{formErrors.email}</p>}
+                  <p className="text-xs text-muted-foreground">
+                    El email está vinculado a esta invitación
+                  </p>
                 </div>
                 
                 <div className="space-y-2">

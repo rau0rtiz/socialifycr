@@ -62,6 +62,7 @@ export type Database = {
           expires_at: string
           id: string
           invited_by: string
+          invitee_name: string | null
           role: Database["public"]["Enums"]["client_role"]
           token: string
         }
@@ -73,6 +74,7 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by: string
+          invitee_name?: string | null
           role?: Database["public"]["Enums"]["client_role"]
           token?: string
         }
@@ -84,6 +86,7 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by?: string
+          invitee_name?: string | null
           role?: Database["public"]["Enums"]["client_role"]
           token?: string
         }
@@ -532,6 +535,16 @@ export type Database = {
         Args: { _token: string }
         Returns: {
           client_id: string
+          role: Database["public"]["Enums"]["client_role"]
+        }[]
+      }
+      get_client_invitation_public: {
+        Args: { _token: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          email: string
+          invitee_name: string
           role: Database["public"]["Enums"]["client_role"]
         }[]
       }

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Check, Loader2 } from 'lucide-react';
+import { Copy, Check, Loader2, Mail, User, Send, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
 
 interface InviteClientDialogProps {
@@ -31,6 +31,7 @@ interface InviteClientDialogProps {
 }
 
 const emailSchema = z.string().trim().email('Por favor ingresa un email válido');
+const nameSchema = z.string().trim().min(1, 'El nombre es requerido').max(100, 'El nombre es muy largo');
 
 export const InviteClientDialog = ({
   open,
@@ -40,49 +41,70 @@ export const InviteClientDialog = ({
   onInviteCreated,
 }: InviteClientDialogProps) => {
   const [email, setEmail] = useState('');
+  const [inviteeName, setInviteeName] = useState('');
   const [role, setRole] = useState<'account_manager' | 'editor' | 'viewer'>('viewer');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ email?: string; name?: string }>({});
   const { toast } = useToast();
 
-  const handleCreateInvite = async () => {
-    // Validate email
+  const validateForm = () => {
+    const newErrors: { email?: string; name?: string } = {};
+
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
-      setEmailError(emailResult.error.errors[0].message);
-      return;
+      newErrors.email = emailResult.error.errors[0].message;
     }
-    setEmailError(null);
+
+    const nameResult = nameSchema.safeParse(inviteeName);
+    if (!nameResult.success) {
+      newErrors.name = nameResult.error.errors[0].message;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSendInvite = async () => {
+    if (!validateForm()) return;
 
     setLoading(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error('No authenticated user');
-
-      const { data, error } = await supabase
-        .from('client_invitations')
-        .insert({
-          client_id: clientId,
-          email: emailResult.data,
+      const { data, error } = await supabase.functions.invoke('send-client-invitation', {
+        body: {
+          clientId,
+          email: email.trim().toLowerCase(),
           role,
-          invited_by: userData.user.id,
-        })
-        .select('token')
-        .single();
+          inviteeName: inviteeName.trim(),
+        },
+      });
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-      // Use the cleaner path-based URL format
-      const link = `${window.location.origin}/invitacion/${data.token}`;
-      setInviteLink(link);
+      setInviteLink(data.inviteLink);
+      setSuccess(true);
       onInviteCreated();
+
+      if (data.emailSent) {
+        toast({
+          title: 'Invitación enviada',
+          description: `Se ha enviado un email de invitación a ${email}`,
+        });
+      } else {
+        toast({
+          title: 'Invitación creada',
+          description: 'La invitación fue creada pero no se pudo enviar el email. Copia el enlace manualmente.',
+          variant: 'destructive',
+        });
+      }
     } catch (error: any) {
-      console.error('Error creating invitation:', error);
+      console.error('Error sending invitation:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo crear la invitación.',
+        description: error.message || 'No se pudo enviar la invitación.',
         variant: 'destructive',
       });
     } finally {
@@ -103,39 +125,75 @@ export const InviteClientDialog = ({
 
   const handleClose = () => {
     setEmail('');
+    setInviteeName('');
     setRole('viewer');
     setInviteLink(null);
+    setSuccess(false);
     setCopied(false);
-    setEmailError(null);
+    setErrors({});
     onOpenChange(false);
+  };
+
+  const roleLabels: Record<string, string> = {
+    account_manager: 'Account Manager',
+    editor: 'Editor',
+    viewer: 'Viewer',
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Invitar Cliente</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Invitar Miembro
+          </DialogTitle>
           <DialogDescription>
-            Genera un enlace de invitación para {clientName}
+            Envía una invitación por email para unirse a {clientName}
           </DialogDescription>
         </DialogHeader>
 
-        {!inviteLink ? (
+        {!success ? (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email del cliente</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="cliente@ejemplo.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setEmailError(null);
-                }}
-              />
-              {emailError && (
-                <p className="text-sm text-destructive">{emailError}</p>
+              <Label htmlFor="invitee-name">Nombre</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="invitee-name"
+                  type="text"
+                  placeholder="Nombre del invitado"
+                  value={inviteeName}
+                  onChange={(e) => {
+                    setInviteeName(e.target.value);
+                    setErrors((prev) => ({ ...prev, name: undefined }));
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="correo@ejemplo.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setErrors((prev) => ({ ...prev, email: undefined }));
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email}</p>
               )}
             </div>
 
@@ -151,26 +209,45 @@ export const InviteClientDialog = ({
                   <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                {role === 'account_manager' && 'Acceso completo para gestionar el cliente'}
+                {role === 'editor' && 'Puede editar contenido y ver métricas'}
+                {role === 'viewer' && 'Solo puede ver métricas y reportes'}
+              </p>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
-              <Button onClick={handleCreateInvite} disabled={loading || !email}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Generar Enlace
+              <Button onClick={handleSendInvite} disabled={loading || !email || !inviteeName}>
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="mr-2 h-4 w-4" />
+                )}
+                Enviar Invitación
               </Button>
             </DialogFooter>
           </div>
         ) : (
           <div className="space-y-4">
+            <div className="flex flex-col items-center justify-center py-4">
+              <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
+                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="mt-4 font-semibold text-lg">¡Invitación Enviada!</h3>
+              <p className="text-sm text-muted-foreground text-center mt-1">
+                Se ha enviado un email a <strong>{email}</strong> con las instrucciones para unirse.
+              </p>
+            </div>
+
             <div className="space-y-2">
-              <Label>Enlace de invitación</Label>
+              <Label>Enlace de respaldo</Label>
               <div className="flex gap-2">
                 <Input
                   readOnly
-                  value={inviteLink}
+                  value={inviteLink || ''}
                   className="font-mono text-xs"
                 />
                 <Button variant="outline" size="icon" onClick={handleCopy}>
@@ -182,12 +259,14 @@ export const InviteClientDialog = ({
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Este enlace expira en 7 días. Compártelo con el cliente por email o mensaje.
+                También puedes compartir este enlace directamente. Expira en 7 días.
               </p>
             </div>
 
             <DialogFooter>
-              <Button onClick={handleClose}>Cerrar</Button>
+              <Button onClick={handleClose} className="w-full">
+                Cerrar
+              </Button>
             </DialogFooter>
           </div>
         )}
