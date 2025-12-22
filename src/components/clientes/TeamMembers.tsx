@@ -60,45 +60,31 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
   }, [clientId]);
 
   const fetchMembers = async () => {
-    // Fetch team members first
-    const { data: teamData, error: teamError } = await supabase
+    const { data, error } = await supabase
       .from('client_team_members')
-      .select('id, user_id, role')
+      .select(`
+        id,
+        user_id,
+        role,
+        profiles:user_id (
+          full_name,
+          email,
+          avatar_url
+        )
+      `)
       .eq('client_id', clientId);
 
-    if (teamError) {
-      console.error('Error fetching team members:', teamError);
-      setLoading(false);
-      return;
+    if (error) {
+      console.error('Error fetching team members:', error);
+    } else {
+      const transformedData = (data || []).map((member: any) => ({
+        id: member.id,
+        user_id: member.user_id,
+        role: member.role as 'account_manager' | 'editor' | 'viewer',
+        profile: member.profiles,
+      }));
+      setMembers(transformedData);
     }
-
-    if (!teamData || teamData.length === 0) {
-      setMembers([]);
-      setLoading(false);
-      return;
-    }
-
-    // Fetch profiles for those users
-    const userIds = teamData.map(m => m.user_id);
-    const { data: profilesData, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, avatar_url')
-      .in('id', userIds);
-
-    if (profilesError) {
-      console.error('Error fetching profiles:', profilesError);
-    }
-
-    // Map profiles to team members
-    const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
-    const transformedData = teamData.map((member) => ({
-      id: member.id,
-      user_id: member.user_id,
-      role: member.role as 'account_manager' | 'editor' | 'viewer',
-      profile: profilesMap.get(member.user_id) || null,
-    }));
-    
-    setMembers(transformedData);
     setLoading(false);
   };
 
