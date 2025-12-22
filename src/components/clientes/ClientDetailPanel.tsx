@@ -73,7 +73,7 @@ export const ClientDetailPanel = ({ client, onClose, onUpdate }: ClientDetailPan
         <Separator />
 
         {/* Team Members */}
-        <TeamMembers clientId={client.id} />
+        <TeamMembers clientId={client.id} clientName={client.name} />
       </CardContent>
     </Card>
   );
