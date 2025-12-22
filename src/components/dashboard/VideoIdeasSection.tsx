@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Plus, Lightbulb, Instagram, Facebook, Youtube, Twitter, 
-  Link2, Trash2, X, Check, ExternalLink, Video
+  Link2, Trash2, X, Check, ExternalLink, Video, Edit2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VideoIdea, TodoItem } from '@/hooks/use-video-ideas';
@@ -54,6 +54,67 @@ const detectPlatform = (url: string): VideoIdea['platform'] => {
   return 'other';
 };
 
+// Video embed URL generator for preview
+const getEmbedUrl = (url: string, platform: VideoIdea['platform']): string | null => {
+  if (!url) return null;
+  
+  try {
+    const urlObj = new URL(url);
+    
+    switch (platform) {
+      case 'youtube': {
+        // Handle youtu.be links
+        if (urlObj.hostname === 'youtu.be') {
+          const videoId = urlObj.pathname.slice(1);
+          return `https://www.youtube.com/embed/${videoId}`;
+        }
+        // Handle youtube.com/watch?v= links
+        const videoId = urlObj.searchParams.get('v');
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}`;
+        }
+        // Handle youtube.com/embed/ links
+        if (urlObj.pathname.includes('/embed/')) {
+          return url;
+        }
+        // Handle youtube.com/shorts/ links
+        if (urlObj.pathname.includes('/shorts/')) {
+          const shortsId = urlObj.pathname.split('/shorts/')[1]?.split('/')[0];
+          if (shortsId) {
+            return `https://www.youtube.com/embed/${shortsId}`;
+          }
+        }
+        break;
+      }
+      case 'tiktok': {
+        // TikTok embed requires their embed player
+        const match = url.match(/\/video\/(\d+)/);
+        if (match) {
+          return `https://www.tiktok.com/embed/v2/${match[1]}`;
+        }
+        break;
+      }
+      case 'instagram': {
+        // Instagram reels/posts can be embedded
+        if (urlObj.pathname.includes('/reel/') || urlObj.pathname.includes('/p/')) {
+          return `${url}embed`;
+        }
+        break;
+      }
+      case 'facebook': {
+        // Facebook video embed
+        return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
+      }
+      default:
+        return null;
+    }
+  } catch {
+    return null;
+  }
+  
+  return null;
+};
+
 const IdeaSkeleton = () => (
   <div className="flex items-center gap-3 p-2">
     <Skeleton className="w-16 h-16 rounded-md" />
@@ -63,6 +124,53 @@ const IdeaSkeleton = () => (
     </div>
   </div>
 );
+
+// Video Preview Component
+const VideoPreview = ({ url, platform }: { url: string; platform: VideoIdea['platform'] }) => {
+  const embedUrl = useMemo(() => getEmbedUrl(url, platform), [url, platform]);
+  
+  if (!url) {
+    return (
+      <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
+          <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">Sin URL de video</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (embedUrl) {
+    return (
+      <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+        <iframe
+          src={embedUrl}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="Video preview"
+        />
+      </div>
+    );
+  }
+
+  // Fallback for unsupported platforms
+  return (
+    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+      <div className="text-center">
+        <Video className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2" />
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => window.open(url, '_blank')}
+        >
+          <ExternalLink className="h-4 w-4 mr-2" />
+          Ver en {platformConfig[platform].label}
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 export const VideoIdeasSection = ({
   ideas,
@@ -79,7 +187,10 @@ export const VideoIdeasSection = ({
   const [newUrl, setNewUrl] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
-  // Edit modal state
+  // Edit modal state - all fields editable
+  const [editUrl, setEditUrl] = useState('');
+  const [editPlatform, setEditPlatform] = useState<VideoIdea['platform']>('other');
+  const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editTagId, setEditTagId] = useState<string>('');
   const [editModelId, setEditModelId] = useState<string>('');
@@ -110,16 +221,29 @@ export const VideoIdeasSection = ({
 
   const handleOpenIdea = (idea: VideoIdea) => {
     setSelectedIdea(idea);
+    setEditUrl(idea.url || '');
+    setEditPlatform(idea.platform);
+    setEditTitle(idea.title || '');
     setEditDescription(idea.description || '');
     setEditTagId(idea.tag_id || '');
     setEditModelId(idea.model_id || '');
     setEditTodos(idea.todos || []);
   };
 
+  const handleUrlChange = (newUrl: string) => {
+    setEditUrl(newUrl);
+    if (newUrl) {
+      setEditPlatform(detectPlatform(newUrl));
+    }
+  };
+
   const handleSaveIdea = async () => {
     if (!selectedIdea) return;
     
     await onUpdateIdea(selectedIdea.id, {
+      url: editUrl || selectedIdea.url,
+      platform: editPlatform,
+      title: editTitle || null,
       description: editDescription || null,
       tag_id: editTagId || null,
       model_id: editModelId || null,
@@ -175,7 +299,7 @@ export const VideoIdeasSection = ({
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => <IdeaSkeleton key={i} />)
             ) : ideas.length === 0 ? (
@@ -239,6 +363,11 @@ export const VideoIdeasSection = ({
                           </Badge>
                         )}
                       </div>
+                      {idea.title && (
+                        <p className="text-xs font-medium truncate mb-0.5">
+                          {idea.title}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground line-clamp-1 truncate">
                         {idea.description || idea.url}
                       </p>
@@ -249,6 +378,9 @@ export const VideoIdeasSection = ({
                         </div>
                       )}
                     </div>
+
+                    {/* Edit indicator */}
+                    <Edit2 className="h-4 w-4 text-muted-foreground/50" />
                   </div>
                 );
               })
@@ -265,7 +397,7 @@ export const VideoIdeasSection = ({
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label>URL del video</Label>
+              <Label>URL del video (opcional)</Label>
               <Input
                 placeholder="https://instagram.com/reel/..."
                 value={newUrl}
@@ -273,14 +405,14 @@ export const VideoIdeasSection = ({
                 onKeyDown={(e) => e.key === 'Enter' && handleAddIdea()}
               />
               <p className="text-xs text-muted-foreground">
-                Soporta: Instagram, Facebook, TikTok, YouTube, Twitter
+                Soporta: Instagram, Facebook, TikTok, YouTube, Twitter. Puedes dejarlo vacío y agregar detalles después.
               </p>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleAddIdea} disabled={!newUrl.trim() || isAdding}>
+              <Button onClick={handleAddIdea} disabled={isAdding}>
                 {isAdding ? 'Guardando...' : 'Agregar'}
               </Button>
             </div>
@@ -288,7 +420,7 @@ export const VideoIdeasSection = ({
         </DialogContent>
       </Dialog>
 
-      {/* View/Edit Modal */}
+      {/* View/Edit Modal - Fully Editable */}
       <Dialog open={!!selectedIdea} onOpenChange={(open) => !open && setSelectedIdea(null)}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedIdea && (
@@ -296,27 +428,20 @@ export const VideoIdeasSection = ({
               <DialogHeader>
                 <div className="flex items-center justify-between">
                   <DialogTitle className="flex items-center gap-2">
-                    {(() => {
-                      const config = platformConfig[selectedIdea.platform];
-                      const PlatformIcon = config.icon;
-                      return (
-                        <Badge variant="outline" className={cn("gap-1", config.color)}>
-                          <PlatformIcon className="h-3 w-3" />
-                          {config.label}
-                        </Badge>
-                      );
-                    })()}
-                    Idea de Video
+                    <Edit2 className="h-4 w-4 text-muted-foreground" />
+                    Editar Idea de Video
                   </DialogTitle>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => window.open(selectedIdea.url, '_blank')}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
+                    {editUrl && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => window.open(editUrl, '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -330,19 +455,47 @@ export const VideoIdeasSection = ({
               </DialogHeader>
 
               <div className="space-y-6 pt-4">
-                {/* Video embed placeholder */}
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <Video className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2" />
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => window.open(selectedIdea.url, '_blank')}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Ver en {platformConfig[selectedIdea.platform].label}
-                    </Button>
+                {/* Video Preview */}
+                <VideoPreview url={editUrl} platform={editPlatform} />
+
+                {/* URL and Platform */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2 space-y-2">
+                    <Label>URL del video</Label>
+                    <Input
+                      placeholder="https://..."
+                      value={editUrl}
+                      onChange={(e) => handleUrlChange(e.target.value)}
+                    />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Plataforma</Label>
+                    <Select value={editPlatform} onValueChange={(val) => setEditPlatform(val as VideoIdea['platform'])}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(platformConfig).map(([key, config]) => (
+                          <SelectItem key={key} value={key}>
+                            <span className="flex items-center gap-2">
+                              <config.icon className="h-3 w-3" />
+                              {config.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Title */}
+                <div className="space-y-2">
+                  <Label>Título</Label>
+                  <Input
+                    placeholder="Dale un título a esta idea..."
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                  />
                 </div>
 
                 {/* Tag and Model selectors */}

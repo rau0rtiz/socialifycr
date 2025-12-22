@@ -20,10 +20,28 @@ interface InsightRequest {
   industry: string;
   contentSummary: ContentSummary;
   insightType: 'content-ideas' | 'trending-topics' | 'performance-analysis' | 'optimization-tips';
+  country: string;
+  additionalContext?: string;
+  hasAdAccount?: boolean;
 }
 
-async function getTrendingTopics(industry: string, perplexityKey: string): Promise<string[]> {
-  console.log('Fetching trending topics for industry:', industry);
+const COUNTRY_NAMES: Record<string, string> = {
+  'CR': 'Costa Rica',
+  'MX': 'México',
+  'CO': 'Colombia',
+  'AR': 'Argentina',
+  'ES': 'España',
+  'US': 'Estados Unidos',
+  'PA': 'Panamá',
+  'GT': 'Guatemala',
+  'SV': 'El Salvador',
+  'HN': 'Honduras',
+  'NI': 'Nicaragua',
+};
+
+async function getTrendingTopics(industry: string, country: string, perplexityKey: string): Promise<{ topics: string[], sources: string[] }> {
+  const countryName = COUNTRY_NAMES[country] || 'Costa Rica';
+  console.log('Fetching trending topics for industry:', industry, 'in', countryName);
   
   try {
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -37,11 +55,11 @@ async function getTrendingTopics(industry: string, perplexityKey: string): Promi
         messages: [
           {
             role: 'system',
-            content: 'You are a social media trends analyst. Return only a JSON array of 5 trending topics/formats. No explanations, just the array.'
+            content: 'You are a social media trends analyst specializing in Latin American markets. Return a JSON object with "topics" (array of 5 trending topics) and "sources" (array of relevant URLs). No explanations.'
           },
           {
             role: 'user',
-            content: `What are the top 5 trending social media topics, formats, or content ideas in the ${industry} industry right now? Return as a JSON array of strings.`
+            content: `What are the top 5 trending social media topics, formats, or content ideas in the ${industry} industry specifically relevant to ${countryName} right now? Consider local culture, events, and preferences. Return as JSON: {"topics": ["topic1", ...], "sources": ["url1", ...]}`
           }
         ],
         search_recency_filter: 'week',
@@ -50,75 +68,135 @@ async function getTrendingTopics(industry: string, perplexityKey: string): Promi
 
     if (!response.ok) {
       console.error('Perplexity API error:', response.status);
-      return [];
+      return { topics: [], sources: [] };
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '[]';
+    const content = data.choices?.[0]?.message?.content || '{}';
     
     // Parse JSON from response
-    const jsonMatch = content.match(/\[[\s\S]*?\]/);
+    const jsonMatch = content.match(/\{[\s\S]*?\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        topics: parsed.topics || [],
+        sources: parsed.sources || [],
+      };
     }
     
-    return [];
+    // Fallback: try to extract array
+    const arrayMatch = content.match(/\[[\s\S]*?\]/);
+    if (arrayMatch) {
+      return { topics: JSON.parse(arrayMatch[0]), sources: [] };
+    }
+    
+    return { topics: [], sources: [] };
   } catch (error) {
     console.error('Error fetching trending topics:', error);
-    return [];
+    return { topics: [], sources: [] };
   }
+}
+
+interface InsightResult {
+  insights: string[];
+  recommendations: string[];
+  justifications: string[];
+  sources: string[];
+  goalRecommendations?: {
+    growth: string[];
+    sales: string[];
+    content: string[];
+  };
 }
 
 async function generateInsights(
   request: InsightRequest,
   trendingTopics: string[],
+  trendingSources: string[],
   lovableKey: string
-): Promise<{ insights: string[]; recommendations: string[] }> {
+): Promise<InsightResult> {
   console.log('Generating insights with Lovable AI');
+  const countryName = COUNTRY_NAMES[request.country] || 'Costa Rica';
 
-  const systemPrompt = `You are an expert social media strategist. Analyze the data and provide actionable insights.
-Always respond in Spanish. Be concise and specific.`;
+  const systemPrompt = `Eres un experto estratega de redes sociales especializado en el mercado de ${countryName} y Centroamérica.
+Analiza los datos proporcionados y da insights específicos y accionables.
+SIEMPRE responde en español. Sé conciso, específico y SIEMPRE justifica tus recomendaciones con razones claras.
+Considera las particularidades culturales, festividades, y preferencias de ${countryName}.
+${request.hasAdAccount ? 'IMPORTANTE: El cliente tiene una cuenta de anuncios conectada, incluye recomendaciones específicas para optimizar campañas publicitarias.' : ''}`;
 
   let userPrompt = '';
+  let responseFormat = '';
   
   switch (request.insightType) {
     case 'content-ideas':
-      userPrompt = `Based on this social media performance data for "${request.clientName}" (${request.industry}):
+      responseFormat = '{"insights": ["idea1 con descripción detallada", ...], "justifications": ["por qué esta idea funcionará en el mercado local", ...], "recommendations": ["tip implementación 1", ...]}';
+      userPrompt = `Datos de rendimiento para "${request.clientName}" (${request.industry}) en ${countryName}:
 - Total posts: ${request.contentSummary.totalPosts}
-- Top platform: ${request.contentSummary.topPlatform}
-- Average engagement: ${request.contentSummary.avgEngagement}
-- Top performing content types: ${request.contentSummary.topPostTypes.join(', ')}
+- Plataforma principal: ${request.contentSummary.topPlatform}
+- Engagement promedio: ${request.contentSummary.avgEngagement}
+- Tipos de contenido top: ${request.contentSummary.topPostTypes.join(', ')}
 
-${trendingTopics.length > 0 ? `Current trending topics in ${request.industry}: ${trendingTopics.join(', ')}` : ''}
+${trendingTopics.length > 0 ? `Tendencias actuales en ${request.industry} para ${countryName}: ${trendingTopics.join(', ')}` : ''}
 
-Generate 5 specific content ideas that would resonate with their audience. Return as JSON: {"insights": ["idea1", "idea2", ...], "recommendations": ["tip1", "tip2", ...]}`;
+${request.additionalContext ? `Contexto adicional del cliente: ${request.additionalContext}` : ''}
+
+Genera 5 ideas de contenido específicas que resonarán con la audiencia de ${countryName}. 
+Para CADA idea, proporciona una justificación de por qué funcionará (datos culturales, tendencias locales, o estadísticas relevantes).
+Retorna como JSON: ${responseFormat}`;
       break;
 
     case 'trending-topics':
-      userPrompt = `For a ${request.industry} brand called "${request.clientName}", analyze these current trending topics:
-${trendingTopics.length > 0 ? trendingTopics.join('\n') : 'No specific trends available'}
+      responseFormat = '{"insights": ["análisis de tendencia 1", ...], "justifications": ["por qué es relevante para tu marca", ...], "recommendations": ["cómo aprovecharla", ...]}';
+      userPrompt = `Para la marca "${request.clientName}" en ${request.industry} operando en ${countryName}, analiza estas tendencias actuales:
+${trendingTopics.length > 0 ? trendingTopics.join('\n') : 'No hay tendencias específicas disponibles'}
 
-Suggest how they can leverage these trends for their social media content. Return as JSON: {"insights": ["trend analysis 1", ...], "recommendations": ["action 1", ...]}`;
+${request.additionalContext ? `Contexto adicional: ${request.additionalContext}` : ''}
+
+Sugiere cómo pueden aprovechar estas tendencias para su contenido en redes sociales.
+Para cada sugerencia, justifica por qué es relevante para el mercado de ${countryName}.
+Retorna como JSON: ${responseFormat}`;
       break;
 
     case 'performance-analysis':
-      userPrompt = `Analyze this social media performance for "${request.clientName}" (${request.industry}):
+      responseFormat = '{"insights": ["análisis clave 1", ...], "goalRecommendations": {"growth": ["recomendación crecimiento 1 con justificación", ...], "sales": ["recomendación ventas 1 con justificación", ...], "content": ["recomendación contenido 1 con justificación", ...]}, "recommendations": [], "justifications": []}';
+      userPrompt = `Analiza el rendimiento de "${request.clientName}" (${request.industry}) en ${countryName}:
 - Total posts: ${request.contentSummary.totalPosts}
-- Top platform: ${request.contentSummary.topPlatform}
-- Average engagement: ${request.contentSummary.avgEngagement}
-- Top performing content types: ${request.contentSummary.topPostTypes.join(', ')}
-- Recent trends: ${request.contentSummary.recentTrends.join(', ')}
+- Plataforma principal: ${request.contentSummary.topPlatform}
+- Engagement promedio: ${request.contentSummary.avgEngagement}
+- Tipos de contenido top: ${request.contentSummary.topPostTypes.join(', ')}
+- Tendencias recientes: ${request.contentSummary.recentTrends.join(', ')}
 
-Provide performance insights and areas for improvement. Return as JSON: {"insights": ["analysis 1", ...], "recommendations": ["improvement 1", ...]}`;
+${request.hasAdAccount ? 'NOTA: Tienen cuenta de anuncios conectada - incluye análisis de oportunidades publicitarias.' : ''}
+${request.additionalContext ? `Contexto adicional: ${request.additionalContext}` : ''}
+
+Proporciona un análisis ESPECÍFICO a esta cuenta (no genérico como "IG es efectivo").
+Incluye recomendaciones separadas por objetivo:
+- CRECIMIENTO: Cómo aumentar seguidores y alcance
+- VENTAS: Cómo mejorar conversiones y ventas
+- CONTENIDO: Cómo mejorar la calidad y engagement del contenido
+
+CADA recomendación debe incluir su justificación basada en los datos.
+Retorna como JSON: ${responseFormat}`;
       break;
 
     case 'optimization-tips':
-      userPrompt = `For "${request.clientName}" in the ${request.industry} industry, with their current performance:
-- Top platform: ${request.contentSummary.topPlatform}
-- Average engagement: ${request.contentSummary.avgEngagement}
-- Top performing content types: ${request.contentSummary.topPostTypes.join(', ')}
+      responseFormat = '{"insights": ["insight sobre métricas actuales", ...], "recommendations": ["tip de optimización detallado", ...], "justifications": ["justificación con datos o mejores prácticas", ...], "sources": ["url fuente si aplica", ...]}';
+      userPrompt = `Para "${request.clientName}" en ${request.industry} en ${countryName}, con este rendimiento:
+- Plataforma principal: ${request.contentSummary.topPlatform}
+- Engagement promedio: ${request.contentSummary.avgEngagement}
+- Tipos de contenido top: ${request.contentSummary.topPostTypes.join(', ')}
+- Tendencias recientes: ${request.contentSummary.recentTrends.join(', ')}
 
-Provide specific optimization tips to improve their social media performance. Return as JSON: {"insights": ["insight 1", ...], "recommendations": ["tip 1", ...]}`;
+${request.hasAdAccount ? 'Tienen cuenta de anuncios conectada - incluye tips de optimización de campañas.' : ''}
+${request.additionalContext ? `Contexto adicional: ${request.additionalContext}` : ''}
+
+Proporciona tips de optimización ESPECÍFICOS basados en los datos de esta cuenta.
+IMPORTANTE: Para CADA recomendación, incluye:
+1. La recomendación específica
+2. Una justificación clara de POR QUÉ funcionará
+3. Si hay datos estadísticos o estudios que respalden la recomendación, menciónalos
+
+Retorna como JSON: ${responseFormat}`;
       break;
   }
 
@@ -148,16 +226,19 @@ Provide specific optimization tips to improve their social media performance. Re
     const content = data.choices?.[0]?.message?.content || '';
     
     // Parse JSON from response
-    const jsonMatch = content.match(/\{[\s\S]*?\}/);
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       return {
         insights: parsed.insights || [],
         recommendations: parsed.recommendations || [],
+        justifications: parsed.justifications || [],
+        sources: [...(parsed.sources || []), ...trendingSources].filter(Boolean),
+        goalRecommendations: parsed.goalRecommendations,
       };
     }
 
-    return { insights: [], recommendations: [] };
+    return { insights: [], recommendations: [], justifications: [], sources: trendingSources };
   } catch (error) {
     console.error('Error generating insights:', error);
     throw error;
@@ -201,17 +282,20 @@ serve(async (req) => {
     }
 
     const request: InsightRequest = await req.json();
-    console.log('Generating insights for:', request.clientName, 'type:', request.insightType);
+    console.log('Generating insights for:', request.clientName, 'type:', request.insightType, 'country:', request.country);
 
     // Get trending topics from Perplexity if available
     let trendingTopics: string[] = [];
+    let trendingSources: string[] = [];
     if (PERPLEXITY_API_KEY && (request.insightType === 'content-ideas' || request.insightType === 'trending-topics')) {
-      trendingTopics = await getTrendingTopics(request.industry, PERPLEXITY_API_KEY);
+      const trendingResult = await getTrendingTopics(request.industry, request.country || 'CR', PERPLEXITY_API_KEY);
+      trendingTopics = trendingResult.topics;
+      trendingSources = trendingResult.sources;
       console.log('Trending topics found:', trendingTopics.length);
     }
 
     // Generate insights with Lovable AI
-    const result = await generateInsights(request, trendingTopics, LOVABLE_API_KEY);
+    const result = await generateInsights(request, trendingTopics, trendingSources, LOVABLE_API_KEY);
 
     return new Response(JSON.stringify({
       success: true,

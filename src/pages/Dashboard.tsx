@@ -229,16 +229,22 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Social Followers Section */}
-      {(socialLoading || socialPlatforms.length > 0) && (
-        <div className="mb-4 md:mb-6">
+      {/* Social Followers & Top Posts Row */}
+      <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
+        {(socialLoading || socialPlatforms.length > 0) && (
           <SocialFollowersSection
             platforms={socialPlatforms}
             isLoading={socialLoading}
             isLiveData={socialIsLive}
           />
-        </div>
-      )}
+        )}
+        <TopPostsSection
+          content={content}
+          isLoading={contentLoading}
+          isLiveData={contentIsLive}
+          onPostClick={setSelectedPost}
+        />
+      </div>
 
       {/* Content Grid - 2x3 Grid below Social */}
       <div className="mb-4 md:mb-6">
@@ -257,14 +263,20 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Top Posts & Video Ideas Row */}
-      <div className="grid lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-        <TopPostsSection
+      {/* AI Insights Panel */}
+      <div className="mb-4 md:mb-6">
+        <AIInsightsPanel
+          clientId={selectedClient.id}
+          clientName={selectedClient.name}
+          industry={selectedClient.industry || 'general'}
           content={content}
-          isLoading={contentLoading}
-          isLiveData={contentIsLive}
-          onPostClick={setSelectedPost}
+          hasAdAccount={hasAdAccount}
+          onAddVideoIdea={addIdea}
         />
+      </div>
+
+      {/* Video Ideas Section */}
+      <div className="mb-4 md:mb-6">
         <VideoIdeasSection
           ideas={videoIdeas}
           isLoading={ideasLoading}
@@ -274,16 +286,6 @@ const Dashboard = () => {
           onUpdateIdea={updateIdea}
           onDeleteIdea={deleteIdea}
           clientId={selectedClient.id}
-        />
-      </div>
-
-      {/* AI Insights Panel */}
-      <div className="mb-4 md:mb-6">
-        <AIInsightsPanel
-          clientId={selectedClient.id}
-          clientName={selectedClient.name}
-          industry={selectedClient.industry || 'general'}
-          content={content}
         />
       </div>
 

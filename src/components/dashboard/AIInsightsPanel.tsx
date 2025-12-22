@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Sparkles, 
   TrendingUp, 
@@ -11,42 +14,68 @@ import {
   Lightbulb,
   RefreshCw,
   Zap,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  Globe,
+  Target,
+  DollarSign,
+  Megaphone,
+  ChevronDown,
+  ChevronUp,
+  Link2
 } from 'lucide-react';
 import { useAIInsights, InsightType } from '@/hooks/use-ai-insights';
 import { ContentPost } from '@/data/mockData';
+import { VideoIdea } from '@/hooks/use-video-ideas';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface AIInsightsPanelProps {
   clientId: string;
   clientName: string;
   industry: string;
   content: ContentPost[];
+  hasAdAccount?: boolean;
+  onAddVideoIdea?: (idea: Omit<VideoIdea, 'id' | 'created_at' | 'updated_at' | 'todos'>) => Promise<VideoIdea | null>;
 }
+
+const COUNTRIES = [
+  { value: 'CR', label: 'Costa Rica', flag: '🇨🇷' },
+  { value: 'MX', label: 'México', flag: '🇲🇽' },
+  { value: 'CO', label: 'Colombia', flag: '🇨🇴' },
+  { value: 'AR', label: 'Argentina', flag: '🇦🇷' },
+  { value: 'ES', label: 'España', flag: '🇪🇸' },
+  { value: 'US', label: 'Estados Unidos', flag: '🇺🇸' },
+  { value: 'PA', label: 'Panamá', flag: '🇵🇦' },
+  { value: 'GT', label: 'Guatemala', flag: '🇬🇹' },
+  { value: 'SV', label: 'El Salvador', flag: '🇸🇻' },
+  { value: 'HN', label: 'Honduras', flag: '🇭🇳' },
+  { value: 'NI', label: 'Nicaragua', flag: '🇳🇮' },
+];
 
 const insightTabs: { value: InsightType; label: string; icon: React.ReactNode; description: string }[] = [
   { 
     value: 'content-ideas', 
     label: 'Ideas', 
     icon: <Lightbulb className="h-4 w-4" />,
-    description: 'Ideas de contenido basadas en tendencias actuales'
+    description: 'Ideas de contenido basadas en tendencias actuales y contexto regional'
   },
   { 
     value: 'trending-topics', 
     label: 'Tendencias', 
     icon: <TrendingUp className="h-4 w-4" />,
-    description: 'Temas trending en tu industria'
+    description: 'Temas trending en tu industria y región'
   },
   { 
     value: 'performance-analysis', 
     label: 'Análisis', 
     icon: <BarChart3 className="h-4 w-4" />,
-    description: 'Análisis de rendimiento de tu contenido'
+    description: 'Análisis de rendimiento con recomendaciones por objetivo'
   },
   { 
     value: 'optimization-tips', 
     label: 'Optimización', 
     icon: <Zap className="h-4 w-4" />,
-    description: 'Tips para mejorar tu engagement'
+    description: 'Tips justificados con datos para mejorar tu engagement'
   },
 ];
 
@@ -54,50 +83,139 @@ export const AIInsightsPanel = ({
   clientId, 
   clientName, 
   industry, 
-  content 
+  content,
+  hasAdAccount = false,
+  onAddVideoIdea
 }: AIInsightsPanelProps) => {
   const [activeTab, setActiveTab] = useState<InsightType>('content-ideas');
+  const [selectedCountry, setSelectedCountry] = useState<string>('CR');
+  const [additionalContext, setAdditionalContext] = useState<string>('');
+  const [showContextInput, setShowContextInput] = useState(false);
+  const [addingIdeaIndex, setAddingIdeaIndex] = useState<number | null>(null);
+  
   const { isLoading, result, error, generateInsights } = useAIInsights(
     clientId,
     clientName,
     industry,
-    content
+    content,
+    selectedCountry,
+    additionalContext,
+    hasAdAccount
   );
 
   const handleGenerate = () => {
     generateInsights(activeTab);
   };
 
-  const currentTab = insightTabs.find(t => t.value === activeTab);
+  const handleAddAsVideoIdea = async (ideaText: string, index: number) => {
+    if (!onAddVideoIdea) return;
+    
+    setAddingIdeaIndex(index);
+    try {
+      await onAddVideoIdea({
+        client_id: clientId,
+        url: '',
+        platform: 'other',
+        thumbnail_url: null,
+        title: ideaText.slice(0, 100),
+        description: ideaText,
+        tag_id: null,
+        model_id: null,
+      });
+    } finally {
+      setAddingIdeaIndex(null);
+    }
+  };
+
+  const countryInfo = COUNTRIES.find(c => c.value === selectedCountry);
 
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-primary" />
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">AI Insights</CardTitle>
+                <CardDescription className="text-xs">
+                  Powered by Perplexity + Gemini
+                </CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-lg">AI Insights</CardTitle>
-              <CardDescription className="text-xs">
-                Powered by Perplexity + Gemini
-              </CardDescription>
-            </div>
+            <Button 
+              onClick={handleGenerate} 
+              disabled={isLoading}
+              size="sm"
+              className="gap-2"
+            >
+              {isLoading ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              Generar
+            </Button>
           </div>
-          <Button 
-            onClick={handleGenerate} 
-            disabled={isLoading}
-            size="sm"
-            className="gap-2"
-          >
-            {isLoading ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
+
+          {/* Country selector and context */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                <SelectTrigger className="w-[160px] h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map(country => (
+                    <SelectItem key={country.value} value={country.value}>
+                      <span className="flex items-center gap-2">
+                        <span>{country.flag}</span>
+                        {country.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              onClick={() => setShowContextInput(!showContextInput)}
+            >
+              {showContextInput ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              Contexto adicional
+            </Button>
+
+            {hasAdAccount && (
+              <Badge variant="secondary" className="text-xs gap-1">
+                <DollarSign className="h-3 w-3" />
+                Ad Account conectado
+              </Badge>
             )}
-            Generar
-          </Button>
+          </div>
+
+          {/* Optional context input */}
+          <Collapsible open={showContextInput}>
+            <CollapsibleContent>
+              <div className="space-y-2 pt-2">
+                <Label className="text-xs text-muted-foreground">
+                  Proporciona contexto adicional para obtener insights más precisos (opcional)
+                </Label>
+                <Textarea
+                  placeholder="Ej: Estamos lanzando un nuevo producto en enero, queremos enfocarnos en el segmento de 25-35 años, nuestro objetivo principal es aumentar las ventas online..."
+                  value={additionalContext}
+                  onChange={(e) => setAdditionalContext(e.target.value)}
+                  rows={2}
+                  className="text-sm"
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -141,7 +259,7 @@ export const AIInsightsPanel = ({
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-primary" />
-                        Tendencias Actuales
+                        Tendencias Actuales {countryInfo && `en ${countryInfo.label}`}
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {result.trendingTopics.map((topic, idx) => (
@@ -153,8 +271,111 @@ export const AIInsightsPanel = ({
                     </div>
                   )}
 
-                  {/* Insights */}
-                  {result.insights.length > 0 && (
+                  {/* Goal-based recommendations for Analysis tab */}
+                  {tab.value === 'performance-analysis' && result.goalRecommendations && (
+                    <div className="space-y-4">
+                      {result.goalRecommendations.growth && result.goalRecommendations.growth.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium flex items-center gap-2">
+                            <Target className="h-4 w-4 text-blue-500" />
+                            Para Crecimiento
+                          </h4>
+                          <ul className="space-y-2">
+                            {result.goalRecommendations.growth.map((rec, idx) => (
+                              <li key={idx} className="text-sm text-muted-foreground bg-blue-500/5 border border-blue-500/20 p-2 rounded-lg">
+                                {rec}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {result.goalRecommendations.sales && result.goalRecommendations.sales.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium flex items-center gap-2">
+                            <DollarSign className="h-4 w-4 text-green-500" />
+                            Para Ventas
+                          </h4>
+                          <ul className="space-y-2">
+                            {result.goalRecommendations.sales.map((rec, idx) => (
+                              <li key={idx} className="text-sm text-muted-foreground bg-green-500/5 border border-green-500/20 p-2 rounded-lg">
+                                {rec}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {result.goalRecommendations.content && result.goalRecommendations.content.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium flex items-center gap-2">
+                            <Megaphone className="h-4 w-4 text-purple-500" />
+                            Para Contenido
+                          </h4>
+                          <ul className="space-y-2">
+                            {result.goalRecommendations.content.map((rec, idx) => (
+                              <li key={idx} className="text-sm text-muted-foreground bg-purple-500/5 border border-purple-500/20 p-2 rounded-lg">
+                                {rec}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Content Ideas with Add button */}
+                  {tab.value === 'content-ideas' && result.insights.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4 text-amber-500" />
+                        Ideas de Contenido
+                      </h4>
+                      <ul className="space-y-2">
+                        {result.insights.map((insight, idx) => (
+                          <li 
+                            key={idx} 
+                            className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-start gap-2 flex-1">
+                                <span className="text-primary font-medium">{idx + 1}.</span>
+                                <span>{insight}</span>
+                              </div>
+                              {onAddVideoIdea && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs shrink-0"
+                                  onClick={() => handleAddAsVideoIdea(insight, idx)}
+                                  disabled={addingIdeaIndex === idx}
+                                >
+                                  {addingIdeaIndex === idx ? (
+                                    <RefreshCw className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Plus className="h-3 w-3 mr-1" />
+                                      Agregar
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                            {/* Justification if available */}
+                            {result.justifications?.[idx] && (
+                              <div className="mt-2 text-xs text-muted-foreground/80 pl-5 border-l-2 border-primary/20">
+                                <span className="font-medium">Por qué: </span>
+                                {result.justifications[idx]}
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Regular Insights (for other tabs) */}
+                  {tab.value !== 'content-ideas' && tab.value !== 'performance-analysis' && result.insights.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium flex items-center gap-2">
                         <Lightbulb className="h-4 w-4 text-amber-500" />
@@ -174,7 +395,7 @@ export const AIInsightsPanel = ({
                     </div>
                   )}
 
-                  {/* Recommendations */}
+                  {/* Recommendations with justifications */}
                   {result.recommendations.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium flex items-center gap-2">
@@ -185,10 +406,33 @@ export const AIInsightsPanel = ({
                         {result.recommendations.map((rec, idx) => (
                           <li 
                             key={idx} 
-                            className="text-sm text-muted-foreground bg-green-500/5 border border-green-500/20 p-2 rounded-lg flex items-start gap-2"
+                            className="text-sm text-muted-foreground bg-green-500/5 border border-green-500/20 p-3 rounded-lg"
                           >
-                            <span className="text-green-600 font-medium">✓</span>
-                            {rec}
+                            <div className="flex items-start gap-2">
+                              <span className="text-green-600 font-medium">✓</span>
+                              <div className="flex-1">
+                                <span>{rec}</span>
+                                {/* Justification */}
+                                {result.justifications?.[result.insights.length + idx] && (
+                                  <div className="mt-2 text-xs text-muted-foreground/80 border-l-2 border-green-500/20 pl-2">
+                                    <span className="font-medium">Justificación: </span>
+                                    {result.justifications[result.insights.length + idx]}
+                                  </div>
+                                )}
+                                {/* Source link if available */}
+                                {result.sources?.[idx] && (
+                                  <a 
+                                    href={result.sources[idx]} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                  >
+                                    <Link2 className="h-3 w-3" />
+                                    Ver fuente
+                                  </a>
+                                )}
+                              </div>
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -202,6 +446,9 @@ export const AIInsightsPanel = ({
                   <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">
                     Haz clic en "Generar" para obtener insights con IA
+                  </p>
+                  <p className="text-xs mt-1 text-muted-foreground/70">
+                    Región: {countryInfo?.flag} {countryInfo?.label}
                   </p>
                 </div>
               )}

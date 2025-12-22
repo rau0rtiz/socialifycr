@@ -13,11 +13,20 @@ interface ContentSummary {
   recentTrends: string[];
 }
 
+interface GoalRecommendations {
+  growth: string[];
+  sales: string[];
+  content: string[];
+}
+
 interface InsightResult {
   insightType: InsightType;
   trendingTopics: string[];
   insights: string[];
   recommendations: string[];
+  justifications: string[];
+  sources: string[];
+  goalRecommendations?: GoalRecommendations;
 }
 
 interface UseAIInsightsResult {
@@ -97,7 +106,10 @@ export const useAIInsights = (
   clientId: string | null,
   clientName: string,
   industry: string,
-  content: ContentPost[]
+  content: ContentPost[],
+  country: string = 'CR',
+  additionalContext: string = '',
+  hasAdAccount: boolean = false
 ): UseAIInsightsResult => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<InsightResult | null>(null);
@@ -123,6 +135,9 @@ export const useAIInsights = (
           industry: industry || 'general',
           contentSummary,
           insightType: type,
+          country,
+          additionalContext,
+          hasAdAccount,
         },
       });
 
@@ -139,6 +154,9 @@ export const useAIInsights = (
         trendingTopics: data.trendingTopics || [],
         insights: data.insights || [],
         recommendations: data.recommendations || [],
+        justifications: data.justifications || [],
+        sources: data.sources || [],
+        goalRecommendations: data.goalRecommendations || undefined,
       });
 
       toast({
@@ -158,7 +176,7 @@ export const useAIInsights = (
     } finally {
       setIsLoading(false);
     }
-  }, [clientId, clientName, industry, content, toast]);
+  }, [clientId, clientName, industry, content, country, additionalContext, hasAdAccount, toast]);
 
   return {
     isLoading,
