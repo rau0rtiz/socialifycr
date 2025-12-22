@@ -53,6 +53,53 @@ export type Database = {
         }
         Relationships: []
       }
+      client_competitors: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          created_by: string | null
+          display_name: string | null
+          id: string
+          notes: string | null
+          platform: string
+          profile_url: string | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          created_by?: string | null
+          display_name?: string | null
+          id?: string
+          notes?: string | null
+          platform: string
+          profile_url?: string | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          display_name?: string | null
+          id?: string
+          notes?: string | null
+          platform?: string
+          profile_url?: string | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_competitors_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_invitations: {
         Row: {
           accepted_at: string | null
