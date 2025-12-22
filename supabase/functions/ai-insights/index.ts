@@ -318,22 +318,46 @@ serve(async (req) => {
     const request: InsightRequest = await req.json();
     console.log('Generating insights for:', request.clientName, 'type:', request.insightType, 'country:', request.country);
 
+    // Fetch client's AI context from database
+    const { data: clientData, error: clientError } = await supabase
+      .from('clients')
+      .select('ai_context')
+      .eq('id', request.clientId)
+      .single();
+
+    if (clientError) {
+      console.error('Error fetching client AI context:', clientError);
+    }
+
+    // Merge stored ai_context with any additionalContext from request
+    const storedContext = clientData?.ai_context || '';
+    const combinedContext = [storedContext, request.additionalContext].filter(Boolean).join('\n\n');
+    
+    // Update request with combined context
+    const enrichedRequest = {
+      ...request,
+      additionalContext: combinedContext || undefined,
+    };
+
+    console.log('Client AI context loaded:', storedContext ? 'yes' : 'no');
+    console.log('Combined context length:', combinedContext.length);
+
     // Get trending topics from Perplexity if available
     let trendingTopics: string[] = [];
     let trendingSources: string[] = [];
-    if (PERPLEXITY_API_KEY && (request.insightType === 'content-ideas' || request.insightType === 'trending-topics')) {
-      const trendingResult = await getTrendingTopics(request.industry, request.country || 'CR', PERPLEXITY_API_KEY);
+    if (PERPLEXITY_API_KEY && (enrichedRequest.insightType === 'content-ideas' || enrichedRequest.insightType === 'trending-topics')) {
+      const trendingResult = await getTrendingTopics(enrichedRequest.industry, enrichedRequest.country || 'CR', PERPLEXITY_API_KEY);
       trendingTopics = trendingResult.topics;
       trendingSources = trendingResult.sources;
       console.log('Trending topics found:', trendingTopics.length);
     }
 
     // Generate insights with Lovable AI
-    const result = await generateInsights(request, trendingTopics, trendingSources, LOVABLE_API_KEY);
+    const result = await generateInsights(enrichedRequest, trendingTopics, trendingSources, LOVABLE_API_KEY);
 
     return new Response(JSON.stringify({
       success: true,
-      insightType: request.insightType,
+      insightType: enrichedRequest.insightType,
       trendingTopics,
       ...result,
     }), {
