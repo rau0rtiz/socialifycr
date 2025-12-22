@@ -593,12 +593,20 @@ export type Database = {
       }
       video_ideas: {
         Row: {
+          carousel_slides: Json | null
           client_id: string
+          content_type: string | null
+          copy_generated_at: string | null
           created_at: string
           description: string | null
+          generated_copy: string | null
           id: string
           model_id: string | null
           platform: string
+          post_description: string | null
+          post_image_url: string | null
+          reference_video_url: string | null
+          script: string | null
           tag_id: string | null
           thumbnail_url: string | null
           title: string | null
@@ -607,12 +615,20 @@ export type Database = {
           url: string
         }
         Insert: {
+          carousel_slides?: Json | null
           client_id: string
+          content_type?: string | null
+          copy_generated_at?: string | null
           created_at?: string
           description?: string | null
+          generated_copy?: string | null
           id?: string
           model_id?: string | null
           platform: string
+          post_description?: string | null
+          post_image_url?: string | null
+          reference_video_url?: string | null
+          script?: string | null
           tag_id?: string | null
           thumbnail_url?: string | null
           title?: string | null
@@ -621,12 +637,20 @@ export type Database = {
           url: string
         }
         Update: {
+          carousel_slides?: Json | null
           client_id?: string
+          content_type?: string | null
+          copy_generated_at?: string | null
           created_at?: string
           description?: string | null
+          generated_copy?: string | null
           id?: string
           model_id?: string | null
           platform?: string
+          post_description?: string | null
+          post_image_url?: string | null
+          reference_video_url?: string | null
+          script?: string | null
           tag_id?: string | null
           thumbnail_url?: string | null
           title?: string | null

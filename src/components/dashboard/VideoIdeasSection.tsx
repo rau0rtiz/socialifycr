@@ -11,10 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Plus, Lightbulb, Instagram, Facebook, Youtube, Twitter, 
-  Link2, Trash2, X, Check, ExternalLink, Video, Edit2
+  Link2, Trash2, X, Check, ExternalLink, Video, Edit2, Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VideoIdea, TodoItem } from '@/hooks/use-video-ideas';
+import { DevelopIdeaModal } from './DevelopIdeaModal';
 
 interface VideoIdeasSectionProps {
   ideas: VideoIdea[];
@@ -184,6 +185,7 @@ export const VideoIdeasSection = ({
 }: VideoIdeasSectionProps) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedIdea, setSelectedIdea] = useState<VideoIdea | null>(null);
+  const [developIdea, setDevelopIdea] = useState<VideoIdea | null>(null);
   const [newUrl, setNewUrl] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
@@ -432,6 +434,18 @@ export const VideoIdeasSection = ({
                     Editar Idea de Video
                   </DialogTitle>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs gap-1"
+                      onClick={() => {
+                        setDevelopIdea(selectedIdea);
+                        setSelectedIdea(null);
+                      }}
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Desarrollar
+                    </Button>
                     {editUrl && (
                       <Button
                         variant="ghost"
@@ -604,6 +618,17 @@ export const VideoIdeasSection = ({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Develop Idea Modal */}
+      <DevelopIdeaModal
+        isOpen={!!developIdea}
+        onClose={() => setDevelopIdea(null)}
+        idea={developIdea}
+        tags={tags}
+        models={models}
+        onSave={onUpdateIdea}
+        clientId={clientId}
+      />
     </>
   );
 };
