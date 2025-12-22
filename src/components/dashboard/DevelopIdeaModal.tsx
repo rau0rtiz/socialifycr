@@ -100,6 +100,10 @@ export const DevelopIdeaModal = ({
   const [generatedCopy, setGeneratedCopy] = useState('');
   const [isGeneratingCopy, setIsGeneratingCopy] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Image upload state
+  const [isUploadingPostImage, setIsUploadingPostImage] = useState(false);
+  const [uploadingSlideId, setUploadingSlideId] = useState<string | null>(null);
 
   // Initialize from idea
   useEffect(() => {
@@ -190,6 +194,111 @@ export const DevelopIdeaModal = ({
     setCarouselSlides(prev => prev.map(s => 
       s.id === slideId ? { ...s, ...updates } : s
     ));
+  };
+
+  // Image upload handler
+  const uploadImage = async (file: File, folder: string): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${clientId}/${folder}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('content-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('content-images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      toast({
+        title: 'Error',
+        description: 'No se pudo subir la imagen',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
+  const handlePostImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Error',
+        description: 'Solo se permiten archivos de imagen',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'Error',
+        description: 'La imagen no puede superar los 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingPostImage(true);
+    const url = await uploadImage(file, 'posts');
+    if (url) {
+      setPostImageUrl(url);
+      toast({
+        title: 'Imagen subida',
+        description: 'La imagen se subió correctamente',
+      });
+    }
+    setIsUploadingPostImage(false);
+  };
+
+  const handleSlideImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, slideId: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Error',
+        description: 'Solo se permiten archivos de imagen',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'Error',
+        description: 'La imagen no puede superar los 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploadingSlideId(slideId);
+    const url = await uploadImage(file, 'carousel');
+    if (url) {
+      handleUpdateSlide(slideId, { imageUrl: url });
+      toast({
+        title: 'Imagen subida',
+        description: 'La imagen del slide se subió correctamente',
+      });
+    }
+    setUploadingSlideId(null);
   };
 
   const handleSave = async () => {
@@ -393,11 +502,35 @@ export const DevelopIdeaModal = ({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <Input
-                      placeholder="URL de la imagen o sube una imagen..."
-                      value={postImageUrl}
-                      onChange={(e) => setPostImageUrl(e.target.value)}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="URL de la imagen..."
+                        value={postImageUrl}
+                        onChange={(e) => setPostImageUrl(e.target.value)}
+                        className="flex-1"
+                      />
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePostImageUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          disabled={isUploadingPostImage}
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          disabled={isUploadingPostImage}
+                          className="pointer-events-none"
+                        >
+                          {isUploadingPostImage ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
                     {postImageUrl && (
                       <div className="relative w-full max-w-xs aspect-square rounded-lg overflow-hidden bg-muted">
                         <img 
@@ -408,6 +541,14 @@ export const DevelopIdeaModal = ({
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-6 w-6"
+                          onClick={() => setPostImageUrl('')}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     )}
                   </CardContent>
@@ -470,11 +611,52 @@ export const DevelopIdeaModal = ({
                           onChange={(e) => handleUpdateSlide(slide.id, { content: e.target.value })}
                           rows={3}
                         />
-                        <Input
-                          placeholder="URL de imagen (opcional)"
-                          value={slide.imageUrl || ''}
-                          onChange={(e) => handleUpdateSlide(slide.id, { imageUrl: e.target.value })}
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="URL de imagen (opcional)"
+                            value={slide.imageUrl || ''}
+                            onChange={(e) => handleUpdateSlide(slide.id, { imageUrl: e.target.value })}
+                            className="flex-1"
+                          />
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleSlideImageUpload(e, slide.id)}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              disabled={uploadingSlideId === slide.id}
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              disabled={uploadingSlideId === slide.id}
+                              className="pointer-events-none"
+                            >
+                              {uploadingSlideId === slide.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Upload className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                        {slide.imageUrl && (
+                          <div className="relative w-24 h-24 rounded-md overflow-hidden bg-muted">
+                            <img 
+                              src={slide.imageUrl} 
+                              alt={`Slide ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-1 right-1 h-5 w-5"
+                              onClick={() => handleUpdateSlide(slide.id, { imageUrl: '' })}
+                            >
+                              <Trash2 className="h-2.5 w-2.5" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </CardContent>
