@@ -569,7 +569,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_account_manager: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_admin_or_higher: { Args: { _user_id: string }; Returns: boolean }
+      is_team_member: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       client_role: "account_manager" | "editor" | "viewer"
