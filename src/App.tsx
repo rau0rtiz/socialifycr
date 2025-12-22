@@ -14,6 +14,7 @@ import Clientes from "./pages/Clientes";
 import Contenido from "./pages/Contenido";
 import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
+import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
 import { MetaOAuthCallback } from "./pages/MetaOAuthCallback";
 
@@ -30,6 +31,7 @@ const App = () => (
               <Sonner />
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/accept-invite" element={<AcceptInvite />} />
                 <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 {/* Agency-only routes */}
                 <Route path="/brand-settings" element={
