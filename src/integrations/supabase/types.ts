@@ -135,6 +135,7 @@ export type Database = {
       clients: {
         Row: {
           accent_color: string | null
+          ai_context: string | null
           created_at: string | null
           id: string
           industry: string | null
@@ -145,6 +146,7 @@ export type Database = {
         }
         Insert: {
           accent_color?: string | null
+          ai_context?: string | null
           created_at?: string | null
           id?: string
           industry?: string | null
@@ -155,6 +157,7 @@ export type Database = {
         }
         Update: {
           accent_color?: string | null
+          ai_context?: string | null
           created_at?: string | null
           id?: string
           industry?: string | null
