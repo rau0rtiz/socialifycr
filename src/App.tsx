@@ -15,6 +15,7 @@ import Contenido from "./pages/Contenido";
 import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import AcceptInvite from "./pages/AcceptInvite";
+import Invitacion from "./pages/Invitacion";
 import NotFound from "./pages/NotFound";
 import { MetaOAuthCallback } from "./pages/MetaOAuthCallback";
 
@@ -32,6 +33,7 @@ const App = () => (
               <Routes>
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/accept-invite" element={<AcceptInvite />} />
+                <Route path="/invitacion/:token" element={<Invitacion />} />
                 <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 {/* Agency-only routes */}
                 <Route path="/brand-settings" element={
