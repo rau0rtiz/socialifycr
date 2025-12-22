@@ -48,6 +48,8 @@ export function YouTubeChannelSelector({
     }
   };
 
+  const [manualError, setManualError] = useState('');
+
   const handleManualAdd = () => {
     if (manualChannelId.trim()) {
       // Extract channel ID from various URL formats
@@ -59,15 +61,20 @@ export function YouTubeChannelSelector({
         const channelMatch = channelId.match(/\/channel\/(UC[a-zA-Z0-9_-]+)/);
         if (channelMatch) {
           channelId = channelMatch[1];
-        }
-        // Format: youtube.com/@handle
-        const handleMatch = channelId.match(/\/@([a-zA-Z0-9_-]+)/);
-        if (handleMatch && !channelId.startsWith('UC')) {
-          // Can't resolve @handle to channel ID without API call
-          // Just use what we have
+        } else if (channelId.includes('/@')) {
+          // Format: youtube.com/@handle - Can't resolve without API
+          setManualError('Los handles (@usuario) no se pueden usar directamente. Ve a YouTube Studio y copia el Channel ID que empieza con "UC".');
+          return;
         }
       }
       
+      // Validate that we have a proper channel ID (should start with UC)
+      if (!channelId.startsWith('UC') || channelId.length < 20) {
+        setManualError('El Channel ID debe empezar con "UC" y tener al menos 24 caracteres. Encuéntralo en YouTube Studio → Configuración → Canal.');
+        return;
+      }
+      
+      setManualError('');
       onSelect({
         id: channelId,
         name: manualChannelName.trim() || `Canal ${channelId.slice(0, 8)}...`,
@@ -206,6 +213,12 @@ export function YouTubeChannelSelector({
               </ol>
             </div>
 
+            {manualError && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+                {manualError}
+              </div>
+            )}
+
             <div className="space-y-3">
               <div>
                 <Label htmlFor="channelId" className="text-sm">Channel ID *</Label>
@@ -213,11 +226,14 @@ export function YouTubeChannelSelector({
                   id="channelId"
                   placeholder="UCxxxxxxxxxxxxxxxxxxxxxx"
                   value={manualChannelId}
-                  onChange={(e) => setManualChannelId(e.target.value)}
+                  onChange={(e) => {
+                    setManualChannelId(e.target.value);
+                    setManualError('');
+                  }}
                   className="mt-1"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  También puedes pegar la URL completa del canal
+                  El ID debe empezar con "UC" (ej: UCcNGyNwVzi9XghpojpadDWA)
                 </p>
               </div>
               
