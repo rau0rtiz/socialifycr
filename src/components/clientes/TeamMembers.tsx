@@ -49,6 +49,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvitation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -59,31 +60,45 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
   }, [clientId]);
 
   const fetchMembers = async () => {
-    const { data, error } = await supabase
+    // Fetch team members first
+    const { data: teamData, error: teamError } = await supabase
       .from('client_team_members')
-      .select(`
-        id,
-        user_id,
-        role,
-        profiles:user_id (
-          full_name,
-          email,
-          avatar_url
-        )
-      `)
+      .select('id, user_id, role')
       .eq('client_id', clientId);
 
-    if (error) {
-      console.error('Error fetching team members:', error);
-    } else {
-      const transformedData = (data || []).map((member: any) => ({
-        id: member.id,
-        user_id: member.user_id,
-        role: member.role,
-        profile: member.profiles,
-      }));
-      setMembers(transformedData);
+    if (teamError) {
+      console.error('Error fetching team members:', teamError);
+      setLoading(false);
+      return;
     }
+
+    if (!teamData || teamData.length === 0) {
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch profiles for those users
+    const userIds = teamData.map(m => m.user_id);
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, avatar_url')
+      .in('id', userIds);
+
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+    }
+
+    // Map profiles to team members
+    const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
+    const transformedData = teamData.map((member) => ({
+      id: member.id,
+      user_id: member.user_id,
+      role: member.role as 'account_manager' | 'editor' | 'viewer',
+      profile: profilesMap.get(member.user_id) || null,
+    }));
+    
+    setMembers(transformedData);
     setLoading(false);
   };
 
@@ -209,13 +224,34 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
     fetchPendingInvites();
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([fetchMembers(), fetchPendingInvites()]);
+    setRefreshing(false);
+    toast({
+      title: 'Actualizado',
+      description: 'La información del equipo ha sido actualizada.',
+    });
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-sm font-medium">Equipo</h4>
-        <Button variant="ghost" size="sm" onClick={() => setInviteDialogOpen(true)}>
-          <UserPlus className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={refreshing}
+            title="Refrescar equipo"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setInviteDialogOpen(true)}>
+            <UserPlus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-2">
