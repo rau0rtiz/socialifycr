@@ -62,11 +62,11 @@ const formatNumber = (num: number): string => {
 
 const LoadingSkeleton = () => (
   <Card className="h-full">
-    <CardContent className="p-4 md:p-6 flex items-center gap-4">
-      <Skeleton className="h-12 w-12 rounded-full" />
-      <div className="space-y-2 flex-1">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-6 w-16" />
+    <CardContent className="p-3 flex items-center gap-3">
+      <Skeleton className="h-10 w-10 rounded-full" />
+      <div className="space-y-1.5 flex-1">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-5 w-14" />
       </div>
     </CardContent>
   </Card>
@@ -79,71 +79,71 @@ export const SocialFollowersSection = ({
 }: SocialFollowersSectionProps) => {
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <h2 className="text-base md:text-lg font-semibold text-foreground">
-            Redes Sociales
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <LoadingSkeleton key={i} />
-          ))}
-        </div>
-      </div>
+      <Card className="h-full">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <LoadingSkeleton key={i} />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (platforms.length === 0) {
-    return null; // Don't show section if no platforms connected
+    return null;
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <h2 className="text-base md:text-lg font-semibold text-foreground">
-          Redes Sociales
-        </h2>
-        {isLiveData && (
-          <Badge
-            variant="outline"
-            className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600"
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            En vivo
-          </Badge>
-        )}
-      </div>
+    <Card className="h-full">
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <h2 className="text-sm font-semibold text-foreground">
+            Redes Sociales
+          </h2>
+          {isLiveData && (
+            <Badge
+              variant="outline"
+              className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600 px-1.5 py-0"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              En vivo
+            </Badge>
+          )}
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {platforms.map((platform) => {
-          const config = platformConfig[platform.platform];
-          const Icon = config.icon;
+        <div className="grid grid-cols-2 gap-2">
+          {platforms.map((platform) => {
+            const config = platformConfig[platform.platform];
+            const Icon = config.icon;
 
-          return (
-            <Card key={platform.platform} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 md:p-6 flex items-center gap-4">
+            return (
+              <div 
+                key={platform.platform} 
+                className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              >
                 <div
-                  className={`h-12 w-12 rounded-full flex items-center justify-center ${config.bgClass}`}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${config.bgClass}`}
                 >
-                  <Icon className={`h-5 w-5 ${config.textClass}`} />
+                  <Icon className={`h-4 w-4 ${config.textClass}`} />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground font-medium">
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">
                     {config.label}
                   </p>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-lg font-bold text-foreground leading-tight">
                     {formatNumber(platform.followers)}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {config.metric}
-                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
