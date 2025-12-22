@@ -49,7 +49,7 @@ interface AIInsightsPanelProps {
 }
 
 const REGIONS = [
-  { value: '', label: 'Sin región', flag: '🌐' },
+  { value: 'none', label: 'Sin región', flag: '🌐' },
   { value: 'LATAM', label: 'Latinoamérica', flag: '🌎' },
   { value: 'CR', label: 'Costa Rica', flag: '🇨🇷' },
   { value: 'MX', label: 'México', flag: '🇲🇽' },
@@ -212,7 +212,7 @@ export const AIInsightsPanel = ({
                 </SelectTrigger>
                 <SelectContent>
                   {REGIONS.map(region => (
-                    <SelectItem key={region.value || 'none'} value={region.value}>
+                    <SelectItem key={region.value} value={region.value}>
                       <span className="flex items-center gap-2">
                         <span>{region.flag}</span>
                         {region.label}
@@ -323,7 +323,7 @@ export const AIInsightsPanel = ({
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-primary" />
-                        Tendencias Actuales {regionInfo && regionInfo.value && `en ${regionInfo.label}`}
+                        Tendencias Actuales {regionInfo && regionInfo.value !== 'none' && `en ${regionInfo.label}`}
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {result.trendingTopics.map((topic, idx) => (
