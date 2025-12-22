@@ -528,6 +528,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_client_invitation: {
+        Args: { _token: string }
+        Returns: {
+          client_id: string
+          role: Database["public"]["Enums"]["client_role"]
+        }[]
+      }
       has_client_access: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
