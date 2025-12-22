@@ -295,6 +295,78 @@ export type Database = {
           },
         ]
       }
+      content_metadata_models: {
+        Row: {
+          created_at: string
+          id: string
+          metadata_id: string
+          model_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata_id: string
+          model_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata_id?: string
+          model_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_metadata_models_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
+            referencedRelation: "content_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_metadata_models_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "content_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_metadata_tags: {
+        Row: {
+          created_at: string
+          id: string
+          metadata_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_metadata_tags_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
+            referencedRelation: "content_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_metadata_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "content_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_models: {
         Row: {
           client_id: string

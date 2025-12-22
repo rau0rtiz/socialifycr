@@ -91,6 +91,7 @@ const Dashboard = () => {
     createTag,
     createModel,
     updateMetadata,
+    updateMetadataMultiple,
     capture48hMetrics,
     refetch: refetchMetadata,
   } = useContentMetadata(clientId);
@@ -408,6 +409,7 @@ const Dashboard = () => {
         onCreateTag={createTag}
         onCreateModel={createModel}
         onUpdateMetadata={updateMetadata}
+        onUpdateMetadataMultiple={updateMetadataMultiple}
         onCapture48hMetrics={capture48hMetrics}
       />
     </DashboardLayout>

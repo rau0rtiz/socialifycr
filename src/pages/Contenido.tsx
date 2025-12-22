@@ -78,6 +78,7 @@ const Contenido = () => {
     createTag,
     createModel,
     updateMetadata,
+    updateMetadataMultiple,
     capture48hMetrics,
   } = useContentMetadata(clientId);
 
@@ -467,6 +468,7 @@ const Contenido = () => {
         onCreateTag={createTag}
         onCreateModel={createModel}
         onUpdateMetadata={updateMetadata}
+        onUpdateMetadataMultiple={updateMetadataMultiple}
         onCapture48hMetrics={capture48hMetrics}
       />
     </DashboardLayout>

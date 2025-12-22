@@ -5,8 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { TagSelector } from './TagSelector';
-import { ModelSelector } from './ModelSelector';
+import { MultiTagSelector } from './MultiTagSelector';
+import { MultiModelSelector } from './MultiModelSelector';
 import { 
   Eye, Heart, MessageCircle, Share2, Bookmark, Clock, 
   ExternalLink, Calendar, Play, Film, LayoutGrid, ImageIcon,
@@ -26,6 +26,7 @@ interface ContentDetailModalProps {
   onCreateTag: (name: string, color: string) => Promise<ContentTag | null>;
   onCreateModel: (name: string, photoUrl?: string, notes?: string) => Promise<ContentModel | null>;
   onUpdateMetadata: (postId: string, updates: Partial<Pick<ContentMetadata, 'tag_id' | 'model_id'>>) => Promise<void>;
+  onUpdateMetadataMultiple: (postId: string, updates: { tag_ids?: string[]; model_ids?: string[] }) => Promise<void>;
   onCapture48hMetrics: (postId: string, metrics: {
     views?: number;
     likes?: number;
@@ -64,21 +65,23 @@ export const ContentDetailModal = ({
   onCreateTag,
   onCreateModel,
   onUpdateMetadata,
+  onUpdateMetadataMultiple,
   onCapture48hMetrics,
 }: ContentDetailModalProps) => {
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
-  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [selectedModelIds, setSelectedModelIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
 
   // Sync state with metadata when it changes
   useEffect(() => {
     if (metadata) {
-      setSelectedTagId(metadata.tag_id);
-      setSelectedModelId(metadata.model_id);
+      // Use multi arrays if available, fallback to single values
+      setSelectedTagIds(metadata.tag_ids?.length ? metadata.tag_ids : (metadata.tag_id ? [metadata.tag_id] : []));
+      setSelectedModelIds(metadata.model_ids?.length ? metadata.model_ids : (metadata.model_id ? [metadata.model_id] : []));
     } else {
-      setSelectedTagId(null);
-      setSelectedModelId(null);
+      setSelectedTagIds([]);
+      setSelectedModelIds([]);
     }
   }, [metadata, post?.id]);
 
@@ -92,17 +95,17 @@ export const ContentDetailModal = ({
   const canCapture48h = hoursSincePost >= 48 && !metadata?.first_48h_captured_at;
   const has48hMetrics = !!metadata?.first_48h_captured_at;
 
-  const handleTagChange = async (tagId: string | null) => {
-    setSelectedTagId(tagId);
+  const handleTagsChange = async (tagIds: string[]) => {
+    setSelectedTagIds(tagIds);
     setIsSaving(true);
-    await onUpdateMetadata(post.id, { tag_id: tagId });
+    await onUpdateMetadataMultiple(post.id, { tag_ids: tagIds });
     setIsSaving(false);
   };
 
-  const handleModelChange = async (modelId: string | null) => {
-    setSelectedModelId(modelId);
+  const handleModelsChange = async (modelIds: string[]) => {
+    setSelectedModelIds(modelIds);
     setIsSaving(true);
-    await onUpdateMetadata(post.id, { model_id: modelId });
+    await onUpdateMetadataMultiple(post.id, { model_ids: modelIds });
     setIsSaving(false);
   };
 
@@ -234,18 +237,18 @@ export const ContentDetailModal = ({
 
             {/* Tag & Model Selection */}
             <div className="space-y-4">
-              <TagSelector
+              <MultiTagSelector
                 tags={tags}
-                selectedTagId={selectedTagId}
-                onSelect={handleTagChange}
+                selectedTagIds={selectedTagIds}
+                onSelect={handleTagsChange}
                 onCreate={onCreateTag}
                 disabled={isSaving}
               />
 
-              <ModelSelector
+              <MultiModelSelector
                 models={models}
-                selectedModelId={selectedModelId}
-                onSelect={handleModelChange}
+                selectedModelIds={selectedModelIds}
+                onSelect={handleModelsChange}
                 onCreate={onCreateModel}
                 disabled={isSaving}
               />

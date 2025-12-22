@@ -37,6 +37,11 @@ export interface ContentMetadata {
   // Joined data
   tag?: ContentTag;
   model?: ContentModel;
+  // Multiple tags and models
+  tag_ids?: string[];
+  model_ids?: string[];
+  tags?: ContentTag[];
+  models?: ContentModel[];
 }
 
 interface UseContentMetadataResult {
@@ -47,6 +52,7 @@ interface UseContentMetadataResult {
   createTag: (name: string, color: string) => Promise<ContentTag | null>;
   createModel: (name: string, photoUrl?: string, notes?: string) => Promise<ContentModel | null>;
   updateMetadata: (postId: string, updates: Partial<Pick<ContentMetadata, 'tag_id' | 'model_id'>>) => Promise<void>;
+  updateMetadataMultiple: (postId: string, updates: { tag_ids?: string[]; model_ids?: string[] }) => Promise<void>;
   capture48hMetrics: (postId: string, metrics: {
     views?: number;
     likes?: number;
@@ -75,8 +81,8 @@ export const useContentMetadata = (clientId: string | null): UseContentMetadataR
     setIsLoading(true);
 
     try {
-      // Fetch tags, models, and metadata in parallel
-      const [tagsResult, modelsResult, metadataResult] = await Promise.all([
+      // Fetch tags, models, metadata, and junction tables in parallel
+      const [tagsResult, modelsResult, metadataResult, metadataTagsResult, metadataModelsResult] = await Promise.all([
         supabase
           .from('content_tags')
           .select('*')
@@ -95,19 +101,55 @@ export const useContentMetadata = (clientId: string | null): UseContentMetadataR
             model:content_models(*)
           `)
           .eq('client_id', clientId),
+        supabase
+          .from('content_metadata_tags')
+          .select('metadata_id, tag_id'),
+        supabase
+          .from('content_metadata_models')
+          .select('metadata_id, model_id'),
       ]);
 
       if (tagsResult.error) throw tagsResult.error;
       if (modelsResult.error) throw modelsResult.error;
       if (metadataResult.error) throw metadataResult.error;
+      // Junction tables might not exist yet, so we handle errors gracefully
+      const metadataTags = metadataTagsResult.data || [];
+      const metadataModels = metadataModelsResult.data || [];
 
       setTags(tagsResult.data || []);
       setModels(modelsResult.data || []);
 
-      // Convert metadata array to a map by post_id
+      // Group junction table data by metadata_id
+      const tagsByMetadata: Record<string, string[]> = {};
+      const modelsByMetadata: Record<string, string[]> = {};
+      
+      metadataTags.forEach((item: any) => {
+        if (!tagsByMetadata[item.metadata_id]) {
+          tagsByMetadata[item.metadata_id] = [];
+        }
+        tagsByMetadata[item.metadata_id].push(item.tag_id);
+      });
+      
+      metadataModels.forEach((item: any) => {
+        if (!modelsByMetadata[item.metadata_id]) {
+          modelsByMetadata[item.metadata_id] = [];
+        }
+        modelsByMetadata[item.metadata_id].push(item.model_id);
+      });
+
+      // Convert metadata array to a map by post_id with multi tags/models
       const metadataMap: Record<string, ContentMetadata> = {};
       (metadataResult.data || []).forEach((item: any) => {
-        metadataMap[item.post_id] = item;
+        const tag_ids = tagsByMetadata[item.id] || [];
+        const model_ids = modelsByMetadata[item.id] || [];
+        
+        metadataMap[item.post_id] = {
+          ...item,
+          tag_ids,
+          model_ids,
+          tags: (tagsResult.data || []).filter(t => tag_ids.includes(t.id)),
+          models: (modelsResult.data || []).filter(m => model_ids.includes(m.id)),
+        };
       });
       setMetadata(metadataMap);
     } catch (err) {
@@ -227,6 +269,85 @@ export const useContentMetadata = (clientId: string | null): UseContentMetadataR
     }
   }, [clientId, metadata, fetchData, toast]);
 
+  const updateMetadataMultiple = useCallback(async (
+    postId: string,
+    updates: { tag_ids?: string[]; model_ids?: string[] }
+  ): Promise<void> => {
+    if (!clientId) return;
+
+    try {
+      let metadataId = metadata[postId]?.id;
+
+      // Create metadata record if it doesn't exist
+      if (!metadataId) {
+        const { data, error } = await supabase
+          .from('content_metadata')
+          .insert({
+            client_id: clientId,
+            post_id: postId,
+          })
+          .select('id')
+          .single();
+
+        if (error) throw error;
+        metadataId = data.id;
+      }
+
+      // Update tags if provided
+      if (updates.tag_ids !== undefined) {
+        // Delete existing tag associations
+        await supabase
+          .from('content_metadata_tags')
+          .delete()
+          .eq('metadata_id', metadataId);
+
+        // Insert new tag associations
+        if (updates.tag_ids.length > 0) {
+          const { error } = await supabase
+            .from('content_metadata_tags')
+            .insert(updates.tag_ids.map(tag_id => ({
+              metadata_id: metadataId,
+              tag_id,
+            })));
+
+          if (error) throw error;
+        }
+      }
+
+      // Update models if provided
+      if (updates.model_ids !== undefined) {
+        // Delete existing model associations
+        await supabase
+          .from('content_metadata_models')
+          .delete()
+          .eq('metadata_id', metadataId);
+
+        // Insert new model associations
+        if (updates.model_ids.length > 0) {
+          const { error } = await supabase
+            .from('content_metadata_models')
+            .insert(updates.model_ids.map(model_id => ({
+              metadata_id: metadataId,
+              model_id,
+            })));
+
+          if (error) throw error;
+        }
+      }
+
+      // Refetch to get updated data
+      await fetchData();
+      toast({ title: 'Actualizado', description: 'Metadatos del post actualizados' });
+    } catch (err: any) {
+      console.error('Error updating metadata:', err);
+      toast({
+        title: 'Error al actualizar',
+        description: err.message || 'No se pudieron guardar los cambios',
+        variant: 'destructive',
+      });
+    }
+  }, [clientId, metadata, fetchData, toast]);
+
   const capture48hMetrics = useCallback(async (
     postId: string,
     metrics: {
@@ -289,6 +410,7 @@ export const useContentMetadata = (clientId: string | null): UseContentMetadataR
     createTag,
     createModel,
     updateMetadata,
+    updateMetadataMultiple,
     capture48hMetrics,
     refetch: fetchData,
   };
