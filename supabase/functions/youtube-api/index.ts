@@ -1,0 +1,214 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { clientId, endpoint } = await req.json();
+
+    if (!clientId) {
+      return new Response(
+        JSON.stringify({ error: 'Client ID is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`YouTube API request for client ${clientId}, endpoint: ${endpoint}`);
+
+    // Get the YouTube connection for this client
+    const { data: connection, error: connectionError } = await supabase
+      .from('platform_connections')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('platform', 'youtube')
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (connectionError) {
+      console.error('Error fetching YouTube connection:', connectionError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch YouTube connection' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!connection) {
+      return new Response(
+        JSON.stringify({ error: 'No active YouTube connection found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const accessToken = connection.access_token;
+    const channelId = connection.platform_page_id; // YouTube channel ID
+
+    if (!accessToken || !channelId) {
+      return new Response(
+        JSON.stringify({ error: 'Missing access token or channel ID' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (endpoint === 'channel-stats') {
+      // Fetch channel statistics
+      const channelResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${channelId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!channelResponse.ok) {
+        const errorText = await channelResponse.text();
+        console.error('YouTube API error:', errorText);
+        
+        // Check if token expired
+        if (channelResponse.status === 401) {
+          // Try to refresh the token
+          const refreshResult = await refreshYouTubeToken(supabase, connection);
+          if (refreshResult.error) {
+            return new Response(
+              JSON.stringify({ error: 'Token expired and refresh failed' }),
+              { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
+          // Retry with new token
+          const retryResponse = await fetch(
+            `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${channelId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${refreshResult.accessToken}`,
+              },
+            }
+          );
+          
+          if (!retryResponse.ok) {
+            return new Response(
+              JSON.stringify({ error: 'Failed to fetch channel data after token refresh' }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
+          const retryData = await retryResponse.json();
+          return formatChannelResponse(retryData, corsHeaders);
+        }
+        
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch channel data' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const channelData = await channelResponse.json();
+      return formatChannelResponse(channelData, corsHeaders);
+    }
+
+    return new Response(
+      JSON.stringify({ error: 'Unknown endpoint' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('YouTube API error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
+
+function formatChannelResponse(channelData: any, corsHeaders: Record<string, string>) {
+  if (!channelData.items || channelData.items.length === 0) {
+    return new Response(
+      JSON.stringify({ error: 'Channel not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const channel = channelData.items[0];
+  const stats = channel.statistics;
+  const snippet = channel.snippet;
+
+  console.log(`YouTube channel stats for ${snippet.title}: ${stats.subscriberCount} subscribers`);
+
+  return new Response(
+    JSON.stringify({
+      channelId: channel.id,
+      name: snippet.title,
+      subscriberCount: parseInt(stats.subscriberCount) || 0,
+      viewCount: parseInt(stats.viewCount) || 0,
+      videoCount: parseInt(stats.videoCount) || 0,
+      thumbnailUrl: snippet.thumbnails?.default?.url,
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function refreshYouTubeToken(supabase: any, connection: any) {
+  const clientId = Deno.env.get('YOUTUBE_CLIENT_ID');
+  const clientSecret = Deno.env.get('YOUTUBE_CLIENT_SECRET');
+  
+  if (!clientId || !clientSecret || !connection.refresh_token) {
+    return { error: 'Missing credentials for token refresh' };
+  }
+
+  try {
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: connection.refresh_token,
+        grant_type: 'refresh_token',
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      console.error('Token refresh failed:', await tokenResponse.text());
+      return { error: 'Token refresh failed' };
+    }
+
+    const tokens = await tokenResponse.json();
+    
+    // Update the connection with new access token
+    const { error: updateError } = await supabase
+      .from('platform_connections')
+      .update({
+        access_token: tokens.access_token,
+        token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', connection.id);
+
+    if (updateError) {
+      console.error('Failed to update token:', updateError);
+      return { error: 'Failed to save new token' };
+    }
+
+    console.log('YouTube token refreshed successfully');
+    return { accessToken: tokens.access_token };
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return { error: errorMessage };
+  }
+}
