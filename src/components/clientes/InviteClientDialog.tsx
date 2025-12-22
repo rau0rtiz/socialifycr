@@ -74,7 +74,8 @@ export const InviteClientDialog = ({
 
       if (error) throw error;
 
-      const link = `${window.location.origin}/accept-invite?token=${data.token}`;
+      // Use the cleaner path-based URL format
+      const link = `${window.location.origin}/invitacion/${data.token}`;
       setInviteLink(link);
       onInviteCreated();
     } catch (error: any) {
