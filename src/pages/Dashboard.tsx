@@ -1,14 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
-import { TopPostsSection } from '@/components/dashboard/TopPostsSection';
+import { InstagramTopPosts } from '@/components/dashboard/InstagramTopPosts';
+import { YouTubeTopVideos } from '@/components/dashboard/YouTubeTopVideos';
 import { VideoIdeasSection } from '@/components/dashboard/VideoIdeasSection';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { FunnelModule } from '@/components/dashboard/FunnelModule';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
-
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
@@ -17,11 +17,11 @@ import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { useVideoIdeas } from '@/hooks/use-video-ideas';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
+import { useYouTubeVideos } from '@/hooks/use-youtube-videos';
 import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Building2, Plus, RefreshCw, X, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 
 const Dashboard = () => {
@@ -95,6 +95,12 @@ const Dashboard = () => {
 
   const { data: metaConnection, refetch: refetchConnection } = useMetaConnection(clientId);
 
+  const {
+    videos: youtubeVideos,
+    isLoading: youtubeLoading,
+    isConnected: youtubeConnected,
+    refetch: refetchYouTube,
+  } = useYouTubeVideos(clientId);
   // Refresh all dashboard data
   const handleRefreshAll = useCallback(async () => {
     setIsRefreshing(true);
@@ -104,12 +110,14 @@ const Dashboard = () => {
       refetchConnection(),
       refetchMetadata(),
       refetchIdeas(),
+      refetchYouTube(),
     ]);
     setIsRefreshing(false);
-  }, [refetchSocial, refetchContent, refetchConnection, refetchMetadata, refetchIdeas]);
+  }, [refetchSocial, refetchContent, refetchConnection, refetchMetadata, refetchIdeas, refetchYouTube]);
 
   // Derived values (not hooks)
   const hasAdAccount = !!metaConnection?.ad_account_id;
+  const hasMetaConnection = !!metaConnection;
 
   // Show loading state while clients are being fetched or role is loading
   if (clientsLoading || roleLoading) {
@@ -294,15 +302,29 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Top Posts Podium - Below Followers */}
-      <div className="mb-4 md:mb-6">
-        <TopPostsSection
-          content={content}
-          isLoading={contentLoading}
-          isLiveData={contentIsLive}
-          onPostClick={setSelectedPost}
-        />
-      </div>
+      {/* Top Posts - Instagram */}
+      {(contentLoading || content.length > 0 || hasMetaConnection) && (
+        <div className="mb-4 md:mb-6">
+          <InstagramTopPosts
+            content={content}
+            isLoading={contentLoading}
+            isLiveData={contentIsLive}
+            isConnected={hasMetaConnection}
+            onPostClick={setSelectedPost}
+          />
+        </div>
+      )}
+
+      {/* Top Videos - YouTube */}
+      {(youtubeLoading || youtubeConnected) && (
+        <div className="mb-4 md:mb-6">
+          <YouTubeTopVideos
+            videos={youtubeVideos}
+            isLoading={youtubeLoading}
+            isConnected={youtubeConnected}
+          />
+        </div>
+      )}
 
       {/* Content Grid - 2x3 Grid below Social */}
       <div className="mb-4 md:mb-6">

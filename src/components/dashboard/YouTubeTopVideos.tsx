@@ -2,26 +2,15 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ContentPost } from '@/data/mockData';
-import { Eye, Heart, MessageCircle, Play, Film, LayoutGrid, ImageIcon, Wifi, TrendingUp } from 'lucide-react';
+import { YouTubeVideo } from '@/hooks/use-youtube-videos';
+import { Youtube, Eye, ThumbsUp, MessageCircle, Wifi, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface TopPostsSectionProps {
-  content: ContentPost[];
+interface YouTubeTopVideosProps {
+  videos: YouTubeVideo[];
   isLoading: boolean;
-  isLiveData: boolean;
-  onPostClick?: (post: ContentPost) => void;
+  isConnected: boolean;
 }
-
-const typeConfig: Record<string, { 
-  icon: React.ComponentType<{ className?: string }>; 
-  class: string;
-}> = {
-  reel: { icon: Play, class: 'bg-violet-500/10 text-violet-600 border-violet-500/20' },
-  video: { icon: Film, class: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
-  carousel: { icon: LayoutGrid, class: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
-  image: { icon: ImageIcon, class: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
-};
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -34,64 +23,61 @@ const podiumConfig = {
   1: {
     height: 'h-32',
     bgColor: 'bg-amber-500',
-    textColor: 'text-amber-500',
     borderColor: 'border-amber-500/30',
   },
   2: {
     height: 'h-28',
     bgColor: 'bg-slate-400',
-    textColor: 'text-slate-400',
     borderColor: 'border-slate-400/30',
   },
   3: {
     height: 'h-24',
     bgColor: 'bg-amber-700',
-    textColor: 'text-amber-700',
     borderColor: 'border-amber-700/30',
   },
   4: {
     height: 'h-20',
     bgColor: 'bg-slate-500',
-    textColor: 'text-slate-500',
     borderColor: 'border-slate-500/30',
   },
   5: {
     height: 'h-16',
     bgColor: 'bg-slate-600',
-    textColor: 'text-slate-600',
     borderColor: 'border-slate-600/30',
   },
 };
 
-export const PodiumSkeleton = () => (
+const displayOrder = [4, 2, 1, 3, 5] as const;
+
+const PodiumSkeleton = () => (
   <div className="flex items-end justify-center gap-2">
-    {[4, 2, 1, 3, 5].map((rank) => (
+    {displayOrder.map((rank) => (
       <div key={rank} className="flex flex-col items-center flex-1">
-        <Skeleton className="w-full aspect-square rounded-lg mb-2" />
-        <Skeleton className={cn("w-full rounded-t-lg", podiumConfig[rank as keyof typeof podiumConfig].height)} />
+        <Skeleton className="w-full aspect-video rounded-lg mb-2" />
+        <Skeleton className={cn("w-full rounded-t-lg", podiumConfig[rank].height)} />
       </div>
     ))}
   </div>
 );
 
-export const PodiumPost = ({ 
-  post, 
-  rank, 
-  onClick 
+const VideoPodiumPost = ({ 
+  video, 
+  rank,
 }: { 
-  post: ContentPost; 
+  video: YouTubeVideo; 
   rank: 1 | 2 | 3 | 4 | 5; 
-  onClick?: (post: ContentPost) => void;
 }) => {
-  const typeInfo = typeConfig[post.type] || typeConfig.image;
-  const TypeIcon = typeInfo.icon;
-  const engagement = (post.likes || 0) + (post.comments || 0);
   const config = podiumConfig[rank];
+  const engagement = video.viewCount;
+
+  const openVideo = () => {
+    window.open(`https://youtube.com/watch?v=${video.id}`, '_blank');
+  };
 
   return (
     <div 
       className="flex flex-col items-center cursor-pointer group flex-1 min-w-0"
-      onClick={() => onClick?.(post)}
+      onClick={openVideo}
     >
       {/* Rank number at top */}
       <div className={cn(
@@ -102,25 +88,28 @@ export const PodiumPost = ({
       </div>
 
       {/* Thumbnail */}
-      <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-muted mb-2 group-hover:ring-2 ring-primary/50 transition-all">
-        {post.thumbnailUrl || post.thumbnail ? (
+      <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-muted mb-2 group-hover:ring-2 ring-red-500/50 transition-all">
+        {video.thumbnailUrl ? (
           <img
-            src={post.thumbnailUrl || post.thumbnail}
-            alt=""
+            src={video.thumbnailUrl}
+            alt={video.title}
             className="w-full h-full object-cover"
             loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <TypeIcon className="h-6 w-6 text-muted-foreground" />
+            <Play className="h-6 w-6 text-muted-foreground" />
           </div>
         )}
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <Play className="h-8 w-8 text-white fill-white" />
+        </div>
         <div className="absolute top-1 left-1">
           <Badge 
             variant="outline" 
-            className={cn("text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm", typeInfo.class)}
+            className="text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm bg-red-500/10 text-red-600 border-red-500/20"
           >
-            <TypeIcon className="h-2.5 w-2.5" />
+            <Play className="h-2.5 w-2.5" />
           </Badge>
         </div>
       </div>
@@ -137,12 +126,12 @@ export const PodiumPost = ({
         <p className="text-sm font-bold text-foreground">{formatNumber(engagement)}</p>
         <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
           <span className="flex items-center gap-0.5">
-            <Heart className="h-2 w-2" />
-            {formatNumber(post.likes || 0)}
+            <Eye className="h-2 w-2" />
+            {formatNumber(video.viewCount)}
           </span>
           <span className="flex items-center gap-0.5">
-            <MessageCircle className="h-2 w-2" />
-            {formatNumber(post.comments || 0)}
+            <ThumbsUp className="h-2 w-2" />
+            {formatNumber(video.likeCount)}
           </span>
         </div>
       </div>
@@ -150,25 +139,20 @@ export const PodiumPost = ({
   );
 };
 
-export const EmptyPodiumSlot = ({ rank }: { rank: 1 | 2 | 3 | 4 | 5 }) => {
+const EmptyVideoPodiumSlot = ({ rank }: { rank: 1 | 2 | 3 | 4 | 5 }) => {
   const config = podiumConfig[rank];
   
   return (
     <div className="flex flex-col items-center flex-1 min-w-0 opacity-40">
-      {/* Rank number at top */}
       <div className={cn(
         "w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold mb-2",
         config.bgColor
       )}>
         {rank}
       </div>
-
-      {/* Empty thumbnail */}
-      <div className="w-full aspect-square rounded-lg bg-muted/50 mb-2 flex items-center justify-center border border-dashed border-muted-foreground/30">
+      <div className="w-full aspect-video rounded-lg bg-muted/50 mb-2 flex items-center justify-center border border-dashed border-muted-foreground/30">
         <span className="text-xs text-muted-foreground">-</span>
       </div>
-
-      {/* Podium stand */}
       <div 
         className={cn(
           "w-full rounded-t-lg border-x border-t flex items-center justify-center",
@@ -183,41 +167,38 @@ export const EmptyPodiumSlot = ({ rank }: { rank: 1 | 2 | 3 | 4 | 5 }) => {
   );
 };
 
-// Order for display: 4, 2, 1, 3, 5 (podium style left to right)
-export const displayOrder = [4, 2, 1, 3, 5] as const;
-
-export { formatNumber, podiumConfig };
-
-export const TopPostsSection = ({
-  content,
+export const YouTubeTopVideos = ({
+  videos,
   isLoading,
-  isLiveData,
-  onPostClick,
-}: TopPostsSectionProps) => {
-  // Get top 5 posts from this month sorted by engagement
-  const topPosts = useMemo(() => {
+  isConnected,
+}: YouTubeTopVideosProps) => {
+  // Get top 5 videos from this month sorted by views
+  const topVideos = useMemo(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
-    return [...content]
-      .filter(post => new Date(post.date) >= startOfMonth)
-      .sort((a, b) => {
-        const engagementA = (a.likes || 0) + (a.comments || 0) + (a.views || 0);
-        const engagementB = (b.likes || 0) + (b.comments || 0) + (b.views || 0);
-        return engagementB - engagementA;
-      })
+    return [...videos]
+      .filter(video => new Date(video.publishedAt) >= startOfMonth)
+      .sort((a, b) => b.viewCount - a.viewCount)
       .slice(0, 5);
-  }, [content]);
+  }, [videos]);
+
+  // Don't render if not connected
+  if (!isConnected) {
+    return null;
+  }
 
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <CardTitle className="text-base font-medium">Top Posts del Mes</CardTitle>
+            <div className="p-1.5 rounded-md bg-red-500">
+              <Youtube className="h-3.5 w-3.5 text-white" />
+            </div>
+            <CardTitle className="text-base font-medium">Top Videos YouTube</CardTitle>
           </div>
-          {isLiveData && !isLoading && (
+          {!isLoading && (
             <Badge
               variant="outline"
               className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600"
@@ -231,18 +212,18 @@ export const TopPostsSection = ({
       <CardContent className="pt-0">
         {isLoading ? (
           <PodiumSkeleton />
-        ) : topPosts.length === 0 ? (
+        ) : topVideos.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
-            No hay posts este mes
+            No hay videos este mes
           </div>
         ) : (
           <div className="flex items-end justify-center gap-2 pt-2 pb-2">
             {displayOrder.map((rank) => {
-              const post = topPosts[rank - 1];
-              if (post) {
-                return <PodiumPost key={post.id} post={post} rank={rank} onClick={onPostClick} />;
+              const video = topVideos[rank - 1];
+              if (video) {
+                return <VideoPodiumPost key={video.id} video={video} rank={rank} />;
               }
-              return <EmptyPodiumSlot key={`empty-${rank}`} rank={rank} />;
+              return <EmptyVideoPodiumSlot key={`empty-${rank}`} rank={rank} />;
             })}
           </div>
         )}
