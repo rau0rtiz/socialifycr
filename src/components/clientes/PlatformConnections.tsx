@@ -35,11 +35,12 @@ interface MetaAccountsData {
 }
 
 interface YouTubeAccountsData {
-  accounts: { id: string; name: string; thumbnail?: string; subscriberCount?: string; videoCount?: string }[];
+  accounts: { id: string; name: string; thumbnail?: string; subscriberCount?: string; videoCount?: string; isOwned?: boolean; type?: 'personal' | 'managed' | 'manual' }[];
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
   clientId: string;
+  message?: string;
 }
 
 interface PlatformConnectionsProps {
@@ -561,6 +562,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         channels={youtubeAccountsData?.accounts || []}
         onSelect={handleSaveYouTubeConnection}
         loading={savingYouTube}
+        message={youtubeAccountsData?.message}
       />
 
       {/* Disconnect Confirmation Dialog */}
