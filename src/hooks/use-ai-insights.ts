@@ -42,7 +42,7 @@ interface UseAIInsightsResult {
   isLoading: boolean;
   result: InsightResult | null;
   error: string | null;
-  generateInsights: (type: InsightType) => Promise<void>;
+  generateInsights: (type: InsightType, focusTopics?: string[]) => Promise<void>;
 }
 
 function summarizeContent(content: ContentPost[]): ContentSummary {
@@ -125,7 +125,7 @@ export const useAIInsights = (
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const generateInsights = useCallback(async (type: InsightType) => {
+  const generateInsights = useCallback(async (type: InsightType, focusTopics?: string[]) => {
     if (!clientId) {
       setError('No client selected');
       return;
@@ -147,6 +147,7 @@ export const useAIInsights = (
           country,
           additionalContext,
           hasAdAccount,
+          focusTopics: focusTopics && focusTopics.length > 0 ? focusTopics : undefined,
         },
       });
 

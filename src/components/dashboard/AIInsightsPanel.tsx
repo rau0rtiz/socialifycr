@@ -29,8 +29,11 @@ import {
   Users,
   Award,
   Eye,
-  Settings
+  Settings,
+  X,
+  Hash
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { useAIInsights, InsightType, ContentIdea } from '@/hooks/use-ai-insights';
 import { ContentPost } from '@/data/mockData';
 import { VideoIdea } from '@/hooks/use-video-ideas';
@@ -111,6 +114,8 @@ export const AIInsightsPanel = ({
   const [addingIdeaIndex, setAddingIdeaIndex] = useState<number | null>(null);
   const [isContextDialogOpen, setIsContextDialogOpen] = useState(false);
   const [currentContext, setCurrentContext] = useState(aiContext);
+  const [focusTopics, setFocusTopics] = useState<string[]>([]);
+  const [newTopic, setNewTopic] = useState('');
   
   // Update selected region when client changes
   useEffect(() => {
@@ -121,6 +126,11 @@ export const AIInsightsPanel = ({
   useEffect(() => {
     setCurrentContext(aiContext);
   }, [aiContext, clientId]);
+
+  // Reset focus topics when client changes
+  useEffect(() => {
+    setFocusTopics([]);
+  }, [clientId]);
   
   const hasAIContext = !!currentContext;
 
@@ -132,6 +142,18 @@ export const AIInsightsPanel = ({
   const handleRegionChange = (region: string) => {
     setSelectedCountry(region);
     onRegionChange?.(region);
+  };
+
+  const handleAddTopic = () => {
+    const trimmed = newTopic.trim();
+    if (trimmed && !focusTopics.includes(trimmed)) {
+      setFocusTopics([...focusTopics, trimmed]);
+      setNewTopic('');
+    }
+  };
+
+  const handleRemoveTopic = (topic: string) => {
+    setFocusTopics(focusTopics.filter(t => t !== topic));
   };
   
   const { isLoading, result, error, generateInsights } = useAIInsights(
@@ -145,7 +167,7 @@ export const AIInsightsPanel = ({
   );
 
   const handleGenerate = () => {
-    generateInsights(activeTab);
+    generateInsights(activeTab, focusTopics.length > 0 ? focusTopics : undefined);
   };
 
   const handleAddAsVideoIdea = async (idea: ContentIdea, index: number) => {
@@ -304,6 +326,63 @@ export const AIInsightsPanel = ({
               </div>
             </CollapsibleContent>
           </Collapsible>
+
+          {/* Focus Topics Selector */}
+          <div className="space-y-2 pt-2 border-t border-border/50">
+            <div className="flex items-center gap-2">
+              <Hash className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-xs text-muted-foreground">
+                Temas de enfoque (opcional)
+              </Label>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ej: Navidad, ofertas de fin de año..."
+                value={newTopic}
+                onChange={(e) => setNewTopic(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTopic();
+                  }
+                }}
+                className="h-8 text-sm flex-1"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3"
+                onClick={handleAddTopic}
+                disabled={!newTopic.trim()}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {focusTopics.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {focusTopics.map((topic, idx) => (
+                  <Badge 
+                    key={idx} 
+                    variant="secondary" 
+                    className="text-xs gap-1 pr-1 bg-primary/10 text-primary border-primary/30"
+                  >
+                    {topic}
+                    <button
+                      onClick={() => handleRemoveTopic(topic)}
+                      className="ml-1 hover:bg-primary/20 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {focusTopics.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Las ideas generadas estarán enfocadas en estos temas específicos.
+              </p>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

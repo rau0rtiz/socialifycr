@@ -23,6 +23,7 @@ interface InsightRequest {
   country: string;
   additionalContext?: string;
   hasAdAccount?: boolean;
+  focusTopics?: string[];
 }
 
 const COUNTRY_NAMES: Record<string, string> = {
@@ -138,6 +139,14 @@ IMPORTANTE - Para ${countryName}:
 - Enfócate en lo que REALMENTE le importa a la audiencia local: entretenimiento, economía, deportes, cultura pop, eventos actuales, noticias locales, comida, tradiciones, humor local.
 - Las ideas deben ser PRÁCTICAS y aplicables, no genéricas.
 - Si el cliente da contexto adicional, ESE CONTEXTO ES PRIORIDAD y debe guiar todas las recomendaciones.
+
+${request.focusTopics && request.focusTopics.length > 0 ? `
+TEMAS DE ENFOQUE OBLIGATORIOS:
+El cliente ha especificado que TODAS las ideas y recomendaciones DEBEN estar relacionadas con estos temas específicos:
+${request.focusTopics.map((t, i) => `${i + 1}. ${t}`).join('\n')}
+
+CADA idea o recomendación que generes DEBE estar directamente relacionada con al menos uno de estos temas. NO generes contenido sobre otros temas.
+` : ''}
 
 ${request.hasAdAccount ? 'IMPORTANTE: El cliente tiene una cuenta de anuncios conectada, incluye recomendaciones específicas para optimizar campañas publicitarias.' : ''}`;
 
