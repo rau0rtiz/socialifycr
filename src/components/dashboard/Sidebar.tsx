@@ -27,11 +27,19 @@ import {
 import { cn } from '@/lib/utils';
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/use-user-role';
 
 const mainMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Campañas y Reportes', url: '/reports', icon: BarChart3 },
   { title: 'Redes Sociales', url: '/social', icon: Share2 },
+  { title: 'Contenido', url: '/content', icon: FileText },
+];
+
+// Client-only menu items (simplified)
+const clientMenuItems = [
+  { title: 'Dashboard', url: '/', icon: LayoutDashboard },
+  { title: 'Mis Reportes', url: '/reports', icon: BarChart3 },
   { title: 'Contenido', url: '/content', icon: FileText },
 ];
 
@@ -47,6 +55,7 @@ export const Sidebar = () => {
   const collapsed = state === 'collapsed';
   const { platformBrand } = useBrand();
   const { signOut } = useAuth();
+  const { isAgency, loading: roleLoading } = useUserRole();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -54,6 +63,9 @@ export const Sidebar = () => {
     await signOut();
     navigate('/auth');
   };
+
+  // Determine which menu items to show based on user role
+  const menuItems = isAgency ? mainMenuItems : clientMenuItems;
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">
@@ -84,7 +96,7 @@ export const Sidebar = () => {
           <SidebarGroupLabel>Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainMenuItems.map((item) => (
+              {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <NavLink 
@@ -104,29 +116,32 @@ export const Sidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Gestión</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {managementMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink 
-                      to={item.url}
-                      className={cn(
-                        "flex items-center gap-3 transition-colors",
-                        isActive(item.url) && "bg-accent text-accent-foreground"
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Only show management section for agency users */}
+        {isAgency && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Gestión</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {managementMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                      <NavLink 
+                        to={item.url}
+                        className={cn(
+                          "flex items-center gap-3 transition-colors",
+                          isActive(item.url) && "bg-accent text-accent-foreground"
+                        )}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-4">

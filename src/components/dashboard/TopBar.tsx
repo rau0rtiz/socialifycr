@@ -6,6 +6,7 @@ import { ClientSelector } from './ClientSelector';
 import { DateRangePicker } from './DateRangePicker';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useBrand } from '@/contexts/BrandContext';
+import { useUserRole } from '@/hooks/use-user-role';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -17,6 +18,7 @@ import {
 
 export const TopBar = () => {
   const { selectedClient } = useBrand();
+  const { isAgency } = useUserRole();
 
   return (
     <header className="h-14 md:h-16 border-b border-border bg-card px-3 md:px-6 flex items-center justify-between gap-2 md:gap-4">
@@ -44,7 +46,9 @@ export const TopBar = () => {
         <div className="hidden lg:block">
           <DateRangePicker />
         </div>
-        <ClientSelector />
+        
+        {/* Only show client selector for agency users */}
+        {isAgency && <ClientSelector />}
         
         <div className="relative hidden xl:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
