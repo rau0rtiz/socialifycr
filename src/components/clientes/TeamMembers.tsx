@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, Trash2, Clock, Mail } from 'lucide-react';
+import { UserPlus, Trash2, Clock, Mail, RefreshCw, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -29,6 +29,7 @@ interface PendingInvitation {
   id: string;
   email: string;
   role: string;
+  invitee_name: string | null;
   created_at: string;
   expires_at: string;
 }
@@ -48,6 +49,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvitation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -88,7 +90,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
   const fetchPendingInvites = async () => {
     const { data, error } = await supabase
       .from('client_invitations')
-      .select('id, email, role, created_at, expires_at')
+      .select('id, email, role, invitee_name, created_at, expires_at')
       .eq('client_id', clientId)
       .is('accepted_at', null)
       .gt('expires_at', new Date().toISOString())
@@ -98,6 +100,45 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
       console.error('Error fetching pending invites:', error);
     } else {
       setPendingInvites(data || []);
+    }
+  };
+
+  const handleResendInvite = async (invite: PendingInvitation) => {
+    setResendingId(invite.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-client-invitation', {
+        body: {
+          clientId,
+          email: invite.email,
+          role: invite.role,
+          inviteeName: invite.invitee_name || undefined,
+        },
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      if (data.emailSent) {
+        toast({
+          title: 'Invitación reenviada',
+          description: `Se ha reenviado el email a ${invite.email}`,
+        });
+      } else {
+        toast({
+          title: 'Error al enviar',
+          description: 'No se pudo enviar el email. Intenta de nuevo.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error resending invitation:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo reenviar la invitación.',
+        variant: 'destructive',
+      });
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -244,15 +285,30 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Badge variant="outline" className="text-xs">
                 {roleLabels[invite.role as keyof typeof roleLabels] || invite.role}
               </Badge>
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-8 w-8"
+                onClick={() => handleResendInvite(invite)}
+                disabled={resendingId === invite.id}
+                title="Reenviar invitación"
+              >
+                {resendingId === invite.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8 text-destructive"
                 onClick={() => handleCancelInvite(invite.id)}
+                title="Cancelar invitación"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
