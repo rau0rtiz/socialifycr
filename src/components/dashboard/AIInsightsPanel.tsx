@@ -14,7 +14,6 @@ import {
   Lightbulb,
   RefreshCw,
   Zap,
-  ExternalLink,
   Plus,
   Globe,
   Target,
@@ -22,9 +21,17 @@ import {
   Megaphone,
   ChevronDown,
   ChevronUp,
-  Link2
+  Link2,
+  Play,
+  Image as ImageIcon,
+  LayoutGrid,
+  MessageSquare,
+  ShoppingCart,
+  Users,
+  Award,
+  Eye
 } from 'lucide-react';
-import { useAIInsights, InsightType } from '@/hooks/use-ai-insights';
+import { useAIInsights, InsightType, ContentIdea } from '@/hooks/use-ai-insights';
 import { ContentPost } from '@/data/mockData';
 import { VideoIdea } from '@/hooks/use-video-ideas';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -107,7 +114,7 @@ export const AIInsightsPanel = ({
     generateInsights(activeTab);
   };
 
-  const handleAddAsVideoIdea = async (ideaText: string, index: number) => {
+  const handleAddAsVideoIdea = async (idea: ContentIdea, index: number) => {
     if (!onAddVideoIdea) return;
     
     setAddingIdeaIndex(index);
@@ -117,14 +124,41 @@ export const AIInsightsPanel = ({
         url: '',
         platform: 'other',
         thumbnail_url: null,
-        title: ideaText.slice(0, 100),
-        description: ideaText,
+        title: idea.idea,
+        description: `${idea.description}\n\nFormato: ${idea.contentType}\nObjetivo: ${idea.goal}\n\n${idea.justification}`,
         tag_id: null,
         model_id: null,
       });
     } finally {
       setAddingIdeaIndex(null);
     }
+  };
+
+  const getContentTypeIcon = (type: string) => {
+    const lower = type.toLowerCase();
+    if (lower.includes('reel') || lower.includes('video') || lower.includes('tiktok')) return Play;
+    if (lower.includes('carrusel') || lower.includes('carousel')) return LayoutGrid;
+    if (lower.includes('story')) return Eye;
+    if (lower.includes('tweet')) return MessageSquare;
+    return ImageIcon;
+  };
+
+  const getGoalIcon = (goal: string) => {
+    const lower = goal.toLowerCase();
+    if (lower.includes('venta') || lower.includes('sale')) return ShoppingCart;
+    if (lower.includes('seguidor') || lower.includes('follower')) return Users;
+    if (lower.includes('autoridad') || lower.includes('authority')) return Award;
+    if (lower.includes('engagement')) return MessageSquare;
+    return Eye;
+  };
+
+  const getGoalColor = (goal: string) => {
+    const lower = goal.toLowerCase();
+    if (lower.includes('venta') || lower.includes('sale')) return 'bg-green-500/10 text-green-600 border-green-500/30';
+    if (lower.includes('seguidor') || lower.includes('follower')) return 'bg-blue-500/10 text-blue-600 border-blue-500/30';
+    if (lower.includes('autoridad') || lower.includes('authority')) return 'bg-purple-500/10 text-purple-600 border-purple-500/30';
+    if (lower.includes('engagement')) return 'bg-amber-500/10 text-amber-600 border-amber-500/30';
+    return 'bg-muted text-muted-foreground border-border';
   };
 
   const countryInfo = COUNTRIES.find(c => c.value === selectedCountry);
@@ -324,8 +358,86 @@ export const AIInsightsPanel = ({
                     </div>
                   )}
 
-                  {/* Content Ideas with Add button */}
-                  {tab.value === 'content-ideas' && result.insights.length > 0 && (
+                  {/* Content Ideas with structured format */}
+                  {tab.value === 'content-ideas' && result.contentIdeas && result.contentIdeas.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4 text-amber-500" />
+                        Ideas de Contenido
+                      </h4>
+                      <div className="grid gap-3">
+                        {result.contentIdeas.map((idea, idx) => {
+                          const ContentTypeIcon = getContentTypeIcon(idea.contentType);
+                          const GoalIcon = getGoalIcon(idea.goal);
+                          
+                          return (
+                            <Card key={idx} className="bg-gradient-to-br from-muted/30 to-muted/10 border-border/50 overflow-hidden">
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between gap-3 mb-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                                        #{idx + 1}
+                                      </span>
+                                      <Badge variant="outline" className="text-xs gap-1 shrink-0">
+                                        <ContentTypeIcon className="h-3 w-3" />
+                                        {idea.contentType}
+                                      </Badge>
+                                    </div>
+                                    <h5 className="font-semibold text-foreground text-sm leading-tight">
+                                      {idea.idea}
+                                    </h5>
+                                  </div>
+                                  {onAddVideoIdea && (
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      className="h-8 px-3 text-xs shrink-0 gap-1"
+                                      onClick={() => handleAddAsVideoIdea(idea, idx)}
+                                      disabled={addingIdeaIndex === idx}
+                                    >
+                                      {addingIdeaIndex === idx ? (
+                                        <RefreshCw className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <Plus className="h-3 w-3" />
+                                          Agregar
+                                        </>
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
+                                
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  {idea.description}
+                                </p>
+                                
+                                <div className="flex items-center gap-2 mb-3">
+                                  <span className="text-xs text-muted-foreground">Objetivo:</span>
+                                  <Badge variant="outline" className={`text-xs gap-1 ${getGoalColor(idea.goal)}`}>
+                                    <GoalIcon className="h-3 w-3" />
+                                    {idea.goal}
+                                  </Badge>
+                                </div>
+                                
+                                {idea.justification && (
+                                  <div className="bg-background/50 rounded-lg p-2.5 border border-border/30">
+                                    <p className="text-xs text-muted-foreground">
+                                      <span className="font-medium text-foreground/80">Por qué funciona: </span>
+                                      {idea.justification}
+                                    </p>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fallback for old insights format */}
+                  {tab.value === 'content-ideas' && (!result.contentIdeas || result.contentIdeas.length === 0) && result.insights.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium flex items-center gap-2">
                         <Lightbulb className="h-4 w-4 text-amber-500" />
@@ -342,32 +454,7 @@ export const AIInsightsPanel = ({
                                 <span className="text-primary font-medium">{idx + 1}.</span>
                                 <span>{insight}</span>
                               </div>
-                              {onAddVideoIdea && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs shrink-0"
-                                  onClick={() => handleAddAsVideoIdea(insight, idx)}
-                                  disabled={addingIdeaIndex === idx}
-                                >
-                                  {addingIdeaIndex === idx ? (
-                                    <RefreshCw className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <>
-                                      <Plus className="h-3 w-3 mr-1" />
-                                      Agregar
-                                    </>
-                                  )}
-                                </Button>
-                              )}
                             </div>
-                            {/* Justification if available */}
-                            {result.justifications?.[idx] && (
-                              <div className="mt-2 text-xs text-muted-foreground/80 pl-5 border-l-2 border-primary/20">
-                                <span className="font-medium">Por qué: </span>
-                                {result.justifications[idx]}
-                              </div>
-                            )}
                           </li>
                         ))}
                       </ul>

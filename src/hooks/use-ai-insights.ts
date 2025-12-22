@@ -19,6 +19,14 @@ interface GoalRecommendations {
   content: string[];
 }
 
+export interface ContentIdea {
+  idea: string;
+  contentType: string;
+  description: string;
+  goal: string;
+  justification: string;
+}
+
 interface InsightResult {
   insightType: InsightType;
   trendingTopics: string[];
@@ -27,6 +35,7 @@ interface InsightResult {
   justifications: string[];
   sources: string[];
   goalRecommendations?: GoalRecommendations;
+  contentIdeas?: ContentIdea[];
 }
 
 interface UseAIInsightsResult {
@@ -157,6 +166,7 @@ export const useAIInsights = (
         justifications: data.justifications || [],
         sources: data.sources || [],
         goalRecommendations: data.goalRecommendations || undefined,
+        contentIdeas: data.contentIdeas || undefined,
       });
 
       toast({
