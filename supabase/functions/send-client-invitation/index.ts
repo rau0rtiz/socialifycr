@@ -177,7 +177,7 @@ serve(async (req) => {
     `;
 
     const { error: emailError } = await resend.emails.send({
-      from: "Socialify <invitaciones@socialifycr.com>",
+      from: "Socialify <onboarding@resend.dev>",
       to: [email],
       subject: `Invitación a ${client.name} - Socialify`,
       html: emailHtml,
