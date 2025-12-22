@@ -8,6 +8,7 @@ import { FunnelModule } from '@/components/dashboard/FunnelModule';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
+import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
@@ -274,6 +275,16 @@ const Dashboard = () => {
           onUpdateIdea={updateIdea}
           onDeleteIdea={deleteIdea}
           clientId={selectedClient.id}
+        />
+      </div>
+
+      {/* AI Insights Panel */}
+      <div className="mb-4 md:mb-6">
+        <AIInsightsPanel
+          clientId={selectedClient.id}
+          clientName={selectedClient.name}
+          industry={selectedClient.industry || 'general'}
+          content={content}
         />
       </div>
 
