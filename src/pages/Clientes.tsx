@@ -17,6 +17,7 @@ export interface Client {
   logo_url: string | null;
   primary_color: string;
   accent_color: string;
+  ai_context: string | null;
   created_at: string;
   updated_at: string;
 }
