@@ -58,9 +58,10 @@ export const InstagramTopPosts = ({
   const [period, setPeriod] = useState<PeriodFilter>('last_3_months');
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
 
-  // Get top 5 posts sorted by engagement
+  // Get top 5 Instagram posts sorted by engagement
   const topPosts = useMemo(() => {
-    let filtered = [...content];
+    // IMPORTANT: Filter to only Instagram posts
+    let filtered = content.filter(post => post.network === 'instagram');
     
     // Apply date filter
     if (period === 'custom') {
