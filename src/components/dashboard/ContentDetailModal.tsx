@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { MultiTagSelector } from './MultiTagSelector';
 import { MultiModelSelector } from './MultiModelSelector';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Eye, Heart, MessageCircle, Share2, Bookmark, Clock, 
   ExternalLink, Calendar, Play, Film, LayoutGrid, ImageIcon,
-  Save
+  Save, Link2, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, differenceInHours, parseISO } from 'date-fns';
@@ -34,6 +35,12 @@ interface ContentDetailModalProps {
     comments?: number;
     saves?: number;
   }) => Promise<void>;
+  // Crosspost linking props
+  allContent?: ContentPost[];
+  linkedPostIds?: string[];
+  onLinkPost?: (linkedPostId: string) => Promise<boolean>;
+  onUnlinkPost?: (linkId: string) => Promise<boolean>;
+  crosspostLinks?: Array<{ id: string; primary_post_id: string; linked_post_id: string }>;
 }
 
 const typeConfig: Record<string, { 
@@ -67,11 +74,17 @@ export const ContentDetailModal = ({
   onUpdateMetadata,
   onUpdateMetadataMultiple,
   onCapture48hMetrics,
+  allContent,
+  linkedPostIds,
+  onLinkPost,
+  onUnlinkPost,
+  crosspostLinks,
 }: ContentDetailModalProps) => {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [selectedModelIds, setSelectedModelIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [selectedLinkPostId, setSelectedLinkPostId] = useState<string>('');
 
   // Sync state with metadata when it changes
   useEffect(() => {
@@ -258,6 +271,101 @@ export const ContentDetailModal = ({
                 disabled={isSaving}
               />
             </div>
+
+            {/* Crosspost Linking */}
+            {allContent && onLinkPost && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Link2 className="h-4 w-4" />
+                    Vincular Crosspost
+                  </p>
+                  
+                  {/* Linked posts */}
+                  {linkedPostIds && linkedPostIds.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">Posts vinculados:</p>
+                      {linkedPostIds.map(linkedId => {
+                        const linkedPost = allContent.find(p => p.id === linkedId);
+                        if (!linkedPost) return null;
+                        
+                        // Find the link to get its ID for unlinking
+                        const link = crosspostLinks?.find(
+                          l => (l.primary_post_id === post.id && l.linked_post_id === linkedId) ||
+                               (l.linked_post_id === post.id && l.primary_post_id === linkedId)
+                        );
+                        
+                        return (
+                          <div key={linkedId} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                            <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0">
+                              <img 
+                                src={linkedPost.thumbnailUrl || linkedPost.thumbnail} 
+                                alt="" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate">{linkedPost.title}</p>
+                              <p className="text-xs text-muted-foreground capitalize">{linkedPost.network}</p>
+                            </div>
+                            {link && onUnlinkPost && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6"
+                                onClick={() => onUnlinkPost(link.id)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Add new link */}
+                  <div className="flex gap-2">
+                    <Select value={selectedLinkPostId} onValueChange={setSelectedLinkPostId}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Seleccionar post..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allContent
+                          .filter(p => 
+                            p.id !== post.id && 
+                            p.network !== post.network &&
+                            !linkedPostIds?.includes(p.id)
+                          )
+                          .slice(0, 20)
+                          .map(p => (
+                            <SelectItem key={p.id} value={p.id}>
+                              <div className="flex items-center gap-2">
+                                <span className="capitalize text-xs text-muted-foreground">{p.network}</span>
+                                <span className="truncate max-w-[150px]">{p.title}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      size="sm"
+                      disabled={!selectedLinkPostId}
+                      onClick={async () => {
+                        if (selectedLinkPostId) {
+                          await onLinkPost(selectedLinkPostId);
+                          setSelectedLinkPostId('');
+                        }
+                      }}
+                    >
+                      <Link2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </DialogContent>
