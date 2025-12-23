@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,13 +7,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ContentPost } from '@/data/mockData';
 import { ContentTag, ContentModel, ContentMetadata } from '@/hooks/use-content-metadata';
 import { ContentDetailModal } from './ContentDetailModal';
-import { Calendar, Clock, Eye, Heart, Play, Film, LayoutGrid, ImageIcon, RefreshCw, Wifi, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, Eye, Heart, Play, Film, LayoutGrid, ImageIcon, RefreshCw, Wifi, Maximize2, Instagram, Youtube, Facebook, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateRange } from 'react-day-picker';
-import { Link } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ContentGridProps {
   data: ContentPost[];
@@ -102,8 +105,25 @@ export const ContentGrid = ({
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [showAllDialog, setShowAllDialog] = useState(false);
+  const [dialogSearch, setDialogSearch] = useState('');
+  const [dialogPlatforms, setDialogPlatforms] = useState<string[]>(['all']);
   const [internalDateRange, setInternalDateRange] = useState<DateRange | undefined>(
     dateRange ? { from: dateRange.from, to: dateRange.to } : undefined
+  );
+
+  // Platform config for dialog
+  const platformConfig: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string }> = {
+    instagram: { icon: Instagram, label: 'Instagram' },
+    youtube: { icon: Youtube, label: 'YouTube' },
+    facebook: { icon: Facebook, label: 'Facebook' },
+    tiktok: { icon: Play, label: 'TikTok' },
+  };
+
+  // All data sorted by date
+  const allSortedData = useMemo(() => 
+    [...data].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [data]
   );
 
   // Filter by date range using internal state, sort by date (most recent first) and limit to 6 posts (2x3 grid)
@@ -120,6 +140,28 @@ export const ContentGrid = ({
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 6);
+
+  // Dialog filtered data
+  const dialogFilteredData = useMemo(() => {
+    return allSortedData.filter((post) => {
+      // Search filter
+      const searchMatch = !dialogSearch || 
+        (post.caption?.toLowerCase().includes(dialogSearch.toLowerCase()) || 
+         post.title?.toLowerCase().includes(dialogSearch.toLowerCase()));
+      
+      // Platform filter
+      const platformMatch = dialogPlatforms.includes('all') || 
+        dialogPlatforms.includes(post.network?.toLowerCase() || '');
+      
+      return searchMatch && platformMatch;
+    });
+  }, [allSortedData, dialogSearch, dialogPlatforms]);
+
+  // Get unique platforms from data
+  const availablePlatforms = useMemo(() => {
+    const platforms = new Set(data.map(p => p.network?.toLowerCase()).filter(Boolean));
+    return Array.from(platforms) as string[];
+  }, [data]);
 
   const handleDateSelect = (range: DateRange | undefined) => {
     setInternalDateRange(range);
@@ -206,11 +248,14 @@ export const ContentGrid = ({
               </Popover>
               
               {/* Ver todo button */}
-              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" asChild>
-                <Link to="/contenido">
-                  Ver todo
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs gap-1"
+                onClick={() => setShowAllDialog(true)}
+              >
+                Ver todo
+                <Maximize2 className="h-3 w-3" />
               </Button>
 
               {onRefresh && (
@@ -364,6 +409,201 @@ export const ContentGrid = ({
         onUpdateMetadataMultiple={onUpdateMetadataMultiple || (async () => {})}
         onCapture48hMetrics={onCapture48hMetrics || (async () => {})}
       />
+
+      {/* Ver Todo Dialog */}
+      <Dialog open={showAllDialog} onOpenChange={setShowAllDialog}>
+        <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-semibold">Todo el Contenido</DialogTitle>
+            </div>
+            
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3 mt-4">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar contenido..."
+                  value={dialogSearch}
+                  onChange={(e) => setDialogSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+                {dialogSearch && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => setDialogSearch('')}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+              
+              {/* Platform Filter */}
+              <ToggleGroup 
+                type="multiple" 
+                value={dialogPlatforms}
+                onValueChange={(value) => {
+                  if (value.length === 0) {
+                    setDialogPlatforms(['all']);
+                  } else if (value.includes('all') && !dialogPlatforms.includes('all')) {
+                    setDialogPlatforms(['all']);
+                  } else {
+                    setDialogPlatforms(value.filter(v => v !== 'all'));
+                  }
+                }}
+                className="justify-start"
+              >
+                <ToggleGroupItem value="all" aria-label="Todas" className="text-xs h-9 px-3">
+                  Todas
+                </ToggleGroupItem>
+                {availablePlatforms.map((platform) => {
+                  const config = platformConfig[platform];
+                  if (!config) return null;
+                  const PlatformIcon = config.icon;
+                  return (
+                    <ToggleGroupItem key={platform} value={platform} aria-label={config.label} className="text-xs h-9 px-3 gap-1.5">
+                      <PlatformIcon className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">{config.label}</span>
+                    </ToggleGroupItem>
+                  );
+                })}
+              </ToggleGroup>
+            </div>
+          </DialogHeader>
+          
+          {/* Content Grid */}
+          <ScrollArea className="flex-1 px-6 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {dialogFilteredData.length === 0 ? (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  No se encontró contenido
+                </div>
+              ) : (
+                dialogFilteredData.map((post) => {
+                  const typeInfo = typeConfig[post.type] || typeConfig.image;
+                  const TypeIcon = typeInfo.icon;
+                  const postMetadata = metadata[post.id];
+                  const postTag = postMetadata?.tag || tags.find(t => t.id === postMetadata?.tag_id);
+                  const caption = post.caption || post.title;
+                  const { text: truncatedCaption, isTruncated } = truncateText(caption, 80);
+                  const PlatformIcon = platformConfig[post.network?.toLowerCase() || '']?.icon;
+                  
+                  return (
+                    <div 
+                      key={post.id}
+                      onClick={() => handlePostClick(post)}
+                      className="group relative rounded-lg border border-border bg-card p-3 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer"
+                    >
+                      <div className="flex gap-3">
+                        {/* Thumbnail */}
+                        <div className="relative w-24 h-24 flex-shrink-0 rounded-md bg-muted overflow-hidden">
+                          {post.thumbnailUrl || post.thumbnail ? (
+                            <img 
+                              src={post.thumbnailUrl || post.thumbnail} 
+                              alt={post.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <TypeIcon className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          {/* Type & Platform badges */}
+                          <div className="absolute top-1 left-1 flex gap-1">
+                            <Badge 
+                              variant="outline" 
+                              className={cn(
+                                "text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm",
+                                typeInfo.class
+                              )}
+                            >
+                              <TypeIcon className="h-2 w-2" />
+                            </Badge>
+                            {PlatformIcon && (
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 backdrop-blur-sm bg-background/50">
+                                <PlatformIcon className="h-2.5 w-2.5" />
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Content info */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          {/* Tags */}
+                          <div className="flex items-center gap-1 flex-wrap mb-1">
+                            {postTag && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-[9px] px-1.5 py-0"
+                                style={{
+                                  backgroundColor: `${postTag.color}20`,
+                                  color: postTag.color,
+                                  borderColor: `${postTag.color}40`
+                                }}
+                              >
+                                {postTag.name}
+                              </Badge>
+                            )}
+                            <Badge 
+                              variant="secondary" 
+                              className={cn("text-[9px] px-1 py-0", statusConfig[post.status].class)}
+                            >
+                              {statusConfig[post.status].label}
+                            </Badge>
+                          </div>
+
+                          {/* Caption */}
+                          <p className="text-xs text-foreground leading-tight line-clamp-2 mb-1.5">
+                            {truncatedCaption}
+                            {isTruncated && (
+                              <span className="text-primary ml-1 font-medium">ver más</span>
+                            )}
+                          </p>
+                          
+                          {/* Metrics */}
+                          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                            {post.views !== undefined && post.views !== null && (
+                              <div className="flex items-center gap-0.5">
+                                <Eye className="h-2.5 w-2.5" />
+                                <span>{formatNumber(post.views)}</span>
+                              </div>
+                            )}
+                            
+                            {post.likes !== undefined && post.likes !== null ? (
+                              <div className="flex items-center gap-0.5">
+                                <Heart className="h-2.5 w-2.5" />
+                                <span>{formatNumber(post.likes)}</span>
+                              </div>
+                            ) : post.engagement > 0 && (
+                              <div className="flex items-center gap-0.5">
+                                <Heart className="h-2.5 w-2.5" />
+                                <span>{formatNumber(post.engagement)}</span>
+                              </div>
+                            )}
+
+                            <span className="text-muted-foreground/60 ml-auto">
+                              {format(new Date(post.date), 'dd MMM yyyy', { locale: es })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </ScrollArea>
+          
+          {/* Footer */}
+          <div className="px-6 py-3 border-t bg-muted/30 text-center text-xs text-muted-foreground">
+            Mostrando {dialogFilteredData.length} de {data.length} publicaciones
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
