@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
+import { useCrosspostLinks } from '@/hooks/use-crosspost-links';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { ContentPost, NetworkType } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -114,6 +115,14 @@ const Contenido = () => {
     updateMetadataMultiple,
     capture48hMetrics,
   } = useContentMetadata(clientId);
+
+  // Crosspost links
+  const {
+    links: crosspostLinks,
+    addLink,
+    removeLink,
+    getLinkedPosts,
+  } = useCrosspostLinks(clientId);
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');
@@ -560,6 +569,11 @@ const Contenido = () => {
           onUpdateMetadata={updateMetadata}
           onUpdateMetadataMultiple={updateMetadataMultiple}
           onCapture48hMetrics={capture48hMetrics}
+          allContent={content}
+          linkedPostIds={getLinkedPosts(selectedPost.id)}
+          onLinkPost={(linkedPostId) => addLink(selectedPost.id, linkedPostId)}
+          onUnlinkPost={removeLink}
+          crosspostLinks={crosspostLinks}
         />
       )}
     </DashboardLayout>

@@ -11,8 +11,9 @@ interface ContentItem {
   caption?: string;
   date: string;
   platform: string;
+  type?: string; // reel, video, post, carousel, short
   thumbnailUrl?: string;
-  duration?: number; // Duration in seconds
+  duration?: number;
 }
 
 interface CrossPostGroup {
@@ -23,40 +24,37 @@ interface CrossPostGroup {
   reason: string;
 }
 
-// Parse ISO 8601 duration (PT1M30S) to seconds
-function parseDuration(duration: string): number {
-  if (!duration) return 0;
-  
-  // If it's already a number, return it
-  if (typeof duration === 'number') return duration;
-  
-  // Handle ISO 8601 duration format (e.g., PT1M30S)
-  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-  if (match) {
-    const hours = parseInt(match[1] || '0', 10);
-    const minutes = parseInt(match[2] || '0', 10);
-    const seconds = parseInt(match[3] || '0', 10);
-    return hours * 3600 + minutes * 60 + seconds;
-  }
-  
-  // Try parsing as plain number
-  const parsed = parseInt(duration, 10);
-  return isNaN(parsed) ? 0 : parsed;
-}
-
-// Check if two dates are within 24 hours of each other
-function isWithin24Hours(date1: string, date2: string): boolean {
+// Check if two dates are within 3 hours of each other
+function isWithin3Hours(date1: string, date2: string): boolean {
   const d1 = new Date(date1).getTime();
   const d2 = new Date(date2).getTime();
   const diffMs = Math.abs(d1 - d2);
   const diffHours = diffMs / (1000 * 60 * 60);
-  return diffHours <= 24;
+  return diffHours <= 3;
 }
 
-// Check if two durations are similar (within tolerance)
-function isSimilarDuration(duration1: number, duration2: number, toleranceSeconds: number = 3): boolean {
-  if (duration1 === 0 || duration2 === 0) return false;
-  return Math.abs(duration1 - duration2) <= toleranceSeconds;
+// Normalize content type for comparison
+function normalizeType(type: string | undefined, platform: string): string {
+  if (!type) return 'unknown';
+  
+  const t = type.toLowerCase();
+  
+  // Video formats across platforms
+  if (t === 'reel' || t === 'short' || t === 'video') {
+    return 'video';
+  }
+  
+  // Image/post formats
+  if (t === 'post' || t === 'image' || t === 'photo') {
+    return 'image';
+  }
+  
+  // Carousel/album formats
+  if (t === 'carousel' || t === 'album' || t === 'carousel_album') {
+    return 'carousel';
+  }
+  
+  return t;
 }
 
 serve(async (req) => {
@@ -103,30 +101,27 @@ serve(async (req) => {
         for (const item1 of content1) {
           if (processedIds.has(item1.id)) continue;
           
-          const duration1 = parseDuration(item1.duration?.toString() || '0');
+          const type1 = normalizeType(item1.type, platform1);
 
           for (const item2 of content2) {
             if (processedIds.has(item2.id)) continue;
             
-            const duration2 = parseDuration(item2.duration?.toString() || '0');
+            const type2 = normalizeType(item2.type, platform2);
 
-            // Check if within 24 hours AND similar duration
-            const withinTimeWindow = isWithin24Hours(item1.date, item2.date);
-            const similarDuration = isSimilarDuration(duration1, duration2);
+            // Check if within 3 hours AND same format type
+            const withinTimeWindow = isWithin3Hours(item1.date, item2.date);
+            const sameFormat = type1 === type2 && type1 !== 'unknown';
 
-            if (withinTimeWindow && similarDuration) {
-              console.log(`Match found: ${item1.id} (${platform1}, ${duration1}s) <-> ${item2.id} (${platform2}, ${duration2}s)`);
+            if (withinTimeWindow && sameFormat) {
+              const timeDiffMinutes = Math.abs(new Date(item1.date).getTime() - new Date(item2.date).getTime()) / (1000 * 60);
               
-              // Determine confidence based on how close the match is
+              console.log(`Match found: ${item1.id} (${platform1}, ${type1}) <-> ${item2.id} (${platform2}, ${type2}) - ${timeDiffMinutes.toFixed(0)} min apart`);
+              
+              // Determine confidence based on time proximity
               let confidence: 'high' | 'medium' | 'low' = 'high';
-              const durationDiff = Math.abs(duration1 - duration2);
-              const timeDiffHours = Math.abs(new Date(item1.date).getTime() - new Date(item2.date).getTime()) / (1000 * 60 * 60);
-              
-              if (durationDiff === 0 && timeDiffHours <= 6) {
+              if (timeDiffMinutes <= 30) {
                 confidence = 'high';
-              } else if (durationDiff <= 1 && timeDiffHours <= 12) {
-                confidence = 'high';
-              } else if (durationDiff <= 2) {
+              } else if (timeDiffMinutes <= 90) {
                 confidence = 'medium';
               } else {
                 confidence = 'low';
@@ -137,12 +132,12 @@ serve(async (req) => {
                 posts: [item1.id, item2.id],
                 platforms: [platform1, platform2],
                 confidence,
-                reason: `Duración similar (${duration1}s vs ${duration2}s) y publicados con ${timeDiffHours.toFixed(1)}h de diferencia`
+                reason: `Mismo formato (${type1}) publicado con ${timeDiffMinutes.toFixed(0)} minutos de diferencia`
               });
 
               processedIds.add(item1.id);
               processedIds.add(item2.id);
-              break; // Move to next item1
+              break;
             }
           }
         }

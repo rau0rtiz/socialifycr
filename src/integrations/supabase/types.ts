@@ -437,6 +437,41 @@ export type Database = {
           },
         ]
       }
+      crosspost_links: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          linked_post_id: string
+          primary_post_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          linked_post_id: string
+          primary_post_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          linked_post_id?: string
+          primary_post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crosspost_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_connections: {
         Row: {
           access_token: string | null
