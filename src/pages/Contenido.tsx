@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { 
   ArrowLeft, Calendar as CalendarIcon, Eye, Heart, Play, Film, 
   LayoutGrid, ImageIcon, Clock, Search, RefreshCw, Wifi, X, Filter 
@@ -93,6 +94,9 @@ const ContentSkeleton = () => (
   </div>
 );
 
+// Unique storage key per client
+const getStorageKey = (clientId: string) => `contenido-platforms-${clientId}`;
+
 const Contenido = () => {
   const { selectedClient, clientBrands } = useBrand();
   const clientId = selectedClient?.id || null;
@@ -131,7 +135,39 @@ const Contenido = () => {
   const [selectedType, setSelectedType] = useState<string>('__all__');
   const [selectedTagId, setSelectedTagId] = useState<string>('__all__');
   const [selectedModelId, setSelectedModelId] = useState<string>('__all__');
-  const [selectedPlatform, setSelectedPlatform] = useState<string>('__all__');
+
+  // Platform selection (multi-select with localStorage persistence)
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+
+  // Initialize selected platforms from localStorage or default to all available
+  useEffect(() => {
+    if (!clientId) return;
+    
+    const stored = localStorage.getItem(getStorageKey(clientId));
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as string[];
+        // Filter to only include currently available platforms
+        const validPlatforms = parsed.filter(p => availablePlatforms.includes(p as NetworkType));
+        if (validPlatforms.length > 0) {
+          setSelectedPlatforms(validPlatforms);
+          return;
+        }
+      } catch {
+        // Invalid stored value, use default
+      }
+    }
+    // Default to all available platforms
+    if (availablePlatforms.length > 0) {
+      setSelectedPlatforms(availablePlatforms as string[]);
+    }
+  }, [clientId, availablePlatforms]);
+
+  // Save to localStorage when selection changes
+  useEffect(() => {
+    if (!clientId || selectedPlatforms.length === 0) return;
+    localStorage.setItem(getStorageKey(clientId), JSON.stringify(selectedPlatforms));
+  }, [clientId, selectedPlatforms]);
 
   // Modal state
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
@@ -149,7 +185,7 @@ const Contenido = () => {
     return Array.from(platforms);
   }, [content]);
 
-  // Filter content
+  // Filter content (without platform filter - that's handled per column)
   const filteredContent = useMemo(() => {
     return [...content]
       .filter((post) => {
@@ -177,12 +213,6 @@ const Contenido = () => {
         // Type filter
         if (selectedType !== '__all__' && post.type !== selectedType) return false;
         
-        // Platform filter
-        if (selectedPlatform !== '__all__') {
-          const postPlatforms = post.platforms || [post.network];
-          if (!postPlatforms.includes(selectedPlatform as NetworkType)) return false;
-        }
-        
         // Tag filter
         if (selectedTagId !== '__all__') {
           const postMetadata = metadata[post.id];
@@ -198,7 +228,24 @@ const Contenido = () => {
         return true;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [content, dateRange, searchQuery, selectedType, selectedPlatform, selectedTagId, selectedModelId, metadata]);
+  }, [content, dateRange, searchQuery, selectedType, selectedTagId, selectedModelId, metadata]);
+
+  // Group content by platform
+  const contentByPlatform = useMemo(() => {
+    const grouped: Record<NetworkType, ContentPost[]> = {
+      instagram: [],
+      youtube: [],
+      facebook: [],
+      tiktok: [],
+      linkedin: [],
+    };
+    
+    filteredContent.forEach(post => {
+      grouped[post.network].push(post);
+    });
+    
+    return grouped;
+  }, [filteredContent]);
 
   const handlePostClick = (post: ContentPost) => {
     setSelectedPost(post);
@@ -210,16 +257,22 @@ const Contenido = () => {
     setSelectedPost(null);
   };
 
+  const handlePlatformToggle = (platforms: string[]) => {
+    // Ensure at least one platform is selected
+    if (platforms.length > 0) {
+      setSelectedPlatforms(platforms);
+    }
+  };
+
   const clearFilters = () => {
     setSearchQuery('');
     setDateRange(undefined);
     setSelectedType('__all__');
     setSelectedTagId('__all__');
     setSelectedModelId('__all__');
-    setSelectedPlatform('__all__');
   };
 
-  const hasActiveFilters = searchQuery || dateRange?.from || selectedType !== '__all__' || selectedTagId !== '__all__' || selectedModelId !== '__all__' || selectedPlatform !== '__all__';
+  const hasActiveFilters = searchQuery || dateRange?.from || selectedType !== '__all__' || selectedTagId !== '__all__' || selectedModelId !== '__all__';
 
   const formatDateRange = () => {
     if (!dateRange?.from) return 'Filtrar por fecha';
@@ -357,24 +410,6 @@ const Contenido = () => {
               </PopoverContent>
             </Popover>
 
-            {/* Platform filter */}
-            <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Plataforma" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todas las plataformas</SelectItem>
-                {uniquePlatforms.map((platform) => (
-                  <SelectItem key={platform} value={platform}>
-                    <span className="flex items-center gap-2">
-                      <span>{platformConfig[platform]?.icon}</span>
-                      {platformConfig[platform]?.label}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
             {/* Type filter */}
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="h-9 text-sm">
@@ -429,131 +464,190 @@ const Contenido = () => {
         </CardContent>
       </Card>
 
+      {/* Platform selector */}
+      <div className="mb-4">
+        <p className="text-sm text-muted-foreground mb-2">Plataformas a mostrar:</p>
+        <ToggleGroup 
+          type="multiple" 
+          value={selectedPlatforms}
+          onValueChange={handlePlatformToggle}
+          className="flex flex-wrap justify-start gap-2"
+        >
+          {uniquePlatforms.map(platform => (
+            <ToggleGroupItem 
+              key={platform} 
+              value={platform}
+              className={cn(
+                "h-8 px-3 text-xs gap-1.5 border rounded-full",
+                selectedPlatforms.includes(platform) && platformConfig[platform]?.class
+              )}
+            >
+              <span>{platformConfig[platform]?.icon}</span>
+              {platformConfig[platform]?.label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </div>
+
       {/* Results count */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">
-          {filteredContent.length} {filteredContent.length === 1 ? 'publicación' : 'publicaciones'}
+          {filteredContent.length} {filteredContent.length === 1 ? 'publicación' : 'publicaciones'} en {selectedPlatforms.length} {selectedPlatforms.length === 1 ? 'plataforma' : 'plataformas'}
         </p>
       </div>
 
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {contentLoading ? (
-          Array.from({ length: 9 }).map((_, i) => <ContentSkeleton key={i} />)
-        ) : filteredContent.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            No hay contenido que coincida con los filtros seleccionados
-          </div>
-        ) : (
-          filteredContent.map((post) => {
-            const typeInfo = typeConfig[post.type] || typeConfig.image;
-            const TypeIcon = typeInfo.icon;
-            const postMetadata = metadata[post.id];
-            const postTag = postMetadata?.tag || tags.find(t => t.id === postMetadata?.tag_id);
-            const caption = post.caption || post.title;
-            const postPlatform = platformConfig[post.network];
+      {/* Content Columns by Platform */}
+      {contentLoading ? (
+        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(selectedPlatforms.length, 3)}, 1fr)` }}>
+          {selectedPlatforms.slice(0, 3).map(platform => (
+            <div key={platform} className="space-y-3">
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="outline" className={cn("text-xs px-2 py-1 gap-1", platformConfig[platform as NetworkType]?.class)}>
+                  <span>{platformConfig[platform as NetworkType]?.icon}</span>
+                  {platformConfig[platform as NetworkType]?.label}
+                </Badge>
+              </div>
+              {Array.from({ length: 3 }).map((_, i) => <ContentSkeleton key={i} />)}
+            </div>
+          ))}
+        </div>
+      ) : selectedPlatforms.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Selecciona al menos una plataforma para ver contenido
+        </div>
+      ) : (
+        <div 
+          className="grid gap-4"
+          style={{ 
+            gridTemplateColumns: `repeat(${Math.min(selectedPlatforms.length, 4)}, 1fr)` 
+          }}
+        >
+          {selectedPlatforms.map(platform => {
+            const platformPosts = contentByPlatform[platform as NetworkType] || [];
+            const platformInfo = platformConfig[platform as NetworkType];
             
             return (
-              <div 
-                key={post.id}
-                onClick={() => handlePostClick(post)}
-                className="group relative rounded-lg border border-border bg-muted/30 p-3 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer"
-              >
-                <div className="flex gap-3">
-                  {/* Thumbnail */}
-                  <div className="relative w-24 h-24 flex-shrink-0 rounded-md bg-muted overflow-hidden">
-                    {post.thumbnailUrl || post.thumbnail ? (
-                      <img 
-                        src={post.thumbnailUrl || post.thumbnail} 
-                        alt={post.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <TypeIcon className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                    )}
-                    {/* Video/Reel indicator */}
-                    {(post.type === 'video' || post.type === 'reel') && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                        <Play className="h-6 w-6 text-white drop-shadow-md" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Content info */}
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    {/* Platform & Type tags row */}
-                    <div className="flex items-center gap-1 flex-wrap mb-1">
-                      {/* Platform badge */}
-                      <Badge 
-                        variant="outline" 
-                        className={cn("text-[9px] px-1.5 py-0 gap-1", postPlatform?.class)}
-                      >
-                        <span>{postPlatform?.icon}</span>
-                        {postPlatform?.label}
-                      </Badge>
-                      {/* Content type badge */}
-                      <Badge 
-                        variant="outline" 
-                        className={cn("text-[9px] px-1.5 py-0 gap-1", typeInfo.class)}
-                      >
-                        <TypeIcon className="h-2.5 w-2.5" />
-                        {typeInfo.label}
-                      </Badge>
-                      {postTag && (
-                        <Badge 
-                          variant="outline" 
-                          className="text-[9px] px-1.5 py-0"
-                          style={{
-                            backgroundColor: `${postTag.color}20`,
-                            color: postTag.color,
-                            borderColor: `${postTag.color}40`
-                          }}
+              <div key={platform} className="space-y-3">
+                {/* Platform Header */}
+                <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur py-2 z-10">
+                  <Badge variant="outline" className={cn("text-xs px-2 py-1 gap-1", platformInfo?.class)}>
+                    <span>{platformInfo?.icon}</span>
+                    {platformInfo?.label}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {platformPosts.length}
+                  </span>
+                </div>
+                
+                {/* Posts Column */}
+                <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                  {platformPosts.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground text-xs">
+                      Sin contenido
+                    </div>
+                  ) : (
+                    platformPosts.map((post) => {
+                      const typeInfo = typeConfig[post.type] || typeConfig.image;
+                      const TypeIcon = typeInfo.icon;
+                      const postMetadata = metadata[post.id];
+                      const postTag = postMetadata?.tag || tags.find(t => t.id === postMetadata?.tag_id);
+                      const caption = post.caption || post.title;
+                      
+                      return (
+                        <div 
+                          key={post.id}
+                          onClick={() => handlePostClick(post)}
+                          className="group relative rounded-lg border border-border bg-muted/30 p-2 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer"
                         >
-                          {postTag.name}
-                        </Badge>
-                      )}
-                    </div>
+                          {/* Thumbnail */}
+                          <div className="relative aspect-square w-full rounded-md bg-muted overflow-hidden mb-2">
+                            {post.thumbnailUrl || post.thumbnail ? (
+                              <img 
+                                src={post.thumbnailUrl || post.thumbnail} 
+                                alt={post.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <TypeIcon className="h-8 w-8 text-muted-foreground" />
+                              </div>
+                            )}
+                            {/* Video/Reel indicator */}
+                            {(post.type === 'video' || post.type === 'reel') && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                <Play className="h-6 w-6 text-white drop-shadow-md" />
+                              </div>
+                            )}
+                            {/* Type badge */}
+                            <div className="absolute top-1 left-1">
+                              <Badge 
+                                variant="outline" 
+                                className={cn("text-[8px] px-1 py-0 gap-0.5 backdrop-blur-sm", typeInfo.class)}
+                              >
+                                <TypeIcon className="h-2 w-2" />
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          {/* Content info */}
+                          <div className="space-y-1">
+                            {/* Tags row */}
+                            {postTag && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-[8px] px-1.5 py-0"
+                                style={{
+                                  backgroundColor: `${postTag.color}20`,
+                                  color: postTag.color,
+                                  borderColor: `${postTag.color}40`
+                                }}
+                              >
+                                {postTag.name}
+                              </Badge>
+                            )}
 
-                    {/* Caption */}
-                    <p className="text-xs text-foreground leading-tight line-clamp-2 mb-1">
-                      {caption}
-                    </p>
-                    
-                    {/* Metrics */}
-                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                      {post.views !== undefined && post.views !== null && (
-                        <div className="flex items-center gap-0.5">
-                          <Eye className="h-2.5 w-2.5" />
-                          <span>{formatNumber(post.views)}</span>
+                            {/* Caption */}
+                            <p className="text-[10px] text-foreground leading-tight line-clamp-2">
+                              {caption}
+                            </p>
+                            
+                            {/* Metrics */}
+                            <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
+                              {post.views !== undefined && post.views !== null && (
+                                <div className="flex items-center gap-0.5">
+                                  <Eye className="h-2 w-2" />
+                                  <span>{formatNumber(post.views)}</span>
+                                </div>
+                              )}
+                              
+                              {post.likes !== undefined && post.likes !== null ? (
+                                <div className="flex items-center gap-0.5">
+                                  <Heart className="h-2 w-2" />
+                                  <span>{formatNumber(post.likes)}</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-0.5">
+                                  <Heart className="h-2 w-2" />
+                                  <span>{formatNumber(post.engagement)}</span>
+                                </div>
+                              )}
+                              
+                              <span className="ml-auto text-[8px]">
+                                {format(new Date(post.date), 'dd/MM', { locale: es })}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      
-                      {post.likes !== undefined && post.likes !== null ? (
-                        <div className="flex items-center gap-0.5">
-                          <Heart className="h-2.5 w-2.5" />
-                          <span>{formatNumber(post.likes)}</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-0.5">
-                          <Heart className="h-2.5 w-2.5" />
-                          <span>{formatNumber(post.engagement)}</span>
-                        </div>
-                      )}
-                      
-                      <span className="ml-auto">
-                        {format(new Date(post.date), 'dd MMM yyyy', { locale: es })}
-                      </span>
-                    </div>
-                  </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {/* Content Detail Modal */}
       {selectedPost && (
