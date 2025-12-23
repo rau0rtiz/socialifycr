@@ -12,7 +12,7 @@ interface UseContentDataResult {
   refetch: () => void;
 }
 
-export const useContentData = (clientId: string | null, limit: number = 10): UseContentDataResult => {
+export const useContentData = (clientId: string | null, limit: number = 100): UseContentDataResult => {
   const [content, setContent] = useState<ContentPost[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLiveData, setIsLiveData] = useState(false);
