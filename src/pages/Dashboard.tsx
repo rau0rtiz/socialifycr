@@ -20,6 +20,7 @@ import { useVideoIdeas } from '@/hooks/use-video-ideas';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useYouTubeVideos } from '@/hooks/use-youtube-videos';
+import { useCrosspostLinks } from '@/hooks/use-crosspost-links';
 import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Building2, Plus, RefreshCw, X, Eye } from 'lucide-react';
@@ -104,6 +105,14 @@ const Dashboard = () => {
     isConnected: youtubeConnected,
     refetch: refetchYouTube,
   } = useYouTubeVideos(clientId);
+
+  const {
+    links: crosspostLinks,
+    addLink: addCrosspostLink,
+    removeLink: removeCrosspostLink,
+    getLinkedPosts,
+    refetch: refetchCrosspostLinks,
+  } = useCrosspostLinks(clientId);
   // Refresh all dashboard data
   const handleRefreshAll = useCallback(async () => {
     setIsRefreshing(true);
@@ -114,9 +123,10 @@ const Dashboard = () => {
       refetchMetadata(),
       refetchIdeas(),
       refetchYouTube(),
+      refetchCrosspostLinks(),
     ]);
     setIsRefreshing(false);
-  }, [refetchSocial, refetchContent, refetchConnection, refetchMetadata, refetchIdeas, refetchYouTube]);
+  }, [refetchSocial, refetchContent, refetchConnection, refetchMetadata, refetchIdeas, refetchYouTube, refetchCrosspostLinks]);
 
   // Derived values (not hooks)
   const hasAdAccount = !!metaConnection?.ad_account_id;
@@ -343,6 +353,10 @@ const Dashboard = () => {
           onCreateModel={createModel}
           onUpdateMetadata={updateMetadata}
           onCapture48hMetrics={capture48hMetrics}
+          crosspostLinks={crosspostLinks}
+          onAddCrosspostLink={addCrosspostLink}
+          onRemoveCrosspostLink={removeCrosspostLink}
+          getLinkedPosts={getLinkedPosts}
         />
       </div>
 
