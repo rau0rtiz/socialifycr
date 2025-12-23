@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-type PeriodFilter = 'this_month' | 'last_30_days' | 'all_time' | 'custom';
+type PeriodFilter = 'this_month' | 'last_30_days' | 'last_3_months' | 'all_time' | 'custom';
 
 interface InstagramTopPostsProps {
   content: ContentPost[];
@@ -38,6 +38,10 @@ const getDateFilter = (period: PeriodFilter): Date | null => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       return thirtyDaysAgo;
+    case 'last_3_months':
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      return threeMonthsAgo;
     case 'all_time':
     case 'custom':
       return null;
@@ -51,7 +55,7 @@ export const InstagramTopPosts = ({
   isConnected,
   onPostClick,
 }: InstagramTopPostsProps) => {
-  const [period, setPeriod] = useState<PeriodFilter>('this_month');
+  const [period, setPeriod] = useState<PeriodFilter>('last_3_months');
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
 
   // Get top 5 posts sorted by engagement
@@ -100,6 +104,7 @@ export const InstagramTopPosts = ({
     if (period === 'custom') return 'Selecciona un rango de fechas';
     if (period === 'this_month') return 'No hay posts este mes';
     if (period === 'last_30_days') return 'No hay posts en los últimos 30 días';
+    if (period === 'last_3_months') return 'No hay posts en los últimos 3 meses';
     return 'No hay posts';
   };
 
@@ -123,12 +128,13 @@ export const InstagramTopPosts = ({
           <div className="flex items-center gap-2 flex-wrap">
             {/* Period Filter */}
             <Select value={period} onValueChange={handlePeriodChange}>
-              <SelectTrigger className="h-7 text-xs w-[110px]">
+              <SelectTrigger className="h-7 text-xs w-[120px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="this_month">Este mes</SelectItem>
                 <SelectItem value="last_30_days">30 días</SelectItem>
+                <SelectItem value="last_3_months">3 meses</SelectItem>
                 <SelectItem value="all_time">Todo</SelectItem>
                 <SelectItem value="custom">Personalizado</SelectItem>
               </SelectContent>
