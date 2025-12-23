@@ -540,7 +540,7 @@ const Contenido = () => {
                 </div>
                 
                 {/* Posts Column */}
-                <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                <div className="space-y-3">
                   {platformPosts.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground text-xs">
                       Sin contenido
