@@ -19,7 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { 
   ArrowLeft, Calendar as CalendarIcon, Eye, Heart, Play, Film, 
-  LayoutGrid, ImageIcon, Clock, Search, RefreshCw, Wifi, X, Filter 
+  LayoutGrid, ImageIcon, Clock, Search, RefreshCw, Wifi, X, Filter,
+  Link2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -230,7 +231,73 @@ const Contenido = () => {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [content, dateRange, searchQuery, selectedType, selectedTagId, selectedModelId, metadata]);
 
-  // Group content by platform
+  // Build crosspost groups map
+  const crosspostGroups = useMemo(() => {
+    const groups = new Map<string, Set<string>>();
+    
+    crosspostLinks.forEach(link => {
+      const existingGroupPrimary = groups.get(link.primary_post_id);
+      const existingGroupLinked = groups.get(link.linked_post_id);
+      
+      if (existingGroupPrimary && existingGroupLinked) {
+        // Merge groups
+        existingGroupLinked.forEach(id => {
+          existingGroupPrimary.add(id);
+          groups.set(id, existingGroupPrimary);
+        });
+      } else if (existingGroupPrimary) {
+        existingGroupPrimary.add(link.linked_post_id);
+        groups.set(link.linked_post_id, existingGroupPrimary);
+      } else if (existingGroupLinked) {
+        existingGroupLinked.add(link.primary_post_id);
+        groups.set(link.primary_post_id, existingGroupLinked);
+      } else {
+        const newGroup = new Set([link.primary_post_id, link.linked_post_id]);
+        groups.set(link.primary_post_id, newGroup);
+        groups.set(link.linked_post_id, newGroup);
+      }
+    });
+    
+    return groups;
+  }, [crosspostLinks]);
+
+  // Get deduplicated content (only show one post per crosspost group)
+  const deduplicatedContent = useMemo(() => {
+    const seenGroups = new Set<Set<string>>();
+    const result: ContentPost[] = [];
+    
+    filteredContent.forEach(post => {
+      const group = crosspostGroups.get(post.id);
+      if (group) {
+        if (!seenGroups.has(group)) {
+          seenGroups.add(group);
+          result.push(post);
+        }
+      } else {
+        result.push(post);
+      }
+    });
+    
+    return result;
+  }, [filteredContent, crosspostGroups]);
+
+  // Get linked platforms for a post
+  const getLinkedPlatforms = useCallback((postId: string): NetworkType[] => {
+    const group = crosspostGroups.get(postId);
+    if (!group) return [];
+    
+    const platforms = new Set<NetworkType>();
+    group.forEach(linkedId => {
+      const linkedPost = content.find(p => p.id === linkedId);
+      if (linkedPost && linkedPost.id !== postId) {
+        platforms.add(linkedPost.network);
+      }
+    });
+    
+    return Array.from(platforms);
+  }, [crosspostGroups, content]);
+
+  // Group content by platform (using deduplicated content)
   const contentByPlatform = useMemo(() => {
     const grouped: Record<NetworkType, ContentPost[]> = {
       instagram: [],
@@ -240,12 +307,12 @@ const Contenido = () => {
       linkedin: [],
     };
     
-    filteredContent.forEach(post => {
+    deduplicatedContent.forEach(post => {
       grouped[post.network].push(post);
     });
     
     return grouped;
-  }, [filteredContent]);
+  }, [deduplicatedContent]);
 
   const handlePostClick = (post: ContentPost) => {
     setSelectedPost(post);
@@ -552,13 +619,27 @@ const Contenido = () => {
                       const postMetadata = metadata[post.id];
                       const postTag = postMetadata?.tag || tags.find(t => t.id === postMetadata?.tag_id);
                       const caption = post.caption || post.title;
+                      const linkedPlatforms = getLinkedPlatforms(post.id);
+                      const isLinked = linkedPlatforms.length > 0;
                       
                       return (
                         <div 
                           key={post.id}
                           onClick={() => handlePostClick(post)}
-                          className="group relative rounded-lg border border-border bg-muted/30 p-2 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer"
+                          className={cn(
+                            "group relative rounded-lg border bg-muted/30 p-2 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer",
+                            isLinked ? "border-violet-500/40 ring-1 ring-violet-500/20" : "border-border"
+                          )}
                         >
+                          {/* Linked indicator */}
+                          {isLinked && (
+                            <div className="absolute -top-2 -right-2 z-10">
+                              <div className="bg-violet-500 text-white rounded-full p-1 shadow-md">
+                                <Link2 className="h-3 w-3" />
+                              </div>
+                            </div>
+                          )}
+                          
                           {/* Thumbnail */}
                           <div className="relative aspect-square w-full rounded-md bg-muted overflow-hidden mb-2">
                             {post.thumbnailUrl || post.thumbnail ? (
@@ -592,6 +673,17 @@ const Contenido = () => {
                           
                           {/* Content info */}
                           <div className="space-y-1">
+                            {/* Linked platforms badge */}
+                            {isLinked && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-[8px] px-1.5 py-0.5 gap-1 bg-violet-500/10 text-violet-600 border-violet-500/30"
+                              >
+                                <Link2 className="h-2 w-2" />
+                                Vinculado a {linkedPlatforms.map(p => platformConfig[p]?.icon).join(' ')}
+                              </Badge>
+                            )}
+                            
                             {/* Tags row */}
                             {postTag && (
                               <Badge 
