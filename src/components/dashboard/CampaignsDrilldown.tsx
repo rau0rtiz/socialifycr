@@ -43,6 +43,8 @@ import {
   DatePresetKey,
   DateRange,
 } from '@/hooks/use-ads-data';
+import { useCampaignGoals, GoalType } from '@/hooks/use-campaign-goals';
+import { CampaignGoalSelector } from './CampaignGoalSelector';
 
 interface CampaignsDrilldownProps {
   clientId: string | null;
@@ -123,13 +125,24 @@ const MetricCard = ({
 );
 
 // Campaign Row Component
-const CampaignRow = ({ campaign, currency, onClick }: { campaign: CampaignInsights; currency: string; onClick: () => void }) => (
+const CampaignRow = ({ 
+  campaign, 
+  currency, 
+  onClick,
+  clientId,
+  configuredGoal 
+}: { 
+  campaign: CampaignInsights; 
+  currency: string; 
+  onClick: () => void;
+  clientId: string;
+  configuredGoal?: GoalType | null;
+}) => (
   <div
-    className="p-4 border border-border rounded-lg hover:bg-muted/30 cursor-pointer transition-colors"
-    onClick={onClick}
+    className="p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors"
   >
     <div className="flex items-start justify-between mb-3">
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
         <div className="flex items-center gap-2 mb-1">
           <h3 className="font-medium text-sm truncate">{campaign.name}</h3>
           <Badge variant="outline" className={cn('text-xs shrink-0', statusConfig[campaign.effectiveStatus]?.class)}>
@@ -144,10 +157,20 @@ const CampaignRow = ({ campaign, currency, onClick }: { campaign: CampaignInsigh
               : 'Sin presupuesto definido'}
         </p>
       </div>
-      <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+      <div className="flex items-center gap-1">
+        <CampaignGoalSelector 
+          clientId={clientId}
+          campaignId={campaign.id}
+          currentGoal={configuredGoal}
+        />
+        <ChevronRight 
+          className="h-5 w-5 text-muted-foreground shrink-0 cursor-pointer" 
+          onClick={onClick}
+        />
+      </div>
     </div>
 
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 cursor-pointer" onClick={onClick}>
       <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(campaign.spend, currency)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(campaign.reach)} />
       <MetricCard icon={Target} label={campaign.resultType} value={formatNumber(campaign.results)} />
@@ -282,12 +305,15 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
+  // Fetch campaign goals for this client
+  const { data: campaignGoals } = useCampaignGoals(clientId);
+
   const {
     data: campaignsResult,
     isLoading: campaignsLoading,
     error: campaignsError,
     refetch: refetchCampaigns,
-  } = useCampaigns(clientId, hasAdAccount, datePreset, customRange);
+  } = useCampaigns(clientId, hasAdAccount, datePreset, customRange, campaignGoals);
 
   const campaigns = campaignsResult?.campaigns || [];
   const currency = campaignsResult?.currency || 'MXN';
@@ -486,7 +512,14 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
         ) : (
           <div className="space-y-4">
             {viewLevel === 'campaigns' && (campaigns || []).map((campaign) => (
-              <CampaignRow key={campaign.id} campaign={campaign} currency={currency} onClick={() => handleCampaignClick(campaign)} />
+              <CampaignRow 
+                key={campaign.id} 
+                campaign={campaign} 
+                currency={currency} 
+                onClick={() => handleCampaignClick(campaign)}
+                clientId={clientId!}
+                configuredGoal={campaignGoals?.[campaign.id]?.goal_type as GoalType | undefined}
+              />
             ))}
             {viewLevel === 'adsets' && (adsets || []).map((adset) => (
               <AdSetRow key={adset.id} adset={adset} currency={currency} onClick={() => handleAdSetClick(adset)} />

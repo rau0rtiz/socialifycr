@@ -53,6 +53,44 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_goals: {
+        Row: {
+          action_type: string | null
+          campaign_id: string
+          client_id: string
+          created_at: string | null
+          goal_type: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          action_type?: string | null
+          campaign_id: string
+          client_id: string
+          created_at?: string | null
+          goal_type: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          action_type?: string | null
+          campaign_id?: string
+          client_id?: string
+          created_at?: string | null
+          goal_type?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_goals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_competitors: {
         Row: {
           client_id: string
