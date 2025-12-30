@@ -217,6 +217,15 @@ serve(async (req) => {
                 `${timeRangeParam}&access_token=${userAccessToken}`
               );
               const insightsData = await insightsResponse.json();
+              
+              // Log actions for messaging campaigns to debug cost per result
+              if (campaign.objective === 'MESSAGES' || campaign.name.toLowerCase().includes('mensaje')) {
+                console.log(`Campaign ${campaign.name} (${campaign.objective}) actions:`, 
+                  JSON.stringify(insightsData?.data?.[0]?.actions || []));
+                console.log(`Campaign ${campaign.name} cost_per_action_type:`, 
+                  JSON.stringify(insightsData?.data?.[0]?.cost_per_action_type || []));
+              }
+              
               return {
                 ...campaign,
                 insights: insightsData
@@ -228,6 +237,7 @@ serve(async (req) => {
           })
         );
 
+        console.log('Successfully fetched campaigns');
         result = { data: campaignsWithInsights, currency };
         break;
       }
