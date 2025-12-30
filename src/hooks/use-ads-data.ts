@@ -109,13 +109,30 @@ const messageActionTypes = [
   'contact',
 ];
 
+// Check if campaign is a messaging campaign by name or actions
+const isMessagingCampaign = (campaignName?: string, actions?: any[]): boolean => {
+  // Check by name
+  if (campaignName && campaignName.toLowerCase().includes('mensaje')) {
+    return true;
+  }
+  // Check by presence of messaging actions
+  if (actions && Array.isArray(actions)) {
+    return actions.some(a => messageActionTypes.includes(a.action_type));
+  }
+  return false;
+};
+
 // Extract results count from actions array based on objective
 const extractResults = (actions: any[], objective: string, campaignName?: string): { count: number; type: string } => {
   if (!actions || !Array.isArray(actions)) {
     return { count: 0, type: getResultTypeFromObjective(objective) };
   }
 
-  const resultType = getResultTypeFromObjective(objective);
+  // Detect messaging campaigns regardless of objective
+  const isMsgCampaign = isMessagingCampaign(campaignName, actions);
+  
+  // Override result type for messaging campaigns
+  const resultType = isMsgCampaign ? 'Conversaciones' : getResultTypeFromObjective(objective);
 
   // Map objective to action types
   const actionTypeMap: Record<string, string[]> = {
@@ -132,13 +149,21 @@ const extractResults = (actions: any[], objective: string, campaignName?: string
     APP_INSTALLS: ['app_install', 'mobile_app_install'],
   };
 
-  const targetActionTypes = actionTypeMap[objective] || [];
+  // For messaging campaigns, use messaging action types regardless of objective
+  const targetActionTypes = isMsgCampaign ? messageActionTypes : (actionTypeMap[objective] || []);
 
-  // Debug logging for messaging campaigns
-  if (objective === 'MESSAGES' || (campaignName && campaignName.toLowerCase().includes('mensaje'))) {
-    console.log(`[DEBUG] Campaign: ${campaignName}, Objective: ${objective}`);
-    console.log(`[DEBUG] Looking for action types:`, targetActionTypes);
-    console.log(`[DEBUG] Available actions:`, actions.map(a => ({ type: a.action_type, value: a.value })));
+  // For messaging campaigns, prioritize conversation_started_7d
+  if (isMsgCampaign) {
+    // First try to get messaging_conversation_started_7d (the most relevant metric)
+    const conversationAction = actions.find(a => a.action_type === 'onsite_conversion.messaging_conversation_started_7d');
+    if (conversationAction) {
+      return { count: parseInt(conversationAction.value) || 0, type: resultType };
+    }
+    // Fallback to messaging_first_reply
+    const firstReplyAction = actions.find(a => a.action_type === 'onsite_conversion.messaging_first_reply');
+    if (firstReplyAction) {
+      return { count: parseInt(firstReplyAction.value) || 0, type: resultType };
+    }
   }
 
   let totalResults = 0;
@@ -156,10 +181,31 @@ const extractCostPerResult = (
   costPerAction: any[],
   objective: string,
   spend: number,
-  results: number
+  results: number,
+  campaignName?: string,
+  actions?: any[]
 ): number => {
+  // Check if it's a messaging campaign
+  const isMsgCampaign = isMessagingCampaign(campaignName, actions);
+  
   // First try to get from cost_per_action_type
   if (costPerAction && Array.isArray(costPerAction)) {
+    // For messaging campaigns, prioritize conversation_started_7d cost
+    if (isMsgCampaign) {
+      const conversationCost = costPerAction.find(
+        c => c.action_type === 'onsite_conversion.messaging_conversation_started_7d'
+      );
+      if (conversationCost) {
+        return parseFloat(conversationCost.value) || 0;
+      }
+      const firstReplyCost = costPerAction.find(
+        c => c.action_type === 'onsite_conversion.messaging_first_reply'
+      );
+      if (firstReplyCost) {
+        return parseFloat(firstReplyCost.value) || 0;
+      }
+    }
+    
     const actionTypeMap: Record<string, string[]> = {
       OUTCOME_LEADS: ['lead', 'leadgen_grouped'],
       LEAD_GENERATION: ['lead', 'leadgen_grouped'],
@@ -232,7 +278,7 @@ export const useCampaigns = (
         const objective = campaign.objective || '';
         const spend = parseFloat(insights.spend) || 0;
         const { count: results, type: resultType } = extractResults(insights.actions, objective, campaign.name);
-        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results);
+        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results, campaign.name, insights.actions);
         const roas = insights.purchase_roas?.[0]?.value || null;
 
         return {
@@ -301,8 +347,8 @@ export const useAdSets = (
       return (data?.data || []).map((adset: any) => {
         const insights = adset.insights?.data?.[0] || {};
         const spend = parseFloat(insights.spend) || 0;
-        const { count: results, type: resultType } = extractResults(insights.actions, objective);
-        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results);
+        const { count: results, type: resultType } = extractResults(insights.actions, objective, adset.name);
+        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results, adset.name, insights.actions);
 
         return {
           id: adset.id,
@@ -362,8 +408,8 @@ export const useAds = (
       return (data?.data || []).map((ad: any) => {
         const insights = ad.insights?.data?.[0] || {};
         const spend = parseFloat(insights.spend) || 0;
-        const { count: results, type: resultType } = extractResults(insights.actions, objective);
-        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results);
+        const { count: results, type: resultType } = extractResults(insights.actions, objective, ad.name);
+        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results, ad.name, insights.actions);
 
         return {
           id: ad.id,
