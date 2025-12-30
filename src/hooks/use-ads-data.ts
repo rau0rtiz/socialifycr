@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { CampaignGoal, getGoalActionTypes, getGoalLabel, GoalType } from './use-campaign-goals';
 
 export interface CampaignInsights {
   id: string;
@@ -191,14 +192,71 @@ export interface DateRange {
   to?: Date;
 }
 
+// Extract results using a configured goal (priority) or auto-detection
+const extractResultsWithGoal = (
+  actions: any[],
+  objective: string,
+  costPerAction: any[],
+  goalType?: GoalType
+): { count: number; type: string } => {
+  if (!actions || !Array.isArray(actions)) {
+    return { count: 0, type: goalType ? getGoalLabel(goalType) : getResultTypeFromObjective(objective) };
+  }
+
+  // If a goal is configured, use its specific action types
+  if (goalType) {
+    const goalActionTypes = getGoalActionTypes(goalType);
+    for (const actionType of goalActionTypes) {
+      const action = actions.find(a => a.action_type === actionType);
+      if (action) {
+        return { count: parseInt(action.value) || 0, type: getGoalLabel(goalType) };
+      }
+    }
+    // If no matching action found, return 0 with the goal label
+    return { count: 0, type: getGoalLabel(goalType) };
+  }
+
+  // Fall back to auto-detection
+  return extractResults(actions, objective, costPerAction);
+};
+
+// Extract cost per result using a configured goal (priority) or auto-detection
+const extractCostPerResultWithGoal = (
+  costPerAction: any[],
+  objective: string,
+  spend: number,
+  results: number,
+  actions: any[],
+  goalType?: GoalType
+): number => {
+  if (goalType && costPerAction && Array.isArray(costPerAction)) {
+    const goalActionTypes = getGoalActionTypes(goalType);
+    for (const actionType of goalActionTypes) {
+      const cpa = costPerAction.find(c => c.action_type === actionType);
+      if (cpa) {
+        return parseFloat(cpa.value) || 0;
+      }
+    }
+    // If no cost found but we have results, calculate manually
+    if (results > 0 && spend > 0) {
+      return spend / results;
+    }
+    return 0;
+  }
+
+  // Fall back to auto-detection
+  return extractCostPerResult(costPerAction, objective, spend, results, actions);
+};
+
 export const useCampaigns = (
   clientId: string | null, 
   hasAdAccount: boolean, 
   datePreset: DatePresetKey = 'last_30d',
-  customRange?: DateRange
+  customRange?: DateRange,
+  campaignGoals?: Record<string, CampaignGoal>
 ) => {
   return useQuery({
-    queryKey: ['meta-campaigns', clientId, datePreset, customRange?.from?.toISOString(), customRange?.to?.toISOString()],
+    queryKey: ['meta-campaigns', clientId, datePreset, customRange?.from?.toISOString(), customRange?.to?.toISOString(), campaignGoals ? Object.keys(campaignGoals).join(',') : ''],
     queryFn: async (): Promise<CampaignsResult> => {
       if (!clientId || !hasAdAccount) return { campaigns: [], currency: 'USD' };
 
@@ -225,8 +283,25 @@ export const useCampaigns = (
         const insights = campaign.insights?.data?.[0] || {};
         const objective = campaign.objective || '';
         const spend = parseFloat(insights.spend) || 0;
-        const { count: results, type: resultType } = extractResults(insights.actions, objective, insights.cost_per_action_type);
-        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results, insights.actions);
+        
+        // Check if there's a configured goal for this campaign
+        const configuredGoal = campaignGoals?.[campaign.id];
+        const goalType = configuredGoal?.goal_type as GoalType | undefined;
+        
+        const { count: results, type: resultType } = extractResultsWithGoal(
+          insights.actions, 
+          objective, 
+          insights.cost_per_action_type,
+          goalType
+        );
+        const costPerResult = extractCostPerResultWithGoal(
+          insights.cost_per_action_type, 
+          objective, 
+          spend, 
+          results, 
+          insights.actions,
+          goalType
+        );
         const roas = insights.purchase_roas?.[0]?.value || null;
 
         return {
