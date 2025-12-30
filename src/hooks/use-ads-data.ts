@@ -110,7 +110,7 @@ const messageActionTypes = [
 ];
 
 // Extract results count from actions array based on objective
-const extractResults = (actions: any[], objective: string): { count: number; type: string } => {
+const extractResults = (actions: any[], objective: string, campaignName?: string): { count: number; type: string } => {
   if (!actions || !Array.isArray(actions)) {
     return { count: 0, type: getResultTypeFromObjective(objective) };
   }
@@ -133,6 +133,13 @@ const extractResults = (actions: any[], objective: string): { count: number; typ
   };
 
   const targetActionTypes = actionTypeMap[objective] || [];
+
+  // Debug logging for messaging campaigns
+  if (objective === 'MESSAGES' || (campaignName && campaignName.toLowerCase().includes('mensaje'))) {
+    console.log(`[DEBUG] Campaign: ${campaignName}, Objective: ${objective}`);
+    console.log(`[DEBUG] Looking for action types:`, targetActionTypes);
+    console.log(`[DEBUG] Available actions:`, actions.map(a => ({ type: a.action_type, value: a.value })));
+  }
 
   let totalResults = 0;
   for (const action of actions) {
@@ -224,7 +231,7 @@ export const useCampaigns = (
         const insights = campaign.insights?.data?.[0] || {};
         const objective = campaign.objective || '';
         const spend = parseFloat(insights.spend) || 0;
-        const { count: results, type: resultType } = extractResults(insights.actions, objective);
+        const { count: results, type: resultType } = extractResults(insights.actions, objective, campaign.name);
         const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results);
         const roas = insights.purchase_roas?.[0]?.value || null;
 
