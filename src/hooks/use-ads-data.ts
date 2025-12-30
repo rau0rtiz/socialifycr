@@ -98,144 +98,92 @@ const getResultTypeFromObjective = (objective: string): string => {
   return objectiveMap[objective] || 'Resultados';
 };
 
-// All message-related action types for Meta campaigns
-const messageActionTypes = [
-  'onsite_conversion.messaging_conversation_started_7d',
-  'onsite_conversion.messaging_first_reply',
-  'onsite_conversion.total_messaging_connection',
-  'messaging_conversation_started_7d',
-  'messaging_first_reply',
-  'new_messaging_connection',
-  'contact',
+// Priority-ordered action types for detecting campaign type and extracting results
+// Each entry: [action_type, result_label]
+const actionTypePriority: [string, string][] = [
+  // Messaging (highest priority for messaging campaigns)
+  ['onsite_conversion.messaging_conversation_started_7d', 'Conversaciones'],
+  ['onsite_conversion.messaging_first_reply', 'Mensajes'],
+  ['onsite_conversion.total_messaging_connection', 'Conexiones'],
+  // Leads
+  ['lead', 'Leads'],
+  ['onsite_conversion.lead_grouped', 'Leads'],
+  ['leadgen_grouped', 'Leads'],
+  ['onsite_web_lead', 'Leads'],
+  // Sales/Purchases
+  ['purchase', 'Compras'],
+  ['omni_purchase', 'Compras'],
+  ['onsite_conversion.purchase', 'Compras'],
+  // Registrations
+  ['complete_registration', 'Registros'],
+  ['offsite_complete_registration_add_meta_leads', 'Registros'],
+  // Traffic
+  ['link_click', 'Clics en enlace'],
+  // Video
+  ['video_view', 'Reproducciones'],
+  // Engagement (lower priority)
+  ['post_engagement', 'Interacciones'],
+  ['page_engagement', 'Interacciones'],
 ];
 
-// Check if campaign is a messaging campaign by name or actions
-const isMessagingCampaign = (campaignName?: string, actions?: any[]): boolean => {
-  // Check by name
-  if (campaignName && campaignName.toLowerCase().includes('mensaje')) {
-    return true;
-  }
-  // Check by presence of messaging actions
-  if (actions && Array.isArray(actions)) {
-    return actions.some(a => messageActionTypes.includes(a.action_type));
-  }
-  return false;
-};
-
-// Extract results count from actions array based on objective
-const extractResults = (actions: any[], objective: string, campaignName?: string): { count: number; type: string } => {
+// Extract results by finding the highest priority action type present in cost_per_action_type
+// This tells us what Meta considers the "result" for this campaign
+const extractResults = (actions: any[], objective: string, costPerAction?: any[]): { count: number; type: string } => {
   if (!actions || !Array.isArray(actions)) {
     return { count: 0, type: getResultTypeFromObjective(objective) };
   }
 
-  // Detect messaging campaigns regardless of objective
-  const isMsgCampaign = isMessagingCampaign(campaignName, actions);
-  
-  // Override result type for messaging campaigns
-  const resultType = isMsgCampaign ? 'Conversaciones' : getResultTypeFromObjective(objective);
-
-  // Map objective to action types
-  const actionTypeMap: Record<string, string[]> = {
-    OUTCOME_LEADS: ['lead', 'leadgen_grouped', 'onsite_conversion.lead_grouped'],
-    LEAD_GENERATION: ['lead', 'leadgen_grouped'],
-    OUTCOME_SALES: ['purchase', 'omni_purchase', 'onsite_conversion.purchase'],
-    CONVERSIONS: ['purchase', 'complete_registration', 'add_to_cart'],
-    OUTCOME_TRAFFIC: ['link_click'],
-    LINK_CLICKS: ['link_click'],
-    OUTCOME_ENGAGEMENT: ['post_engagement', 'page_engagement', 'post_reaction'],
-    POST_ENGAGEMENT: ['post_engagement', 'page_engagement'],
-    VIDEO_VIEWS: ['video_view'],
-    MESSAGES: messageActionTypes,
-    APP_INSTALLS: ['app_install', 'mobile_app_install'],
-  };
-
-  // For messaging campaigns, use messaging action types regardless of objective
-  const targetActionTypes = isMsgCampaign ? messageActionTypes : (actionTypeMap[objective] || []);
-
-  // For messaging campaigns, prioritize conversation_started_7d
-  if (isMsgCampaign) {
-    // First try to get messaging_conversation_started_7d (the most relevant metric)
-    const conversationAction = actions.find(a => a.action_type === 'onsite_conversion.messaging_conversation_started_7d');
-    if (conversationAction) {
-      return { count: parseInt(conversationAction.value) || 0, type: resultType };
-    }
-    // Fallback to messaging_first_reply
-    const firstReplyAction = actions.find(a => a.action_type === 'onsite_conversion.messaging_first_reply');
-    if (firstReplyAction) {
-      return { count: parseInt(firstReplyAction.value) || 0, type: resultType };
+  // First, check cost_per_action_type to see what Meta considers the primary result
+  // This is the most reliable indicator of the campaign's optimization goal
+  if (costPerAction && Array.isArray(costPerAction)) {
+    for (const [actionType, label] of actionTypePriority) {
+      const hasCost = costPerAction.some(c => c.action_type === actionType);
+      if (hasCost) {
+        const action = actions.find(a => a.action_type === actionType);
+        if (action) {
+          return { count: parseInt(action.value) || 0, type: label };
+        }
+      }
     }
   }
 
-  let totalResults = 0;
-  for (const action of actions) {
-    if (targetActionTypes.includes(action.action_type)) {
-      totalResults += parseInt(action.value) || 0;
+  // Fallback: find highest priority action type in actions
+  for (const [actionType, label] of actionTypePriority) {
+    const action = actions.find(a => a.action_type === actionType);
+    if (action) {
+      return { count: parseInt(action.value) || 0, type: label };
     }
   }
 
-  return { count: totalResults, type: resultType };
+  // Final fallback based on objective
+  return { count: 0, type: getResultTypeFromObjective(objective) };
 };
 
-// Extract cost per result from cost_per_action_type or calculate from spend/results
+// Extract cost per result by finding the highest priority action type
 const extractCostPerResult = (
   costPerAction: any[],
   objective: string,
   spend: number,
   results: number,
-  campaignName?: string,
   actions?: any[]
 ): number => {
-  // Check if it's a messaging campaign
-  const isMsgCampaign = isMessagingCampaign(campaignName, actions);
-  
-  // First try to get from cost_per_action_type
   if (costPerAction && Array.isArray(costPerAction)) {
-    // For messaging campaigns, prioritize conversation_started_7d cost
-    if (isMsgCampaign) {
-      const conversationCost = costPerAction.find(
-        c => c.action_type === 'onsite_conversion.messaging_conversation_started_7d'
-      );
-      if (conversationCost) {
-        return parseFloat(conversationCost.value) || 0;
-      }
-      const firstReplyCost = costPerAction.find(
-        c => c.action_type === 'onsite_conversion.messaging_first_reply'
-      );
-      if (firstReplyCost) {
-        return parseFloat(firstReplyCost.value) || 0;
-      }
-    }
-    
-    const actionTypeMap: Record<string, string[]> = {
-      OUTCOME_LEADS: ['lead', 'leadgen_grouped'],
-      LEAD_GENERATION: ['lead', 'leadgen_grouped'],
-      OUTCOME_SALES: ['purchase', 'omni_purchase'],
-      CONVERSIONS: ['purchase'],
-      OUTCOME_TRAFFIC: ['link_click'],
-      LINK_CLICKS: ['link_click'],
-      MESSAGES: messageActionTypes,
-      VIDEO_VIEWS: ['video_view'],
-      OUTCOME_ENGAGEMENT: ['post_engagement', 'page_engagement'],
-      POST_ENGAGEMENT: ['post_engagement'],
-    };
-
-    const targetActionTypes = actionTypeMap[objective] || [];
-
-    for (const cpa of costPerAction) {
-      if (targetActionTypes.includes(cpa.action_type)) {
+    // Find highest priority action type that has a cost
+    for (const [actionType] of actionTypePriority) {
+      const cpa = costPerAction.find(c => c.action_type === actionType);
+      if (cpa) {
         return parseFloat(cpa.value) || 0;
       }
     }
   }
 
-  // Fallback: calculate from spend / results if we have results
+  // Fallback: calculate from spend / results
   if (results > 0 && spend > 0) {
     return spend / results;
   }
 
   return 0;
 };
-
 export type DatePresetKey = 'last_7d' | 'last_14d' | 'last_30d' | 'last_90d' | 'this_month' | 'last_month' | 'custom';
 
 export interface DateRange {
@@ -277,8 +225,8 @@ export const useCampaigns = (
         const insights = campaign.insights?.data?.[0] || {};
         const objective = campaign.objective || '';
         const spend = parseFloat(insights.spend) || 0;
-        const { count: results, type: resultType } = extractResults(insights.actions, objective, campaign.name);
-        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results, campaign.name, insights.actions);
+        const { count: results, type: resultType } = extractResults(insights.actions, objective, insights.cost_per_action_type);
+        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results, insights.actions);
         const roas = insights.purchase_roas?.[0]?.value || null;
 
         return {
@@ -347,8 +295,8 @@ export const useAdSets = (
       return (data?.data || []).map((adset: any) => {
         const insights = adset.insights?.data?.[0] || {};
         const spend = parseFloat(insights.spend) || 0;
-        const { count: results, type: resultType } = extractResults(insights.actions, objective, adset.name);
-        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results, adset.name, insights.actions);
+        const { count: results, type: resultType } = extractResults(insights.actions, objective, insights.cost_per_action_type);
+        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results, insights.actions);
 
         return {
           id: adset.id,
@@ -408,8 +356,8 @@ export const useAds = (
       return (data?.data || []).map((ad: any) => {
         const insights = ad.insights?.data?.[0] || {};
         const spend = parseFloat(insights.spend) || 0;
-        const { count: results, type: resultType } = extractResults(insights.actions, objective, ad.name);
-        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results, ad.name, insights.actions);
+        const { count: results, type: resultType } = extractResults(insights.actions, objective, insights.cost_per_action_type);
+        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results, insights.actions);
 
         return {
           id: ad.id,
