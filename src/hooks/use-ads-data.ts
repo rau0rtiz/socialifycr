@@ -98,6 +98,17 @@ const getResultTypeFromObjective = (objective: string): string => {
   return objectiveMap[objective] || 'Resultados';
 };
 
+// All message-related action types for Meta campaigns
+const messageActionTypes = [
+  'onsite_conversion.messaging_conversation_started_7d',
+  'onsite_conversion.messaging_first_reply',
+  'onsite_conversion.total_messaging_connection',
+  'messaging_conversation_started_7d',
+  'messaging_first_reply',
+  'new_messaging_connection',
+  'contact',
+];
+
 // Extract results count from actions array based on objective
 const extractResults = (actions: any[], objective: string): { count: number; type: string } => {
   if (!actions || !Array.isArray(actions)) {
@@ -117,7 +128,7 @@ const extractResults = (actions: any[], objective: string): { count: number; typ
     OUTCOME_ENGAGEMENT: ['post_engagement', 'page_engagement', 'post_reaction'],
     POST_ENGAGEMENT: ['post_engagement', 'page_engagement'],
     VIDEO_VIEWS: ['video_view'],
-    MESSAGES: ['onsite_conversion.messaging_conversation_started_7d'],
+    MESSAGES: messageActionTypes,
     APP_INSTALLS: ['app_install', 'mobile_app_install'],
   };
 
@@ -133,25 +144,40 @@ const extractResults = (actions: any[], objective: string): { count: number; typ
   return { count: totalResults, type: resultType };
 };
 
-// Extract cost per result
-const extractCostPerResult = (costPerAction: any[], objective: string): number => {
-  if (!costPerAction || !Array.isArray(costPerAction)) return 0;
+// Extract cost per result from cost_per_action_type or calculate from spend/results
+const extractCostPerResult = (
+  costPerAction: any[],
+  objective: string,
+  spend: number,
+  results: number
+): number => {
+  // First try to get from cost_per_action_type
+  if (costPerAction && Array.isArray(costPerAction)) {
+    const actionTypeMap: Record<string, string[]> = {
+      OUTCOME_LEADS: ['lead', 'leadgen_grouped'],
+      LEAD_GENERATION: ['lead', 'leadgen_grouped'],
+      OUTCOME_SALES: ['purchase', 'omni_purchase'],
+      CONVERSIONS: ['purchase'],
+      OUTCOME_TRAFFIC: ['link_click'],
+      LINK_CLICKS: ['link_click'],
+      MESSAGES: messageActionTypes,
+      VIDEO_VIEWS: ['video_view'],
+      OUTCOME_ENGAGEMENT: ['post_engagement', 'page_engagement'],
+      POST_ENGAGEMENT: ['post_engagement'],
+    };
 
-  const actionTypeMap: Record<string, string[]> = {
-    OUTCOME_LEADS: ['lead', 'leadgen_grouped'],
-    LEAD_GENERATION: ['lead', 'leadgen_grouped'],
-    OUTCOME_SALES: ['purchase', 'omni_purchase'],
-    CONVERSIONS: ['purchase'],
-    OUTCOME_TRAFFIC: ['link_click'],
-    LINK_CLICKS: ['link_click'],
-  };
+    const targetActionTypes = actionTypeMap[objective] || [];
 
-  const targetActionTypes = actionTypeMap[objective] || [];
-
-  for (const cpa of costPerAction) {
-    if (targetActionTypes.includes(cpa.action_type)) {
-      return parseFloat(cpa.value) || 0;
+    for (const cpa of costPerAction) {
+      if (targetActionTypes.includes(cpa.action_type)) {
+        return parseFloat(cpa.value) || 0;
+      }
     }
+  }
+
+  // Fallback: calculate from spend / results if we have results
+  if (results > 0 && spend > 0) {
+    return spend / results;
   }
 
   return 0;
@@ -197,8 +223,9 @@ export const useCampaigns = (
       const campaigns = (data?.data || []).map((campaign: any) => {
         const insights = campaign.insights?.data?.[0] || {};
         const objective = campaign.objective || '';
+        const spend = parseFloat(insights.spend) || 0;
         const { count: results, type: resultType } = extractResults(insights.actions, objective);
-        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective);
+        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results);
         const roas = insights.purchase_roas?.[0]?.value || null;
 
         return {
@@ -211,7 +238,7 @@ export const useCampaigns = (
           lifetimeBudget: campaign.lifetime_budget ? parseFloat(campaign.lifetime_budget) / 100 : null,
           startTime: campaign.start_time,
           stopTime: campaign.stop_time,
-          spend: parseFloat(insights.spend) || 0,
+          spend,
           reach: parseInt(insights.reach) || 0,
           impressions: parseInt(insights.impressions) || 0,
           clicks: parseInt(insights.clicks) || 0,
@@ -266,8 +293,9 @@ export const useAdSets = (
 
       return (data?.data || []).map((adset: any) => {
         const insights = adset.insights?.data?.[0] || {};
+        const spend = parseFloat(insights.spend) || 0;
         const { count: results, type: resultType } = extractResults(insights.actions, objective);
-        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective);
+        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results);
 
         return {
           id: adset.id,
@@ -326,8 +354,9 @@ export const useAds = (
 
       return (data?.data || []).map((ad: any) => {
         const insights = ad.insights?.data?.[0] || {};
+        const spend = parseFloat(insights.spend) || 0;
         const { count: results, type: resultType } = extractResults(insights.actions, objective);
-        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective);
+        const costPerResult = extractCostPerResult(insights.cost_per_action_type, objective, spend, results);
 
         return {
           id: ad.id,
