@@ -81,6 +81,23 @@ const formatNumber = (num: number) => {
   return num.toString();
 };
 
+// Convert result type to "Costo por X" label
+const getCostPerResultLabel = (resultType: string): string => {
+  const labelMap: Record<string, string> = {
+    'Conversaciones': 'Costo por conversación',
+    'Mensajes': 'Costo por mensaje',
+    'Conexiones': 'Costo por conexión',
+    'Leads': 'Costo por lead',
+    'Compras': 'Costo por compra',
+    'Registros': 'Costo por registro',
+    'Clics en enlace': 'Costo por clic',
+    'Reproducciones': 'Costo por reproducción',
+    'Interacciones': 'Costo por interacción',
+    'Resultados': 'Costo por resultado',
+  };
+  return labelMap[resultType] || `Costo por ${resultType.toLowerCase()}`;
+};
+
 // Metric Card Component
 const MetricCard = ({
   icon: Icon,
@@ -137,7 +154,7 @@ const CampaignRow = ({ campaign, currency, onClick }: { campaign: CampaignInsigh
       <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(campaign.clicks)} />
       <MetricCard
         icon={TrendingUp}
-        label="Costo por resultado"
+        label={getCostPerResultLabel(campaign.resultType)}
         value={campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult, currency) : '-'}
       />
       {campaign.roas !== null && <MetricCard icon={TrendingUp} label="ROAS" value={`${campaign.roas.toFixed(2)}x`} />}
@@ -177,7 +194,7 @@ const AdSetRow = ({ adset, currency, onClick }: { adset: AdSetInsights; currency
       <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(adset.clicks)} />
       <MetricCard
         icon={TrendingUp}
-        label="Costo por resultado"
+        label={getCostPerResultLabel(adset.resultType)}
         value={adset.costPerResult > 0 ? formatCurrency(adset.costPerResult, currency) : '-'}
       />
     </div>
@@ -217,7 +234,7 @@ const AdRow = ({ ad, currency }: { ad: AdInsights; currency: string }) => (
       <MetricCard icon={MousePointerClick} label="Clics" value={formatNumber(ad.clicks)} />
       <MetricCard
         icon={TrendingUp}
-        label="Costo por resultado"
+        label={getCostPerResultLabel(ad.resultType)}
         value={ad.costPerResult > 0 ? formatCurrency(ad.costPerResult, currency) : '-'}
       />
     </div>
