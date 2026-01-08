@@ -43,8 +43,9 @@ import {
   DatePresetKey,
   DateRange,
 } from '@/hooks/use-ads-data';
-import { useCampaignGoals, GoalType } from '@/hooks/use-campaign-goals';
+import { useCampaignGoals, GoalType, useSetDefaultCampaignGoal, GOAL_OPTIONS } from '@/hooks/use-campaign-goals';
 import { CampaignGoalSelector } from './CampaignGoalSelector';
+import { useBrand } from '@/contexts/BrandContext';
 
 interface CampaignsDrilldownProps {
   clientId: string | null;
@@ -305,15 +306,20 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
+  // Get selected client from context for default goal
+  const { selectedClient, refetchClients } = useBrand();
+  const defaultGoal = selectedClient?.default_campaign_goal as GoalType | undefined;
+  
   // Fetch campaign goals for this client
-  const { data: campaignGoals } = useCampaignGoals(clientId);
+  const { data: campaignGoalsData } = useCampaignGoals(clientId, defaultGoal);
+  const setDefaultGoalMutation = useSetDefaultCampaignGoal();
 
   const {
     data: campaignsResult,
     isLoading: campaignsLoading,
     error: campaignsError,
     refetch: refetchCampaigns,
-  } = useCampaigns(clientId, hasAdAccount, datePreset, customRange, campaignGoals);
+  } = useCampaigns(clientId, hasAdAccount, datePreset, customRange, campaignGoalsData);
 
   const campaigns = campaignsResult?.campaigns || [];
   const currency = campaignsResult?.currency || 'MXN';
@@ -425,7 +431,30 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {viewLevel === 'campaigns' && clientId && (
+              <Select 
+                value={defaultGoal || '_none'} 
+                onValueChange={(value) => {
+                  const goalValue = value === '_none' ? null : value as GoalType;
+                  setDefaultGoalMutation.mutate({ clientId, goalType: goalValue }, {
+                    onSuccess: () => refetchClients()
+                  });
+                }}
+              >
+                <SelectTrigger className="w-36 md:w-44 bg-background h-8 text-xs md:text-sm">
+                  <Target className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                  <SelectValue placeholder="Meta por defecto" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  <SelectItem value="_none">Sin meta por defecto</SelectItem>
+                  {GOAL_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            
             <Select value={datePreset} onValueChange={handleDatePresetChange}>
               <SelectTrigger className="w-36 md:w-44 bg-background h-8 text-xs md:text-sm">
                 <SelectValue>{getDateDisplayText()}</SelectValue>
@@ -518,7 +547,7 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
                 currency={currency} 
                 onClick={() => handleCampaignClick(campaign)}
                 clientId={clientId!}
-                configuredGoal={campaignGoals?.[campaign.id]?.goal_type as GoalType | undefined}
+                configuredGoal={campaignGoalsData?.goals?.[campaign.id]?.goal_type as GoalType | undefined}
               />
             ))}
             {viewLevel === 'adsets' && (adsets || []).map((adset) => (
