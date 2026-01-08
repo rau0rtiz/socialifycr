@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { GoalType } from '@/hooks/use-campaign-goals';
 
 export interface Client {
   id: string;
@@ -10,6 +11,7 @@ export interface Client {
   accent_color: string | null;
   ai_context: string | null;
   preferred_region: string | null;
+  default_campaign_goal: string | null;
 }
 
 interface PlatformBrand {
@@ -86,7 +88,7 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name, industry, logo_url, primary_color, accent_color, ai_context, preferred_region')
+        .select('id, name, industry, logo_url, primary_color, accent_color, ai_context, preferred_region, default_campaign_goal')
         .order('name');
 
       if (error) {

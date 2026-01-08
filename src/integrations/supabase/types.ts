@@ -229,6 +229,7 @@ export type Database = {
           accent_color: string | null
           ai_context: string | null
           created_at: string | null
+          default_campaign_goal: string | null
           id: string
           industry: string | null
           logo_url: string | null
@@ -241,6 +242,7 @@ export type Database = {
           accent_color?: string | null
           ai_context?: string | null
           created_at?: string | null
+          default_campaign_goal?: string | null
           id?: string
           industry?: string | null
           logo_url?: string | null
@@ -253,6 +255,7 @@ export type Database = {
           accent_color?: string | null
           ai_context?: string | null
           created_at?: string | null
+          default_campaign_goal?: string | null
           id?: string
           industry?: string | null
           logo_url?: string | null

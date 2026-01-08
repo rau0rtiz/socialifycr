@@ -248,15 +248,20 @@ const extractCostPerResultWithGoal = (
   return extractCostPerResult(costPerAction, objective, spend, results, actions);
 };
 
+export interface CampaignGoalsData {
+  goals: Record<string, CampaignGoal>;
+  defaultGoal?: GoalType | null;
+}
+
 export const useCampaigns = (
   clientId: string | null, 
   hasAdAccount: boolean, 
   datePreset: DatePresetKey = 'last_30d',
   customRange?: DateRange,
-  campaignGoals?: Record<string, CampaignGoal>
+  campaignGoalsData?: CampaignGoalsData
 ) => {
   return useQuery({
-    queryKey: ['meta-campaigns', clientId, datePreset, customRange?.from?.toISOString(), customRange?.to?.toISOString(), campaignGoals ? Object.keys(campaignGoals).join(',') : ''],
+    queryKey: ['meta-campaigns', clientId, datePreset, customRange?.from?.toISOString(), customRange?.to?.toISOString(), campaignGoalsData?.goals ? Object.keys(campaignGoalsData.goals).join(',') : '', campaignGoalsData?.defaultGoal || ''],
     queryFn: async (): Promise<CampaignsResult> => {
       if (!clientId || !hasAdAccount) return { campaigns: [], currency: 'USD' };
 
@@ -284,9 +289,9 @@ export const useCampaigns = (
         const objective = campaign.objective || '';
         const spend = parseFloat(insights.spend) || 0;
         
-        // Check if there's a configured goal for this campaign
-        const configuredGoal = campaignGoals?.[campaign.id];
-        const goalType = configuredGoal?.goal_type as GoalType | undefined;
+        // Check if there's a configured goal for this campaign, or use default
+        const configuredGoal = campaignGoalsData?.goals?.[campaign.id];
+        const goalType = (configuredGoal?.goal_type || campaignGoalsData?.defaultGoal) as GoalType | undefined;
         
         const { count: results, type: resultType } = extractResultsWithGoal(
           insights.actions, 

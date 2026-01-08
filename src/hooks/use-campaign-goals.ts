@@ -60,11 +60,11 @@ export interface CampaignGoal {
 }
 
 // Hook to fetch all campaign goals for a client
-export function useCampaignGoals(clientId: string | null) {
+export function useCampaignGoals(clientId: string | null, defaultGoal?: GoalType | null) {
   return useQuery({
-    queryKey: ['campaign-goals', clientId],
-    queryFn: async () => {
-      if (!clientId) return {};
+    queryKey: ['campaign-goals', clientId, defaultGoal],
+    queryFn: async (): Promise<{ goals: Record<string, CampaignGoal>; defaultGoal?: GoalType | null }> => {
+      if (!clientId) return { goals: {}, defaultGoal };
       
       const { data, error } = await supabase
         .from('campaign_goals')
@@ -79,9 +79,38 @@ export function useCampaignGoals(clientId: string | null) {
         goalsMap[goal.campaign_id] = goal as CampaignGoal;
       });
       
-      return goalsMap;
+      return { goals: goalsMap, defaultGoal };
     },
     enabled: !!clientId,
+  });
+}
+
+// Hook to set/update the default campaign goal for a client
+export function useSetDefaultCampaignGoal() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      clientId, 
+      goalType 
+    }: { 
+      clientId: string; 
+      goalType: GoalType | null;
+    }) => {
+      const { data, error } = await supabase
+        .from('clients')
+        .update({ default_campaign_goal: goalType })
+        .eq('id', clientId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['campaign-goals', variables.clientId] });
+      queryClient.invalidateQueries({ queryKey: ['meta-campaigns'] });
+    },
   });
 }
 
