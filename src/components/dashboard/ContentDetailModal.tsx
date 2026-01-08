@@ -85,6 +85,7 @@ export const ContentDetailModal = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [selectedLinkPostId, setSelectedLinkPostId] = useState<string>('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Sync state with metadata when it changes
   useEffect(() => {
@@ -96,6 +97,7 @@ export const ContentDetailModal = ({
       setSelectedTagIds([]);
       setSelectedModelIds([]);
     }
+    setHasUnsavedChanges(false);
   }, [metadata, post?.id]);
 
   if (!post) return null;
@@ -108,17 +110,23 @@ export const ContentDetailModal = ({
   const canCapture48h = hoursSincePost >= 48 && !metadata?.first_48h_captured_at;
   const has48hMetrics = !!metadata?.first_48h_captured_at;
 
-  const handleTagsChange = async (tagIds: string[]) => {
+  const handleTagsChange = (tagIds: string[]) => {
     setSelectedTagIds(tagIds);
-    setIsSaving(true);
-    await onUpdateMetadataMultiple(post.id, { tag_ids: tagIds });
-    setIsSaving(false);
+    setHasUnsavedChanges(true);
   };
 
-  const handleModelsChange = async (modelIds: string[]) => {
+  const handleModelsChange = (modelIds: string[]) => {
     setSelectedModelIds(modelIds);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSave = async () => {
     setIsSaving(true);
-    await onUpdateMetadataMultiple(post.id, { model_ids: modelIds });
+    await onUpdateMetadataMultiple(post.id, { 
+      tag_ids: selectedTagIds, 
+      model_ids: selectedModelIds 
+    });
+    setHasUnsavedChanges(false);
     setIsSaving(false);
   };
 
@@ -270,6 +278,16 @@ export const ContentDetailModal = ({
                 onCreate={onCreateModel}
                 disabled={isSaving}
               />
+
+              {/* Save button */}
+              <Button 
+                onClick={handleSave} 
+                disabled={!hasUnsavedChanges || isSaving}
+                className="w-full"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isSaving ? 'Guardando...' : hasUnsavedChanges ? 'Guardar cambios' : 'Guardado'}
+              </Button>
             </div>
 
             {/* Crosspost Linking */}
