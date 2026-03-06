@@ -260,6 +260,15 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title="Editar venta"
+                            onClick={() => handleEdit(sale)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
                           {hasAdAccount && (
                             <Button
                               variant="ghost"
