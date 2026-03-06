@@ -128,6 +128,19 @@ const Contenido = () => {
     capture48hMetrics,
   } = useContentMetadata(clientId);
 
+  const {
+    ideas: videoIdeas,
+    isLoading: ideasLoading,
+    addIdea,
+    updateIdea,
+    deleteIdea,
+  } = useVideoIdeas(clientId);
+
+  const { data: metaConnection } = useMetaConnection(clientId);
+  const hasAdAccount = !!metaConnection?.ad_account_id;
+
+  const { isAgency, clientAccess } = useUserRole();
+
   // Crosspost links
   const {
     links: crosspostLinks,
