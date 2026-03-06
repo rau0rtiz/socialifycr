@@ -5,15 +5,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { SaleInput } from '@/hooks/use-sales-tracking';
-import { CampaignInsights } from '@/hooks/use-ads-data';
+import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { toast } from 'sonner';
+import { Image as ImageIcon, Link2, X } from 'lucide-react';
 
 interface RegisterSaleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (sale: SaleInput) => void;
-  campaigns?: CampaignInsights[];
+  clientId?: string;
+  hasAdAccount?: boolean;
   isSubmitting?: boolean;
 }
 
@@ -36,21 +40,25 @@ export const RegisterSaleDialog = ({
   open,
   onOpenChange,
   onSubmit,
-  campaigns = [],
+  clientId,
+  hasAdAccount = false,
   isSubmitting,
 }: RegisterSaleDialogProps) => {
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
   const [source, setSource] = useState<string>('');
-  const [adCampaignId, setAdCampaignId] = useState('');
+  const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
+  const [showAdPicker, setShowAdPicker] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [product, setProduct] = useState('');
   const [messagePlatform, setMessagePlatform] = useState('');
   const [notes, setNotes] = useState('');
-  
 
-  const selectedCampaign = campaigns.find(c => c.id === adCampaignId);
+  const { data: allAds, isLoading: adsLoading } = useAllAds(
+    clientId || null,
+    hasAdAccount && open && source === 'ad'
+  );
 
   const handleSubmit = () => {
     if (!amount || !source) {
@@ -69,16 +77,19 @@ export const RegisterSaleDialog = ({
       notes: notes || undefined,
     };
 
-    if (source === 'ad' && selectedCampaign) {
-      sale.ad_campaign_id = selectedCampaign.id;
-      sale.ad_campaign_name = selectedCampaign.name;
+    if (source === 'ad' && selectedAd) {
+      sale.ad_id = selectedAd.id;
+      sale.ad_name = selectedAd.name;
+      sale.ad_campaign_id = selectedAd.campaignId;
+      sale.ad_campaign_name = selectedAd.campaignName;
     }
 
     onSubmit(sale);
     // Reset form
     setAmount('');
     setSource('');
-    setAdCampaignId('');
+    setSelectedAd(null);
+    setShowAdPicker(false);
     setCustomerName('');
     setProduct('');
     setMessagePlatform('');
@@ -125,7 +136,7 @@ export const RegisterSaleDialog = ({
           {/* Source */}
           <div>
             <Label>Fuente</Label>
-            <Select value={source} onValueChange={setSource}>
+            <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); setShowAdPicker(false); }}>
               <SelectTrigger><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
               <SelectContent>
                 {SOURCE_OPTIONS.map(opt => (
@@ -135,18 +146,69 @@ export const RegisterSaleDialog = ({
             </Select>
           </div>
 
-          {/* Campaign selector - only when source is ad */}
-          {source === 'ad' && campaigns.length > 0 && (
+          {/* Ad selector - only when source is ad and has ad account */}
+          {source === 'ad' && hasAdAccount && (
             <div>
-              <Label>Campaña</Label>
-              <Select value={adCampaignId} onValueChange={setAdCampaignId}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar campaña" /></SelectTrigger>
-                <SelectContent>
-                  {campaigns.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Anuncio</Label>
+              {selectedAd ? (
+                <div className="flex items-center gap-2 rounded-lg border p-2 mt-1">
+                  {selectedAd.thumbnailUrl ? (
+                    <img src={selectedAd.thumbnailUrl} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
+                  ) : (
+                    <div className="h-8 w-8 rounded bg-muted flex items-center justify-center shrink-0">
+                      <ImageIcon className="h-3 w-3 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{selectedAd.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{selectedAd.campaignName}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setSelectedAd(null)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-1 justify-start"
+                    onClick={() => setShowAdPicker(!showAdPicker)}
+                  >
+                    <Link2 className="h-3 w-3 mr-2" />
+                    Seleccionar anuncio
+                  </Button>
+                  {showAdPicker && (
+                    <div className="mt-2 max-h-48 overflow-y-auto space-y-1 rounded-md border p-1">
+                      {adsLoading ? (
+                        <div className="space-y-1">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
+                      ) : !allAds || allAds.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-4">No hay anuncios activos</p>
+                      ) : (
+                        allAds.map(ad => (
+                          <button
+                            key={ad.id}
+                            className="w-full flex items-center gap-2 rounded-md p-2 hover:bg-accent/50 transition-colors text-left"
+                            onClick={() => { setSelectedAd(ad); setShowAdPicker(false); }}
+                          >
+                            {ad.thumbnailUrl ? (
+                              <img src={ad.thumbnailUrl} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
+                            ) : (
+                              <div className="h-8 w-8 rounded bg-muted flex items-center justify-center shrink-0">
+                                <ImageIcon className="h-3 w-3 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-medium truncate">{ad.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">{ad.campaignName}</p>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
