@@ -12,7 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import BrandSettings from "./pages/BrandSettings";
 import Clientes from "./pages/Clientes";
 import Contenido from "./pages/Contenido";
-import Reports from "./pages/Reports";
+
 import Ventas from "./pages/Ventas";
 import Auth from "./pages/Auth";
 import AcceptInvite from "./pages/AcceptInvite";
