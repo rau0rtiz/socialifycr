@@ -61,6 +61,7 @@ export interface AdInsights {
   results: number;
   resultType: string;
   costPerResult: number;
+  landingPageViews: number;
 }
 
 const getMetaErrorMessage = (err: unknown) => {
