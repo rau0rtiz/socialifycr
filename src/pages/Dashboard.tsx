@@ -320,7 +320,7 @@ const Dashboard = () => {
       )}
 
       {/* Top Posts - Instagram */}
-      {featureFlags.instagram_posts && (contentLoading || content.length > 0 || hasMetaConnection) && (
+      {(contentLoading || content.length > 0 || hasMetaConnection) && (
         <div className="mb-4 md:mb-6">
           <InstagramTopPosts
             content={content}
