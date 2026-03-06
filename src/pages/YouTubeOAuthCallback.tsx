@@ -93,7 +93,7 @@ export const YouTubeOAuthCallback = () => {
         });
 
         if (window.opener) {
-          window.opener.postMessage({ type: 'YOUTUBE_OAUTH_ERROR', error: errorMessage }, '*');
+          window.opener.postMessage({ type: 'YOUTUBE_OAUTH_ERROR', error: errorMessage }, window.location.origin);
           window.close();
         } else {
           navigate('/clientes');
