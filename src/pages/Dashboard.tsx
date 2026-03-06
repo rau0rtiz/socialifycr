@@ -401,11 +401,13 @@ const Dashboard = () => {
           onDeleteIdea={deleteIdea}
           clientId={selectedClient.id}
         />
-      </div>
+        </div>
+      )}
 
       {/* Competitors Panel */}
-      <div className="mb-4 md:mb-6">
-        <CompetitorsPanel 
+      {featureFlags.competitors && (
+        <div className="mb-4 md:mb-6">
+          <CompetitorsPanel
           clientId={selectedClient.id} 
           canEdit={isAgency || clientAccess.some(c => c.clientId === selectedClient.id && (c.role === 'editor' || c.role === 'account_manager'))}
         />
