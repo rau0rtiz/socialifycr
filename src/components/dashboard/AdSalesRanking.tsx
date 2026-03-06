@@ -194,12 +194,12 @@ export const AdSalesRanking = ({ clientId, hasAdAccount }: AdSalesRankingProps) 
                   }`}
                 >
                   {/* Thumbnail */}
-                  <div className="relative aspect-square bg-muted">
+                  <div className="relative aspect-[9/16] bg-muted">
                     {item.thumbnailUrl ? (
                       <img
                         src={item.thumbnailUrl}
                         alt={item.adName}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
