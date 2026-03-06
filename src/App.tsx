@@ -35,6 +35,7 @@ const App = () => (
               <Sonner />
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/accept-invite" element={<AcceptInvite />} />
                 <Route path="/invitacion/:token" element={<Invitacion />} />
                 <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
