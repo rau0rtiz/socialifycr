@@ -11,6 +11,20 @@ const META_APP_SECRET = Deno.env.get('META_APP_SECRET');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+// Helper: verify JWT and return user
+async function verifyAuth(req: Request, supabase: any) {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return { user: null, error: 'Missing authorization header' };
+  }
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
+    return { user: null, error: 'Unauthorized' };
+  }
+  return { user, error: null };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -62,14 +76,32 @@ serve(async (req) => {
       });
     }
 
-    // Fetch accounts without saving - returns available accounts for user selection
+    // Fetch accounts without saving - requires authentication
     if (action === 'fetch-accounts') {
+      // Verify JWT
+      const { user, error: authError } = await verifyAuth(req, supabase);
+      if (!user) {
+        return new Response(JSON.stringify({ error: authError }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const body = await req.json();
       const { code, redirectUri, clientId } = body;
 
       if (!code || !redirectUri || !clientId) {
         return new Response(JSON.stringify({ error: 'Missing code, redirectUri, or clientId' }), {
           status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Verify user has access to this client
+      const { data: hasAccess } = await supabase.rpc('has_client_access', { _client_id: clientId, _user_id: user.id });
+      if (!hasAccess) {
+        return new Response(JSON.stringify({ error: 'Access denied to this client' }), {
+          status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -117,7 +149,7 @@ serve(async (req) => {
       }
 
       const accessToken = longLivedData.access_token;
-      const expiresIn = longLivedData.expires_in || 5184000; // Default 60 days
+      const expiresIn = longLivedData.expires_in || 5184000;
 
       // Get user's pages
       const pagesResponse = await fetch(
@@ -179,18 +211,9 @@ serve(async (req) => {
 
     // Save selected accounts to database (requires authentication)
     if (action === 'save-connection') {
-      // Verify JWT - only authenticated users can save connections
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader) {
-        return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      if (authError || !user) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      const { user, error: authError } = await verifyAuth(req, supabase);
+      if (!user) {
+        return new Response(JSON.stringify({ error: authError }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -228,9 +251,7 @@ serve(async (req) => {
       const connectionData = {
         client_id: clientId,
         platform: 'meta',
-        // Store the long-lived USER token (required for Ads Manager / ad account endpoints)
         access_token: accessToken || pageAccessToken,
-        // Store the selected PAGE token (useful for page/IG endpoints)
         refresh_token: pageAccessToken,
         status: 'active',
         platform_page_id: pageId,
@@ -275,175 +296,6 @@ serve(async (req) => {
           pageName,
           instagramId,
           adAccountId
-        }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Legacy callback action (kept for backwards compatibility)
-    if (action === 'callback') {
-      const body = await req.json();
-      const { code, redirectUri, clientId } = body;
-
-      if (!code || !redirectUri || !clientId) {
-        return new Response(JSON.stringify({ error: 'Missing code, redirectUri, or clientId' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      console.log('Exchanging code for token, client:', clientId);
-
-      // Exchange code for short-lived token
-      const tokenResponse = await fetch(
-        `https://graph.facebook.com/v18.0/oauth/access_token?` +
-        `client_id=${META_APP_ID}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&client_secret=${META_APP_SECRET}` +
-        `&code=${code}`
-      );
-
-      const tokenData = await tokenResponse.json();
-      console.log('Token exchange response:', JSON.stringify(tokenData));
-
-      if (tokenData.error) {
-        console.error('Token exchange error:', tokenData.error);
-        return new Response(JSON.stringify({ error: tokenData.error.message }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Exchange for long-lived token
-      const longLivedResponse = await fetch(
-        `https://graph.facebook.com/v18.0/oauth/access_token?` +
-        `grant_type=fb_exchange_token` +
-        `&client_id=${META_APP_ID}` +
-        `&client_secret=${META_APP_SECRET}` +
-        `&fb_exchange_token=${tokenData.access_token}`
-      );
-
-      const longLivedData = await longLivedResponse.json();
-      console.log('Long-lived token response received');
-
-      if (longLivedData.error) {
-        console.error('Long-lived token error:', longLivedData.error);
-        return new Response(JSON.stringify({ error: longLivedData.error.message }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      const accessToken = longLivedData.access_token;
-      const expiresIn = longLivedData.expires_in || 5184000; // Default 60 days
-
-      // Get user's pages
-      const pagesResponse = await fetch(
-        `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`
-      );
-      const pagesData = await pagesResponse.json();
-      console.log('Pages fetched:', pagesData.data?.length || 0);
-
-      // Get Instagram accounts linked to pages
-      const instagramAccounts: any[] = [];
-      if (pagesData.data) {
-        for (const page of pagesData.data) {
-          const igResponse = await fetch(
-            `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
-          );
-          const igData = await igResponse.json();
-          if (igData.instagram_business_account) {
-            instagramAccounts.push({
-              pageId: page.id,
-              pageName: page.name,
-              instagramId: igData.instagram_business_account.id,
-              pageAccessToken: page.access_token
-            });
-          }
-        }
-      }
-      console.log('Instagram accounts found:', instagramAccounts.length);
-
-      // Get ad accounts
-      const adAccountsResponse = await fetch(
-        `https://graph.facebook.com/v18.0/me/adaccounts?access_token=${accessToken}`
-      );
-      const adAccountsData = await adAccountsResponse.json();
-      console.log('Ad accounts fetched:', adAccountsData.data?.length || 0);
-
-      // Store connection in database
-      const tokenExpiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
-      
-      const firstPage = pagesData.data?.[0];
-      const firstInstagram = instagramAccounts[0];
-      const firstAdAccount = adAccountsData.data?.[0];
-
-      // Check if connection already exists
-      const { data: existingConnection } = await supabase
-        .from('platform_connections')
-        .select('id')
-        .eq('client_id', clientId)
-        .eq('platform', 'meta')
-        .maybeSingle();
-
-      const connectionData = {
-        client_id: clientId,
-        platform: 'meta',
-        // Store the long-lived USER token (required for Ads Manager / ad account endpoints)
-        access_token: accessToken,
-        // Store a PAGE token for page/IG endpoints when available
-        refresh_token: firstPage?.access_token || null,
-        status: 'active',
-        platform_page_id: firstPage?.id || null,
-        platform_page_name: firstPage?.name || null,
-        instagram_account_id: firstInstagram?.instagramId || null,
-        ad_account_id: firstAdAccount?.id || null,
-        token_expires_at: tokenExpiresAt,
-        permissions: {
-          pages: pagesData.data?.map((p: any) => ({ id: p.id, name: p.name })) || [],
-          instagram: instagramAccounts,
-          adAccounts: adAccountsData.data?.map((a: any) => ({ id: a.id, name: a.name })) || []
-        },
-        updated_at: new Date().toISOString()
-      };
-
-      let result;
-      if (existingConnection) {
-        result = await supabase
-          .from('platform_connections')
-          .update(connectionData)
-          .eq('id', existingConnection.id)
-          .select()
-          .single();
-      } else {
-        result = await supabase
-          .from('platform_connections')
-          .insert(connectionData)
-          .select()
-          .single();
-      }
-
-      if (result.error) {
-        console.error('Database error:', result.error);
-        return new Response(JSON.stringify({ error: 'Failed to save connection' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      console.log('Connection saved successfully');
-
-      return new Response(JSON.stringify({
-        success: true,
-        connection: {
-          id: result.data.id,
-          platform: 'meta',
-          pageName: firstPage?.name,
-          instagramId: firstInstagram?.instagramId,
-          pagesCount: pagesData.data?.length || 0,
-          instagramCount: instagramAccounts.length,
-          adAccountsCount: adAccountsData.data?.length || 0
         }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
