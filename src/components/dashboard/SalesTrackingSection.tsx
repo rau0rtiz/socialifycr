@@ -55,6 +55,7 @@ const formatCurrency = (amount: number, currency: string) => {
 export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false }: SalesTrackingSectionProps) => {
   const [month, setMonth] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingSale, setEditingSale] = useState<MessageSale | null>(null);
   const [linkAdSaleId, setLinkAdSaleId] = useState<string | null>(null);
 
   const { sales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);

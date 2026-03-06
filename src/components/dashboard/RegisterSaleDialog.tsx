@@ -83,9 +83,7 @@ export const RegisterSaleDialog = ({
           campaignName: editingSale.ad_campaign_name || '',
           thumbnailUrl: null,
           spend: 0,
-          impressions: 0,
-          clicks: 0,
-          status: '',
+          effectiveStatus: '',
         });
       } else {
         setSelectedAd(null);
