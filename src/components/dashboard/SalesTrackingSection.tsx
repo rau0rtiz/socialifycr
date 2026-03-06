@@ -1,16 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, DollarSign, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { RegisterSaleDialog } from './RegisterSaleDialog';
 import { CampaignInsights } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { format, addMonths, subMonths } from 'date-fns';
+import { format, addMonths, subMonths, eachDayOfInterval, startOfMonth, endOfMonth as endOfMonthFn } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface SalesTrackingSectionProps {
   clientId: string;
