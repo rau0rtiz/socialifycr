@@ -389,7 +389,7 @@ const Dashboard = () => {
       )}
 
       {/* Video Ideas Section */}
-      {featureFlags.video_ideas && (
+      {(
         <div className="mb-4 md:mb-6">
           <VideoIdeasSection
           ideas={videoIdeas}
