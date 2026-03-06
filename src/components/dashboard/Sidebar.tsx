@@ -7,7 +7,8 @@ import {
   Users, 
   Palette, 
   LogOut,
-  ChevronLeft
+  ChevronLeft,
+  ShoppingCart
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
