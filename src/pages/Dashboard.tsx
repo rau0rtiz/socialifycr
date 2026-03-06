@@ -21,7 +21,7 @@ import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useYouTubeVideos } from '@/hooks/use-youtube-videos';
 import { useCrosspostLinks } from '@/hooks/use-crosspost-links';
-import { useClientFeatures } from '@/hooks/use-client-features';
+
 import { SalesTrackingSection } from '@/components/dashboard/SalesTrackingSection';
 import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
@@ -116,7 +116,7 @@ const Dashboard = () => {
     refetch: refetchCrosspostLinks,
   } = useCrosspostLinks(clientId);
 
-  const { flags: featureFlags } = useClientFeatures(clientId);
+  
   // Refresh all dashboard data
   const handleRefreshAll = useCallback(async () => {
     setIsRefreshing(true);
@@ -309,7 +309,7 @@ const Dashboard = () => {
       </div>
 
       {/* Social Followers - Full Width */}
-      {featureFlags.social_followers && (socialLoading || socialPlatforms.length > 0) && (
+      {(socialLoading || socialPlatforms.length > 0) && (
         <div className="mb-4 md:mb-6">
           <SocialFollowersSection
             platforms={socialPlatforms}
@@ -320,7 +320,7 @@ const Dashboard = () => {
       )}
 
       {/* Top Posts - Instagram */}
-      {featureFlags.instagram_posts && (contentLoading || content.length > 0 || hasMetaConnection) && (
+      {(contentLoading || content.length > 0 || hasMetaConnection) && (
         <div className="mb-4 md:mb-6">
           <InstagramTopPosts
             content={content}
@@ -333,7 +333,7 @@ const Dashboard = () => {
       )}
 
       {/* Top Videos - YouTube */}
-      {featureFlags.youtube_videos && (youtubeLoading || youtubeConnected) && (
+      {(youtubeLoading || youtubeConnected) && (
         <div className="mb-4 md:mb-6">
           <YouTubeTopVideos
             videos={youtubeVideos}
@@ -344,7 +344,7 @@ const Dashboard = () => {
       )}
 
       {/* Content Grid - 2x3 Grid below Social */}
-      {featureFlags.content_grid && (
+      {(
         <div className="mb-4 md:mb-6">
         <ContentGrid
           data={content}
@@ -367,7 +367,7 @@ const Dashboard = () => {
       )}
 
       {/* AI Insights Panel */}
-      {featureFlags.ai_insights && (
+      {(
         <div className="mb-4 md:mb-6">
         <AIInsightsPanel
           clientId={selectedClient.id}
@@ -389,7 +389,7 @@ const Dashboard = () => {
       )}
 
       {/* Video Ideas Section */}
-      {featureFlags.video_ideas && (
+      {(
         <div className="mb-4 md:mb-6">
           <VideoIdeasSection
           ideas={videoIdeas}
@@ -405,7 +405,7 @@ const Dashboard = () => {
       )}
 
       {/* Competitors Panel */}
-      {featureFlags.competitors && (
+      {(
         <div className="mb-4 md:mb-6">
           <CompetitorsPanel
           clientId={selectedClient.id} 
@@ -415,21 +415,21 @@ const Dashboard = () => {
       )}
 
       {/* Sales Tracking */}
-      {featureFlags.sales_tracking && (
+      {(
         <div className="mb-4 md:mb-6">
           <SalesTrackingSection clientId={selectedClient.id} campaigns={[]} />
         </div>
       )}
 
       {/* Funnel Module */}
-      {featureFlags.funnel && (
+      {(
         <div className="mb-4 md:mb-6">
           <FunnelModule clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
         </div>
       )}
 
       {/* Campaigns Drilldown */}
-      {featureFlags.campaigns && (
+      {(
         <div className="mb-4 md:mb-6">
           <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
         </div>

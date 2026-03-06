@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 import { PlatformConnections } from './PlatformConnections';
 import { TeamMembers } from './TeamMembers';
 import { AIContextEditor } from './AIContextEditor';
-import { ClientFeatureFlags } from './ClientFeatureFlags';
+
 
 interface ClientDetailPanelProps {
   client: Client;
@@ -86,10 +86,6 @@ export const ClientDetailPanel = ({ client, onClose, onUpdate }: ClientDetailPan
         {/* Team Members */}
         <TeamMembers clientId={client.id} clientName={client.name} />
 
-        <Separator />
-
-        {/* Feature Flags */}
-        <ClientFeatureFlags clientId={client.id} />
       </CardContent>
     </Card>
   );

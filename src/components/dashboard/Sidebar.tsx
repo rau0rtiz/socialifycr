@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/use-user-role';
-import { useClientFeatures } from '@/hooks/use-client-features';
+
 
 const mainMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -58,7 +58,7 @@ export const Sidebar = () => {
   const { platformBrand, selectedClient } = useBrand();
   const { signOut } = useAuth();
   const { isAgency, loading: roleLoading } = useUserRole();
-  const { flags: featureFlags } = useClientFeatures(selectedClient?.id || null);
+  
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -70,10 +70,8 @@ export const Sidebar = () => {
   // Determine which menu items to show based on user role
   const baseMenuItems = isAgency ? mainMenuItems : clientMenuItems;
   
-  // Add dynamic items based on feature flags
-  const menuItems = featureFlags.sales_tracking
-    ? [...baseMenuItems.slice(0, 1), { title: 'Ventas', url: '/#ventas', icon: ShoppingCart }, ...baseMenuItems.slice(1)]
-    : baseMenuItems;
+  // Always include Ventas in menu
+  const menuItems = [...baseMenuItems.slice(0, 1), { title: 'Ventas', url: '/#ventas', icon: ShoppingCart }, ...baseMenuItems.slice(1)];
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">
