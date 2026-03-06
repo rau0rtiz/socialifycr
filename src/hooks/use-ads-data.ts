@@ -337,6 +337,7 @@ export const useCampaigns = (
           resultType,
           costPerResult,
           roas: roas ? parseFloat(roas) : null,
+          landingPageViews: extractLandingPageViews(insights.actions),
         };
       });
 
