@@ -13,7 +13,8 @@ interface LinkAdDialogProps {
 }
 
 export const LinkAdDialog = ({ open, onOpenChange, clientId, hasAdAccount, onSelectAd }: LinkAdDialogProps) => {
-  const { data: ads, isLoading } = useAllAds(clientId, hasAdAccount && open);
+  const { data: adsResult, isLoading } = useAllAds(clientId, hasAdAccount && open);
+  const ads = adsResult?.ads;
 
   const handleSelectAd = (ad: AllAdItem) => {
     onSelectAd({
