@@ -398,6 +398,64 @@ serve(async (req) => {
         break;
       }
 
+      case 'all-ads': {
+        // Get ALL ads across all active campaigns (flat list for linking to sales)
+        if (!adAccountId) {
+          return new Response(JSON.stringify({ error: 'No Ad account connected' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Build time range params
+        let timeRangeParam = '';
+        if (params.since && params.until) {
+          timeRangeParam = `&time_range={"since":"${params.since}","until":"${params.until}"}`;
+        } else {
+          const datePreset = params.datePreset || 'last_30d';
+          timeRangeParam = `&date_preset=${datePreset}`;
+        }
+
+        // Get all ads from ad account with active campaigns filter
+        const allAdsResponse = await fetch(
+          `https://graph.facebook.com/v18.0/${adAccountId}/ads?` +
+          `fields=id,name,status,effective_status,creative{id,name,thumbnail_url},campaign{id,name}` +
+          `&filtering=[{"field":"campaign.effective_status","operator":"IN","value":["ACTIVE"]}]` +
+          `&limit=100&access_token=${userAccessToken}`
+        );
+        const allAdsData = await allAdsResponse.json();
+
+        if (allAdsData.error) {
+          console.error('All Ads API error:', allAdsData.error);
+          result = allAdsData;
+          break;
+        }
+
+        // For each ad, get insights
+        const allAdsWithInsights = await Promise.all(
+          (allAdsData.data || []).map(async (ad: any) => {
+            try {
+              const insightsResponse = await fetch(
+                `https://graph.facebook.com/v18.0/${ad.id}/insights?` +
+                `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type` +
+                `${timeRangeParam}&access_token=${userAccessToken}`
+              );
+              const insightsData = await insightsResponse.json();
+              return {
+                ...ad,
+                insights: insightsData
+              };
+            } catch (err) {
+              console.log(`Could not fetch insights for ad ${ad.id}:`, err);
+              return { ...ad, insights: null };
+            }
+          })
+        );
+
+        result = { data: allAdsWithInsights };
+        break;
+      }
+
       case 'page-info': {
         // Get basic page and Instagram info
         const pageResponse = await fetch(
