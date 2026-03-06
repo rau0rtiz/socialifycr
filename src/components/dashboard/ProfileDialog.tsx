@@ -38,8 +38,8 @@ export const useProfile = () => {
 function cropToSquare(
   img: HTMLImageElement,
   zoom: number,
-  offsetX: number,
-  offsetY: number
+  panX: number, // pixels offset of image relative to container center
+  panY: number
 ): Promise<Blob> {
   const size = 400;
   const canvas = document.createElement('canvas');
@@ -48,16 +48,25 @@ function cropToSquare(
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingQuality = 'high';
 
-  // Determine the visible region in natural image coordinates
-  const minDim = Math.min(img.naturalWidth, img.naturalHeight);
+  const { naturalWidth: nw, naturalHeight: nh } = img;
+  // The visible crop square in natural-image coordinates
+  const minDim = Math.min(nw, nh);
   const cropSize = minDim / zoom;
-  const maxOffset = (minDim - cropSize) / 2;
+
+  // Center of crop in natural coords, shifted by pan
+  // panX/panY are in "preview pixels" — convert to natural coords
+  const previewSize = 192; // w-48 = 192px container
+  const scale = (minDim * zoom) / previewSize; // natural px per preview px
   
-  const cx = (img.naturalWidth - cropSize) / 2 + offsetX * maxOffset;
-  const cy = (img.naturalHeight - cropSize) / 2 + offsetY * maxOffset;
+  let cx = nw / 2 - panX * scale - cropSize / 2;
+  let cy = nh / 2 - panY * scale - cropSize / 2;
+
+  // Clamp to image bounds
+  cx = Math.max(0, Math.min(nw - cropSize, cx));
+  cy = Math.max(0, Math.min(nh - cropSize, cy));
 
   ctx.drawImage(img, cx, cy, cropSize, cropSize, 0, 0, size, size);
-  
+
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error('Failed to create image'))),
@@ -122,10 +131,11 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!dragRef.current) return;
-    const dx = (e.clientX - dragRef.current.startX) / 100;
-    const dy = (e.clientY - dragRef.current.startY) / 100;
-    setPanX(Math.max(-1, Math.min(1, dragRef.current.startPanX - dx)));
-    setPanY(Math.max(-1, Math.min(1, dragRef.current.startPanY - dy)));
+    // Direct pixel offset — user drags, image follows
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    setPanX(dragRef.current.startPanX + dx);
+    setPanY(dragRef.current.startPanY + dy);
   };
 
   const handlePointerUp = () => {
@@ -191,16 +201,25 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   // Compute CSS transform for the preview image inside the crop area
   const getPreviewStyle = (): React.CSSProperties => {
     if (!imgRef.current) return {};
-    const { naturalWidth, naturalHeight } = imgRef.current;
-    const isLandscape = naturalWidth >= naturalHeight;
-    // Scale so the shorter side fills the container, then apply zoom
-    const baseScale = isLandscape
-      ? (naturalHeight > 0 ? 1 : 1)
-      : (naturalWidth > 0 ? 1 : 1);
+    const { naturalWidth: nw, naturalHeight: nh } = imgRef.current;
+    const containerSize = 192; // w-48
+    // Base scale: fit shorter side to container
+    const baseScale = nw >= nh
+      ? containerSize / nh * (nw / nh) // landscape: scale by width ratio
+      : containerSize / nw * (nh / nw); // portrait: scale by height ratio
+    // Actually simpler: scale so image covers container, then zoom
+    const coverScale = Math.max(containerSize / nw, containerSize / nh);
+    const totalScale = coverScale * zoom;
     return {
-      transform: `scale(${zoom}) translate(${-panX * 30}%, ${-panY * 30}%)`,
+      width: nw,
+      height: nh,
+      position: 'absolute' as const,
+      left: '50%',
+      top: '50%',
+      transform: `translate(-50%, -50%) translate(${panX}px, ${panY}px) scale(${totalScale})`,
       transformOrigin: 'center center',
-      objectFit: 'cover' as const,
+      maxWidth: 'none',
+      maxHeight: 'none',
     };
   };
 
@@ -229,13 +248,10 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
                     ref={imgRef}
                     src={cropSrc}
                     alt="Vista previa"
-                    className="w-full h-full pointer-events-none"
+                    className="pointer-events-none"
                     draggable={false}
                     style={getPreviewStyle()}
-                    onLoad={() => {
-                      // Force re-render once image loads
-                      setZoom(z => z);
-                    }}
+                    onLoad={() => setZoom(z => z)}
                   />
                 </div>
               </div>
