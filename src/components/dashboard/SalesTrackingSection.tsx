@@ -276,7 +276,8 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSubmit={handleAddSale}
-        campaigns={campaigns}
+        clientId={clientId}
+        hasAdAccount={hasAdAccount}
         isSubmitting={addSale.isPending}
       />
 
