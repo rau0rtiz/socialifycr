@@ -116,7 +116,7 @@ const Dashboard = () => {
     refetch: refetchCrosspostLinks,
   } = useCrosspostLinks(clientId);
 
-  const { flags: featureFlags } = useClientFeatures(clientId);
+  
   // Refresh all dashboard data
   const handleRefreshAll = useCallback(async () => {
     setIsRefreshing(true);
