@@ -73,6 +73,7 @@ const getInitialPlatformBrand = (): PlatformBrand => {
 };
 
 export const BrandProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
   const [platformBrand, setPlatformBrand] = useState<PlatformBrand>(getInitialPlatformBrand);
   const [clients, setClients] = useState<Client[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
@@ -85,6 +86,11 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
   const hasUnsavedChanges = JSON.stringify({ platformBrand, clientBrands }) !== savedState;
 
   const fetchClients = async () => {
+    if (!user?.id) {
+      setClients([]);
+      setClientsLoading(false);
+      return;
+    }
     setClientsLoading(true);
     try {
       const { data, error } = await supabase
@@ -110,7 +116,7 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     fetchClients();
-  }, []);
+  }, [user?.id]);
 
   const updateClientBrand = (clientId: string, brand: ClientBrand) => {
     setClientBrands(prev => ({
