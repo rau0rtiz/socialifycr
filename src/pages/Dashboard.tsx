@@ -422,7 +422,7 @@ const Dashboard = () => {
       )}
 
       {/* Funnel Module */}
-      {featureFlags.funnel && (
+      {(
         <div className="mb-4 md:mb-6">
           <FunnelModule clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
         </div>
