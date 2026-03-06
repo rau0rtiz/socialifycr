@@ -66,7 +66,25 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     });
   };
 
-  const handleDelete = (id: string) => {
+  // Build daily chart data
+  const chartData = useMemo(() => {
+    const days = eachDayOfInterval({
+      start: startOfMonth(month),
+      end: endOfMonthFn(month),
+    });
+    return days.map(day => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      const daySales = sales.filter(s => s.sale_date === dateStr && s.status === 'completed');
+      return {
+        date: format(day, 'dd'),
+        story: daySales.filter(s => s.source === 'story').reduce((sum, s) => sum + Number(s.amount), 0),
+        ad: daySales.filter(s => s.source === 'ad').reduce((sum, s) => sum + Number(s.amount), 0),
+        referral: daySales.filter(s => s.source === 'referral').reduce((sum, s) => sum + Number(s.amount), 0),
+        organic: daySales.filter(s => s.source === 'organic').reduce((sum, s) => sum + Number(s.amount), 0),
+        other: daySales.filter(s => s.source === 'other').reduce((sum, s) => sum + Number(s.amount), 0),
+      };
+    });
+  }, [sales, month]);
     deleteSale.mutate(id, {
       onSuccess: () => toast.success('Venta eliminada'),
       onError: () => toast.error('Error al eliminar'),
