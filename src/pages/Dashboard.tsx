@@ -415,7 +415,7 @@ const Dashboard = () => {
       )}
 
       {/* Sales Tracking */}
-      {featureFlags.sales_tracking && (
+      {(
         <div className="mb-4 md:mb-6">
           <SalesTrackingSection clientId={selectedClient.id} campaigns={[]} />
         </div>
