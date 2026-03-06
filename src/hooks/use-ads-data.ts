@@ -45,6 +45,7 @@ export interface AdSetInsights {
   results: number;
   resultType: string;
   costPerResult: number;
+  landingPageViews: number;
 }
 
 export interface AdInsights {
