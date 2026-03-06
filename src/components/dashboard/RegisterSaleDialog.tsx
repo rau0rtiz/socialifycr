@@ -48,7 +48,7 @@ export const RegisterSaleDialog = ({
   const [product, setProduct] = useState('');
   const [messagePlatform, setMessagePlatform] = useState('');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<'completed' | 'pending'>('completed');
+  
 
   const selectedCampaign = campaigns.find(c => c.id === adCampaignId);
 
