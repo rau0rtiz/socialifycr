@@ -56,6 +56,7 @@ const App = () => (
                 <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                 <Route path="/content" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                 <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
                 <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                 <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -414,12 +414,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Sales Tracking */}
-      {(
-        <div className="mb-4 md:mb-6">
-          <SalesTrackingSection clientId={selectedClient.id} campaigns={[]} />
-        </div>
-      )}
 
       {/* Funnel Module */}
       {(
