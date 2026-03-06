@@ -21,6 +21,7 @@ export interface CampaignInsights {
   resultType: string;
   costPerResult: number;
   roas: number | null;
+  landingPageViews: number;
 }
 
 export interface CampaignsResult {
