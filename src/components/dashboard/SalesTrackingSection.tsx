@@ -61,13 +61,29 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
   const { sales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
 
   const handleAddSale = (sale: any) => {
-    addSale.mutate(sale, {
-      onSuccess: () => {
-        toast.success('Venta registrada');
-        setDialogOpen(false);
-      },
-      onError: () => toast.error('Error al registrar venta'),
-    });
+    if (editingSale) {
+      updateSale.mutate({ saleId: editingSale.id, updates: sale }, {
+        onSuccess: () => {
+          toast.success('Venta actualizada');
+          setDialogOpen(false);
+          setEditingSale(null);
+        },
+        onError: () => toast.error('Error al actualizar venta'),
+      });
+    } else {
+      addSale.mutate(sale, {
+        onSuccess: () => {
+          toast.success('Venta registrada');
+          setDialogOpen(false);
+        },
+        onError: () => toast.error('Error al registrar venta'),
+      });
+    }
+  };
+
+  const handleEdit = (sale: MessageSale) => {
+    setEditingSale(sale);
+    setDialogOpen(true);
   };
 
   // Build daily chart data
