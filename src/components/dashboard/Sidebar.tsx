@@ -58,7 +58,7 @@ export const Sidebar = () => {
   const { platformBrand, selectedClient } = useBrand();
   const { signOut } = useAuth();
   const { isAgency, loading: roleLoading } = useUserRole();
-  const { flags: featureFlags } = useClientFeatures(selectedClient?.id || null);
+  
 
   const isActive = (path: string) => location.pathname === path;
 
