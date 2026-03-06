@@ -327,6 +327,15 @@ serve(async (req) => {
     const request: InsightRequest = await req.json();
     console.log('Generating insights for:', request.clientName, 'type:', request.insightType, 'country:', request.country);
 
+    // Verify user has access to this client
+    const { data: hasAccess } = await supabase.rpc('has_client_access', { _client_id: request.clientId, _user_id: user.id });
+    if (!hasAccess) {
+      return new Response(JSON.stringify({ error: 'Access denied to this client' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Fetch client's AI context from database
     const { data: clientData, error: clientError } = await supabase
       .from('clients')
