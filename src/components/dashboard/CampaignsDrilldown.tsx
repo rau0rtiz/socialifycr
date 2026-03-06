@@ -194,7 +194,7 @@ const CampaignRow = ({
 };
 
 // AdSet Row Component
-const AdSetRow = ({ adset, currency, onClick }: { adset: AdSetInsights; currency: string; onClick: () => void }) => (
+const AdSetRow = ({ adset, currency, onClick, isPurchaseGoal }: { adset: AdSetInsights; currency: string; onClick: () => void; isPurchaseGoal?: boolean }) => (
   <div
     className="p-4 border border-border rounded-lg hover:bg-muted/30 cursor-pointer transition-colors"
     onClick={onClick}
@@ -228,12 +228,15 @@ const AdSetRow = ({ adset, currency, onClick }: { adset: AdSetInsights; currency
         label={getCostPerResultLabel(adset.resultType)}
         value={adset.costPerResult > 0 ? formatCurrency(adset.costPerResult, currency) : '-'}
       />
+      {isPurchaseGoal && (
+        <MetricCard icon={Eye} label="Landing Page Views" value={formatNumber(adset.landingPageViews)} />
+      )}
     </div>
   </div>
 );
 
 // Ad Row Component
-const AdRow = ({ ad, currency }: { ad: AdInsights; currency: string }) => (
+const AdRow = ({ ad, currency, isPurchaseGoal }: { ad: AdInsights; currency: string; isPurchaseGoal?: boolean }) => (
   <div className="p-4 border border-border rounded-lg">
     <div className="flex items-start gap-4 mb-3">
       {ad.thumbnailUrl ? (
@@ -268,6 +271,9 @@ const AdRow = ({ ad, currency }: { ad: AdInsights; currency: string }) => (
         label={getCostPerResultLabel(ad.resultType)}
         value={ad.costPerResult > 0 ? formatCurrency(ad.costPerResult, currency) : '-'}
       />
+      {isPurchaseGoal && (
+        <MetricCard icon={Eye} label="Landing Page Views" value={formatNumber(ad.landingPageViews)} />
+      )}
     </div>
   </div>
 );
