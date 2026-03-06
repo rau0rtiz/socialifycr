@@ -131,10 +131,11 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!dragRef.current) return;
-    const dx = (e.clientX - dragRef.current.startX) / 100;
-    const dy = (e.clientY - dragRef.current.startY) / 100;
-    setPanX(Math.max(-1, Math.min(1, dragRef.current.startPanX - dx)));
-    setPanY(Math.max(-1, Math.min(1, dragRef.current.startPanY - dy)));
+    // Direct pixel offset — user drags, image follows
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    setPanX(dragRef.current.startPanX + dx);
+    setPanY(dragRef.current.startPanY + dy);
   };
 
   const handlePointerUp = () => {
