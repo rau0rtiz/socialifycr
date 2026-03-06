@@ -1,16 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, Check, X } from 'lucide-react';
+import { Camera, Check, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
+import { Slider } from '@/components/ui/slider';
 
 interface ProfileDialogProps {
   open: boolean;
@@ -35,41 +34,36 @@ export const useProfile = () => {
   });
 };
 
-function centerAspectCrop(mediaWidth: number, mediaHeight: number) {
-  return centerCrop(
-    makeAspectCrop({ unit: '%', width: 80 }, 1, mediaWidth, mediaHeight),
-    mediaWidth,
-    mediaHeight
-  );
-}
-
-async function getCroppedBlob(image: HTMLImageElement, crop: Crop): Promise<Blob> {
+// Simple square crop via canvas with zoom+pan
+function cropToSquare(
+  img: HTMLImageElement,
+  zoom: number,
+  offsetX: number,
+  offsetY: number
+): Promise<Blob> {
+  const size = 400;
   const canvas = document.createElement('canvas');
-  const size = 400; // output 400x400
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingQuality = 'high';
 
-  // Convert crop values to natural image pixels
-  let sx: number, sy: number, sw: number, sh: number;
-  if (crop.unit === '%') {
-    sx = (crop.x / 100) * image.naturalWidth;
-    sy = (crop.y / 100) * image.naturalHeight;
-    sw = (crop.width / 100) * image.naturalWidth;
-    sh = (crop.height / 100) * image.naturalHeight;
-  } else {
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-    sx = (crop.x || 0) * scaleX;
-    sy = (crop.y || 0) * scaleY;
-    sw = (crop.width || 0) * scaleX;
-    sh = (crop.height || 0) * scaleY;
-  }
+  // Determine the visible region in natural image coordinates
+  const minDim = Math.min(img.naturalWidth, img.naturalHeight);
+  const cropSize = minDim / zoom;
+  const maxOffset = (minDim - cropSize) / 2;
+  
+  const cx = (img.naturalWidth - cropSize) / 2 + offsetX * maxOffset;
+  const cy = (img.naturalHeight - cropSize) / 2 + offsetY * maxOffset;
 
-  ctx.drawImage(image, sx, sy, sw, sh, 0, 0, size, size);
+  ctx.drawImage(img, cx, cy, cropSize, cropSize, 0, 0, size, size);
+  
   return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas toBlob failed')), 'image/jpeg', 0.9);
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('Failed to create image'))),
+      'image/jpeg',
+      0.9
+    );
   });
 }
 
@@ -83,18 +77,21 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const [phone, setPhone] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [saving, setSaving] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Crop state
   const [cropSrc, setCropSrc] = useState<string | null>(null);
-  const [crop, setCrop] = useState<Crop>();
+  const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; startPanX: number; startPanY: number } | null>(null);
 
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || '');
       setEmail(profile.email || user?.email || '');
-      setPhone((profile as any).phone || '');
+      setPhone(profile.phone || '');
       setAvatarUrl(profile.avatar_url || '');
     }
   }, [profile, user]);
@@ -102,23 +99,44 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecciona un archivo de imagen');
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = () => setCropSrc(reader.result as string);
+    reader.onload = () => {
+      setCropSrc(reader.result as string);
+      setZoom(1);
+      setPanX(0);
+      setPanY(0);
+    };
     reader.readAsDataURL(file);
     e.target.value = '';
   };
 
-  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { width, height } = e.currentTarget;
-    setCrop(centerAspectCrop(width, height));
-    imgRef.current = e.currentTarget;
-  }, []);
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    dragRef.current = { startX: e.clientX, startY: e.clientY, startPanX: panX, startPanY: panY };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    const dx = (e.clientX - dragRef.current.startX) / 100;
+    const dy = (e.clientY - dragRef.current.startY) / 100;
+    setPanX(Math.max(-1, Math.min(1, dragRef.current.startPanX - dx)));
+    setPanY(Math.max(-1, Math.min(1, dragRef.current.startPanY - dy)));
+  };
+
+  const handlePointerUp = () => {
+    dragRef.current = null;
+  };
 
   const handleCropConfirm = async () => {
-    if (!imgRef.current || !crop || !user) return;
-    setUploadingAvatar(true);
+    if (!imgRef.current || !user) return;
+    setUploading(true);
     try {
-      const blob = await getCroppedBlob(imgRef.current, crop);
+      const blob = await cropToSquare(imgRef.current, zoom, panX, panY);
       const filePath = `avatars/${user.id}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from('content-images')
@@ -129,12 +147,12 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         .getPublicUrl(filePath);
       setAvatarUrl(publicUrl + '?t=' + Date.now());
       setCropSrc(null);
-      toast.success('Imagen recortada y subida');
-    } catch (err) {
-      console.error('Profile image upload error:', err);
-      toast.error(err instanceof Error ? err.message : 'Error al subir imagen');
+      toast.success('Foto actualizada');
+    } catch (err: any) {
+      console.error('Avatar upload error:', err);
+      toast.error(err.message || 'Error al subir imagen');
     } finally {
-      setUploadingAvatar(false);
+      setUploading(false);
     }
   };
 
@@ -148,7 +166,7 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           full_name: fullName,
           avatar_url: avatarUrl || null,
           phone: phone || null,
-        } as any)
+        })
         .eq('id', user.id);
       if (profileError) throw profileError;
       if (email !== user.email) {
@@ -170,6 +188,22 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     ? fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : email?.[0]?.toUpperCase() || '?';
 
+  // Compute CSS transform for the preview image inside the crop area
+  const getPreviewStyle = (): React.CSSProperties => {
+    if (!imgRef.current) return {};
+    const { naturalWidth, naturalHeight } = imgRef.current;
+    const isLandscape = naturalWidth >= naturalHeight;
+    // Scale so the shorter side fills the container, then apply zoom
+    const baseScale = isLandscape
+      ? (naturalHeight > 0 ? 1 : 1)
+      : (naturalWidth > 0 ? 1 : 1);
+    return {
+      transform: `scale(${zoom}) translate(${-panX * 30}%, ${-panY * 30}%)`,
+      transformOrigin: 'center center',
+      objectFit: 'cover' as const,
+    };
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
@@ -179,31 +213,51 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Crop UI */}
           {cropSrc ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground text-center">Ajusta el recorte cuadrado</p>
-              <div className="flex justify-center max-h-[300px] overflow-hidden rounded-lg border">
-                <ReactCrop
-                  crop={crop}
-                  onChange={c => setCrop(c)}
-                  aspect={1}
-                  circularCrop
+              <p className="text-sm text-muted-foreground text-center">Arrastra para ajustar</p>
+              {/* Square crop preview with circular mask */}
+              <div className="flex justify-center">
+                <div
+                  className="relative w-48 h-48 rounded-full overflow-hidden border-2 border-primary cursor-grab active:cursor-grabbing select-none"
+                  onPointerDown={handlePointerDown}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  style={{ touchAction: 'none' }}
                 >
                   <img
+                    ref={imgRef}
                     src={cropSrc}
-                    onLoad={onImageLoad}
-                    alt="Recortar"
-                    className="max-h-[300px]"
+                    alt="Vista previa"
+                    className="w-full h-full pointer-events-none"
+                    draggable={false}
+                    style={getPreviewStyle()}
+                    onLoad={() => {
+                      // Force re-render once image loads
+                      setZoom(z => z);
+                    }}
                   />
-                </ReactCrop>
+                </div>
+              </div>
+              {/* Zoom slider */}
+              <div className="flex items-center gap-2 px-4">
+                <ZoomOut className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Slider
+                  value={[zoom]}
+                  onValueChange={([v]) => setZoom(v)}
+                  min={1}
+                  max={3}
+                  step={0.05}
+                  className="flex-1"
+                />
+                <ZoomIn className="h-4 w-4 text-muted-foreground shrink-0" />
               </div>
               <div className="flex justify-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => setCropSrc(null)} disabled={uploadingAvatar}>
+                <Button size="sm" variant="outline" onClick={() => setCropSrc(null)} disabled={uploading}>
                   <X className="h-4 w-4 mr-1" /> Cancelar
                 </Button>
-                <Button size="sm" onClick={handleCropConfirm} disabled={uploadingAvatar}>
-                  <Check className="h-4 w-4 mr-1" /> {uploadingAvatar ? 'Subiendo...' : 'Confirmar'}
+                <Button size="sm" onClick={handleCropConfirm} disabled={uploading}>
+                  <Check className="h-4 w-4 mr-1" /> {uploading ? 'Subiendo...' : 'Confirmar'}
                 </Button>
               </div>
             </div>
@@ -216,12 +270,7 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
                 </Avatar>
                 <label className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors">
                   <Camera className="h-3.5 w-3.5 text-primary-foreground" />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileSelect}
-                  />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
                 </label>
               </div>
             </div>
