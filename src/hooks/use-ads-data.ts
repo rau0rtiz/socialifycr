@@ -512,7 +512,7 @@ export const useAllAds = (clientId: string | null, hasAdAccount: boolean, datePr
           id: ad.id,
           name: ad.name,
           effectiveStatus: ad.effective_status,
-          thumbnailUrl: ad.creative?.thumbnail_url || null,
+          thumbnailUrl: ad.creative?.image_url || ad.creative?.thumbnail_url || null,
           campaignId: ad.campaign?.id || '',
           campaignName: ad.campaign?.name || '',
           spend: parseFloat(insights.spend) || 0,

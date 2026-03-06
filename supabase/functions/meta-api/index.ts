@@ -433,7 +433,7 @@ serve(async (req) => {
         // Get all ads from ad account with active campaigns filter
         const allAdsResponse = await fetch(
           `https://graph.facebook.com/v18.0/${adAccountId}/ads?` +
-          `fields=id,name,status,effective_status,creative{id,name,thumbnail_url},campaign{id,name}` +
+          `fields=id,name,status,effective_status,creative{id,name,thumbnail_url,image_url,object_story_spec},campaign{id,name}` +
           `&filtering=[{"field":"campaign.effective_status","operator":"IN","value":["ACTIVE"]}]` +
           `&limit=100&access_token=${userAccessToken}`
         );
