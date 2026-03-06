@@ -66,7 +66,7 @@ export const ClientDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden p-0">
         {/* Header with gradient background */}
         <div 
           className="relative p-6 pb-16"
