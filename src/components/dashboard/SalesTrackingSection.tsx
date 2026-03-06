@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2 } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil } from 'lucide-react';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { RegisterSaleDialog } from './RegisterSaleDialog';
 import { LinkAdDialog } from './LinkAdDialog';
@@ -55,18 +55,35 @@ const formatCurrency = (amount: number, currency: string) => {
 export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false }: SalesTrackingSectionProps) => {
   const [month, setMonth] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingSale, setEditingSale] = useState<MessageSale | null>(null);
   const [linkAdSaleId, setLinkAdSaleId] = useState<string | null>(null);
 
   const { sales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
 
   const handleAddSale = (sale: any) => {
-    addSale.mutate(sale, {
-      onSuccess: () => {
-        toast.success('Venta registrada');
-        setDialogOpen(false);
-      },
-      onError: () => toast.error('Error al registrar venta'),
-    });
+    if (editingSale) {
+      updateSale.mutate({ saleId: editingSale.id, updates: sale }, {
+        onSuccess: () => {
+          toast.success('Venta actualizada');
+          setDialogOpen(false);
+          setEditingSale(null);
+        },
+        onError: () => toast.error('Error al actualizar venta'),
+      });
+    } else {
+      addSale.mutate(sale, {
+        onSuccess: () => {
+          toast.success('Venta registrada');
+          setDialogOpen(false);
+        },
+        onError: () => toast.error('Error al registrar venta'),
+      });
+    }
+  };
+
+  const handleEdit = (sale: MessageSale) => {
+    setEditingSale(sale);
+    setDialogOpen(true);
   };
 
   // Build daily chart data
@@ -153,7 +170,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>
+            <Button size="sm" onClick={() => { setEditingSale(null); setDialogOpen(true); }}>
               <Plus className="h-4 w-4 mr-1" />
               Registrar Venta
             </Button>
@@ -243,6 +260,15 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title="Editar venta"
+                            onClick={() => handleEdit(sale)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
                           {hasAdAccount && (
                             <Button
                               variant="ghost"
@@ -274,11 +300,12 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
 
       <RegisterSaleDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingSale(null); }}
         onSubmit={handleAddSale}
         clientId={clientId}
         hasAdAccount={hasAdAccount}
-        isSubmitting={addSale.isPending}
+        isSubmitting={addSale.isPending || updateSale.isPending}
+        editingSale={editingSale}
       />
 
       <LinkAdDialog
