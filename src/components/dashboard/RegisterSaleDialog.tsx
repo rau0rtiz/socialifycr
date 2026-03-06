@@ -83,7 +83,6 @@ export const RegisterSaleDialog = ({
     setProduct('');
     setMessagePlatform('');
     setNotes('');
-    setStatus('completed');
   };
 
   return (
