@@ -23,7 +23,7 @@ export const MetaOAuthCallback = () => {
         });
         
         if (window.opener) {
-          window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: errorDescription }, '*');
+          window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: errorDescription }, window.location.origin);
           window.close();
         } else {
           navigate('/clientes');

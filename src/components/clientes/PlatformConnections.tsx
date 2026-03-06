@@ -122,6 +122,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   // Listen for OAuth callback messages
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'META_OAUTH_ACCOUNTS') {
         setMetaAccountsData(event.data.accounts);
         setShowAccountSelector(true);
