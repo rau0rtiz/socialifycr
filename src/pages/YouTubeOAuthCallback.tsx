@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export const YouTubeOAuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -50,11 +51,22 @@ export const YouTubeOAuthCallback = () => {
         const clientId = stateData.clientId;
         const redirectUri = `${window.location.origin}/oauth/youtube/callback`;
 
+        // Get current session token for authenticated request
+        const { data: { session } } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
+
+        if (!accessToken) {
+          throw new Error('No hay sesión activa. Por favor inicia sesión primero.');
+        }
+
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-oauth?action=fetch-accounts`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`,
+            },
             body: JSON.stringify({ code, redirectUri, clientId })
           }
         );
