@@ -163,18 +163,6 @@ export const RegisterSaleDialog = ({
             </Select>
           </div>
 
-          {/* Status */}
-          <div>
-            <Label>Estado</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as 'completed' | 'pending')}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="completed">Completada</SelectItem>
-                <SelectItem value="pending">Pendiente</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Product */}
           <div>
             <Label>Producto / Servicio</Label>
