@@ -761,6 +761,54 @@ const Contenido = () => {
         </div>
       )}
 
+      {/* AI Insights Panel */}
+      {selectedClient && (
+        <div className="mb-4 md:mb-6">
+          <AIInsightsPanel
+            clientId={selectedClient.id}
+            clientName={selectedClient.name}
+            industry={selectedClient.industry || 'general'}
+            content={content}
+            hasAdAccount={hasAdAccount}
+            aiContext={selectedClient.ai_context}
+            preferredRegion={selectedClient.preferred_region}
+            onRegionChange={async (region) => {
+              await supabase
+                .from('clients')
+                .update({ preferred_region: region })
+                .eq('id', selectedClient.id);
+            }}
+            onAddVideoIdea={addIdea}
+          />
+        </div>
+      )}
+
+      {/* Video Ideas Section */}
+      {selectedClient && (
+        <div className="mb-4 md:mb-6">
+          <VideoIdeasSection
+            ideas={videoIdeas}
+            isLoading={ideasLoading}
+            tags={tags}
+            models={models}
+            onAddIdea={addIdea}
+            onUpdateIdea={updateIdea}
+            onDeleteIdea={deleteIdea}
+            clientId={selectedClient.id}
+          />
+        </div>
+      )}
+
+      {/* Competitors Panel */}
+      {selectedClient && (
+        <div className="mb-4 md:mb-6">
+          <CompetitorsPanel
+            clientId={selectedClient.id}
+            canEdit={isAgency || clientAccess.some(c => c.clientId === selectedClient.id && (c.role === 'editor' || c.role === 'account_manager'))}
+          />
+        </div>
+      )}
+
       {/* Content Detail Modal */}
       {selectedPost && (
         <ContentDetailModal
