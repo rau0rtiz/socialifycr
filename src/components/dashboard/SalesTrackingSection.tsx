@@ -158,6 +158,23 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
             </div>
           </div>
 
+          {/* Daily Sales Chart */}
+          {sales.length > 0 && (
+            <ChartContainer config={CHART_CONFIG} className="h-[250px] w-full">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
+                <YAxis tickLine={false} axisLine={false} fontSize={11} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="story" stackId="a" fill={SOURCE_COLORS.story} radius={[0, 0, 0, 0]} />
+                <Bar dataKey="ad" stackId="a" fill={SOURCE_COLORS.ad} />
+                <Bar dataKey="referral" stackId="a" fill={SOURCE_COLORS.referral} />
+                <Bar dataKey="organic" stackId="a" fill={SOURCE_COLORS.organic} />
+                <Bar dataKey="other" stackId="a" fill={SOURCE_COLORS.other} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          )}
+
           {/* Source breakdown */}
           {Object.keys(summary.sourceBreakdown).length > 0 && (
             <div className="flex flex-wrap gap-2">
