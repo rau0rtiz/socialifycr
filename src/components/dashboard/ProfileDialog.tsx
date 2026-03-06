@@ -38,8 +38,8 @@ export const useProfile = () => {
 function cropToSquare(
   img: HTMLImageElement,
   zoom: number,
-  offsetX: number,
-  offsetY: number
+  panX: number, // pixels offset of image relative to container center
+  panY: number
 ): Promise<Blob> {
   const size = 400;
   const canvas = document.createElement('canvas');
@@ -48,16 +48,25 @@ function cropToSquare(
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingQuality = 'high';
 
-  // Determine the visible region in natural image coordinates
-  const minDim = Math.min(img.naturalWidth, img.naturalHeight);
+  const { naturalWidth: nw, naturalHeight: nh } = img;
+  // The visible crop square in natural-image coordinates
+  const minDim = Math.min(nw, nh);
   const cropSize = minDim / zoom;
-  const maxOffset = (minDim - cropSize) / 2;
+
+  // Center of crop in natural coords, shifted by pan
+  // panX/panY are in "preview pixels" — convert to natural coords
+  const previewSize = 192; // w-48 = 192px container
+  const scale = (minDim * zoom) / previewSize; // natural px per preview px
   
-  const cx = (img.naturalWidth - cropSize) / 2 + offsetX * maxOffset;
-  const cy = (img.naturalHeight - cropSize) / 2 + offsetY * maxOffset;
+  let cx = nw / 2 - panX * scale - cropSize / 2;
+  let cy = nh / 2 - panY * scale - cropSize / 2;
+
+  // Clamp to image bounds
+  cx = Math.max(0, Math.min(nw - cropSize, cx));
+  cy = Math.max(0, Math.min(nh - cropSize, cy));
 
   ctx.drawImage(img, cx, cy, cropSize, cropSize, 0, 0, size, size);
-  
+
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error('Failed to create image'))),
