@@ -500,7 +500,7 @@ export const ContentGrid = ({
           setSelectedForLinking([]);
         }
       }}>
-        <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-6xl h-[85vh] flex flex-col p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">Todo el Contenido</DialogTitle>
