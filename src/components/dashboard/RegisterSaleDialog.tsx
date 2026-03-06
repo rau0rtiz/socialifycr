@@ -1,13 +1,12 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SaleInput } from '@/hooks/use-sales-tracking';
+import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { toast } from 'sonner';
 import { Image as ImageIcon, Link2, X } from 'lucide-react';
@@ -19,6 +18,7 @@ interface RegisterSaleDialogProps {
   clientId?: string;
   hasAdAccount?: boolean;
   isSubmitting?: boolean;
+  editingSale?: MessageSale | null;
 }
 
 const SOURCE_OPTIONS = [
@@ -43,6 +43,7 @@ export const RegisterSaleDialog = ({
   clientId,
   hasAdAccount = false,
   isSubmitting,
+  editingSale,
 }: RegisterSaleDialogProps) => {
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
@@ -54,12 +55,56 @@ export const RegisterSaleDialog = ({
   const [product, setProduct] = useState('');
   const [messagePlatform, setMessagePlatform] = useState('');
   const [notes, setNotes] = useState('');
+  const [status, setStatus] = useState<string>('completed');
 
   const { data: allAdsResult, isLoading: adsLoading } = useAllAds(
     clientId || null,
     hasAdAccount && open && source === 'ad'
   );
   const allAds = allAdsResult?.ads;
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingSale && open) {
+      setAmount(String(editingSale.amount));
+      setCurrency(editingSale.currency);
+      setSaleDate(editingSale.sale_date);
+      setSource(editingSale.source);
+      setCustomerName(editingSale.customer_name || '');
+      setProduct(editingSale.product || '');
+      setMessagePlatform(editingSale.message_platform || '');
+      setNotes(editingSale.notes || '');
+      setStatus(editingSale.status);
+      if (editingSale.ad_id) {
+        setSelectedAd({
+          id: editingSale.ad_id,
+          name: editingSale.ad_name || '',
+          campaignId: editingSale.ad_campaign_id || '',
+          campaignName: editingSale.ad_campaign_name || '',
+          thumbnailUrl: null,
+          spend: 0,
+          impressions: 0,
+          clicks: 0,
+          status: '',
+        });
+      } else {
+        setSelectedAd(null);
+      }
+    } else if (!editingSale && open) {
+      // Reset for new sale
+      setAmount('');
+      setCurrency('CRC');
+      setSaleDate(new Date().toISOString().split('T')[0]);
+      setSource('');
+      setSelectedAd(null);
+      setShowAdPicker(false);
+      setCustomerName('');
+      setProduct('');
+      setMessagePlatform('');
+      setNotes('');
+      setStatus('completed');
+    }
+  }, [editingSale, open]);
 
   const handleSubmit = () => {
     if (!amount || !source) {
@@ -76,6 +121,7 @@ export const RegisterSaleDialog = ({
       product: product || undefined,
       message_platform: messagePlatform || undefined,
       notes: notes || undefined,
+      status: status as SaleInput['status'],
     };
 
     if (source === 'ad' && selectedAd) {
@@ -86,22 +132,16 @@ export const RegisterSaleDialog = ({
     }
 
     onSubmit(sale);
-    // Reset form
-    setAmount('');
-    setSource('');
-    setSelectedAd(null);
-    setShowAdPicker(false);
-    setCustomerName('');
-    setProduct('');
-    setMessagePlatform('');
-    setNotes('');
   };
+
+  const isEditing = !!editingSale;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Registrar Venta</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar Venta' : 'Registrar Venta'}</DialogTitle>
+          <DialogDescription>{isEditing ? 'Modifica los datos de la venta' : 'Ingresa los datos de la nueva venta'}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -109,12 +149,7 @@ export const RegisterSaleDialog = ({
           <div className="flex gap-2">
             <div className="flex-1">
               <Label>Monto</Label>
-              <Input
-                type="number"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
+              <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
             </div>
             <div className="w-24">
               <Label>Moneda</Label>
@@ -147,7 +182,7 @@ export const RegisterSaleDialog = ({
             </Select>
           </div>
 
-          {/* Ad selector - only when source is ad and has ad account */}
+          {/* Ad selector */}
           {source === 'ad' && hasAdAccount && (
             <div>
               <Label>Anuncio</Label>
@@ -170,12 +205,7 @@ export const RegisterSaleDialog = ({
                 </div>
               ) : (
                 <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-1 justify-start"
-                    onClick={() => setShowAdPicker(!showAdPicker)}
-                  >
+                  <Button variant="outline" size="sm" className="w-full mt-1 justify-start" onClick={() => setShowAdPicker(!showAdPicker)}>
                     <Link2 className="h-3 w-3 mr-2" />
                     Seleccionar anuncio
                   </Button>
@@ -210,6 +240,21 @@ export const RegisterSaleDialog = ({
                   )}
                 </>
               )}
+            </div>
+          )}
+
+          {/* Status (only in edit mode) */}
+          {isEditing && (
+            <div>
+              <Label>Estado</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="completed">Completada</SelectItem>
+                  <SelectItem value="pending">Pendiente</SelectItem>
+                  <SelectItem value="cancelled">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
 
@@ -248,7 +293,7 @@ export const RegisterSaleDialog = ({
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Guardando...' : 'Registrar'}
+            {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Registrar'}
           </Button>
         </DialogFooter>
       </DialogContent>
