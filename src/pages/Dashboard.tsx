@@ -23,7 +23,6 @@ import { useUserRole } from '@/hooks/use-user-role';
 import { useYouTubeVideos } from '@/hooks/use-youtube-videos';
 import { useCrosspostLinks } from '@/hooks/use-crosspost-links';
 
-import { SalesTrackingSection } from '@/components/dashboard/SalesTrackingSection';
 import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Building2, Plus, RefreshCw, X, Eye } from 'lucide-react';
@@ -415,12 +414,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Sales Tracking */}
-      {(
-        <div className="mb-4 md:mb-6">
-          <SalesTrackingSection clientId={selectedClient.id} campaigns={[]} />
-        </div>
-      )}
 
       {/* Funnel Module */}
       {(

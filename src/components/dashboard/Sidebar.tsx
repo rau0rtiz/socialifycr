@@ -71,7 +71,7 @@ export const Sidebar = () => {
   const baseMenuItems = isAgency ? mainMenuItems : clientMenuItems;
   
   // Always include Ventas in menu
-  const menuItems = [...baseMenuItems.slice(0, 1), { title: 'Ventas', url: '/#ventas', icon: ShoppingCart }, ...baseMenuItems.slice(1)];
+  const menuItems = [...baseMenuItems.slice(0, 1), { title: 'Ventas', url: '/ventas', icon: ShoppingCart }, ...baseMenuItems.slice(1)];
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">
