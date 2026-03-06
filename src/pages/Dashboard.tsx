@@ -405,7 +405,7 @@ const Dashboard = () => {
       )}
 
       {/* Competitors Panel */}
-      {featureFlags.competitors && (
+      {(
         <div className="mb-4 md:mb-6">
           <CompetitorsPanel
           clientId={selectedClient.id} 
