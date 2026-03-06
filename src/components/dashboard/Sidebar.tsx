@@ -70,10 +70,8 @@ export const Sidebar = () => {
   // Determine which menu items to show based on user role
   const baseMenuItems = isAgency ? mainMenuItems : clientMenuItems;
   
-  // Add dynamic items based on feature flags
-  const menuItems = featureFlags.sales_tracking
-    ? [...baseMenuItems.slice(0, 1), { title: 'Ventas', url: '/#ventas', icon: ShoppingCart }, ...baseMenuItems.slice(1)]
-    : baseMenuItems;
+  // Always include Ventas in menu
+  const menuItems = [...baseMenuItems.slice(0, 1), { title: 'Ventas', url: '/#ventas', icon: ShoppingCart }, ...baseMenuItems.slice(1)];
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">

@@ -429,7 +429,7 @@ const Dashboard = () => {
       )}
 
       {/* Campaigns Drilldown */}
-      {featureFlags.campaigns && (
+      {(
         <div className="mb-4 md:mb-6">
           <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
         </div>
