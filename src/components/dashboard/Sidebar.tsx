@@ -1,13 +1,9 @@
 import { 
   LayoutDashboard, 
-  Megaphone, 
-  Share2, 
   FileText, 
-  BarChart3, 
   Users, 
   Palette, 
   LogOut,
-  ChevronLeft,
   ShoppingCart
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
