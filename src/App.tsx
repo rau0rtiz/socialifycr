@@ -55,7 +55,7 @@ const App = () => (
                 {/* Shared routes (with conditional content based on role) */}
                 <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                 <Route path="/content" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
-                <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute><NotFound /></ProtectedRoute>} />
                 <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
                 <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                 <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
