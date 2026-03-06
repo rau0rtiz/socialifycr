@@ -309,7 +309,7 @@ const Dashboard = () => {
       </div>
 
       {/* Social Followers - Full Width */}
-      {featureFlags.social_followers && (socialLoading || socialPlatforms.length > 0) && (
+      {(socialLoading || socialPlatforms.length > 0) && (
         <div className="mb-4 md:mb-6">
           <SocialFollowersSection
             platforms={socialPlatforms}
