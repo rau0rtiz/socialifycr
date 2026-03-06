@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/use-user-role';
-import { useClientFeatures } from '@/hooks/use-client-features';
+
 
 const mainMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
