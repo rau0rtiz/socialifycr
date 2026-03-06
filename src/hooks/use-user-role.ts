@@ -30,18 +30,22 @@ export const useUserRole = (): UserRoleData => {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .eq('user_id', user.id);
       
       if (error) {
         console.error('Error fetching user role:', error);
         return null;
       }
       
-      return data?.role as SystemRole | null;
+      if (!data || data.length === 0) return null;
+      
+      // Pick highest priority role
+      const priority: SystemRole[] = ['owner', 'admin', 'manager', 'analyst', 'viewer'];
+      const roles = data.map(d => d.role as SystemRole);
+      return priority.find(r => roles.includes(r)) || roles[0];
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   // Fetch client access
