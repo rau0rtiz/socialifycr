@@ -411,17 +411,29 @@ const Dashboard = () => {
           clientId={selectedClient.id} 
           canEdit={isAgency || clientAccess.some(c => c.clientId === selectedClient.id && (c.role === 'editor' || c.role === 'account_manager'))}
         />
-      </div>
+        </div>
+      )}
+
+      {/* Sales Tracking */}
+      {featureFlags.sales_tracking && (
+        <div className="mb-4 md:mb-6">
+          <SalesTrackingSection clientId={selectedClient.id} campaigns={[]} />
+        </div>
+      )}
 
       {/* Funnel Module */}
-      <div className="mb-4 md:mb-6">
-        <FunnelModule clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
-      </div>
+      {featureFlags.funnel && (
+        <div className="mb-4 md:mb-6">
+          <FunnelModule clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
+        </div>
+      )}
 
       {/* Campaigns Drilldown */}
-      <div className="mb-4 md:mb-6">
-        <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
-      </div>
+      {featureFlags.campaigns && (
+        <div className="mb-4 md:mb-6">
+          <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
+        </div>
+      )}
 
       {/* Content Detail Modal for Top Posts */}
       <ContentDetailModal
