@@ -344,7 +344,7 @@ const Dashboard = () => {
       )}
 
       {/* Content Grid - 2x3 Grid below Social */}
-      {featureFlags.content_grid && (
+      {(
         <div className="mb-4 md:mb-6">
         <ContentGrid
           data={content}
