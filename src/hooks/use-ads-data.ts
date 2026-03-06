@@ -405,6 +405,7 @@ export const useAdSets = (
           results,
           resultType,
           costPerResult,
+          landingPageViews: extractLandingPageViews(insights.actions),
         };
       });
     },
