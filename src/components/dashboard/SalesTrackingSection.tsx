@@ -85,6 +85,8 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
       };
     });
   }, [sales, month]);
+
+  const handleDelete = (id: string) => {
     deleteSale.mutate(id, {
       onSuccess: () => toast.success('Venta eliminada'),
       onError: () => toast.error('Error al eliminar'),
