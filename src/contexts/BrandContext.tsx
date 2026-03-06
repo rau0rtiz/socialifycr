@@ -118,10 +118,25 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
-  const saveBrandSettings = () => {
+  const saveBrandSettings = async () => {
     const data = { platformBrand, clientBrands };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     setSavedState(JSON.stringify(data));
+
+    // Persist client brand changes to the database
+    const updates = Object.entries(clientBrands).map(([clientId, brand]) =>
+      supabase
+        .from('clients')
+        .update({
+          logo_url: brand.logoUrl || null,
+          primary_color: brand.primaryColor,
+          accent_color: brand.accentColor,
+        })
+        .eq('id', clientId)
+    );
+
+    await Promise.all(updates);
+    await fetchClients();
   };
 
   return (
