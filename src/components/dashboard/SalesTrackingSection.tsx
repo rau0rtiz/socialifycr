@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2 } from 'lucide-react';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { RegisterSaleDialog } from './RegisterSaleDialog';
+import { LinkAdDialog } from './LinkAdDialog';
 import { CampaignInsights } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -19,6 +20,7 @@ interface SalesTrackingSectionProps {
   campaigns?: CampaignInsights[];
   adSpend?: number;
   adCurrency?: string;
+  hasAdAccount?: boolean;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -50,11 +52,12 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 };
 
-export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD' }: SalesTrackingSectionProps) => {
+export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false }: SalesTrackingSectionProps) => {
   const [month, setMonth] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [linkAdSaleId, setLinkAdSaleId] = useState<string | null>(null);
 
-  const { sales, isLoading, addSale, deleteSale, summary } = useSalesTracking(clientId, month);
+  const { sales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
 
   const handleAddSale = (sale: any) => {
     addSale.mutate(sale, {
@@ -90,6 +93,26 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     deleteSale.mutate(id, {
       onSuccess: () => toast.success('Venta eliminada'),
       onError: () => toast.error('Error al eliminar'),
+    });
+  };
+
+  const handleLinkAd = (adData: { adId: string; adName: string; campaignId: string; campaignName: string }) => {
+    if (!linkAdSaleId) return;
+    updateSale.mutate({
+      saleId: linkAdSaleId,
+      updates: {
+        ad_id: adData.adId,
+        ad_name: adData.adName,
+        ad_campaign_id: adData.campaignId,
+        ad_campaign_name: adData.campaignName,
+        source: 'ad',
+      },
+    }, {
+      onSuccess: () => {
+        toast.success('Anuncio vinculado');
+        setLinkAdSaleId(null);
+      },
+      onError: () => toast.error('Error al vincular anuncio'),
     });
   };
 
@@ -195,10 +218,9 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                     <TableHead>Fecha</TableHead>
                     <TableHead>Monto</TableHead>
                     <TableHead>Fuente</TableHead>
-                    <TableHead className="hidden md:table-cell">Campaña</TableHead>
+                    <TableHead className="hidden md:table-cell">Anuncio</TableHead>
                     <TableHead className="hidden md:table-cell">Cliente</TableHead>
-                    
-                    <TableHead className="w-10"></TableHead>
+                    <TableHead className="w-20"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -214,15 +236,28 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {sale.ad_campaign_name || '—'}
+                        {sale.ad_name || sale.ad_campaign_name || '—'}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-sm">
                         {sale.customer_name || '—'}
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(sale.id)}>
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {hasAdAccount && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              title="Vincular anuncio"
+                              onClick={() => setLinkAdSaleId(sale.id)}
+                            >
+                              <Link2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(sale.id)}>
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -243,6 +278,14 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
         onSubmit={handleAddSale}
         campaigns={campaigns}
         isSubmitting={addSale.isPending}
+      />
+
+      <LinkAdDialog
+        open={!!linkAdSaleId}
+        onOpenChange={(open) => { if (!open) setLinkAdSaleId(null); }}
+        clientId={clientId}
+        hasAdAccount={hasAdAccount}
+        onSelectAd={handleLinkAd}
       />
     </>
   );
