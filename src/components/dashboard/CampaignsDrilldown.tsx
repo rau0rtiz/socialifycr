@@ -138,7 +138,10 @@ const CampaignRow = ({
   onClick: () => void;
   clientId: string;
   configuredGoal?: GoalType | null;
-}) => (
+}) => {
+  const isPurchaseGoal = configuredGoal === 'purchases' || campaign.resultType === 'Compras';
+  
+  return (
   <div
     className="p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors"
   >
@@ -181,10 +184,14 @@ const CampaignRow = ({
         label={getCostPerResultLabel(campaign.resultType)}
         value={campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult, currency) : '-'}
       />
+      {isPurchaseGoal && (
+        <MetricCard icon={Eye} label="Landing Page Views" value={formatNumber(campaign.landingPageViews)} />
+      )}
       {campaign.roas !== null && <MetricCard icon={TrendingUp} label="ROAS" value={`${campaign.roas.toFixed(2)}x`} />}
     </div>
   </div>
-);
+  );
+};
 
 // AdSet Row Component
 const AdSetRow = ({ adset, currency, onClick }: { adset: AdSetInsights; currency: string; onClick: () => void }) => (
