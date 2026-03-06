@@ -38,7 +38,7 @@ interface BrandContextType {
   setSelectedClient: (client: Client | null) => void;
   clientBrands: Record<string, ClientBrand>;
   updateClientBrand: (clientId: string, brand: ClientBrand) => void;
-  saveBrandSettings: () => void;
+  saveBrandSettings: () => Promise<void>;
   hasUnsavedChanges: boolean;
   refetchClients: () => Promise<void>;
 }
