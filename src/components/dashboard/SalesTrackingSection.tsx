@@ -114,7 +114,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
           <div>
             <CardTitle className="text-base md:text-lg flex items-center gap-2">
               <ShoppingCart className="h-5 w-5" />
-              Ventas por Mensajes
+              Ventas
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
