@@ -68,7 +68,12 @@ export const Sidebar = () => {
   };
 
   // Determine which menu items to show based on user role
-  const menuItems = isAgency ? mainMenuItems : clientMenuItems;
+  const baseMenuItems = isAgency ? mainMenuItems : clientMenuItems;
+  
+  // Add dynamic items based on feature flags
+  const menuItems = featureFlags.sales_tracking
+    ? [...baseMenuItems.slice(0, 1), { title: 'Ventas', url: '/#ventas', icon: ShoppingCart }, ...baseMenuItems.slice(1)]
+    : baseMenuItems;
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">
