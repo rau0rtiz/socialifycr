@@ -131,7 +131,8 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       setCropSrc(null);
       toast.success('Imagen recortada y subida');
     } catch (err) {
-      toast.error('Error al subir imagen');
+      console.error('Profile image upload error:', err);
+      toast.error(err instanceof Error ? err.message : 'Error al subir imagen');
     } finally {
       setUploadingAvatar(false);
     }
