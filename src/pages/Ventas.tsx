@@ -4,11 +4,9 @@ import { AdSalesRanking } from '@/components/dashboard/AdSalesRanking';
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useMetaConnection } from '@/hooks/use-meta-api';
-import { useCampaigns, useAds } from '@/hooks/use-ads-data';
-import { useSalesTracking } from '@/hooks/use-sales-tracking';
+import { useCampaigns } from '@/hooks/use-ads-data';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2 } from 'lucide-react';
-import { useMemo } from 'react';
 
 const Ventas = () => {
   const { selectedClient, clientsLoading } = useBrand();
@@ -22,19 +20,6 @@ const Ventas = () => {
   const campaigns = campaignsResult?.campaigns || [];
   const adCurrency = campaignsResult?.currency || 'USD';
   const totalAdSpend = campaigns.reduce((sum, c) => sum + c.spend, 0);
-
-  // Get all sales for ranking (current month)
-  const { sales } = useSalesTracking(clientId);
-
-  // We need all ads across all campaigns for the ranking thumbnails/spend
-  // Collect unique ad IDs from sales that are linked to ads
-  const linkedAdIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const sale of sales) {
-      if (sale.ad_id) ids.add(sale.ad_id);
-    }
-    return ids;
-  }, [sales]);
 
   if (clientsLoading || roleLoading) {
     return (
@@ -80,8 +65,8 @@ const Ventas = () => {
           hasAdAccount={hasAdAccount}
         />
         <AdSalesRanking
-          sales={sales}
-          currency={adCurrency}
+          clientId={selectedClient.id}
+          hasAdAccount={hasAdAccount}
         />
       </div>
     </DashboardLayout>
