@@ -22,7 +22,7 @@ export const YouTubeOAuthCallback = () => {
         });
         
         if (window.opener) {
-          window.opener.postMessage({ type: 'YOUTUBE_OAUTH_ERROR', error }, '*');
+          window.opener.postMessage({ type: 'YOUTUBE_OAUTH_ERROR', error }, window.location.origin);
           window.close();
         } else {
           navigate('/clientes');
@@ -73,7 +73,7 @@ export const YouTubeOAuthCallback = () => {
             refreshToken: result.refreshToken,
             expiresIn: result.expiresIn,
             clientId
-          }, '*');
+          }, window.location.origin);
           window.close();
         } else {
           toast({
@@ -93,7 +93,7 @@ export const YouTubeOAuthCallback = () => {
         });
 
         if (window.opener) {
-          window.opener.postMessage({ type: 'YOUTUBE_OAUTH_ERROR', error: errorMessage }, '*');
+          window.opener.postMessage({ type: 'YOUTUBE_OAUTH_ERROR', error: errorMessage }, window.location.origin);
           window.close();
         } else {
           navigate('/clientes');

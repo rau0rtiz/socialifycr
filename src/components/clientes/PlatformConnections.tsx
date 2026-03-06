@@ -122,6 +122,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   // Listen for OAuth callback messages
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'META_OAUTH_ACCOUNTS') {
         setMetaAccountsData(event.data.accounts);
         setShowAccountSelector(true);
@@ -174,11 +175,15 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     if (!metaAccountsData) return;
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=save-connection`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
           body: JSON.stringify({
             clientId,
             // Long-lived USER token (required for Ads Manager / ad account endpoints)
@@ -351,11 +356,15 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     setSavingYouTube(true);
     
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-oauth?action=save-connection`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
           body: JSON.stringify({
             clientId,
             channelId: channel.id,

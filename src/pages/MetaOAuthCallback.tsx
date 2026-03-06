@@ -23,7 +23,7 @@ export const MetaOAuthCallback = () => {
         });
         
         if (window.opener) {
-          window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: errorDescription }, '*');
+          window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: errorDescription }, window.location.origin);
           window.close();
         } else {
           navigate('/clientes');
@@ -74,7 +74,7 @@ export const MetaOAuthCallback = () => {
             type: 'META_OAUTH_ACCOUNTS', 
             accounts: result.accounts,
             clientId
-          }, '*');
+          }, window.location.origin);
           window.close();
         } else {
           toast({
@@ -94,7 +94,7 @@ export const MetaOAuthCallback = () => {
         });
 
         if (window.opener) {
-          window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: errorMessage }, '*');
+          window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: errorMessage }, window.location.origin);
           window.close();
         } else {
           navigate('/clientes');
