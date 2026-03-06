@@ -74,7 +74,7 @@ export const MetaOAuthCallback = () => {
             type: 'META_OAUTH_ACCOUNTS', 
             accounts: result.accounts,
             clientId
-          }, '*');
+          }, window.location.origin);
           window.close();
         } else {
           toast({
