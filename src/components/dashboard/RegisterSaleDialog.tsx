@@ -48,7 +48,7 @@ export const RegisterSaleDialog = ({
   const [product, setProduct] = useState('');
   const [messagePlatform, setMessagePlatform] = useState('');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<'completed' | 'pending'>('completed');
+  
 
   const selectedCampaign = campaigns.find(c => c.id === adCampaignId);
 
@@ -67,7 +67,6 @@ export const RegisterSaleDialog = ({
       product: product || undefined,
       message_platform: messagePlatform || undefined,
       notes: notes || undefined,
-      status,
     };
 
     if (source === 'ad' && selectedCampaign) {
@@ -84,7 +83,6 @@ export const RegisterSaleDialog = ({
     setProduct('');
     setMessagePlatform('');
     setNotes('');
-    setStatus('completed');
   };
 
   return (
@@ -161,18 +159,6 @@ export const RegisterSaleDialog = ({
                 {PLATFORM_OPTIONS.map(opt => (
                   <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Status */}
-          <div>
-            <Label>Estado</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as 'completed' | 'pending')}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="completed">Completada</SelectItem>
-                <SelectItem value="pending">Pendiente</SelectItem>
               </SelectContent>
             </Select>
           </div>

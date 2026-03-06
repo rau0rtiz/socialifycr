@@ -27,11 +27,6 @@ const SOURCE_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  completed: 'Completada',
-  pending: 'Pendiente',
-  cancelled: 'Cancelada',
-};
 
 const formatCurrency = (amount: number, currency: string) => {
   if (currency === 'CRC') return `₡${amount.toLocaleString('es-CR')}`;
@@ -148,7 +143,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                     <TableHead>Fuente</TableHead>
                     <TableHead className="hidden md:table-cell">Campaña</TableHead>
                     <TableHead className="hidden md:table-cell">Cliente</TableHead>
-                    <TableHead className="hidden md:table-cell">Estado</TableHead>
+                    
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -169,11 +164,6 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-sm">
                         {sale.customer_name || '—'}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Badge variant={sale.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
-                          {STATUS_LABELS[sale.status]}
-                        </Badge>
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(sale.id)}>
