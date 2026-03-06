@@ -356,11 +356,15 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     setSavingYouTube(true);
     
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-oauth?action=save-connection`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
           body: JSON.stringify({
             clientId,
             channelId: channel.id,
