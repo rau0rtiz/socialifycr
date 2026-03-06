@@ -27,11 +27,6 @@ const SOURCE_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  completed: 'Completada',
-  pending: 'Pendiente',
-  cancelled: 'Cancelada',
-};
 
 const formatCurrency = (amount: number, currency: string) => {
   if (currency === 'CRC') return `₡${amount.toLocaleString('es-CR')}`;
