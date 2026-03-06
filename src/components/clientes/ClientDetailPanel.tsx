@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { PlatformConnections } from './PlatformConnections';
 import { TeamMembers } from './TeamMembers';
 import { AIContextEditor } from './AIContextEditor';
+import { ClientFeatureFlags } from './ClientFeatureFlags';
 
 interface ClientDetailPanelProps {
   client: Client;
