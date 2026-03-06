@@ -21,7 +21,7 @@ import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useYouTubeVideos } from '@/hooks/use-youtube-videos';
 import { useCrosspostLinks } from '@/hooks/use-crosspost-links';
-import { useClientFeatures } from '@/hooks/use-client-features';
+
 import { SalesTrackingSection } from '@/components/dashboard/SalesTrackingSection';
 import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
