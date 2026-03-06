@@ -367,7 +367,7 @@ const Dashboard = () => {
       )}
 
       {/* AI Insights Panel */}
-      {featureFlags.ai_insights && (
+      {(
         <div className="mb-4 md:mb-6">
         <AIInsightsPanel
           clientId={selectedClient.id}
