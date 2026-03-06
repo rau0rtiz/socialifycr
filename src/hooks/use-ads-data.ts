@@ -473,3 +473,48 @@ export const useAds = (
     staleTime: 5 * 60 * 1000,
   });
 };
+
+export interface AllAdItem {
+  id: string;
+  name: string;
+  effectiveStatus: string;
+  thumbnailUrl: string | null;
+  campaignId: string;
+  campaignName: string;
+  spend: number;
+}
+
+export const useAllAds = (clientId: string | null, hasAdAccount: boolean) => {
+  return useQuery({
+    queryKey: ['meta-all-ads', clientId],
+    queryFn: async (): Promise<AllAdItem[]> => {
+      if (!clientId || !hasAdAccount) return [];
+
+      const { data, error } = await supabase.functions.invoke('meta-api', {
+        body: {
+          clientId,
+          endpoint: 'all-ads',
+          params: { datePreset: 'last_30d' },
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(getMetaErrorMessage(data.error));
+
+      return (data?.data || []).map((ad: any) => {
+        const insights = ad.insights?.data?.[0] || {};
+        return {
+          id: ad.id,
+          name: ad.name,
+          effectiveStatus: ad.effective_status,
+          thumbnailUrl: ad.creative?.thumbnail_url || null,
+          campaignId: ad.campaign?.id || '',
+          campaignName: ad.campaign?.name || '',
+          spend: parseFloat(insights.spend) || 0,
+        };
+      });
+    },
+    enabled: !!clientId && hasAdAccount,
+    staleTime: 5 * 60 * 1000,
+  });
+};
