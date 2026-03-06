@@ -1,16 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, DollarSign, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { RegisterSaleDialog } from './RegisterSaleDialog';
 import { CampaignInsights } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { format, addMonths, subMonths } from 'date-fns';
+import { format, addMonths, subMonths, eachDayOfInterval, startOfMonth, endOfMonth as endOfMonthFn } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface SalesTrackingSectionProps {
   clientId: string;
@@ -27,6 +29,21 @@ const SOURCE_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
+const SOURCE_COLORS: Record<string, string> = {
+  story: 'hsl(280, 70%, 50%)',
+  ad: 'hsl(210, 80%, 50%)',
+  referral: 'hsl(150, 60%, 45%)',
+  organic: 'hsl(40, 90%, 50%)',
+  other: 'hsl(0, 0%, 60%)',
+};
+
+const CHART_CONFIG = {
+  story: { label: 'Historia', color: SOURCE_COLORS.story },
+  ad: { label: 'Publicidad', color: SOURCE_COLORS.ad },
+  referral: { label: 'Referencia', color: SOURCE_COLORS.referral },
+  organic: { label: 'Orgánico', color: SOURCE_COLORS.organic },
+  other: { label: 'Otro', color: SOURCE_COLORS.other },
+};
 
 const formatCurrency = (amount: number, currency: string) => {
   if (currency === 'CRC') return `₡${amount.toLocaleString('es-CR')}`;
@@ -48,6 +65,26 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
       onError: () => toast.error('Error al registrar venta'),
     });
   };
+
+  // Build daily chart data
+  const chartData = useMemo(() => {
+    const days = eachDayOfInterval({
+      start: startOfMonth(month),
+      end: endOfMonthFn(month),
+    });
+    return days.map(day => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      const daySales = sales.filter(s => s.sale_date === dateStr && s.status === 'completed');
+      return {
+        date: format(day, 'dd'),
+        story: daySales.filter(s => s.source === 'story').reduce((sum, s) => sum + Number(s.amount), 0),
+        ad: daySales.filter(s => s.source === 'ad').reduce((sum, s) => sum + Number(s.amount), 0),
+        referral: daySales.filter(s => s.source === 'referral').reduce((sum, s) => sum + Number(s.amount), 0),
+        organic: daySales.filter(s => s.source === 'organic').reduce((sum, s) => sum + Number(s.amount), 0),
+        other: daySales.filter(s => s.source === 'other').reduce((sum, s) => sum + Number(s.amount), 0),
+      };
+    });
+  }, [sales, month]);
 
   const handleDelete = (id: string) => {
     deleteSale.mutate(id, {
@@ -77,7 +114,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
           <div>
             <CardTitle className="text-base md:text-lg flex items-center gap-2">
               <ShoppingCart className="h-5 w-5" />
-              Ventas por Mensajes
+              Ventas
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
@@ -120,6 +157,23 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
               <p className="text-xl font-bold">{roas ? `${roas}x` : '—'}</p>
             </div>
           </div>
+
+          {/* Daily Sales Chart */}
+          {sales.length > 0 && (
+            <ChartContainer config={CHART_CONFIG} className="h-[250px] w-full">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
+                <YAxis tickLine={false} axisLine={false} fontSize={11} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="story" stackId="a" fill={SOURCE_COLORS.story} radius={[0, 0, 0, 0]} />
+                <Bar dataKey="ad" stackId="a" fill={SOURCE_COLORS.ad} />
+                <Bar dataKey="referral" stackId="a" fill={SOURCE_COLORS.referral} />
+                <Bar dataKey="organic" stackId="a" fill={SOURCE_COLORS.organic} />
+                <Bar dataKey="other" stackId="a" fill={SOURCE_COLORS.other} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          )}
 
           {/* Source breakdown */}
           {Object.keys(summary.sourceBreakdown).length > 0 && (
