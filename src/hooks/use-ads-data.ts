@@ -463,6 +463,7 @@ export const useAds = (
           results,
           resultType,
           costPerResult,
+          landingPageViews: extractLandingPageViews(insights.actions),
         };
       });
     },
