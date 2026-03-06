@@ -363,10 +363,12 @@ const Dashboard = () => {
           onRemoveCrosspostLink={removeCrosspostLink}
           getLinkedPosts={getLinkedPosts}
         />
-      </div>
+        </div>
+      )}
 
       {/* AI Insights Panel */}
-      <div className="mb-4 md:mb-6">
+      {featureFlags.ai_insights && (
+        <div className="mb-4 md:mb-6">
         <AIInsightsPanel
           clientId={selectedClient.id}
           clientName={selectedClient.name}
