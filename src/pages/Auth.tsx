@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Lock, User } from 'lucide-react';
 import { z } from 'zod';
+import loginBanner from '@/assets/login-banner.jpg';
 
 const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'La contraseña debe tener al menos 6 caracteres');
@@ -110,11 +111,22 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Marketing Dashboard</CardTitle>
-          <CardDescription>Gestiona tus campañas y clientes</CardDescription>
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Background banner */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src={loginBanner}
+          alt=""
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 backdrop-blur-sm bg-background/70" />
+      </div>
+
+      {/* Card */}
+      <Card className="w-full max-w-md relative z-10 mx-4 border-border/50 shadow-2xl bg-card/95 backdrop-blur-md">
+        <CardHeader className="text-center pb-2">
+          <CardTitle className="text-3xl font-bold tracking-tight">Socialify</CardTitle>
+          <CardDescription className="text-base">Dashboard</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
