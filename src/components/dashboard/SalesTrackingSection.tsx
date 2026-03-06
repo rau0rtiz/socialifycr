@@ -170,7 +170,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>
+            <Button size="sm" onClick={() => { setEditingSale(null); setDialogOpen(true); }}>
               <Plus className="h-4 w-4 mr-1" />
               Registrar Venta
             </Button>
