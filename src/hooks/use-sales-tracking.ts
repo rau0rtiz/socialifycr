@@ -116,6 +116,7 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
     isLoading,
     addSale,
     deleteSale,
+    updateSale,
     summary: {
       totalCount: completedSales.length,
       totalCRC: totalSalesCRC,
