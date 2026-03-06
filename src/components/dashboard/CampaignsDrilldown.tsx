@@ -138,7 +138,10 @@ const CampaignRow = ({
   onClick: () => void;
   clientId: string;
   configuredGoal?: GoalType | null;
-}) => (
+}) => {
+  const isPurchaseGoal = configuredGoal === 'purchases' || campaign.resultType === 'Compras';
+  
+  return (
   <div
     className="p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors"
   >
@@ -181,13 +184,17 @@ const CampaignRow = ({
         label={getCostPerResultLabel(campaign.resultType)}
         value={campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult, currency) : '-'}
       />
+      {isPurchaseGoal && (
+        <MetricCard icon={Eye} label="Landing Page Views" value={formatNumber(campaign.landingPageViews)} />
+      )}
       {campaign.roas !== null && <MetricCard icon={TrendingUp} label="ROAS" value={`${campaign.roas.toFixed(2)}x`} />}
     </div>
   </div>
-);
+  );
+};
 
 // AdSet Row Component
-const AdSetRow = ({ adset, currency, onClick }: { adset: AdSetInsights; currency: string; onClick: () => void }) => (
+const AdSetRow = ({ adset, currency, onClick, isPurchaseGoal }: { adset: AdSetInsights; currency: string; onClick: () => void; isPurchaseGoal?: boolean }) => (
   <div
     className="p-4 border border-border rounded-lg hover:bg-muted/30 cursor-pointer transition-colors"
     onClick={onClick}
@@ -221,12 +228,15 @@ const AdSetRow = ({ adset, currency, onClick }: { adset: AdSetInsights; currency
         label={getCostPerResultLabel(adset.resultType)}
         value={adset.costPerResult > 0 ? formatCurrency(adset.costPerResult, currency) : '-'}
       />
+      {isPurchaseGoal && (
+        <MetricCard icon={Eye} label="Landing Page Views" value={formatNumber(adset.landingPageViews)} />
+      )}
     </div>
   </div>
 );
 
 // Ad Row Component
-const AdRow = ({ ad, currency }: { ad: AdInsights; currency: string }) => (
+const AdRow = ({ ad, currency, isPurchaseGoal }: { ad: AdInsights; currency: string; isPurchaseGoal?: boolean }) => (
   <div className="p-4 border border-border rounded-lg">
     <div className="flex items-start gap-4 mb-3">
       {ad.thumbnailUrl ? (
@@ -261,6 +271,9 @@ const AdRow = ({ ad, currency }: { ad: AdInsights; currency: string }) => (
         label={getCostPerResultLabel(ad.resultType)}
         value={ad.costPerResult > 0 ? formatCurrency(ad.costPerResult, currency) : '-'}
       />
+      {isPurchaseGoal && (
+        <MetricCard icon={Eye} label="Landing Page Views" value={formatNumber(ad.landingPageViews)} />
+      )}
     </div>
   </div>
 );
@@ -550,12 +563,16 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
                 configuredGoal={campaignGoalsData?.goals?.[campaign.id]?.goal_type as GoalType | undefined}
               />
             ))}
-            {viewLevel === 'adsets' && (adsets || []).map((adset) => (
-              <AdSetRow key={adset.id} adset={adset} currency={currency} onClick={() => handleAdSetClick(adset)} />
-            ))}
-            {viewLevel === 'ads' && (ads || []).map((ad) => (
-              <AdRow key={ad.id} ad={ad} currency={currency} />
-            ))}
+            {viewLevel === 'adsets' && (adsets || []).map((adset) => {
+              const campaignGoal = selectedCampaign ? (campaignGoalsData?.goals?.[selectedCampaign.id]?.goal_type as GoalType | undefined) : undefined;
+              const isPurchase = campaignGoal === 'purchases' || selectedCampaign?.resultType === 'Compras';
+              return <AdSetRow key={adset.id} adset={adset} currency={currency} onClick={() => handleAdSetClick(adset)} isPurchaseGoal={isPurchase} />;
+            })}
+            {viewLevel === 'ads' && (ads || []).map((ad) => {
+              const campaignGoal = selectedCampaign ? (campaignGoalsData?.goals?.[selectedCampaign.id]?.goal_type as GoalType | undefined) : undefined;
+              const isPurchase = campaignGoal === 'purchases' || selectedCampaign?.resultType === 'Compras';
+              return <AdRow key={ad.id} ad={ad} currency={currency} isPurchaseGoal={isPurchase} />;
+            })}
           </div>
         )}
       </CardContent>

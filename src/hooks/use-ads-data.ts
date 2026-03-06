@@ -21,6 +21,7 @@ export interface CampaignInsights {
   resultType: string;
   costPerResult: number;
   roas: number | null;
+  landingPageViews: number;
 }
 
 export interface CampaignsResult {
@@ -44,6 +45,7 @@ export interface AdSetInsights {
   results: number;
   resultType: string;
   costPerResult: number;
+  landingPageViews: number;
 }
 
 export interface AdInsights {
@@ -60,6 +62,7 @@ export interface AdInsights {
   results: number;
   resultType: string;
   costPerResult: number;
+  landingPageViews: number;
 }
 
 const getMetaErrorMessage = (err: unknown) => {
@@ -158,6 +161,13 @@ const extractResults = (actions: any[], objective: string, costPerAction?: any[]
 
   // Final fallback based on objective
   return { count: 0, type: getResultTypeFromObjective(objective) };
+};
+
+// Extract landing page views from actions array
+const extractLandingPageViews = (actions: any[]): number => {
+  if (!actions || !Array.isArray(actions)) return 0;
+  const lpv = actions.find((a: any) => a.action_type === 'landing_page_view');
+  return lpv ? parseInt(lpv.value) || 0 : 0;
 };
 
 // Extract cost per result by finding the highest priority action type
@@ -328,6 +338,7 @@ export const useCampaigns = (
           resultType,
           costPerResult,
           roas: roas ? parseFloat(roas) : null,
+          landingPageViews: extractLandingPageViews(insights.actions),
         };
       });
 
@@ -394,6 +405,7 @@ export const useAdSets = (
           results,
           resultType,
           costPerResult,
+          landingPageViews: extractLandingPageViews(insights.actions),
         };
       });
     },
@@ -453,6 +465,7 @@ export const useAds = (
           results,
           resultType,
           costPerResult,
+          landingPageViews: extractLandingPageViews(insights.actions),
         };
       });
     },
