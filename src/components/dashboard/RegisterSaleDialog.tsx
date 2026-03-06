@@ -67,7 +67,6 @@ export const RegisterSaleDialog = ({
       product: product || undefined,
       message_platform: messagePlatform || undefined,
       notes: notes || undefined,
-      status,
     };
 
     if (source === 'ad' && selectedCampaign) {
