@@ -190,15 +190,37 @@ serve(async (req) => {
       });
     }
 
-    // Action: Save connection to database
+    // Action: Save connection to database (requires authentication)
     if (action === 'save-connection') {
-      const { clientId, channelId, channelName, accessToken, refreshToken, expiresIn } = await req.json();
-      
-      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-        throw new Error('Supabase configuration missing');
+      // Verify JWT - only authenticated users can save connections
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
-      
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+      const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { clientId, channelId, channelName, accessToken, refreshToken, expiresIn } = await req.json();
+
+      // Verify user has access to this client
+      const { data: hasAccess } = await supabase.rpc('has_client_access', { _client_id: clientId, _user_id: user.id });
+      if (!hasAccess) {
+        return new Response(JSON.stringify({ error: 'Access denied to this client' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       
       const tokenExpiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
       

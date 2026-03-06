@@ -177,14 +177,40 @@ serve(async (req) => {
       });
     }
 
-    // Save selected accounts to database
+    // Save selected accounts to database (requires authentication)
     if (action === 'save-connection') {
+      // Verify JWT - only authenticated users can save connections
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const body = await req.json();
       const { clientId, pageId, pageName, pageAccessToken, instagramId, adAccountId, tokenExpiresAt, accessToken } = body;
 
       if (!clientId || !pageId || !pageName || !pageAccessToken) {
         return new Response(JSON.stringify({ error: 'Missing required fields' }), {
           status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Verify user has access to this client
+      const { data: hasAccess } = await supabase.rpc('has_client_access', { _client_id: clientId, _user_id: user.id });
+      if (!hasAccess) {
+        return new Response(JSON.stringify({ error: 'Access denied to this client' }), {
+          status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
