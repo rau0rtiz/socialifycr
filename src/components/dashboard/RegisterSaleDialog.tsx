@@ -55,10 +55,11 @@ export const RegisterSaleDialog = ({
   const [messagePlatform, setMessagePlatform] = useState('');
   const [notes, setNotes] = useState('');
 
-  const { data: allAds, isLoading: adsLoading } = useAllAds(
+  const { data: allAdsResult, isLoading: adsLoading } = useAllAds(
     clientId || null,
     hasAdAccount && open && source === 'ad'
   );
+  const allAds = allAdsResult?.ads;
 
   const handleSubmit = () => {
     if (!amount || !source) {

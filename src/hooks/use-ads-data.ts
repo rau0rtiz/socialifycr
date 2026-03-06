@@ -484,11 +484,16 @@ export interface AllAdItem {
   spend: number;
 }
 
+export interface AllAdsResult {
+  ads: AllAdItem[];
+  currency: string;
+}
+
 export const useAllAds = (clientId: string | null, hasAdAccount: boolean, datePreset: DatePresetKey = 'last_30d') => {
   return useQuery({
     queryKey: ['meta-all-ads', clientId, datePreset],
-    queryFn: async (): Promise<AllAdItem[]> => {
-      if (!clientId || !hasAdAccount) return [];
+    queryFn: async (): Promise<AllAdsResult> => {
+      if (!clientId || !hasAdAccount) return { ads: [], currency: 'USD' };
 
       const { data, error } = await supabase.functions.invoke('meta-api', {
         body: {
@@ -501,7 +506,7 @@ export const useAllAds = (clientId: string | null, hasAdAccount: boolean, datePr
       if (error) throw error;
       if (data?.error) throw new Error(getMetaErrorMessage(data.error));
 
-      return (data?.data || []).map((ad: any) => {
+      const ads = (data?.data || []).map((ad: any) => {
         const insights = ad.insights?.data?.[0] || {};
         return {
           id: ad.id,
@@ -513,6 +518,8 @@ export const useAllAds = (clientId: string | null, hasAdAccount: boolean, datePr
           spend: parseFloat(insights.spend) || 0,
         };
       });
+
+      return { ads, currency: data?.currency || 'USD' };
     },
     enabled: !!clientId && hasAdAccount,
     staleTime: 5 * 60 * 1000,

@@ -416,6 +416,20 @@ serve(async (req) => {
           timeRangeParam = `&date_preset=${datePreset}`;
         }
 
+        // Get ad account currency
+        let allAdsCurrency = 'USD';
+        try {
+          const accountResponse = await fetch(
+            `https://graph.facebook.com/v18.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
+          );
+          const accountData = await accountResponse.json();
+          if (accountData.currency) {
+            allAdsCurrency = accountData.currency;
+          }
+        } catch (err) {
+          console.log('Could not fetch ad account currency:', err);
+        }
+
         // Get all ads from ad account with active campaigns filter
         const allAdsResponse = await fetch(
           `https://graph.facebook.com/v18.0/${adAccountId}/ads?` +
@@ -452,7 +466,7 @@ serve(async (req) => {
           })
         );
 
-        result = { data: allAdsWithInsights };
+        result = { data: allAdsWithInsights, currency: allAdsCurrency };
         break;
       }
 
