@@ -563,12 +563,16 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
                 configuredGoal={campaignGoalsData?.goals?.[campaign.id]?.goal_type as GoalType | undefined}
               />
             ))}
-            {viewLevel === 'adsets' && (adsets || []).map((adset) => (
-              <AdSetRow key={adset.id} adset={adset} currency={currency} onClick={() => handleAdSetClick(adset)} />
-            ))}
-            {viewLevel === 'ads' && (ads || []).map((ad) => (
-              <AdRow key={ad.id} ad={ad} currency={currency} />
-            ))}
+            {viewLevel === 'adsets' && (adsets || []).map((adset) => {
+              const campaignGoal = selectedCampaign ? (campaignGoalsData?.goals?.[selectedCampaign.id]?.goal_type as GoalType | undefined) : undefined;
+              const isPurchase = campaignGoal === 'purchases' || selectedCampaign?.resultType === 'Compras';
+              return <AdSetRow key={adset.id} adset={adset} currency={currency} onClick={() => handleAdSetClick(adset)} isPurchaseGoal={isPurchase} />;
+            })}
+            {viewLevel === 'ads' && (ads || []).map((ad) => {
+              const campaignGoal = selectedCampaign ? (campaignGoalsData?.goals?.[selectedCampaign.id]?.goal_type as GoalType | undefined) : undefined;
+              const isPurchase = campaignGoal === 'purchases' || selectedCampaign?.resultType === 'Compras';
+              return <AdRow key={ad.id} ad={ad} currency={currency} isPurchaseGoal={isPurchase} />;
+            })}
           </div>
         )}
       </CardContent>
