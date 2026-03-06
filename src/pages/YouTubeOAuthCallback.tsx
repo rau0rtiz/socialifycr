@@ -73,7 +73,7 @@ export const YouTubeOAuthCallback = () => {
             refreshToken: result.refreshToken,
             expiresIn: result.expiresIn,
             clientId
-          }, '*');
+          }, window.location.origin);
           window.close();
         } else {
           toast({
