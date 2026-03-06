@@ -12,7 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import BrandSettings from "./pages/BrandSettings";
 import Clientes from "./pages/Clientes";
 import Contenido from "./pages/Contenido";
-import Reports from "./pages/Reports";
+
 import Ventas from "./pages/Ventas";
 import Auth from "./pages/Auth";
 import AcceptInvite from "./pages/AcceptInvite";
@@ -55,7 +55,7 @@ const App = () => (
                 {/* Shared routes (with conditional content based on role) */}
                 <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                 <Route path="/content" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
-                <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute><NotFound /></ProtectedRoute>} />
                 <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
                 <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                 <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />

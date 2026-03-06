@@ -6,8 +6,15 @@ import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
 import { useCrosspostLinks } from '@/hooks/use-crosspost-links';
+import { useVideoIdeas } from '@/hooks/use-video-ideas';
+import { useMetaConnection } from '@/hooks/use-meta-api';
+import { useUserRole } from '@/hooks/use-user-role';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
+import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel';
+import { VideoIdeasSection } from '@/components/dashboard/VideoIdeasSection';
+import { CompetitorsPanel } from '@/components/dashboard/CompetitorsPanel';
 import { ContentPost, NetworkType } from '@/data/mockData';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -120,6 +127,19 @@ const Contenido = () => {
     updateMetadataMultiple,
     capture48hMetrics,
   } = useContentMetadata(clientId);
+
+  const {
+    ideas: videoIdeas,
+    isLoading: ideasLoading,
+    addIdea,
+    updateIdea,
+    deleteIdea,
+  } = useVideoIdeas(clientId);
+
+  const { data: metaConnection } = useMetaConnection(clientId);
+  const hasAdAccount = !!metaConnection?.ad_account_id;
+
+  const { isAgency, clientAccess } = useUserRole();
 
   // Crosspost links
   const {
@@ -738,6 +758,54 @@ const Contenido = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* AI Insights Panel */}
+      {selectedClient && (
+        <div className="mb-4 md:mb-6">
+          <AIInsightsPanel
+            clientId={selectedClient.id}
+            clientName={selectedClient.name}
+            industry={selectedClient.industry || 'general'}
+            content={content}
+            hasAdAccount={hasAdAccount}
+            aiContext={selectedClient.ai_context}
+            preferredRegion={selectedClient.preferred_region}
+            onRegionChange={async (region) => {
+              await supabase
+                .from('clients')
+                .update({ preferred_region: region })
+                .eq('id', selectedClient.id);
+            }}
+            onAddVideoIdea={addIdea}
+          />
+        </div>
+      )}
+
+      {/* Video Ideas Section */}
+      {selectedClient && (
+        <div className="mb-4 md:mb-6">
+          <VideoIdeasSection
+            ideas={videoIdeas}
+            isLoading={ideasLoading}
+            tags={tags}
+            models={models}
+            onAddIdea={addIdea}
+            onUpdateIdea={updateIdea}
+            onDeleteIdea={deleteIdea}
+            clientId={selectedClient.id}
+          />
+        </div>
+      )}
+
+      {/* Competitors Panel */}
+      {selectedClient && (
+        <div className="mb-4 md:mb-6">
+          <CompetitorsPanel
+            clientId={selectedClient.id}
+            canEdit={isAgency || clientAccess.some(c => c.clientId === selectedClient.id && (c.role === 'editor' || c.role === 'account_manager'))}
+          />
         </div>
       )}
 

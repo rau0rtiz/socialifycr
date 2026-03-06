@@ -1,13 +1,9 @@
 import { 
   LayoutDashboard, 
-  Megaphone, 
-  Share2, 
   FileText, 
-  BarChart3, 
   Users, 
   Palette, 
   LogOut,
-  ChevronLeft,
   ShoppingCart
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
@@ -33,15 +29,12 @@ import { useUserRole } from '@/hooks/use-user-role';
 
 const mainMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
-  { title: 'Campañas y Reportes', url: '/reports', icon: BarChart3 },
-  { title: 'Redes Sociales', url: '/social', icon: Share2 },
   { title: 'Contenido', url: '/content', icon: FileText },
 ];
 
 // Client-only menu items (simplified)
 const clientMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
-  { title: 'Mis Reportes', url: '/reports', icon: BarChart3 },
   { title: 'Contenido', url: '/content', icon: FileText },
 ];
 
