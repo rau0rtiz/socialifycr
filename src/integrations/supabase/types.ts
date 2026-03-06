@@ -138,6 +138,68 @@ export type Database = {
           },
         ]
       }
+      client_feature_flags: {
+        Row: {
+          ai_insights: boolean
+          campaigns: boolean
+          client_id: string
+          competitors: boolean
+          content_grid: boolean
+          created_at: string | null
+          dashboard: boolean
+          funnel: boolean
+          id: string
+          instagram_posts: boolean
+          sales_tracking: boolean
+          social_followers: boolean
+          updated_at: string | null
+          video_ideas: boolean
+          youtube_videos: boolean
+        }
+        Insert: {
+          ai_insights?: boolean
+          campaigns?: boolean
+          client_id: string
+          competitors?: boolean
+          content_grid?: boolean
+          created_at?: string | null
+          dashboard?: boolean
+          funnel?: boolean
+          id?: string
+          instagram_posts?: boolean
+          sales_tracking?: boolean
+          social_followers?: boolean
+          updated_at?: string | null
+          video_ideas?: boolean
+          youtube_videos?: boolean
+        }
+        Update: {
+          ai_insights?: boolean
+          campaigns?: boolean
+          client_id?: string
+          competitors?: boolean
+          content_grid?: boolean
+          created_at?: string | null
+          dashboard?: boolean
+          funnel?: boolean
+          id?: string
+          instagram_posts?: boolean
+          sales_tracking?: boolean
+          social_followers?: boolean
+          updated_at?: string | null
+          video_ideas?: boolean
+          youtube_videos?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_feature_flags_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_invitations: {
         Row: {
           accepted_at: string | null
@@ -506,6 +568,77 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "crosspost_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_sales: {
+        Row: {
+          ad_campaign_id: string | null
+          ad_campaign_name: string | null
+          ad_id: string | null
+          ad_name: string | null
+          amount: number
+          client_id: string
+          created_at: string | null
+          created_by: string
+          currency: string
+          customer_name: string | null
+          id: string
+          message_platform: string | null
+          notes: string | null
+          product: string | null
+          sale_date: string
+          source: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          ad_campaign_id?: string | null
+          ad_campaign_name?: string | null
+          ad_id?: string | null
+          ad_name?: string | null
+          amount: number
+          client_id: string
+          created_at?: string | null
+          created_by: string
+          currency?: string
+          customer_name?: string | null
+          id?: string
+          message_platform?: string | null
+          notes?: string | null
+          product?: string | null
+          sale_date?: string
+          source: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          ad_campaign_id?: string | null
+          ad_campaign_name?: string | null
+          ad_id?: string | null
+          ad_name?: string | null
+          amount?: number
+          client_id?: string
+          created_at?: string | null
+          created_by?: string
+          currency?: string
+          customer_name?: string | null
+          id?: string
+          message_platform?: string | null
+          notes?: string | null
+          product?: string | null
+          sale_date?: string
+          source?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_sales_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"

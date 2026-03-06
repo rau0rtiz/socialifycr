@@ -7,7 +7,8 @@ import {
   Users, 
   Palette, 
   LogOut,
-  ChevronLeft
+  ChevronLeft,
+  ShoppingCart
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -28,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/use-user-role';
+import { useClientFeatures } from '@/hooks/use-client-features';
 
 const mainMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -53,9 +55,10 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const { platformBrand } = useBrand();
+  const { platformBrand, selectedClient } = useBrand();
   const { signOut } = useAuth();
   const { isAgency, loading: roleLoading } = useUserRole();
+  const { flags: featureFlags } = useClientFeatures(selectedClient?.id || null);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -65,7 +68,12 @@ export const Sidebar = () => {
   };
 
   // Determine which menu items to show based on user role
-  const menuItems = isAgency ? mainMenuItems : clientMenuItems;
+  const baseMenuItems = isAgency ? mainMenuItems : clientMenuItems;
+  
+  // Add dynamic items based on feature flags
+  const menuItems = featureFlags.sales_tracking
+    ? [...baseMenuItems.slice(0, 1), { title: 'Ventas', url: '/#ventas', icon: ShoppingCart }, ...baseMenuItems.slice(1)]
+    : baseMenuItems;
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">
