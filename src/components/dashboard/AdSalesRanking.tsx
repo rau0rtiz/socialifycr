@@ -79,7 +79,9 @@ interface AdRankItem {
 export const AdSalesRanking = ({ clientId, hasAdAccount }: AdSalesRankingProps) => {
   const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
 
-  const { data: allAds, isLoading: adsLoading } = useAllAds(clientId, hasAdAccount, datePreset);
+  const { data: allAdsResult, isLoading: adsLoading } = useAllAds(clientId, hasAdAccount, datePreset);
+  const allAds = allAdsResult?.ads || [];
+  const adCurrency = allAdsResult?.currency || 'USD';
 
   // Get date range for filtering sales
   const dateRange = useMemo(() => getDateRangeForPreset(datePreset), [datePreset]);
@@ -116,13 +118,15 @@ export const AdSalesRanking = ({ clientId, hasAdAccount }: AdSalesRankingProps) 
       const totalCRC = adSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
       const totalUSD = adSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
 
-      // Get real spend from Meta API
-      const adData = allAds?.find(a => a.id === adId);
+      // Get real spend from Meta API (in adCurrency)
+      const adData = allAds.find(a => a.id === adId);
       const adSpend = adData?.spend || 0;
       const thumbnailUrl = adData?.thumbnailUrl || null;
 
-      // Manual ROAS: total sales (USD) / ad spend
-      const roas = adSpend > 0 && totalUSD > 0 ? totalUSD / adSpend : null;
+      // ROAS: compare sales in the SAME currency as the ad spend
+      // If ads are in CRC, use CRC sales; if in USD, use USD sales
+      const salesInAdCurrency = adCurrency === 'CRC' ? totalCRC : totalUSD;
+      const roas = adSpend > 0 && salesInAdCurrency > 0 ? salesInAdCurrency / adSpend : null;
 
       items.push({
         adId,
@@ -139,7 +143,7 @@ export const AdSalesRanking = ({ clientId, hasAdAccount }: AdSalesRankingProps) 
 
     items.sort((a, b) => b.salesCount - a.salesCount || b.totalAmountUSD - a.totalAmountUSD);
     return items;
-  }, [filteredSales, allAds]);
+  }, [filteredSales, allAds, adCurrency]);
 
   const isLoading = adsLoading || salesLoading;
 
