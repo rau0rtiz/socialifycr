@@ -18,6 +18,7 @@ import Auth from "./pages/Auth";
 import AcceptInvite from "./pages/AcceptInvite";
 import Invitacion from "./pages/Invitacion";
 import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/ResetPassword";
 import { MetaOAuthCallback } from "./pages/MetaOAuthCallback";
 import { YouTubeOAuthCallback } from "./pages/YouTubeOAuthCallback";
 
@@ -34,6 +35,7 @@ const App = () => (
               <Sonner />
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/accept-invite" element={<AcceptInvite />} />
                 <Route path="/invitacion/:token" element={<Invitacion />} />
                 <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

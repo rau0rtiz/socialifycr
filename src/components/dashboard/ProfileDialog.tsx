@@ -45,21 +45,29 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number) {
 
 async function getCroppedBlob(image: HTMLImageElement, crop: Crop): Promise<Blob> {
   const canvas = document.createElement('canvas');
-  const scaleX = image.naturalWidth / image.width;
-  const scaleY = image.naturalHeight / image.height;
   const size = 400; // output 400x400
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(
-    image,
-    (crop.x || 0) * scaleX,
-    (crop.y || 0) * scaleY,
-    (crop.width || 0) * scaleX,
-    (crop.height || 0) * scaleY,
-    0, 0, size, size
-  );
+
+  // Convert crop values to natural image pixels
+  let sx: number, sy: number, sw: number, sh: number;
+  if (crop.unit === '%') {
+    sx = (crop.x / 100) * image.naturalWidth;
+    sy = (crop.y / 100) * image.naturalHeight;
+    sw = (crop.width / 100) * image.naturalWidth;
+    sh = (crop.height / 100) * image.naturalHeight;
+  } else {
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    sx = (crop.x || 0) * scaleX;
+    sy = (crop.y || 0) * scaleY;
+    sw = (crop.width || 0) * scaleX;
+    sh = (crop.height || 0) * scaleY;
+  }
+
+  ctx.drawImage(image, sx, sy, sw, sh, 0, 0, size, size);
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas toBlob failed')), 'image/jpeg', 0.9);
   });
@@ -123,7 +131,8 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       setCropSrc(null);
       toast.success('Imagen recortada y subida');
     } catch (err) {
-      toast.error('Error al subir imagen');
+      console.error('Profile image upload error:', err);
+      toast.error(err instanceof Error ? err.message : 'Error al subir imagen');
     } finally {
       setUploadingAvatar(false);
     }
