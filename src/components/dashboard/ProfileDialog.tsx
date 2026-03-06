@@ -248,13 +248,10 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
                     ref={imgRef}
                     src={cropSrc}
                     alt="Vista previa"
-                    className="w-full h-full pointer-events-none"
+                    className="pointer-events-none"
                     draggable={false}
                     style={getPreviewStyle()}
-                    onLoad={() => {
-                      // Force re-render once image loads
-                      setZoom(z => z);
-                    }}
+                    onLoad={() => setZoom(z => z)}
                   />
                 </div>
               </div>
