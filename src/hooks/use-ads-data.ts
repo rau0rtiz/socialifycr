@@ -162,6 +162,13 @@ const extractResults = (actions: any[], objective: string, costPerAction?: any[]
   return { count: 0, type: getResultTypeFromObjective(objective) };
 };
 
+// Extract landing page views from actions array
+const extractLandingPageViews = (actions: any[]): number => {
+  if (!actions || !Array.isArray(actions)) return 0;
+  const lpv = actions.find((a: any) => a.action_type === 'landing_page_view');
+  return lpv ? parseInt(lpv.value) || 0 : 0;
+};
+
 // Extract cost per result by finding the highest priority action type
 const extractCostPerResult = (
   costPerAction: any[],
