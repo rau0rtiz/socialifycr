@@ -385,11 +385,13 @@ const Dashboard = () => {
           }}
           onAddVideoIdea={addIdea}
         />
-      </div>
+        </div>
+      )}
 
       {/* Video Ideas Section */}
-      <div className="mb-4 md:mb-6">
-        <VideoIdeasSection
+      {featureFlags.video_ideas && (
+        <div className="mb-4 md:mb-6">
+          <VideoIdeasSection
           ideas={videoIdeas}
           isLoading={ideasLoading}
           tags={tags}
