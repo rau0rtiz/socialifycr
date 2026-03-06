@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle } from 'lucide-react';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { RegisterSaleDialog } from './RegisterSaleDialog';
 import { LinkAdDialog } from './LinkAdDialog';
@@ -14,6 +14,17 @@ import { format, addMonths, subMonths, eachDayOfInterval, startOfMonth, endOfMon
 import { es } from 'date-fns/locale';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface SalesTrackingSectionProps {
   clientId: string;
@@ -280,9 +291,33 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                               <Link2 className="h-3 w-3" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(sale.id)}>
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7">
+                                <Trash2 className="h-3 w-3 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-2">
+                                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                                </div>
+                                <AlertDialogTitle className="text-center">¿Eliminar esta venta?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-center">
+                                  Esta acción no se puede deshacer.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="sm:justify-center gap-2">
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => handleDelete(sale.id)}
+                                >
+                                  Eliminar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>
