@@ -43,7 +43,7 @@ const Ventas = () => {
     <DashboardLayout>
       <div className="mb-4 md:mb-6">
         <h1 className="text-lg md:text-xl font-semibold text-foreground mb-4">
-          Ventas por Mensajes
+          Ventas
         </h1>
         <SalesTrackingSection clientId={selectedClient.id} campaigns={[]} />
       </div>
