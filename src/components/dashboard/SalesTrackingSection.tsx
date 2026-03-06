@@ -29,6 +29,21 @@ const SOURCE_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
+const SOURCE_COLORS: Record<string, string> = {
+  story: 'hsl(280, 70%, 50%)',
+  ad: 'hsl(210, 80%, 50%)',
+  referral: 'hsl(150, 60%, 45%)',
+  organic: 'hsl(40, 90%, 50%)',
+  other: 'hsl(0, 0%, 60%)',
+};
+
+const CHART_CONFIG = {
+  story: { label: 'Historia', color: SOURCE_COLORS.story },
+  ad: { label: 'Publicidad', color: SOURCE_COLORS.ad },
+  referral: { label: 'Referencia', color: SOURCE_COLORS.referral },
+  organic: { label: 'Orgánico', color: SOURCE_COLORS.organic },
+  other: { label: 'Otro', color: SOURCE_COLORS.other },
+};
 
 const formatCurrency = (amount: number, currency: string) => {
   if (currency === 'CRC') return `₡${amount.toLocaleString('es-CR')}`;
