@@ -253,7 +253,7 @@ export const AdSalesRanking = ({ clientId, hasAdAccount }: AdSalesRankingProps) 
                       <div className="text-center">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Gasto</p>
                         <p className="text-sm font-bold text-muted-foreground">
-                          {item.adSpend > 0 ? `$${item.adSpend.toFixed(2)}` : '—'}
+                          {item.adSpend > 0 ? formatCurrency(item.adSpend, adCurrency) : '—'}
                         </p>
                       </div>
 
