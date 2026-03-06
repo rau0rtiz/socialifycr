@@ -165,11 +165,6 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                       <TableCell className="hidden md:table-cell text-sm">
                         {sale.customer_name || '—'}
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Badge variant={sale.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
-                          {STATUS_LABELS[sale.status]}
-                        </Badge>
-                      </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(sale.id)}>
                           <Trash2 className="h-3 w-3 text-destructive" />
