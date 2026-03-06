@@ -89,6 +89,16 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
     },
   });
 
+  const updateSale = useMutation({
+    mutationFn: async ({ saleId, updates }: { saleId: string; updates: Partial<SaleInput & { ad_id?: string; ad_name?: string }> }) => {
+      const { error } = await supabase.from('message_sales').update(updates).eq('id', saleId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['message-sales', clientId] });
+    },
+  });
+
   // Summary calculations
   const completedSales = sales.filter(s => s.status === 'completed');
   const totalSalesCRC = completedSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
