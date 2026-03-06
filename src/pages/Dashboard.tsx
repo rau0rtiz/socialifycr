@@ -333,7 +333,7 @@ const Dashboard = () => {
       )}
 
       {/* Top Videos - YouTube */}
-      {featureFlags.youtube_videos && (youtubeLoading || youtubeConnected) && (
+      {(youtubeLoading || youtubeConnected) && (
         <div className="mb-4 md:mb-6">
           <YouTubeTopVideos
             videos={youtubeVideos}
