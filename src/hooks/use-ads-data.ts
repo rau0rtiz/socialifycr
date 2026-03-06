@@ -484,9 +484,9 @@ export interface AllAdItem {
   spend: number;
 }
 
-export const useAllAds = (clientId: string | null, hasAdAccount: boolean) => {
+export const useAllAds = (clientId: string | null, hasAdAccount: boolean, datePreset: DatePresetKey = 'last_30d') => {
   return useQuery({
-    queryKey: ['meta-all-ads', clientId],
+    queryKey: ['meta-all-ads', clientId, datePreset],
     queryFn: async (): Promise<AllAdItem[]> => {
       if (!clientId || !hasAdAccount) return [];
 
@@ -494,7 +494,7 @@ export const useAllAds = (clientId: string | null, hasAdAccount: boolean) => {
         body: {
           clientId,
           endpoint: 'all-ads',
-          params: { datePreset: 'last_30d' },
+          params: { datePreset },
         },
       });
 
