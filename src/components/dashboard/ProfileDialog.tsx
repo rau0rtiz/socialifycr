@@ -201,16 +201,25 @@ export const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   // Compute CSS transform for the preview image inside the crop area
   const getPreviewStyle = (): React.CSSProperties => {
     if (!imgRef.current) return {};
-    const { naturalWidth, naturalHeight } = imgRef.current;
-    const isLandscape = naturalWidth >= naturalHeight;
-    // Scale so the shorter side fills the container, then apply zoom
-    const baseScale = isLandscape
-      ? (naturalHeight > 0 ? 1 : 1)
-      : (naturalWidth > 0 ? 1 : 1);
+    const { naturalWidth: nw, naturalHeight: nh } = imgRef.current;
+    const containerSize = 192; // w-48
+    // Base scale: fit shorter side to container
+    const baseScale = nw >= nh
+      ? containerSize / nh * (nw / nh) // landscape: scale by width ratio
+      : containerSize / nw * (nh / nw); // portrait: scale by height ratio
+    // Actually simpler: scale so image covers container, then zoom
+    const coverScale = Math.max(containerSize / nw, containerSize / nh);
+    const totalScale = coverScale * zoom;
     return {
-      transform: `scale(${zoom}) translate(${-panX * 30}%, ${-panY * 30}%)`,
+      width: nw,
+      height: nh,
+      position: 'absolute' as const,
+      left: '50%',
+      top: '50%',
+      transform: `translate(-50%, -50%) translate(${panX}px, ${panY}px) scale(${totalScale})`,
       transformOrigin: 'center center',
-      objectFit: 'cover' as const,
+      maxWidth: 'none',
+      maxHeight: 'none',
     };
   };
 
