@@ -295,6 +295,23 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
               <CardTitle className="text-base">Opciones de Generación</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
+              {/* Context (required) */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
+                  Contexto del reporte <span className="text-destructive">*</span>
+                </label>
+                <Textarea
+                  placeholder="Ej: Enfócate en el ROAS. Usa un tono ejecutivo. Incluye recomendaciones de presupuesto. Resalta el crecimiento en ventas..."
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
+                {customInstructions.trim().length === 0 && (
+                  <p className="text-xs text-muted-foreground">Describe el enfoque, tono y puntos clave que debe tener el reporte.</p>
+                )}
+              </div>
+
               {/* Format */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -330,18 +347,6 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              {/* Custom Instructions */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Instrucciones adicionales (opcional)</label>
-                <Textarea
-                  placeholder="Ej: Enfócate en el ROAS. Usa un tono ejecutivo. Incluye recomendaciones de presupuesto..."
-                  value={customInstructions}
-                  onChange={(e) => setCustomInstructions(e.target.value)}
-                  rows={4}
-                  className="resize-none"
-                />
               </div>
 
               {/* Generate Button */}
