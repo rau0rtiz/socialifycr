@@ -5,7 +5,8 @@ import {
   Palette, 
   LogOut,
   ShoppingCart,
-  History
+  History,
+  BarChart3
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
