@@ -335,6 +335,12 @@ const Contenido = () => {
     return grouped;
   }, [deduplicatedContent]);
 
+  // Filter by selected platforms
+  const platformFilteredContent = useMemo(() => {
+    if (selectedPlatforms.length === 0) return [];
+    return deduplicatedContent.filter(post => selectedPlatforms.includes(post.network));
+  }, [deduplicatedContent, selectedPlatforms]);
+
   const handlePostClick = (post: ContentPost) => {
     setSelectedPost(post);
     setIsModalOpen(true);
