@@ -219,5 +219,3 @@ export const SocialPerformanceReport = ({ clientId }: SocialPerformanceReportPro
   );
 };
 
-// Need to import Cell for the BarChart coloring
-import { Cell } from 'recharts';
