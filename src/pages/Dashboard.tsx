@@ -295,7 +295,7 @@ const Dashboard = () => {
 
       {/* Social Followers - Full Width */}
       {(socialLoading || socialPlatforms.length > 0) && (
-        <div className="mb-4 md:mb-6">
+        <div className="mb-4 md:mb-6" data-tour="kpi-section">
           <SocialFollowersSection
             platforms={socialPlatforms}
             isLoading={socialLoading}
