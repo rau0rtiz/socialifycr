@@ -161,7 +161,7 @@ export const ClientDetailDialog = ({
 
           {/* Tabs */}
           <Tabs defaultValue="connections" className="w-full">
-            <TabsList className="w-full grid grid-cols-3 mb-4">
+            <TabsList className="w-full grid grid-cols-4 mb-4">
               <TabsTrigger value="connections" className="gap-2">
                 <Link2 className="h-4 w-4" />
                 Conexiones
@@ -169,6 +169,10 @@ export const ClientDetailDialog = ({
               <TabsTrigger value="team" className="gap-2">
                 <Users className="h-4 w-4" />
                 Equipo
+              </TabsTrigger>
+              <TabsTrigger value="sections" className="gap-2">
+                <ToggleRight className="h-4 w-4" />
+                Secciones
               </TabsTrigger>
               <TabsTrigger value="brand" className="gap-2">
                 <Palette className="h-4 w-4" />
