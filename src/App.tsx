@@ -55,6 +55,13 @@ const App = () => (
                     </RoleProtectedRoute>
                   </ProtectedRoute>
                 } />
+                <Route path="/historial" element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requireAgency>
+                      <Historial />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } />
                 {/* Shared routes (with conditional content based on role) */}
                 <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                 <Route path="/content" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />

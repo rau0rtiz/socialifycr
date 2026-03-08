@@ -70,7 +70,7 @@ export const Sidebar = () => {
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4" data-tour="sidebar-nav">
         <div className="flex items-center gap-3">
           {platformBrand.logoUrl ? (
             <img 

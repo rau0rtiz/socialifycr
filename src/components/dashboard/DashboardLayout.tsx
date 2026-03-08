@@ -93,6 +93,7 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
             {children}
           </main>
         </div>
+        <OnboardingTour />
       </div>
     </SidebarProvider>
   );
