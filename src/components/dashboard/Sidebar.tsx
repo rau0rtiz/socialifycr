@@ -102,6 +102,7 @@ export const Sidebar = () => {
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <NavLink 
                       to={item.url} 
+                      data-tour={item.url === '/ventas' ? 'ventas-link' : item.url === '/content' ? 'contenido-link' : undefined}
                       className={cn(
                         "flex items-center gap-3 transition-colors",
                         isActive(item.url) && "bg-accent text-accent-foreground"

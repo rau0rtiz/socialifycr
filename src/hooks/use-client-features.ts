@@ -80,6 +80,7 @@ export const useClientFeatures = (clientId: string | null) => {
         funnel: data.funnel,
         campaigns: data.campaigns,
         sales_tracking: data.sales_tracking,
+        monthly_sales_report: data.monthly_sales_report,
       }
     : DEFAULT_FLAGS;
 
