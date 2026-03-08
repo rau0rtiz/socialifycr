@@ -14,6 +14,7 @@ import Clientes from "./pages/Clientes";
 import Contenido from "./pages/Contenido";
 
 import Ventas from "./pages/Ventas";
+import Reportes from "./pages/Reportes";
 import Historial from "./pages/Historial";
 import Auth from "./pages/Auth";
 import AcceptInvite from "./pages/AcceptInvite";
