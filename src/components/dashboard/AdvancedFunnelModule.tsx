@@ -42,7 +42,6 @@ import { es } from 'date-fns/locale';
 import { useFunnelAnalytics } from '@/hooks/use-funnel-analytics';
 import { useUTMTracking, UTMInput } from '@/hooks/use-utm-tracking';
 import { DatePresetKey, DateRange } from '@/hooks/use-ads-data';
-import { DatePresetKey, DateRange } from '@/hooks/use-ads-data';
 import { toast } from 'sonner';
 
 interface AdvancedFunnelModuleProps {
