@@ -421,12 +421,31 @@ export const ContentGrid = ({
                         )}
                       </div>
                     </div>
+                    {/* Date below thumbnail */}
+                    <div className="px-2 py-1.5">
+                      <span className="text-[10px] text-muted-foreground">
+                        {format(new Date(post.date), 'dd MMM yyyy', { locale: es })}
+                      </span>
                     </div>
                   </div>
                 );
               })
             )}
           </div>
+          {/* Pagination */}
+          {!isLoading && totalGridPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-3">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleGridPrev} disabled={gridPage === 0}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {gridPage + 1} / {totalGridPages}
+              </span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleGridNext} disabled={gridPage >= totalGridPages - 1}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
