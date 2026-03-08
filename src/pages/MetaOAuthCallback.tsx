@@ -1,133 +1,64 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useSearchParams } from 'react-router-dom';
 
 export const MetaOAuthCallback = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const code = searchParams.get('code');
-      const state = searchParams.get('state');
-      const error = searchParams.get('error');
-      const errorDescription = searchParams.get('error_description');
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    const error = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
 
-      if (error) {
-        console.error('OAuth error:', error, errorDescription);
-        toast({
-          title: 'Error de autorización',
-          description: errorDescription || 'Error al conectar con Meta',
-          variant: 'destructive',
-        });
-        
-        if (window.opener) {
-          window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: errorDescription }, window.location.origin);
-          window.close();
-        } else {
-          navigate('/clientes');
-        }
-        return;
+    if (error) {
+      console.error('OAuth error:', error, errorDescription);
+      if (window.opener) {
+        window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: errorDescription || error }, window.location.origin);
+        window.close();
       }
+      return;
+    }
 
-      if (!code || !state) {
-        toast({
-          title: 'Error',
-          description: 'Parámetros de autorización faltantes',
-          variant: 'destructive',
-        });
-        
-        if (window.opener) {
-          window.close();
-        } else {
-          navigate('/clientes');
-        }
-        return;
+    if (!code || !state) {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: 'Parámetros de autorización faltantes' }, window.location.origin);
+        window.close();
       }
+      return;
+    }
 
-      try {
-        // Decode state to get clientId
-        const stateData = JSON.parse(atob(state));
-        const clientId = stateData.clientId;
-        const redirectUri = `${window.location.origin}/oauth/meta/callback`;
-
-        // Wait for auth session to be restored from storage (popup may not have it immediately)
-        let accessToken: string | undefined;
-        for (let i = 0; i < 10; i++) {
-          const { data: { session } } = await supabase.auth.getSession();
-          accessToken = session?.access_token;
-          if (accessToken) break;
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-
-        if (!accessToken) {
-          throw new Error('No hay sesión activa. Por favor inicia sesión primero.');
-        }
-
-        // Call fetch-accounts with authentication
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=fetch-accounts`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({ code, redirectUri, clientId })
-          }
-        );
-
-        const result = await response.json();
-
-        if (result.error) {
-          throw new Error(result.error);
-        }
-
-        // Send accounts data to parent window for selection
-        if (window.opener) {
-          window.opener.postMessage({ 
-            type: 'META_OAUTH_ACCOUNTS', 
-            accounts: result.accounts,
-            clientId
-          }, window.location.origin);
-          window.close();
-        } else {
-          toast({
-            title: 'Error',
-            description: 'Por favor usa la ventana emergente para conectar',
-          });
-          navigate('/clientes');
-        }
-      } catch (err) {
-        console.error('Error completing OAuth:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-        
-        toast({
-          title: 'Error',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-
-        if (window.opener) {
-          window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: errorMessage }, window.location.origin);
-          window.close();
-        } else {
-          navigate('/clientes');
-        }
+    // Decode state to get clientId
+    let clientId: string;
+    try {
+      const stateData = JSON.parse(atob(state));
+      clientId = stateData.clientId;
+    } catch {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: 'Estado inválido' }, window.location.origin);
+        window.close();
       }
-    };
+      return;
+    }
 
-    handleCallback();
-  }, [searchParams, navigate, toast]);
+    // Send the code back to the parent window - the parent has the active session
+    // and will make the authenticated API call
+    if (window.opener) {
+      window.opener.postMessage({
+        type: 'META_OAUTH_CODE',
+        code,
+        clientId,
+        redirectUri: `${window.location.origin}/oauth/meta/callback`,
+      }, window.location.origin);
+      window.close();
+    }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
         <h1 className="text-xl font-semibold text-foreground">Conectando con Meta...</h1>
-        <p className="text-muted-foreground mt-2">Por favor espera mientras obtenemos tus cuentas.</p>
+        <p className="text-muted-foreground mt-2">Por favor espera mientras completamos la conexión.</p>
       </div>
     </div>
   );
