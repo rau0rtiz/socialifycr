@@ -6,7 +6,7 @@ import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSe
 import { InstagramTopPosts } from '@/components/dashboard/InstagramTopPosts';
 import { YouTubeTopVideos } from '@/components/dashboard/YouTubeTopVideos';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
-import { FunnelModule } from '@/components/dashboard/FunnelModule';
+import { AdvancedFunnelModule } from '@/components/dashboard/AdvancedFunnelModule';
 import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { useBrand } from '@/contexts/BrandContext';
