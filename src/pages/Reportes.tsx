@@ -91,6 +91,12 @@ const Reportes = () => {
             )}
 
             {isAgency && (
+              <TabsContent value="gamma" className="mt-6">
+                <GammaReportGenerator clientId={clientId} hasAdAccount={hasAdAccount} />
+              </TabsContent>
+            )}
+
+            {isAgency && (
               <TabsContent value="ai-reports" className="mt-6">
                 <AIReportGenerator clientId={clientId} hasAdAccount={hasAdAccount} />
               </TabsContent>
