@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ContentPost } from '@/data/mockData';
 import { ContentTag, ContentModel, ContentMetadata } from '@/hooks/use-content-metadata';
 import { ContentDetailModal } from './ContentDetailModal';
-import { Calendar, Clock, Eye, Heart, Play, Film, LayoutGrid, ImageIcon, RefreshCw, Wifi, Maximize2, Instagram, Youtube, Facebook, Search, X, Link2, Check, Unlink } from 'lucide-react';
+import { Calendar, Clock, Eye, Heart, Play, Film, LayoutGrid, ImageIcon, RefreshCw, Wifi, Maximize2, Instagram, Youtube, Facebook, Search, X, Link2, Check, Unlink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
@@ -74,14 +74,11 @@ const formatNumber = (num: number): string => {
 };
 
 const ContentSkeleton = () => (
-  <div className="group relative rounded-lg border border-border bg-muted/30 p-3">
-    <div className="flex gap-3">
-      <Skeleton className="w-20 h-20 rounded-md flex-shrink-0" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-3 w-3/4" />
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-1/2" />
-      </div>
+  <div className="group relative rounded-lg border border-border bg-muted/30 overflow-hidden">
+    <Skeleton className="w-full aspect-[4/5]" />
+    <div className="p-2 space-y-1.5">
+      <Skeleton className="h-3 w-3/4" />
+      <Skeleton className="h-2.5 w-1/2" />
     </div>
   </div>
 );
@@ -116,6 +113,8 @@ export const ContentGrid = ({
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [gridPage, setGridPage] = useState(0);
+  const GRID_PAGE_SIZE = 9;
   const [showAllDialog, setShowAllDialog] = useState(false);
   const [dialogSearch, setDialogSearch] = useState('');
   const [dialogPlatforms, setDialogPlatforms] = useState<string[]>(['all']);
@@ -141,20 +140,25 @@ export const ContentGrid = ({
     [data]
   );
 
-  // Filter by date range using internal state, sort by date (most recent first) and limit to 6 posts (2x3 grid)
-  const filteredData = [...data]
+  // Filter by date range using internal state, sort by date (most recent first)
+  const allFilteredData = useMemo(() => [...data]
     .filter((post) => {
       if (!internalDateRange?.from || !internalDateRange?.to) return true;
       const postDate = new Date(post.date);
-      // Normalize dates for proper comparison
       const fromDate = new Date(internalDateRange.from);
       fromDate.setHours(0, 0, 0, 0);
       const toDate = new Date(internalDateRange.to);
       toDate.setHours(23, 59, 59, 999);
       return postDate >= fromDate && postDate <= toDate;
     })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 6);
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [data, internalDateRange]);
+
+  const totalGridPages = Math.max(1, Math.ceil(allFilteredData.length / GRID_PAGE_SIZE));
+  const filteredData = allFilteredData.slice(gridPage * GRID_PAGE_SIZE, (gridPage + 1) * GRID_PAGE_SIZE);
+
+  const handleGridPrev = useCallback(() => setGridPage(p => Math.max(0, p - 1)), []);
+  const handleGridNext = useCallback(() => setGridPage(p => Math.min(totalGridPages - 1, p + 1)), [totalGridPages]);
 
   // Dialog filtered data - group linked posts together
   const dialogFilteredData = useMemo(() => {
@@ -355,10 +359,10 @@ export const ContentGrid = ({
           </div>
         </CardHeader>
         <CardContent className="px-3 md:px-6">
-          {/* 2x3 Grid with horizontal cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* 3x3 Grid with vertical 4:5 thumbnail cards */}
+          <div className="grid grid-cols-3 gap-2">
             {isLoading ? (
-              Array.from({ length: 6 }).map((_, i) => <ContentSkeleton key={i} />)
+              Array.from({ length: 9 }).map((_, i) => <ContentSkeleton key={i} />)
             ) : filteredData.length === 0 ? (
               <div className="col-span-full text-center py-8 text-muted-foreground text-sm">
                 No hay contenido en el rango seleccionado
@@ -367,113 +371,81 @@ export const ContentGrid = ({
               filteredData.map((post) => {
                 const typeInfo = typeConfig[post.type] || typeConfig.image;
                 const TypeIcon = typeInfo.icon;
-                const postMetadata = metadata[post.id];
-                const postTag = postMetadata?.tag || tags.find(t => t.id === postMetadata?.tag_id);
-                
-                // Get caption for display
-                const caption = post.caption || post.title;
-                const { text: truncatedCaption, isTruncated } = truncateText(caption, 60);
                 
                 return (
                   <div 
                     key={post.id}
                     onClick={() => handlePostClick(post)}
-                    className="group relative rounded-lg border border-border bg-muted/30 p-3 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer"
+                    className="group relative rounded-lg border border-border bg-muted/30 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all cursor-pointer"
                   >
-                    <div className="flex gap-3">
-                      {/* Thumbnail - Left side */}
-                      <div className="relative w-20 h-20 flex-shrink-0 rounded-md bg-muted overflow-hidden">
-                        {post.thumbnailUrl || post.thumbnail ? (
-                          <img 
-                            src={post.thumbnailUrl || post.thumbnail} 
-                            alt={post.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <TypeIcon className="h-6 w-6 text-muted-foreground" />
+                    {/* 4:5 Thumbnail */}
+                    <div className="relative w-full aspect-[4/5] bg-muted overflow-hidden">
+                      {post.thumbnailUrl || post.thumbnail ? (
+                        <img 
+                          src={post.thumbnailUrl || post.thumbnail} 
+                          alt={post.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <TypeIcon className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      {/* Type badge */}
+                      <div className="absolute top-1.5 left-1.5">
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            "text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm bg-background/60",
+                            typeInfo.class
+                          )}
+                        >
+                          <TypeIcon className="h-2.5 w-2.5" />
+                          <span className="hidden sm:inline">{typeInfo.label}</span>
+                        </Badge>
+                      </div>
+                      {/* Metrics overlay at bottom */}
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 flex items-center gap-2 text-[10px] text-white/90">
+                        {post.views !== undefined && post.views !== null && (
+                          <div className="flex items-center gap-0.5">
+                            <Eye className="h-2.5 w-2.5" />
+                            <span>{formatNumber(post.views)}</span>
                           </div>
                         )}
-                        {/* Type badge on thumbnail */}
-                        <div className="absolute top-1 left-1">
-                          <Badge 
-                            variant="outline" 
-                            className={cn(
-                              "text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm",
-                              typeInfo.class
-                            )}
-                          >
-                            <TypeIcon className="h-2 w-2" />
-                          </Badge>
-                        </div>
+                        {post.likes !== undefined && post.likes !== null && (
+                          <div className="flex items-center gap-0.5">
+                            <Heart className="h-2.5 w-2.5" />
+                            <span>{formatNumber(post.likes)}</span>
+                          </div>
+                        )}
                       </div>
-                      
-                      {/* Content info - Right side */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
-                        {/* Top: Tags */}
-                        <div className="flex items-center gap-1 flex-wrap mb-1">
-                          {postTag && (
-                            <Badge 
-                              variant="outline" 
-                              className="text-[9px] px-1.5 py-0"
-                              style={{
-                                backgroundColor: `${postTag.color}20`,
-                                color: postTag.color,
-                                borderColor: `${postTag.color}40`
-                              }}
-                            >
-                              {postTag.name}
-                            </Badge>
-                          )}
-                          <Badge 
-                            variant="secondary" 
-                            className={cn("text-[9px] px-1 py-0", statusConfig[post.status].class)}
-                          >
-                            {statusConfig[post.status].label}
-                          </Badge>
-                        </div>
-
-                        {/* Caption */}
-                        <p className="text-xs text-foreground leading-tight line-clamp-2 mb-1">
-                          {truncatedCaption}
-                          {isTruncated && (
-                            <span className="text-primary ml-1 font-medium">ver más</span>
-                          )}
-                        </p>
-                        
-                        {/* Metrics Row */}
-                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                          {post.views !== undefined && post.views !== null && (
-                            <div className="flex items-center gap-0.5">
-                              <Eye className="h-2.5 w-2.5" />
-                              <span>{formatNumber(post.views)}</span>
-                            </div>
-                          )}
-                          
-                          {post.likes !== undefined && post.likes !== null ? (
-                            <div className="flex items-center gap-0.5">
-                              <Heart className="h-2.5 w-2.5" />
-                              <span>{formatNumber(post.likes)}</span>
-                            </div>
-                          ) : post.engagement > 0 && (
-                            <div className="flex items-center gap-0.5">
-                              <Heart className="h-2.5 w-2.5" />
-                              <span>{formatNumber(post.engagement)}</span>
-                            </div>
-                          )}
-
-                          <span className="text-muted-foreground/60 ml-auto">
-                            {format(new Date(post.date), 'dd MMM', { locale: es })}
-                          </span>
-                        </div>
-                      </div>
+                    </div>
+                    {/* Date below thumbnail */}
+                    <div className="px-2 py-1.5">
+                      <span className="text-[10px] text-muted-foreground">
+                        {format(new Date(post.date), 'dd MMM yyyy', { locale: es })}
+                      </span>
                     </div>
                   </div>
                 );
               })
             )}
           </div>
+          {/* Pagination */}
+          {!isLoading && totalGridPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-3">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleGridPrev} disabled={gridPage === 0}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {gridPage + 1} / {totalGridPages}
+              </span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleGridNext} disabled={gridPage >= totalGridPages - 1}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
