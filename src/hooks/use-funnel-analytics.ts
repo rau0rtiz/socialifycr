@@ -138,9 +138,7 @@ export const useFunnelAnalytics = (
   customRange?: DateRange,
   selectedCampaignId?: string
 ) => {
-  const { selectedClient } = require('@/contexts/BrandContext').useBrand();
-  const defaultGoal = selectedClient?.default_campaign_goal as GoalType | undefined;
-  const { data: campaignGoalsData } = useCampaignGoals(clientId, defaultGoal);
+  const { data: campaignGoalsData } = useCampaignGoals(clientId);
 
   const {
     data: campaignsResult,
