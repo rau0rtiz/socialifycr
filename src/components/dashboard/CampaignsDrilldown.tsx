@@ -543,6 +543,15 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
   const currentErrorMessage = currentError instanceof Error ? currentError.message : currentError ? String(currentError) : '';
 
   return (
+    <>
+    {showGoalDialog && !campaignsLoading && activeCampaignsWithoutGoals.length > 0 && clientId && (
+      <MandatoryGoalDialog
+        campaigns={campaigns}
+        clientId={clientId}
+        goalsMap={campaignGoalsData?.goals || {}}
+        onComplete={() => setShowGoalDialog(false)}
+      />
+    )}
     <Card>
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
