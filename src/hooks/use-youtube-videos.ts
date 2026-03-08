@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { usePlatformConnections } from './use-platform-connections';
 
 export interface YouTubeVideo {
   id: string;
@@ -22,78 +23,33 @@ interface UseYouTubeVideosResult {
 }
 
 export const useYouTubeVideos = (clientId: string | null, limit: number = 10): UseYouTubeVideosResult => {
-  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data: connections, isLoading: connectionsLoading } = usePlatformConnections(clientId);
+  const youtubeConnection = connections?.find(c => c.platform === 'youtube');
 
-  const fetchVideos = useCallback(async () => {
-    if (!clientId) {
-      setVideos([]);
-      setIsConnected(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Check if client has active YouTube connection
-      const { data: connection } = await supabase
-        .from('platform_connections')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('platform', 'youtube')
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (!connection) {
-        setVideos([]);
-        setIsConnected(false);
-        setIsLoading(false);
-        return;
-      }
-
-      setIsConnected(true);
-
-      // Fetch YouTube videos
+  const { data, isLoading: dataLoading, error: queryError, refetch } = useQuery({
+    queryKey: ['youtube-videos', clientId, limit],
+    queryFn: async () => {
       const { data, error: functionError } = await supabase.functions.invoke('youtube-api', {
-        body: {
-          clientId,
-          endpoint: 'channel-videos',
-          params: { limit }
-        }
+        body: { clientId, endpoint: 'channel-videos', params: { limit } }
       });
 
-      if (functionError) {
-        throw new Error(functionError.message);
-      }
-
-      if (data.error) {
+      if (functionError) throw new Error(functionError.message);
+      if (data?.error) {
         console.warn('YouTube API error:', data.error);
-        setVideos([]);
-        return;
+        return [];
       }
 
-      setVideos(data.videos || []);
-    } catch (err) {
-      console.error('Error fetching YouTube videos:', err);
-      setError(err instanceof Error ? err.message : 'Error fetching videos');
-      setVideos([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [clientId, limit]);
-
-  useEffect(() => {
-    fetchVideos();
-  }, [fetchVideos]);
+      return (data?.videos || []) as YouTubeVideo[];
+    },
+    enabled: !!clientId && !connectionsLoading && !!youtubeConnection,
+    staleTime: 5 * 60 * 1000,
+  });
 
   return {
-    videos,
-    isLoading,
-    isConnected,
-    error,
-    refetch: fetchVideos,
+    videos: data || [],
+    isLoading: connectionsLoading || dataLoading,
+    isConnected: !!youtubeConnection,
+    error: queryError?.message || null,
+    refetch,
   };
 };

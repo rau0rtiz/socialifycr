@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CampaignData, getClientCampaigns } from '@/data/mockData';
+import { usePlatformConnections } from './use-platform-connections';
 
 interface MetaCampaign {
   id: string;
@@ -22,85 +23,43 @@ interface UseCampaignsDataResult {
   refetch: () => void;
 }
 
+const mapStatus = (metaStatus: string): CampaignData['status'] => {
+  switch (metaStatus?.toUpperCase()) {
+    case 'ACTIVE': return 'active';
+    case 'PAUSED': return 'paused';
+    case 'DELETED':
+    case 'ARCHIVED': return 'completed';
+    default: return 'scheduled';
+  }
+};
+
 export function useCampaignsData(clientId: string | null): UseCampaignsDataResult {
-  const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLiveData, setIsLiveData] = useState(false);
-  const [hasAdAccount, setHasAdAccount] = useState(false);
+  const { data: connections, isLoading: connectionsLoading } = usePlatformConnections(clientId);
+  const metaConnection = connections?.find(c => c.platform === 'meta');
+  const hasAdAccount = !!metaConnection?.ad_account_id;
 
-  const mapStatus = (metaStatus: string): CampaignData['status'] => {
-    switch (metaStatus?.toUpperCase()) {
-      case 'ACTIVE':
-        return 'active';
-      case 'PAUSED':
-        return 'paused';
-      case 'DELETED':
-      case 'ARCHIVED':
-        return 'completed';
-      default:
-        return 'scheduled';
-    }
-  };
-
-  const fetchData = useCallback(async () => {
-    if (!clientId) {
-      setCampaigns([]);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Check for active Meta connection with ad account
-      const { data: connection } = await supabase
-        .from('platform_connections')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('platform', 'meta')
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (!connection || !connection.ad_account_id) {
-        // No Meta connection or no ad account, use mock data
-        setCampaigns(getClientCampaigns(clientId));
-        setIsLiveData(false);
-        setHasAdAccount(false);
-        setIsLoading(false);
-        return;
+  const { data, isLoading: dataLoading, refetch } = useQuery({
+    queryKey: ['campaigns-data', clientId, hasAdAccount],
+    queryFn: async () => {
+      if (!hasAdAccount) {
+        return { campaigns: getClientCampaigns(clientId!), isLiveData: false };
       }
 
-      setHasAdAccount(true);
-
-      // Fetch real campaigns from Meta API
       const { data, error } = await supabase.functions.invoke('meta-api', {
-        body: {
-          clientId,
-          endpoint: 'campaigns',
-        },
+        body: { clientId, endpoint: 'campaigns' },
       });
 
       if (error || data?.error) {
         console.error('Error fetching campaigns:', error || data?.error);
-        setCampaigns(getClientCampaigns(clientId));
-        setIsLiveData(false);
-        setIsLoading(false);
-        return;
+        return { campaigns: getClientCampaigns(clientId!), isLiveData: false };
       }
 
       const metaCampaigns = (data?.campaigns || []) as MetaCampaign[];
-
       if (metaCampaigns.length === 0) {
-        // No campaigns found, use mock data
-        setCampaigns(getClientCampaigns(clientId));
-        setIsLiveData(false);
-        setIsLoading(false);
-        return;
+        return { campaigns: getClientCampaigns(clientId!), isLiveData: false };
       }
 
-      // Map Meta campaigns to our format
       const mappedCampaigns: CampaignData[] = metaCampaigns.map((campaign) => {
-        // Extract leads from actions if available
         const leadAction = campaign.actions?.find(
           (a) => a.action_type === 'lead' || a.action_type === 'leadgen_grouped'
         );
@@ -109,7 +68,7 @@ export function useCampaignsData(clientId: string | null): UseCampaignsDataResul
         return {
           id: campaign.id,
           name: campaign.name,
-          network: 'facebook' as const, // Meta campaigns show as Facebook
+          network: 'facebook' as const,
           reach: campaign.reach || 0,
           engagement: campaign.clicks || 0,
           leads,
@@ -119,26 +78,17 @@ export function useCampaignsData(clientId: string | null): UseCampaignsDataResul
         };
       });
 
-      setCampaigns(mappedCampaigns);
-      setIsLiveData(true);
-    } catch (err) {
-      console.error('Error in useCampaignsData:', err);
-      setCampaigns(getClientCampaigns(clientId));
-      setIsLiveData(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [clientId]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+      return { campaigns: mappedCampaigns, isLiveData: true };
+    },
+    enabled: !!clientId && !connectionsLoading,
+    staleTime: 3 * 60 * 1000,
+  });
 
   return {
-    campaigns,
-    isLoading,
-    isLiveData,
+    campaigns: data?.campaigns || [],
+    isLoading: connectionsLoading || dataLoading,
+    isLiveData: data?.isLiveData || false,
     hasAdAccount,
-    refetch: fetchData,
+    refetch,
   };
 }
