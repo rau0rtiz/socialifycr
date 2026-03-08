@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { useBrand } from '@/contexts/BrandContext';
 import { Loader2 } from 'lucide-react';
+import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
 
 export interface DashboardLayoutProps {
   children: ReactNode;
