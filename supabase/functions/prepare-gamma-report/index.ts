@@ -16,38 +16,45 @@ serve(async (req) => {
       throw new Error('PERPLEXITY_API_KEY is not configured');
     }
 
-    const { dashboardData, clientName, clientIndustry, clientContext, format } = await req.json();
+    const { dashboardData, clientName, clientIndustry, clientContext, format, customInstructions } = await req.json();
 
     if (!dashboardData) throw new Error('dashboardData is required');
 
     const formatLabel = format === 'document' ? 'documento' : 'presentación';
 
-    const systemPrompt = `Eres un estratega de marketing digital experto. Tu tarea es analizar datos reales de un cliente y generar un texto rico, estructurado y profesional en español que será usado para crear una ${formatLabel} en Gamma.app.
+    const systemPrompt = `Eres un estratega de marketing digital experto que comunica de forma CLARA y SIMPLE. Tu tarea es analizar datos reales de un cliente y generar un reporte estructurado en español.
 
-REGLAS IMPORTANTES:
-- El texto debe estar estructurado con secciones claras usando ## para encabezados
+ESTILO DE ESCRITURA (MUY IMPORTANTE):
+- Escribe como si le explicaras los resultados a un cliente que NO es experto en marketing
+- Usa oraciones cortas y directas. Evita párrafos largos
+- Cuando uses un término técnico (CPA, ROAS, CTR, etc.), explícalo brevemente entre paréntesis la primera vez. Ejemplo: "El ROAS (retorno por cada dólar invertido en ads) fue de 3.2x"
+- Prefiere ejemplos concretos: "Por cada ₡1,000 invertidos, generamos ₡3,200 en ventas" en lugar de solo "ROAS 3.2x"
+- Usa comparaciones fáciles de entender: "El alcance creció un 25%, como pasar de llenar un auditorio de 100 personas a uno de 125"
+- Destaca lo positivo primero, luego áreas de mejora con soluciones claras
+- Usa viñetas y listas para facilitar la lectura
+- Incluye emojis con moderación para hacer el contenido más visual y amigable
+
+ESTRUCTURA DEL REPORTE:
+- Usa ## para encabezados de sección
 - Incluye insights accionables, no solo números
-- Compara métricas cuando sea posible (ej: CPA vs industria)
-- Sugiere optimizaciones específicas basadas en los datos
-- Usa un tono profesional pero accesible
-- Incluye emojis relevantes para hacer el contenido visual
-- Organiza la información para que Gamma pueda crear slides/secciones lógicas
-- Si el cliente tiene contexto de negocio, úsalo para personalizar las recomendaciones
+- Sugiere optimizaciones específicas en lenguaje simple
+- Si el cliente tiene contexto de negocio, personaliza las recomendaciones
 - Responde SIEMPRE en español`;
 
     const userMessage = `Cliente: ${clientName || 'Sin nombre'}
 Industria: ${clientIndustry || 'No especificada'}
 ${clientContext ? `Contexto del negocio: ${clientContext}` : ''}
+${customInstructions ? `\nInstrucciones adicionales del usuario: ${customInstructions}` : ''}
 
 Datos del dashboard:
 ${JSON.stringify(dashboardData, null, 2)}
 
-Genera un texto completo y estructurado para una ${formatLabel} de reporte mensual de marketing digital. Incluye:
-1. Resumen ejecutivo con los KPIs más importantes
-2. Análisis de cada área de datos proporcionada (campañas, ventas, redes sociales, contenido)
-3. Insights clave y patrones identificados
-4. Recomendaciones específicas para el próximo mes
-5. Conclusión con próximos pasos`;
+Genera un reporte mensual de marketing digital como ${formatLabel}. Incluye:
+1. **Resumen ejecutivo** — Los 3-5 puntos más importantes del mes en lenguaje simple
+2. **Análisis por área** — Desglosa cada fuente de datos (campañas, ventas, redes) con explicaciones claras
+3. **Qué funcionó y qué mejorar** — Insights concretos con contexto
+4. **Recomendaciones** — Acciones específicas para el próximo mes, escritas como pasos claros
+5. **Próximos pasos** — Resumen de 3-5 acciones prioritarias`;
 
     console.log('Generating report text with Perplexity for client:', clientName);
 
