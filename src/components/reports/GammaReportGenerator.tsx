@@ -113,7 +113,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
       ? customRange
       : getDateRangeFromPreset(datePreset);
     if (range.from && range.to) {
-      return `${format(range.from, 'dd MMM yyyy', { locale: es })} – ${format(range.to, 'dd MMM yyyy', { locale: es })}`;
+      return `${formatDate(range.from, 'dd MMM yyyy', { locale: es })} – ${formatDate(range.to, 'dd MMM yyyy', { locale: es })}`;
     }
     return 'Últimos 30 días';
   };
