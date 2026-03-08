@@ -499,7 +499,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
   const handleExportToGamma = () => {
     if (!generatedText.trim()) return;
     setStep('exporting');
-    generate(generatedText, format, customInstructions || undefined, parseInt(numCards) || undefined, selectedThemeId || undefined);
+    generate(generatedText, format, customInstructions || undefined, parseInt(numCards) || undefined, selectedThemeId === '_default' ? undefined : selectedThemeId || undefined);
   };
 
   if (generation?.status === 'completed' && step === 'exporting') {
