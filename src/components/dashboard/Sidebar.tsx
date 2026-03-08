@@ -41,6 +41,7 @@ const clientMenuItems = [
 
 const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
+  { title: 'Historial', url: '/historial', icon: History },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
 ];
 
