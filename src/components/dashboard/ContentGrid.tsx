@@ -140,20 +140,25 @@ export const ContentGrid = ({
     [data]
   );
 
-  // Filter by date range using internal state, sort by date (most recent first) and limit to 6 posts (2x3 grid)
-  const filteredData = [...data]
+  // Filter by date range using internal state, sort by date (most recent first)
+  const allFilteredData = useMemo(() => [...data]
     .filter((post) => {
       if (!internalDateRange?.from || !internalDateRange?.to) return true;
       const postDate = new Date(post.date);
-      // Normalize dates for proper comparison
       const fromDate = new Date(internalDateRange.from);
       fromDate.setHours(0, 0, 0, 0);
       const toDate = new Date(internalDateRange.to);
       toDate.setHours(23, 59, 59, 999);
       return postDate >= fromDate && postDate <= toDate;
     })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 6);
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [data, internalDateRange]);
+
+  const totalGridPages = Math.max(1, Math.ceil(allFilteredData.length / GRID_PAGE_SIZE));
+  const filteredData = allFilteredData.slice(gridPage * GRID_PAGE_SIZE, (gridPage + 1) * GRID_PAGE_SIZE);
+
+  const handleGridPrev = useCallback(() => setGridPage(p => Math.max(0, p - 1)), []);
+  const handleGridNext = useCallback(() => setGridPage(p => Math.min(totalGridPages - 1, p + 1)), [totalGridPages]);
 
   // Dialog filtered data - group linked posts together
   const dialogFilteredData = useMemo(() => {
