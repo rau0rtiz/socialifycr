@@ -818,6 +818,71 @@ export type Database = {
         }
         Relationships: []
       }
+      utm_tracking: {
+        Row: {
+          campaign_name: string
+          client_id: string
+          created_at: string
+          created_by: string | null
+          destination_url: string
+          full_url: string
+          id: string
+          meta_ad_id: string | null
+          meta_campaign_id: string | null
+          notes: string | null
+          updated_at: string
+          utm_campaign: string
+          utm_content: string | null
+          utm_medium: string
+          utm_source: string
+          utm_term: string | null
+        }
+        Insert: {
+          campaign_name: string
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          destination_url: string
+          full_url: string
+          id?: string
+          meta_ad_id?: string | null
+          meta_campaign_id?: string | null
+          notes?: string | null
+          updated_at?: string
+          utm_campaign: string
+          utm_content?: string | null
+          utm_medium: string
+          utm_source: string
+          utm_term?: string | null
+        }
+        Update: {
+          campaign_name?: string
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          destination_url?: string
+          full_url?: string
+          id?: string
+          meta_ad_id?: string | null
+          meta_campaign_id?: string | null
+          notes?: string | null
+          updated_at?: string
+          utm_campaign?: string
+          utm_content?: string | null
+          utm_medium?: string
+          utm_source?: string
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utm_tracking_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_ideas: {
         Row: {
           carousel_slides: Json | null
