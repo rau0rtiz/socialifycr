@@ -59,6 +59,12 @@ const Reportes = () => {
                 </TabsTrigger>
               )}
               {isAgency && (
+                <TabsTrigger value="gamma" className="flex items-center gap-2">
+                  <Presentation className="h-4 w-4" />
+                  <span className="hidden sm:inline">Gamma</span>
+                </TabsTrigger>
+              )}
+              {isAgency && (
                 <TabsTrigger value="ai-reports" className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
                   <span className="hidden sm:inline">Generar con IA</span>
