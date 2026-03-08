@@ -392,19 +392,6 @@ export const ContentGrid = ({
                           <TypeIcon className="h-8 w-8 text-muted-foreground" />
                         </div>
                       )}
-                      {/* Type badge */}
-                      <div className="absolute top-1.5 left-1.5">
-                        <Badge 
-                          variant="outline" 
-                          className={cn(
-                            "text-[9px] px-1 py-0 gap-0.5 backdrop-blur-sm bg-background/60",
-                            typeInfo.class
-                          )}
-                        >
-                          <TypeIcon className="h-2.5 w-2.5" />
-                          <span className="hidden sm:inline">{typeInfo.label}</span>
-                        </Badge>
-                      </div>
                       {/* Metrics overlay at bottom */}
                       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 flex items-center gap-2 text-[10px] text-white/90">
                         {post.views !== undefined && post.views !== null && (
@@ -421,11 +408,30 @@ export const ContentGrid = ({
                         )}
                       </div>
                     </div>
-                    {/* Date below thumbnail */}
-                    <div className="px-2 py-1.5">
-                      <span className="text-[10px] text-muted-foreground">
-                        {format(new Date(post.date), 'dd MMM yyyy', { locale: es })}
-                      </span>
+                    {/* Info below thumbnail */}
+                    <div className="px-2 py-1.5 space-y-1">
+                      {/* Caption preview */}
+                      {(post.caption || post.title) && (
+                        <p className="text-[10px] text-foreground leading-tight line-clamp-2">
+                          {post.caption || post.title}
+                        </p>
+                      )}
+                      {/* Type badge + date */}
+                      <div className="flex items-center gap-1.5">
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            "text-[8px] px-1 py-0 gap-0.5",
+                            typeInfo.class
+                          )}
+                        >
+                          <TypeIcon className="h-2 w-2" />
+                          <span className="hidden sm:inline">{typeInfo.label}</span>
+                        </Badge>
+                        <span className="text-[9px] text-muted-foreground">
+                          {format(new Date(post.date), 'dd MMM yyyy', { locale: es })}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
