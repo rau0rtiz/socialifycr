@@ -22,7 +22,7 @@ import { DateRangePicker, DatePresetKey } from '@/components/dashboard/DateRange
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReportPreview } from './ReportPreview';
-import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { format as formatDate, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 
