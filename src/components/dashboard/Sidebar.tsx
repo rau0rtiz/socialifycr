@@ -4,7 +4,8 @@ import {
   Users, 
   Palette, 
   LogOut,
-  ShoppingCart
+  ShoppingCart,
+  History
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
