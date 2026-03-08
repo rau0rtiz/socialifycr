@@ -20,6 +20,7 @@ import { useGammaReport, GammaFormat } from '@/hooks/use-gamma-report';
 import { useBrand } from '@/contexts/BrandContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { ReportPreview } from './ReportPreview';
 
 interface GammaReportGeneratorProps {
   clientId: string | null;
@@ -27,7 +28,7 @@ interface GammaReportGeneratorProps {
 }
 
 type DataSource = 'campaigns' | 'sales' | 'social';
-type Step = 'configure' | 'review' | 'generating' | 'done';
+type Step = 'configure' | 'preview' | 'sending' | 'done';
 
 const dataSourceOptions: { id: DataSource; label: string; icon: React.ElementType; description: string }[] = [
   { id: 'campaigns', label: 'Campañas Meta Ads', icon: BarChart3, description: 'Gasto, alcance, clics, ROAS' },
@@ -44,6 +45,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
   const [step, setStep] = useState<Step>('configure');
   const [generatedText, setGeneratedText] = useState('');
   const [isPreparingText, setIsPreparingText] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const { generate, isGenerating, generation, reset: resetGamma } = useGammaReport();
 
@@ -154,6 +156,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
           clientIndustry: selectedClient?.industry,
           clientContext: selectedClient?.ai_context,
           format,
+          customInstructions,
         },
       });
 
@@ -161,7 +164,8 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
       if (!data?.text) throw new Error('No text generated');
 
       setGeneratedText(data.text);
-      setStep('review');
+      setStep('preview');
+      setIsEditing(false);
     } catch (err) {
       console.error('Error preparing text:', err);
       toast.error('Error al preparar el texto del reporte');
@@ -172,18 +176,19 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
 
   const handleSendToGamma = () => {
     if (!generatedText.trim()) return;
-    setStep('generating');
+    setStep('sending');
     generate(generatedText, format, customInstructions || undefined, parseInt(numCards) || undefined);
   };
 
   // Watch for Gamma completion
-  if (generation?.status === 'completed' && step === 'generating') {
+  if (generation?.status === 'completed' && step === 'sending') {
     setStep('done');
   }
 
   const handleReset = () => {
     setStep('configure');
     setGeneratedText('');
+    setIsEditing(false);
     resetGamma();
   };
 
@@ -199,8 +204,8 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
       <div className="flex items-center gap-2 text-sm">
         {[
           { key: 'configure', label: '1. Configurar' },
-          { key: 'review', label: '2. Revisar texto' },
-          { key: 'generating', label: '3. Generar' },
+          { key: 'preview', label: '2. Previsualizar' },
+          { key: 'sending', label: '3. Exportar' },
           { key: 'done', label: '4. Listo' },
         ].map((s, i, arr) => (
           <div key={s.key} className="flex items-center gap-2">
@@ -208,11 +213,11 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
               'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors',
               step === s.key
                 ? 'bg-primary text-primary-foreground'
-                : ['done', 'generating', 'review'].indexOf(step) >= ['done', 'generating', 'review'].indexOf(s.key) && step !== 'configure'
+                : ['done', 'sending', 'preview'].indexOf(step) >= ['done', 'sending', 'preview'].indexOf(s.key) && step !== 'configure'
                   ? 'bg-primary/20 text-primary'
                   : 'bg-muted text-muted-foreground'
             )}>
-              {['review', 'generating', 'done'].indexOf(step) > ['review', 'generating', 'done'].indexOf(s.key) && s.key !== step ? (
+              {['preview', 'sending', 'done'].indexOf(step) > ['preview', 'sending', 'done'].indexOf(s.key) && s.key !== step ? (
                 <Check className="h-3 w-3" />
               ) : null}
               {s.label}
@@ -236,7 +241,6 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              {/* Data Sources */}
               <div className="grid gap-2">
                 {dataSourceOptions.map(option => {
                   const isDisabled = option.id === 'campaigns' && !hasAdAccount;
@@ -268,7 +272,6 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
                 })}
               </div>
 
-              {/* Data Summary */}
               {isDataLoading ? (
                 <Skeleton className="h-10 w-full" />
               ) : (
@@ -359,12 +362,12 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
                 {isPreparingText ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Analizando datos con Perplexity...
+                    Analizando datos...
                   </>
                 ) : (
                   <>
                     <Eye className="h-4 w-4 mr-2" />
-                    Analizar y Previsualizar
+                    Generar Reporte
                   </>
                 )}
               </Button>
@@ -373,54 +376,83 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
         </div>
       )}
 
-      {/* Step 2: Review text */}
-      {step === 'review' && (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
+      {/* Step 2: Preview */}
+      {step === 'preview' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Pencil className="h-5 w-5" />
-                Revisar Contenido
-              </CardTitle>
-              <CardDescription className="mt-1">
-                Perplexity analizó tus datos. Revisa y edita el texto antes de enviarlo a Gamma.
-              </CardDescription>
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Vista Previa del Reporte
+              </h2>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Revisa el contenido. Puedes editarlo antes de exportar a Gamma.
+              </p>
             </div>
-            <Badge variant="secondary" className="shrink-0">
-              {format === 'presentation' ? 'Presentación' : 'Documento'} • {numCards} slides
-            </Badge>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ScrollArea className="h-[400px]">
-              <Textarea
-                value={generatedText}
-                onChange={(e) => setGeneratedText(e.target.value)}
-                className="min-h-[380px] font-mono text-sm resize-none border-0 focus-visible:ring-0 p-0"
-              />
-            </ScrollArea>
-
-            <div className="flex items-center gap-3 pt-2">
-              <Button variant="outline" onClick={() => setStep('configure')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver
-              </Button>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">
+                {format === 'presentation' ? 'Presentación' : 'Documento'} • {numCards} slides
+              </Badge>
               <Button
-                className="flex-1"
-                size="lg"
-                onClick={handleSendToGamma}
-                disabled={!generatedText.trim()}
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditing(!isEditing)}
               >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Enviar a Gamma
-                <ArrowRight className="h-4 w-4 ml-2" />
+                <Pencil className="h-4 w-4 mr-1" />
+                {isEditing ? 'Ver preview' : 'Editar'}
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          {isEditing ? (
+            <Card>
+              <CardContent className="pt-6">
+                <ScrollArea className="h-[500px]">
+                  <Textarea
+                    value={generatedText}
+                    onChange={(e) => setGeneratedText(e.target.value)}
+                    className="min-h-[480px] font-mono text-sm resize-none border-0 focus-visible:ring-0 p-0"
+                  />
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          ) : (
+            <ReportPreview content={generatedText} />
+          )}
+
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={() => setStep('configure')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver
+            </Button>
+            <Button variant="outline" onClick={handleReset}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Regenerar
+            </Button>
+            <div className="flex-1" />
+            <Button
+              size="lg"
+              onClick={handleSendToGamma}
+              disabled={!generatedText.trim() || isGenerating}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando a Gamma...
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Exportar a Gamma
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       )}
 
-      {/* Step 3: Generating */}
-      {step === 'generating' && (
+      {/* Step 3: Sending to Gamma */}
+      {step === 'sending' && (
         <Card>
           <CardContent className="py-16 flex flex-col items-center justify-center text-center space-y-4">
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -450,7 +482,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
                 ¡{format === 'presentation' ? 'Presentación' : 'Documento'} listo! 🎉
               </p>
               <p className="text-muted-foreground mt-1">
-                Tu reporte fue generado exitosamente en Gamma
+                Tu reporte fue exportado exitosamente a Gamma
               </p>
             </div>
 
@@ -488,7 +520,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
       {generation?.status === 'failed' && (
         <Card>
           <CardContent className="py-12 text-center space-y-4">
-            <p className="text-destructive font-medium">Error al generar el reporte en Gamma</p>
+            <p className="text-destructive font-medium">Error al exportar el reporte a Gamma</p>
             <Button variant="outline" onClick={handleReset}>Intentar de nuevo</Button>
           </CardContent>
         </Card>
