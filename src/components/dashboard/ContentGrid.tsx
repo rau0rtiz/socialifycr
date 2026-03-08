@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ContentPost } from '@/data/mockData';
 import { ContentTag, ContentModel, ContentMetadata } from '@/hooks/use-content-metadata';
 import { ContentDetailModal } from './ContentDetailModal';
-import { Calendar, Clock, Eye, Heart, Play, Film, LayoutGrid, ImageIcon, RefreshCw, Wifi, Maximize2, Instagram, Youtube, Facebook, Search, X, Link2, Check, Unlink } from 'lucide-react';
+import { Calendar, Clock, Eye, Heart, Play, Film, LayoutGrid, ImageIcon, RefreshCw, Wifi, Maximize2, Instagram, Youtube, Facebook, Search, X, Link2, Check, Unlink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
