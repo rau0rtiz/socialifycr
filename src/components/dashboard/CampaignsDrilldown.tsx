@@ -439,6 +439,7 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [showGoalDialog, setShowGoalDialog] = useState(true);
 
   // Get selected client from context for default goal
   const { selectedClient, refetchClients } = useBrand();
