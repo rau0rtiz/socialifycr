@@ -32,3 +32,6 @@ verify_jwt = true
 
 [functions.polish-context]
 verify_jwt = true
+
+[functions.generate-monthly-sales-report]
+verify_jwt = false

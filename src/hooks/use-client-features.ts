@@ -15,6 +15,7 @@ export interface ClientFeatureFlags {
   funnel: boolean;
   campaigns: boolean;
   sales_tracking: boolean;
+  monthly_sales_report: boolean;
 }
 
 const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
@@ -29,6 +30,7 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
   funnel: false,
   campaigns: false,
   sales_tracking: false,
+  monthly_sales_report: false,
 };
 
 export const FEATURE_LABELS: Record<string, string> = {
@@ -43,6 +45,7 @@ export const FEATURE_LABELS: Record<string, string> = {
   funnel: 'Embudo (Funnel)',
   campaigns: 'Campañas',
   sales_tracking: 'Ventas por Mensajes',
+  monthly_sales_report: 'Reporte Mensual de Ventas',
 };
 
 export const useClientFeatures = (clientId: string | null) => {
@@ -77,6 +80,7 @@ export const useClientFeatures = (clientId: string | null) => {
         funnel: data.funnel,
         campaigns: data.campaigns,
         sales_tracking: data.sales_tracking,
+        monthly_sales_report: data.monthly_sales_report,
       }
     : DEFAULT_FLAGS;
 

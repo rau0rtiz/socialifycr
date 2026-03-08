@@ -4,7 +4,8 @@ import {
   Users, 
   Palette, 
   LogOut,
-  ShoppingCart
+  ShoppingCart,
+  History
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -40,6 +41,7 @@ const clientMenuItems = [
 
 const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
+  { title: 'Historial', url: '/historial', icon: History },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
 ];
 
@@ -68,7 +70,7 @@ export const Sidebar = () => {
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4" data-tour="sidebar-nav">
         <div className="flex items-center gap-3">
           {platformBrand.logoUrl ? (
             <img 
@@ -100,6 +102,7 @@ export const Sidebar = () => {
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <NavLink 
                       to={item.url} 
+                      data-tour={item.url === '/ventas' ? 'ventas-link' : item.url === '/content' ? 'contenido-link' : undefined}
                       className={cn(
                         "flex items-center gap-3 transition-colors",
                         isActive(item.url) && "bg-accent text-accent-foreground"
