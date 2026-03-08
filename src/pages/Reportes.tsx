@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AIReportGenerator } from '@/components/reports/AIReportGenerator';
+import { GammaReportGenerator } from '@/components/reports/GammaReportGenerator';
 import { SavedReportsList } from '@/components/reports/SavedReportsList';
 import { MonthlySalesReport } from '@/components/reports/MonthlySalesReport';
 import { SocialPerformanceReport } from '@/components/reports/SocialPerformanceReport';
@@ -8,7 +9,7 @@ import { useBrand } from '@/contexts/BrandContext';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Users, Sparkles, FileText, BarChart3, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Users, Sparkles, FileText, BarChart3, TrendingUp, Presentation } from 'lucide-react';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 
 const Reportes = () => {
@@ -58,6 +59,12 @@ const Reportes = () => {
                 </TabsTrigger>
               )}
               {isAgency && (
+                <TabsTrigger value="gamma" className="flex items-center gap-2">
+                  <Presentation className="h-4 w-4" />
+                  <span className="hidden sm:inline">Gamma</span>
+                </TabsTrigger>
+              )}
+              {isAgency && (
                 <TabsTrigger value="ai-reports" className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
                   <span className="hidden sm:inline">Generar con IA</span>
@@ -80,6 +87,12 @@ const Reportes = () => {
             {isAgency && (
               <TabsContent value="campaigns" className="mt-6">
                 <CampaignsDrilldown clientId={clientId} hasAdAccount={hasAdAccount} />
+              </TabsContent>
+            )}
+
+            {isAgency && (
+              <TabsContent value="gamma" className="mt-6">
+                <GammaReportGenerator clientId={clientId} hasAdAccount={hasAdAccount} />
               </TabsContent>
             )}
 
