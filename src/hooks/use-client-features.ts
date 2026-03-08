@@ -45,6 +45,7 @@ export const FEATURE_LABELS: Record<string, string> = {
   funnel: 'Embudo (Funnel)',
   campaigns: 'Campañas',
   sales_tracking: 'Ventas por Mensajes',
+  monthly_sales_report: 'Reporte Mensual de Ventas',
 };
 
 export const useClientFeatures = (clientId: string | null) => {
