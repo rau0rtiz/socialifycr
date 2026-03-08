@@ -10,6 +10,7 @@ import { useVideoIdeas } from '@/hooks/use-video-ideas';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
+import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel';
 import { VideoIdeasSection } from '@/components/dashboard/VideoIdeasSection';
 import { CompetitorsPanel } from '@/components/dashboard/CompetitorsPanel';
