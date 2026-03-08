@@ -272,10 +272,6 @@ const ClientActions = ({
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem onClick={(e) => onPreview(client, e)}>
-        <ExternalLink className="h-4 w-4 mr-2" />
-        Ver Dashboard
-      </DropdownMenuItem>
       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSelect(client); }}>
         <Eye className="h-4 w-4 mr-2" />
         Ver detalles

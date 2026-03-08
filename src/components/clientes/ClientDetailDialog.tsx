@@ -102,13 +102,6 @@ export const ClientDetailDialog = ({
                   )}
                 </div>
               </div>
-              <Button 
-                onClick={handleViewDashboard}
-                className="bg-background/20 hover:bg-background/30 text-white border-0 backdrop-blur-sm"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Ver Dashboard
-              </Button>
             </div>
           </DialogHeader>
         </div>

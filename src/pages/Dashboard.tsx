@@ -251,19 +251,6 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Ver Dashboard button - only for agency when not in preview mode */}
-            {isAgency && !isPreviewMode && (
-              <Button
-                variant="default"
-                size="sm"
-                className="text-xs md:text-sm h-8"
-                onClick={() => navigate(`/?preview=${selectedClient.id}`)}
-              >
-                <Eye className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Ver Dashboard</span>
-                <span className="sm:hidden">Ver</span>
-              </Button>
-            )}
             <Button
               variant="outline"
               size="sm"
@@ -274,21 +261,6 @@ const Dashboard = () => {
               <RefreshCw className={`h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Actualizar</span>
             </Button>
-            {/* Only show export/share buttons for agency users */}
-            {isAgency && (
-              <>
-                <Button variant="outline" size="sm" className="text-xs md:text-sm h-8">
-                  <Download className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">Exportar PDF</span>
-                  <span className="sm:hidden">PDF</span>
-                </Button>
-                <Button variant="outline" size="sm" className="text-xs md:text-sm h-8">
-                  <Share2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">Compartir</span>
-                  <span className="sm:hidden">Share</span>
-                </Button>
-              </>
-            )}
           </div>
         </div>
       </div>
