@@ -16,6 +16,9 @@ export interface ClientFeatureFlags {
   campaigns: boolean;
   sales_tracking: boolean;
   monthly_sales_report: boolean;
+  ventas_section: boolean;
+  contenido_section: boolean;
+  reportes_section: boolean;
 }
 
 const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
@@ -31,8 +34,19 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
   campaigns: false,
   sales_tracking: false,
   monthly_sales_report: false,
+  ventas_section: false,
+  contenido_section: false,
+  reportes_section: false,
 };
 
+// Navigation section flags — these control sidebar visibility
+export const SECTION_LABELS: Record<string, string> = {
+  ventas_section: 'Ventas',
+  contenido_section: 'Contenido',
+  reportes_section: 'Reportes',
+};
+
+// Dashboard widget flags — these control individual widgets within pages
 export const FEATURE_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
   social_followers: 'Seguidores de Redes',
@@ -81,6 +95,9 @@ export const useClientFeatures = (clientId: string | null) => {
         campaigns: data.campaigns,
         sales_tracking: data.sales_tracking,
         monthly_sales_report: data.monthly_sales_report,
+        ventas_section: data.ventas_section,
+        contenido_section: data.contenido_section,
+        reportes_section: data.reportes_section,
       }
     : DEFAULT_FLAGS;
 
