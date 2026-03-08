@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -20,6 +20,15 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import {
   ChevronRight,
   ChevronLeft,
   Radio,
@@ -31,6 +40,7 @@ import {
   Image as ImageIcon,
   RefreshCw,
   CalendarIcon,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -43,9 +53,10 @@ import {
   DatePresetKey,
   DateRange,
 } from '@/hooks/use-ads-data';
-import { useCampaignGoals, GoalType, useSetDefaultCampaignGoal, GOAL_OPTIONS } from '@/hooks/use-campaign-goals';
+import { useCampaignGoals, GoalType, useSetDefaultCampaignGoal, useSetCampaignGoal, GOAL_OPTIONS, getGoalLabel } from '@/hooks/use-campaign-goals';
 import { CampaignGoalSelector } from './CampaignGoalSelector';
 import { useBrand } from '@/contexts/BrandContext';
+import { toast } from 'sonner';
 
 interface CampaignsDrilldownProps {
   clientId: string | null;
