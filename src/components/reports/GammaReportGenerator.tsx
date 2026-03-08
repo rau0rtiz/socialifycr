@@ -755,7 +755,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
                     <SelectValue placeholder="Tema por defecto del workspace" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tema por defecto</SelectItem>
+                    <SelectItem value="_default">Tema por defecto</SelectItem>
                     {themesLoading ? (
                       <SelectItem value="_loading" disabled>Cargando temas...</SelectItem>
                     ) : (gammaThemes || []).map(theme => (
