@@ -189,6 +189,10 @@ export const ClientDetailDialog = ({
                 <TeamMembers clientId={client.id} clientName={client.name} />
               </TabsContent>
 
+              <TabsContent value="sections" className="mt-0">
+                <ClientFeatureFlags clientId={client.id} />
+              </TabsContent>
+
               <TabsContent value="brand" className="mt-0 space-y-4">
                 {/* Live Preview */}
                 <div className="space-y-2">
