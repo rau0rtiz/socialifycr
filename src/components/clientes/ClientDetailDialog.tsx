@@ -14,7 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlatformConnections } from './PlatformConnections';
 import { TeamMembers } from './TeamMembers';
 import { useNavigate } from 'react-router-dom';
-import { ExternalLink, Palette, Users, Link2, Calendar, ImageIcon, Save, Loader2 } from 'lucide-react';
+import { ExternalLink, Palette, Users, Link2, Calendar, ImageIcon, Save, Loader2, ToggleRight } from 'lucide-react';
+import { ClientFeatureFlags } from './ClientFeatureFlags';
 import { useBrand } from '@/contexts/BrandContext';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -160,7 +161,7 @@ export const ClientDetailDialog = ({
 
           {/* Tabs */}
           <Tabs defaultValue="connections" className="w-full">
-            <TabsList className="w-full grid grid-cols-3 mb-4">
+            <TabsList className="w-full grid grid-cols-4 mb-4">
               <TabsTrigger value="connections" className="gap-2">
                 <Link2 className="h-4 w-4" />
                 Conexiones
@@ -168,6 +169,10 @@ export const ClientDetailDialog = ({
               <TabsTrigger value="team" className="gap-2">
                 <Users className="h-4 w-4" />
                 Equipo
+              </TabsTrigger>
+              <TabsTrigger value="sections" className="gap-2">
+                <ToggleRight className="h-4 w-4" />
+                Secciones
               </TabsTrigger>
               <TabsTrigger value="brand" className="gap-2">
                 <Palette className="h-4 w-4" />
@@ -182,6 +187,10 @@ export const ClientDetailDialog = ({
               
               <TabsContent value="team" className="mt-0">
                 <TeamMembers clientId={client.id} clientName={client.name} />
+              </TabsContent>
+
+              <TabsContent value="sections" className="mt-0">
+                <ClientFeatureFlags clientId={client.id} />
               </TabsContent>
 
               <TabsContent value="brand" className="mt-0 space-y-4">
