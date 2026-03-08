@@ -152,6 +152,7 @@ const CampaignRow = ({
   configuredGoal?: GoalType | null;
 }) => {
   const isPurchaseGoal = configuredGoal === 'purchases' || campaign.resultType === 'Compras';
+  const goalLabel = configuredGoal ? getGoalLabel(configuredGoal) : null;
   
   return (
   <div
@@ -164,6 +165,17 @@ const CampaignRow = ({
           <Badge variant="outline" className={cn('text-xs shrink-0', statusConfig[campaign.effectiveStatus]?.class)}>
             {statusConfig[campaign.effectiveStatus]?.label || campaign.effectiveStatus}
           </Badge>
+          {goalLabel ? (
+            <Badge variant="secondary" className="text-[10px] shrink-0 gap-1">
+              <Target className="h-2.5 w-2.5" />
+              {goalLabel}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-[10px] shrink-0 gap-1 border-amber-500/30 text-amber-600">
+              <AlertTriangle className="h-2.5 w-2.5" />
+              Sin meta
+            </Badge>
+          )}
         </div>
         <p className="text-xs text-muted-foreground">
           {campaign.dailyBudget
@@ -202,6 +214,103 @@ const CampaignRow = ({
       {campaign.roas !== null && <MetricCard icon={TrendingUp} label="ROAS" value={`${campaign.roas.toFixed(2)}x`} />}
     </div>
   </div>
+  );
+};
+
+// Mandatory Goal Assignment Dialog
+const MandatoryGoalDialog = ({
+  campaigns,
+  clientId,
+  goalsMap,
+  onComplete,
+}: {
+  campaigns: CampaignInsights[];
+  clientId: string;
+  goalsMap: Record<string, { goal_type: string }>;
+  onComplete: () => void;
+}) => {
+  const campaignsWithoutGoals = campaigns.filter(
+    (c) => c.effectiveStatus === 'ACTIVE' && !goalsMap[c.id]
+  );
+  
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedGoal, setSelectedGoal] = useState<GoalType | ''>('');
+  const setGoalMutation = useSetCampaignGoal();
+  
+  const currentCampaign = campaignsWithoutGoals[currentIndex];
+  
+  if (!currentCampaign) return null;
+  
+  const handleAssign = async () => {
+    if (!selectedGoal) return;
+    try {
+      await setGoalMutation.mutateAsync({
+        clientId,
+        campaignId: currentCampaign.id,
+        goalType: selectedGoal as GoalType,
+      });
+      toast.success(`Meta asignada a "${currentCampaign.name}"`);
+      setSelectedGoal('');
+      if (currentIndex + 1 >= campaignsWithoutGoals.length) {
+        onComplete();
+      } else {
+        setCurrentIndex((prev) => prev + 1);
+      }
+    } catch {
+      toast.error('Error al asignar meta');
+    }
+  };
+  
+  return (
+    <Dialog open={true}>
+      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            Asignar meta de campaña
+          </DialogTitle>
+          <DialogDescription>
+            La campaña <strong>"{currentCampaign.name}"</strong> no tiene una meta asignada. 
+            Selecciona el objetivo principal para poder medir resultados correctamente.
+            {campaignsWithoutGoals.length > 1 && (
+              <span className="block mt-1 text-xs">
+                Campaña {currentIndex + 1} de {campaignsWithoutGoals.length} sin meta
+              </span>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <RadioGroup
+          value={selectedGoal}
+          onValueChange={(v) => setSelectedGoal(v as GoalType)}
+          className="grid grid-cols-1 gap-2 mt-2"
+        >
+          {GOAL_OPTIONS.map((goal) => (
+            <div
+              key={goal.value}
+              className={cn(
+                "flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 transition-colors",
+                selectedGoal === goal.value && "border-primary bg-primary/5"
+              )}
+              onClick={() => setSelectedGoal(goal.value as GoalType)}
+            >
+              <RadioGroupItem value={goal.value} id={`goal-${goal.value}`} />
+              <Label htmlFor={`goal-${goal.value}`} className="cursor-pointer flex-1 text-sm font-medium">
+                {goal.label}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
+        
+        <Button
+          className="w-full mt-2"
+          disabled={!selectedGoal || setGoalMutation.isPending}
+          onClick={handleAssign}
+        >
+          {setGoalMutation.isPending ? 'Guardando...' : 'Asignar meta'}
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 };
 
