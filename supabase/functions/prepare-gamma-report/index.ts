@@ -16,47 +16,62 @@ serve(async (req) => {
       throw new Error('PERPLEXITY_API_KEY is not configured');
     }
 
-    const { dashboardData, clientName, clientIndustry, clientContext, format, customInstructions } = await req.json();
+    const { dashboardData, clientName, clientIndustry, clientContext, format, customInstructions, dateRange } = await req.json();
 
     if (!dashboardData) throw new Error('dashboardData is required');
 
-    const formatLabel = format === 'document' ? 'documento' : 'presentación';
+    const formatLabel = format === 'document' ? 'documento ejecutivo' : 'presentación ejecutiva';
+    const periodLabel = dateRange || 'últimos 30 días';
 
-    const systemPrompt = `Eres un estratega de marketing digital experto que comunica de forma CLARA y SIMPLE. Tu tarea es analizar datos reales de un cliente y generar un reporte estructurado en español.
+    const systemPrompt = `Eres un consultor de marketing digital de alto nivel que elabora reportes ejecutivos para clientes premium. Tu trabajo es transformar datos crudos en narrativas estratégicas que impresionen.
 
-ESTILO DE ESCRITURA (MUY IMPORTANTE):
-- Escribe como si le explicaras los resultados a un cliente que NO es experto en marketing
-- Usa oraciones cortas y directas. Evita párrafos largos
-- Cuando uses un término técnico (CPA, ROAS, CTR, etc.), explícalo brevemente entre paréntesis la primera vez. Ejemplo: "El ROAS (retorno por cada dólar invertido en ads) fue de 3.2x"
-- Prefiere ejemplos concretos: "Por cada ₡1,000 invertidos, generamos ₡3,200 en ventas" en lugar de solo "ROAS 3.2x"
-- Usa comparaciones fáciles de entender: "El alcance creció un 25%, como pasar de llenar un auditorio de 100 personas a uno de 125"
-- Destaca lo positivo primero, luego áreas de mejora con soluciones claras
-- Usa viñetas y listas para facilitar la lectura
-- Incluye emojis con moderación para hacer el contenido más visual y amigable
+PRINCIPIOS DE COMUNICACIÓN:
+- Claridad ante todo: escribe para que un CEO sin background técnico entienda cada punto
+- Cuando uses un término técnico (CPA, ROAS, CTR, CPM, etc.), explícalo de forma natural la primera vez. Ejemplo: "El ROAS — es decir, cuánto generamos por cada dólar invertido — fue de 3.2x"
+- Traduce números a impacto real: "Invertimos $500 y generamos $1,600 en ventas" es más poderoso que "ROAS 3.2x"
+- Usa analogías cuando ayuden: "El alcance creció 40%, como pasar de llenar un salón de conferencias a llenar un auditorio"
 
-ESTRUCTURA DEL REPORTE:
-- Usa ## para encabezados de sección
-- Incluye insights accionables, no solo números
-- Sugiere optimizaciones específicas en lenguaje simple
-- Si el cliente tiene contexto de negocio, personaliza las recomendaciones
-- Responde SIEMPRE en español`;
+FORMATO Y ESTRUCTURA:
+- Usa ## para encabezados principales y ### para sub-secciones
+- Cada sección debe abrir con un insight clave en **negrita** (el "titular")
+- Usa tablas markdown cuando presentes comparativas numéricas
+- Usa > blockquotes para destacar hallazgos clave o recomendaciones importantes
+- Incluye separadores --- entre secciones principales
+- Usa ✅ para logros, ⚠️ para alertas, 📈 para crecimiento, 💡 para recomendaciones, 🎯 para objetivos
 
-    const userMessage = `Cliente: ${clientName || 'Sin nombre'}
-Industria: ${clientIndustry || 'No especificada'}
-${clientContext ? `Contexto del negocio: ${clientContext}` : ''}
-${customInstructions ? `\nInstrucciones adicionales del usuario: ${customInstructions}` : ''}
+CALIDAD DEL CONTENIDO:
+- NO repitas datos sin análisis. Cada número debe ir acompañado de contexto (¿es bueno? ¿malo? ¿por qué?)
+- Incluye porcentajes de cambio cuando los datos lo permitan
+- Prioriza insights accionables sobre descripciones genéricas
+- Las recomendaciones deben ser específicas, medibles y con timeline sugerido
+- Cierra con un "Resumen para el cliente" de máximo 3 bullets que capturen lo esencial
 
-Datos del dashboard:
+TONO: Profesional, confiado, estratégico. Como un socio consultor, no como un reporte automatizado.
+
+IDIOMA: Siempre en español.`;
+
+    const userMessage = `# Reporte para: ${clientName || 'Cliente'}
+**Industria:** ${clientIndustry || 'No especificada'}
+**Período analizado:** ${periodLabel}
+${clientContext ? `**Contexto estratégico del negocio:** ${clientContext}` : ''}
+${customInstructions ? `\n**Instrucciones del equipo:** ${customInstructions}` : ''}
+
+## Datos del período
 ${JSON.stringify(dashboardData, null, 2)}
 
-Genera un reporte mensual de marketing digital como ${formatLabel}. Incluye:
-1. **Resumen ejecutivo** — Los 3-5 puntos más importantes del mes en lenguaje simple
-2. **Análisis por área** — Desglosa cada fuente de datos (campañas, ventas, redes) con explicaciones claras
-3. **Qué funcionó y qué mejorar** — Insights concretos con contexto
-4. **Recomendaciones** — Acciones específicas para el próximo mes, escritas como pasos claros
-5. **Próximos pasos** — Resumen de 3-5 acciones prioritarias`;
+---
 
-    console.log('Generating report text with Perplexity for client:', clientName);
+Genera un ${formatLabel} de reporte de marketing digital para el período **${periodLabel}**. Estructura:
+
+1. **📊 Resumen Ejecutivo** — Los 3-5 hallazgos más importantes, con impacto en negrita
+2. **🎯 Rendimiento de Campañas** (si hay datos) — Análisis de inversión vs retorno, mejores y peores campañas, eficiencia del gasto. Incluye tabla comparativa
+3. **💰 Análisis de Ventas** (si hay datos) — Tendencias, fuentes más efectivas, ticket promedio, conversión
+4. **👥 Presencia en Redes Sociales** (si hay datos) — Crecimiento de audiencia, plataformas destacadas
+5. **💡 Insights Estratégicos** — Patrones, oportunidades, riesgos identificados
+6. **🚀 Plan de Acción** — 5-7 recomendaciones concretas con prioridad (alta/media/baja) y timeline
+7. **📋 Resumen para el Cliente** — 3 bullets que capturen lo esencial del mes`;
+
+    console.log('Generating PRO report text with Perplexity for client:', clientName, 'period:', periodLabel);
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -65,13 +80,13 @@ Genera un reporte mensual de marketing digital como ${formatLabel}. Incluye:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'sonar',
+        model: 'sonar-pro',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage },
         ],
-        temperature: 0.3,
-        max_tokens: 4000,
+        temperature: 0.2,
+        max_tokens: 6000,
       }),
     });
 
@@ -90,7 +105,7 @@ Genera un reporte mensual de marketing digital como ${formatLabel}. Incluye:
     const data = await response.json();
     const generatedText = data.choices?.[0]?.message?.content || '';
 
-    console.log('Report text generated successfully, length:', generatedText.length);
+    console.log('PRO report text generated successfully, length:', generatedText.length);
 
     return new Response(
       JSON.stringify({ text: generatedText }),

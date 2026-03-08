@@ -18,9 +18,13 @@ import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { useGammaReport, GammaFormat } from '@/hooks/use-gamma-report';
 import { useBrand } from '@/contexts/BrandContext';
+import { DateRangePicker, DatePresetKey } from '@/components/dashboard/DateRangePicker';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReportPreview } from './ReportPreview';
+import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
 
 interface GammaReportGeneratorProps {
   clientId: string | null;
@@ -32,9 +36,35 @@ type Step = 'configure' | 'preview' | 'sending' | 'done';
 
 const dataSourceOptions: { id: DataSource; label: string; icon: React.ElementType; description: string }[] = [
   { id: 'campaigns', label: 'Campañas Meta Ads', icon: BarChart3, description: 'Gasto, alcance, clics, ROAS' },
-  { id: 'sales', label: 'Ventas', icon: ShoppingCart, description: 'Ventas registradas del mes' },
+  { id: 'sales', label: 'Ventas', icon: ShoppingCart, description: 'Ventas registradas del período' },
   { id: 'social', label: 'Redes Sociales', icon: Users, description: 'Seguidores por plataforma' },
 ];
+
+// Helper to get date range from preset
+const getDateRangeFromPreset = (preset: DatePresetKey): DateRange => {
+  const now = new Date();
+  switch (preset) {
+    case 'last_7d': return { from: subDays(now, 7), to: now };
+    case 'last_14d': return { from: subDays(now, 14), to: now };
+    case 'last_30d': return { from: subDays(now, 30), to: now };
+    case 'last_90d': return { from: subDays(now, 90), to: now };
+    case 'this_month': return { from: startOfMonth(now), to: endOfMonth(now) };
+    case 'last_month': {
+      const lm = new Date(); lm.setMonth(lm.getMonth() - 1);
+      return { from: startOfMonth(lm), to: endOfMonth(lm) };
+    }
+    default: return { from: subDays(now, 30), to: now };
+  }
+};
+
+// Get month from date range for sales hook
+const getMonthFromRange = (preset: DatePresetKey, customRange?: DateRange): Date => {
+  if (preset === 'custom' && customRange?.from) return customRange.from;
+  if (preset === 'last_month') {
+    const d = new Date(); d.setMonth(d.getMonth() - 1); return d;
+  }
+  return new Date();
+};
 
 export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGeneratorProps) => {
   const { selectedClient } = useBrand();
@@ -46,17 +76,22 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
   const [generatedText, setGeneratedText] = useState('');
   const [isPreparingText, setIsPreparingText] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
+  const [customRange, setCustomRange] = useState<DateRange | undefined>();
 
   const { generate, isGenerating, generation, reset: resetGamma } = useGammaReport();
 
   const { data: campaignsResult, isLoading: campaignsLoading } = useCampaigns(
     clientId,
     hasAdAccount && selectedSources.includes('campaigns'),
-    'last_30d'
+    datePreset,
+    datePreset === 'custom' ? customRange : undefined
   );
 
+  const salesMonth = getMonthFromRange(datePreset, customRange);
   const { sales, isLoading: salesLoading } = useSalesTracking(
-    selectedSources.includes('sales') ? clientId : null
+    selectedSources.includes('sales') ? clientId : null,
+    salesMonth
   );
 
   const { platforms: socialPlatforms, isLoading: socialLoading } = useSocialFollowers(
@@ -70,6 +105,17 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
     setSelectedSources(prev =>
       prev.includes(source) ? prev.filter(s => s !== source) : [...prev, source]
     );
+  };
+
+  // Get human-readable date range label
+  const getDateLabel = (): string => {
+    const range = datePreset === 'custom' && customRange
+      ? customRange
+      : getDateRangeFromPreset(datePreset);
+    if (range.from && range.to) {
+      return `${format(range.from, 'dd MMM yyyy', { locale: es })} – ${format(range.to, 'dd MMM yyyy', { locale: es })}`;
+    }
+    return 'Últimos 30 días';
   };
 
   const buildDashboardData = useCallback(() => {
@@ -157,6 +203,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
           clientContext: selectedClient?.ai_context,
           format,
           customInstructions,
+          dateRange: getDateLabel(),
         },
       });
 
@@ -180,7 +227,6 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
     generate(generatedText, format, customInstructions || undefined, parseInt(numCards) || undefined);
   };
 
-  // Watch for Gamma completion
   if (generation?.status === 'completed' && step === 'sending') {
     setStep('done');
   }
@@ -237,10 +283,20 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
                 Datos del Reporte
               </CardTitle>
               <CardDescription>
-                Selecciona qué datos incluir. Perplexity los analizará para crear el contenido.
+                Selecciona el período y las fuentes de datos para tu reporte.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
+              {/* Date Range */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Período del reporte</label>
+                <DateRangePicker
+                  value={datePreset}
+                  onChange={(preset) => setDatePreset(preset)}
+                />
+              </div>
+
+              {/* Data Sources */}
               <div className="grid gap-2">
                 {dataSourceOptions.map(option => {
                   const isDisabled = option.id === 'campaigns' && !hasAdAccount;
@@ -272,6 +328,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
                 })}
               </div>
 
+              {/* Data Summary */}
               {isDataLoading ? (
                 <Skeleton className="h-10 w-full" />
               ) : (
@@ -386,7 +443,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
                 Vista Previa del Reporte
               </h2>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Revisa el contenido. Puedes editarlo antes de exportar a Gamma.
+                Período: {getDateLabel()}
               </p>
             </div>
             <div className="flex items-center gap-2">
