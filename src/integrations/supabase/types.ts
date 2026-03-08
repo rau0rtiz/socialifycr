@@ -150,6 +150,7 @@ export type Database = {
           funnel: boolean
           id: string
           instagram_posts: boolean
+          monthly_sales_report: boolean
           sales_tracking: boolean
           social_followers: boolean
           updated_at: string | null
@@ -167,6 +168,7 @@ export type Database = {
           funnel?: boolean
           id?: string
           instagram_posts?: boolean
+          monthly_sales_report?: boolean
           sales_tracking?: boolean
           social_followers?: boolean
           updated_at?: string | null
@@ -184,6 +186,7 @@ export type Database = {
           funnel?: boolean
           id?: string
           instagram_posts?: boolean
+          monthly_sales_report?: boolean
           sales_tracking?: boolean
           social_followers?: boolean
           updated_at?: string | null
@@ -718,6 +721,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          onboarding_completed: boolean
           phone: string | null
         }
         Insert: {
@@ -726,6 +730,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          onboarding_completed?: boolean
           phone?: string | null
         }
         Update: {
@@ -734,6 +739,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          onboarding_completed?: boolean
           phone?: string | null
         }
         Relationships: []
