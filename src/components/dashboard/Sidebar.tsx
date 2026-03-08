@@ -32,12 +32,14 @@ import { useUserRole } from '@/hooks/use-user-role';
 const mainMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Contenido', url: '/content', icon: FileText },
+  { title: 'Reportes', url: '/reportes', icon: BarChart3 },
 ];
 
 // Client-only menu items (simplified)
 const clientMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Contenido', url: '/content', icon: FileText },
+  { title: 'Reportes', url: '/reportes', icon: BarChart3 },
 ];
 
 const managementMenuItems = [
