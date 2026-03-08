@@ -257,9 +257,8 @@ export const useMetaApi = (clientId: string | null) => {
 
 // Standalone hook to get Meta connection — derives from shared platform connections cache
 export const useMetaConnection = (clientId: string | null) => {
-  const { usePlatformConnections } = require('./use-platform-connections');
   const { data: connections, isLoading, refetch } = usePlatformConnections(clientId);
-  const metaConnection = connections?.find((c: any) => c.platform === 'meta') || null;
+  const metaConnection = connections?.find((c) => c.platform === 'meta') || null;
   
   return {
     data: metaConnection,
