@@ -5,7 +5,8 @@ import {
   Palette, 
   LogOut,
   ShoppingCart,
-  History
+  History,
+  BarChart3
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -31,12 +32,14 @@ import { useUserRole } from '@/hooks/use-user-role';
 const mainMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Contenido', url: '/content', icon: FileText },
+  { title: 'Reportes', url: '/reportes', icon: BarChart3 },
 ];
 
 // Client-only menu items (simplified)
 const clientMenuItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Contenido', url: '/content', icon: FileText },
+  { title: 'Reportes', url: '/reportes', icon: BarChart3 },
 ];
 
 const managementMenuItems = [
