@@ -8,7 +8,7 @@ import { useBrand } from '@/contexts/BrandContext';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Users, Sparkles, FileText, BarChart3 } from 'lucide-react';
+import { ShoppingCart, Users, Sparkles, FileText, BarChart3, TrendingUp } from 'lucide-react';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 
 const Reportes = () => {
@@ -23,11 +23,17 @@ const Reportes = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Reportes</h1>
-          <p className="text-muted-foreground">
-            Resúmenes de ventas, rendimiento social y reportes personalizados
-          </p>
+        {/* Visual Header */}
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border border-primary/10">
+          <div className="absolute top-3 right-4 opacity-10">
+            <TrendingUp className="h-24 w-24 text-primary" />
+          </div>
+          <div className="relative">
+            <h1 className="text-2xl font-bold text-foreground">Reportes</h1>
+            <p className="text-muted-foreground mt-1">
+              Resúmenes de ventas, rendimiento social y reportes personalizados
+            </p>
+          </div>
         </div>
 
         {!clientId ? (
