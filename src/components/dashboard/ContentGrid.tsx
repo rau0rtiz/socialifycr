@@ -74,14 +74,11 @@ const formatNumber = (num: number): string => {
 };
 
 const ContentSkeleton = () => (
-  <div className="group relative rounded-lg border border-border bg-muted/30 p-3">
-    <div className="flex gap-3">
-      <Skeleton className="w-20 h-20 rounded-md flex-shrink-0" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-3 w-3/4" />
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-1/2" />
-      </div>
+  <div className="group relative rounded-lg border border-border bg-muted/30 overflow-hidden">
+    <Skeleton className="w-full aspect-[4/5]" />
+    <div className="p-2 space-y-1.5">
+      <Skeleton className="h-3 w-3/4" />
+      <Skeleton className="h-2.5 w-1/2" />
     </div>
   </div>
 );
