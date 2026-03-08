@@ -115,6 +115,20 @@ export const OnboardingTour = () => {
     }
   }, [isLoading, roleLoading, onboardingCompleted]);
 
+  // Auto-skip steps whose target element doesn't exist in the DOM
+  useEffect(() => {
+    if (!isVisible) return;
+    const step = steps[currentStep];
+    const el = document.querySelector(`[data-tour="${step.target}"]`);
+    if (!el) {
+      if (currentStep < steps.length - 1) {
+        setCurrentStep((s) => s + 1);
+      } else {
+        handleFinish();
+      }
+    }
+  }, [isVisible, currentStep, steps]);
+
   const positionTooltip = useCallback(() => {
     const step = steps[currentStep];
     const el = document.querySelector(`[data-tour="${step.target}"]`);
