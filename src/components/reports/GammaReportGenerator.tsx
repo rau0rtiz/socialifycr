@@ -1,20 +1,25 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Presentation, FileText, ExternalLink, Download, RefreshCw,
-  Sparkles, BarChart3, ShoppingCart, Users, Loader2
+  Sparkles, BarChart3, ShoppingCart, Users, Loader2, Eye,
+  ArrowRight, ArrowLeft, Check, Pencil
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useCampaigns } from '@/hooks/use-ads-data';
 import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { useGammaReport, GammaFormat } from '@/hooks/use-gamma-report';
+import { useBrand } from '@/contexts/BrandContext';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface GammaReportGeneratorProps {
   clientId: string | null;
@@ -22,6 +27,7 @@ interface GammaReportGeneratorProps {
 }
 
 type DataSource = 'campaigns' | 'sales' | 'social';
+type Step = 'configure' | 'review' | 'generating' | 'done';
 
 const dataSourceOptions: { id: DataSource; label: string; icon: React.ElementType; description: string }[] = [
   { id: 'campaigns', label: 'Campañas Meta Ads', icon: BarChart3, description: 'Gasto, alcance, clics, ROAS' },
@@ -30,12 +36,16 @@ const dataSourceOptions: { id: DataSource; label: string; icon: React.ElementTyp
 ];
 
 export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGeneratorProps) => {
-  const [selectedSources, setSelectedSources] = useState<DataSource[]>(['campaigns']);
+  const { selectedClient } = useBrand();
+  const [selectedSources, setSelectedSources] = useState<DataSource[]>(['campaigns', 'sales', 'social']);
   const [format, setFormat] = useState<GammaFormat>('presentation');
   const [customInstructions, setCustomInstructions] = useState('');
   const [numCards, setNumCards] = useState<string>('8');
+  const [step, setStep] = useState<Step>('configure');
+  const [generatedText, setGeneratedText] = useState('');
+  const [isPreparingText, setIsPreparingText] = useState(false);
 
-  const { generate, isGenerating, generation, reset } = useGammaReport();
+  const { generate, isGenerating, generation, reset: resetGamma } = useGammaReport();
 
   const { data: campaignsResult, isLoading: campaignsLoading } = useCampaigns(
     clientId,
@@ -56,16 +66,12 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
 
   const toggleSource = (source: DataSource) => {
     setSelectedSources(prev =>
-      prev.includes(source)
-        ? prev.filter(s => s !== source)
-        : [...prev, source]
+      prev.includes(source) ? prev.filter(s => s !== source) : [...prev, source]
     );
   };
 
-  const buildInputText = (): string => {
-    const sections: string[] = [];
-
-    sections.push('Genera un reporte profesional de marketing digital en español con los siguientes datos:\n');
+  const buildDashboardData = useCallback(() => {
+    const data: Record<string, unknown> = {};
 
     if (selectedSources.includes('campaigns') && campaigns.length > 0) {
       const totals = campaigns.reduce(
@@ -78,18 +84,27 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
         { spend: 0, reach: 0, clicks: 0, results: 0 }
       );
 
-      sections.push('## CAMPAÑAS META ADS (Últimos 30 días)');
-      sections.push(`Total de campañas: ${campaigns.length}`);
-      sections.push(`Inversión total: ${totals.spend.toFixed(2)} ${currency}`);
-      sections.push(`Alcance total: ${totals.reach.toLocaleString()}`);
-      sections.push(`Clics totales: ${totals.clicks.toLocaleString()}`);
-      sections.push(`Resultados totales: ${totals.results.toLocaleString()}\n`);
-
-      sections.push('Detalle por campaña:');
-      campaigns.forEach(c => {
-        sections.push(`- ${c.name}: Gasto ${c.spend.toFixed(2)} ${currency}, Alcance ${c.reach.toLocaleString()}, Clics ${c.clicks}, Resultados ${c.results} (${c.resultType}), CPA ${c.costPerResult.toFixed(2)} ${currency}${c.roas ? `, ROAS ${c.roas.toFixed(2)}` : ''}`);
-      });
-      sections.push('');
+      data.campaigns = {
+        summary: {
+          totalCampaigns: campaigns.length,
+          totalSpend: `${totals.spend.toFixed(2)} ${currency}`,
+          totalReach: totals.reach,
+          totalClicks: totals.clicks,
+          totalResults: totals.results,
+          avgCPA: totals.results > 0 ? (totals.spend / totals.results).toFixed(2) : 'N/A',
+        },
+        details: campaigns.map(c => ({
+          name: c.name,
+          status: c.effectiveStatus,
+          spend: c.spend,
+          reach: c.reach,
+          clicks: c.clicks,
+          results: c.results,
+          resultType: c.resultType,
+          costPerResult: c.costPerResult,
+          roas: c.roas,
+        })),
+      };
     }
 
     if (selectedSources.includes('sales') && sales.length > 0) {
@@ -99,60 +114,129 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
         acc[s.source] = (acc[s.source] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
+      const byStatus = sales.reduce((acc, s) => {
+        acc[s.status] = (acc[s.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
 
-      sections.push('## VENTAS DEL MES');
-      sections.push(`Total de ventas: ${sales.length}`);
-      if (totalCRC > 0) sections.push(`Total CRC: ₡${totalCRC.toLocaleString()}`);
-      if (totalUSD > 0) sections.push(`Total USD: $${totalUSD.toLocaleString()}`);
-      sections.push(`Fuentes: ${Object.entries(bySource).map(([k, v]) => `${k}: ${v}`).join(', ')}`);
-      sections.push('');
+      data.sales = {
+        totalSales: sales.length,
+        totalCRC,
+        totalUSD,
+        bySource,
+        byStatus,
+        topProducts: [...new Set(sales.filter(s => s.product).map(s => s.product))].slice(0, 5),
+      };
     }
 
     if (selectedSources.includes('social') && socialPlatforms.length > 0) {
-      sections.push('## REDES SOCIALES');
-      socialPlatforms.forEach(p => {
-        sections.push(`- ${p.platform}: ${p.followers.toLocaleString()} seguidores`);
-      });
-      sections.push('');
+      data.socialFollowers = socialPlatforms.map(p => ({
+        platform: p.platform,
+        followers: p.followers,
+        name: p.name,
+      }));
     }
 
-    return sections.join('\n');
+    return data;
+  }, [selectedSources, campaigns, currency, sales, socialPlatforms]);
+
+  const handlePrepareText = async () => {
+    if (selectedSources.length === 0) return;
+
+    setIsPreparingText(true);
+    try {
+      const dashboardData = buildDashboardData();
+
+      const { data, error } = await supabase.functions.invoke('prepare-gamma-report', {
+        body: {
+          dashboardData,
+          clientName: selectedClient?.name,
+          clientIndustry: selectedClient?.industry,
+          clientContext: selectedClient?.ai_context,
+          format,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.text) throw new Error('No text generated');
+
+      setGeneratedText(data.text);
+      setStep('review');
+    } catch (err) {
+      console.error('Error preparing text:', err);
+      toast.error('Error al preparar el texto del reporte');
+    } finally {
+      setIsPreparingText(false);
+    }
   };
 
-  const handleGenerate = () => {
-    if (selectedSources.length === 0) {
-      return;
-    }
+  const handleSendToGamma = () => {
+    if (!generatedText.trim()) return;
+    setStep('generating');
+    generate(generatedText, format, customInstructions || undefined, parseInt(numCards) || undefined);
+  };
 
-    const inputText = buildInputText();
-    generate(inputText, format, customInstructions || undefined, parseInt(numCards) || undefined);
+  // Watch for Gamma completion
+  if (generation?.status === 'completed' && step === 'generating') {
+    setStep('done');
+  }
+
+  const handleReset = () => {
+    setStep('configure');
+    setGeneratedText('');
+    resetGamma();
   };
 
   const isDataLoading = campaignsLoading || salesLoading || socialLoading;
-
   const hasData =
     (selectedSources.includes('campaigns') && campaigns.length > 0) ||
     (selectedSources.includes('sales') && sales.length > 0) ||
     (selectedSources.includes('social') && socialPlatforms.length > 0);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {/* Left Panel - Configuration */}
-      <div className="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              Generar con Gamma
-            </CardTitle>
-            <CardDescription>
-              Crea presentaciones o documentos profesionales con tus datos reales
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {/* Data Sources */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Datos a incluir</label>
+    <div className="space-y-6">
+      {/* Step indicator */}
+      <div className="flex items-center gap-2 text-sm">
+        {[
+          { key: 'configure', label: '1. Configurar' },
+          { key: 'review', label: '2. Revisar texto' },
+          { key: 'generating', label: '3. Generar' },
+          { key: 'done', label: '4. Listo' },
+        ].map((s, i, arr) => (
+          <div key={s.key} className="flex items-center gap-2">
+            <div className={cn(
+              'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors',
+              step === s.key
+                ? 'bg-primary text-primary-foreground'
+                : ['done', 'generating', 'review'].indexOf(step) >= ['done', 'generating', 'review'].indexOf(s.key) && step !== 'configure'
+                  ? 'bg-primary/20 text-primary'
+                  : 'bg-muted text-muted-foreground'
+            )}>
+              {['review', 'generating', 'done'].indexOf(step) > ['review', 'generating', 'done'].indexOf(s.key) && s.key !== step ? (
+                <Check className="h-3 w-3" />
+              ) : null}
+              {s.label}
+            </div>
+            {i < arr.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
+          </div>
+        ))}
+      </div>
+
+      {/* Step 1: Configure */}
+      {step === 'configure' && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                Datos del Reporte
+              </CardTitle>
+              <CardDescription>
+                Selecciona qué datos incluir. Perplexity los analizará para crear el contenido.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Data Sources */}
               <div className="grid gap-2">
                 {dataSourceOptions.map(option => {
                   const isDisabled = option.id === 'campaigns' && !hasAdAccount;
@@ -183,185 +267,227 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
                   );
                 })}
               </div>
-            </div>
 
-            {/* Format */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Formato</label>
-                <Select value={format} onValueChange={(v) => setFormat(v as GammaFormat)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="presentation">
-                      <span className="flex items-center gap-2">
-                        <Presentation className="h-4 w-4" /> Presentación
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="document">
-                      <span className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" /> Documento
-                      </span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Slides / Secciones</label>
-                <Select value={numCards} onValueChange={setNumCards}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[5, 6, 7, 8, 10, 12].map(n => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Custom Instructions */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Instrucciones adicionales (opcional)</label>
-              <Textarea
-                placeholder="Ej: Enfócate en el ROAS de las campañas de ventas. Usa un tono ejecutivo..."
-                value={customInstructions}
-                onChange={(e) => setCustomInstructions(e.target.value)}
-                rows={3}
-                className="resize-none"
-              />
-            </div>
-
-            {/* Data Summary */}
-            {isDataLoading ? (
-              <Skeleton className="h-10 w-full" />
-            ) : (
-              <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                {selectedSources.includes('campaigns') && (
-                  <Badge variant="secondary">{campaigns.length} campañas</Badge>
-                )}
-                {selectedSources.includes('sales') && (
-                  <Badge variant="secondary">{sales.length} ventas</Badge>
-                )}
-                {selectedSources.includes('social') && (
-                  <Badge variant="secondary">{socialPlatforms.length} plataformas</Badge>
-                )}
-                {selectedSources.length === 0 && (
-                  <span className="text-xs text-muted-foreground">Selecciona al menos una fuente de datos</span>
-                )}
-              </div>
-            )}
-
-            {/* Generate Button */}
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || selectedSources.length === 0 || !hasData || isDataLoading}
-              className="w-full"
-            >
-              {isGenerating ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Generando en Gamma...
-                </>
+              {/* Data Summary */}
+              {isDataLoading ? (
+                <Skeleton className="h-10 w-full" />
               ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generar en Gamma
-                </>
+                <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                  {selectedSources.includes('campaigns') && (
+                    <Badge variant="secondary">{campaigns.length} campañas</Badge>
+                  )}
+                  {selectedSources.includes('sales') && (
+                    <Badge variant="secondary">{sales.length} ventas</Badge>
+                  )}
+                  {selectedSources.includes('social') && (
+                    <Badge variant="secondary">{socialPlatforms.length} plataformas</Badge>
+                  )}
+                  {selectedSources.length === 0 && (
+                    <span className="text-xs text-muted-foreground">Selecciona al menos una fuente</span>
+                  )}
+                </div>
               )}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
 
-      {/* Right Panel - Result */}
-      <Card className="flex flex-col">
-        <CardHeader>
-          <CardTitle className="text-base">Resultado</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 min-h-[400px] flex flex-col items-center justify-center">
-          {isGenerating && !generation?.gammaUrl && (
-            <div className="text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-              <div>
-                <p className="font-medium">Generando tu {format === 'presentation' ? 'presentación' : 'documento'}...</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Gamma está creando tu reporte. Esto puede tardar hasta 1 minuto.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {generation?.status === 'completed' && generation.gammaUrl && (
-            <div className="text-center space-y-6 w-full">
-              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-3">
-                {format === 'presentation' ? (
-                  <Presentation className="h-16 w-16 text-primary mx-auto" />
-                ) : (
-                  <FileText className="h-16 w-16 text-primary mx-auto" />
-                )}
-                <div>
-                  <p className="font-semibold text-lg">
-                    ¡{format === 'presentation' ? 'Presentación' : 'Documento'} listo!
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Tu reporte fue generado exitosamente en Gamma
-                  </p>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Opciones de Generación</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Format */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Formato</label>
+                  <Select value={format} onValueChange={(v) => setFormat(v as GammaFormat)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="presentation">
+                        <span className="flex items-center gap-2">
+                          <Presentation className="h-4 w-4" /> Presentación
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="document">
+                        <span className="flex items-center gap-2">
+                          <FileText className="h-4 w-4" /> Documento
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Slides / Secciones</label>
+                  <Select value={numCards} onValueChange={setNumCards}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[5, 6, 7, 8, 10, 12].map(n => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Button
-                  className="w-full"
-                  onClick={() => window.open(generation.gammaUrl, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Abrir en Gamma
-                </Button>
-
-                {generation.exportUrl && (
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => window.open(generation.exportUrl, '_blank')}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Descargar PDF
-                  </Button>
-                )}
-
-                <Button
-                  variant="ghost"
-                  className="w-full"
-                  onClick={reset}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Generar otro
-                </Button>
+              {/* Custom Instructions */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Instrucciones adicionales (opcional)</label>
+                <Textarea
+                  placeholder="Ej: Enfócate en el ROAS. Usa un tono ejecutivo. Incluye recomendaciones de presupuesto..."
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
               </div>
-            </div>
-          )}
 
-          {generation?.status === 'failed' && (
-            <div className="text-center space-y-4">
-              <p className="text-destructive font-medium">Error al generar el reporte</p>
-              <Button variant="outline" onClick={reset}>
-                Intentar de nuevo
+              {/* Generate Button */}
+              <Button
+                onClick={handlePrepareText}
+                disabled={isPreparingText || selectedSources.length === 0 || !hasData || isDataLoading}
+                className="w-full"
+                size="lg"
+              >
+                {isPreparingText ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analizando datos con Perplexity...
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Analizar y Previsualizar
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Step 2: Review text */}
+      {step === 'review' && (
+        <Card>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Pencil className="h-5 w-5" />
+                Revisar Contenido
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Perplexity analizó tus datos. Revisa y edita el texto antes de enviarlo a Gamma.
+              </CardDescription>
+            </div>
+            <Badge variant="secondary" className="shrink-0">
+              {format === 'presentation' ? 'Presentación' : 'Documento'} • {numCards} slides
+            </Badge>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ScrollArea className="h-[400px]">
+              <Textarea
+                value={generatedText}
+                onChange={(e) => setGeneratedText(e.target.value)}
+                className="min-h-[380px] font-mono text-sm resize-none border-0 focus-visible:ring-0 p-0"
+              />
+            </ScrollArea>
+
+            <div className="flex items-center gap-3 pt-2">
+              <Button variant="outline" onClick={() => setStep('configure')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver
+              </Button>
+              <Button
+                className="flex-1"
+                size="lg"
+                onClick={handleSendToGamma}
+                disabled={!generatedText.trim()}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Enviar a Gamma
+                <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
-          )}
+          </CardContent>
+        </Card>
+      )}
 
-          {!isGenerating && !generation && (
-            <div className="text-center text-muted-foreground space-y-2">
-              <Presentation className="h-12 w-12 mx-auto opacity-50" />
-              <p>Tu reporte de Gamma aparecerá aquí</p>
-              <p className="text-xs">Selecciona los datos y haz clic en generar</p>
+      {/* Step 3: Generating */}
+      {step === 'generating' && (
+        <Card>
+          <CardContent className="py-16 flex flex-col items-center justify-center text-center space-y-4">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            <div>
+              <p className="text-lg font-semibold">Gamma está creando tu {format === 'presentation' ? 'presentación' : 'documento'}...</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Esto puede tardar hasta 1 minuto. No cierres esta página.
+              </p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 4: Done */}
+      {step === 'done' && generation?.gammaUrl && (
+        <Card>
+          <CardContent className="py-12 flex flex-col items-center justify-center text-center space-y-6">
+            <div className="p-6 rounded-2xl bg-primary/5 border border-primary/20">
+              {format === 'presentation' ? (
+                <Presentation className="h-20 w-20 text-primary" />
+              ) : (
+                <FileText className="h-20 w-20 text-primary" />
+              )}
+            </div>
+            <div>
+              <p className="text-xl font-bold">
+                ¡{format === 'presentation' ? 'Presentación' : 'Documento'} listo! 🎉
+              </p>
+              <p className="text-muted-foreground mt-1">
+                Tu reporte fue generado exitosamente en Gamma
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-md">
+              <Button
+                className="w-full sm:flex-1"
+                size="lg"
+                onClick={() => window.open(generation.gammaUrl, '_blank')}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Abrir en Gamma
+              </Button>
+              {generation.exportUrl && (
+                <Button
+                  variant="outline"
+                  className="w-full sm:flex-1"
+                  size="lg"
+                  onClick={() => window.open(generation.exportUrl, '_blank')}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Descargar PDF
+                </Button>
+              )}
+            </div>
+
+            <Button variant="ghost" onClick={handleReset}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Generar otro reporte
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Failed state */}
+      {generation?.status === 'failed' && (
+        <Card>
+          <CardContent className="py-12 text-center space-y-4">
+            <p className="text-destructive font-medium">Error al generar el reporte en Gamma</p>
+            <Button variant="outline" onClick={handleReset}>Intentar de nuevo</Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
