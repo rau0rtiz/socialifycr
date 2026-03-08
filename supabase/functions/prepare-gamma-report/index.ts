@@ -50,6 +50,25 @@ TONO: Profesional, confiado, estratégico. Como un socio consultor, no como un r
 
 IDIOMA: Siempre en español.`;
 
+    // Build content analysis section
+    let contentSection = '';
+    if (dashboardData.topContent) {
+      contentSection = `
+
+## Datos de Contenido Orgánico del Período
+${JSON.stringify(dashboardData.topContent, null, 2)}
+
+INSTRUCCIONES PARA ANÁLISIS DE CONTENIDO:
+- Identifica los TOP 5 contenidos con mejor rendimiento del período y explica POR QUÉ funcionaron
+- Analiza patrones: ¿qué tipo de contenido (Reel, Video, Carrusel, Post) genera más engagement?
+- Si hay datos de modelos/personas, indica quiénes generan más interacción
+- Compara el rendimiento promedio de cada tipo de contenido
+- Detecta tendencias: ¿qué temas, formatos o estilos resuenan más con la audiencia?
+- Genera recomendaciones concretas para replicar éxitos: qué tipo de contenido crear más, qué temas explorar, qué formatos priorizar
+- Si hay contenido cross-platform, analiza qué plataforma rinde mejor para cada tipo
+`;
+    }
+
     const userMessage = `# Reporte para: ${clientName || 'Cliente'}
 **Industria:** ${clientIndustry || 'No especificada'}
 **Período analizado:** ${periodLabel}
@@ -58,18 +77,20 @@ ${customInstructions ? `\n**Instrucciones del equipo:** ${customInstructions}` :
 
 ## Datos del período
 ${JSON.stringify(dashboardData, null, 2)}
+${contentSection}
 
 ---
 
 Genera un ${formatLabel} de reporte de marketing digital para el período **${periodLabel}**. Estructura:
 
 1. **📊 Resumen Ejecutivo** — Los 3-5 hallazgos más importantes, con impacto en negrita
-2. **🎯 Rendimiento de Campañas** (si hay datos) — Análisis de inversión vs retorno, mejores y peores campañas, eficiencia del gasto. Incluye tabla comparativa
-3. **💰 Análisis de Ventas** (si hay datos) — Tendencias, fuentes más efectivas, ticket promedio, conversión
-4. **👥 Presencia en Redes Sociales** (si hay datos) — Crecimiento de audiencia, plataformas destacadas
-5. **💡 Insights Estratégicos** — Patrones, oportunidades, riesgos identificados
-6. **🚀 Plan de Acción** — 5-7 recomendaciones concretas con prioridad (alta/media/baja) y timeline
-7. **📋 Resumen para el Cliente** — 3 bullets que capturen lo esencial del mes`;
+2. **🎯 Rendimiento de Campañas** (si hay datos de campañas) — Análisis de inversión vs retorno, mejores y peores campañas, eficiencia del gasto. Incluye tabla comparativa
+3. **💰 Análisis de Ventas** (si hay datos de ventas) — Tendencias, fuentes más efectivas, ticket promedio, conversión. Si hay ventas atribuidas a anuncios, calcula el ROAS manual
+4. **📱 Rendimiento de Contenido Orgánico** (si hay datos de contenido) — Top posts del período, análisis de qué funciona y qué no, patrones de engagement por tipo de contenido, recomendaciones para replicar éxitos
+5. **👥 Presencia en Redes Sociales** (si hay datos de seguidores) — Crecimiento de audiencia, plataformas destacadas
+6. **💡 Insights Estratégicos** — Patrones, oportunidades, riesgos identificados. Conecta insights de paid + organic + ventas
+7. **🚀 Plan de Acción** — 5-7 recomendaciones concretas con prioridad (alta/media/baja) y timeline
+8. **📋 Resumen para el Cliente** — 3 bullets que capturen lo esencial del período`;
 
     console.log('Generating PRO report text with Perplexity for client:', clientName, 'period:', periodLabel);
 
