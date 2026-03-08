@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AIReportGenerator } from '@/components/reports/AIReportGenerator';
+import { GammaReportGenerator } from '@/components/reports/GammaReportGenerator';
 import { SavedReportsList } from '@/components/reports/SavedReportsList';
 import { MonthlySalesReport } from '@/components/reports/MonthlySalesReport';
 import { SocialPerformanceReport } from '@/components/reports/SocialPerformanceReport';
@@ -8,7 +9,7 @@ import { useBrand } from '@/contexts/BrandContext';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Users, Sparkles, FileText, BarChart3, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Users, Sparkles, FileText, BarChart3, TrendingUp, Presentation } from 'lucide-react';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 
 const Reportes = () => {
