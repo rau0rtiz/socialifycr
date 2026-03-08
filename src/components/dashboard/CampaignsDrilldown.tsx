@@ -716,5 +716,6 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
         )}
       </CardContent>
     </Card>
+    </>
   );
 };
