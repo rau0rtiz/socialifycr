@@ -78,6 +78,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signOut = async () => {
+    sessionStorage.removeItem('splash-shown-session');
     await supabase.auth.signOut();
   };
 
