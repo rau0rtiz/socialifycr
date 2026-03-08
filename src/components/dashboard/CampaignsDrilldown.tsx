@@ -459,6 +459,14 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
   const campaigns = campaignsResult?.campaigns || [];
   const currency = campaignsResult?.currency || 'MXN';
 
+  // Detect active campaigns without assigned goals
+  const activeCampaignsWithoutGoals = useMemo(() => {
+    if (!campaigns.length || !campaignGoalsData) return [];
+    return campaigns.filter(
+      (c) => c.effectiveStatus === 'ACTIVE' && !campaignGoalsData.goals?.[c.id]
+    );
+  }, [campaigns, campaignGoalsData]);
+
   const {
     data: adsets,
     isLoading: adsetsLoading,
