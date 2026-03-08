@@ -15,6 +15,7 @@ export interface ClientFeatureFlags {
   funnel: boolean;
   campaigns: boolean;
   sales_tracking: boolean;
+  monthly_sales_report: boolean;
 }
 
 const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
