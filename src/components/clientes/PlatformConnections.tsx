@@ -119,11 +119,56 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     fetchConnections();
   }, [fetchConnections]);
 
+  // Handle META_OAUTH_CODE: parent makes the authenticated API call
+  const handleMetaOAuthCode = useCallback(async (code: string, oauthClientId: string, redirectUri: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
+      if (!accessToken) {
+        throw new Error('No hay sesión activa. Por favor inicia sesión primero.');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=fetch-accounts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ code, redirectUri, clientId: oauthClientId })
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      setMetaAccountsData(result.accounts);
+      setShowAccountSelector(true);
+    } catch (err) {
+      console.error('Error fetching Meta accounts:', err);
+      toast({
+        title: 'Error de conexión',
+        description: err instanceof Error ? err.message : 'Error al conectar con Meta',
+        variant: 'destructive',
+      });
+    } finally {
+      setConnecting(null);
+    }
+  }, [toast]);
+
   // Listen for OAuth callback messages
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
-      if (event.data?.type === 'META_OAUTH_ACCOUNTS') {
+      if (event.data?.type === 'META_OAUTH_CODE') {
+        // Parent receives the code from the popup and makes the authenticated call
+        handleMetaOAuthCode(event.data.code, event.data.clientId, event.data.redirectUri);
+      } else if (event.data?.type === 'META_OAUTH_ACCOUNTS') {
         setMetaAccountsData(event.data.accounts);
         setShowAccountSelector(true);
         setConnecting(null);
@@ -163,7 +208,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [toast, fetchConnections]);
+  }, [toast, fetchConnections, handleMetaOAuthCode]);
 
   const handleSaveMetaConnection = async (selectedAccounts: {
     pageId: string;
