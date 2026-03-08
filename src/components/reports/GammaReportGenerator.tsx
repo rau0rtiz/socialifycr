@@ -220,7 +220,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
   const [generatedText, setGeneratedText] = useState('');
   const [isPreparingText, setIsPreparingText] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedThemeId, setSelectedThemeId] = useState<string>('');
+  const [selectedThemeId, setSelectedThemeId] = useState<string>('_default');
 
   // Date range
   const [dateRange, setDateRange] = useState<DateRange>({
