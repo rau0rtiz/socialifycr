@@ -61,7 +61,7 @@ export const TopBar = () => {
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
-          {isAgency && <ClientSelector />}
+          {isAgency && <div data-tour="client-selector"><ClientSelector /></div>}
 
           <ThemeToggle />
 
