@@ -53,9 +53,14 @@ export const MetaOAuthCallback = () => {
         const clientId = stateData.clientId;
         const redirectUri = `${window.location.origin}/oauth/meta/callback`;
 
-        // Get current session token for authenticated request
-        const { data: { session } } = await supabase.auth.getSession();
-        const accessToken = session?.access_token;
+        // Wait for auth session to be restored from storage (popup may not have it immediately)
+        let accessToken: string | undefined;
+        for (let i = 0; i < 10; i++) {
+          const { data: { session } } = await supabase.auth.getSession();
+          accessToken = session?.access_token;
+          if (accessToken) break;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
 
         if (!accessToken) {
           throw new Error('No hay sesión activa. Por favor inicia sesión primero.');
