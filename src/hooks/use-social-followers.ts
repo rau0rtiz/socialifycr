@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { usePlatformConnections } from './use-platform-connections';
 
 interface PlatformFollowers {
   platform: 'instagram' | 'facebook' | 'tiktok' | 'youtube';
@@ -15,108 +16,75 @@ interface UseSocialFollowersResult {
 }
 
 export function useSocialFollowers(clientId: string | null): UseSocialFollowersResult {
-  const [platforms, setPlatforms] = useState<PlatformFollowers[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLiveData, setIsLiveData] = useState(false);
+  const { data: connections, isLoading: connectionsLoading } = usePlatformConnections(clientId);
 
-  const fetchData = useCallback(async () => {
-    if (!clientId) {
-      setPlatforms([]);
-      setIsLoading(false);
-      return;
-    }
+  const metaConnection = connections?.find(c => c.platform === 'meta');
+  const youtubeConnection = connections?.find(c => c.platform === 'youtube');
 
-    setIsLoading(true);
+  const { data, isLoading: dataLoading, refetch } = useQuery({
+    queryKey: ['social-followers', clientId, !!metaConnection, !!youtubeConnection],
+    queryFn: async () => {
+      const results: PlatformFollowers[] = [];
 
-    try {
-      const connectedPlatforms: PlatformFollowers[] = [];
-
-      // Check for active Meta connection
-      const { data: metaConnection } = await supabase
-        .from('platform_connections')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('platform', 'meta')
-        .eq('status', 'active')
-        .maybeSingle();
+      // Fire all API calls in parallel
+      const promises: Promise<void>[] = [];
 
       if (metaConnection) {
-        // Fetch real data from Meta API
-        const { data, error } = await supabase.functions.invoke('meta-api', {
-          body: {
-            clientId,
-            endpoint: 'account-insights',
-            params: { datePreset: 'last_30d' },
-          },
-        });
-
-        if (!error && !data?.error) {
-          // Add Instagram if connected
-          if (data.instagram && metaConnection.instagram_account_id) {
-            connectedPlatforms.push({
-              platform: 'instagram',
-              followers: data.instagram.followers || 0,
-              name: data.instagram.username,
-            });
-          }
-
-          // Add Facebook if connected
-          if (data.facebook && metaConnection.platform_page_id) {
-            connectedPlatforms.push({
-              platform: 'facebook',
-              followers: data.facebook.fans || data.facebook.followers || 0,
-              name: data.facebook.name,
-            });
-          }
-        }
+        promises.push(
+          supabase.functions.invoke('meta-api', {
+            body: {
+              clientId,
+              endpoint: 'account-insights',
+              params: { datePreset: 'last_30d' },
+            },
+          }).then(({ data, error }) => {
+            if (!error && !data?.error) {
+              if (data.instagram && metaConnection.instagram_account_id) {
+                results.push({
+                  platform: 'instagram',
+                  followers: data.instagram.followers || 0,
+                  name: data.instagram.username,
+                });
+              }
+              if (data.facebook && metaConnection.platform_page_id) {
+                results.push({
+                  platform: 'facebook',
+                  followers: data.facebook.fans || data.facebook.followers || 0,
+                  name: data.facebook.name,
+                });
+              }
+            }
+          })
+        );
       }
-
-      // Check for active YouTube connection
-      const { data: youtubeConnection } = await supabase
-        .from('platform_connections')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('platform', 'youtube')
-        .eq('status', 'active')
-        .maybeSingle();
 
       if (youtubeConnection) {
-        // Fetch YouTube channel stats
-        const { data: ytData, error: ytError } = await supabase.functions.invoke('youtube-api', {
-          body: {
-            clientId,
-            endpoint: 'channel-stats',
-          },
-        });
-
-        if (!ytError && !ytData?.error && ytData?.subscriberCount !== undefined) {
-          connectedPlatforms.push({
-            platform: 'youtube',
-            followers: ytData.subscriberCount,
-            name: ytData.name,
-          });
-        }
+        promises.push(
+          supabase.functions.invoke('youtube-api', {
+            body: { clientId, endpoint: 'channel-stats' },
+          }).then(({ data: ytData, error: ytError }) => {
+            if (!ytError && !ytData?.error && ytData?.subscriberCount !== undefined) {
+              results.push({
+                platform: 'youtube',
+                followers: ytData.subscriberCount,
+                name: ytData.name,
+              });
+            }
+          })
+        );
       }
 
-      setPlatforms(connectedPlatforms);
-      setIsLiveData(connectedPlatforms.length > 0);
-    } catch (err) {
-      console.error('Error in useSocialFollowers:', err);
-      setPlatforms([]);
-      setIsLiveData(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [clientId]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+      await Promise.all(promises);
+      return results;
+    },
+    enabled: !!clientId && !connectionsLoading,
+    staleTime: 5 * 60 * 1000,
+  });
 
   return {
-    platforms,
-    isLoading,
-    isLiveData,
-    refetch: fetchData,
+    platforms: data || [],
+    isLoading: connectionsLoading || dataLoading,
+    isLiveData: (data?.length || 0) > 0,
+    refetch,
   };
 }

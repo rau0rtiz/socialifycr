@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { usePlatformConnections } from './use-platform-connections';
 
 interface MetaApiParams {
   [key: string]: string | number | boolean;
@@ -254,29 +255,14 @@ export const useMetaApi = (clientId: string | null) => {
   };
 };
 
-// Standalone hook to get Meta connection with React Query
+// Standalone hook to get Meta connection — derives from shared platform connections cache
 export const useMetaConnection = (clientId: string | null) => {
-  return useQuery({
-    queryKey: ['meta-connection', clientId],
-    queryFn: async () => {
-      if (!clientId) return null;
-
-      const { data, error } = await supabase
-        .from('platform_connections')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('platform', 'meta')
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching connection:', error);
-        return null;
-      }
-
-      return data;
-    },
-    enabled: !!clientId,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: connections, isLoading, refetch } = usePlatformConnections(clientId);
+  const metaConnection = connections?.find((c) => c.platform === 'meta') || null;
+  
+  return {
+    data: metaConnection,
+    isLoading,
+    refetch,
+  };
 };

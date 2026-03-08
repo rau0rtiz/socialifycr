@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -21,44 +22,28 @@ interface UseCrosspostLinksResult {
 }
 
 export const useCrosspostLinks = (clientId: string | null): UseCrosspostLinksResult => {
-  const [links, setLinks] = useState<CrosspostLink[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchLinks = useCallback(async () => {
-    if (!clientId) {
-      setLinks([]);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { data, error: fetchError } = await supabase
+  const { data: links = [], isLoading, error: queryError, refetch } = useQuery({
+    queryKey: ['crosspost-links', clientId],
+    queryFn: async () => {
+      if (!clientId) return [];
+      const { data, error } = await supabase
         .from('crosspost_links')
         .select('*')
         .eq('client_id', clientId);
 
-      if (fetchError) throw fetchError;
-      setLinks(data || []);
-    } catch (err) {
-      console.error('Error fetching crosspost links:', err);
-      setError(err instanceof Error ? err.message : 'Error fetching links');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [clientId]);
-
-  useEffect(() => {
-    fetchLinks();
-  }, [fetchLinks]);
+      if (error) throw error;
+      return (data || []) as CrosspostLink[];
+    },
+    enabled: !!clientId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const addLink = useCallback(async (primaryPostId: string, linkedPostId: string): Promise<boolean> => {
     if (!clientId) return false;
 
     try {
-      // Check if link already exists (in either direction)
       const existing = links.find(
         l => (l.primary_post_id === primaryPostId && l.linked_post_id === linkedPostId) ||
              (l.primary_post_id === linkedPostId && l.linked_post_id === primaryPostId)
@@ -69,19 +54,17 @@ export const useCrosspostLinks = (clientId: string | null): UseCrosspostLinksRes
         return false;
       }
 
-      const { data, error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from('crosspost_links')
         .insert({
           client_id: clientId,
           primary_post_id: primaryPostId,
           linked_post_id: linkedPostId,
-        })
-        .select()
-        .single();
+        });
 
       if (insertError) throw insertError;
 
-      setLinks(prev => [...prev, data]);
+      queryClient.invalidateQueries({ queryKey: ['crosspost-links', clientId] });
       toast.success('Posts vinculados correctamente');
       return true;
     } catch (err) {
@@ -89,7 +72,7 @@ export const useCrosspostLinks = (clientId: string | null): UseCrosspostLinksRes
       toast.error('Error al vincular posts');
       return false;
     }
-  }, [clientId, links]);
+  }, [clientId, links, queryClient]);
 
   const removeLink = useCallback(async (linkId: string): Promise<boolean> => {
     try {
@@ -100,7 +83,7 @@ export const useCrosspostLinks = (clientId: string | null): UseCrosspostLinksRes
 
       if (deleteError) throw deleteError;
 
-      setLinks(prev => prev.filter(l => l.id !== linkId));
+      queryClient.invalidateQueries({ queryKey: ['crosspost-links', clientId] });
       toast.success('Vínculo eliminado');
       return true;
     } catch (err) {
@@ -108,11 +91,10 @@ export const useCrosspostLinks = (clientId: string | null): UseCrosspostLinksRes
       toast.error('Error al eliminar vínculo');
       return false;
     }
-  }, []);
+  }, [clientId, queryClient]);
 
   const getLinkedPosts = useCallback((postId: string): string[] => {
     const linkedIds: string[] = [];
-    
     for (const link of links) {
       if (link.primary_post_id === postId) {
         linkedIds.push(link.linked_post_id);
@@ -120,17 +102,16 @@ export const useCrosspostLinks = (clientId: string | null): UseCrosspostLinksRes
         linkedIds.push(link.primary_post_id);
       }
     }
-    
     return linkedIds;
   }, [links]);
 
   return {
     links,
     isLoading,
-    error,
+    error: queryError?.message || null,
     addLink,
     removeLink,
     getLinkedPosts,
-    refetch: fetchLinks,
+    refetch,
   };
 };
