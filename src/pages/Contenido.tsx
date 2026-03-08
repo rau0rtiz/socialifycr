@@ -579,187 +579,31 @@ const Contenido = () => {
       {/* Results count */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">
-          {filteredContent.length} {filteredContent.length === 1 ? 'publicación' : 'publicaciones'} en {selectedPlatforms.length} {selectedPlatforms.length === 1 ? 'plataforma' : 'plataformas'}
+          {platformFilteredContent.length} {platformFilteredContent.length === 1 ? 'publicación' : 'publicaciones'} en {selectedPlatforms.length} {selectedPlatforms.length === 1 ? 'plataforma' : 'plataformas'}
         </p>
       </div>
 
-      {/* Content Columns by Platform */}
-      {contentLoading ? (
-        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(selectedPlatforms.length, 3)}, 1fr)` }}>
-          {selectedPlatforms.slice(0, 3).map(platform => (
-            <div key={platform} className="space-y-3">
-              <div className="flex items-center gap-2 mb-3">
-                <Badge variant="outline" className={cn("text-xs px-2 py-1 gap-1", platformConfig[platform as NetworkType]?.class)}>
-                  <span>{platformConfig[platform as NetworkType]?.icon}</span>
-                  {platformConfig[platform as NetworkType]?.label}
-                </Badge>
-              </div>
-              {Array.from({ length: 3 }).map((_, i) => <ContentSkeleton key={i} />)}
-            </div>
-          ))}
-        </div>
-      ) : selectedPlatforms.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          Selecciona al menos una plataforma para ver contenido
-        </div>
-      ) : (
-        <div 
-          className="grid gap-4"
-          style={{ 
-            gridTemplateColumns: `repeat(${Math.min(selectedPlatforms.length, 4)}, 1fr)` 
-          }}
-        >
-          {selectedPlatforms.map(platform => {
-            const platformPosts = contentByPlatform[platform as NetworkType] || [];
-            const platformInfo = platformConfig[platform as NetworkType];
-            
-            return (
-              <div key={platform} className="space-y-3">
-                {/* Platform Header */}
-                <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur py-2 z-10">
-                  <Badge variant="outline" className={cn("text-xs px-2 py-1 gap-1", platformInfo?.class)}>
-                    <span>{platformInfo?.icon}</span>
-                    {platformInfo?.label}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {platformPosts.length}
-                  </span>
-                </div>
-                
-                {/* Posts Column */}
-                <div className="space-y-3">
-                  {platformPosts.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground text-xs">
-                      Sin contenido
-                    </div>
-                  ) : (
-                    platformPosts.map((post) => {
-                      const typeInfo = typeConfig[post.type] || typeConfig.image;
-                      const TypeIcon = typeInfo.icon;
-                      const postMetadata = metadata[post.id];
-                      const postTag = postMetadata?.tag || tags.find(t => t.id === postMetadata?.tag_id);
-                      const caption = post.caption || post.title;
-                      const linkedPlatforms = getLinkedPlatforms(post.id);
-                      const isLinked = linkedPlatforms.length > 0;
-                      
-                      return (
-                        <div 
-                          key={post.id}
-                          onClick={() => handlePostClick(post)}
-                          className={cn(
-                            "group relative rounded-lg border bg-muted/30 p-2 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer",
-                            isLinked ? "border-violet-500/40 ring-1 ring-violet-500/20" : "border-border"
-                          )}
-                        >
-                          {/* Linked indicator */}
-                          {isLinked && (
-                            <div className="absolute -top-2 -right-2 z-10">
-                              <div className="bg-violet-500 text-white rounded-full p-1 shadow-md">
-                                <Link2 className="h-3 w-3" />
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Thumbnail */}
-                          <div className="relative aspect-square w-full rounded-md bg-muted overflow-hidden mb-2">
-                            {post.thumbnailUrl || post.thumbnail ? (
-                              <img 
-                                src={post.thumbnailUrl || post.thumbnail} 
-                                alt={post.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <TypeIcon className="h-8 w-8 text-muted-foreground" />
-                              </div>
-                            )}
-                            {/* Video/Reel indicator */}
-                            {(post.type === 'video' || post.type === 'reel') && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                                <Play className="h-6 w-6 text-white drop-shadow-md" />
-                              </div>
-                            )}
-                            {/* Type badge */}
-                            <div className="absolute top-1 left-1">
-                              <Badge 
-                                variant="outline" 
-                                className={cn("text-[8px] px-1 py-0 gap-0.5 backdrop-blur-sm", typeInfo.class)}
-                              >
-                                <TypeIcon className="h-2 w-2" />
-                              </Badge>
-                            </div>
-                          </div>
-                          
-                          {/* Content info */}
-                          <div className="space-y-1">
-                            {/* Linked platforms badge */}
-                            {isLinked && (
-                              <Badge 
-                                variant="outline" 
-                                className="text-[8px] px-1.5 py-0.5 gap-1 bg-violet-500/10 text-violet-600 border-violet-500/30"
-                              >
-                                <Link2 className="h-2 w-2" />
-                                Vinculado a {linkedPlatforms.map(p => platformConfig[p]?.icon).join(' ')}
-                              </Badge>
-                            )}
-                            
-                            {/* Tags row */}
-                            {postTag && (
-                              <Badge 
-                                variant="outline" 
-                                className="text-[8px] px-1.5 py-0"
-                                style={{
-                                  backgroundColor: `${postTag.color}20`,
-                                  color: postTag.color,
-                                  borderColor: `${postTag.color}40`
-                                }}
-                              >
-                                {postTag.name}
-                              </Badge>
-                            )}
-
-                            {/* Caption */}
-                            <p className="text-[10px] text-foreground leading-tight line-clamp-2">
-                              {caption}
-                            </p>
-                            
-                            {/* Metrics */}
-                            <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
-                              {post.views !== undefined && post.views !== null && (
-                                <div className="flex items-center gap-0.5">
-                                  <Eye className="h-2 w-2" />
-                                  <span>{formatNumber(post.views)}</span>
-                                </div>
-                              )}
-                              
-                              {post.likes !== undefined && post.likes !== null ? (
-                                <div className="flex items-center gap-0.5">
-                                  <Heart className="h-2 w-2" />
-                                  <span>{formatNumber(post.likes)}</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-0.5">
-                                  <Heart className="h-2 w-2" />
-                                  <span>{formatNumber(post.engagement)}</span>
-                                </div>
-                              )}
-                              
-                              <span className="ml-auto text-[8px]">
-                                {format(new Date(post.date), 'dd/MM', { locale: es })}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {/* Content Grid - 3x3 with pagination */}
+      <div className="mb-4 md:mb-6">
+        <ContentGrid
+          data={platformFilteredContent}
+          isLoading={contentLoading}
+          isLiveData={contentIsLive}
+          onRefresh={refetchContent}
+          tags={tags}
+          models={models}
+          metadata={metadata}
+          onCreateTag={createTag}
+          onCreateModel={createModel}
+          onUpdateMetadata={updateMetadata}
+          onUpdateMetadataMultiple={updateMetadataMultiple}
+          onCapture48hMetrics={capture48hMetrics}
+          crosspostLinks={crosspostLinks}
+          onAddCrosspostLink={addLink}
+          onRemoveCrosspostLink={removeLink}
+          getLinkedPosts={getLinkedPosts}
+        />
+      </div>
 
       {/* AI Insights Panel */}
       {selectedClient && (
