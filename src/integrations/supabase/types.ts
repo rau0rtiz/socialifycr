@@ -144,6 +144,7 @@ export type Database = {
           campaigns: boolean
           client_id: string
           competitors: boolean
+          contenido_section: boolean
           content_grid: boolean
           created_at: string | null
           dashboard: boolean
@@ -151,9 +152,11 @@ export type Database = {
           id: string
           instagram_posts: boolean
           monthly_sales_report: boolean
+          reportes_section: boolean
           sales_tracking: boolean
           social_followers: boolean
           updated_at: string | null
+          ventas_section: boolean
           video_ideas: boolean
           youtube_videos: boolean
         }
@@ -162,6 +165,7 @@ export type Database = {
           campaigns?: boolean
           client_id: string
           competitors?: boolean
+          contenido_section?: boolean
           content_grid?: boolean
           created_at?: string | null
           dashboard?: boolean
@@ -169,9 +173,11 @@ export type Database = {
           id?: string
           instagram_posts?: boolean
           monthly_sales_report?: boolean
+          reportes_section?: boolean
           sales_tracking?: boolean
           social_followers?: boolean
           updated_at?: string | null
+          ventas_section?: boolean
           video_ideas?: boolean
           youtube_videos?: boolean
         }
@@ -180,6 +186,7 @@ export type Database = {
           campaigns?: boolean
           client_id?: string
           competitors?: boolean
+          contenido_section?: boolean
           content_grid?: boolean
           created_at?: string | null
           dashboard?: boolean
@@ -187,9 +194,11 @@ export type Database = {
           id?: string
           instagram_posts?: boolean
           monthly_sales_report?: boolean
+          reportes_section?: boolean
           sales_tracking?: boolean
           social_followers?: boolean
           updated_at?: string | null
+          ventas_section?: boolean
           video_ideas?: boolean
           youtube_videos?: boolean
         }
