@@ -352,7 +352,7 @@ export const GammaReportGenerator = ({ clientId, hasAdAccount }: GammaReportGene
               {/* Generate Button */}
               <Button
                 onClick={handlePrepareText}
-                disabled={isPreparingText || selectedSources.length === 0 || !hasData || isDataLoading}
+                disabled={isPreparingText || selectedSources.length === 0 || !hasData || isDataLoading || !customInstructions.trim()}
                 className="w-full"
                 size="lg"
               >
