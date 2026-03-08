@@ -30,6 +30,7 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
   funnel: false,
   campaigns: false,
   sales_tracking: false,
+  monthly_sales_report: false,
 };
 
 export const FEATURE_LABELS: Record<string, string> = {
