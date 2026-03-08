@@ -20,6 +20,25 @@ serve(async (req) => {
 
     const { action, generationId, ...params } = await req.json();
 
+    // Action: list available themes
+    if (action === 'themes') {
+      const response = await fetch(`${GAMMA_API_URL}/themes`, {
+        method: 'GET',
+        headers: { 'X-API-KEY': GAMMA_API_KEY },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gamma themes error:', response.status, errorText);
+        throw new Error(`Gamma API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Action: check status of a generation
     if (action === 'status') {
       if (!generationId) throw new Error('generationId is required for status check');
@@ -46,7 +65,6 @@ serve(async (req) => {
       const { gammaId, exportAs } = params;
       if (!gammaId || !exportAs) throw new Error('gammaId and exportAs are required');
 
-      // Use the generations endpoint with export parameter
       const response = await fetch(`${GAMMA_API_URL}/generations/from-template`, {
         method: 'POST',
         headers: {
@@ -73,7 +91,7 @@ serve(async (req) => {
     }
 
     // Action: generate a new gamma
-    const { inputText, format, additionalInstructions, numCards } = params;
+    const { inputText, format, additionalInstructions, numCards, themeId } = params;
 
     if (!inputText) throw new Error('inputText is required');
 
@@ -85,8 +103,9 @@ serve(async (req) => {
 
     if (additionalInstructions) body.additionalInstructions = additionalInstructions;
     if (numCards) body.numCards = numCards;
+    if (themeId) body.themeId = themeId;
 
-    console.log('Generating Gamma report:', { format: body.format, textLength: inputText.length });
+    console.log('Generating Gamma report:', { format: body.format, textLength: inputText.length, themeId: body.themeId });
 
     const response = await fetch(`${GAMMA_API_URL}/generations`, {
       method: 'POST',

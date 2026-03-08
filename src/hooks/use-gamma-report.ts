@@ -1,14 +1,42 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 
 export type GammaFormat = 'presentation' | 'document';
+
+export interface GammaTheme {
+  id: string;
+  name: string;
+  thumbnailUrl?: string;
+}
 
 export interface GammaGenerationStatus {
   generationId: string;
   status: 'pending' | 'completed' | 'failed';
   gammaUrl?: string;
   exportUrl?: string;
+}
+
+export function useGammaThemes() {
+  return useQuery({
+    queryKey: ['gamma-themes'],
+    queryFn: async (): Promise<GammaTheme[]> => {
+      const { data, error } = await supabase.functions.invoke('gamma-report', {
+        body: { action: 'themes' },
+      });
+
+      if (error) throw error;
+      // Gamma returns an array of theme objects
+      const themes = Array.isArray(data) ? data : (data?.themes || []);
+      return themes.map((t: any) => ({
+        id: t.id || t.themeId,
+        name: t.name || 'Sin nombre',
+        thumbnailUrl: t.thumbnailUrl || t.thumbnail_url || null,
+      }));
+    },
+    staleTime: 30 * 60 * 1000, // Cache for 30 minutes
+  });
 }
 
 export function useGammaReport() {
@@ -41,11 +69,11 @@ export function useGammaReport() {
       if (data.status === 'completed') {
         stopPolling();
         setIsGenerating(false);
-        toast.success('¡Reporte generado en Gamma!');
+        toast.success('¡Reporte exportado a Gamma!');
       } else if (data.status === 'failed') {
         stopPolling();
         setIsGenerating(false);
-        toast.error('Error al generar el reporte en Gamma');
+        toast.error('Error al exportar a Gamma');
       }
     } catch (err) {
       console.error('Error polling Gamma status:', err);
@@ -57,6 +85,7 @@ export function useGammaReport() {
     format: GammaFormat,
     additionalInstructions?: string,
     numCards?: number,
+    themeId?: string,
   ) => {
     setIsGenerating(true);
     setGeneration(null);
@@ -70,6 +99,7 @@ export function useGammaReport() {
           format,
           additionalInstructions,
           numCards,
+          themeId,
         },
       });
 
@@ -80,14 +110,12 @@ export function useGammaReport() {
 
       setGeneration({ generationId, status: 'pending' });
 
-      // Poll every 5 seconds
       pollingRef.current = setInterval(() => pollStatus(generationId), 5000);
-      // Also poll immediately after a short delay
       setTimeout(() => pollStatus(generationId), 3000);
 
     } catch (err) {
       console.error('Error generating Gamma report:', err);
-      toast.error('Error al iniciar la generación en Gamma');
+      toast.error('Error al iniciar la exportación a Gamma');
       setIsGenerating(false);
     }
   }, [pollStatus, stopPolling]);
