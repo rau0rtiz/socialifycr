@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuditLog } from '@/hooks/use-audit-log';
 import { Copy, Check, Loader2, Mail, User, Send, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
 
