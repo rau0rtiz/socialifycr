@@ -153,6 +153,7 @@ const CampaignRow = ({
   configuredGoal?: GoalType | null;
 }) => {
   const isPurchaseGoal = configuredGoal === 'purchases' || campaign.resultType === 'Compras';
+  const isFollowersGoal = configuredGoal === 'followers' || campaign.resultType === 'Seguidores';
   const goalLabel = configuredGoal ? getGoalLabel(configuredGoal) : null;
   
   return (
