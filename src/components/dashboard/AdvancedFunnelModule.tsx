@@ -694,9 +694,6 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
               />
             </TabsContent>
 
-            <TabsContent value="sankey" className="mt-4">
-              <SankeyDiagram nodes={sankeyNodes} links={sankeyLinks} />
-            </TabsContent>
 
             <TabsContent value="calculator" className="mt-4">
               <ProjectionCalculator
