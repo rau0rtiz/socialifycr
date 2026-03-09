@@ -295,7 +295,7 @@ export const useFunnelAnalytics = (
       currency,
       spend: metaTotals.spend,
     };
-  }, [campaigns, salesData, selectedCampaignId, currency, campaignGoalsData]);
+  }, [campaigns, salesData, selectedCampaignIds, currency, campaignGoalsData]);
 
   // Projection calculator: given a target at any stage, project others
   const calculateProjection = (targetStageId: string, targetValue: number): FunnelProjection[] => {

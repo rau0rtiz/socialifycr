@@ -728,17 +728,6 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
                 </Popover>
               )}
 
-              <Select value={selectedCampaignId} onValueChange={setSelectedCampaignId}>
-                <SelectTrigger className="w-[160px] h-8 text-xs">
-                  <SelectValue placeholder="Campaña" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las campañas</SelectItem>
-                  {campaigns.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
 
               <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading} className="h-8">
                 <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
