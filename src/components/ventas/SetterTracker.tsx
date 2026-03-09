@@ -90,11 +90,33 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
   };
 
   const handleStatusChange = async (appointment: SetterAppointment, newStatus: AppointmentStatus) => {
+    if (newStatus === 'sold') {
+      setSalePrompt(appointment);
+      setSaleAmount('');
+      setSaleCurrency(appointment.currency as 'CRC' | 'USD' || 'CRC');
+      return;
+    }
     try {
       await updateAppointment.mutateAsync({ id: appointment.id, status: newStatus } as any);
       toast.success(`Estado actualizado a ${STATUS_CONFIG[newStatus].label}`);
     } catch {
       toast.error('Error actualizando estado');
+    }
+  };
+
+  const handleConfirmSale = async () => {
+    if (!salePrompt || !saleAmount) return;
+    try {
+      await updateAppointment.mutateAsync({
+        id: salePrompt.id,
+        status: 'sold',
+        estimated_value: parseFloat(saleAmount),
+        currency: saleCurrency,
+      } as any);
+      toast.success('Venta registrada');
+      setSalePrompt(null);
+    } catch {
+      toast.error('Error registrando venta');
     }
   };
 
