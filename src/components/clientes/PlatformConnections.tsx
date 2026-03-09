@@ -252,6 +252,13 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         throw new Error(result.error);
       }
 
+      await logAction({
+        action: 'platform.connect',
+        entityType: 'platform_connection',
+        entityName: `Meta - ${selectedAccounts.pageName}`,
+        details: { platform: 'meta', page_name: selectedAccounts.pageName },
+      });
+
       toast({
         title: 'Conexión exitosa',
         description: `Conectado a: ${selectedAccounts.pageName}`,
