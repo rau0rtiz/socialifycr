@@ -436,6 +436,13 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         throw new Error(result.error);
       }
 
+      await logAction({
+        action: 'platform.connect',
+        entityType: 'platform_connection',
+        entityName: `YouTube - ${channel.name}`,
+        details: { platform: 'youtube', channel_name: channel.name },
+      });
+
       toast({
         title: 'Conexión exitosa',
         description: `Conectado a YouTube: ${channel.name}`,
