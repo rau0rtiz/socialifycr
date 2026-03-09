@@ -911,6 +911,7 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
               <UTMTracker clientId={clientId} />
             </TabsContent>
           </Tabs>
+          </>
         )}
       </CardContent>
     </Card>
