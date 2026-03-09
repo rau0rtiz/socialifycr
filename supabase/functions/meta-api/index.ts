@@ -612,7 +612,10 @@ serve(async (req) => {
               // Determine metrics based on media type
               let metrics: string[] = [];
               
-              if (media.media_type === 'VIDEO') {
+              // Stories have different available metrics
+              if (media.media_product_type === 'STORY') {
+                metrics = ['impressions', 'reach', 'replies'];
+              } else if (media.media_type === 'VIDEO') {
                 const isReel = media.media_product_type === 'REELS';
                 if (isReel) {
                   metrics = ['plays', 'saved', 'shares', 'ig_reels_avg_watch_time'];
