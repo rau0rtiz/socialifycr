@@ -244,22 +244,6 @@ export const AppointmentFormDialog = ({
               </Select>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2 space-y-1.5">
-                <Label className="text-xs">Valor Estimado</Label>
-                <Input type="number" placeholder="0" value={estimatedValue} onChange={e => setEstimatedValue(e.target.value)} className="h-8 text-xs" min="0" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Moneda</Label>
-                <Select value={currency} onValueChange={v => setCurrency(v as any)}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CRC" className="text-xs">CRC</SelectItem>
-                    <SelectItem value="USD" className="text-xs">USD</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
             <div className="space-y-1.5">
               <Label className="text-xs">Fuente</Label>
