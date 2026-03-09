@@ -670,14 +670,10 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
           </div>
         ) : (
           <Tabs defaultValue="funnel" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 h-9">
+            <TabsList className="grid w-full grid-cols-3 h-9">
               <TabsTrigger value="funnel" className="text-xs">
                 <ArrowDown className="h-3 w-3 mr-1" />
                 Embudo
-              </TabsTrigger>
-              <TabsTrigger value="sankey" className="text-xs">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                Flujo
               </TabsTrigger>
               <TabsTrigger value="calculator" className="text-xs">
                 <Calculator className="h-3 w-3 mr-1" />
