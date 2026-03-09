@@ -259,6 +259,72 @@ export type Database = {
           },
         ]
       }
+      client_subscriptions: {
+        Row: {
+          cancelled_at: string | null
+          client_id: string
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          id: string
+          payment_provider:
+            | Database["public"]["Enums"]["payment_provider"]
+            | null
+          plan_id: string
+          provider_subscription_id: string | null
+          status: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          client_id: string
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          payment_provider?:
+            | Database["public"]["Enums"]["payment_provider"]
+            | null
+          plan_id: string
+          provider_subscription_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          client_id?: string
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          payment_provider?:
+            | Database["public"]["Enums"]["payment_provider"]
+            | null
+          plan_id?: string
+          provider_subscription_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_subscriptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_team_members: {
         Row: {
           client_id: string
@@ -658,6 +724,72 @@ export type Database = {
           },
         ]
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          currency: string
+          error_message: string | null
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_response: Json | null
+          provider_transaction_id: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string
+          currency?: string
+          error_message?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_response?: Json | null
+          provider_transaction_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          currency?: string
+          error_message?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          provider?: Database["public"]["Enums"]["payment_provider"]
+          provider_response?: Json | null
+          provider_transaction_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "client_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_connections: {
         Row: {
           access_token: string | null
@@ -796,6 +928,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_plans: {
+        Row: {
+          billing_interval: string
+          created_at: string
+          currency: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean
+          max_clients: number | null
+          max_users: number | null
+          name: string
+          price_amount: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          billing_interval?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          max_clients?: number | null
+          max_users?: number | null
+          name: string
+          price_amount: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          billing_interval?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          max_clients?: number | null
+          max_users?: number | null
+          name?: string
+          price_amount?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -1020,6 +1200,14 @@ export type Database = {
     Enums: {
       client_role: "account_manager" | "editor" | "viewer"
       connection_status: "active" | "expired" | "revoked" | "pending"
+      payment_provider: "tilopay" | "onvopay" | "bac_compra_click"
+      payment_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "refunded"
+        | "cancelled"
       platform_type:
         | "meta"
         | "tiktok"
@@ -1027,6 +1215,12 @@ export type Database = {
         | "twitter"
         | "google"
         | "youtube"
+      subscription_status:
+        | "active"
+        | "past_due"
+        | "cancelled"
+        | "expired"
+        | "trialing"
       system_role: "owner" | "admin" | "manager" | "analyst" | "viewer"
     }
     CompositeTypes: {
@@ -1157,6 +1351,15 @@ export const Constants = {
     Enums: {
       client_role: ["account_manager", "editor", "viewer"],
       connection_status: ["active", "expired", "revoked", "pending"],
+      payment_provider: ["tilopay", "onvopay", "bac_compra_click"],
+      payment_status: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "refunded",
+        "cancelled",
+      ],
       platform_type: [
         "meta",
         "tiktok",
@@ -1164,6 +1367,13 @@ export const Constants = {
         "twitter",
         "google",
         "youtube",
+      ],
+      subscription_status: [
+        "active",
+        "past_due",
+        "cancelled",
+        "expired",
+        "trialing",
       ],
       system_role: ["owner", "admin", "manager", "analyst", "viewer"],
     },
