@@ -5,13 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSetterAppointments, SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
 import { AppointmentFormDialog } from './AppointmentFormDialog';
+import { RegisterSaleDialog } from '@/components/dashboard/RegisterSaleDialog';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import {
-  CalendarPlus, Phone, Mail, User, DollarSign,
-  Trash2, Pencil, CalendarClock, TrendingUp,
-  CheckCircle2, XCircle, Clock, AlertTriangle
+  UserPlus, User, DollarSign,
+  Trash2, Pencil, TrendingUp,
+  CheckCircle2, XCircle, Clock, AlertTriangle, ShoppingCart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,8 +33,16 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SetterAppointment | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [saleAppointment, setSaleAppointment] = useState<SetterAppointment | null>(null);
 
   const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, period);
+
+  // Extract unique setter names for the dropdown
+  const existingSetters = useMemo(() => {
+    const names = new Set<string>();
+    appointments.forEach(a => { if (a.setter_name) names.add(a.setter_name); });
+    return Array.from(names).sort();
+  }, [appointments]);
 
   // Stats
   const stats = useMemo(() => {
@@ -62,25 +69,25 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
     try {
       if (editing) {
         await updateAppointment.mutateAsync({ id: editing.id, ...input });
-        toast.success('Agenda actualizada');
+        toast.success('Lead actualizado');
       } else {
         await addAppointment.mutateAsync(input);
-        toast.success('Agenda registrada');
+        toast.success('Lead registrado');
       }
       setShowForm(false);
       setEditing(null);
     } catch {
-      toast.error('Error guardando agenda');
+      toast.error('Error guardando lead');
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteAppointment.mutateAsync(id);
-      toast.success('Agenda eliminada');
+      toast.success('Lead eliminado');
       setConfirmDelete(null);
     } catch {
-      toast.error('Error eliminando agenda');
+      toast.error('Error eliminando lead');
     }
   };
 
@@ -99,8 +106,8 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <CalendarClock className="h-4 w-4" />
-              Setter & Agendas
+              <UserPlus className="h-4 w-4" />
+              Setter & Pipeline
             </CardTitle>
             <div className="flex items-center gap-2">
               <Select value={period} onValueChange={setPeriod}>
@@ -114,8 +121,8 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
                 </SelectContent>
               </Select>
               <Button size="sm" className="h-7 text-xs" onClick={() => { setEditing(null); setShowForm(true); }}>
-                <CalendarPlus className="h-3.5 w-3.5 mr-1" />
-                Nueva Agenda
+                <UserPlus className="h-3.5 w-3.5 mr-1" />
+                Nuevo Lead
               </Button>
             </div>
           </div>
@@ -124,7 +131,7 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
         <CardContent className="space-y-4">
           {/* Stats row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatsCard label="Agendas" value={stats.total} sub={`${stats.scheduled} pendientes`} icon={CalendarClock} />
+            <StatsCard label="Leads" value={stats.total} sub={`${stats.scheduled} pendientes`} icon={UserPlus} />
             <StatsCard label="Show Rate" value={`${stats.showRate.toFixed(0)}%`} sub={`${stats.noShows} no shows`} icon={TrendingUp} />
             <StatsCard label="Close Rate" value={`${stats.closeRate.toFixed(0)}%`} sub={`${stats.sold} ventas`} icon={CheckCircle2} />
             <StatsCard
@@ -135,20 +142,21 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
             />
           </div>
 
-          {/* Appointments list */}
+          {/* Leads list */}
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground text-xs">Cargando...</div>
           ) : appointments.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <CalendarClock className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm font-medium">Sin agendas registradas</p>
-              <p className="text-xs mt-1">Registra agendas para trackear tu pipeline de ventas.</p>
+              <UserPlus className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm font-medium">Sin leads registrados</p>
+              <p className="text-xs mt-1">Registra leads para trackear tu pipeline de ventas.</p>
             </div>
           ) : (
             <div className="space-y-2">
               {appointments.map(apt => {
                 const cfg = STATUS_CONFIG[apt.status as AppointmentStatus] || STATUS_CONFIG.scheduled;
                 const StatusIcon = cfg.icon;
+                const leadGoal = (apt as any).lead_goal;
                 return (
                   <div
                     key={apt.id}
@@ -172,22 +180,11 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-wrap">
-                        <span className="flex items-center gap-0.5">
-                          <CalendarClock className="h-2.5 w-2.5" />
-                          {format(new Date(apt.appointment_date), "dd MMM yyyy 'a las' HH:mm", { locale: es })}
-                        </span>
-                        {apt.lead_phone && (
-                          <span className="flex items-center gap-0.5">
-                            <Phone className="h-2.5 w-2.5" /> {apt.lead_phone}
-                          </span>
-                        )}
-                        {apt.lead_email && (
-                          <span className="flex items-center gap-0.5">
-                            <Mail className="h-2.5 w-2.5" /> {apt.lead_email}
-                          </span>
-                        )}
-                      </div>
+                      {leadGoal && (
+                        <p className="text-xs text-muted-foreground">
+                          🎯 {leadGoal}
+                        </p>
+                      )}
                       {apt.ad_name && (
                         <p className="text-[10px] text-muted-foreground">
                           📢 {apt.ad_name} — {apt.ad_campaign_name}
@@ -205,7 +202,19 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
+                      {/* Manage sale button */}
+                      {(apt.status === 'completed' || apt.status === 'confirmed') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-[10px] px-2 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10"
+                          onClick={() => setSaleAppointment(apt)}
+                        >
+                          <ShoppingCart className="h-3 w-3 mr-0.5" />
+                          Venta
+                        </Button>
+                      )}
                       {/* Quick status change */}
                       <Select
                         value={apt.status}
@@ -264,7 +273,32 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
         hasAdAccount={hasAdAccount}
         isSubmitting={addAppointment.isPending || updateAppointment.isPending}
         editing={editing}
+        existingSetters={existingSetters}
       />
+
+      {/* Sale registration dialog - reusing existing RegisterSaleDialog */}
+      {saleAppointment && (
+        <RegisterSaleDialog
+          open={!!saleAppointment}
+          onOpenChange={v => { if (!v) setSaleAppointment(null); }}
+          clientId={clientId}
+          hasAdAccount={hasAdAccount}
+          defaultValues={{
+            customer_name: saleAppointment.lead_name,
+            ad_campaign_id: saleAppointment.ad_campaign_id || undefined,
+            ad_campaign_name: saleAppointment.ad_campaign_name || undefined,
+            ad_id: saleAppointment.ad_id || undefined,
+            ad_name: saleAppointment.ad_name || undefined,
+            source: saleAppointment.source === 'ads' ? 'ad' : saleAppointment.source || 'other',
+          }}
+          onSaleRegistered={async () => {
+            // Mark appointment as sold
+            await updateAppointment.mutateAsync({ id: saleAppointment.id, status: 'sold' } as any);
+            setSaleAppointment(null);
+            toast.success('Venta registrada y lead actualizado');
+          }}
+        />
+      )}
     </>
   );
 };
