@@ -112,10 +112,11 @@ export const ClientsTable = ({
       <CardContent>
         {viewMode === 'list' ? (
           <Table>
-            <TableHeader>
+             <TableHeader>
               <TableRow>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Industria</TableHead>
+                <TableHead>Plan</TableHead>
                 <TableHead>Creado</TableHead>
                 <TableHead className="w-[70px]"></TableHead>
               </TableRow>
