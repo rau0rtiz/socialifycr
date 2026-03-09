@@ -166,23 +166,33 @@ export const useFunnelAnalytics = (
       return { stages: [], conversionRates: [], sankeyNodes: [], sankeyLinks: [] };
     }
 
-    // Aggregate Meta metrics
+    // Aggregate Meta metrics separating result types
     const metaTotals = filteredCampaigns.reduce(
-      (acc, c) => ({
-        impressions: acc.impressions + c.impressions,
-        reach: acc.reach + c.reach,
-        clicks: acc.clicks + c.clicks,
-        results: acc.results + c.results,
-        spend: acc.spend + c.spend,
-        landingPageViews: acc.landingPageViews + c.landingPageViews,
-      }),
-      { impressions: 0, reach: 0, clicks: 0, results: 0, spend: 0, landingPageViews: 0 }
+      (acc, c) => {
+        acc.impressions += c.impressions;
+        acc.reach += c.reach;
+        acc.clicks += c.clicks;
+        acc.spend += c.spend;
+        acc.landingPageViews += c.landingPageViews;
+
+        const rType = (c.resultType || '').toLowerCase();
+        if (rType.includes('compra')) {
+          acc.purchases += c.results;
+        } else if (rType.includes('conversaci') || rType.includes('mensaje')) {
+          acc.conversations += c.results;
+        } else if (rType.includes('lead') || rType.includes('cliente')) {
+          acc.leads += c.results;
+        } else {
+          acc.otherResults += c.results;
+        }
+        return acc;
+      },
+      { impressions: 0, reach: 0, clicks: 0, spend: 0, landingPageViews: 0, purchases: 0, conversations: 0, leads: 0, otherResults: 0 }
     );
 
-    const resultType = filteredCampaigns.find(c => c.resultType)?.resultType || 'Resultados';
     const salesCount = salesData?.totalCount || 0;
 
-    // Build stages: Impressions → Reach → Clicks → Results(Messages) → Sales
+    // Build stages: Impressions → Reach → Clicks → LPV → Conversations/Leads → Purchases → Sales
     const stages: FunnelStage[] = [];
 
     if (metaTotals.impressions > 0) {
@@ -197,8 +207,17 @@ export const useFunnelAnalytics = (
     if (metaTotals.landingPageViews > 0) {
       stages.push({ id: 'lpv', name: 'Landing Page Views', value: metaTotals.landingPageViews, source: 'meta' });
     }
-    if (metaTotals.results > 0) {
-      stages.push({ id: 'results', name: resultType, value: metaTotals.results, source: 'meta' });
+    if (metaTotals.conversations > 0) {
+      stages.push({ id: 'conversations', name: 'Conversaciones', value: metaTotals.conversations, source: 'meta' });
+    }
+    if (metaTotals.leads > 0) {
+      stages.push({ id: 'leads', name: 'Leads', value: metaTotals.leads, source: 'meta' });
+    }
+    if (metaTotals.otherResults > 0) {
+      stages.push({ id: 'results', name: 'Otros Resultados', value: metaTotals.otherResults, source: 'meta' });
+    }
+    if (metaTotals.purchases > 0) {
+      stages.push({ id: 'purchases', name: 'Compras', value: metaTotals.purchases, source: 'meta' });
     }
     if (salesCount > 0) {
       stages.push({ id: 'sales', name: 'Ventas Cerradas', value: salesCount, source: 'sales' });
