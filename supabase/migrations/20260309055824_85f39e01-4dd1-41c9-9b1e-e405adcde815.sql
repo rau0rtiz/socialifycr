@@ -1,0 +1,1 @@
+ALTER TABLE public.setter_appointments ADD COLUMN IF NOT EXISTS lead_goal text;
