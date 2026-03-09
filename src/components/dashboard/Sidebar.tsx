@@ -153,6 +153,17 @@ export const Sidebar = () => {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+                {isOwnerOrAdmin && selectedClient && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={handleClientView}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span>Vista Cliente</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
