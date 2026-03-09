@@ -73,6 +73,17 @@ const Facturacion = () => {
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [assignClientId, setAssignClientId] = useState<string | null>(null);
+
+  const handleOpenAssignDialog = (clientId?: string) => {
+    setAssignClientId(clientId || selectedClient?.id || null);
+    setShowAssignDialog(true);
+  };
+
+  const handleCloseAssignDialog = (open: boolean) => {
+    setShowAssignDialog(open);
+    if (!open) setAssignClientId(null);
+  };
 
   const handleEditPlan = (plan: SubscriptionPlan) => {
     setEditingPlan(plan);
