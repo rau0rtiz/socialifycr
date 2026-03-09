@@ -276,29 +276,9 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
         existingSetters={existingSetters}
       />
 
-      {/* Sale registration dialog - reusing existing RegisterSaleDialog */}
-      {saleAppointment && (
-        <RegisterSaleDialog
-          open={!!saleAppointment}
-          onOpenChange={v => { if (!v) setSaleAppointment(null); }}
-          clientId={clientId}
-          hasAdAccount={hasAdAccount}
-          defaultValues={{
-            customer_name: saleAppointment.lead_name,
-            ad_campaign_id: saleAppointment.ad_campaign_id || undefined,
-            ad_campaign_name: saleAppointment.ad_campaign_name || undefined,
-            ad_id: saleAppointment.ad_id || undefined,
-            ad_name: saleAppointment.ad_name || undefined,
-            source: saleAppointment.source === 'ads' ? 'ad' : saleAppointment.source || 'other',
-          }}
-          onSaleRegistered={async () => {
-            // Mark appointment as sold
-            await updateAppointment.mutateAsync({ id: saleAppointment.id, status: 'sold' } as any);
-            setSaleAppointment(null);
-            toast.success('Venta registrada y lead actualizado');
-          }}
-        />
-      )}
+    </>
+  );
+};
     </>
   );
 };
