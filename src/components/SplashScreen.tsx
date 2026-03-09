@@ -183,11 +183,9 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
   }, [client, prefetchAll]);
 
   useEffect(() => {
-    if (progress >= 100) {
-      const timer = setTimeout(onComplete, 600);
-      return () => clearTimeout(timer);
-    }
-  }, [progress, onComplete]);
+    const timer = setTimeout(onComplete, 8000);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
 
   const logo = clientLogo || client?.logo_url;
 
