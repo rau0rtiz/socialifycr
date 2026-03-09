@@ -30,6 +30,7 @@ export interface SetterAppointment {
 
 export interface AppointmentInput {
   lead_name: string;
+  lead_goal?: string;
   lead_phone?: string;
   lead_email?: string;
   appointment_date: string;
