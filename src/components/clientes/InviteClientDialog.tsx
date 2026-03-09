@@ -50,6 +50,7 @@ export const InviteClientDialog = ({
   const [copied, setCopied] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; name?: string }>({});
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
 
   const validateForm = () => {
     const newErrors: { email?: string; name?: string } = {};
