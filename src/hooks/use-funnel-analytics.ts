@@ -180,6 +180,10 @@ export const useFunnelAnalytics = (
       if (rType.includes('compra') || rType.includes('purchase')) return 'purchases';
       if (rType.includes('conversaci') || rType.includes('mensaje') || rType.includes('message')) return 'messages';
       if (rType.includes('lead') || rType.includes('cliente')) return 'leads';
+      if (rType.includes('seguidor') || rType.includes('follower')) return 'followers';
+      if (rType.includes('visita') || rType.includes('profile')) return 'profile_visits';
+      if (rType.includes('clic en enlace') || rType.includes('link')) return 'link_clicks';
+      if (rType.includes('reproduccion') || rType.includes('video')) return 'video_views';
       return 'other';
     };
 
