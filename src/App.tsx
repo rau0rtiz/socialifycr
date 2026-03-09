@@ -76,6 +76,13 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
+                  <Route path="/facturacion" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <Facturacion />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/historial" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>

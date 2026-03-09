@@ -31,6 +31,7 @@ import { useClientFeatures } from '@/hooks/use-client-features';
 
 const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
+  { title: 'Facturación', url: '/facturacion', icon: CreditCard },
   { title: 'Historial', url: '/historial', icon: History },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
 ];
