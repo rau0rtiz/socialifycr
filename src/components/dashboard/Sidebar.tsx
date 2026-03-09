@@ -35,6 +35,7 @@ const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
   { title: 'Facturación', url: '/facturacion', icon: CreditCard },
   { title: 'Historial', url: '/historial', icon: History },
+  { title: 'Image DB', url: '/image-db', icon: Image },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
 ];
 

@@ -92,6 +92,15 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
+                  <Route path="/image-db" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <ImageDB />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  {/* External PIN-protected image DB */}
+                  <Route path="/imgdb" element={<ImageDBPinGate />} />
                   {/* Shared routes */}
                   <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                   <Route path="/content" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
