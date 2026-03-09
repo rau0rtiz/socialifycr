@@ -195,7 +195,7 @@ export const useAssignPlan = () => {
         .eq('client_id', clientId)
         .maybeSingle();
 
-      const providerValue = provider && provider !== 'none' ? provider : null;
+      const providerValue = (provider && provider !== 'none' ? provider : null) as 'tilopay' | 'onvopay' | 'bac_compra_click' | null;
 
       if (existing) {
         const { data, error } = await supabase
@@ -203,7 +203,7 @@ export const useAssignPlan = () => {
           .update({
             plan_id: planId,
             payment_provider: providerValue,
-            status: 'active',
+            status: 'active' as const,
             current_period_start: new Date().toISOString(),
             current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           })
@@ -219,7 +219,7 @@ export const useAssignPlan = () => {
             client_id: clientId,
             plan_id: planId,
             payment_provider: providerValue,
-            status: 'active',
+            status: 'active' as const,
             current_period_start: new Date().toISOString(),
             current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           })
