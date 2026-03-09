@@ -239,6 +239,13 @@ const Contenido = () => {
         />
       </div>
 
+      {/* Stories Section */}
+      {selectedClient && (
+        <div className="mb-6">
+          <StoriesSection clientId={selectedClient.id} />
+        </div>
+      )}
+
       {/* Content Calendar */}
       <div className="mb-6">
         <ContentCalendar
