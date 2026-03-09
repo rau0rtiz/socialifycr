@@ -279,9 +279,6 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
     </>
   );
 };
-    </>
-  );
-};
 
 // Small stats card
 const StatsCard = ({ label, value, sub, icon: Icon }: { label: string; value: string | number; sub: string; icon: React.ElementType }) => (
