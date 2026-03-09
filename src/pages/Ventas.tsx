@@ -1,6 +1,7 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SalesTrackingSection } from '@/components/dashboard/SalesTrackingSection';
 import { AdSalesRanking } from '@/components/dashboard/AdSalesRanking';
+import { SetterTracker } from '@/components/ventas/SetterTracker';
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useMetaConnection } from '@/hooks/use-meta-api';
