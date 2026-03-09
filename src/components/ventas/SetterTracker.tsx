@@ -299,6 +299,52 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
         existingSetters={existingSetters}
       />
 
+      {/* Sale amount dialog */}
+      <Dialog open={!!salePrompt} onOpenChange={(v) => { if (!v) setSalePrompt(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Registrar Venta</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ingresa el monto de la venta para <span className="font-medium text-foreground">{salePrompt?.lead_name}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="flex gap-2">
+              <div className="flex-1 space-y-1.5">
+                <Label className="text-xs">Monto de la Venta *</Label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={saleAmount}
+                  onChange={e => setSaleAmount(e.target.value)}
+                  className="h-8 text-xs"
+                  min="0"
+                  autoFocus
+                />
+              </div>
+              <div className="w-20 space-y-1.5">
+                <Label className="text-xs">Moneda</Label>
+                <Select value={saleCurrency} onValueChange={v => setSaleCurrency(v as 'CRC' | 'USD')}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CRC" className="text-xs">CRC</SelectItem>
+                    <SelectItem value="USD" className="text-xs">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setSalePrompt(null)}>
+              Cancelar
+            </Button>
+            <Button size="sm" className="text-xs" onClick={handleConfirmSale} disabled={!saleAmount || updateAppointment.isPending}>
+              {updateAppointment.isPending ? 'Guardando...' : 'Confirmar Venta'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </>
   );
 };
