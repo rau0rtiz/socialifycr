@@ -51,7 +51,9 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useFunnelAnalytics } from '@/hooks/use-funnel-analytics';
 import { useUTMTracking, UTMInput } from '@/hooks/use-utm-tracking';
-import { DatePresetKey, DateRange } from '@/hooks/use-ads-data';
+import { DatePresetKey, DateRange, CampaignInsights } from '@/hooks/use-ads-data';
+import { useCampaignGoals, getGoalLabel, GoalType } from '@/hooks/use-campaign-goals';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 interface AdvancedFunnelModuleProps {
