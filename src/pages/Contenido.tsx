@@ -11,6 +11,7 @@ import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { ContentCalendar } from '@/components/dashboard/ContentCalendar';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
+import { StoriesSection } from '@/components/dashboard/StoriesSection';
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel';
 import { VideoIdeasSection } from '@/components/dashboard/VideoIdeasSection';
 import { CompetitorsPanel } from '@/components/dashboard/CompetitorsPanel';
@@ -200,7 +201,7 @@ const Contenido = () => {
             <p className="text-sm text-muted-foreground">{selectedClient.name}</p>
           </div>
           {contentIsLive && (
-            <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+            <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
               <Wifi className="h-2.5 w-2.5" />
               En vivo
             </Badge>
@@ -237,6 +238,13 @@ const Contenido = () => {
           isLiveData={socialIsLive}
         />
       </div>
+
+      {/* Stories Section */}
+      {selectedClient && (
+        <div className="mb-6">
+          <StoriesSection clientId={selectedClient.id} />
+        </div>
+      )}
 
       {/* Content Calendar */}
       <div className="mb-6">

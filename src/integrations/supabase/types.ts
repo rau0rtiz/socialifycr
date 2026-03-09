@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      archived_stories: {
+        Row: {
+          captured_at: string
+          client_id: string
+          created_at: string | null
+          exits: number | null
+          id: string
+          impressions: number | null
+          media_type: string | null
+          media_url: string | null
+          permalink: string | null
+          reach: number | null
+          replies: number | null
+          story_id: string
+          taps_back: number | null
+          taps_forward: number | null
+          thumbnail_url: string | null
+          timestamp: string
+        }
+        Insert: {
+          captured_at?: string
+          client_id: string
+          created_at?: string | null
+          exits?: number | null
+          id?: string
+          impressions?: number | null
+          media_type?: string | null
+          media_url?: string | null
+          permalink?: string | null
+          reach?: number | null
+          replies?: number | null
+          story_id: string
+          taps_back?: number | null
+          taps_forward?: number | null
+          thumbnail_url?: string | null
+          timestamp: string
+        }
+        Update: {
+          captured_at?: string
+          client_id?: string
+          created_at?: string | null
+          exits?: number | null
+          id?: string
+          impressions?: number | null
+          media_type?: string | null
+          media_url?: string | null
+          permalink?: string | null
+          reach?: number | null
+          replies?: number | null
+          story_id?: string
+          taps_back?: number | null
+          taps_forward?: number | null
+          thumbnail_url?: string | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "archived_stories_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string

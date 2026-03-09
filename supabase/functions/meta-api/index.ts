@@ -1021,6 +1021,64 @@ serve(async (req) => {
         break;
       }
 
+      case 'stories': {
+        if (!instagramId) {
+          return new Response(JSON.stringify({ error: 'No Instagram account connected' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Fetch active stories (only returns non-expired stories within 24h)
+        const storiesUrl = `https://graph.facebook.com/v18.0/${instagramId}/stories?` +
+          `fields=id,media_type,media_url,thumbnail_url,timestamp,permalink` +
+          `&access_token=${accessToken}`;
+        
+        const storiesResponse = await fetch(storiesUrl);
+        const storiesData = await storiesResponse.json();
+
+        if (storiesData.error) {
+          console.error('Error fetching stories:', storiesData.error);
+          return new Response(JSON.stringify({ error: storiesData.error.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Enrich each story with insights
+        const enrichedStories = await Promise.all(
+          (storiesData.data || []).map(async (story: any) => {
+            let insights = { impressions: 0, reach: 0, replies: 0 };
+
+            try {
+              const insightsUrl = `https://graph.facebook.com/v18.0/${story.id}/insights?` +
+                `metric=impressions,reach,replies&access_token=${accessToken}`;
+              const insightsRes = await fetch(insightsUrl);
+              const insightsData = await insightsRes.json();
+
+              if (insightsData.data) {
+                for (const metric of insightsData.data) {
+                  const value = metric.values?.[0]?.value || 0;
+                  if (metric.name === 'impressions') insights.impressions = value;
+                  if (metric.name === 'reach') insights.reach = value;
+                  if (metric.name === 'replies') insights.replies = value;
+                }
+              }
+            } catch (err) {
+              console.warn(`Could not fetch insights for story ${story.id}:`, err);
+            }
+
+            return {
+              ...story,
+              ...insights,
+            };
+          })
+        );
+
+        result = { stories: enrichedStories };
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({ error: 'Unknown endpoint' }), {
           status: 400,
