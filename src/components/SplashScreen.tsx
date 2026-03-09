@@ -36,144 +36,38 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
     return () => clearInterval(interval);
   }, []);
 
+  // Time-based progress: fills gradually over 8 seconds
+  useEffect(() => {
+    const duration = 8000;
+    const interval = 50;
+    const totalSteps = duration / interval;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      setProgress(Math.min((step / totalSteps) * 100, 100));
+      if (step >= totalSteps) clearInterval(timer);
+    }, interval);
+    return () => clearInterval(timer);
+  }, []);
+
   const prefetchAll = useCallback(async () => {
     const clientId = client?.id;
-    if (!clientId) {
-      setProgress(100);
-      return;
-    }
+    if (!clientId) return;
 
-    const steps: Array<() => Promise<void>> = [];
-    let completed = 0;
-    const advance = () => {
-      completed++;
-      setProgress(Math.min(Math.round((completed / steps.length) * 100), 100));
-    };
+    const queries = [
+      queryClient.prefetchQuery({ queryKey: ['platform-connections', clientId], queryFn: async () => { const { data } = await supabase.from('platform_connections').select('*').eq('client_id', clientId).eq('status', 'active'); return data || []; }, staleTime: 5 * 60 * 1000 }),
+      queryClient.prefetchQuery({ queryKey: ['client-features', clientId], queryFn: async () => { const { data } = await supabase.from('client_feature_flags').select('*').eq('client_id', clientId).maybeSingle(); return data; }, staleTime: 5 * 60 * 1000 }),
+      queryClient.prefetchQuery({ queryKey: ['content-tags', clientId], queryFn: async () => { const { data } = await supabase.from('content_tags').select('*').eq('client_id', clientId).order('name'); return data || []; }, staleTime: 5 * 60 * 1000 }),
+      queryClient.prefetchQuery({ queryKey: ['content-models', clientId], queryFn: async () => { const { data } = await supabase.from('content_models').select('*').eq('client_id', clientId).order('name'); return data || []; }, staleTime: 5 * 60 * 1000 }),
+      queryClient.prefetchQuery({ queryKey: ['content-metadata', clientId], queryFn: async () => { const { data } = await supabase.from('content_metadata').select('*').eq('client_id', clientId); return data || []; }, staleTime: 5 * 60 * 1000 }),
+      queryClient.prefetchQuery({ queryKey: ['sales', clientId], queryFn: async () => { const { data } = await supabase.from('message_sales').select('*').eq('client_id', clientId).order('sale_date', { ascending: false }); return data || []; }, staleTime: 2 * 60 * 1000 }),
+      queryClient.prefetchQuery({ queryKey: ['campaign-goals', clientId], queryFn: async () => { const { data } = await supabase.from('campaign_goals').select('*').eq('client_id', clientId); return data || []; }, staleTime: 5 * 60 * 1000 }),
+      queryClient.prefetchQuery({ queryKey: ['video-ideas', clientId], queryFn: async () => { const { data } = await supabase.from('video_ideas').select('*').eq('client_id', clientId).order('created_at', { ascending: false }); return data || []; }, staleTime: 2 * 60 * 1000 }),
+      queryClient.prefetchQuery({ queryKey: ['user-role'], queryFn: async () => { const { data: { user } } = await supabase.auth.getUser(); if (!user) return null; const { data } = await supabase.from('user_roles').select('role').eq('user_id', user.id).maybeSingle(); return data; }, staleTime: 10 * 60 * 1000 }),
+      queryClient.prefetchQuery({ queryKey: ['saved-reports', clientId], queryFn: async () => { const { data } = await supabase.from('saved_reports').select('*').eq('client_id', clientId).order('updated_at', { ascending: false }); return data || []; }, staleTime: 2 * 60 * 1000 }),
+    ];
 
-    steps.push(async () => {
-      await queryClient.prefetchQuery({
-        queryKey: ['platform-connections', clientId],
-        queryFn: async () => {
-          const { data } = await supabase.from('platform_connections').select('*').eq('client_id', clientId).eq('status', 'active');
-          return data || [];
-        },
-        staleTime: 5 * 60 * 1000,
-      });
-      advance();
-    });
-
-    steps.push(async () => {
-      await queryClient.prefetchQuery({
-        queryKey: ['client-features', clientId],
-        queryFn: async () => {
-          const { data } = await supabase.from('client_feature_flags').select('*').eq('client_id', clientId).maybeSingle();
-          return data;
-        },
-        staleTime: 5 * 60 * 1000,
-      });
-      advance();
-    });
-
-    steps.push(async () => {
-      await queryClient.prefetchQuery({
-        queryKey: ['content-tags', clientId],
-        queryFn: async () => {
-          const { data } = await supabase.from('content_tags').select('*').eq('client_id', clientId).order('name');
-          return data || [];
-        },
-        staleTime: 5 * 60 * 1000,
-      });
-      advance();
-    });
-
-    steps.push(async () => {
-      await queryClient.prefetchQuery({
-        queryKey: ['content-models', clientId],
-        queryFn: async () => {
-          const { data } = await supabase.from('content_models').select('*').eq('client_id', clientId).order('name');
-          return data || [];
-        },
-        staleTime: 5 * 60 * 1000,
-      });
-      advance();
-    });
-
-    steps.push(async () => {
-      await queryClient.prefetchQuery({
-        queryKey: ['content-metadata', clientId],
-        queryFn: async () => {
-          const { data } = await supabase.from('content_metadata').select('*').eq('client_id', clientId);
-          return data || [];
-        },
-        staleTime: 5 * 60 * 1000,
-      });
-      advance();
-    });
-
-    steps.push(async () => {
-      await queryClient.prefetchQuery({
-        queryKey: ['sales', clientId],
-        queryFn: async () => {
-          const { data } = await supabase.from('message_sales').select('*').eq('client_id', clientId).order('sale_date', { ascending: false });
-          return data || [];
-        },
-        staleTime: 2 * 60 * 1000,
-      });
-      advance();
-    });
-
-    steps.push(async () => {
-      await queryClient.prefetchQuery({
-        queryKey: ['campaign-goals', clientId],
-        queryFn: async () => {
-          const { data } = await supabase.from('campaign_goals').select('*').eq('client_id', clientId);
-          return data || [];
-        },
-        staleTime: 5 * 60 * 1000,
-      });
-      advance();
-    });
-
-    steps.push(async () => {
-      await queryClient.prefetchQuery({
-        queryKey: ['video-ideas', clientId],
-        queryFn: async () => {
-          const { data } = await supabase.from('video_ideas').select('*').eq('client_id', clientId).order('created_at', { ascending: false });
-          return data || [];
-        },
-        staleTime: 2 * 60 * 1000,
-      });
-      advance();
-    });
-
-    steps.push(async () => {
-      await queryClient.prefetchQuery({
-        queryKey: ['user-role'],
-        queryFn: async () => {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return null;
-          const { data } = await supabase.from('user_roles').select('role').eq('user_id', user.id).maybeSingle();
-          return data;
-        },
-        staleTime: 10 * 60 * 1000,
-      });
-      advance();
-    });
-
-    steps.push(async () => {
-      await queryClient.prefetchQuery({
-        queryKey: ['saved-reports', clientId],
-        queryFn: async () => {
-          const { data } = await supabase.from('saved_reports').select('*').eq('client_id', clientId).order('updated_at', { ascending: false });
-          return data || [];
-        },
-        staleTime: 2 * 60 * 1000,
-      });
-      advance();
-    });
-
-    await Promise.allSettled(steps.map(fn => fn()));
-    setProgress(100);
+    await Promise.allSettled(queries);
   }, [client?.id, queryClient]);
 
   useEffect(() => {
