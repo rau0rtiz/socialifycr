@@ -96,6 +96,7 @@ export const useClientFeatures = (clientId: string | null) => {
         funnel: data.funnel,
         campaigns: data.campaigns,
         sales_tracking: data.sales_tracking,
+        setter_tracker: data.setter_tracker,
         monthly_sales_report: data.monthly_sales_report,
         ventas_section: data.ventas_section,
         contenido_section: data.contenido_section,
