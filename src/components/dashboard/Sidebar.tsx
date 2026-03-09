@@ -8,6 +8,7 @@ import {
   History,
   BarChart3,
   CreditCard,
+  Eye,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
