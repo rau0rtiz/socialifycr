@@ -62,7 +62,7 @@ export const Sidebar = () => {
     }
   };
 
-  const isOwnerOrAdmin = isAgency && (roleLoading === false);
+  
 
   // Build menu items based on feature flags
   const menuItems: { title: string; url: string; icon: React.ElementType; dataTour?: string }[] = [
