@@ -102,11 +102,17 @@ const FunnelVisual = ({
   conversionRates,
   spend,
   currency,
+  salesRevenueCRC,
+  salesRevenueUSD,
+  nonAttributedRevenue,
 }: {
   stages: { id: string; name: string; value: number; source: string }[];
   conversionRates: { from: string; to: string; rate: number }[];
   spend: number;
   currency: string;
+  salesRevenueCRC?: number;
+  salesRevenueUSD?: number;
+  nonAttributedRevenue?: { totalAmount: number; currency: string } | null;
 }) => {
   if (stages.length === 0) {
     return (
