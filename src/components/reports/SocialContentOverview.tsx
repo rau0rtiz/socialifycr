@@ -1,10 +1,40 @@
+import { useState, useMemo } from 'react';
 import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { useContentData } from '@/hooks/use-content-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, Instagram, Facebook, Youtube, Eye, Heart, MessageCircle, Share2, Bookmark, BarChart3, TrendingUp, PlayCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Users, Instagram, Facebook, Youtube, Eye, Heart, MessageCircle, Share2, Bookmark, BarChart3, TrendingUp, PlayCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie } from 'recharts';
+import { format, subDays, startOfMonth, endOfMonth, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
+import { cn } from '@/lib/utils';
+
+type PeriodKey = 'this_month' | 'last_30d' | 'last_90d' | 'all_time' | 'custom';
+
+const periodOptions: { key: PeriodKey; label: string }[] = [
+  { key: 'this_month', label: 'Este mes' },
+  { key: 'last_30d', label: 'Últimos 30 días' },
+  { key: 'last_90d', label: 'Últimos 90 días' },
+  { key: 'all_time', label: 'Todo el tiempo' },
+  { key: 'custom', label: 'Personalizado' },
+];
+
+function getDateRange(period: PeriodKey): { from: Date; to: Date } | null {
+  const now = new Date();
+  switch (period) {
+    case 'this_month': return { from: startOfMonth(now), to: endOfMonth(now) };
+    case 'last_30d': return { from: startOfDay(subDays(now, 30)), to: endOfDay(now) };
+    case 'last_90d': return { from: startOfDay(subDays(now, 90)), to: endOfDay(now) };
+    case 'all_time': return null;
+    case 'custom': return null;
+  }
+}
 
 interface SocialContentOverviewProps {
   clientId: string;
@@ -36,10 +66,37 @@ const formatNumber = (num: number): string => {
 
 export const SocialContentOverview = ({ clientId }: SocialContentOverviewProps) => {
   const { platforms, isLoading: socialLoading, isLiveData: socialLive } = useSocialFollowers(clientId);
-  const { content, isLoading: contentLoading, isLiveData: contentLive } = useContentData(clientId, 100);
+  const { content: allContent, isLoading: contentLoading, isLiveData: contentLive } = useContentData(clientId, 500);
+
+  const [period, setPeriod] = useState<PeriodKey>('last_30d');
+  const [customRange, setCustomRange] = useState<DateRange | undefined>();
+  const [customOpen, setCustomOpen] = useState(false);
 
   const isLoading = socialLoading || contentLoading;
   const isLiveData = socialLive || contentLive;
+
+  const content = useMemo(() => {
+    if (period === 'all_time') return allContent;
+
+    let range: { from: Date; to: Date } | null = null;
+    if (period === 'custom' && customRange?.from && customRange?.to) {
+      range = { from: startOfDay(customRange.from), to: endOfDay(customRange.to) };
+    } else if (period !== 'custom') {
+      range = getDateRange(period);
+    }
+
+    if (!range) return allContent;
+
+    return allContent.filter(p => {
+      if (!p.date) return false;
+      try {
+        const postDate = typeof p.date === 'string' ? parseISO(p.date) : new Date(p.date);
+        return isWithinInterval(postDate, { start: range!.from, end: range!.to });
+      } catch {
+        return false;
+      }
+    });
+  }, [allContent, period, customRange]);
 
   // Aggregate content metrics
   const totalViews = content.reduce((s, p) => s + (p.views || 0), 0);
