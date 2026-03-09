@@ -20,7 +20,8 @@ import {
 import { MoreHorizontal, Pencil, Trash2, Eye, ExternalLink, LayoutGrid, List } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useAllSubscriptions, useSubscriptionPlans } from '@/hooks/use-billing';
 
 type ViewMode = 'list' | 'grid';
 
