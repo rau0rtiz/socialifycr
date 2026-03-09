@@ -7,6 +7,7 @@ import {
   usePaymentTransactions,
   useClientSubscription,
   useMutatePlan,
+  useRemoveAssignedPlan,
   SubscriptionPlan,
 } from '@/hooks/use-billing';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,6 +70,7 @@ const Facturacion = () => {
   const { data: transactions = [] } = usePaymentTransactions(selectedClient?.id ?? null);
   const { data: currentSub } = useClientSubscription(selectedClient?.id ?? null);
   const { remove } = useMutatePlan();
+  const removeSub = useRemoveAssignedPlan();
 
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
@@ -102,6 +104,16 @@ const Facturacion = () => {
       toast.success('Plan eliminado');
     } catch {
       toast.error('Error al eliminar. Verifica que no tenga suscripciones asociadas.');
+    }
+  };
+
+  const handleRemoveSubscription = async (subId: string, clientName: string) => {
+    if (!confirm(`¿Quitar el plan de "${clientName}"? El cliente quedará sin suscripción.`)) return;
+    try {
+      await removeSub.mutateAsync(subId);
+      toast.success('Plan removido del cliente');
+    } catch {
+      toast.error('Error al remover el plan');
     }
   };
 
@@ -254,6 +266,15 @@ const Facturacion = () => {
                                 }}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                onClick={() => handleRemoveSubscription(sub.id, client?.name || 'este cliente')}
+                                disabled={removeSub.isPending}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
                           </TableCell>
