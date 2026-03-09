@@ -44,6 +44,19 @@ export const ClientsTable = ({
 }: ClientsTableProps) => {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const { data: subscriptions = [] } = useAllSubscriptions();
+  const { data: plans = [] } = useSubscriptionPlans();
+
+  const clientPlanMap = useMemo(() => {
+    const map: Record<string, { planName: string; status: string }> = {};
+    for (const sub of subscriptions) {
+      const plan = plans.find(p => p.id === sub.plan_id);
+      if (plan) {
+        map[sub.client_id] = { planName: plan.name, status: sub.status };
+      }
+    }
+    return map;
+  }, [subscriptions, plans]);
 
   const handlePreviewDashboard = (client: Client, e: React.MouseEvent) => {
     e.stopPropagation();
