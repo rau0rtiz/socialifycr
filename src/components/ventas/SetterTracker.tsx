@@ -208,7 +208,7 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
                           variant="outline"
                           size="sm"
                           className="h-6 text-[10px] px-2 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10"
-                          onClick={() => setSaleAppointment(apt)}
+                          onClick={() => handleStatusChange(apt, 'sold')}
                         >
                           <ShoppingCart className="h-3 w-3 mr-0.5" />
                           Venta
