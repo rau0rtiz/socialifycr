@@ -36,19 +36,23 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
     return () => clearInterval(interval);
   }, []);
 
+  // Time-based progress: fills gradually over 8 seconds
+  useEffect(() => {
+    const duration = 8000;
+    const interval = 50;
+    const totalSteps = duration / interval;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      setProgress(Math.min((step / totalSteps) * 100, 100));
+      if (step >= totalSteps) clearInterval(timer);
+    }, interval);
+    return () => clearInterval(timer);
+  }, []);
+
   const prefetchAll = useCallback(async () => {
     const clientId = client?.id;
-    if (!clientId) {
-      setProgress(100);
-      return;
-    }
-
-    const steps: Array<() => Promise<void>> = [];
-    let completed = 0;
-    const advance = () => {
-      completed++;
-      setProgress(Math.min(Math.round((completed / steps.length) * 100), 100));
-    };
+    if (!clientId) return;
 
     steps.push(async () => {
       await queryClient.prefetchQuery({
