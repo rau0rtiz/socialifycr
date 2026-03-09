@@ -205,6 +205,7 @@ const Facturacion = () => {
                       <TableHead>Estado</TableHead>
                       <TableHead>Pasarela</TableHead>
                       <TableHead>Vence</TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -230,12 +231,27 @@ const Facturacion = () => {
                           <TableCell className="text-sm text-muted-foreground">
                             {format(new Date(sub.current_period_end), 'dd MMM yyyy', { locale: es })}
                           </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => {
+                                  setAssignClientId(sub.client_id);
+                                  setShowAssignDialog(true);
+                                }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
                     {allSubscriptions.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           No hay suscripciones activas aún. Usa "Asignar Plan" para empezar.
                         </TableCell>
                       </TableRow>
