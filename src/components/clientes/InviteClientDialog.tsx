@@ -90,6 +90,13 @@ export const InviteClientDialog = ({
       setSuccess(true);
       onInviteCreated();
 
+      await logAction({
+        action: 'team_member.add',
+        entityType: 'team_member',
+        entityName: inviteeName.trim() || email.trim(),
+        details: { client_id: clientId, client_name: clientName, email: email.trim(), role },
+      });
+
       if (data.emailSent) {
         toast({
           title: 'Invitación enviada',
