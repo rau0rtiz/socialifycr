@@ -658,7 +658,9 @@ serve(async (req) => {
 
             // Determine content type
             let contentType = 'post';
-            if (media.media_type === 'CAROUSEL_ALBUM') {
+            if (media.media_product_type === 'STORY') {
+              contentType = 'story';
+            } else if (media.media_type === 'CAROUSEL_ALBUM') {
               contentType = 'carousel';
             } else if (media.media_type === 'VIDEO') {
               contentType = media.media_product_type === 'REELS' ? 'reel' : 'video';
