@@ -925,6 +925,9 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
                 conversionRates={conversionRates}
                 spend={spend || 0}
                 currency={currency || 'USD'}
+                salesRevenueCRC={salesData?.totalCRC}
+                salesRevenueUSD={salesData?.totalUSD}
+                nonAttributedRevenue={nonAttributedSales}
               />
               
               {/* Non-attributed sales button - only for purchase campaigns */}
