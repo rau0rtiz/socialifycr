@@ -8,6 +8,7 @@ export interface SetterAppointment {
   id: string;
   client_id: string;
   lead_name: string;
+  lead_goal: string | null;
   lead_phone: string | null;
   lead_email: string | null;
   appointment_date: string;
