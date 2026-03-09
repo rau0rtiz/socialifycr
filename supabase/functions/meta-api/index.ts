@@ -573,6 +573,31 @@ serve(async (req) => {
           }
         }
 
+        // Also fetch live Stories (only returns active/non-expired stories within 24h)
+        try {
+          const storiesUrl = `https://graph.facebook.com/v18.0/${instagramId}/stories?` +
+            `fields=id,media_type,media_url,thumbnail_url,timestamp,permalink` +
+            `&access_token=${accessToken}`;
+          
+          const storiesResponse = await fetch(storiesUrl);
+          const storiesData = await storiesResponse.json();
+          
+          if (storiesData.data && storiesData.data.length > 0) {
+            console.log(`Found ${storiesData.data.length} active stories`);
+            // Mark stories with media_product_type = STORY
+            const enrichedStories = storiesData.data.map((story: any) => ({
+              ...story,
+              media_product_type: 'STORY',
+              caption: '', // Stories don't have captions in the API
+              like_count: 0,
+              comments_count: 0,
+            }));
+            allMedia = allMedia.concat(enrichedStories);
+          }
+        } catch (storiesErr) {
+          console.log('Could not fetch stories (may not have permission):', storiesErr);
+        }
+
         console.log(`Fetched ${allMedia.length} posts in ${pagesProcessed} pages`);
 
         // Trim to requested limit
@@ -587,7 +612,10 @@ serve(async (req) => {
               // Determine metrics based on media type
               let metrics: string[] = [];
               
-              if (media.media_type === 'VIDEO') {
+              // Stories have different available metrics
+              if (media.media_product_type === 'STORY') {
+                metrics = ['impressions', 'reach', 'replies'];
+              } else if (media.media_type === 'VIDEO') {
                 const isReel = media.media_product_type === 'REELS';
                 if (isReel) {
                   metrics = ['plays', 'saved', 'shares', 'ig_reels_avg_watch_time'];
@@ -633,7 +661,9 @@ serve(async (req) => {
 
             // Determine content type
             let contentType = 'post';
-            if (media.media_type === 'CAROUSEL_ALBUM') {
+            if (media.media_product_type === 'STORY') {
+              contentType = 'story';
+            } else if (media.media_type === 'CAROUSEL_ALBUM') {
               contentType = 'carousel';
             } else if (media.media_type === 'VIDEO') {
               contentType = media.media_product_type === 'REELS' ? 'reel' : 'video';
