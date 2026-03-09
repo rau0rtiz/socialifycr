@@ -660,6 +660,7 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
   }
 
   return (
+    <>
     <Card>
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3">
