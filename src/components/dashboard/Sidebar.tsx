@@ -6,7 +6,8 @@ import {
   LogOut,
   ShoppingCart,
   History,
-  BarChart3
+  BarChart3,
+  CreditCard,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
