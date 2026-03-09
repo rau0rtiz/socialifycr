@@ -17,6 +17,7 @@ const BrandSettings = lazy(() => import("./pages/BrandSettings"));
 const Clientes = lazy(() => import("./pages/Clientes"));
 const Contenido = lazy(() => import("./pages/Contenido"));
 const Ventas = lazy(() => import("./pages/Ventas"));
+const Facturacion = lazy(() => import("./pages/Facturacion"));
 const Reportes = lazy(() => import("./pages/Reportes"));
 const Historial = lazy(() => import("./pages/Historial"));
 const Auth = lazy(() => import("./pages/Auth"));
