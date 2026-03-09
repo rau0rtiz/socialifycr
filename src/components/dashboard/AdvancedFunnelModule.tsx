@@ -646,6 +646,7 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
     calculateProjection,
     spend,
     currency,
+    salesData,
   } = useFunnelAnalytics(clientId, hasAdAccount, datePreset, customRange, selectedCampaignIds.length > 0 ? selectedCampaignIds : undefined);
 
   // Toggle campaign selection
