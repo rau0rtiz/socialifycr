@@ -212,7 +212,7 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
             <DialogTitle className="flex items-center gap-2 text-base">
               Historia
               {selectedStory?.isActive && (
-                <Badge className="bg-pink-500 text-white text-[9px]">Activa</Badge>
+                <Badge variant="default" className="text-[9px]">Activa</Badge>
               )}
             </DialogTitle>
           </DialogHeader>

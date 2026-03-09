@@ -201,7 +201,7 @@ const Contenido = () => {
             <p className="text-sm text-muted-foreground">{selectedClient.name}</p>
           </div>
           {contentIsLive && (
-            <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+            <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
               <Wifi className="h-2.5 w-2.5" />
               En vivo
             </Badge>
