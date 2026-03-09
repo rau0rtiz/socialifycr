@@ -203,7 +203,7 @@ const Facturacion = () => {
             <TabsContent value="subscriptions" className="space-y-4">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">Vista general de suscripciones de todos los clientes.</p>
-                <Button size="sm" onClick={() => setShowAssignDialog(true)}>
+                <Button size="sm" onClick={() => handleOpenAssignDialog()}>
                   <UserPlus className="h-4 w-4 mr-1" /> Asignar Plan
                 </Button>
               </div>
