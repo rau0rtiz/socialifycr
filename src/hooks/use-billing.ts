@@ -175,6 +175,25 @@ export const useMutatePlan = () => {
   return { create, update, remove };
 };
 
+export const useRemoveAssignedPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      const { error } = await supabase
+        .from('client_subscriptions')
+        .delete()
+        .eq('id', subscriptionId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['client-subscription'] });
+    },
+  });
+};
+
 export const useAssignPlan = () => {
   const queryClient = useQueryClient();
 
