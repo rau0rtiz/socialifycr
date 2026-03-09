@@ -568,9 +568,16 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState('all');
 
+  // Non-attributed sales state
+  const [showSalesDialog, setShowSalesDialog] = useState(false);
+  const [salesQuantity, setSalesQuantity] = useState('');
+  const [salesTotalAmount, setSalesTotalAmount] = useState('');
+  const [salesCurrency, setSalesCurrency] = useState('CRC');
+  const [nonAttributedSales, setNonAttributedSales] = useState<{ quantity: number; totalAmount: number; currency: string } | null>(null);
+
   const {
-    stages,
-    conversionRates,
+    stages: rawStages,
+    conversionRates: rawConversionRates,
     campaigns,
     isLoading,
     refetch,
@@ -578,6 +585,56 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
     spend,
     currency,
   } = useFunnelAnalytics(clientId, hasAdAccount, datePreset, customRange, selectedCampaignId);
+
+  // Check if there are purchase campaigns in the funnel
+  const hasPurchaseStage = rawStages.some(s => s.id === 'purchases');
+
+  // Build stages with non-attributed sales appended
+  const stages = useMemo(() => {
+    if (!nonAttributedSales || !hasPurchaseStage) return rawStages;
+    
+    const metaPurchases = rawStages.find(s => s.id === 'purchases')?.value || 0;
+    const totalSales = metaPurchases + nonAttributedSales.quantity;
+
+    const formatAmt = new Intl.NumberFormat('es-CR', {
+      style: 'currency',
+      currency: nonAttributedSales.currency,
+      maximumFractionDigits: 0,
+    }).format(nonAttributedSales.totalAmount);
+
+    return [
+      ...rawStages,
+      { id: 'nonAttributed', name: `+${nonAttributedSales.quantity} no atribuidas`, value: nonAttributedSales.quantity, source: 'manual' as const },
+      { id: 'totalSales', name: `Total Ventas Tienda (${formatAmt})`, value: totalSales, source: 'sales' as const },
+    ];
+  }, [rawStages, nonAttributedSales, hasPurchaseStage]);
+
+  // Recalculate conversion rates with new stages
+  const conversionRates = useMemo(() => {
+    if (!nonAttributedSales || !hasPurchaseStage) return rawConversionRates;
+    const rates = [...rawConversionRates];
+    for (let i = rawStages.length; i < stages.length; i++) {
+      const prev = stages[i - 1];
+      const curr = stages[i];
+      rates.push({
+        from: prev.name,
+        to: curr.name,
+        rate: prev.value > 0 ? curr.value / prev.value : 0,
+      });
+    }
+    return rates;
+  }, [rawConversionRates, stages, rawStages, nonAttributedSales, hasPurchaseStage]);
+
+  const handleAddNonAttributedSales = () => {
+    const qty = parseInt(salesQuantity) || 0;
+    const amount = parseFloat(salesTotalAmount) || 0;
+    if (qty > 0 && amount > 0) {
+      setNonAttributedSales({ quantity: qty, totalAmount: amount, currency: salesCurrency });
+    }
+    setShowSalesDialog(false);
+    setSalesQuantity('');
+    setSalesTotalAmount('');
+  };
 
   const handleRefresh = async () => {
     await refetch();
