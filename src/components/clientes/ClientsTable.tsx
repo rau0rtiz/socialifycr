@@ -144,6 +144,9 @@ export const ClientsTable = ({
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
+                  <TableCell>
+                    <PlanBadge info={clientPlanMap[client.id]} />
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(client.created_at).toLocaleDateString('es-ES')}
                   </TableCell>
