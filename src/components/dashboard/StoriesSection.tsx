@@ -51,7 +51,7 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
           "relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group",
           "bg-muted border-2 transition-all hover:scale-[1.02]",
           story.isActive 
-            ? "border-pink-500/50 ring-2 ring-pink-500/20" 
+            ? "border-primary/50 ring-2 ring-primary/20" 
             : "border-border hover:border-muted-foreground/30"
         )}
       >
@@ -63,7 +63,7 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-500/20 to-purple-500/20">
+          <div className="w-full h-full flex items-center justify-center bg-muted">
             {isVideo ? (
               <Play className="h-8 w-8 text-muted-foreground" />
             ) : (
@@ -78,7 +78,7 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
         {/* Active badge */}
         {story.isActive && (
           <div className="absolute top-2 left-2">
-            <Badge className="bg-pink-500 text-white text-[9px] gap-1 animate-pulse">
+            <Badge variant="default" className="text-[9px] gap-1 animate-pulse">
               <Zap className="h-2.5 w-2.5" />
               Activa
             </Badge>
@@ -88,7 +88,7 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
         {/* Video indicator */}
         {isVideo && (
           <div className="absolute top-2 right-2">
-            <Badge variant="secondary" className="text-[9px] bg-black/50 text-white border-0">
+            <Badge variant="secondary" className="text-[9px]">
               <Play className="h-2.5 w-2.5 mr-0.5" />
               Video
             </Badge>
