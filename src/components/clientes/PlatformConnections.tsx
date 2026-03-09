@@ -489,6 +489,14 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
 
       if (error) throw error;
 
+      await logAction({
+        action: 'platform.disconnect',
+        entityType: 'platform_connection',
+        entityId: connectionToDisconnect.id,
+        entityName: `${platformConfig[connectionToDisconnect.platform].name} - ${connectionToDisconnect.platform_page_name || ''}`,
+        details: { platform: connectionToDisconnect.platform },
+      });
+
       toast({
         title: 'Plataforma desconectada',
         description: `${platformConfig[connectionToDisconnect.platform].name} ha sido desconectada.`,

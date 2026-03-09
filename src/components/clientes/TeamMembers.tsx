@@ -167,6 +167,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
   };
 
   const handleRemoveMember = async (memberId: string) => {
+    const member = members.find(m => m.id === memberId);
     const { error } = await supabase
       .from('client_team_members')
       .delete()
@@ -179,6 +180,13 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
         variant: 'destructive',
       });
     } else {
+      await logAction({
+        action: 'team_member.remove',
+        entityType: 'team_member',
+        entityId: memberId,
+        entityName: member?.profile?.full_name || member?.profile?.email || 'Unknown',
+        details: { client_id: clientId, client_name: clientName },
+      });
       fetchMembers();
       toast({
         title: 'Miembro eliminado',
