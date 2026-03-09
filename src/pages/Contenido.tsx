@@ -11,6 +11,7 @@ import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { ContentCalendar } from '@/components/dashboard/ContentCalendar';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
+import { StoriesSection } from '@/components/dashboard/StoriesSection';
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel';
 import { VideoIdeasSection } from '@/components/dashboard/VideoIdeasSection';
 import { CompetitorsPanel } from '@/components/dashboard/CompetitorsPanel';

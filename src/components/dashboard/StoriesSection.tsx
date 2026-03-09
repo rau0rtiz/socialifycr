@@ -139,7 +139,7 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <div className="h-5 w-5 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500" />
+            <div className="h-5 w-5 rounded-full bg-gradient-to-tr from-primary/70 to-primary" />
             Historias
           </CardTitle>
         </CardHeader>
@@ -160,10 +160,10 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <div className="h-5 w-5 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500" />
+              <div className="h-5 w-5 rounded-full bg-gradient-to-tr from-primary/70 to-primary" />
               Historias
               {activeStories.length > 0 && (
-                <Badge variant="outline" className="text-[10px] bg-pink-500/10 text-pink-600 border-pink-500/20">
+                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">
                   {activeStories.length} activas
                 </Badge>
               )}
