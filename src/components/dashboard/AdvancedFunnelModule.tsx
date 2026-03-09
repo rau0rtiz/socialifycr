@@ -51,7 +51,9 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useFunnelAnalytics } from '@/hooks/use-funnel-analytics';
 import { useUTMTracking, UTMInput } from '@/hooks/use-utm-tracking';
-import { DatePresetKey, DateRange } from '@/hooks/use-ads-data';
+import { DatePresetKey, DateRange, CampaignInsights } from '@/hooks/use-ads-data';
+import { useCampaignGoals, getGoalLabel, GoalType } from '@/hooks/use-campaign-goals';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 interface AdvancedFunnelModuleProps {
@@ -566,7 +568,7 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
   const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
   const [customRange, setCustomRange] = useState<DateRange>({});
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [selectedCampaignId, setSelectedCampaignId] = useState('all');
+  const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([]);
 
   // Non-attributed sales state
   const [showSalesDialog, setShowSalesDialog] = useState(false);
@@ -574,6 +576,9 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
   const [salesTotalAmount, setSalesTotalAmount] = useState('');
   const [salesCurrency, setSalesCurrency] = useState('CRC');
   const [nonAttributedSales, setNonAttributedSales] = useState<{ quantity: number; totalAmount: number; currency: string } | null>(null);
+
+  // Fetch campaign goals for tags
+  const { data: campaignGoalsData } = useCampaignGoals(clientId);
 
   const {
     stages: rawStages,
@@ -584,7 +589,21 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
     calculateProjection,
     spend,
     currency,
-  } = useFunnelAnalytics(clientId, hasAdAccount, datePreset, customRange, selectedCampaignId);
+  } = useFunnelAnalytics(clientId, hasAdAccount, datePreset, customRange, selectedCampaignIds.length > 0 ? selectedCampaignIds : undefined);
+
+  // Toggle campaign selection
+  const toggleCampaign = (campaignId: string) => {
+    setSelectedCampaignIds(prev => {
+      if (prev.includes(campaignId)) {
+        return prev.filter(id => id !== campaignId);
+      }
+      return [...prev, campaignId];
+    });
+  };
+
+  const selectAllCampaigns = () => {
+    setSelectedCampaignIds([]);
+  };
 
   // Check if there are purchase campaigns in the funnel
   const hasPurchaseStage = rawStages.some(s => s.id === 'purchases');
@@ -709,17 +728,6 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
                 </Popover>
               )}
 
-              <Select value={selectedCampaignId} onValueChange={setSelectedCampaignId}>
-                <SelectTrigger className="w-[160px] h-8 text-xs">
-                  <SelectValue placeholder="Campaña" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las campañas</SelectItem>
-                  {campaigns.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
 
               <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading} className="h-8">
                 <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
@@ -730,6 +738,66 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
       </CardHeader>
 
       <CardContent>
+        {/* Visual Campaign Selector */}
+        {campaigns.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs text-muted-foreground">Campañas</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={selectAllCampaigns}
+                className="h-6 text-[10px] px-2"
+              >
+                {selectedCampaignIds.length === 0 ? 'Todas seleccionadas' : 'Seleccionar todas'}
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {campaigns.map((campaign) => {
+                const isSelected = selectedCampaignIds.length === 0 || selectedCampaignIds.includes(campaign.id);
+                const goalType = campaignGoalsData?.goals?.[campaign.id]?.goal_type as GoalType | undefined;
+                const goalLabel = goalType ? getGoalLabel(goalType) : null;
+                
+                return (
+                  <button
+                    key={campaign.id}
+                    onClick={() => toggleCampaign(campaign.id)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-all",
+                      isSelected
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      className="h-3 w-3 pointer-events-none"
+                    />
+                    <span className="font-medium truncate max-w-[150px]">{campaign.name}</span>
+                    {goalLabel && (
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "text-[9px] px-1.5 py-0 shrink-0",
+                          isSelected ? "bg-primary/20" : "bg-muted"
+                        )}
+                      >
+                        <Target className="h-2 w-2 mr-0.5" />
+                        {goalLabel}
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedCampaignIds.length > 0 && (
+              <p className="text-[10px] text-muted-foreground mt-2">
+                {selectedCampaignIds.length} de {campaigns.length} campañas seleccionadas
+              </p>
+            )}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex flex-col items-center gap-2 py-8">
             {[100, 80, 60, 40, 20].map((w, i) => (

@@ -41,6 +41,7 @@ import {
   RefreshCw,
   CalendarIcon,
   AlertTriangle,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -152,6 +153,7 @@ const CampaignRow = ({
   configuredGoal?: GoalType | null;
 }) => {
   const isPurchaseGoal = configuredGoal === 'purchases' || campaign.resultType === 'Compras';
+  const isFollowersGoal = configuredGoal === 'followers' || campaign.resultType === 'Seguidores';
   const goalLabel = configuredGoal ? getGoalLabel(configuredGoal) : null;
   
   return (
@@ -210,6 +212,9 @@ const CampaignRow = ({
       />
       {isPurchaseGoal && (
         <MetricCard icon={Eye} label="Landing Page Views" value={formatNumber(campaign.landingPageViews)} />
+      )}
+      {isFollowersGoal && (
+        <MetricCard icon={Users} label="New IG Followers" value={formatNumber(campaign.results)} />
       )}
       {campaign.roas !== null && <MetricCard icon={TrendingUp} label="ROAS" value={`${campaign.roas.toFixed(2)}x`} />}
     </div>
