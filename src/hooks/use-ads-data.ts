@@ -128,6 +128,9 @@ const actionTypePriority: [string, string][] = [
   // Engagement (lower priority)
   ['post_engagement', 'Interacciones'],
   ['page_engagement', 'Interacciones'],
+  // Followers / Profile visits
+  ['follow', 'Seguidores'],
+  ['onsite_conversion.profile_visit', 'Visitas al perfil'],
 ];
 
 // Extract results by finding the highest priority action type present in cost_per_action_type
