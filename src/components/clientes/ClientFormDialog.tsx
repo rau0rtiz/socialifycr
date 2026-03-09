@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuditLog } from '@/hooks/use-audit-log';
 import { Loader2 } from 'lucide-react';
 
 interface ClientFormDialogProps {
@@ -33,6 +34,7 @@ export const ClientFormDialog = ({
   const [accentColor, setAccentColor] = useState('262 83% 58%');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
 
   const isEditing = !!client;
 
@@ -88,6 +90,13 @@ export const ClientFormDialog = ({
           variant: 'destructive',
         });
       } else {
+        await logAction({
+          action: 'client.update',
+          entityType: 'client',
+          entityId: client.id,
+          entityName: name.trim(),
+          details: { industry: industry.trim() || null },
+        });
         toast({
           title: 'Cliente actualizado',
           description: 'El cliente ha sido actualizado correctamente.',
@@ -95,9 +104,11 @@ export const ClientFormDialog = ({
         onSuccess();
       }
     } else {
-      const { error } = await supabase
+      const { data: newClient, error } = await supabase
         .from('clients')
-        .insert([clientData]);
+        .insert([clientData])
+        .select('id')
+        .single();
 
       if (error) {
         console.error('Error creating client:', error);
@@ -107,6 +118,13 @@ export const ClientFormDialog = ({
           variant: 'destructive',
         });
       } else {
+        await logAction({
+          action: 'client.create',
+          entityType: 'client',
+          entityId: newClient?.id,
+          entityName: name.trim(),
+          details: { industry: industry.trim() || null },
+        });
         toast({
           title: 'Cliente creado',
           description: 'El cliente ha sido creado correctamente.',

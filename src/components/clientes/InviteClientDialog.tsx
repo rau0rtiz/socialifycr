@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuditLog } from '@/hooks/use-audit-log';
 import { Copy, Check, Loader2, Mail, User, Send, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
 
@@ -49,6 +50,7 @@ export const InviteClientDialog = ({
   const [copied, setCopied] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; name?: string }>({});
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
 
   const validateForm = () => {
     const newErrors: { email?: string; name?: string } = {};
@@ -87,6 +89,13 @@ export const InviteClientDialog = ({
       setInviteLink(data.inviteLink);
       setSuccess(true);
       onInviteCreated();
+
+      await logAction({
+        action: 'team_member.add',
+        entityType: 'team_member',
+        entityName: inviteeName.trim() || email.trim(),
+        details: { client_id: clientId, client_name: clientName, email: email.trim(), role },
+      });
 
       if (data.emailSent) {
         toast({

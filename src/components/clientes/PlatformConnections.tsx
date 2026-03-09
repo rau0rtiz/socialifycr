@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuditLog } from '@/hooks/use-audit-log';
 import { Facebook, Instagram, Youtube, Linkedin, Twitter, Plus, CheckCircle2, XCircle, Clock, RefreshCw, Trash2 } from 'lucide-react';
 import { MetaAccountSelector } from './MetaAccountSelector';
 import { YouTubeChannelSelector } from './YouTubeChannelSelector';
@@ -100,6 +101,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [connectionToDisconnect, setConnectionToDisconnect] = useState<PlatformConnection | null>(null);
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
 
   const fetchConnections = useCallback(async () => {
     const { data, error } = await supabase
@@ -249,6 +251,13 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       if (result.error) {
         throw new Error(result.error);
       }
+
+      await logAction({
+        action: 'platform.connect',
+        entityType: 'platform_connection',
+        entityName: `Meta - ${selectedAccounts.pageName}`,
+        details: { platform: 'meta', page_name: selectedAccounts.pageName },
+      });
 
       toast({
         title: 'Conexión exitosa',
@@ -427,6 +436,13 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         throw new Error(result.error);
       }
 
+      await logAction({
+        action: 'platform.connect',
+        entityType: 'platform_connection',
+        entityName: `YouTube - ${channel.name}`,
+        details: { platform: 'youtube', channel_name: channel.name },
+      });
+
       toast({
         title: 'Conexión exitosa',
         description: `Conectado a YouTube: ${channel.name}`,
@@ -472,6 +488,14 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         .eq('id', connectionToDisconnect.id);
 
       if (error) throw error;
+
+      await logAction({
+        action: 'platform.disconnect',
+        entityType: 'platform_connection',
+        entityId: connectionToDisconnect.id,
+        entityName: `${platformConfig[connectionToDisconnect.platform].name} - ${connectionToDisconnect.platform_page_name || ''}`,
+        details: { platform: connectionToDisconnect.platform },
+      });
 
       toast({
         title: 'Plataforma desconectada',
