@@ -107,6 +107,16 @@ const Facturacion = () => {
     }
   };
 
+  const handleRemoveSubscription = async (subId: string, clientName: string) => {
+    if (!confirm(`¿Quitar el plan de "${clientName}"? El cliente quedará sin suscripción.`)) return;
+    try {
+      await removeSub.mutateAsync(subId);
+      toast.success('Plan removido del cliente');
+    } catch {
+      toast.error('Error al remover el plan');
+    }
+  };
+
   if (roleLoading) {
     return (
       <DashboardLayout>
