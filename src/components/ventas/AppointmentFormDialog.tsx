@@ -78,7 +78,6 @@ export const AppointmentFormDialog = ({
       setLeadName(editing.lead_name);
       setLeadGoal((editing as any).lead_goal || '');
       setSetterName(editing.setter_name || '');
-      setEstimatedValue(editing.estimated_value ? String(editing.estimated_value) : '');
       setCurrency(editing.currency as 'CRC' | 'USD');
       setStatus(editing.status);
       setSource(editing.source || 'ads');
