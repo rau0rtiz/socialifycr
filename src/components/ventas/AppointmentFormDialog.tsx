@@ -53,7 +53,6 @@ export const AppointmentFormDialog = ({
   const [setterName, setSetterName] = useState('');
   const [showNewSetter, setShowNewSetter] = useState(false);
   const [newSetterName, setNewSetterName] = useState('');
-  const [estimatedValue, setEstimatedValue] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
   const [status, setStatus] = useState('scheduled');
   const [source, setSource] = useState('ads');
