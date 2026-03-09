@@ -136,7 +136,7 @@ export const useFunnelAnalytics = (
   hasAdAccount: boolean,
   datePreset: DatePresetKey,
   customRange?: DateRange,
-  selectedCampaignId?: string
+  selectedCampaignIds?: string[]
 ) => {
   const { data: campaignGoalsData } = useCampaignGoals(clientId);
 
@@ -158,8 +158,8 @@ export const useFunnelAnalytics = (
   // Build funnel stages
   const funnelData = useMemo(() => {
     let filteredCampaigns = campaigns;
-    if (selectedCampaignId && selectedCampaignId !== 'all') {
-      filteredCampaigns = campaigns.filter(c => c.id === selectedCampaignId);
+    if (selectedCampaignIds && selectedCampaignIds.length > 0 && !selectedCampaignIds.includes('all')) {
+      filteredCampaigns = campaigns.filter(c => selectedCampaignIds.includes(c.id));
     }
 
     if (filteredCampaigns.length === 0 && !salesData?.totalCount) {
