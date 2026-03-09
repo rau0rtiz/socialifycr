@@ -15,6 +15,7 @@ export interface ClientFeatureFlags {
   funnel: boolean;
   campaigns: boolean;
   sales_tracking: boolean;
+  setter_tracker: boolean;
   monthly_sales_report: boolean;
   ventas_section: boolean;
   contenido_section: boolean;
@@ -34,6 +35,7 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
   campaigns: false,
   sales_tracking: false,
   monthly_sales_report: false,
+  setter_tracker: false,
   ventas_section: false,
   contenido_section: false,
   reportes_section: false,
@@ -60,6 +62,7 @@ export const FEATURE_LABELS: Record<string, string> = {
   campaigns: 'Campañas',
   sales_tracking: 'Ventas por Mensajes',
   monthly_sales_report: 'Reporte Mensual de Ventas',
+  setter_tracker: 'Setter & Pipeline',
 };
 
 export const useClientFeatures = (clientId: string | null) => {
@@ -94,6 +97,7 @@ export const useClientFeatures = (clientId: string | null) => {
         funnel: data.funnel,
         campaigns: data.campaigns,
         sales_tracking: data.sales_tracking,
+        setter_tracker: data.setter_tracker,
         monthly_sales_report: data.monthly_sales_report,
         ventas_section: data.ventas_section,
         contenido_section: data.contenido_section,

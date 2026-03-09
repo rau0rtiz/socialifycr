@@ -219,6 +219,7 @@ export type Database = {
           monthly_sales_report: boolean
           reportes_section: boolean
           sales_tracking: boolean
+          setter_tracker: boolean
           social_followers: boolean
           updated_at: string | null
           ventas_section: boolean
@@ -240,6 +241,7 @@ export type Database = {
           monthly_sales_report?: boolean
           reportes_section?: boolean
           sales_tracking?: boolean
+          setter_tracker?: boolean
           social_followers?: boolean
           updated_at?: string | null
           ventas_section?: boolean
@@ -261,6 +263,7 @@ export type Database = {
           monthly_sales_report?: boolean
           reportes_section?: boolean
           sales_tracking?: boolean
+          setter_tracker?: boolean
           social_followers?: boolean
           updated_at?: string | null
           ventas_section?: boolean

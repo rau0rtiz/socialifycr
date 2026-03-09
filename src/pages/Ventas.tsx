@@ -6,6 +6,7 @@ import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useCampaigns } from '@/hooks/use-ads-data';
+import { useClientFeatures } from '@/hooks/use-client-features';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2 } from 'lucide-react';
 
@@ -16,6 +17,7 @@ const Ventas = () => {
   const clientId = selectedClient?.id || null;
   const { data: metaConnection } = useMetaConnection(clientId);
   const hasAdAccount = !!metaConnection?.ad_account_id;
+  const { flags } = useClientFeatures(clientId);
 
   const { data: campaignsResult } = useCampaigns(clientId, hasAdAccount, 'last_30d');
   const campaigns = campaignsResult?.campaigns || [];
@@ -58,6 +60,14 @@ const Ventas = () => {
         <h1 className="text-lg md:text-xl font-semibold text-foreground">
           Ventas
         </h1>
+        {/* Setter pipeline first (lead → sale flow) */}
+        {flags.setter_tracker && (
+          <SetterTracker
+            clientId={selectedClient.id}
+            hasAdAccount={hasAdAccount}
+          />
+        )}
+        {/* Sales tracking */}
         <SalesTrackingSection
           clientId={selectedClient.id}
           campaigns={campaigns}
@@ -65,11 +75,8 @@ const Ventas = () => {
           adCurrency={adCurrency}
           hasAdAccount={hasAdAccount}
         />
+        {/* Ad ranking last */}
         <AdSalesRanking
-          clientId={selectedClient.id}
-          hasAdAccount={hasAdAccount}
-        />
-        <SetterTracker
           clientId={selectedClient.id}
           hasAdAccount={hasAdAccount}
         />
