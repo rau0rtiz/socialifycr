@@ -53,7 +53,6 @@ export const AppointmentFormDialog = ({
   const [setterName, setSetterName] = useState('');
   const [showNewSetter, setShowNewSetter] = useState(false);
   const [newSetterName, setNewSetterName] = useState('');
-  const [estimatedValue, setEstimatedValue] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
   const [status, setStatus] = useState('scheduled');
   const [source, setSource] = useState('ads');
@@ -79,7 +78,6 @@ export const AppointmentFormDialog = ({
       setLeadName(editing.lead_name);
       setLeadGoal((editing as any).lead_goal || '');
       setSetterName(editing.setter_name || '');
-      setEstimatedValue(editing.estimated_value ? String(editing.estimated_value) : '');
       setCurrency(editing.currency as 'CRC' | 'USD');
       setStatus(editing.status);
       setSource(editing.source || 'ads');
@@ -101,7 +99,6 @@ export const AppointmentFormDialog = ({
       setLeadName('');
       setLeadGoal('');
       setSetterName('');
-      setEstimatedValue('');
       setCurrency('CRC');
       setStatus('scheduled');
       setSource('ads');
@@ -134,7 +131,7 @@ export const AppointmentFormDialog = ({
       lead_goal: leadGoal.trim() || undefined,
       appointment_date: new Date().toISOString(),
       setter_name: setterName || undefined,
-      estimated_value: estimatedValue ? parseFloat(estimatedValue) : 0,
+      estimated_value: 0,
       currency,
       status: status as any,
       source,
@@ -244,22 +241,6 @@ export const AppointmentFormDialog = ({
               </Select>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2 space-y-1.5">
-                <Label className="text-xs">Valor Estimado</Label>
-                <Input type="number" placeholder="0" value={estimatedValue} onChange={e => setEstimatedValue(e.target.value)} className="h-8 text-xs" min="0" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Moneda</Label>
-                <Select value={currency} onValueChange={v => setCurrency(v as any)}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CRC" className="text-xs">CRC</SelectItem>
-                    <SelectItem value="USD" className="text-xs">USD</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
             <div className="space-y-1.5">
               <Label className="text-xs">Fuente</Label>

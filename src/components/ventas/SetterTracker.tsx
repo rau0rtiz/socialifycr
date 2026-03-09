@@ -2,7 +2,10 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useSetterAppointments, SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
 import { AppointmentFormDialog } from './AppointmentFormDialog';
 
@@ -33,6 +36,9 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SetterAppointment | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [salePrompt, setSalePrompt] = useState<SetterAppointment | null>(null);
+  const [saleAmount, setSaleAmount] = useState('');
+  const [saleCurrency, setSaleCurrency] = useState<'CRC' | 'USD'>('CRC');
 
   const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, period);
 
@@ -50,18 +56,14 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
     const completed = appointments.filter(a => a.status === 'completed' || a.status === 'sold').length;
     const noShows = appointments.filter(a => a.status === 'no_show').length;
     const sold = appointments.filter(a => a.status === 'sold').length;
-    const totalEstimated = appointments.reduce((sum, a) => {
-      const val = a.currency === 'USD' ? a.estimated_value : a.estimated_value / 520;
-      return sum + val;
-    }, 0);
     const soldValue = appointments.filter(a => a.status === 'sold').reduce((sum, a) => {
-      const val = a.currency === 'USD' ? a.estimated_value : a.estimated_value / 520;
+      const val = a.currency === 'USD' ? (a.estimated_value || 0) : (a.estimated_value || 0) / 520;
       return sum + val;
     }, 0);
     const showRate = total > 0 ? ((completed + sold) / (completed + sold + noShows)) * 100 : 0;
     const closeRate = (completed + sold) > 0 ? (sold / (completed + sold)) * 100 : 0;
 
-    return { total, scheduled, completed, noShows, sold, totalEstimated, soldValue, showRate, closeRate };
+    return { total, scheduled, completed, noShows, sold, soldValue, showRate, closeRate };
   }, [appointments]);
 
   const handleSubmit = async (input: any) => {
@@ -91,11 +93,33 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
   };
 
   const handleStatusChange = async (appointment: SetterAppointment, newStatus: AppointmentStatus) => {
+    if (newStatus === 'sold') {
+      setSalePrompt(appointment);
+      setSaleAmount('');
+      setSaleCurrency(appointment.currency as 'CRC' | 'USD' || 'CRC');
+      return;
+    }
     try {
       await updateAppointment.mutateAsync({ id: appointment.id, status: newStatus } as any);
       toast.success(`Estado actualizado a ${STATUS_CONFIG[newStatus].label}`);
     } catch {
       toast.error('Error actualizando estado');
+    }
+  };
+
+  const handleConfirmSale = async () => {
+    if (!salePrompt || !saleAmount) return;
+    try {
+      await updateAppointment.mutateAsync({
+        id: salePrompt.id,
+        status: 'sold',
+        estimated_value: parseFloat(saleAmount),
+        currency: saleCurrency,
+      } as any);
+      toast.success('Venta registrada');
+      setSalePrompt(null);
+    } catch {
+      toast.error('Error registrando venta');
     }
   };
 
@@ -134,9 +158,9 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
             <StatsCard label="Show Rate" value={`${stats.showRate.toFixed(0)}%`} sub={`${stats.noShows} no shows`} icon={TrendingUp} />
             <StatsCard label="Close Rate" value={`${stats.closeRate.toFixed(0)}%`} sub={`${stats.sold} ventas`} icon={CheckCircle2} />
             <StatsCard
-              label="Pipeline"
-              value={`$${stats.totalEstimated.toLocaleString('en', { maximumFractionDigits: 0 })}`}
-              sub={`$${stats.soldValue.toLocaleString('en', { maximumFractionDigits: 0 })} cerrado`}
+              label="Ventas Cerradas"
+              value={`$${stats.soldValue.toLocaleString('en', { maximumFractionDigits: 0 })}`}
+              sub={`${stats.sold} ventas`}
               icon={DollarSign}
             />
           </div>
@@ -189,10 +213,10 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
                           📢 {apt.ad_name} — {apt.ad_campaign_name}
                         </p>
                       )}
-                      {apt.estimated_value > 0 && (
+                      {apt.status === 'sold' && (apt.estimated_value || 0) > 0 && (
                         <p className="text-xs font-medium text-foreground">
                           {apt.currency === 'CRC' ? '₡' : '$'}
-                          {apt.estimated_value.toLocaleString()}
+                          {(apt.estimated_value || 0).toLocaleString()}
                         </p>
                       )}
                       {apt.notes && (
@@ -274,6 +298,52 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
         editing={editing}
         existingSetters={existingSetters}
       />
+
+      {/* Sale amount dialog */}
+      <Dialog open={!!salePrompt} onOpenChange={(v) => { if (!v) setSalePrompt(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Registrar Venta</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ingresa el monto de la venta para <span className="font-medium text-foreground">{salePrompt?.lead_name}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="flex gap-2">
+              <div className="flex-1 space-y-1.5">
+                <Label className="text-xs">Monto de la Venta *</Label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={saleAmount}
+                  onChange={e => setSaleAmount(e.target.value)}
+                  className="h-8 text-xs"
+                  min="0"
+                  autoFocus
+                />
+              </div>
+              <div className="w-20 space-y-1.5">
+                <Label className="text-xs">Moneda</Label>
+                <Select value={saleCurrency} onValueChange={v => setSaleCurrency(v as 'CRC' | 'USD')}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CRC" className="text-xs">CRC</SelectItem>
+                    <SelectItem value="USD" className="text-xs">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setSalePrompt(null)}>
+              Cancelar
+            </Button>
+            <Button size="sm" className="text-xs" onClick={handleConfirmSale} disabled={!saleAmount || updateAppointment.isPending}>
+              {updateAppointment.isPending ? 'Guardando...' : 'Confirmar Venta'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </>
   );
