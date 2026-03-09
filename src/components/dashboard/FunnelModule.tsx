@@ -197,7 +197,8 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
       case 'traffic':
         steps.push(
           { id: 'clicks', name: 'Clics', value: totals.clicks, isManual: false, enabled: enabledSteps.clicks },
-          { id: 'landingPageViews', name: 'Vistas a Página', value: totals.landingPageViews, isManual: false, enabled: enabledSteps.landingPageViews }
+          { id: 'landingPageViews', name: 'Vistas a Página', value: totals.landingPageViews, isManual: false, enabled: enabledSteps.landingPageViews },
+          { id: 'results', name: resultType || 'Clics en enlace', value: totals.results, isManual: false, enabled: enabledSteps.results }
         );
         break;
       

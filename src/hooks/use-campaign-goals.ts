@@ -45,6 +45,18 @@ export const GOAL_OPTIONS = [
     actionType: 'post_engagement',
     alternativeTypes: ['page_engagement']
   },
+  { 
+    value: 'followers', 
+    label: 'Seguidores', 
+    actionType: 'follow',
+    alternativeTypes: ['like', 'page_engagement']
+  },
+  { 
+    value: 'profile_visits', 
+    label: 'Visitas al perfil', 
+    actionType: 'onsite_conversion.profile_visit',
+    alternativeTypes: ['page_engagement']
+  },
 ] as const;
 
 export type GoalType = typeof GOAL_OPTIONS[number]['value'];
