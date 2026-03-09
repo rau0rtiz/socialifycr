@@ -73,6 +73,17 @@ const Facturacion = () => {
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [assignClientId, setAssignClientId] = useState<string | null>(null);
+
+  const handleOpenAssignDialog = (clientId?: string) => {
+    setAssignClientId(clientId || selectedClient?.id || null);
+    setShowAssignDialog(true);
+  };
+
+  const handleCloseAssignDialog = (open: boolean) => {
+    setShowAssignDialog(open);
+    if (!open) setAssignClientId(null);
+  };
 
   const handleEditPlan = (plan: SubscriptionPlan) => {
     setEditingPlan(plan);
@@ -192,7 +203,7 @@ const Facturacion = () => {
             <TabsContent value="subscriptions" className="space-y-4">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">Vista general de suscripciones de todos los clientes.</p>
-                <Button size="sm" onClick={() => setShowAssignDialog(true)}>
+                <Button size="sm" onClick={() => handleOpenAssignDialog()}>
                   <UserPlus className="h-4 w-4 mr-1" /> Asignar Plan
                 </Button>
               </div>
@@ -205,6 +216,7 @@ const Facturacion = () => {
                       <TableHead>Estado</TableHead>
                       <TableHead>Pasarela</TableHead>
                       <TableHead>Vence</TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -230,12 +242,27 @@ const Facturacion = () => {
                           <TableCell className="text-sm text-muted-foreground">
                             {format(new Date(sub.current_period_end), 'dd MMM yyyy', { locale: es })}
                           </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => {
+                                  setAssignClientId(sub.client_id);
+                                  setShowAssignDialog(true);
+                                }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
                     {allSubscriptions.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           No hay suscripciones activas aún. Usa "Asignar Plan" para empezar.
                         </TableCell>
                       </TableRow>
@@ -296,7 +323,7 @@ const Facturacion = () => {
                   <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">Este cliente no tiene suscripción activa.</p>
                   {isAgency && (
-                    <Button variant="outline" size="sm" className="mt-4" onClick={() => setShowAssignDialog(true)}>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => handleOpenAssignDialog()}>
                       <UserPlus className="h-4 w-4 mr-1" /> Asignar Plan
                     </Button>
                   )}
@@ -360,7 +387,7 @@ const Facturacion = () => {
       </div>
 
       <PlanFormDialog open={showPlanDialog} onOpenChange={handleClosePlanDialog} editPlan={editingPlan} />
-      <AssignPlanDialog open={showAssignDialog} onOpenChange={setShowAssignDialog} clients={clients} preselectedClientId={selectedClient?.id} />
+      <AssignPlanDialog open={showAssignDialog} onOpenChange={handleCloseAssignDialog} clients={clients} preselectedClientId={assignClientId} />
     </DashboardLayout>
   );
 };

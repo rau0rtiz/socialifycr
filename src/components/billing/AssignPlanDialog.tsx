@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSubscriptionPlans, useAssignPlan } from '@/hooks/use-billing';
+import { useSubscriptionPlans, useAssignPlan, useClientSubscription } from '@/hooks/use-billing';
 import { toast } from 'sonner';
 
 interface AssignPlanDialogProps {
@@ -20,7 +20,32 @@ export const AssignPlanDialog = ({ open, onOpenChange, clients, preselectedClien
   const [selectedPlan, setSelectedPlan] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<string>('');
 
+  const { data: currentSub } = useClientSubscription(selectedClient || null);
+
   const activePlans = plans.filter(p => p.is_active);
+
+  // Sync preselectedClientId when dialog opens
+  useEffect(() => {
+    if (open && preselectedClientId) {
+      setSelectedClient(preselectedClientId);
+    }
+    if (!open) {
+      setSelectedClient('');
+      setSelectedPlan('');
+      setSelectedProvider('');
+    }
+  }, [open, preselectedClientId]);
+
+  // Pre-fill plan/provider from current subscription
+  useEffect(() => {
+    if (currentSub) {
+      setSelectedPlan(currentSub.plan_id);
+      setSelectedProvider(currentSub.payment_provider || 'none');
+    } else {
+      setSelectedPlan('');
+      setSelectedProvider('');
+    }
+  }, [currentSub]);
 
   const handleAssign = async () => {
     if (!selectedClient || !selectedPlan) {
@@ -34,21 +59,20 @@ export const AssignPlanDialog = ({ open, onOpenChange, clients, preselectedClien
         planId: selectedPlan,
         provider: selectedProvider || null,
       });
-      toast.success('Plan asignado exitosamente');
+      toast.success(currentSub ? 'Plan actualizado exitosamente' : 'Plan asignado exitosamente');
       onOpenChange(false);
-      setSelectedClient('');
-      setSelectedPlan('');
-      setSelectedProvider('');
     } catch (err) {
       toast.error('Error al asignar el plan');
     }
   };
 
+  const isEditing = !!currentSub;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Asignar Plan a Cliente</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar Plan del Cliente' : 'Asignar Plan a Cliente'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -88,7 +112,7 @@ export const AssignPlanDialog = ({ open, onOpenChange, clients, preselectedClien
             </Select>
           </div>
           <Button className="w-full" onClick={handleAssign} disabled={assignPlan.isPending}>
-            {assignPlan.isPending ? 'Asignando...' : 'Asignar Plan'}
+            {assignPlan.isPending ? 'Guardando...' : isEditing ? 'Actualizar Plan' : 'Asignar Plan'}
           </Button>
         </div>
       </DialogContent>
