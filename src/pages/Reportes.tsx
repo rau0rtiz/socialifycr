@@ -1,5 +1,6 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { GammaReportGenerator } from '@/components/reports/GammaReportGenerator';
+import { SocialContentOverview } from '@/components/reports/SocialContentOverview';
 import { useBrand } from '@/contexts/BrandContext';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { TrendingUp } from 'lucide-react';
@@ -31,7 +32,13 @@ const Reportes = () => {
             Selecciona un cliente para generar reportes
           </div>
         ) : (
-          <GammaReportGenerator clientId={clientId} hasAdAccount={hasAdAccount} />
+          <>
+            {/* Unified Social + Content Overview */}
+            <SocialContentOverview clientId={clientId} />
+
+            {/* Gamma Report Generator */}
+            <GammaReportGenerator clientId={clientId} hasAdAccount={hasAdAccount} />
+          </>
         )}
       </div>
     </DashboardLayout>
