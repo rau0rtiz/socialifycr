@@ -190,6 +190,7 @@ export const ClientsTable = ({
                       {client.industry && (
                         <Badge variant="secondary" className="mt-1 text-xs">{client.industry}</Badge>
                       )}
+                      <PlanBadge info={clientPlanMap[client.id]} className="mt-1" />
                     </div>
                   </div>
                   <ClientActions
