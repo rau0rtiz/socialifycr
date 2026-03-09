@@ -69,6 +69,10 @@ const Ventas = () => {
           clientId={selectedClient.id}
           hasAdAccount={hasAdAccount}
         />
+        <SetterTracker
+          clientId={selectedClient.id}
+          hasAdAccount={hasAdAccount}
+        />
       </div>
     </DashboardLayout>
   );
