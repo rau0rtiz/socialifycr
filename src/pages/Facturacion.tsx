@@ -70,6 +70,7 @@ const Facturacion = () => {
   const { data: transactions = [] } = usePaymentTransactions(selectedClient?.id ?? null);
   const { data: currentSub } = useClientSubscription(selectedClient?.id ?? null);
   const { remove } = useMutatePlan();
+  const removeSub = useRemoveAssignedPlan();
 
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
