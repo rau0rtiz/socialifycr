@@ -25,6 +25,8 @@ const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const Invitacion = lazy(() => import("./pages/Invitacion"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ImageDB = lazy(() => import("./pages/ImageDB"));
+const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
 const YouTubeOAuthCallback = lazy(() => import("./pages/YouTubeOAuthCallback").then(m => ({ default: m.YouTubeOAuthCallback })));
 
@@ -90,6 +92,15 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
+                  <Route path="/image-db" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <ImageDB />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  {/* External PIN-protected image DB */}
+                  <Route path="/imgdb" element={<ImageDBPinGate />} />
                   {/* Shared routes */}
                   <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                   <Route path="/content" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />

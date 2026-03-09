@@ -738,23 +738,22 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
       </CardHeader>
 
       <CardContent>
-        {/* Visual Campaign Selector */}
-        {campaigns.length > 0 && (
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <Label className="text-xs text-muted-foreground">Campañas</Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={selectAllCampaigns}
-                className="h-6 text-[10px] px-2"
-              >
-                {selectedCampaignIds.length === 0 ? 'Todas seleccionadas' : 'Seleccionar todas'}
-              </Button>
+        {isLoading ? (
+          <div className="flex flex-col items-center gap-2 py-8">
+            {[100, 80, 60, 40, 20].map((w, i) => (
+              <Skeleton key={i} className="h-14" style={{ width: `${w}%` }} />
+            ))}
+          </div>
+        ) : campaigns.length > 0 && selectedCampaignIds.length === 0 ? (
+          /* Campaign selection grid - shown when no campaigns are selected */
+          <div className="py-4">
+            <div className="text-center mb-4">
+              <Target className="h-8 w-8 mx-auto text-primary mb-2" />
+              <p className="text-sm font-semibold">Selecciona una o más campañas</p>
+              <p className="text-xs text-muted-foreground mt-1">Elige las campañas que deseas analizar en el embudo</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {campaigns.map((campaign) => {
-                const isSelected = selectedCampaignIds.length === 0 || selectedCampaignIds.includes(campaign.id);
                 const goalType = campaignGoalsData?.goals?.[campaign.id]?.goal_type as GoalType | undefined;
                 const goalLabel = goalType ? getGoalLabel(goalType) : null;
                 
@@ -762,49 +761,90 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
                   <button
                     key={campaign.id}
                     onClick={() => toggleCampaign(campaign.id)}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-all",
-                      isSelected
-                        ? "border-primary bg-primary/10 text-foreground"
-                        : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
-                    )}
+                    className="flex items-center gap-3 p-3 rounded-lg border-2 border-border bg-muted/20 text-left transition-all hover:border-primary hover:bg-primary/5"
                   >
-                    <Checkbox
-                      checked={isSelected}
-                      className="h-3 w-3 pointer-events-none"
-                    />
-                    <span className="font-medium truncate max-w-[150px]">{campaign.name}</span>
-                    {goalLabel && (
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-[9px] px-1.5 py-0 shrink-0",
-                          isSelected ? "bg-primary/20" : "bg-muted"
+                    <Checkbox checked={false} className="h-4 w-4 pointer-events-none shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold truncate">{campaign.name}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {goalLabel && (
+                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                            <Target className="h-2 w-2 mr-0.5" />
+                            {goalLabel}
+                          </Badge>
                         )}
-                      >
-                        <Target className="h-2 w-2 mr-0.5" />
-                        {goalLabel}
-                      </Badge>
-                    )}
+                        {campaign.status === 'ACTIVE' && (
+                          <Badge className="text-[9px] px-1.5 py-0 bg-emerald-500/20 text-emerald-600 border-0">
+                            Activa
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </button>
                 );
               })}
             </div>
-            {selectedCampaignIds.length > 0 && (
+          </div>
+        ) : (
+          <>
+          {/* Campaign pills - shown when campaigns are selected */}
+          {campaigns.length > 0 && selectedCampaignIds.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs text-muted-foreground">Campañas</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={selectAllCampaigns}
+                  className="h-6 text-[10px] px-2"
+                >
+                  Cambiar selección
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {campaigns.map((campaign) => {
+                  const isSelected = selectedCampaignIds.includes(campaign.id);
+                  const goalType = campaignGoalsData?.goals?.[campaign.id]?.goal_type as GoalType | undefined;
+                  const goalLabel = goalType ? getGoalLabel(goalType) : null;
+                  
+                  return (
+                    <button
+                      key={campaign.id}
+                      onClick={() => toggleCampaign(campaign.id)}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-all",
+                        isSelected
+                          ? "border-primary bg-primary/10 text-foreground"
+                          : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        className="h-3 w-3 pointer-events-none"
+                      />
+                      <span className="font-medium truncate max-w-[150px]">{campaign.name}</span>
+                      {goalLabel && (
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "text-[9px] px-1.5 py-0 shrink-0",
+                            isSelected ? "bg-primary/20" : "bg-muted"
+                          )}
+                        >
+                          <Target className="h-2 w-2 mr-0.5" />
+                          {goalLabel}
+                        </Badge>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
               <p className="text-[10px] text-muted-foreground mt-2">
                 {selectedCampaignIds.length} de {campaigns.length} campañas seleccionadas
               </p>
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {isLoading ? (
-          <div className="flex flex-col items-center gap-2 py-8">
-            {[100, 80, 60, 40, 20].map((w, i) => (
-              <Skeleton key={i} className="h-14" style={{ width: `${w}%` }} />
-            ))}
-          </div>
-        ) : (
           <Tabs defaultValue="funnel" className="w-full">
             <TabsList className="grid w-full grid-cols-3 h-9">
               <TabsTrigger value="funnel" className="text-xs">
@@ -871,6 +911,7 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
               <UTMTracker clientId={clientId} />
             </TabsContent>
           </Tabs>
+          </>
         )}
       </CardContent>
     </Card>
