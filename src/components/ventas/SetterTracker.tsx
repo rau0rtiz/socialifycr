@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSetterAppointments, SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
 import { AppointmentFormDialog } from './AppointmentFormDialog';
-import { RegisterSaleDialog } from '@/components/dashboard/RegisterSaleDialog';
+
 import { toast } from 'sonner';
 import {
   UserPlus, User, DollarSign,
