@@ -43,7 +43,12 @@ export const ClientFeatureFlags = ({ clientId }: ClientFeatureFlagsProps) => {
   ];
 
   const sectionKeys = Object.keys(SECTION_LABELS);
-  const featureKeys = Object.keys(FEATURE_LABELS);
+
+  const widgetGroups = [
+    { title: 'Widgets del Dashboard', description: 'Módulos dentro del dashboard principal.', labels: DASHBOARD_WIDGET_LABELS },
+    { title: 'Widgets de Ventas', description: 'Módulos dentro de la sección de Ventas.', labels: VENTAS_WIDGET_LABELS },
+    { title: 'Widgets de Contenido', description: 'Módulos dentro de la sección de Contenido.', labels: CONTENIDO_WIDGET_LABELS },
+  ];
 
   return (
     <div className="space-y-5">
@@ -87,30 +92,28 @@ export const ClientFeatureFlags = ({ clientId }: ClientFeatureFlagsProps) => {
         </div>
       </div>
 
-      <Separator />
-
-      {/* Widget-level features */}
-      <div>
-        <h4 className="text-sm font-medium mb-3">Widgets del Dashboard</h4>
-        <p className="text-xs text-muted-foreground mb-3">
-          Controla qué módulos aparecen dentro del dashboard del cliente.
-        </p>
-        <div className="space-y-2">
-          {featureKeys.map((key) => (
-            <div key={key} className="flex items-center justify-between">
-              <Label htmlFor={`flag-${key}`} className="text-sm cursor-pointer">
-                {FEATURE_LABELS[key]}
-              </Label>
-              <Switch
-                id={`flag-${key}`}
-                checked={(flags as any)[key] ?? false}
-                onCheckedChange={(checked) => handleToggle(key, checked)}
-                disabled={key === 'dashboard'}
-              />
-            </div>
-          ))}
+      {/* Widget groups by section */}
+      {widgetGroups.map((group) => (
+        <div key={group.title}>
+          <Separator className="mb-4" />
+          <h4 className="text-sm font-medium mb-1">{group.title}</h4>
+          <p className="text-xs text-muted-foreground mb-3">{group.description}</p>
+          <div className="space-y-2">
+            {Object.keys(group.labels).map((key) => (
+              <div key={key} className="flex items-center justify-between">
+                <Label htmlFor={`flag-${key}`} className="text-sm cursor-pointer">
+                  {group.labels[key]}
+                </Label>
+                <Switch
+                  id={`flag-${key}`}
+                  checked={(flags as any)[key] ?? false}
+                  onCheckedChange={(checked) => handleToggle(key, checked)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 };
