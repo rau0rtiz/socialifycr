@@ -53,18 +53,14 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
     const completed = appointments.filter(a => a.status === 'completed' || a.status === 'sold').length;
     const noShows = appointments.filter(a => a.status === 'no_show').length;
     const sold = appointments.filter(a => a.status === 'sold').length;
-    const totalEstimated = appointments.reduce((sum, a) => {
-      const val = a.currency === 'USD' ? a.estimated_value : a.estimated_value / 520;
-      return sum + val;
-    }, 0);
     const soldValue = appointments.filter(a => a.status === 'sold').reduce((sum, a) => {
-      const val = a.currency === 'USD' ? a.estimated_value : a.estimated_value / 520;
+      const val = a.currency === 'USD' ? (a.estimated_value || 0) : (a.estimated_value || 0) / 520;
       return sum + val;
     }, 0);
     const showRate = total > 0 ? ((completed + sold) / (completed + sold + noShows)) * 100 : 0;
     const closeRate = (completed + sold) > 0 ? (sold / (completed + sold)) * 100 : 0;
 
-    return { total, scheduled, completed, noShows, sold, totalEstimated, soldValue, showRate, closeRate };
+    return { total, scheduled, completed, noShows, sold, soldValue, showRate, closeRate };
   }, [appointments]);
 
   const handleSubmit = async (input: any) => {
