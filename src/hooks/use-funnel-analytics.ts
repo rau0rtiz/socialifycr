@@ -249,6 +249,18 @@ export const useFunnelAnalytics = (
     if (metaTotals.leads > 0) {
       stages.push({ id: 'leads', name: 'Leads', value: metaTotals.leads, source: 'meta' });
     }
+    if (metaTotals.linkClicks > 0) {
+      stages.push({ id: 'linkClicks', name: 'Clics en enlace', value: metaTotals.linkClicks, source: 'meta' });
+    }
+    if (metaTotals.videoViews > 0) {
+      stages.push({ id: 'videoViews', name: 'Reproducciones', value: metaTotals.videoViews, source: 'meta' });
+    }
+    if (metaTotals.profileVisits > 0) {
+      stages.push({ id: 'profileVisits', name: 'Visitas al perfil', value: metaTotals.profileVisits, source: 'meta' });
+    }
+    if (metaTotals.followers > 0) {
+      stages.push({ id: 'followers', name: 'Seguidores', value: metaTotals.followers, source: 'meta' });
+    }
     if (metaTotals.otherResults > 0) {
       stages.push({ id: 'results', name: 'Otros Resultados', value: metaTotals.otherResults, source: 'meta' });
     }
