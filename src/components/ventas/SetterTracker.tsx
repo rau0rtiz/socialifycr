@@ -155,9 +155,9 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
             <StatsCard label="Show Rate" value={`${stats.showRate.toFixed(0)}%`} sub={`${stats.noShows} no shows`} icon={TrendingUp} />
             <StatsCard label="Close Rate" value={`${stats.closeRate.toFixed(0)}%`} sub={`${stats.sold} ventas`} icon={CheckCircle2} />
             <StatsCard
-              label="Pipeline"
-              value={`$${stats.totalEstimated.toLocaleString('en', { maximumFractionDigits: 0 })}`}
-              sub={`$${stats.soldValue.toLocaleString('en', { maximumFractionDigits: 0 })} cerrado`}
+              label="Ventas Cerradas"
+              value={`$${stats.soldValue.toLocaleString('en', { maximumFractionDigits: 0 })}`}
+              sub={`${stats.sold} ventas`}
               icon={DollarSign}
             />
           </div>
