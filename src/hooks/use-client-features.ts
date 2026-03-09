@@ -62,6 +62,7 @@ export const FEATURE_LABELS: Record<string, string> = {
   campaigns: 'Campañas',
   sales_tracking: 'Ventas por Mensajes',
   monthly_sales_report: 'Reporte Mensual de Ventas',
+  setter_tracker: 'Setter & Pipeline',
 };
 
 export const useClientFeatures = (clientId: string | null) => {
