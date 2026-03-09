@@ -163,10 +163,31 @@ export const useFunnelAnalytics = (
     }
 
     if (filteredCampaigns.length === 0 && !salesData?.totalCount) {
-      return { stages: [], conversionRates: [], sankeyNodes: [], sankeyLinks: [] };
+      return { stages: [], conversionRates: [] };
     }
 
-    // Aggregate Meta metrics separating result types
+    // Build goal lookup from campaignGoalsData
+    const goalsMap = campaignGoalsData?.goals || {};
+    const defaultGoal = campaignGoalsData?.defaultGoal;
+
+    // Classify each campaign by its goal_type
+    const getGoalForCampaign = (campaignId: string, resultType: string): string => {
+      const goal = goalsMap[campaignId];
+      if (goal) return goal.goal_type;
+      if (defaultGoal) return defaultGoal;
+      // Fallback: infer from resultType string
+      const rType = (resultType || '').toLowerCase();
+      if (rType.includes('compra') || rType.includes('purchase')) return 'purchases';
+      if (rType.includes('conversaci') || rType.includes('mensaje') || rType.includes('message')) return 'messages';
+      if (rType.includes('lead') || rType.includes('cliente')) return 'leads';
+      return 'other';
+    };
+
+    // Track which goal types are present
+    let hasConversationCampaigns = false;
+    let hasPurchaseCampaigns = false;
+
+    // Aggregate Meta metrics separating result types by goal
     const metaTotals = filteredCampaigns.reduce(
       (acc, c) => {
         acc.impressions += c.impressions;
@@ -175,12 +196,15 @@ export const useFunnelAnalytics = (
         acc.spend += c.spend;
         acc.landingPageViews += c.landingPageViews;
 
-        const rType = (c.resultType || '').toLowerCase();
-        if (rType.includes('compra')) {
+        const goalType = getGoalForCampaign(c.id, c.resultType);
+
+        if (goalType === 'purchases') {
           acc.purchases += c.results;
-        } else if (rType.includes('conversaci') || rType.includes('mensaje')) {
+          hasPurchaseCampaigns = true;
+        } else if (goalType === 'messages') {
           acc.conversations += c.results;
-        } else if (rType.includes('lead') || rType.includes('cliente')) {
+          hasConversationCampaigns = true;
+        } else if (goalType === 'leads') {
           acc.leads += c.results;
         } else {
           acc.otherResults += c.results;
@@ -192,7 +216,7 @@ export const useFunnelAnalytics = (
 
     const salesCount = salesData?.totalCount || 0;
 
-    // Build stages: Impressions → Reach → Clicks → LPV → Conversations/Leads → Purchases → Sales
+    // Build stages
     const stages: FunnelStage[] = [];
 
     if (metaTotals.impressions > 0) {
@@ -216,10 +240,14 @@ export const useFunnelAnalytics = (
     if (metaTotals.otherResults > 0) {
       stages.push({ id: 'results', name: 'Otros Resultados', value: metaTotals.otherResults, source: 'meta' });
     }
+    // Purchase campaigns: funnel ends at Compras (Meta) — NOT linked to manual sales
     if (metaTotals.purchases > 0) {
-      stages.push({ id: 'purchases', name: 'Compras', value: metaTotals.purchases, source: 'meta' });
+      stages.push({ id: 'purchases', name: 'Compras (Meta)', value: metaTotals.purchases, source: 'meta' });
     }
-    if (salesCount > 0) {
+    // Conversation campaigns: link to manual Ventas Cerradas
+    // Only show Ventas Cerradas if there are conversation campaigns OR no purchase-only campaigns
+    const shouldShowManualSales = salesCount > 0 && (hasConversationCampaigns || (!hasPurchaseCampaigns && !hasConversationCampaigns));
+    if (shouldShowManualSales) {
       stages.push({ id: 'sales', name: 'Ventas Cerradas', value: salesCount, source: 'sales' });
     }
 
@@ -235,79 +263,15 @@ export const useFunnelAnalytics = (
       });
     }
 
-    // Build Sankey data
-    // Nodes: each stage + breakdown by campaign for results and sales
-    const sankeyNodes: SankeyNode[] = [];
-    const sankeyLinks: SankeyLink[] = [];
-
-    // Simple sankey: stages as nodes
-    stages.forEach(s => sankeyNodes.push({ name: s.name }));
-
-    // Links between consecutive stages
-    for (let i = 0; i < stages.length - 1; i++) {
-      sankeyLinks.push({
-        source: i,
-        target: i + 1,
-        value: stages[i + 1].value,
-        sourceName: stages[i].name,
-        targetName: stages[i + 1].name,
-      });
-    }
-
-    // Add campaign breakdown nodes for detailed sankey
-    if (filteredCampaigns.length > 1 && selectedCampaignId === 'all') {
-      const campaignStartIdx = sankeyNodes.length;
-      filteredCampaigns.forEach((c, idx) => {
-        sankeyNodes.push({ name: c.name });
-        // Link from Impressions to each campaign
-        if (c.impressions > 0) {
-          sankeyLinks.push({
-            source: 0, // Impressions
-            target: campaignStartIdx + idx,
-            value: c.impressions,
-            sourceName: 'Impresiones',
-            targetName: c.name,
-          });
-        }
-      });
-    }
-
-    // Sales source breakdown
-    if (salesData?.bySource && salesCount > 0) {
-      const salesIdx = stages.findIndex(s => s.id === 'sales');
-      if (salesIdx >= 0) {
-        const sourceStartIdx = sankeyNodes.length;
-        Object.entries(salesData.bySource).forEach(([source, count], idx) => {
-          const sourceLabels: Record<string, string> = {
-            ad: 'Publicidad',
-            story: 'Historia',
-            referral: 'Referencia',
-            organic: 'Orgánico',
-            other: 'Otro',
-          };
-          sankeyNodes.push({ name: sourceLabels[source] || source });
-          sankeyLinks.push({
-            source: salesIdx,
-            target: sourceStartIdx + idx,
-            value: count as number,
-            sourceName: 'Ventas Cerradas',
-            targetName: sourceLabels[source] || source,
-          });
-        });
-      }
-    }
-
     return {
       stages,
       conversionRates,
-      sankeyNodes,
-      sankeyLinks,
       metaTotals,
       salesData,
       currency,
       spend: metaTotals.spend,
     };
-  }, [campaigns, salesData, selectedCampaignId, currency]);
+  }, [campaigns, salesData, selectedCampaignId, currency, campaignGoalsData]);
 
   // Projection calculator: given a target at any stage, project others
   const calculateProjection = (targetStageId: string, targetValue: number): FunnelProjection[] => {
