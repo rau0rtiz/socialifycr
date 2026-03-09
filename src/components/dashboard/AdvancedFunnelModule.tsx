@@ -566,7 +566,7 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
   const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
   const [customRange, setCustomRange] = useState<DateRange>({});
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [selectedCampaignId, setSelectedCampaignId] = useState('all');
+  const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([]);
 
   // Non-attributed sales state
   const [showSalesDialog, setShowSalesDialog] = useState(false);
@@ -574,6 +574,9 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
   const [salesTotalAmount, setSalesTotalAmount] = useState('');
   const [salesCurrency, setSalesCurrency] = useState('CRC');
   const [nonAttributedSales, setNonAttributedSales] = useState<{ quantity: number; totalAmount: number; currency: string } | null>(null);
+
+  // Fetch campaign goals for tags
+  const { data: campaignGoalsData } = useCampaignGoals(clientId);
 
   const {
     stages: rawStages,
@@ -584,7 +587,21 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
     calculateProjection,
     spend,
     currency,
-  } = useFunnelAnalytics(clientId, hasAdAccount, datePreset, customRange, selectedCampaignId);
+  } = useFunnelAnalytics(clientId, hasAdAccount, datePreset, customRange, selectedCampaignIds.length > 0 ? selectedCampaignIds : undefined);
+
+  // Toggle campaign selection
+  const toggleCampaign = (campaignId: string) => {
+    setSelectedCampaignIds(prev => {
+      if (prev.includes(campaignId)) {
+        return prev.filter(id => id !== campaignId);
+      }
+      return [...prev, campaignId];
+    });
+  };
+
+  const selectAllCampaigns = () => {
+    setSelectedCampaignIds([]);
+  };
 
   // Check if there are purchase campaigns in the funnel
   const hasPurchaseStage = rawStages.some(s => s.id === 'purchases');
