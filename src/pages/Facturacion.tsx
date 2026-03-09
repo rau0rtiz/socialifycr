@@ -7,17 +7,20 @@ import {
   usePaymentTransactions,
   useClientSubscription,
   useMutatePlan,
+  SubscriptionPlan,
 } from '@/hooks/use-billing';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CreditCard, Package, Receipt, Plus, Building2 } from 'lucide-react';
+import { CreditCard, Package, Plus, Building2, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState } from 'react';
 import { PlanFormDialog } from '@/components/billing/PlanFormDialog';
+import { AssignPlanDialog } from '@/components/billing/AssignPlanDialog';
+import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-500/10 text-green-500',
@@ -30,6 +33,19 @@ const statusColors: Record<string, string> = {
   processing: 'bg-blue-500/10 text-blue-500',
   failed: 'bg-destructive/10 text-destructive',
   refunded: 'bg-muted text-muted-foreground',
+};
+
+const statusLabels: Record<string, string> = {
+  active: 'Activa',
+  past_due: 'Vencida',
+  cancelled: 'Cancelada',
+  expired: 'Expirada',
+  trialing: 'Prueba',
+  completed: 'Completado',
+  pending: 'Pendiente',
+  processing: 'Procesando',
+  failed: 'Fallido',
+  refunded: 'Reembolsado',
 };
 
 const providerLabels: Record<string, string> = {
@@ -52,7 +68,31 @@ const Facturacion = () => {
   const { data: allSubscriptions = [] } = useAllSubscriptions();
   const { data: transactions = [] } = usePaymentTransactions(selectedClient?.id ?? null);
   const { data: currentSub } = useClientSubscription(selectedClient?.id ?? null);
+  const { remove } = useMutatePlan();
+
   const [showPlanDialog, setShowPlanDialog] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+
+  const handleEditPlan = (plan: SubscriptionPlan) => {
+    setEditingPlan(plan);
+    setShowPlanDialog(true);
+  };
+
+  const handleClosePlanDialog = (open: boolean) => {
+    setShowPlanDialog(open);
+    if (!open) setEditingPlan(null);
+  };
+
+  const handleDeletePlan = async (plan: SubscriptionPlan) => {
+    if (!confirm(`¿Eliminar el plan "${plan.name}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      await remove.mutateAsync(plan.id);
+      toast.success('Plan eliminado');
+    } catch {
+      toast.error('Error al eliminar. Verifica que no tenga suscripciones asociadas.');
+    }
+  };
 
   if (roleLoading) {
     return (
@@ -84,7 +124,7 @@ const Facturacion = () => {
             <TabsContent value="plans" className="space-y-4">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">Administra los planes de suscripción disponibles.</p>
-                <Button size="sm" onClick={() => setShowPlanDialog(true)}>
+                <Button size="sm" onClick={() => { setEditingPlan(null); setShowPlanDialog(true); }}>
                   <Plus className="h-4 w-4 mr-1" /> Nuevo Plan
                 </Button>
               </div>
@@ -92,14 +132,16 @@ const Facturacion = () => {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {plans.map((plan) => (
                   <Card key={plan.id}>
-                    <CardHeader>
+                    <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">{plan.name}</CardTitle>
-                        <Badge variant={plan.is_active ? "default" : "secondary"}>
-                          {plan.is_active ? 'Activo' : 'Inactivo'}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge variant={plan.is_active ? "default" : "secondary"}>
+                            {plan.is_active ? 'Activo' : 'Inactivo'}
+                          </Badge>
+                        </div>
                       </div>
-                      <CardDescription>{plan.description}</CardDescription>
+                      {plan.description && <CardDescription>{plan.description}</CardDescription>}
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-foreground">
@@ -118,6 +160,14 @@ const Facturacion = () => {
                           Hasta {plan.max_clients} clientes · {plan.max_users || '∞'} usuarios
                         </p>
                       )}
+                      <div className="flex gap-2 mt-4 pt-3 border-t border-border">
+                        <Button variant="outline" size="sm" className="flex-1" onClick={() => handleEditPlan(plan)}>
+                          <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                        </Button>
+                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeletePlan(plan)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -140,15 +190,21 @@ const Facturacion = () => {
           {/* Admin: All Subscriptions */}
           {isAgency && (
             <TabsContent value="subscriptions" className="space-y-4">
-              <p className="text-sm text-muted-foreground">Vista general de suscripciones de todos los clientes.</p>
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-muted-foreground">Vista general de suscripciones de todos los clientes.</p>
+                <Button size="sm" onClick={() => setShowAssignDialog(true)}>
+                  <UserPlus className="h-4 w-4 mr-1" /> Asignar Plan
+                </Button>
+              </div>
               <Card>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Cliente</TableHead>
+                      <TableHead>Plan</TableHead>
                       <TableHead>Estado</TableHead>
-                      <TableHead>Proveedor</TableHead>
-                      <TableHead>Período</TableHead>
+                      <TableHead>Pasarela</TableHead>
+                      <TableHead>Vence</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -158,18 +214,18 @@ const Facturacion = () => {
                       return (
                         <TableRow key={sub.id}>
                           <TableCell>
-                            <div>
-                              <p className="font-medium text-foreground">{client?.name || 'Cliente'}</p>
-                              <p className="text-xs text-muted-foreground">{plan?.name}</p>
-                            </div>
+                            <p className="font-medium text-foreground">{client?.name || 'Cliente'}</p>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {plan?.name || '—'}
                           </TableCell>
                           <TableCell>
                             <Badge className={statusColors[sub.status] || ''} variant="outline">
-                              {sub.status}
+                              {statusLabels[sub.status] || sub.status}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
-                            {sub.payment_provider ? providerLabels[sub.payment_provider] : '—'}
+                            {sub.payment_provider ? providerLabels[sub.payment_provider] : 'Manual'}
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {format(new Date(sub.current_period_end), 'dd MMM yyyy', { locale: es })}
@@ -179,8 +235,8 @@ const Facturacion = () => {
                     })}
                     {allSubscriptions.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                          No hay suscripciones activas aún.
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No hay suscripciones activas aún. Usa "Asignar Plan" para empezar.
                         </TableCell>
                       </TableRow>
                     )}
@@ -209,15 +265,21 @@ const Facturacion = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Plan:</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {plans.find(p => p.id === currentSub.plan_id)?.name || '—'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Estado:</span>
                     <Badge className={statusColors[currentSub.status] || ''} variant="outline">
-                      {currentSub.status}
+                      {statusLabels[currentSub.status] || currentSub.status}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Proveedor:</span>
+                    <span className="text-sm text-muted-foreground">Pasarela:</span>
                     <span className="text-sm text-foreground">
-                      {currentSub.payment_provider ? providerLabels[currentSub.payment_provider] : 'No configurado'}
+                      {currentSub.payment_provider ? providerLabels[currentSub.payment_provider] : 'Manual'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -233,6 +295,11 @@ const Facturacion = () => {
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">Este cliente no tiene suscripción activa.</p>
+                  {isAgency && (
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => setShowAssignDialog(true)}>
+                      <UserPlus className="h-4 w-4 mr-1" /> Asignar Plan
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -272,7 +339,7 @@ const Facturacion = () => {
                         </TableCell>
                         <TableCell>
                           <Badge className={statusColors[tx.status] || ''} variant="outline">
-                            {tx.status}
+                            {statusLabels[tx.status] || tx.status}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -292,7 +359,8 @@ const Facturacion = () => {
         </Tabs>
       </div>
 
-      <PlanFormDialog open={showPlanDialog} onOpenChange={setShowPlanDialog} />
+      <PlanFormDialog open={showPlanDialog} onOpenChange={handleClosePlanDialog} editPlan={editingPlan} />
+      <AssignPlanDialog open={showAssignDialog} onOpenChange={setShowAssignDialog} clients={clients} preselectedClientId={selectedClient?.id} />
     </DashboardLayout>
   );
 };
