@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppointmentInput, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
-import { Image as ImageIcon, X } from 'lucide-react';
+import { Image as ImageIcon, X, Plus } from 'lucide-react';
 
 interface AppointmentFormDialogProps {
   open: boolean;
@@ -18,6 +18,7 @@ interface AppointmentFormDialogProps {
   hasAdAccount?: boolean;
   isSubmitting?: boolean;
   editing?: SetterAppointment | null;
+  existingSetters?: string[];
 }
 
 const STATUS_OPTIONS = [
@@ -44,13 +45,13 @@ export const AppointmentFormDialog = ({
   hasAdAccount = false,
   isSubmitting,
   editing,
+  existingSetters = [],
 }: AppointmentFormDialogProps) => {
   const [leadName, setLeadName] = useState('');
-  const [leadPhone, setLeadPhone] = useState('');
-  const [leadEmail, setLeadEmail] = useState('');
-  const [appointmentDate, setAppointmentDate] = useState('');
-  const [appointmentTime, setAppointmentTime] = useState('10:00');
+  const [leadGoal, setLeadGoal] = useState('');
   const [setterName, setSetterName] = useState('');
+  const [showNewSetter, setShowNewSetter] = useState(false);
+  const [newSetterName, setNewSetterName] = useState('');
   const [estimatedValue, setEstimatedValue] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
   const [status, setStatus] = useState('scheduled');
@@ -69,11 +70,7 @@ export const AppointmentFormDialog = ({
     if (open) {
       if (editing) {
         setLeadName(editing.lead_name);
-        setLeadPhone(editing.lead_phone || '');
-        setLeadEmail(editing.lead_email || '');
-        const d = new Date(editing.appointment_date);
-        setAppointmentDate(d.toISOString().split('T')[0]);
-        setAppointmentTime(d.toTimeString().slice(0, 5));
+        setLeadGoal((editing as any).lead_goal || '');
         setSetterName(editing.setter_name || '');
         setEstimatedValue(editing.estimated_value ? String(editing.estimated_value) : '');
         setCurrency(editing.currency as 'CRC' | 'USD');
@@ -95,10 +92,7 @@ export const AppointmentFormDialog = ({
         }
       } else {
         setLeadName('');
-        setLeadPhone('');
-        setLeadEmail('');
-        setAppointmentDate(new Date().toISOString().split('T')[0]);
-        setAppointmentTime('10:00');
+        setLeadGoal('');
         setSetterName('');
         setEstimatedValue('');
         setCurrency('CRC');
@@ -107,18 +101,26 @@ export const AppointmentFormDialog = ({
         setSelectedAd(null);
         setNotes('');
       }
+      setShowNewSetter(false);
+      setNewSetterName('');
     }
   }, [open, editing]);
 
+  const handleAddSetter = () => {
+    if (newSetterName.trim()) {
+      setSetterName(newSetterName.trim());
+      setShowNewSetter(false);
+      setNewSetterName('');
+    }
+  };
+
   const handleSubmit = () => {
-    if (!leadName.trim() || !appointmentDate) return;
-    const dateTime = new Date(`${appointmentDate}T${appointmentTime}:00`).toISOString();
+    if (!leadName.trim()) return;
     onSubmit({
       lead_name: leadName.trim(),
-      lead_phone: leadPhone.trim() || undefined,
-      lead_email: leadEmail.trim() || undefined,
-      appointment_date: dateTime,
-      setter_name: setterName.trim() || undefined,
+      lead_goal: leadGoal.trim() || undefined,
+      appointment_date: new Date().toISOString(),
+      setter_name: setterName || undefined,
       estimated_value: estimatedValue ? parseFloat(estimatedValue) : 0,
       currency,
       status: status as any,
@@ -128,7 +130,7 @@ export const AppointmentFormDialog = ({
       ad_id: selectedAd?.id || undefined,
       ad_name: selectedAd?.name || undefined,
       notes: notes.trim() || undefined,
-    });
+    } as any);
   };
 
   return (
@@ -136,95 +138,91 @@ export const AppointmentFormDialog = ({
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-base">
-            {editing ? 'Editar Agenda' : 'Nueva Agenda'}
+            {editing ? 'Editar Lead' : 'Nuevo Lead'}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Registra una agenda de un lead para trackear el pipeline de ventas high-ticket.
+            Registra un lead para trackear el pipeline de ventas high-ticket.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3 py-2">
-          {/* Lead info */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Nombre del Lead *</Label>
-              <Input
-                placeholder="Nombre completo"
-                value={leadName}
-                onChange={e => setLeadName(e.target.value)}
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Teléfono</Label>
-              <Input
-                placeholder="+506 ..."
-                value={leadPhone}
-                onChange={e => setLeadPhone(e.target.value)}
-                className="h-8 text-xs"
-              />
-            </div>
-          </div>
-
+          {/* Lead name */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Email</Label>
+            <Label className="text-xs">Nombre del Cliente *</Label>
             <Input
-              placeholder="email@ejemplo.com"
-              value={leadEmail}
-              onChange={e => setLeadEmail(e.target.value)}
+              placeholder="Nombre completo del lead"
+              value={leadName}
+              onChange={e => setLeadName(e.target.value)}
               className="h-8 text-xs"
-              type="email"
             />
           </div>
 
-          {/* Date & Time */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Fecha *</Label>
-              <Input
-                type="date"
-                value={appointmentDate}
-                onChange={e => setAppointmentDate(e.target.value)}
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Hora</Label>
-              <Input
-                type="time"
-                value={appointmentTime}
-                onChange={e => setAppointmentTime(e.target.value)}
-                className="h-8 text-xs"
-              />
-            </div>
+          {/* Lead goal */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Meta del Cliente</Label>
+            <Input
+              placeholder="Ej: Generar 50 leads mensuales, Escalar ventas..."
+              value={leadGoal}
+              onChange={e => setLeadGoal(e.target.value)}
+              className="h-8 text-xs"
+            />
           </div>
 
-          {/* Setter & Status */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Setter</Label>
-              <Input
-                placeholder="Nombre del setter"
-                value={setterName}
-                onChange={e => setSetterName(e.target.value)}
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Estado</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map(o => (
-                    <SelectItem key={o.value} value={o.value} className="text-xs">
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Seller (setter) dropdown */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Vendedor Asignado</Label>
+            {showNewSetter ? (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Nombre del vendedor"
+                  value={newSetterName}
+                  onChange={e => setNewSetterName(e.target.value)}
+                  className="h-8 text-xs flex-1"
+                  autoFocus
+                  onKeyDown={e => { if (e.key === 'Enter') handleAddSetter(); }}
+                />
+                <Button size="sm" className="h-8 text-xs" onClick={handleAddSetter} disabled={!newSetterName.trim()}>
+                  Agregar
+                </Button>
+                <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setShowNewSetter(false)}>
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Select value={setterName || '_none'} onValueChange={v => setSetterName(v === '_none' ? '' : v)}>
+                  <SelectTrigger className="h-8 text-xs flex-1">
+                    <SelectValue placeholder="Sin asignar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                    {existingSetters.map(s => (
+                      <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowNewSetter(true)}>
+                  <Plus className="h-3 w-3 mr-1" /> Nuevo
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Status */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Estado</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map(o => (
+                  <SelectItem key={o.value} value={o.value} className="text-xs">
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Value */}
@@ -335,10 +333,10 @@ export const AppointmentFormDialog = ({
           <Button
             size="sm"
             onClick={handleSubmit}
-            disabled={!leadName.trim() || !appointmentDate || isSubmitting}
+            disabled={!leadName.trim() || isSubmitting}
             className="text-xs"
           >
-            {isSubmitting ? 'Guardando...' : editing ? 'Guardar' : 'Agendar'}
+            {isSubmitting ? 'Guardando...' : editing ? 'Guardar' : 'Registrar'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -8,6 +8,7 @@ export interface SetterAppointment {
   id: string;
   client_id: string;
   lead_name: string;
+  lead_goal: string | null;
   lead_phone: string | null;
   lead_email: string | null;
   appointment_date: string;
@@ -29,6 +30,7 @@ export interface SetterAppointment {
 
 export interface AppointmentInput {
   lead_name: string;
+  lead_goal?: string;
   lead_phone?: string;
   lead_email?: string;
   appointment_date: string;
@@ -93,6 +95,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
         client_id: clientId,
         created_by: user.id,
         lead_name: input.lead_name,
+        lead_goal: input.lead_goal || null,
         lead_phone: input.lead_phone || null,
         lead_email: input.lead_email || null,
         appointment_date: input.appointment_date,
@@ -118,6 +121,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
     mutationFn: async ({ id, ...input }: AppointmentInput & { id: string }) => {
       const updateData: Record<string, any> = {};
       if (input.lead_name !== undefined) updateData.lead_name = input.lead_name;
+      if (input.lead_goal !== undefined) updateData.lead_goal = input.lead_goal || null;
       if (input.lead_phone !== undefined) updateData.lead_phone = input.lead_phone || null;
       if (input.lead_email !== undefined) updateData.lead_email = input.lead_email || null;
       if (input.appointment_date !== undefined) updateData.appointment_date = input.appointment_date;
