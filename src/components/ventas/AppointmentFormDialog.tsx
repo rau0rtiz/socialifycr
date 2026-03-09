@@ -99,7 +99,6 @@ export const AppointmentFormDialog = ({
       setLeadName('');
       setLeadGoal('');
       setSetterName('');
-      setEstimatedValue('');
       setCurrency('CRC');
       setStatus('scheduled');
       setSource('ads');
