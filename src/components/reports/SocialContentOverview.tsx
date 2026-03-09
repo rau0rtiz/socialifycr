@@ -182,16 +182,61 @@ export const SocialContentOverview = ({ clientId }: SocialContentOverviewProps) 
     );
   }
 
+  const formatCustomRange = () => {
+    if (!customRange?.from) return 'Seleccionar';
+    if (!customRange.to) return format(customRange.from, 'dd MMM yyyy', { locale: es });
+    return `${format(customRange.from, 'dd MMM', { locale: es })} - ${format(customRange.to, 'dd MMM yyyy', { locale: es })}`;
+  };
+
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2">
-        <h2 className="text-lg font-semibold text-foreground">Resumen de Redes y Contenido</h2>
-        {isLiveData && (
-          <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600 px-1.5 py-0">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            En vivo
-          </Badge>
-        )}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Resumen de Redes y Contenido</h2>
+          {isLiveData && (
+            <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600 px-1.5 py-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              En vivo
+            </Badge>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+            <SelectTrigger className="w-[160px] h-9">
+              <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {periodOptions.map(opt => (
+                <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {period === 'custom' && (
+            <Popover open={customOpen} onOpenChange={setCustomOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("h-9 font-normal", !customRange && "text-muted-foreground")}>
+                  {formatCustomRange()}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  defaultMonth={customRange?.from}
+                  selected={customRange}
+                  onSelect={(range) => {
+                    setCustomRange(range);
+                    if (range?.from && range?.to) setCustomOpen(false);
+                  }}
+                  numberOfMonths={2}
+                  locale={es}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
       </div>
 
       {/* Top KPI row: followers per platform + total engagement */}
