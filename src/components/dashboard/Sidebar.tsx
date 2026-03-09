@@ -54,6 +54,14 @@ export const Sidebar = () => {
     navigate('/auth');
   };
 
+  const handleClientView = () => {
+    if (selectedClient) {
+      navigate(`/?preview=${selectedClient.id}`);
+    }
+  };
+
+  const isOwnerOrAdmin = isAgency && (roleLoading === false);
+
   // Build menu items based on feature flags
   const menuItems: { title: string; url: string; icon: React.ElementType; dataTour?: string }[] = [
     { title: 'Dashboard', url: '/', icon: LayoutDashboard },
