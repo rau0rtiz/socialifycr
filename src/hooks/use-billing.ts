@@ -161,5 +161,77 @@ export const useMutatePlan = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subscription-plans'] }),
   });
 
-  return { create, update };
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('subscription_plans')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subscription-plans'] }),
+  });
+
+  return { create, update, remove };
+};
+
+export const useAssignPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      clientId,
+      planId,
+      provider,
+    }: {
+      clientId: string;
+      planId: string;
+      provider: string | null;
+    }) => {
+      // Upsert: if subscription exists for client, update it; otherwise insert
+      const { data: existing } = await supabase
+        .from('client_subscriptions')
+        .select('id')
+        .eq('client_id', clientId)
+        .maybeSingle();
+
+      const providerValue = provider && provider !== 'none' ? provider : null;
+
+      if (existing) {
+        const { data, error } = await supabase
+          .from('client_subscriptions')
+          .update({
+            plan_id: planId,
+            payment_provider: providerValue,
+            status: 'active',
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          })
+          .eq('id', existing.id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase
+          .from('client_subscriptions')
+          .insert({
+            client_id: clientId,
+            plan_id: planId,
+            payment_provider: providerValue,
+            status: 'active',
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['client-subscription'] });
+    },
+  });
 };
