@@ -5,11 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Skeleton } from '@/components/ui/skeleton';
 import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
+import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { toast } from 'sonner';
-import { Image as ImageIcon, Link2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface RegisterSaleDialogProps {
   open: boolean;
@@ -45,27 +45,33 @@ export const RegisterSaleDialog = ({
   isSubmitting,
   editingSale,
 }: RegisterSaleDialogProps) => {
+  const [step, setStep] = useState(1);
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
   const [source, setSource] = useState<string>('');
   const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
-  const [showAdPicker, setShowAdPicker] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [product, setProduct] = useState('');
   const [messagePlatform, setMessagePlatform] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<string>('completed');
 
+  const needsAdStep = source === 'ad' && hasAdAccount;
+  const maxStep = needsAdStep ? 2 : 1;
+
   const { data: allAdsResult, isLoading: adsLoading } = useAllAds(
     clientId || null,
-    hasAdAccount && open && source === 'ad'
+    hasAdAccount && open && needsAdStep
   );
-  const allAds = allAdsResult?.ads;
+  const allAds = allAdsResult?.ads || [];
+  const adsCurrency = allAdsResult?.currency || 'USD';
 
-  // Populate form when editing
+  // Populate form when editing or reset
   useEffect(() => {
-    if (editingSale && open) {
+    if (!open) return;
+    setStep(1);
+    if (editingSale) {
       setAmount(String(editingSale.amount));
       setCurrency(editingSale.currency);
       setSaleDate(editingSale.sale_date);
@@ -88,14 +94,12 @@ export const RegisterSaleDialog = ({
       } else {
         setSelectedAd(null);
       }
-    } else if (!editingSale && open) {
-      // Reset for new sale
+    } else {
       setAmount('');
       setCurrency('CRC');
       setSaleDate(new Date().toISOString().split('T')[0]);
       setSource('');
       setSelectedAd(null);
-      setShowAdPicker(false);
       setCustomerName('');
       setProduct('');
       setMessagePlatform('');
@@ -104,11 +108,23 @@ export const RegisterSaleDialog = ({
     }
   }, [editingSale, open]);
 
-  const handleSubmit = () => {
+  const validateStep1 = () => {
     if (!amount || !source) {
       toast.error('Monto y fuente son requeridos');
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (step === 1 && !validateStep1()) return;
+    setStep((s) => Math.min(s + 1, maxStep));
+  };
+
+  const handleBack = () => setStep((s) => Math.max(s - 1, 1));
+
+  const handleSubmit = () => {
+    if (step === 1 && !validateStep1()) return;
 
     const sale: SaleInput = {
       sale_date: saleDate,
@@ -133,166 +149,143 @@ export const RegisterSaleDialog = ({
   };
 
   const isEditing = !!editingSale;
+  const isLastStep = step >= maxStep;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Venta' : 'Registrar Venta'}</DialogTitle>
-          <DialogDescription>{isEditing ? 'Modifica los datos de la venta' : 'Ingresa los datos de la nueva venta'}</DialogDescription>
+          <DialogDescription>
+            {maxStep > 1 ? `Paso ${step} de ${maxStep}` : (isEditing ? 'Modifica los datos de la venta' : 'Ingresa los datos de la nueva venta')}
+          </DialogDescription>
+          {maxStep > 1 && (
+            <div className="flex gap-1.5 pt-1">
+              {Array.from({ length: maxStep }, (_, i) => (
+                <div
+                  key={i}
+                  className={`h-1 flex-1 rounded-full transition-colors ${i < step ? 'bg-primary' : 'bg-muted'}`}
+                />
+              ))}
+            </div>
+          )}
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Amount & Currency */}
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Label>Monto</Label>
-              <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        {/* Step 1: Info */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Label>Monto *</Label>
+                <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              </div>
+              <div className="w-24">
+                <Label>Moneda</Label>
+                <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CRC">₡ CRC</SelectItem>
+                    <SelectItem value="USD">$ USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="w-24">
-              <Label>Moneda</Label>
-              <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+
+            <div>
+              <Label>Fecha</Label>
+              <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} />
+            </div>
+
+            <div>
+              <Label>Fuente *</Label>
+              <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
+                <SelectTrigger><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CRC">₡ CRC</SelectItem>
-                  <SelectItem value="USD">$ USD</SelectItem>
+                  {SOURCE_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          {/* Date */}
-          <div>
-            <Label>Fecha</Label>
-            <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} />
-          </div>
+            {isEditing && (
+              <div>
+                <Label>Estado</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="completed">Completada</SelectItem>
+                    <SelectItem value="pending">Pendiente</SelectItem>
+                    <SelectItem value="cancelled">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-          {/* Source */}
-          <div>
-            <Label>Fuente</Label>
-            <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); setShowAdPicker(false); }}>
-              <SelectTrigger><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
-              <SelectContent>
-                {SOURCE_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Ad selector */}
-          {source === 'ad' && hasAdAccount && (
             <div>
-              <Label>Anuncio</Label>
-              {selectedAd ? (
-                <div className="flex items-center gap-2 rounded-lg border p-2 mt-1">
-                  {selectedAd.thumbnailUrl ? (
-                    <img src={selectedAd.thumbnailUrl} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
-                  ) : (
-                    <div className="h-8 w-8 rounded bg-muted flex items-center justify-center shrink-0">
-                      <ImageIcon className="h-3 w-3 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{selectedAd.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{selectedAd.campaignName}</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setSelectedAd(null)}>
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <Button variant="outline" size="sm" className="w-full mt-1 justify-start" onClick={() => setShowAdPicker(!showAdPicker)}>
-                    <Link2 className="h-3 w-3 mr-2" />
-                    Seleccionar anuncio
-                  </Button>
-                  {showAdPicker && (
-                    <div className="mt-2 max-h-48 overflow-y-auto space-y-1 rounded-md border p-1">
-                      {adsLoading ? (
-                        <div className="space-y-1">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
-                      ) : !allAds || allAds.length === 0 ? (
-                        <p className="text-xs text-muted-foreground text-center py-4">No hay anuncios activos</p>
-                      ) : (
-                        allAds.map(ad => (
-                          <button
-                            key={ad.id}
-                            className="w-full flex items-center gap-2 rounded-md p-2 hover:bg-accent/50 transition-colors text-left"
-                            onClick={() => { setSelectedAd(ad); setShowAdPicker(false); }}
-                          >
-                            {ad.thumbnailUrl ? (
-                              <img src={ad.thumbnailUrl} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
-                            ) : (
-                              <div className="h-8 w-8 rounded bg-muted flex items-center justify-center shrink-0">
-                                <ImageIcon className="h-3 w-3 text-muted-foreground" />
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-medium truncate">{ad.name}</p>
-                              <p className="text-xs text-muted-foreground truncate">{ad.campaignName}</p>
-                            </div>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Status (only in edit mode) */}
-          {isEditing && (
-            <div>
-              <Label>Estado</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Label>Plataforma del mensaje</Label>
+              <Select value={messagePlatform} onValueChange={setMessagePlatform}>
+                <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="completed">Completada</SelectItem>
-                  <SelectItem value="pending">Pendiente</SelectItem>
-                  <SelectItem value="cancelled">Cancelada</SelectItem>
+                  {PLATFORM_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+
+            <div>
+              <Label>Producto / Servicio</Label>
+              <Input placeholder="Opcional" value={product} onChange={(e) => setProduct(e.target.value)} />
+            </div>
+
+            <div>
+              <Label>Cliente</Label>
+              <Input placeholder="Opcional" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+            </div>
+
+            <div>
+              <Label>Notas</Label>
+              <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Ad selection */}
+        {step === 2 && needsAdStep && (
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm font-medium">Selecciona el anuncio vinculado</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">Elige el anuncio que originó esta venta</p>
+            </div>
+            <AdGridSelector
+              ads={allAds}
+              isLoading={adsLoading}
+              selectedAd={selectedAd}
+              onSelect={setSelectedAd}
+              currency={adsCurrency}
+            />
+          </div>
+        )}
+
+        <DialogFooter className="flex-row justify-between sm:justify-between gap-2">
+          {step > 1 ? (
+            <Button variant="ghost" onClick={handleBack}>
+              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           )}
 
-          {/* Message Platform */}
-          <div>
-            <Label>Plataforma del mensaje</Label>
-            <Select value={messagePlatform} onValueChange={setMessagePlatform}>
-              <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
-              <SelectContent>
-                {PLATFORM_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Product */}
-          <div>
-            <Label>Producto / Servicio</Label>
-            <Input placeholder="Opcional" value={product} onChange={(e) => setProduct(e.target.value)} />
-          </div>
-
-          {/* Customer */}
-          <div>
-            <Label>Cliente</Label>
-            <Input placeholder="Opcional" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <Label>Notas</Label>
-            <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Registrar'}
-          </Button>
+          {isLastStep ? (
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Registrar'}
+            </Button>
+          ) : (
+            <Button onClick={handleNext}>
+              Continuar <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
