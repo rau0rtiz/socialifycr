@@ -1,0 +1,1 @@
+ALTER TABLE public.client_feature_flags ADD COLUMN IF NOT EXISTS setter_tracker boolean NOT NULL DEFAULT false;
