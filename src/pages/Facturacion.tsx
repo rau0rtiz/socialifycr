@@ -323,7 +323,7 @@ const Facturacion = () => {
                   <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">Este cliente no tiene suscripción activa.</p>
                   {isAgency && (
-                    <Button variant="outline" size="sm" className="mt-4" onClick={() => setShowAssignDialog(true)}>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => handleOpenAssignDialog()}>
                       <UserPlus className="h-4 w-4 mr-1" /> Asignar Plan
                     </Button>
                   )}
