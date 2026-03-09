@@ -102,11 +102,17 @@ const FunnelVisual = ({
   conversionRates,
   spend,
   currency,
+  salesRevenueCRC,
+  salesRevenueUSD,
+  nonAttributedRevenue,
 }: {
   stages: { id: string; name: string; value: number; source: string }[];
   conversionRates: { from: string; to: string; rate: number }[];
   spend: number;
   currency: string;
+  salesRevenueCRC?: number;
+  salesRevenueUSD?: number;
+  nonAttributedRevenue?: { totalAmount: number; currency: string } | null;
 }) => {
   if (stages.length === 0) {
     return (
@@ -205,6 +211,57 @@ const FunnelVisual = ({
               <p className="text-[10px] md:text-xs text-muted-foreground truncate">Costo por Venta</p>
               <p className="text-xs md:text-sm font-bold truncate">
                 {formatCurrency(spend / (stages.find(s => s.id === 'sales')?.value || 1), currency)}
+              </p>
+            </div>
+          </div>
+        )}
+        {/* ROAS Calculation */}
+        {spend > 0 && (() => {
+          // Calculate total revenue: sales data + non-attributed
+          let totalRevenue = 0;
+          let revenueCurrency = 'USD';
+          
+          if (salesRevenueUSD && salesRevenueUSD > 0) {
+            totalRevenue += salesRevenueUSD;
+          }
+          if (salesRevenueCRC && salesRevenueCRC > 0) {
+            // Convert CRC to USD approx for ROAS (using ~520 rate)
+            totalRevenue += salesRevenueCRC / 520;
+            if (!salesRevenueUSD) revenueCurrency = 'CRC';
+          }
+          if (nonAttributedRevenue && nonAttributedRevenue.totalAmount > 0) {
+            if (nonAttributedRevenue.currency === 'USD') {
+              totalRevenue += nonAttributedRevenue.totalAmount;
+            } else {
+              totalRevenue += nonAttributedRevenue.totalAmount / 520;
+            }
+          }
+          
+          if (totalRevenue <= 0) return null;
+          
+          const roas = totalRevenue / spend;
+          const roasColor = roas >= 3 ? 'text-green-600 dark:text-green-400' : roas >= 1 ? 'text-yellow-600 dark:text-yellow-400' : 'text-destructive';
+          
+          return (
+            <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+              <TrendingUp className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] md:text-xs text-muted-foreground truncate">ROAS</p>
+                <p className={cn("text-xs md:text-sm font-bold truncate", roasColor)}>
+                  {roas.toFixed(2)}x
+                </p>
+              </div>
+            </div>
+          );
+        })()}
+        {/* Cost per Result */}
+        {spend > 0 && stages.length >= 2 && stages[stages.length - 1].value > 0 && !stages.find(s => s.id === 'sales') && (
+          <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+            <Target className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[10px] md:text-xs text-muted-foreground truncate">Costo por Resultado</p>
+              <p className="text-xs md:text-sm font-bold truncate">
+                {formatCurrency(spend / stages[stages.length - 1].value, currency)}
               </p>
             </div>
           </div>
@@ -589,6 +646,7 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
     calculateProjection,
     spend,
     currency,
+    salesData,
   } = useFunnelAnalytics(clientId, hasAdAccount, datePreset, customRange, selectedCampaignIds.length > 0 ? selectedCampaignIds : undefined);
 
   // Toggle campaign selection
@@ -867,6 +925,9 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
                 conversionRates={conversionRates}
                 spend={spend || 0}
                 currency={currency || 'USD'}
+                salesRevenueCRC={salesData?.totalCRC}
+                salesRevenueUSD={salesData?.totalUSD}
+                nonAttributedRevenue={nonAttributedSales}
               />
               
               {/* Non-attributed sales button - only for purchase campaigns */}
