@@ -180,6 +180,10 @@ export const useFunnelAnalytics = (
       if (rType.includes('compra') || rType.includes('purchase')) return 'purchases';
       if (rType.includes('conversaci') || rType.includes('mensaje') || rType.includes('message')) return 'messages';
       if (rType.includes('lead') || rType.includes('cliente')) return 'leads';
+      if (rType.includes('seguidor') || rType.includes('follower')) return 'followers';
+      if (rType.includes('visita') || rType.includes('profile')) return 'profile_visits';
+      if (rType.includes('clic en enlace') || rType.includes('link')) return 'link_clicks';
+      if (rType.includes('reproduccion') || rType.includes('video')) return 'video_views';
       return 'other';
     };
 
@@ -206,12 +210,20 @@ export const useFunnelAnalytics = (
           hasConversationCampaigns = true;
         } else if (goalType === 'leads') {
           acc.leads += c.results;
+        } else if (goalType === 'followers') {
+          acc.followers += c.results;
+        } else if (goalType === 'profile_visits') {
+          acc.profileVisits += c.results;
+        } else if (goalType === 'link_clicks') {
+          acc.linkClicks += c.results;
+        } else if (goalType === 'video_views') {
+          acc.videoViews += c.results;
         } else {
           acc.otherResults += c.results;
         }
         return acc;
       },
-      { impressions: 0, reach: 0, clicks: 0, spend: 0, landingPageViews: 0, purchases: 0, conversations: 0, leads: 0, otherResults: 0 }
+      { impressions: 0, reach: 0, clicks: 0, spend: 0, landingPageViews: 0, purchases: 0, conversations: 0, leads: 0, followers: 0, profileVisits: 0, linkClicks: 0, videoViews: 0, otherResults: 0 }
     );
 
     const salesCount = salesData?.totalCount || 0;
@@ -236,6 +248,18 @@ export const useFunnelAnalytics = (
     }
     if (metaTotals.leads > 0) {
       stages.push({ id: 'leads', name: 'Leads', value: metaTotals.leads, source: 'meta' });
+    }
+    if (metaTotals.linkClicks > 0) {
+      stages.push({ id: 'linkClicks', name: 'Clics en enlace', value: metaTotals.linkClicks, source: 'meta' });
+    }
+    if (metaTotals.videoViews > 0) {
+      stages.push({ id: 'videoViews', name: 'Reproducciones', value: metaTotals.videoViews, source: 'meta' });
+    }
+    if (metaTotals.profileVisits > 0) {
+      stages.push({ id: 'profileVisits', name: 'Visitas al perfil', value: metaTotals.profileVisits, source: 'meta' });
+    }
+    if (metaTotals.followers > 0) {
+      stages.push({ id: 'followers', name: 'Seguidores', value: metaTotals.followers, source: 'meta' });
     }
     if (metaTotals.otherResults > 0) {
       stages.push({ id: 'results', name: 'Otros Resultados', value: metaTotals.otherResults, source: 'meta' });

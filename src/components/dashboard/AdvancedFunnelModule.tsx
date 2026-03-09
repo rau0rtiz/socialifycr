@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -14,6 +15,14 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import {
   Tooltip,
   TooltipContent,
@@ -35,6 +44,7 @@ import {
   Plus,
   Link,
   ExternalLink,
+  ShoppingBag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -558,9 +568,16 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState('all');
 
+  // Non-attributed sales state
+  const [showSalesDialog, setShowSalesDialog] = useState(false);
+  const [salesQuantity, setSalesQuantity] = useState('');
+  const [salesTotalAmount, setSalesTotalAmount] = useState('');
+  const [salesCurrency, setSalesCurrency] = useState('CRC');
+  const [nonAttributedSales, setNonAttributedSales] = useState<{ quantity: number; totalAmount: number; currency: string } | null>(null);
+
   const {
-    stages,
-    conversionRates,
+    stages: rawStages,
+    conversionRates: rawConversionRates,
     campaigns,
     isLoading,
     refetch,
@@ -568,6 +585,56 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
     spend,
     currency,
   } = useFunnelAnalytics(clientId, hasAdAccount, datePreset, customRange, selectedCampaignId);
+
+  // Check if there are purchase campaigns in the funnel
+  const hasPurchaseStage = rawStages.some(s => s.id === 'purchases');
+
+  // Build stages with non-attributed sales appended
+  const stages = useMemo(() => {
+    if (!nonAttributedSales || !hasPurchaseStage) return rawStages;
+    
+    const metaPurchases = rawStages.find(s => s.id === 'purchases')?.value || 0;
+    const totalSales = metaPurchases + nonAttributedSales.quantity;
+
+    const formatAmt = new Intl.NumberFormat('es-CR', {
+      style: 'currency',
+      currency: nonAttributedSales.currency,
+      maximumFractionDigits: 0,
+    }).format(nonAttributedSales.totalAmount);
+
+    return [
+      ...rawStages,
+      { id: 'nonAttributed', name: `+${nonAttributedSales.quantity} no atribuidas`, value: nonAttributedSales.quantity, source: 'manual' as const },
+      { id: 'totalSales', name: `Total Ventas Tienda (${formatAmt})`, value: totalSales, source: 'sales' as const },
+    ];
+  }, [rawStages, nonAttributedSales, hasPurchaseStage]);
+
+  // Recalculate conversion rates with new stages
+  const conversionRates = useMemo(() => {
+    if (!nonAttributedSales || !hasPurchaseStage) return rawConversionRates;
+    const rates = [...rawConversionRates];
+    for (let i = rawStages.length; i < stages.length; i++) {
+      const prev = stages[i - 1];
+      const curr = stages[i];
+      rates.push({
+        from: prev.name,
+        to: curr.name,
+        rate: prev.value > 0 ? curr.value / prev.value : 0,
+      });
+    }
+    return rates;
+  }, [rawConversionRates, stages, rawStages, nonAttributedSales, hasPurchaseStage]);
+
+  const handleAddNonAttributedSales = () => {
+    const qty = parseInt(salesQuantity) || 0;
+    const amount = parseFloat(salesTotalAmount) || 0;
+    if (qty > 0 && amount > 0) {
+      setNonAttributedSales({ quantity: qty, totalAmount: amount, currency: salesCurrency });
+    }
+    setShowSalesDialog(false);
+    setSalesQuantity('');
+    setSalesTotalAmount('');
+  };
 
   const handleRefresh = async () => {
     await refetch();
@@ -593,6 +660,7 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
   }
 
   return (
+    <>
     <Card>
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3">
@@ -692,13 +760,39 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
                 spend={spend || 0}
                 currency={currency || 'USD'}
               />
+              
+              {/* Non-attributed sales button - only for purchase campaigns */}
+              {hasPurchaseStage && !nonAttributedSales && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSalesDialog(true)}
+                    className="w-full"
+                  >
+                    <ShoppingBag className="h-4 w-4 mr-2" />
+                    Agregar ventas no atribuidas por Meta
+                  </Button>
+                </div>
+              )}
+              {hasPurchaseStage && nonAttributedSales && (
+                <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    +{nonAttributedSales.quantity} ventas no atribuidas ({new Intl.NumberFormat('es-CR', { style: 'currency', currency: nonAttributedSales.currency, maximumFractionDigits: 0 }).format(nonAttributedSales.totalAmount)} total tienda)
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={() => setNonAttributedSales(null)} className="h-7 text-xs">
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Quitar
+                  </Button>
+                </div>
+              )}
             </TabsContent>
 
 
             <TabsContent value="calculator" className="mt-4">
               <ProjectionCalculator
-                stages={stages}
-                conversionRates={conversionRates}
+                stages={rawStages}
+                conversionRates={rawConversionRates}
                 calculateProjection={calculateProjection}
                 spend={spend || 0}
                 currency={currency || 'USD'}
@@ -712,5 +806,72 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
         )}
       </CardContent>
     </Card>
+
+    {/* Non-attributed sales dialog */}
+    <Dialog open={showSalesDialog} onOpenChange={setShowSalesDialog}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShoppingBag className="h-5 w-5" />
+            Ventas no atribuidas por Meta
+          </DialogTitle>
+          <DialogDescription>
+            Agrega las ventas de tu tienda en línea que Meta no pudo rastrear. Esto te dará una visión más completa de tu ROI real.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="salesQuantity">Cantidad de ventas adicionales</Label>
+            <Input
+              id="salesQuantity"
+              type="number"
+              placeholder="Ej: 15"
+              value={salesQuantity}
+              onChange={(e) => setSalesQuantity(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Ventas que ocurrieron pero no fueron atribuidas por el pixel de Meta
+            </p>
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="salesTotalAmount">Monto TOTAL de ventas en tienda</Label>
+            <div className="flex gap-2">
+              <Select value={salesCurrency} onValueChange={setSalesCurrency}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CRC">CRC</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                id="salesTotalAmount"
+                type="number"
+                placeholder="Ej: 500000"
+                value={salesTotalAmount}
+                onChange={(e) => setSalesTotalAmount(e.target.value)}
+                className="flex-1"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              El monto maestro total de ventas reportado por tu plataforma de e-commerce
+            </p>
+          </div>
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowSalesDialog(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleAddNonAttributedSales} disabled={!salesQuantity || !salesTotalAmount}>
+            Agregar al embudo
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
