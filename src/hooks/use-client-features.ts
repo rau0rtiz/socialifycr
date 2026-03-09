@@ -48,21 +48,34 @@ export const SECTION_LABELS: Record<string, string> = {
   reportes_section: 'Reportes',
 };
 
-// Dashboard widget flags — these control individual widgets within pages
-export const FEATURE_LABELS: Record<string, string> = {
-  dashboard: 'Dashboard',
+// Dashboard widget flags grouped by section
+export const DASHBOARD_WIDGET_LABELS: Record<string, string> = {
   social_followers: 'Seguidores de Redes',
   instagram_posts: 'Top Posts Instagram',
   youtube_videos: 'Top Videos YouTube',
+  funnel: 'Embudo (Funnel)',
+  campaigns: 'Campañas',
+};
+
+export const VENTAS_WIDGET_LABELS: Record<string, string> = {
+  setter_tracker: 'Setter & Pipeline',
+  sales_tracking: 'Ventas por Mensajes',
+  monthly_sales_report: 'Reporte Mensual de Ventas',
+};
+
+export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
   content_grid: 'Grid de Contenido',
   ai_insights: 'Insights de IA',
   video_ideas: 'Ideas de Video',
   competitors: 'Competidores',
-  funnel: 'Embudo (Funnel)',
-  campaigns: 'Campañas',
-  sales_tracking: 'Ventas por Mensajes',
-  monthly_sales_report: 'Reporte Mensual de Ventas',
-  setter_tracker: 'Setter & Pipeline',
+};
+
+// Combined for backward compat
+export const FEATURE_LABELS: Record<string, string> = {
+  dashboard: 'Dashboard',
+  ...DASHBOARD_WIDGET_LABELS,
+  ...VENTAS_WIDGET_LABELS,
+  ...CONTENIDO_WIDGET_LABELS,
 };
 
 export const useClientFeatures = (clientId: string | null) => {

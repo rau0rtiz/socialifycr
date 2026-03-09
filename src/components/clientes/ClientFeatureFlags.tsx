@@ -1,4 +1,4 @@
-import { useClientFeatures, FEATURE_LABELS, SECTION_LABELS } from '@/hooks/use-client-features';
+import { useClientFeatures, FEATURE_LABELS, SECTION_LABELS, DASHBOARD_WIDGET_LABELS, VENTAS_WIDGET_LABELS, CONTENIDO_WIDGET_LABELS } from '@/hooks/use-client-features';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
