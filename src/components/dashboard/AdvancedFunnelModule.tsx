@@ -738,6 +738,66 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
       </CardHeader>
 
       <CardContent>
+        {/* Visual Campaign Selector */}
+        {campaigns.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs text-muted-foreground">Campañas</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={selectAllCampaigns}
+                className="h-6 text-[10px] px-2"
+              >
+                {selectedCampaignIds.length === 0 ? 'Todas seleccionadas' : 'Seleccionar todas'}
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {campaigns.map((campaign) => {
+                const isSelected = selectedCampaignIds.length === 0 || selectedCampaignIds.includes(campaign.id);
+                const goalType = campaignGoalsData?.goals?.[campaign.id]?.goal_type as GoalType | undefined;
+                const goalLabel = goalType ? getGoalLabel(goalType) : null;
+                
+                return (
+                  <button
+                    key={campaign.id}
+                    onClick={() => toggleCampaign(campaign.id)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-all",
+                      isSelected
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      className="h-3 w-3 pointer-events-none"
+                    />
+                    <span className="font-medium truncate max-w-[150px]">{campaign.name}</span>
+                    {goalLabel && (
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "text-[9px] px-1.5 py-0 shrink-0",
+                          isSelected ? "bg-primary/20" : "bg-muted"
+                        )}
+                      >
+                        <Target className="h-2 w-2 mr-0.5" />
+                        {goalLabel}
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedCampaignIds.length > 0 && (
+              <p className="text-[10px] text-muted-foreground mt-2">
+                {selectedCampaignIds.length} de {campaigns.length} campañas seleccionadas
+              </p>
+            )}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex flex-col items-center gap-2 py-8">
             {[100, 80, 60, 40, 20].map((w, i) => (
