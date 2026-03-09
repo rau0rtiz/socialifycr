@@ -210,12 +210,20 @@ export const useFunnelAnalytics = (
           hasConversationCampaigns = true;
         } else if (goalType === 'leads') {
           acc.leads += c.results;
+        } else if (goalType === 'followers') {
+          acc.followers += c.results;
+        } else if (goalType === 'profile_visits') {
+          acc.profileVisits += c.results;
+        } else if (goalType === 'link_clicks') {
+          acc.linkClicks += c.results;
+        } else if (goalType === 'video_views') {
+          acc.videoViews += c.results;
         } else {
           acc.otherResults += c.results;
         }
         return acc;
       },
-      { impressions: 0, reach: 0, clicks: 0, spend: 0, landingPageViews: 0, purchases: 0, conversations: 0, leads: 0, otherResults: 0 }
+      { impressions: 0, reach: 0, clicks: 0, spend: 0, landingPageViews: 0, purchases: 0, conversations: 0, leads: 0, followers: 0, profileVisits: 0, linkClicks: 0, videoViews: 0, otherResults: 0 }
     );
 
     const salesCount = salesData?.totalCount || 0;
