@@ -210,10 +210,10 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
                           📢 {apt.ad_name} — {apt.ad_campaign_name}
                         </p>
                       )}
-                      {apt.estimated_value > 0 && (
+                      {apt.status === 'sold' && (apt.estimated_value || 0) > 0 && (
                         <p className="text-xs font-medium text-foreground">
                           {apt.currency === 'CRC' ? '₡' : '$'}
-                          {apt.estimated_value.toLocaleString()}
+                          {(apt.estimated_value || 0).toLocaleString()}
                         </p>
                       )}
                       {apt.notes && (
