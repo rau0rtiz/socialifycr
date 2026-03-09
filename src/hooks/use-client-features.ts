@@ -15,6 +15,7 @@ export interface ClientFeatureFlags {
   funnel: boolean;
   campaigns: boolean;
   sales_tracking: boolean;
+  setter_tracker: boolean;
   monthly_sales_report: boolean;
   ventas_section: boolean;
   contenido_section: boolean;
