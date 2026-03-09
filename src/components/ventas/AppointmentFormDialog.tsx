@@ -58,9 +58,12 @@ export const AppointmentFormDialog = ({
   const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
   const [notes, setNotes] = useState('');
 
-  const { data: ads, isLoading: adsLoading } = useAllAds(
-    source === 'ads' && hasAdAccount ? clientId || null : null
+  const shouldFetchAds = source === 'ads' && hasAdAccount;
+  const { data: adsResult, isLoading: adsLoading } = useAllAds(
+    shouldFetchAds ? clientId || null : null,
+    shouldFetchAds,
   );
+  const adsList = adsResult?.ads || [];
 
   useEffect(() => {
     if (open) {
@@ -79,11 +82,14 @@ export const AppointmentFormDialog = ({
         setNotes(editing.notes || '');
         if (editing.ad_id) {
           setSelectedAd({
-            adId: editing.ad_id,
-            adName: editing.ad_name || '',
+            id: editing.ad_id,
+            name: editing.ad_name || '',
             campaignId: editing.ad_campaign_id || '',
             campaignName: editing.ad_campaign_name || '',
-          } as AllAdItem);
+            effectiveStatus: 'ACTIVE',
+            thumbnailUrl: null,
+            spend: 0,
+          });
         } else {
           setSelectedAd(null);
         }
@@ -119,8 +125,8 @@ export const AppointmentFormDialog = ({
       source,
       ad_campaign_id: selectedAd?.campaignId || undefined,
       ad_campaign_name: selectedAd?.campaignName || undefined,
-      ad_id: selectedAd?.adId || undefined,
-      ad_name: selectedAd?.adName || undefined,
+      ad_id: selectedAd?.id || undefined,
+      ad_name: selectedAd?.name || undefined,
       notes: notes.trim() || undefined,
     });
   };
@@ -273,7 +279,7 @@ export const AppointmentFormDialog = ({
               ) : selectedAd ? (
                 <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md border border-border">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{selectedAd.adName}</p>
+                    <p className="text-xs font-medium truncate">{selectedAd.name}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{selectedAd.campaignName}</p>
                   </div>
                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setSelectedAd(null)}>
@@ -282,12 +288,12 @@ export const AppointmentFormDialog = ({
                 </div>
               ) : (
                 <div className="max-h-32 overflow-y-auto border border-border rounded-md">
-                  {(ads || []).length === 0 ? (
+                  {adsList.length === 0 ? (
                     <p className="text-xs text-muted-foreground p-2">Sin anuncios activos</p>
                   ) : (
-                    (ads || []).map(ad => (
+                    adsList.map(ad => (
                       <button
-                        key={ad.adId}
+                        key={ad.id}
                         onClick={() => setSelectedAd(ad)}
                         className="w-full flex items-center gap-2 p-2 hover:bg-muted/50 text-left border-b border-border last:border-0 transition-colors"
                       >
@@ -299,7 +305,7 @@ export const AppointmentFormDialog = ({
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium truncate">{ad.adName}</p>
+                          <p className="text-xs font-medium truncate">{ad.name}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{ad.campaignName}</p>
                         </div>
                       </button>
