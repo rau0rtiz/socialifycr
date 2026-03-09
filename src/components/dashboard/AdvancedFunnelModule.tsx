@@ -202,132 +202,6 @@ const FunnelVisual = ({
   );
 };
 
-// ============= SANKEY DIAGRAM =============
-const SankeyDiagram = ({
-  nodes,
-  links,
-}: {
-  nodes: { name: string }[];
-  links: { source: number; target: number; value: number; sourceName?: string; targetName?: string }[];
-}) => {
-  const [hoveredLink, setHoveredLink] = useState<number | null>(null);
-
-  if (nodes.length < 2 || links.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        <p>Se necesitan al menos 2 etapas con datos para visualizar el flujo.</p>
-      </div>
-    );
-  }
-
-  const width = 800;
-  const height = 400;
-  const nodeWidth = 20;
-  const nodePadding = 30;
-
-  // Calculate node positions and heights
-  const maxValue = Math.max(...links.map(l => l.value));
-  const nodeHeights = nodes.map((_, idx) => {
-    const incomingValue = links.filter(l => l.target === idx).reduce((sum, l) => sum + l.value, 0);
-    const outgoingValue = links.filter(l => l.source === idx).reduce((sum, l) => sum + l.value, 0);
-    const maxNodeValue = Math.max(incomingValue, outgoingValue);
-    return maxNodeValue > 0 ? (maxNodeValue / maxValue) * (height - nodePadding * 2) : 0;
-  });
-
-  // Position nodes in columns
-  const columns = Math.ceil(Math.sqrt(nodes.length));
-  const columnWidth = (width - nodeWidth) / Math.max(columns - 1, 1);
-  const nodePositions = nodes.map((node, idx) => {
-    const col = Math.floor(idx / Math.ceil(nodes.length / columns));
-    const rowInCol = idx % Math.ceil(nodes.length / columns);
-    return {
-      x: col * columnWidth,
-      y: height / 2 - nodeHeights[idx] / 2 + rowInCol * 20,
-      height: Math.max(nodeHeights[idx], 30),
-    };
-  });
-
-  return (
-    <div className="w-full overflow-x-auto">
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-[350px] md:h-[400px]"
-        style={{ minWidth: '600px' }}
-      >
-        {/* Draw links */}
-        {links.map((link, idx) => {
-          const sourcePos = nodePositions[link.source];
-          const targetPos = nodePositions[link.target];
-          if (!sourcePos || !targetPos) return null;
-
-          const sourceX = sourcePos.x + nodeWidth;
-          const sourceY = sourcePos.y + sourcePos.height / 2;
-          const targetX = targetPos.x;
-          const targetY = targetPos.y + targetPos.height / 2;
-
-          const controlX = (sourceX + targetX) / 2;
-          const color = funnelColors[link.source % funnelColors.length];
-          const isHovered = hoveredLink === idx;
-
-          return (
-            <g key={idx}>
-              <path
-                d={`M ${sourceX} ${sourceY} C ${controlX} ${sourceY}, ${controlX} ${targetY}, ${targetX} ${targetY}`}
-                stroke={color}
-                strokeWidth={Math.max(2, (link.value / maxValue) * 20)}
-                strokeOpacity={isHovered ? 0.6 : 0.3}
-                fill="none"
-                onMouseEnter={() => setHoveredLink(idx)}
-                onMouseLeave={() => setHoveredLink(null)}
-                className="cursor-pointer transition-all duration-200"
-              />
-              {isHovered && (
-                <foreignObject x={controlX - 60} y={(sourceY + targetY) / 2 - 20} width="120" height="40">
-                  <div className="bg-popover p-1.5 rounded shadow-lg border border-border text-[10px] text-center">
-                    <p className="font-medium truncate">{formatNumber(link.value)}</p>
-                    {link.sourceName && link.targetName && (
-                      <p className="text-muted-foreground truncate">{link.sourceName} → {link.targetName}</p>
-                    )}
-                  </div>
-                </foreignObject>
-              )}
-            </g>
-          );
-        })}
-
-        {/* Draw nodes */}
-        {nodes.map((node, idx) => {
-          const pos = nodePositions[idx];
-          if (!pos) return null;
-          const color = funnelColors[idx % funnelColors.length];
-
-          return (
-            <g key={idx}>
-              <rect
-                x={pos.x}
-                y={pos.y}
-                width={nodeWidth}
-                height={pos.height}
-                fill={color}
-                rx={4}
-                ry={4}
-              />
-              <text
-                x={pos.x + nodeWidth + 5}
-                y={pos.y + pos.height / 2}
-                dominantBaseline="middle"
-                className="fill-foreground text-[10px] md:text-xs font-medium"
-              >
-                {node.name.length > 15 ? node.name.slice(0, 15) + '…' : node.name}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-};
-
 // ============= PROJECTION CALCULATOR =============
 const ProjectionCalculator = ({
   stages,
@@ -687,8 +561,6 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
   const {
     stages,
     conversionRates,
-    sankeyNodes,
-    sankeyLinks,
     campaigns,
     isLoading,
     refetch,
@@ -798,14 +670,10 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
           </div>
         ) : (
           <Tabs defaultValue="funnel" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 h-9">
+            <TabsList className="grid w-full grid-cols-3 h-9">
               <TabsTrigger value="funnel" className="text-xs">
                 <ArrowDown className="h-3 w-3 mr-1" />
                 Embudo
-              </TabsTrigger>
-              <TabsTrigger value="sankey" className="text-xs">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                Flujo
               </TabsTrigger>
               <TabsTrigger value="calculator" className="text-xs">
                 <Calculator className="h-3 w-3 mr-1" />
@@ -826,9 +694,6 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
               />
             </TabsContent>
 
-            <TabsContent value="sankey" className="mt-4">
-              <SankeyDiagram nodes={sankeyNodes} links={sankeyLinks} />
-            </TabsContent>
 
             <TabsContent value="calculator" className="mt-4">
               <ProjectionCalculator
