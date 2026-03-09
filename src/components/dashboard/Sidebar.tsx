@@ -8,6 +8,7 @@ import {
   History,
   BarChart3,
   CreditCard,
+  Eye,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -43,8 +44,10 @@ export const Sidebar = () => {
   const collapsed = state === 'collapsed';
   const { platformBrand, selectedClient } = useBrand();
   const { signOut } = useAuth();
-  const { isAgency, loading: roleLoading } = useUserRole();
+  const { isAgency, systemRole, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
+
+  const isOwnerOrAdmin = !roleLoading && (systemRole === 'owner' || systemRole === 'admin');
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -52,6 +55,14 @@ export const Sidebar = () => {
     await signOut();
     navigate('/auth');
   };
+
+  const handleClientView = () => {
+    if (selectedClient) {
+      navigate(`/?preview=${selectedClient.id}`);
+    }
+  };
+
+  
 
   // Build menu items based on feature flags
   const menuItems: { title: string; url: string; icon: React.ElementType; dataTour?: string }[] = [
@@ -144,6 +155,17 @@ export const Sidebar = () => {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+                {isOwnerOrAdmin && selectedClient && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={handleClientView}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span>Vista Cliente</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
