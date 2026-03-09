@@ -42,78 +42,87 @@ export const ClientFeatureFlags = ({ clientId }: ClientFeatureFlagsProps) => {
     { label: 'Ajustes', icon: Palette },
   ];
 
-  const sectionKeys = Object.keys(SECTION_LABELS);
-
-  const widgetGroups = [
-    { title: 'Widgets del Dashboard', description: 'Módulos dentro del dashboard principal.', labels: DASHBOARD_WIDGET_LABELS },
-    { title: 'Widgets de Ventas', description: 'Módulos dentro de la sección de Ventas.', labels: VENTAS_WIDGET_LABELS },
-    { title: 'Widgets de Contenido', description: 'Módulos dentro de la sección de Contenido.', labels: CONTENIDO_WIDGET_LABELS },
+  const sectionWithWidgets: {
+    sectionKey: string | null;
+    icon: React.ElementType;
+    locked?: boolean;
+    widgets: Record<string, string>;
+  }[] = [
+    { sectionKey: null, icon: LayoutDashboard, locked: true, widgets: DASHBOARD_WIDGET_LABELS },
+    { sectionKey: 'ventas_section', icon: LayoutDashboard, widgets: VENTAS_WIDGET_LABELS },
+    { sectionKey: 'contenido_section', icon: LayoutDashboard, widgets: CONTENIDO_WIDGET_LABELS },
+    { sectionKey: 'reportes_section', icon: LayoutDashboard, widgets: {} },
   ];
 
   return (
-    <div className="space-y-5">
-      {/* Navigation sections */}
-      <div>
-        <h4 className="text-sm font-medium mb-3">Secciones de Navegación</h4>
-        <p className="text-xs text-muted-foreground mb-3">
-          Controla qué pestañas ve el cliente en su menú lateral.
-        </p>
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">
+        Controla qué secciones y widgets ve el cliente.
+      </p>
 
-        {/* Always-on sections */}
-        <div className="space-y-2 mb-3">
-          {defaultSections.map((s) => (
-            <div key={s.label} className="flex items-center justify-between opacity-60">
-              <div className="flex items-center gap-2">
-                <s.icon className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm">{s.label}</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Lock className="h-3 w-3 text-muted-foreground" />
-                <Switch checked disabled />
-              </div>
+      {/* Always-on: Historial & Ajustes */}
+      <div className="space-y-2 mb-2">
+        {defaultSections.map((s) => (
+          <div key={s.label} className="flex items-center justify-between opacity-60">
+            <div className="flex items-center gap-2">
+              <s.icon className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-sm">{s.label}</Label>
             </div>
-          ))}
-        </div>
-
-        {/* Toggleable sections */}
-        <div className="space-y-2">
-          {sectionKeys.map((key) => (
-            <div key={key} className="flex items-center justify-between">
-              <Label htmlFor={`section-${key}`} className="text-sm cursor-pointer font-medium">
-                {SECTION_LABELS[key]}
-              </Label>
-              <Switch
-                id={`section-${key}`}
-                checked={(flags as any)[key] ?? false}
-                onCheckedChange={(checked) => handleToggle(key, checked)}
-              />
+            <div className="flex items-center gap-2">
+              <Lock className="h-3 w-3 text-muted-foreground" />
+              <Switch checked disabled />
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
 
-      {/* Widget groups by section */}
-      {widgetGroups.map((group) => (
-        <div key={group.title}>
-          <Separator className="mb-4" />
-          <h4 className="text-sm font-medium mb-1">{group.title}</h4>
-          <p className="text-xs text-muted-foreground mb-3">{group.description}</p>
-          <div className="space-y-2">
-            {Object.keys(group.labels).map((key) => (
-              <div key={key} className="flex items-center justify-between">
-                <Label htmlFor={`flag-${key}`} className="text-sm cursor-pointer">
-                  {group.labels[key]}
-                </Label>
+      {sectionWithWidgets.map((section, idx) => {
+        const sectionLabel = section.sectionKey ? SECTION_LABELS[section.sectionKey] : 'Dashboard';
+        const sectionEnabled = section.locked || (section.sectionKey ? (flags as any)[section.sectionKey] ?? false : true);
+        const hasWidgets = Object.keys(section.widgets).length > 0;
+
+        return (
+          <div key={idx}>
+            <Separator className="mb-3" />
+            {/* Section toggle */}
+            <div className={`flex items-center justify-between ${section.locked ? 'opacity-60' : ''}`}>
+              <Label htmlFor={`section-${section.sectionKey}`} className="text-sm cursor-pointer font-semibold">
+                {sectionLabel}
+              </Label>
+              {section.locked ? (
+                <div className="flex items-center gap-2">
+                  <Lock className="h-3 w-3 text-muted-foreground" />
+                  <Switch checked disabled />
+                </div>
+              ) : (
                 <Switch
-                  id={`flag-${key}`}
-                  checked={(flags as any)[key] ?? false}
-                  onCheckedChange={(checked) => handleToggle(key, checked)}
+                  id={`section-${section.sectionKey}`}
+                  checked={sectionEnabled}
+                  onCheckedChange={(checked) => handleToggle(section.sectionKey!, checked)}
                 />
+              )}
+            </div>
+
+            {/* Nested widgets */}
+            {hasWidgets && sectionEnabled && (
+              <div className="ml-4 mt-2 space-y-2 border-l-2 border-border pl-3">
+                {Object.keys(section.widgets).map((key) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <Label htmlFor={`flag-${key}`} className="text-sm cursor-pointer">
+                      {section.widgets[key]}
+                    </Label>
+                    <Switch
+                      id={`flag-${key}`}
+                      checked={(flags as any)[key] ?? false}
+                      onCheckedChange={(checked) => handleToggle(key, checked)}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
