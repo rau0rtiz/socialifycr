@@ -20,7 +20,8 @@ import {
 import { MoreHorizontal, Pencil, Trash2, Eye, ExternalLink, LayoutGrid, List } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useAllSubscriptions, useSubscriptionPlans } from '@/hooks/use-billing';
 
 type ViewMode = 'list' | 'grid';
 
@@ -43,6 +44,19 @@ export const ClientsTable = ({
 }: ClientsTableProps) => {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const { data: subscriptions = [] } = useAllSubscriptions();
+  const { data: plans = [] } = useSubscriptionPlans();
+
+  const clientPlanMap = useMemo(() => {
+    const map: Record<string, { planName: string; status: string }> = {};
+    for (const sub of subscriptions) {
+      const plan = plans.find(p => p.id === sub.plan_id);
+      if (plan) {
+        map[sub.client_id] = { planName: plan.name, status: sub.status };
+      }
+    }
+    return map;
+  }, [subscriptions, plans]);
 
   const handlePreviewDashboard = (client: Client, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -98,10 +112,11 @@ export const ClientsTable = ({
       <CardContent>
         {viewMode === 'list' ? (
           <Table>
-            <TableHeader>
+             <TableHeader>
               <TableRow>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Industria</TableHead>
+                <TableHead>Plan</TableHead>
                 <TableHead>Creado</TableHead>
                 <TableHead className="w-[70px]"></TableHead>
               </TableRow>
@@ -128,6 +143,9 @@ export const ClientsTable = ({
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <PlanBadge info={clientPlanMap[client.id]} />
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(client.created_at).toLocaleDateString('es-ES')}
@@ -172,6 +190,7 @@ export const ClientsTable = ({
                       {client.industry && (
                         <Badge variant="secondary" className="mt-1 text-xs">{client.industry}</Badge>
                       )}
+                      <PlanBadge info={clientPlanMap[client.id]} className="mt-1" />
                     </div>
                   </div>
                   <ClientActions
@@ -290,3 +309,26 @@ const ClientActions = ({
     </DropdownMenuContent>
   </DropdownMenu>
 );
+
+const statusLabels: Record<string, string> = {
+  active: 'Activo',
+  trialing: 'Prueba',
+  past_due: 'Vencido',
+  cancelled: 'Cancelado',
+  expired: 'Expirado',
+};
+
+const PlanBadge = ({ info, className }: { info?: { planName: string; status: string }; className?: string }) => {
+  if (!info) {
+    return <Badge variant="outline" className={cn('text-xs', className)}>Sin plan</Badge>;
+  }
+  const isActive = info.status === 'active' || info.status === 'trialing';
+  return (
+    <Badge
+      variant={isActive ? 'default' : 'secondary'}
+      className={cn('text-xs', className)}
+    >
+      {info.planName} · {statusLabels[info.status] || info.status}
+    </Badge>
+  );
+};
