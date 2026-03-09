@@ -34,6 +34,7 @@ export const ClientFormDialog = ({
   const [accentColor, setAccentColor] = useState('262 83% 58%');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
 
   const isEditing = !!client;
 
