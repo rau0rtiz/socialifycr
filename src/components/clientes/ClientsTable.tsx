@@ -309,3 +309,26 @@ const ClientActions = ({
     </DropdownMenuContent>
   </DropdownMenu>
 );
+
+const statusLabels: Record<string, string> = {
+  active: 'Activo',
+  trialing: 'Prueba',
+  past_due: 'Vencido',
+  cancelled: 'Cancelado',
+  expired: 'Expirado',
+};
+
+const PlanBadge = ({ info, className }: { info?: { planName: string; status: string }; className?: string }) => {
+  if (!info) {
+    return <Badge variant="outline" className={cn('text-xs', className)}>Sin plan</Badge>;
+  }
+  const isActive = info.status === 'active' || info.status === 'trialing';
+  return (
+    <Badge
+      variant={isActive ? 'default' : 'secondary'}
+      className={cn('text-xs', className)}
+    >
+      {info.planName} · {statusLabels[info.status] || info.status}
+    </Badge>
+  );
+};
