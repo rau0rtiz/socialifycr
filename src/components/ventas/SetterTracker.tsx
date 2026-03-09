@@ -33,6 +33,9 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SetterAppointment | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [salePrompt, setSalePrompt] = useState<SetterAppointment | null>(null);
+  const [saleAmount, setSaleAmount] = useState('');
+  const [saleCurrency, setSaleCurrency] = useState<'CRC' | 'USD'>('CRC');
 
   const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, period);
 
