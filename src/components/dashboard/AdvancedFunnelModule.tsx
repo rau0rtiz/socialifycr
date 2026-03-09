@@ -561,8 +561,6 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
   const {
     stages,
     conversionRates,
-    sankeyNodes,
-    sankeyLinks,
     campaigns,
     isLoading,
     refetch,
