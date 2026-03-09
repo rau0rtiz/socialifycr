@@ -22,23 +22,23 @@ const reportTemplates = [
   {
     id: 'performance',
     title: 'Análisis de Rendimiento',
-    description: 'Analiza el rendimiento de las campañas con métricas clave',
+    description: 'Análisis completo con KPIs, puntos clave y plan de acción',
     icon: TrendingUp,
-    prompt: 'Genera un análisis detallado del rendimiento de las campañas, incluyendo métricas de gasto, alcance, clics y conversiones. Identifica las campañas más exitosas y áreas de mejora.',
+    prompt: 'Genera un análisis completo del rendimiento de las campañas. Sigue la estructura estándar: contexto del negocio, KPIs clave según la industria, resumen de resultados con métricas de gasto/alcance/clics/conversiones, puntos excedentes y preocupantes, diagnóstico de problemas con soluciones concretas, y un plan de acción priorizado.',
   },
   {
     id: 'optimization',
     title: 'Recomendaciones de Optimización',
-    description: 'Obtén sugerencias para mejorar tus campañas',
+    description: 'Diagnóstico de problemas y plan de mejora detallado',
     icon: Target,
-    prompt: 'Basándote en los datos de las campañas, proporciona recomendaciones específicas para optimizar el presupuesto, mejorar el ROAS y reducir el costo por resultado.',
+    prompt: 'Basándote en los datos de las campañas, genera un reporte enfocado en optimización. Incluye: contexto actual, KPIs que deberíamos estar midiendo, resumen de dónde estamos, identifica los puntos más preocupantes (gasto ineficiente, bajo ROAS, CPA alto, etc.) y los que están bien, explica las causas de los problemas, y genera un plan de acción detallado para optimizar presupuesto, mejorar ROAS y reducir costos.',
   },
   {
     id: 'executive',
     title: 'Resumen Ejecutivo',
-    description: 'Reporte conciso para presentar a stakeholders',
+    description: 'Reporte conciso con hallazgos clave para stakeholders',
     icon: FileText,
-    prompt: 'Crea un resumen ejecutivo profesional de las campañas publicitarias, destacando los KPIs principales, logros y próximos pasos. Formato adecuado para presentar a directivos.',
+    prompt: 'Crea un resumen ejecutivo profesional para presentar a directivos. Sigue la estructura: contexto del negocio, KPIs principales que importan a nivel ejecutivo, resumen de resultados en lenguaje simple (traduce términos técnicos), destaca los logros más importantes y las banderas rojas, explica brevemente qué hacer con los problemas, y cierra con un plan de acción de alto nivel con prioridades claras.',
   },
 ];
 

@@ -29,7 +29,7 @@ PRINCIPIOS DE COMUNICACIÓN:
 - Claridad ante todo: escribe para que un CEO sin background técnico entienda cada punto
 - Cuando uses un término técnico (CPA, ROAS, CTR, CPM, etc.), explícalo de forma natural la primera vez. Ejemplo: "El ROAS — es decir, cuánto generamos por cada dólar invertido — fue de 3.2x"
 - Traduce números a impacto real: "Invertimos $500 y generamos $1,600 en ventas" es más poderoso que "ROAS 3.2x"
-- Usa analogías cuando ayuden: "El alcance creció 40%, como pasar de llenar un salón de conferencias a llenar un auditorio"
+- Usa analogías cuando ayuden
 
 FORMATO Y ESTRUCTURA:
 - Usa ## para encabezados principales y ### para sub-secciones
@@ -37,14 +37,13 @@ FORMATO Y ESTRUCTURA:
 - Usa tablas markdown cuando presentes comparativas numéricas
 - Usa > blockquotes para destacar hallazgos clave o recomendaciones importantes
 - Incluye separadores --- entre secciones principales
-- Usa ✅ para logros, ⚠️ para alertas, 📈 para crecimiento, 💡 para recomendaciones, 🎯 para objetivos
+- Usa ✅ para logros, ⚠️ para alertas, 📈 para crecimiento, 💡 para recomendaciones, 🎯 para objetivos, 🔴 para puntos preocupantes, 🟢 para puntos excedentes
 
 CALIDAD DEL CONTENIDO:
 - NO repitas datos sin análisis. Cada número debe ir acompañado de contexto (¿es bueno? ¿malo? ¿por qué?)
 - Incluye porcentajes de cambio cuando los datos lo permitan
 - Prioriza insights accionables sobre descripciones genéricas
 - Las recomendaciones deben ser específicas, medibles y con timeline sugerido
-- Cierra con un "Resumen para el cliente" de máximo 3 bullets que capturen lo esencial
 
 TONO: Profesional, confiado, estratégico. Como un socio consultor, no como un reporte automatizado.
 
@@ -64,8 +63,7 @@ INSTRUCCIONES PARA ANÁLISIS DE CONTENIDO:
 - Si hay datos de modelos/personas, indica quiénes generan más interacción
 - Compara el rendimiento promedio de cada tipo de contenido
 - Detecta tendencias: ¿qué temas, formatos o estilos resuenan más con la audiencia?
-- Genera recomendaciones concretas para replicar éxitos: qué tipo de contenido crear más, qué temas explorar, qué formatos priorizar
-- Si hay contenido cross-platform, analiza qué plataforma rinde mejor para cada tipo
+- Genera recomendaciones concretas para replicar éxitos
 `;
     }
 
@@ -81,16 +79,51 @@ ${contentSection}
 
 ---
 
-Genera un ${formatLabel} de reporte de marketing digital para el período **${periodLabel}**. Estructura:
+Genera un ${formatLabel} de reporte de marketing digital para el período **${periodLabel}**. 
 
-1. **📊 Resumen Ejecutivo** — Los 3-5 hallazgos más importantes, con impacto en negrita
-2. **🎯 Rendimiento de Campañas** (si hay datos de campañas) — Análisis de inversión vs retorno, mejores y peores campañas, eficiencia del gasto. Incluye tabla comparativa
-3. **💰 Análisis de Ventas** (si hay datos de ventas) — Tendencias, fuentes más efectivas, ticket promedio, conversión. Si hay ventas atribuidas a anuncios, calcula el ROAS manual
-4. **📱 Rendimiento de Contenido Orgánico** (si hay datos de contenido) — Top posts del período, análisis de qué funciona y qué no, patrones de engagement por tipo de contenido, recomendaciones para replicar éxitos
-5. **👥 Presencia en Redes Sociales** (si hay datos de seguidores) — Crecimiento de audiencia, plataformas destacadas
-6. **💡 Insights Estratégicos** — Patrones, oportunidades, riesgos identificados. Conecta insights de paid + organic + ventas
-7. **🚀 Plan de Acción** — 5-7 recomendaciones concretas con prioridad (alta/media/baja) y timeline
-8. **📋 Resumen para el Cliente** — 3 bullets que capturen lo esencial del período`;
+ESTRUCTURA OBLIGATORIA (sigue este orden exacto):
+
+## 1. 🏢 Contexto
+- Breve descripción del negocio, industria y situación actual
+- Objetivos principales del período
+- Cualquier factor externo relevante (temporada, tendencias del mercado, etc.)
+
+## 2. 🎯 KPIs Clave a Medir
+- Define los KPIs más relevantes SEGÚN EL TIPO DE NEGOCIO e industria del cliente
+- Explica por qué cada KPI es importante para este negocio en particular
+- Establece benchmarks o referencias de la industria cuando sea posible
+- Presenta los KPIs en una tabla con: KPI | Meta/Benchmark | Resultado Real | Estado
+
+## 3. 📊 Resumen de Resultados
+- Resumen general del rendimiento del período
+- Si hay campañas: análisis de inversión vs retorno, mejores y peores campañas, eficiencia del gasto con tabla comparativa
+- Si hay ventas: tendencias, fuentes más efectivas, ticket promedio. Si hay ventas atribuidas a anuncios, calcula el ROAS manual
+- Si hay contenido orgánico: top posts, análisis de qué funciona y qué no, patrones de engagement por tipo
+- Si hay datos de seguidores: crecimiento de audiencia, plataformas destacadas
+
+## 4. 🟢🔴 Puntos Importantes
+### Puntos Excedentes (lo que va muy bien)
+- Identifica métricas o resultados que están significativamente por encima de lo esperado
+- Explica qué está generando estos buenos resultados
+- Recomienda cómo capitalizar y escalar estos éxitos
+
+### Puntos Preocupantes (lo que necesita atención)
+- Identifica métricas o resultados que están por debajo de lo esperado o muestran tendencias negativas
+- Sé honesto y directo sobre los problemas
+
+## 5. ⚠️ Diagnóstico y Mejoras
+- Para cada punto preocupante del punto anterior:
+  - **¿Por qué está pasando?** — Análisis de causa raíz
+  - **¿Cómo se puede mejorar?** — Soluciones específicas y concretas
+  - **¿En cuánto tiempo veríamos mejora?** — Timeline realista
+
+## 6. 🚀 Plan de Acción
+- 5-7 acciones concretas ordenadas por prioridad (Alta / Media / Baja)
+- Cada acción debe incluir: qué hacer, quién es responsable (equipo de marketing, cliente, diseñador, etc.), timeline, y resultado esperado
+- Presenta en formato tabla: Acción | Prioridad | Responsable | Timeline | Resultado Esperado
+
+## 7. 📋 Resumen Ejecutivo
+- 3-5 bullets que capturen lo esencial del período para el cliente`;
 
     console.log('Generating PRO report text with Perplexity for client:', clientName, 'period:', periodLabel);
 
