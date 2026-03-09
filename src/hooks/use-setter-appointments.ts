@@ -95,6 +95,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
         client_id: clientId,
         created_by: user.id,
         lead_name: input.lead_name,
+        lead_goal: input.lead_goal || null,
         lead_phone: input.lead_phone || null,
         lead_email: input.lead_email || null,
         appointment_date: input.appointment_date,
