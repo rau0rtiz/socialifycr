@@ -131,7 +131,7 @@ export const AppointmentFormDialog = ({
       lead_goal: leadGoal.trim() || undefined,
       appointment_date: new Date().toISOString(),
       setter_name: setterName || undefined,
-      estimated_value: estimatedValue ? parseFloat(estimatedValue) : 0,
+      estimated_value: 0,
       currency,
       status: status as any,
       source,
