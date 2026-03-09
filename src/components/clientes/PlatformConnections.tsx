@@ -101,6 +101,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [connectionToDisconnect, setConnectionToDisconnect] = useState<PlatformConnection | null>(null);
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
 
   const fetchConnections = useCallback(async () => {
     const { data, error } = await supabase

@@ -54,6 +54,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
 
   useEffect(() => {
     fetchMembers();
