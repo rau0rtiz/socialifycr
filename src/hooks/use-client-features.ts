@@ -35,6 +35,7 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
   campaigns: false,
   sales_tracking: false,
   monthly_sales_report: false,
+  setter_tracker: false,
   ventas_section: false,
   contenido_section: false,
   reportes_section: false,
