@@ -573,6 +573,31 @@ serve(async (req) => {
           }
         }
 
+        // Also fetch live Stories (only returns active/non-expired stories within 24h)
+        try {
+          const storiesUrl = `https://graph.facebook.com/v18.0/${instagramId}/stories?` +
+            `fields=id,media_type,media_url,thumbnail_url,timestamp,permalink` +
+            `&access_token=${accessToken}`;
+          
+          const storiesResponse = await fetch(storiesUrl);
+          const storiesData = await storiesResponse.json();
+          
+          if (storiesData.data && storiesData.data.length > 0) {
+            console.log(`Found ${storiesData.data.length} active stories`);
+            // Mark stories with media_product_type = STORY
+            const enrichedStories = storiesData.data.map((story: any) => ({
+              ...story,
+              media_product_type: 'STORY',
+              caption: '', // Stories don't have captions in the API
+              like_count: 0,
+              comments_count: 0,
+            }));
+            allMedia = allMedia.concat(enrichedStories);
+          }
+        } catch (storiesErr) {
+          console.log('Could not fetch stories (may not have permission):', storiesErr);
+        }
+
         console.log(`Fetched ${allMedia.length} posts in ${pagesProcessed} pages`);
 
         // Trim to requested limit
