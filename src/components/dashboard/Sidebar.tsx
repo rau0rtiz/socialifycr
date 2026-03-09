@@ -44,8 +44,10 @@ export const Sidebar = () => {
   const collapsed = state === 'collapsed';
   const { platformBrand, selectedClient } = useBrand();
   const { signOut } = useAuth();
-  const { isAgency, loading: roleLoading } = useUserRole();
+  const { isAgency, systemRole, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
+
+  const isOwnerOrAdmin = !roleLoading && (systemRole === 'owner' || systemRole === 'admin');
 
   const isActive = (path: string) => location.pathname === path;
 
