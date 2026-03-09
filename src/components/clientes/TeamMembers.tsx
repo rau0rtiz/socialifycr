@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAuditLog } from '@/hooks/use-audit-log';
 import { InviteClientDialog } from './InviteClientDialog';
 
 interface TeamMember {
