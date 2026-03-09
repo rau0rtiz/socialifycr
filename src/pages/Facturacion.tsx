@@ -387,7 +387,7 @@ const Facturacion = () => {
       </div>
 
       <PlanFormDialog open={showPlanDialog} onOpenChange={handleClosePlanDialog} editPlan={editingPlan} />
-      <AssignPlanDialog open={showAssignDialog} onOpenChange={setShowAssignDialog} clients={clients} preselectedClientId={selectedClient?.id} />
+      <AssignPlanDialog open={showAssignDialog} onOpenChange={handleCloseAssignDialog} clients={clients} preselectedClientId={assignClientId} />
     </DashboardLayout>
   );
 };
