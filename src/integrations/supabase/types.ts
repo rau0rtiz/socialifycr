@@ -994,6 +994,83 @@ export type Database = {
           },
         ]
       }
+      setter_appointments: {
+        Row: {
+          ad_campaign_id: string | null
+          ad_campaign_name: string | null
+          ad_id: string | null
+          ad_name: string | null
+          appointment_date: string
+          client_id: string
+          created_at: string | null
+          created_by: string
+          currency: string
+          estimated_value: number | null
+          id: string
+          lead_email: string | null
+          lead_name: string
+          lead_phone: string | null
+          notes: string | null
+          sale_id: string | null
+          setter_name: string | null
+          source: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          ad_campaign_id?: string | null
+          ad_campaign_name?: string | null
+          ad_id?: string | null
+          ad_name?: string | null
+          appointment_date: string
+          client_id: string
+          created_at?: string | null
+          created_by: string
+          currency?: string
+          estimated_value?: number | null
+          id?: string
+          lead_email?: string | null
+          lead_name: string
+          lead_phone?: string | null
+          notes?: string | null
+          sale_id?: string | null
+          setter_name?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          ad_campaign_id?: string | null
+          ad_campaign_name?: string | null
+          ad_id?: string | null
+          ad_name?: string | null
+          appointment_date?: string
+          client_id?: string
+          created_at?: string | null
+          created_by?: string
+          currency?: string
+          estimated_value?: number | null
+          id?: string
+          lead_email?: string | null
+          lead_name?: string
+          lead_phone?: string | null
+          notes?: string | null
+          sale_id?: string | null
+          setter_name?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setter_appointments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           billing_interval: string
