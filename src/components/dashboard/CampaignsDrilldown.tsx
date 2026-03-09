@@ -213,6 +213,9 @@ const CampaignRow = ({
       {isPurchaseGoal && (
         <MetricCard icon={Eye} label="Landing Page Views" value={formatNumber(campaign.landingPageViews)} />
       )}
+      {isFollowersGoal && (
+        <MetricCard icon={Users} label="New IG Followers" value={formatNumber(campaign.results)} />
+      )}
       {campaign.roas !== null && <MetricCard icon={TrendingUp} label="ROAS" value={`${campaign.roas.toFixed(2)}x`} />}
     </div>
   </div>
