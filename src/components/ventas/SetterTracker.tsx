@@ -7,13 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useSetterAppointments, SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
+import { useClientProducts } from '@/hooks/use-client-products';
 import { AppointmentFormDialog } from './AppointmentFormDialog';
 
 import { toast } from 'sonner';
 import {
   UserPlus, User, DollarSign,
   Trash2, Pencil, TrendingUp,
-  CheckCircle2, XCircle, Clock, AlertTriangle, ShoppingCart
+  CheckCircle2, XCircle, Clock, AlertTriangle, ShoppingCart, Package, Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -39,8 +40,12 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
   const [salePrompt, setSalePrompt] = useState<SetterAppointment | null>(null);
   const [saleAmount, setSaleAmount] = useState('');
   const [saleCurrency, setSaleCurrency] = useState<'CRC' | 'USD'>('CRC');
+  const [saleProduct, setSaleProduct] = useState('');
+  const [showNewSaleProduct, setShowNewSaleProduct] = useState(false);
+  const [newSaleProductName, setNewSaleProductName] = useState('');
 
   const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, period);
+  const { products, addProduct } = useClientProducts(clientId);
 
   // Extract unique setter names for the dropdown
   const existingSetters = useMemo(() => {
@@ -94,9 +99,7 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
 
   const handleStatusChange = async (appointment: SetterAppointment, newStatus: AppointmentStatus) => {
     if (newStatus === 'sold') {
-      setSalePrompt(appointment);
-      setSaleAmount('');
-      setSaleCurrency(appointment.currency as 'CRC' | 'USD' || 'CRC');
+      openSaleDialog(appointment);
       return;
     }
     try {
@@ -104,6 +107,28 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
       toast.success(`Estado actualizado a ${STATUS_CONFIG[newStatus].label}`);
     } catch {
       toast.error('Error actualizando estado');
+    }
+  };
+
+  const openSaleDialog = (appointment: SetterAppointment) => {
+    setSalePrompt(appointment);
+    setSaleAmount('');
+    setSaleCurrency(appointment.currency as 'CRC' | 'USD' || 'CRC');
+    setSaleProduct((appointment as any).product || '');
+    setShowNewSaleProduct(false);
+    setNewSaleProductName('');
+  };
+
+  const handleAddSaleProduct = async () => {
+    if (!newSaleProductName.trim()) return;
+    try {
+      const result = await addProduct.mutateAsync({ name: newSaleProductName.trim() });
+      setSaleProduct(result.name);
+      setShowNewSaleProduct(false);
+      setNewSaleProductName('');
+      toast.success('Producto creado');
+    } catch {
+      toast.error('Error creando producto');
     }
   };
 
@@ -115,6 +140,7 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
         status: 'sold',
         estimated_value: parseFloat(saleAmount),
         currency: saleCurrency,
+        product: saleProduct || undefined,
       } as any);
       toast.success('Venta registrada');
       setSalePrompt(null);
@@ -122,6 +148,8 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
       toast.error('Error registrando venta');
     }
   };
+
+  const productNames = products.map(p => p.name);
 
   return (
     <>
@@ -180,6 +208,8 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
                 const cfg = STATUS_CONFIG[apt.status as AppointmentStatus] || STATUS_CONFIG.scheduled;
                 const StatusIcon = cfg.icon;
                 const leadGoal = (apt as any).lead_goal;
+                const product = (apt as any).product;
+                const canConvertToSale = apt.status === 'completed' || apt.status === 'confirmed' || apt.status === 'scheduled';
                 return (
                   <div
                     key={apt.id}
@@ -203,6 +233,11 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
                           </span>
                         )}
                       </div>
+                      {product && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Package className="h-3 w-3" /> {product}
+                        </p>
+                      )}
                       {leadGoal && (
                         <p className="text-xs text-muted-foreground">
                           🎯 {leadGoal}
@@ -226,13 +261,13 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
 
                     {/* Actions */}
                     <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
-                      {/* Manage sale button */}
-                      {(apt.status === 'completed' || apt.status === 'confirmed') && (
+                      {/* Convert to sale button */}
+                      {canConvertToSale && (
                         <Button
                           variant="outline"
                           size="sm"
                           className="h-6 text-[10px] px-2 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10"
-                          onClick={() => handleStatusChange(apt, 'sold')}
+                          onClick={() => openSaleDialog(apt)}
                         >
                           <ShoppingCart className="h-3 w-3 mr-0.5" />
                           Venta
@@ -299,16 +334,62 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
         existingSetters={existingSetters}
       />
 
-      {/* Sale amount dialog */}
+      {/* Sale conversion dialog */}
       <Dialog open={!!salePrompt} onOpenChange={(v) => { if (!v) setSalePrompt(null); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-base">Registrar Venta</DialogTitle>
             <DialogDescription className="text-xs">
-              Ingresa el monto de la venta para <span className="font-medium text-foreground">{salePrompt?.lead_name}</span>
+              Convierte este lead en una venta para <span className="font-medium text-foreground">{salePrompt?.lead_name}</span>
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
+          <div className="space-y-4 py-2">
+            {/* Product */}
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1.5">
+                <Package className="h-3 w-3" /> Producto
+              </Label>
+              {showNewSaleProduct ? (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Nombre del producto"
+                    value={newSaleProductName}
+                    onChange={e => setNewSaleProductName(e.target.value)}
+                    className="h-8 text-xs flex-1"
+                    autoFocus
+                    onKeyDown={e => { if (e.key === 'Enter') handleAddSaleProduct(); }}
+                  />
+                  <Button size="sm" className="h-8 text-xs" onClick={handleAddSaleProduct} disabled={!newSaleProductName.trim() || addProduct.isPending}>
+                    {addProduct.isPending ? '...' : 'OK'}
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setShowNewSaleProduct(false)}>
+                    ✕
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Select value={saleProduct || '_none'} onValueChange={v => setSaleProduct(v === '_none' ? '' : v)}>
+                    <SelectTrigger className="h-8 text-xs flex-1">
+                      <SelectValue placeholder="Seleccionar producto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none" className="text-xs">Sin producto</SelectItem>
+                      {saleProduct && !productNames.includes(saleProduct) && (
+                        <SelectItem key={saleProduct} value={saleProduct} className="text-xs">{saleProduct}</SelectItem>
+                      )}
+                      {productNames.map(name => (
+                        <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowNewSaleProduct(true)}>
+                    <Plus className="h-3 w-3 mr-0.5" /> Nuevo
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Amount + Currency */}
             <div className="flex gap-2">
               <div className="flex-1 space-y-1.5">
                 <Label className="text-xs">Monto de la Venta *</Label>
@@ -319,7 +400,7 @@ export const SetterTracker = ({ clientId, hasAdAccount }: SetterTrackerProps) =>
                   onChange={e => setSaleAmount(e.target.value)}
                   className="h-8 text-xs"
                   min="0"
-                  autoFocus
+                  autoFocus={!showNewSaleProduct}
                 />
               </div>
               <div className="w-20 space-y-1.5">
