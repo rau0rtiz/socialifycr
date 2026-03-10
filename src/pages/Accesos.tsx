@@ -12,15 +12,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Shield, Users, UserPlus, Trash2, Search, Mail } from 'lucide-react';
+import { Shield, Users, UserPlus, Trash2, Search, Mail, Circle } from 'lucide-react';
 import { useUserRole, type SystemRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface SystemUser {
   id: string;
   user_id: string;
   role: SystemRole;
   created_at: string;
+  last_sign_in_at?: string | null;
   profile?: {
     full_name: string | null;
     email: string | null;
@@ -72,18 +75,19 @@ const Accesos = () => {
         .select('id, user_id, role, created_at');
       if (error) throw error;
 
-      // Fetch profiles for each user
       const userIds = [...new Set(roles.map(r => r.user_id))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, avatar_url')
-        .in('id', userIds);
+      const [{ data: profiles }, { data: signIns }] = await Promise.all([
+        supabase.from('profiles').select('id, full_name, email, avatar_url').in('id', userIds),
+        supabase.rpc('get_users_last_sign_in', { user_ids: userIds }),
+      ]);
 
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      const signInMap = new Map((signIns as any[])?.map(s => [s.user_id, s.last_sign_in_at]) || []);
 
       return roles.map(r => ({
         ...r,
         profile: profileMap.get(r.user_id) || { full_name: null, email: null, avatar_url: null },
+        last_sign_in_at: signInMap.get(r.user_id) || null,
       })) as SystemUser[];
     },
   });
@@ -260,6 +264,8 @@ const Accesos = () => {
                         <TableHead>Usuario</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Rol</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Última sesión</TableHead>
                         <TableHead>Desde</TableHead>
                         {isOwner && <TableHead className="w-12"></TableHead>}
                       </TableRow>
@@ -269,6 +275,8 @@ const Accesos = () => {
                         const isCurrentUser = u.user_id === user?.id;
                         const isOwnerRole = u.role === 'owner';
                         const canDelete = isOwner && !isCurrentUser && !isOwnerRole;
+                        const lastSignIn = u.last_sign_in_at ? new Date(u.last_sign_in_at) : null;
+                        const isActive = lastSignIn && (Date.now() - lastSignIn.getTime()) < 7 * 24 * 60 * 60 * 1000; // active if signed in within 7 days
 
                         return (
                           <TableRow key={u.id}>
@@ -285,6 +293,19 @@ const Accesos = () => {
                               <Badge variant="outline" className={roleLabels[u.role]?.color || ''}>
                                 {roleLabels[u.role]?.label || u.role}
                               </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                <Circle className={`h-2.5 w-2.5 fill-current ${isActive ? 'text-emerald-500' : lastSignIn ? 'text-amber-500' : 'text-muted-foreground/40'}`} />
+                                <span className={`text-sm ${isActive ? 'text-emerald-600 dark:text-emerald-400' : lastSignIn ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
+                                  {isActive ? 'Activo' : lastSignIn ? 'Inactivo' : 'Nunca'}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {lastSignIn
+                                ? formatDistanceToNow(lastSignIn, { addSuffix: true, locale: es })
+                                : '—'}
                             </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
                               {new Date(u.created_at!).toLocaleDateString('es-CR')}
