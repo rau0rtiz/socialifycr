@@ -129,11 +129,18 @@ export const AppointmentFormDialog = ({
     }
   }, [open, editing]);
 
-  const handleAddSetter = () => {
+  const handleAddSetter = async () => {
     if (newSetterName.trim()) {
-      setSetterName(newSetterName.trim());
+      const name = newSetterName.trim();
+      setSetterName(name);
       setShowNewSetter(false);
       setNewSetterName('');
+      // Persist the new setter
+      try {
+        await addSetterMutation.mutateAsync(name);
+      } catch {
+        // Ignore duplicate errors silently
+      }
     }
   };
 
