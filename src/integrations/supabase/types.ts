@@ -333,6 +333,44 @@ export type Database = {
           },
         ]
       }
+      client_products: {
+        Row: {
+          client_id: string
+          created_at: string
+          currency: string
+          id: string
+          name: string
+          price: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          name: string
+          price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          name?: string
+          price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_products_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_subscriptions: {
         Row: {
           cancelled_at: string | null
