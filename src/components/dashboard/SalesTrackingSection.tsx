@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle, Filter } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { RegisterSaleDialog, SalePrefill } from './RegisterSaleDialog';
 import { LinkAdDialog } from './LinkAdDialog';
@@ -72,6 +73,8 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
   const [editingSale, setEditingSale] = useState<MessageSale | null>(null);
   const [linkAdSaleId, setLinkAdSaleId] = useState<string | null>(null);
   const [currentPrefill, setCurrentPrefill] = useState<SalePrefill | null>(null);
+  const [filterSetter, setFilterSetter] = useState<string>('all');
+  const [filterProduct, setFilterProduct] = useState<string>('all');
 
   // Open dialog when triggered from setter
   useEffect(() => {
@@ -82,7 +85,29 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     }
   }, [showSaleDialog, salePrefill]);
 
-  const { sales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
+  const { sales: allSales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
+
+  // Extract unique setters and products for filters
+  const uniqueSetters = useMemo(() => {
+    const names = new Set<string>();
+    allSales.forEach(s => { if (s.customer_name) names.add(s.customer_name); });
+    return Array.from(names).sort();
+  }, [allSales]);
+
+  const uniqueProducts = useMemo(() => {
+    const names = new Set<string>();
+    allSales.forEach(s => { if (s.product) names.add(s.product); });
+    return Array.from(names).sort();
+  }, [allSales]);
+
+  // Apply filters
+  const sales = useMemo(() => {
+    return allSales.filter(s => {
+      if (filterSetter !== 'all' && s.customer_name !== filterSetter) return false;
+      if (filterProduct !== 'all' && s.product !== filterProduct) return false;
+      return true;
+    });
+  }, [allSales, filterSetter, filterProduct]);
 
   const handleAddSale = (sale: any, appointmentId?: string) => {
     if (editingSale) {
@@ -203,6 +228,44 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
             </Button>
           </div>
         </CardHeader>
+
+        {/* Filters */}
+        {(uniqueSetters.length > 0 || uniqueProducts.length > 0) && (
+          <div className="px-6 pb-2 flex flex-wrap items-center gap-2">
+            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            {uniqueSetters.length > 0 && (
+              <Select value={filterSetter} onValueChange={setFilterSetter}>
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue placeholder="Vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">Todos los vendedores</SelectItem>
+                  {uniqueSetters.map(name => (
+                    <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {uniqueProducts.length > 0 && (
+              <Select value={filterProduct} onValueChange={setFilterProduct}>
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue placeholder="Producto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">Todos los productos</SelectItem>
+                  {uniqueProducts.map(name => (
+                    <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {(filterSetter !== 'all' || filterProduct !== 'all') && (
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setFilterSetter('all'); setFilterProduct('all'); }}>
+                Limpiar filtros
+              </Button>
+            )}
+          </div>
+        )}
 
         <CardContent className="space-y-4">
           {/* Summary Cards */}

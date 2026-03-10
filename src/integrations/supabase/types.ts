@@ -1163,6 +1163,50 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_goals: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string
+          currency: string
+          end_date: string
+          id: string
+          start_date: string
+          target_amount: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          end_date: string
+          id?: string
+          start_date?: string
+          target_amount: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          end_date?: string
+          id?: string
+          start_date?: string
+          target_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_goals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_reports: {
         Row: {
           client_id: string
