@@ -310,6 +310,19 @@ const Contenido = () => {
         </div>
       )}
 
+      {/* Generador de Pauta */}
+      {(isAgency || flags.generador_pauta) && selectedClient && (
+        <div className="mb-6">
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-96">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          }>
+            <GeneradorPauta />
+          </Suspense>
+        </div>
+      )}
+
       {/* Content Detail Modal */}
       {selectedPost && (
         <ContentDetailModal
