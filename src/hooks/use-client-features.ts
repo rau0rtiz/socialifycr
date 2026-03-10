@@ -48,6 +48,7 @@ export const SECTION_LABELS: Record<string, string> = {
   ventas_section: 'Ventas',
   contenido_section: 'Contenido',
   reportes_section: 'Reportes',
+  email_marketing_section: 'Email Marketing',
 };
 
 // Dashboard widget flags grouped by section
