@@ -23,6 +23,10 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw, Wifi } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
+
+const GeneradorPauta = lazy(() => import('@/components/generador-pauta/GeneradorPauta'));
 
 const platformConfig: Record<NetworkType, { 
   label: string; 
