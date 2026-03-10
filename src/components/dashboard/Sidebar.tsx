@@ -40,7 +40,6 @@ const managementMenuItems = [
   { title: 'Facturación', url: '/facturacion', icon: CreditCard },
   { title: 'Historial', url: '/historial', icon: History },
   { title: 'Image DB', url: '/image-db', icon: Image },
-  { title: 'Generador Pauta', url: '/generador-pauta', icon: Megaphone },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
 ];
 
