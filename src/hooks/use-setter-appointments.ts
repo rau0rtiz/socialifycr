@@ -45,6 +45,7 @@ export interface AppointmentInput {
   sale_id?: string | null;
   notes?: string;
   source?: string;
+  product?: string;
 }
 
 export const useSetterAppointments = (clientId: string | null, period?: string) => {
