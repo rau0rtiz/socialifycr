@@ -12,8 +12,9 @@ import {
   Eye,
   KeyRound,
   Mail,
+  X,
 } from 'lucide-react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -45,6 +46,7 @@ const managementMenuItems = [
 export const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const { platformBrand, selectedClient } = useBrand();
@@ -52,6 +54,7 @@ export const Sidebar = () => {
   const { isAgency, systemRole, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
 
+  const isPreviewMode = !!searchParams.get('preview');
   const isOwnerOrAdmin = !roleLoading && (systemRole === 'owner' || systemRole === 'admin');
 
   const isActive = (path: string) => location.pathname === path;
@@ -67,18 +70,23 @@ export const Sidebar = () => {
     }
   };
 
-  
+  const handleExitPreview = () => {
+    navigate('/');
+  };
+
+  // In preview mode, behave like a client — respect feature flags
+  const effectiveAgency = isAgency && !isPreviewMode;
 
   // Build menu items based on feature flags
   const menuItems: { title: string; url: string; icon: React.ElementType; dataTour?: string }[] = [
-    { title: 'Dashboard', url: '/', icon: LayoutDashboard },
+    { title: 'Dashboard', url: isPreviewMode ? `/?preview=${searchParams.get('preview')}` : '/', icon: LayoutDashboard },
   ];
 
-  // For agency users, always show all sections. For clients, respect flags.
-  const showVentas = isAgency || flags.ventas_section;
-  const showContenido = isAgency || flags.contenido_section;
-  const showReportes = isAgency || flags.reportes_section;
-  const showEmailMarketing = isAgency || flags.email_marketing_section;
+  // For agency users (not in preview), always show all sections. Otherwise respect flags.
+  const showVentas = effectiveAgency || flags.ventas_section;
+  const showContenido = effectiveAgency || flags.contenido_section;
+  const showReportes = effectiveAgency || flags.reportes_section;
+  const showEmailMarketing = effectiveAgency || flags.email_marketing_section;
 
   if (showVentas) {
     menuItems.push({ title: 'Ventas', url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
@@ -124,13 +132,13 @@ export const Sidebar = () => {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                  <SidebarMenuButton asChild isActive={isActive(item.url.split('?')[0])}>
                     <NavLink 
                       to={item.url} 
                       data-tour={item.dataTour}
                       className={cn(
                         "flex items-center gap-3 transition-colors",
-                        isActive(item.url) && "bg-accent text-accent-foreground"
+                        isActive(item.url.split('?')[0]) && "bg-accent text-accent-foreground"
                       )}
                     >
                       <item.icon className="h-4 w-4" />
@@ -143,7 +151,26 @@ export const Sidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isAgency && (
+        {/* Preview mode: show exit button instead of management */}
+        {isPreviewMode && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={handleExitPreview}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <X className="h-4 w-4" />
+                    <span>Salir de Vista Cliente</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {effectiveAgency && (
           <SidebarGroup>
             <SidebarGroupLabel>Gestión</SidebarGroupLabel>
             <SidebarGroupContent>

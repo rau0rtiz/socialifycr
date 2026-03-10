@@ -17,6 +17,7 @@ import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useYouTubeVideos } from '@/hooks/use-youtube-videos';
 import { useCrosspostLinks } from '@/hooks/use-crosspost-links';
+import { useClientFeatures } from '@/hooks/use-client-features';
 
 import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,10 @@ const Dashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const { isAgency, isClient, clientAccess, loading: roleLoading } = useUserRole();
+  const { flags } = useClientFeatures(selectedClient?.id ?? null);
+
+  // In preview mode, respect feature flags like a client would
+  const shouldRespectFlags = isPreviewMode || isClient;
 
   // Handle preview mode - select the client from URL param
   useEffect(() => {
@@ -121,6 +126,14 @@ const Dashboard = () => {
   const hasAdAccount = !!metaConnection?.ad_account_id;
   const hasMetaConnection = !!metaConnection;
 
+  // Widget visibility — agency sees all unless in preview mode
+  const showSocialFollowers = !shouldRespectFlags || flags.social_followers;
+  const showInstagramPosts = !shouldRespectFlags || flags.instagram_posts;
+  const showYouTubeVideos = !shouldRespectFlags || flags.youtube_videos;
+  const showContentGrid = !shouldRespectFlags || flags.content_grid;
+  const showFunnel = !shouldRespectFlags || flags.funnel;
+  const showCampaigns = !shouldRespectFlags || flags.campaigns;
+
   // Show loading state while clients are being fetched or role is loading
   if (clientsLoading || roleLoading) {
     return (
@@ -201,7 +214,7 @@ const Dashboard = () => {
   } as React.CSSProperties;
 
   const handleExitPreview = () => {
-    navigate('/clientes');
+    navigate('/');
   };
 
   return (
@@ -211,13 +224,14 @@ const Dashboard = () => {
         <div className="mb-4 p-3 rounded-lg border flex items-center justify-between" style={{ backgroundColor: `hsl(${accentColor} / 0.1)`, borderColor: `hsl(${accentColor} / 0.3)` }}>
           <div className="flex items-center gap-2">
             <Badge variant="outline" style={{ borderColor: `hsl(${accentColor})`, color: `hsl(${accentColor})` }}>
+              <Eye className="h-3 w-3 mr-1" />
               Modo Vista Previa
             </Badge>
             <span className="text-sm text-muted-foreground">
-              Viendo el dashboard como lo ve el cliente
+              Viendo como lo ve <strong>{selectedClient.name}</strong>
             </span>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleExitPreview}>
+          <Button variant="outline" size="sm" onClick={handleExitPreview} className="border-destructive/30 text-destructive hover:bg-destructive/10">
             <X className="h-4 w-4 mr-1" />
             Salir
           </Button>
@@ -266,7 +280,7 @@ const Dashboard = () => {
       </div>
 
       {/* Social Followers - Full Width */}
-      {(socialLoading || socialPlatforms.length > 0) && (
+      {showSocialFollowers && (socialLoading || socialPlatforms.length > 0) && (
         <div className="mb-4 md:mb-6" data-tour="kpi-section">
           <SocialFollowersSection
             platforms={socialPlatforms}
@@ -277,7 +291,7 @@ const Dashboard = () => {
       )}
 
       {/* Top Posts - Instagram */}
-      {(contentLoading || content.length > 0 || hasMetaConnection) && (
+      {showInstagramPosts && (contentLoading || content.length > 0 || hasMetaConnection) && (
         <div className="mb-4 md:mb-6">
           <InstagramTopPosts
             content={content}
@@ -290,7 +304,7 @@ const Dashboard = () => {
       )}
 
       {/* Top Videos - YouTube */}
-      {(youtubeLoading || youtubeConnected) && (
+      {showYouTubeVideos && (youtubeLoading || youtubeConnected) && (
         <div className="mb-4 md:mb-6">
           <YouTubeTopVideos
             videos={youtubeVideos}
@@ -301,7 +315,7 @@ const Dashboard = () => {
       )}
 
       {/* Content Grid - 2x3 Grid below Social */}
-      {(
+      {showContentGrid && (
         <div className="mb-4 md:mb-6">
         <ContentGrid
           data={content}
@@ -324,14 +338,14 @@ const Dashboard = () => {
       )}
 
       {/* Advanced Funnel Analytics */}
-      {(
+      {showFunnel && (
         <div className="mb-4 md:mb-6">
           <AdvancedFunnelModule clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
         </div>
       )}
 
       {/* Campaigns Drilldown */}
-      {(
+      {showCampaigns && (
         <div className="mb-4 md:mb-6">
           <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
         </div>
