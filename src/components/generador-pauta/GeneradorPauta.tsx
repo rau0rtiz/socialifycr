@@ -104,30 +104,35 @@ const CARD_CSS = `
 .gp-v45 .gp-bot{flex-shrink:0;padding:0 16px 16px;align-items:flex-start;}
 .gp-v45 .gp-pamt{font-size:1.6rem;}
 
-/* Story — 270×480 (ratio 9:16 exact) */
-.gp-st{width:270px;height:480px;position:relative;}
-.gp-st .gp-ci{padding-top:46px;}
-.gp-profile-bar{position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;gap:7px;padding:0 10px;background:linear-gradient(to bottom,rgba(0,0,0,0.18),transparent);pointer-events:none;z-index:10;}
-.gp-avatar{width:24px;height:24px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.25);}
-.gp-spname{font-size:0.52rem;font-weight:700;color:rgba(255,255,255,0.85);}
-.gp-sptime{font-size:0.48rem;color:rgba(255,255,255,0.55);margin-left:3px;}
-.gp-st .gp-pn{font-size:1.6rem;flex-shrink:0;text-align:center;padding:4px 10px 0;}
-.gp-st .gp-psub{text-align:center;font-size:0.6rem;}
-.gp-st-chips{flex-shrink:0;display:flex;gap:3px;justify-content:center;padding:4px 6px 0;}
-.gp-st-chip{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 2px;border-radius:5px;background:rgba(255,255,255,0.82);box-shadow:0 1px 6px rgba(0,0,0,0.1);text-align:center;min-width:0;}
-.gp-st-chip span:first-child{font-size:0.65rem;line-height:1;}
-.gp-st-chip span:last-child{font-size:0.4rem;font-weight:700;line-height:1.15;word-break:break-word;}
+/* Story — renders at native 1080×1920, scaled down for preview */
+.gp-st{width:1080px;height:1920px;position:relative;}
+.gp-st .gp-ci{padding-top:180px;}
+.gp-profile-bar{position:absolute;top:0;left:0;right:0;height:180px;display:flex;align-items:center;gap:28px;padding:0 40px;background:linear-gradient(to bottom,rgba(0,0,0,0.18),transparent);pointer-events:none;z-index:10;}
+.gp-avatar{width:96px;height:96px;border-radius:50%;border:6px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.25);}
+.gp-spname{font-size:28px;font-weight:700;color:rgba(255,255,255,0.85);}
+.gp-sptime{font-size:24px;color:rgba(255,255,255,0.55);margin-left:12px;}
+.gp-st .gp-pn{font-size:80px;flex-shrink:0;text-align:center;padding:16px 40px 0;}
+.gp-st .gp-psub{text-align:center;font-size:30px;}
+.gp-st-chips{flex-shrink:0;display:flex;gap:16px;justify-content:center;padding:20px 24px 0;}
+.gp-st-chip{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;border-radius:24px;background:rgba(255,255,255,0.82);box-shadow:0 4px 24px rgba(0,0,0,0.1);text-align:center;min-width:0;}
+.gp-st-chip span:first-child{font-size:36px;line-height:1;}
+.gp-st-chip span:last-child{font-size:22px;font-weight:700;line-height:1.2;word-break:break-word;}
 .bg-orange .gp-st-chip span:last-child,.bg-split .gp-st-chip span:last-child{color:rgba(50,20,0,0.85);}
 .bg-teal .gp-st-chip span:last-child{color:rgba(0,40,35,0.85);}
 .bg-night .gp-st-chip span:last-child{color:rgba(50,10,10,0.85);}
-.gp-pi-zone{flex:1;position:relative;min-height:0;margin:4px 0;}
+.gp-pi-zone{flex:1;position:relative;min-height:0;margin:16px 0;}
 .gp-pi-zone .gp-pi{position:absolute;inset:0;padding:0;}
 .gp-pi-zone .gp-pi img{max-width:70%;max-height:75%;}
-.gp-st-bottom{flex-shrink:0;padding:4px 10px 0;display:flex;flex-direction:column;align-items:center;gap:3px;}
-.gp-st .gp-price{width:75%;flex-direction:row;justify-content:center;gap:5px;padding:5px 10px;border-radius:8px;}
-.gp-st .gp-pfrom{font-size:0.42rem;}
-.gp-st .gp-pamt{font-size:1.4rem;letter-spacing:0;}
-.gp-msgbar{width:100%;height:34px;flex-shrink:0;margin-top:2px;}
+.gp-st-bottom{flex-shrink:0;padding:16px 40px 0;display:flex;flex-direction:column;align-items:center;gap:12px;}
+.gp-st .gp-price{width:75%;flex-direction:row;justify-content:center;gap:20px;padding:24px 40px;border-radius:32px;box-shadow:0 8px 40px rgba(0,0,0,0.12);}
+.gp-st .gp-pfrom{font-size:22px;}
+.gp-st .gp-pamt{font-size:72px;letter-spacing:0;}
+.gp-msgbar{width:100%;height:130px;flex-shrink:0;margin-top:8px;}
+.gp-st .g1{width:1400px!important;height:1400px!important;}
+.gp-st .g2{width:900px!important;height:900px!important;}
+.gp-st .gp-dots{background-size:44px 44px!important;}
+.gp-st .gp-ring:nth-child(1){width:500px;height:500px;top:50%;left:50%;transform:translate(-50%,-50%);}
+.gp-st .gp-ring:nth-child(2){width:700px;height:700px;top:50%;left:50%;transform:translate(-50%,-50%);}
 
 /* Banner — 540×270 (ratio 2:1 exact) */
 .gp-bn{width:540px;height:270px;}
@@ -368,7 +373,7 @@ export default function GeneradorPauta() {
   const FORMAT_SIZES: Record<string, { w: number; h: number }> = {
     sq:  { w: 480, h: 480 },
     v45: { w: 480, h: 600 },
-    st:  { w: 270, h: 480 },
+    st:  { w: 1080, h: 1920 },
     bn:  { w: 540, h: 270 },
   };
   const EXPORT_SIZES: Record<string, { w: number; h: number }> = {
@@ -382,16 +387,23 @@ export default function GeneradorPauta() {
     const card = cardRef.current as HTMLElement | null;
     if (!card) return;
 
-    const scaleWrapper = card.parentElement;
-    const origTransform = scaleWrapper?.style.transform || '';
-    if (scaleWrapper) scaleWrapper.style.transform = 'none';
+    // For story, parent chain: card -> scale(0.25) wrapper -> main scale wrapper
+    // For others: card -> main scale wrapper
+    const immediateParent = card.parentElement;
+    const origImmediateTransform = immediateParent?.style.transform || '';
+    const origImmediateMargin = (immediateParent as HTMLElement)?.style.marginBottom || '';
+    if (immediateParent) { immediateParent.style.transform = 'none'; immediateParent.style.marginBottom = '0'; }
+    const grandParent = immediateParent?.parentElement;
+    const origGrandTransform = grandParent?.style.transform || '';
+    if (grandParent) grandParent.style.transform = 'none';
 
     const noExport = card.querySelectorAll(".no-export");
     noExport.forEach((el) => ((el as HTMLElement).style.visibility = "hidden"));
 
     const restore = () => {
       noExport.forEach((el) => ((el as HTMLElement).style.visibility = ""));
-      if (scaleWrapper) scaleWrapper.style.transform = origTransform;
+      if (immediateParent) { immediateParent.style.transform = origImmediateTransform; (immediateParent as HTMLElement).style.marginBottom = origImmediateMargin; }
+      if (grandParent) grandParent.style.transform = origGrandTransform;
     };
 
     const script = document.createElement("script");
@@ -399,8 +411,8 @@ export default function GeneradorPauta() {
     const run = () => {
       const size = FORMAT_SIZES[fmt] || { w: card.offsetWidth, h: card.offsetHeight };
       const exp = EXPORT_SIZES[fmt] || { w: 1080, h: 1080 };
-      // Capture at high res then resize to exact export dimensions
-      const captureScale = Math.max(exp.w / size.w, exp.h / size.h, 2);
+      // Story is already at native size, capture at scale 1; others need upscaling
+      const captureScale = fmt === 'st' ? 1 : Math.max(exp.w / size.w, exp.h / size.h, 2);
       // Remove border-radius for export
       card.style.borderRadius = '0';
       (window as any).html2canvas(card, {
@@ -652,7 +664,11 @@ export default function GeneradorPauta() {
         {/* Tarjeta — scale down on smaller viewports */}
         <div className="flex items-center justify-center flex-1 w-full" style={{ transform: 'scale(var(--gp-scale, 1))', transformOrigin: 'top center' }}>
           <style>{`@media (max-width: 768px) { :root { --gp-scale: 0.6; } } @media (min-width: 769px) and (max-width: 1100px) { :root { --gp-scale: 0.8; } }`}</style>
-          {renderCard()}
+          {fmt === 'st' ? (
+            <div style={{ transform: 'scale(0.25)', transformOrigin: 'top center', width: 1080, height: 1920, marginBottom: -(1920 * 0.75) }}>
+              {renderCard()}
+            </div>
+          ) : renderCard()}
         </div>
       </div>
 
