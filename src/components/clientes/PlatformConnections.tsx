@@ -205,6 +205,22 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
           variant: 'destructive',
         });
         setConnecting(null);
+      } else if (event.data?.type === 'TIKTOK_OAUTH_ACCOUNT') {
+        // Auto-save TikTok connection (no selector needed — single account)
+        handleSaveTikTokConnection(
+          event.data.account,
+          event.data.accessToken,
+          event.data.refreshToken,
+          event.data.expiresIn,
+        );
+        setConnecting(null);
+      } else if (event.data?.type === 'TIKTOK_OAUTH_ERROR') {
+        toast({
+          title: 'Error de conexión',
+          description: event.data.error || 'Error al conectar con TikTok',
+          variant: 'destructive',
+        });
+        setConnecting(null);
       }
     };
 
@@ -463,11 +479,123 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     }
   };
 
+  const handleSaveTikTokConnection = async (
+    account: { openId: string; displayName: string },
+    accessToken: string,
+    refreshToken: string,
+    expiresIn: number,
+  ) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tiktok-oauth?action=save-connection`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            clientId,
+            openId: account.openId,
+            displayName: account.displayName,
+            accessToken,
+            refreshToken,
+            expiresIn,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.error) throw new Error(result.error);
+
+      await logAction({
+        action: 'platform.connect',
+        entityType: 'platform_connection',
+        entityName: `TikTok - ${account.displayName}`,
+        details: { platform: 'tiktok', display_name: account.displayName },
+      });
+
+      toast({
+        title: 'Conexión exitosa',
+        description: `Conectado a TikTok: ${account.displayName}`,
+      });
+
+      fetchConnections();
+    } catch (err) {
+      console.error('Error saving TikTok connection:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Error al guardar la conexión',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleConnectTikTok = async () => {
+    setConnecting('tiktok');
+    
+    try {
+      const redirectUri = `${window.location.origin}/oauth/tiktok/callback`;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tiktok-oauth?action=authorize`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ redirectUri, clientId }),
+        }
+      );
+      
+      const data = await response.json();
+
+      if (data.error) {
+        toast({ title: 'Error', description: data.error, variant: 'destructive' });
+        setConnecting(null);
+        return;
+      }
+
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const popup = window.open(
+        data.authUrl,
+        'tiktok-oauth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!popup) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      }
+
+      const checkPopup = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkPopup);
+          setConnecting(null);
+        }
+      }, 1000);
+
+    } catch (err) {
+      console.error('Error initiating TikTok OAuth:', err);
+      toast({ title: 'Error', description: 'Error al iniciar la conexión con TikTok', variant: 'destructive' });
+      setConnecting(null);
+    }
+  };
+
   const handleConnect = (platform: string) => {
     if (platform === 'Meta (Facebook/Instagram)') {
       handleConnectMeta();
     } else if (platform === 'YouTube') {
       handleConnectYouTube();
+    } else if (platform === 'TikTok') {
+      handleConnectTikTok();
     } else {
       toast({
         title: 'Próximamente',
