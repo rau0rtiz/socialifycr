@@ -267,6 +267,10 @@ export const AppointmentFormDialog = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                        {/* Show current setter if not in existing list */}
+                        {setterName && !existingSetters.includes(setterName) && (
+                          <SelectItem key={setterName} value={setterName} className="text-xs">{setterName}</SelectItem>
+                        )}
                         {existingSetters.map(s => (
                           <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                         ))}
