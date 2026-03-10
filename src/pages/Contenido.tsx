@@ -95,6 +95,7 @@ const Contenido = () => {
   const hasAdAccount = !!metaConnection?.ad_account_id;
 
   const { isAgency, clientAccess } = useUserRole();
+  const { flags } = useClientFeatures(clientId);
 
   // Social followers
   const { 
