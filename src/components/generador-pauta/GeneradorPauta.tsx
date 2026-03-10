@@ -404,8 +404,8 @@ export default function GeneradorPauta() {
     const run = () => {
       const size = FORMAT_SIZES[fmt] || { w: card.offsetWidth, h: card.offsetHeight };
       const exp = EXPORT_SIZES[fmt] || { w: 1080, h: 1080 };
-      // Capture at high res then resize to exact export dimensions
-      const captureScale = Math.max(exp.w / size.w, exp.h / size.h, 2);
+      // Story is already at native size, capture at scale 1; others need upscaling
+      const captureScale = fmt === 'st' ? 1 : Math.max(exp.w / size.w, exp.h / size.h, 2);
       // Remove border-radius for export
       card.style.borderRadius = '0';
       (window as any).html2canvas(card, {
