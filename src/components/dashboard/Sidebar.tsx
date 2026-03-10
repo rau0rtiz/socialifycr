@@ -12,7 +12,6 @@ import {
   Eye,
   KeyRound,
   Mail,
-  Megaphone,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
