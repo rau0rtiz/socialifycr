@@ -1496,6 +1496,13 @@ export type Database = {
           role: Database["public"]["Enums"]["client_role"]
         }[]
       }
+      get_users_last_sign_in: {
+        Args: { user_ids: string[] }
+        Returns: {
+          last_sign_in_at: string
+          user_id: string
+        }[]
+      }
       has_client_access: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
