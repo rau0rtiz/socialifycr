@@ -52,6 +52,7 @@ export const ClientFeatureFlags = ({ clientId }: ClientFeatureFlagsProps) => {
     { sectionKey: 'ventas_section', icon: LayoutDashboard, widgets: VENTAS_WIDGET_LABELS },
     { sectionKey: 'contenido_section', icon: LayoutDashboard, widgets: CONTENIDO_WIDGET_LABELS },
     { sectionKey: 'reportes_section', icon: LayoutDashboard, widgets: {} },
+    { sectionKey: 'email_marketing_section', icon: LayoutDashboard, widgets: {} },
   ];
 
   return (

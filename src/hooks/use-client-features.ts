@@ -118,6 +118,7 @@ export const useClientFeatures = (clientId: string | null) => {
         ventas_section: data.ventas_section,
         contenido_section: data.contenido_section,
         reportes_section: data.reportes_section,
+        email_marketing_section: data.email_marketing_section,
       }
     : DEFAULT_FLAGS;
 

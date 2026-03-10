@@ -78,6 +78,7 @@ export const Sidebar = () => {
   const showVentas = isAgency || flags.ventas_section;
   const showContenido = isAgency || flags.contenido_section;
   const showReportes = isAgency || flags.reportes_section;
+  const showEmailMarketing = isAgency || flags.email_marketing_section;
 
   if (showVentas) {
     menuItems.push({ title: 'Ventas', url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
@@ -87,6 +88,9 @@ export const Sidebar = () => {
   }
   if (showReportes) {
     menuItems.push({ title: 'Reportes', url: '/reportes', icon: BarChart3 });
+  }
+  if (showEmailMarketing) {
+    menuItems.push({ title: 'Email Marketing', url: '/email-marketing', icon: Mail });
   }
 
   return (
