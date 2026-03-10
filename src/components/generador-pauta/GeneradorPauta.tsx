@@ -145,6 +145,9 @@ const CARD_CSS = `
 `;
 
 export default function GeneradorPauta() {
+  const { selectedClient } = useBrand();
+  const clientLogoUrl = selectedClient?.logo_url || null;
+
   const [tpl, setTpl] = useState("orange");
   const [fmt, setFmt] = useState("sq");
   const [font, setFont] = useState("Bebas Neue");
@@ -152,7 +155,10 @@ export default function GeneradorPauta() {
   const [imgScale, setImgScale] = useState(1);
   const [imgX, setImgX] = useState(0);
   const [imgY, setImgY] = useState(0);
-  const [logoSrc, setLogoSrc] = useState(LOGO_DEFAULT);
+  const [logoSrc, setLogoSrc] = useState<string | null>(null);
+  const [logoScale, setLogoScale] = useState(1);
+  const [logoX, setLogoX] = useState(0);
+  const [logoY, setLogoY] = useState(0);
   const [tab, setTab] = useState("upload");
   const [imgUrl, setImgUrl] = useState("");
   const [previewName, setPreviewName] = useState("");
