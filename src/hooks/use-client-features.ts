@@ -73,6 +73,7 @@ export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
   ai_insights: 'Insights de IA',
   video_ideas: 'Ideas de Video',
   competitors: 'Competidores',
+  generador_pauta: 'Generador de Pauta',
 };
 
 // Combined for backward compat
