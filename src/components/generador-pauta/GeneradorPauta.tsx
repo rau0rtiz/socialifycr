@@ -274,7 +274,7 @@ export default function GeneradorPauta() {
 
     if (fmt === "bn") {
       return (
-        <div ref={cardRef} className={`gp-card ${bgClass} gp-bn`} style={{ "--bg-clr": bgColor }}>
+        <div ref={cardRef} className={`gp-card ${bgClass} gp-bn`} style={{ "--bg-clr": bgColor } as React.CSSProperties}>
           <div className="g1" /><div className="g2" /><div className="gp-dots" />
           {tpl === "split" && <div className="gp-diag" />}
           <div className="gp-ci">
