@@ -75,18 +75,19 @@ const Accesos = () => {
         .select('id, user_id, role, created_at');
       if (error) throw error;
 
-      // Fetch profiles for each user
       const userIds = [...new Set(roles.map(r => r.user_id))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, avatar_url')
-        .in('id', userIds);
+      const [{ data: profiles }, { data: signIns }] = await Promise.all([
+        supabase.from('profiles').select('id, full_name, email, avatar_url').in('id', userIds),
+        supabase.rpc('get_users_last_sign_in', { user_ids: userIds }),
+      ]);
 
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      const signInMap = new Map((signIns as any[])?.map(s => [s.user_id, s.last_sign_in_at]) || []);
 
       return roles.map(r => ({
         ...r,
         profile: profileMap.get(r.user_id) || { full_name: null, email: null, avatar_url: null },
+        last_sign_in_at: signInMap.get(r.user_id) || null,
       })) as SystemUser[];
     },
   });
