@@ -373,7 +373,7 @@ export default function GeneradorPauta() {
   const FORMAT_SIZES: Record<string, { w: number; h: number }> = {
     sq:  { w: 480, h: 480 },
     v45: { w: 480, h: 600 },
-    st:  { w: 270, h: 480 },
+    st:  { w: 1080, h: 1920 },
     bn:  { w: 540, h: 270 },
   };
   const EXPORT_SIZES: Record<string, { w: number; h: number }> = {
