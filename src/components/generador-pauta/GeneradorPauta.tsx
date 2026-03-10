@@ -86,7 +86,7 @@ const CARD_CSS = `
 .gp-sq{width:480px;height:480px;}
 .gp-sq .gp-pn{font-size:2.7rem;flex-shrink:0;}
 .gp-sq .gp-pi{flex:1;min-height:0;padding:8px 16px;}
-.gp-sq .gp-pi img{width:100%;height:100%;}
+.gp-sq .gp-pi img{max-width:100%;max-height:100%;object-fit:contain;}
 .gp-sq .gp-ring:nth-child(1){width:200px;height:200px;top:50%;left:50%;transform:translate(-50%,-50%);}
 .gp-sq .gp-ring:nth-child(2){width:280px;height:280px;top:50%;left:50%;transform:translate(-50%,-50%);}
 .gp-sq .gp-bot{flex-shrink:0;padding:0 16px 14px;align-items:flex-start;}
