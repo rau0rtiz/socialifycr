@@ -209,10 +209,10 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
                       {canConvertToSale && onConvertToSale && (
                         <Button
                           size="sm"
-                          className="mt-2 h-9 text-sm px-5 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                          className="mt-1 h-8 text-xs px-4 bg-emerald-600 hover:bg-emerald-700 text-white"
                           onClick={() => onConvertToSale(apt)}
                         >
-                          <ShoppingCart className="h-4 w-4" />
+                          <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
                           Registrar Venta
                         </Button>
                       )}
