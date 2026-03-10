@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { AppointmentInput, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useClientProducts } from '@/hooks/use-client-products';
+import { useClientSetters } from '@/hooks/use-client-setters';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { X, Plus, ChevronLeft, ChevronRight, User, Target, Settings, Megaphone, Package } from 'lucide-react';
@@ -73,6 +74,7 @@ export const AppointmentFormDialog = ({
   const [notes, setNotes] = useState('');
 
   const { products, addProduct } = useClientProducts(clientId || null);
+  const { addSetter: addSetterMutation } = useClientSetters(clientId || null);
 
   const needsAdStep = source === 'ads' && hasAdAccount;
   const totalSteps = needsAdStep ? 4 : 3;
@@ -127,11 +129,18 @@ export const AppointmentFormDialog = ({
     }
   }, [open, editing]);
 
-  const handleAddSetter = () => {
+  const handleAddSetter = async () => {
     if (newSetterName.trim()) {
-      setSetterName(newSetterName.trim());
+      const name = newSetterName.trim();
+      setSetterName(name);
       setShowNewSetter(false);
       setNewSetterName('');
+      // Persist the new setter
+      try {
+        await addSetterMutation.mutateAsync(name);
+      } catch {
+        // Ignore duplicate errors silently
+      }
     }
   };
 

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSetterAppointments, SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
+import { useClientSetters } from '@/hooks/use-client-setters';
 import { AppointmentFormDialog } from './AppointmentFormDialog';
 
 import { toast } from 'sonner';
@@ -36,13 +37,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, period);
-
-  // Extract unique setter names for the dropdown
-  const existingSetters = useMemo(() => {
-    const names = new Set<string>();
-    appointments.forEach(a => { if (a.setter_name) names.add(a.setter_name); });
-    return Array.from(names).sort();
-  }, [appointments]);
+  const { setterNames: existingSetters, addSetter } = useClientSetters(clientId);
 
   // Stats
   const stats = useMemo(() => {
