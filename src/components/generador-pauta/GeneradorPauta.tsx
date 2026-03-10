@@ -580,16 +580,35 @@ export default function GeneradorPauta() {
         <div className="h-px bg-border my-3.5" />
 
         {/* Logo */}
-        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">🏷 Logo de la Tienda</div>
+        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">🏷 Logo</div>
         <div className="bg-muted/50 border border-border rounded-[10px] p-3 mb-2.5">
           <div className="relative border-2 border-dashed border-primary/30 rounded-lg p-2.5 text-center cursor-pointer bg-primary/5">
-            <input type="file" accept="image/*" onChange={(e) => handleLogoFile(e.target.files?.[0])} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-            <div className="text-[0.65rem] font-bold text-primary">📁 Subir logo</div>
+            <input type="file" accept="image/png,image/webp,image/svg+xml" onChange={(e) => handleLogoFile(e.target.files?.[0])} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+            <div className="text-[0.65rem] font-bold text-primary">📁 Subir logo (PNG sin fondo)</div>
           </div>
-          {logoSrc !== LOGO_DEFAULT && (
-            <button onClick={() => setLogoSrc(LOGO_DEFAULT)} className="mt-1.5 text-[0.6rem] bg-transparent border-none text-destructive/50 cursor-pointer hover:text-destructive">✕ Restaurar logo original</button>
+          {logoSrc && (
+            <div className="mt-2 flex items-center gap-2">
+              <img src={logoSrc} alt="logo" className="h-8 object-contain" style={{ background: 'repeating-conic-gradient(#0001 0% 25%, transparent 0% 50%) 50%/8px 8px' }} />
+              <span className="text-[0.6rem] text-muted-foreground flex-1">Logo activo</span>
+              {logoSrc !== LOGO_DEFAULT && logoSrc !== clientLogoUrl && (
+                <button onClick={() => setLogoSrc(clientLogoUrl || LOGO_DEFAULT)} className="text-[0.6rem] bg-transparent border-none text-destructive/50 cursor-pointer hover:text-destructive">✕</button>
+              )}
+            </div>
           )}
         </div>
+        {/* Logo scale + position */}
+        {[
+          { label: "🔍 ESCALA", val: Math.round(logoScale * 100) + "%", min: 30, max: 300, value: Math.round(logoScale * 100), onChange: (v: number) => setLogoScale(v / 100) },
+          { label: "↔ X", val: logoX, min: -60, max: 60, value: logoX, onChange: setLogoX },
+          { label: "↕ Y", val: logoY, min: -60, max: 60, value: logoY, onChange: setLogoY },
+        ].map(({ label, val, min, max, value, onChange }) => (
+          <div key={"logo-" + label} className="flex items-center gap-2 mb-2">
+            <label className="text-[0.68rem] font-bold text-muted-foreground whitespace-nowrap">{label}</label>
+            <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(+e.target.value)}
+              className="flex-1 accent-primary" />
+            <span className="text-[0.68rem] font-extrabold text-primary min-w-[32px] text-right">{val}</span>
+          </div>
+        ))}
       </div>
 
       {/* ── PREVIEW ── */}
