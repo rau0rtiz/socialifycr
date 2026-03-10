@@ -657,7 +657,11 @@ export default function GeneradorPauta() {
         {/* Tarjeta — scale down on smaller viewports */}
         <div className="flex items-center justify-center flex-1 w-full" style={{ transform: 'scale(var(--gp-scale, 1))', transformOrigin: 'top center' }}>
           <style>{`@media (max-width: 768px) { :root { --gp-scale: 0.6; } } @media (min-width: 769px) and (max-width: 1100px) { :root { --gp-scale: 0.8; } }`}</style>
-          {renderCard()}
+          {fmt === 'st' ? (
+            <div style={{ transform: 'scale(0.25)', transformOrigin: 'top center', width: 1080, height: 1920, marginBottom: -(1920 * 0.75) }}>
+              {renderCard()}
+            </div>
+          ) : renderCard()}
         </div>
       </div>
 
