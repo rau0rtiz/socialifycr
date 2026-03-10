@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { AppointmentInput, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useClientProducts } from '@/hooks/use-client-products';
+import { useClientSetters } from '@/hooks/use-client-setters';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { X, Plus, ChevronLeft, ChevronRight, User, Target, Settings, Megaphone, Package } from 'lucide-react';
