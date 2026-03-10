@@ -40,7 +40,6 @@ const managementMenuItems = [
   { title: 'Historial', url: '/historial', icon: History },
   { title: 'Image DB', url: '/image-db', icon: Image },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
-  { title: 'Email Marketing', url: '/email-marketing', icon: Mail },
 ];
 
 export const Sidebar = () => {
