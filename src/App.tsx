@@ -93,6 +93,13 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
+                  <Route path="/accesos" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <Accesos />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/image-db" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
