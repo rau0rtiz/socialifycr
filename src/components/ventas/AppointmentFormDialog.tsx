@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { AppointmentInput, SetterAppointment } from '@/hooks/use-setter-appointments';
+import { useClientProducts } from '@/hooks/use-client-products';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
-import { X, Plus, ChevronLeft, ChevronRight, User, Target, Settings, Megaphone } from 'lucide-react';
+import { X, Plus, ChevronLeft, ChevronRight, User, Target, Settings, Megaphone, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface AppointmentFormDialogProps {
   open: boolean;
@@ -61,14 +63,18 @@ export const AppointmentFormDialog = ({
   const [setterName, setSetterName] = useState('');
   const [showNewSetter, setShowNewSetter] = useState(false);
   const [newSetterName, setNewSetterName] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [newProductName, setNewProductName] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
   const [status, setStatus] = useState('scheduled');
   const [source, setSource] = useState('ads');
   const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
   const [notes, setNotes] = useState('');
 
+  const { products, addProduct } = useClientProducts(clientId || null);
+
   const needsAdStep = source === 'ads' && hasAdAccount;
-  // Steps: 0=Lead, 1=Details, 2=Status/Source, 3=Ad (conditional)
   const totalSteps = needsAdStep ? 4 : 3;
   const lastStep = totalSteps - 1;
 
@@ -84,10 +90,13 @@ export const AppointmentFormDialog = ({
     setStep(0);
     setShowNewSetter(false);
     setNewSetterName('');
+    setShowNewProduct(false);
+    setNewProductName('');
     if (editing) {
       setLeadName(editing.lead_name);
       setLeadGoal((editing as any).lead_goal || '');
       setSetterName(editing.setter_name || '');
+      setSelectedProduct((editing as any).product || '');
       setCurrency(editing.currency as 'CRC' | 'USD');
       setStatus(editing.status);
       setSource(editing.source || 'ads');
@@ -109,6 +118,7 @@ export const AppointmentFormDialog = ({
       setLeadName('');
       setLeadGoal('');
       setSetterName('');
+      setSelectedProduct('');
       setCurrency('CRC');
       setStatus('scheduled');
       setSource('ads');
@@ -122,6 +132,19 @@ export const AppointmentFormDialog = ({
       setSetterName(newSetterName.trim());
       setShowNewSetter(false);
       setNewSetterName('');
+    }
+  };
+
+  const handleAddProduct = async () => {
+    if (!newProductName.trim()) return;
+    try {
+      const result = await addProduct.mutateAsync({ name: newProductName.trim() });
+      setSelectedProduct(result.name);
+      setShowNewProduct(false);
+      setNewProductName('');
+      toast.success('Producto creado');
+    } catch {
+      toast.error('Error creando producto');
     }
   };
 
@@ -150,6 +173,7 @@ export const AppointmentFormDialog = ({
       currency,
       status: status as any,
       source,
+      product: selectedProduct || undefined,
       ad_campaign_id: selectedAd?.campaignId || undefined,
       ad_campaign_name: selectedAd?.campaignName || undefined,
       ad_id: selectedAd?.id || undefined,
@@ -167,10 +191,16 @@ export const AppointmentFormDialog = ({
 
   const stepDescriptions = [
     'Ingresa el nombre del cliente potencial',
-    'Meta del cliente y vendedor asignado',
+    'Producto de interés, meta y vendedor',
     'Define el estado actual y origen del lead',
     ...(needsAdStep ? ['Selecciona el anuncio que originó este lead'] : []),
   ];
+
+  // Build product options including current selection if not in list
+  const productNames = products.map(p => p.name);
+  const allProductOptions = selectedProduct && !productNames.includes(selectedProduct)
+    ? [selectedProduct, ...productNames]
+    : productNames;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -205,7 +235,7 @@ export const AppointmentFormDialog = ({
           </div>
         </div>
 
-        {/* Content area with fixed height for carousel feel */}
+        {/* Content area */}
         <div className="px-6 overflow-y-auto" style={{ minHeight: '200px', maxHeight: '50vh' }}>
           {/* Step 0: Lead name */}
           {step === 0 && (
@@ -226,9 +256,52 @@ export const AppointmentFormDialog = ({
             </div>
           )}
 
-          {/* Step 1: Goal + Setter */}
+          {/* Step 1: Product + Goal + Setter */}
           {step === 1 && (
             <div className="space-y-4 py-4">
+              {/* Product selector */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5" />
+                  Producto de Interés
+                </Label>
+                {showNewProduct ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nombre del producto"
+                      value={newProductName}
+                      onChange={e => setNewProductName(e.target.value)}
+                      className="h-10 text-sm flex-1"
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }}
+                    />
+                    <Button size="sm" className="h-10 text-xs" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>
+                      {addProduct.isPending ? '...' : 'OK'}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewProduct(false)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Select value={selectedProduct || '_none'} onValueChange={v => setSelectedProduct(v === '_none' ? '' : v)}>
+                      <SelectTrigger className="h-10 text-sm flex-1">
+                        <SelectValue placeholder="Sin producto" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none" className="text-xs">Sin producto</SelectItem>
+                        {allProductOptions.map(name => (
+                          <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewProduct(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
+                    </Button>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Meta del Cliente</Label>
                 <Input
@@ -236,7 +309,6 @@ export const AppointmentFormDialog = ({
                   value={leadGoal}
                   onChange={e => setLeadGoal(e.target.value)}
                   className="h-10 text-sm"
-                  autoFocus
                 />
               </div>
 
@@ -267,7 +339,6 @@ export const AppointmentFormDialog = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
-                        {/* Show current setter if not in existing list */}
                         {setterName && !existingSetters.includes(setterName) && (
                           <SelectItem key={setterName} value={setterName} className="text-xs">{setterName}</SelectItem>
                         )}
@@ -338,7 +409,7 @@ export const AppointmentFormDialog = ({
           )}
         </div>
 
-        {/* Footer: centered navigation */}
+        {/* Footer */}
         <div className="px-6 pb-6 pt-3 border-t border-border">
           <div className="flex items-center justify-center gap-3">
             {step === 0 ? (
