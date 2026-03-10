@@ -330,7 +330,7 @@ export default function GeneradorPauta() {
     const card = cardRef.current as HTMLElement | null;
     if (!card) return;
 
-    // Temporarily remove preview scaling from the wrapper to ensure pixel-perfect capture
+    // Remove preview scaling from wrapper
     const scaleWrapper = card.parentElement;
     const origTransform = scaleWrapper?.style.transform || '';
     if (scaleWrapper) scaleWrapper.style.transform = 'none';
@@ -338,27 +338,36 @@ export default function GeneradorPauta() {
     const noExport = card.querySelectorAll(".no-export");
     noExport.forEach((el) => ((el as HTMLElement).style.visibility = "hidden"));
 
+    const restore = () => {
+      noExport.forEach((el) => ((el as HTMLElement).style.visibility = ""));
+      if (scaleWrapper) scaleWrapper.style.transform = origTransform;
+    };
+
     const script = document.createElement("script");
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
     const run = () => {
+      // Capture at high scale for quality, then resize to 1024x1024
+      const captureScale = Math.max(2, 1024 / card.offsetWidth, 1024 / card.offsetHeight);
       (window as any).html2canvas(card, {
-        scale: 2,
+        scale: captureScale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
-        windowWidth: card.scrollWidth,
-        windowHeight: card.scrollHeight,
-      }).then((c: HTMLCanvasElement) => {
-        noExport.forEach((el) => ((el as HTMLElement).style.visibility = ""));
-        if (scaleWrapper) scaleWrapper.style.transform = origTransform;
+        width: card.offsetWidth,
+        height: card.offsetHeight,
+      }).then((captured: HTMLCanvasElement) => {
+        restore();
+        // Resize to 1024x1024
+        const output = document.createElement("canvas");
+        output.width = 1024;
+        output.height = 1024;
+        const ctx = output.getContext("2d")!;
+        ctx.drawImage(captured, 0, 0, 1024, 1024);
         const a = document.createElement("a");
         a.download = `petshop2go-${tpl}-${fmt}.png`;
-        a.href = c.toDataURL("image/png");
+        a.href = output.toDataURL("image/png");
         a.click();
-      }).catch(() => {
-        noExport.forEach((el) => ((el as HTMLElement).style.visibility = ""));
-        if (scaleWrapper) scaleWrapper.style.transform = origTransform;
-      });
+      }).catch(() => restore());
     };
     if (!(window as any).html2canvas) { script.onload = run; document.head.appendChild(script); }
     else run();
