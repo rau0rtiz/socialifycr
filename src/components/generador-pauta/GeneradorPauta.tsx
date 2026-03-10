@@ -346,26 +346,24 @@ export default function GeneradorPauta() {
     const script = document.createElement("script");
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
     const run = () => {
-      // Capture at high scale for quality, then resize to 1024x1024
-      const captureScale = Math.max(2, 1024 / card.offsetWidth, 1024 / card.offsetHeight);
+      // Capture at 1024px wide, keeping aspect ratio
+      const w = card.offsetWidth;
+      const h = card.offsetHeight;
+      const outputW = 1024;
+      const outputH = Math.round((h / w) * 1024);
+      const captureScale = outputW / w;
       (window as any).html2canvas(card, {
         scale: captureScale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
-        width: card.offsetWidth,
-        height: card.offsetHeight,
+        width: w,
+        height: h,
       }).then((captured: HTMLCanvasElement) => {
         restore();
-        // Resize to 1024x1024
-        const output = document.createElement("canvas");
-        output.width = 1024;
-        output.height = 1024;
-        const ctx = output.getContext("2d")!;
-        ctx.drawImage(captured, 0, 0, 1024, 1024);
         const a = document.createElement("a");
         a.download = `petshop2go-${tpl}-${fmt}.png`;
-        a.href = output.toDataURL("image/png");
+        a.href = captured.toDataURL("image/png");
         a.click();
       }).catch(() => restore());
     };
