@@ -350,10 +350,10 @@ export default function GeneradorPauta() {
   // ── Sidebar + Preview use design system tokens ──
 
   return (
-    <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <div className="flex flex-col lg:flex-row min-h-[500px] max-h-[80vh] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
 
       {/* ── SIDEBAR ── */}
-      <div className="w-[300px] flex-shrink-0 border-r border-border bg-card overflow-y-auto p-4" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      <div className="w-full lg:w-[300px] flex-shrink-0 border-b lg:border-b-0 lg:border-r border-border bg-card overflow-y-auto p-4 max-h-[40vh] lg:max-h-none" style={{ fontFamily: "'Montserrat', sans-serif" }}>
 
         {/* Imagen */}
         <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">🖼 Imagen del Producto</div>
@@ -528,7 +528,7 @@ export default function GeneradorPauta() {
       </div>
 
       {/* ── PREVIEW ── */}
-      <div className="flex-1 flex flex-col items-center p-6 gap-4 overflow-y-auto bg-muted/40">
+      <div className="flex-1 flex flex-col items-center p-4 lg:p-6 gap-4 overflow-y-auto overflow-x-auto bg-muted/40 min-h-[300px]">
         {/* Barra de formatos + descarga */}
         <div className="flex gap-1.5 w-full max-w-[560px] items-center flex-wrap">
           {FORMATS.map((f) => (
@@ -549,8 +549,9 @@ export default function GeneradorPauta() {
           </button>
         </div>
 
-        {/* Tarjeta */}
-        <div className="flex items-center justify-center flex-1 w-full">
+        {/* Tarjeta — scale down on smaller viewports */}
+        <div className="flex items-center justify-center flex-1 w-full" style={{ transform: 'scale(var(--gp-scale, 1))', transformOrigin: 'top center' }}>
+          <style>{`@media (max-width: 768px) { :root { --gp-scale: 0.6; } } @media (min-width: 769px) and (max-width: 1100px) { :root { --gp-scale: 0.8; } }`}</style>
           {renderCard()}
         </div>
       </div>
