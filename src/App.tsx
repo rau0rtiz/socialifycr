@@ -104,13 +104,6 @@ const App = () => (
                     </ProtectedRoute>
                   } />
                   <Route path="/email-marketing" element={<ProtectedRoute><EmailMarketing /></ProtectedRoute>} />
-                  <Route path="/generador-pauta" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <GeneradorPautaPage />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
                   <Route path="/image-db" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
