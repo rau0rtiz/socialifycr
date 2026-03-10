@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useBrand } from "@/contexts/BrandContext";
+import { supabase } from "@/integrations/supabase/client";
 
 // ── Fuentes (cargadas via <link> en index.html de Lovable) ──────────────────
 // Agregar en el <head> de index.html:
@@ -56,7 +58,7 @@ const CARD_CSS = `
 .gp-diag::before{content:'';position:absolute;top:0;left:0;width:48%;height:100%;background:linear-gradient(160deg,rgba(255,107,26,0.07) 0%,transparent 100%);clip-path:polygon(0 0,100% 0,70% 100%,0 100%);}
 .gp-ci{position:relative;z-index:2;width:100%;height:100%;display:flex;flex-direction:column;}
 .gp-tb{display:flex;align-items:center;justify-content:flex-end;padding:13px 15px 0;}
-.gp-logo{width:34px;height:34px;border-radius:8px;background:rgba(0,0,0,0.05);object-fit:contain;padding:3px;border:1px solid rgba(0,0,0,0.08);}
+.gp-logo{max-height:40px;max-width:80px;object-fit:contain;pointer-events:none;}
 .gp-pn{letter-spacing:1.5px;line-height:0.92;padding:8px 15px 0;}
 .bg-orange .gp-pn,.bg-split .gp-pn{color:#1a0d00;}.bg-teal .gp-pn{color:#001a17;}.bg-night .gp-pn{color:#1a0505;}
 .gp-psub{padding:4px 15px 0;font-size:0.75rem;font-weight:600;letter-spacing:0.3px;line-height:1.3;}
@@ -143,6 +145,9 @@ const CARD_CSS = `
 `;
 
 export default function GeneradorPauta() {
+  const { selectedClient } = useBrand();
+  const clientLogoUrl = selectedClient?.logo_url || null;
+
   const [tpl, setTpl] = useState("orange");
   const [fmt, setFmt] = useState("sq");
   const [font, setFont] = useState("Bebas Neue");
@@ -150,7 +155,10 @@ export default function GeneradorPauta() {
   const [imgScale, setImgScale] = useState(1);
   const [imgX, setImgX] = useState(0);
   const [imgY, setImgY] = useState(0);
-  const [logoSrc, setLogoSrc] = useState(LOGO_DEFAULT);
+  const [logoSrc, setLogoSrc] = useState<string | null>(null);
+  const [logoScale, setLogoScale] = useState(1);
+  const [logoX, setLogoX] = useState(0);
+  const [logoY, setLogoY] = useState(0);
   const [tab, setTab] = useState("upload");
   const [imgUrl, setImgUrl] = useState("");
   const [previewName, setPreviewName] = useState("");
@@ -166,7 +174,14 @@ export default function GeneradorPauta() {
   const [dragging, setDragging] = useState(false);
   const cardRef = useRef(null);
 
-  // Inyectar CSS una vez
+  // Load client logo from DB
+  useEffect(() => {
+    if (clientLogoUrl) {
+      setLogoSrc(clientLogoUrl);
+    } else {
+      setLogoSrc(LOGO_DEFAULT);
+    }
+  }, [clientLogoUrl]);
   useEffect(() => {
     if (!document.getElementById("gp-style")) {
       const style = document.createElement("style");
@@ -188,9 +203,27 @@ export default function GeneradorPauta() {
     readFile(file, (src, fname) => { setImgSrc(src); setPreviewName(fname); });
   };
 
-  const handleLogoFile = (file) => {
+  const handleLogoFile = async (file: File | undefined) => {
     if (!file?.type.startsWith("image/")) return;
-    readFile(file, (src) => setLogoSrc(src));
+    // Upload to storage and save URL to client
+    if (selectedClient) {
+      const ext = file.name.split('.').pop() || 'png';
+      const path = `${selectedClient.id}/logo.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from('content-images')
+        .upload(path, file, { upsert: true });
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage
+          .from('content-images')
+          .getPublicUrl(path);
+        const publicUrl = urlData.publicUrl;
+        setLogoSrc(publicUrl);
+        await supabase.from('clients').update({ logo_url: publicUrl }).eq('id', selectedClient.id);
+        return;
+      }
+    }
+    // Fallback: use data URL
+    readFile(file, (src: string) => setLogoSrc(src));
   };
 
   const applyUrl = () => {
@@ -230,9 +263,12 @@ export default function GeneradorPauta() {
     </div>
   );
 
-  const LogoCorner = () => (
-    <img className="gp-logo" src={logoSrc} alt="logo" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
-  );
+  const logoTransform = `translate(${logoX}px,${logoY}px) scale(${logoScale})`;
+
+  const LogoCorner = () =>
+    logoSrc ? (
+      <img className="gp-logo" src={logoSrc} alt="logo" style={{ transform: logoTransform, transformOrigin: "center" }} onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+    ) : null;
 
   const renderCard = () => {
     if (fmt === "st") {
@@ -544,16 +580,35 @@ export default function GeneradorPauta() {
         <div className="h-px bg-border my-3.5" />
 
         {/* Logo */}
-        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">🏷 Logo de la Tienda</div>
+        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">🏷 Logo</div>
         <div className="bg-muted/50 border border-border rounded-[10px] p-3 mb-2.5">
           <div className="relative border-2 border-dashed border-primary/30 rounded-lg p-2.5 text-center cursor-pointer bg-primary/5">
-            <input type="file" accept="image/*" onChange={(e) => handleLogoFile(e.target.files?.[0])} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-            <div className="text-[0.65rem] font-bold text-primary">📁 Subir logo</div>
+            <input type="file" accept="image/png,image/webp,image/svg+xml" onChange={(e) => handleLogoFile(e.target.files?.[0])} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+            <div className="text-[0.65rem] font-bold text-primary">📁 Subir logo (PNG sin fondo)</div>
           </div>
-          {logoSrc !== LOGO_DEFAULT && (
-            <button onClick={() => setLogoSrc(LOGO_DEFAULT)} className="mt-1.5 text-[0.6rem] bg-transparent border-none text-destructive/50 cursor-pointer hover:text-destructive">✕ Restaurar logo original</button>
+          {logoSrc && (
+            <div className="mt-2 flex items-center gap-2">
+              <img src={logoSrc} alt="logo" className="h-8 object-contain" style={{ background: 'repeating-conic-gradient(#0001 0% 25%, transparent 0% 50%) 50%/8px 8px' }} />
+              <span className="text-[0.6rem] text-muted-foreground flex-1">Logo activo</span>
+              {logoSrc !== LOGO_DEFAULT && logoSrc !== clientLogoUrl && (
+                <button onClick={() => setLogoSrc(clientLogoUrl || LOGO_DEFAULT)} className="text-[0.6rem] bg-transparent border-none text-destructive/50 cursor-pointer hover:text-destructive">✕</button>
+              )}
+            </div>
           )}
         </div>
+        {/* Logo scale + position */}
+        {[
+          { label: "🔍 ESCALA", val: Math.round(logoScale * 100) + "%", min: 30, max: 300, value: Math.round(logoScale * 100), onChange: (v: number) => setLogoScale(v / 100) },
+          { label: "↔ X", val: logoX, min: -60, max: 60, value: logoX, onChange: setLogoX },
+          { label: "↕ Y", val: logoY, min: -60, max: 60, value: logoY, onChange: setLogoY },
+        ].map(({ label, val, min, max, value, onChange }) => (
+          <div key={"logo-" + label} className="flex items-center gap-2 mb-2">
+            <label className="text-[0.68rem] font-bold text-muted-foreground whitespace-nowrap">{label}</label>
+            <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(+e.target.value)}
+              className="flex-1 accent-primary" />
+            <span className="text-[0.68rem] font-extrabold text-primary min-w-[32px] text-right">{val}</span>
+          </div>
+        ))}
       </div>
 
       {/* ── PREVIEW ── */}
