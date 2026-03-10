@@ -21,6 +21,7 @@ export interface ClientFeatureFlags {
   contenido_section: boolean;
   reportes_section: boolean;
   email_marketing_section: boolean;
+  generador_pauta: boolean;
 }
 
 const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
