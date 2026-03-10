@@ -463,11 +463,70 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     }
   };
 
+  const handleConnectTikTok = async () => {
+    setConnecting('tiktok');
+    
+    try {
+      const redirectUri = `${window.location.origin}/oauth/tiktok/callback`;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tiktok-oauth?action=authorize`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ redirectUri, clientId }),
+        }
+      );
+      
+      const data = await response.json();
+
+      if (data.error) {
+        toast({ title: 'Error', description: data.error, variant: 'destructive' });
+        setConnecting(null);
+        return;
+      }
+
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const popup = window.open(
+        data.authUrl,
+        'tiktok-oauth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!popup) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      }
+
+      const checkPopup = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkPopup);
+          setConnecting(null);
+        }
+      }, 1000);
+
+    } catch (err) {
+      console.error('Error initiating TikTok OAuth:', err);
+      toast({ title: 'Error', description: 'Error al iniciar la conexión con TikTok', variant: 'destructive' });
+      setConnecting(null);
+    }
+  };
+
   const handleConnect = (platform: string) => {
     if (platform === 'Meta (Facebook/Instagram)') {
       handleConnectMeta();
     } else if (platform === 'YouTube') {
       handleConnectYouTube();
+    } else if (platform === 'TikTok') {
+      handleConnectTikTok();
     } else {
       toast({
         title: 'Próximamente',

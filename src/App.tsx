@@ -120,6 +120,7 @@ const App = () => (
                   <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
                   <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                   <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
+                  <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
