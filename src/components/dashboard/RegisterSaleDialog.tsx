@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, X, Package } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone } from 'lucide-react';
 
 export interface SalePrefill {
   customer_name?: string;
@@ -76,7 +77,11 @@ export const RegisterSaleDialog = ({
   const { products, addProduct } = useClientProducts(clientId || null);
   const productNames = products.map(p => p.name);
 
-  const needsAdStep = source === 'ad' && hasAdAccount;
+  const isEditing = !!editingSale;
+  const isPrefilled = !!prefill && !editingSale;
+
+  // For prefilled mode, skip ad step since ad is already linked
+  const needsAdStep = !isPrefilled && source === 'ad' && hasAdAccount;
   const maxStep = needsAdStep ? 2 : 1;
 
   const { data: allAdsResult, isLoading: adsLoading } = useAllAds(
@@ -86,7 +91,6 @@ export const RegisterSaleDialog = ({
   const allAds = allAdsResult?.ads || [];
   const adsCurrency = allAdsResult?.currency || 'USD';
 
-  // Populate form when editing, prefilling, or reset
   useEffect(() => {
     if (!open) return;
     setStep(1);
@@ -165,23 +169,27 @@ export const RegisterSaleDialog = ({
     }
   };
 
-  const validateStep1 = () => {
-    if (!amount || !source) {
-      toast.error('Monto y fuente son requeridos');
+  const validateForm = () => {
+    if (!amount) {
+      toast.error('El monto es requerido');
+      return false;
+    }
+    if (!isPrefilled && !source) {
+      toast.error('La fuente es requerida');
       return false;
     }
     return true;
   };
 
   const handleNext = () => {
-    if (step === 1 && !validateStep1()) return;
+    if (step === 1 && !validateForm()) return;
     setStep((s) => Math.min(s + 1, maxStep));
   };
 
   const handleBack = () => setStep((s) => Math.max(s - 1, 1));
 
   const handleSubmit = () => {
-    if (step === 1 && !validateStep1()) return;
+    if (!validateForm()) return;
 
     const sale: SaleInput = {
       sale_date: saleDate,
@@ -205,14 +213,13 @@ export const RegisterSaleDialog = ({
     onSubmit(sale, prefill?.appointmentId);
   };
 
-  const isEditing = !!editingSale;
   const isLastStep = step >= maxStep;
-  const isPrefilled = !!prefill && !editingSale;
 
-  // Build product options
   const allProductOptions = product && !productNames.includes(product)
     ? [product, ...productNames]
     : productNames;
+
+  const sourceLabel = SOURCE_OPTIONS.find(o => o.value === source)?.label || source;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -223,7 +230,7 @@ export const RegisterSaleDialog = ({
           </DialogTitle>
           <DialogDescription>
             {isPrefilled && prefill?.customer_name
-              ? `Convierte el lead de ${prefill.customer_name} en una venta`
+              ? `Completa los datos faltantes para cerrar la venta`
               : maxStep > 1 ? `Paso ${step} de ${maxStep}` : (isEditing ? 'Modifica los datos de la venta' : 'Ingresa los datos de la nueva venta')}
           </DialogDescription>
           {maxStep > 1 && (
@@ -238,9 +245,36 @@ export const RegisterSaleDialog = ({
           )}
         </DialogHeader>
 
+        {/* Prefilled summary badges — show what's already known from the lead */}
+        {isPrefilled && step === 1 && (
+          <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+            {prefill?.customer_name && (
+              <Badge variant="secondary" className="gap-1.5 text-xs">
+                <User className="h-3 w-3" /> {prefill.customer_name}
+              </Badge>
+            )}
+            {prefill?.product && (
+              <Badge variant="secondary" className="gap-1.5 text-xs">
+                <Package className="h-3 w-3" /> {prefill.product}
+              </Badge>
+            )}
+            {source && (
+              <Badge variant="secondary" className="gap-1.5 text-xs">
+                <Tag className="h-3 w-3" /> {sourceLabel}
+              </Badge>
+            )}
+            {selectedAd && (
+              <Badge variant="secondary" className="gap-1.5 text-xs">
+                <Megaphone className="h-3 w-3" /> {selectedAd.name}
+              </Badge>
+            )}
+          </div>
+        )}
+
         {/* Step 1: Info */}
         {step === 1 && (
           <div className="space-y-4">
+            {/* Amount + Currency — always shown */}
             <div className="flex gap-2">
               <div className="flex-1">
                 <Label>Monto *</Label>
@@ -258,23 +292,28 @@ export const RegisterSaleDialog = ({
               </div>
             </div>
 
+            {/* Date — always shown */}
             <div>
               <Label>Fecha</Label>
               <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} />
             </div>
 
-            <div>
-              <Label>Fuente *</Label>
-              <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
-                <SelectTrigger><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
-                <SelectContent>
-                  {SOURCE_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Source — hide when prefilled (already shown in badges) */}
+            {!isPrefilled && (
+              <div>
+                <Label>Fuente *</Label>
+                <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
+                  <SelectTrigger><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
+            {/* Status — only when editing */}
             {isEditing && (
               <div>
                 <Label>Estado</Label>
@@ -289,6 +328,7 @@ export const RegisterSaleDialog = ({
               </div>
             )}
 
+            {/* Platform — always shown */}
             <div>
               <Label>Plataforma del mensaje</Label>
               <Select value={messagePlatform} onValueChange={setMessagePlatform}>
@@ -301,51 +341,57 @@ export const RegisterSaleDialog = ({
               </Select>
             </div>
 
-            {/* Product with create-new */}
-            <div>
-              <Label className="flex items-center gap-1.5">
-                <Package className="h-3.5 w-3.5" /> Producto / Servicio
-              </Label>
-              {showNewProduct ? (
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    placeholder="Nombre del producto"
-                    value={newProductName}
-                    onChange={e => setNewProductName(e.target.value)}
-                    className="flex-1"
-                    autoFocus
-                    onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }}
-                  />
-                  <Button size="sm" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>
-                    {addProduct.isPending ? '...' : 'OK'}
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setShowNewProduct(false)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex gap-2 mt-1">
-                  <Select value={product || '_none'} onValueChange={v => setProduct(v === '_none' ? '' : v)}>
-                    <SelectTrigger className="flex-1"><SelectValue placeholder="Opcional" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Sin producto</SelectItem>
-                      {allProductOptions.map(name => (
-                        <SelectItem key={name} value={name}>{name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" size="sm" onClick={() => setShowNewProduct(true)}>
-                    <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
-                  </Button>
-                </div>
-              )}
-            </div>
+            {/* Product — hide when prefilled with product */}
+            {!(isPrefilled && prefill?.product) && (
+              <div>
+                <Label className="flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5" /> Producto / Servicio
+                </Label>
+                {showNewProduct ? (
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      placeholder="Nombre del producto"
+                      value={newProductName}
+                      onChange={e => setNewProductName(e.target.value)}
+                      className="flex-1"
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }}
+                    />
+                    <Button size="sm" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>
+                      {addProduct.isPending ? '...' : 'OK'}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setShowNewProduct(false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 mt-1">
+                    <Select value={product || '_none'} onValueChange={v => setProduct(v === '_none' ? '' : v)}>
+                      <SelectTrigger className="flex-1"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">Sin producto</SelectItem>
+                        {allProductOptions.map(name => (
+                          <SelectItem key={name} value={name}>{name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" onClick={() => setShowNewProduct(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
 
-            <div>
-              <Label>Cliente</Label>
-              <Input placeholder="Opcional" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
-            </div>
+            {/* Customer name — hide when prefilled with name */}
+            {!(isPrefilled && prefill?.customer_name) && (
+              <div>
+                <Label>Cliente</Label>
+                <Input placeholder="Opcional" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+              </div>
+            )}
 
+            {/* Notes — always shown */}
             <div>
               <Label>Notas</Label>
               <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
@@ -353,7 +399,7 @@ export const RegisterSaleDialog = ({
           </div>
         )}
 
-        {/* Step 2: Ad selection */}
+        {/* Step 2: Ad selection (only for non-prefilled ad source) */}
         {step === 2 && needsAdStep && (
           <div className="space-y-3">
             <div>
