@@ -8,6 +8,7 @@ import { useVideoIdeas } from '@/hooks/use-video-ideas';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useSocialFollowers } from '@/hooks/use-social-followers';
+import { useClientFeatures } from '@/hooks/use-client-features';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { ContentCalendar } from '@/components/dashboard/ContentCalendar';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
