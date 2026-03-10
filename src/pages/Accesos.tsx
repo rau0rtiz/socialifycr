@@ -12,15 +12,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Shield, Users, UserPlus, Trash2, Search, Mail } from 'lucide-react';
+import { Shield, Users, UserPlus, Trash2, Search, Mail, Circle } from 'lucide-react';
 import { useUserRole, type SystemRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface SystemUser {
   id: string;
   user_id: string;
   role: SystemRole;
   created_at: string;
+  last_sign_in_at?: string | null;
   profile?: {
     full_name: string | null;
     email: string | null;
