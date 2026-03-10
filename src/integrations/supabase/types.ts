@@ -215,6 +215,7 @@ export type Database = {
           dashboard: boolean
           email_marketing_section: boolean
           funnel: boolean
+          generador_pauta: boolean
           id: string
           instagram_posts: boolean
           monthly_sales_report: boolean
@@ -238,6 +239,7 @@ export type Database = {
           dashboard?: boolean
           email_marketing_section?: boolean
           funnel?: boolean
+          generador_pauta?: boolean
           id?: string
           instagram_posts?: boolean
           monthly_sales_report?: boolean
@@ -261,6 +263,7 @@ export type Database = {
           dashboard?: boolean
           email_marketing_section?: boolean
           funnel?: boolean
+          generador_pauta?: boolean
           id?: string
           instagram_posts?: boolean
           monthly_sales_report?: boolean
