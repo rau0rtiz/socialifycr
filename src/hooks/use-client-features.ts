@@ -40,6 +40,7 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
   ventas_section: false,
   contenido_section: false,
   reportes_section: false,
+  email_marketing_section: false,
 };
 
 // Navigation section flags — these control sidebar visibility
