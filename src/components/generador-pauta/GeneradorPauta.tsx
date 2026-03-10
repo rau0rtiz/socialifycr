@@ -326,6 +326,14 @@ export default function GeneradorPauta() {
   };
 
   // ── Descarga PNG ──
+  // Known pixel sizes per format
+  const FORMAT_SIZES: Record<string, { w: number; h: number }> = {
+    sq:  { w: 460, h: 460 },
+    v45: { w: 400, h: 500 },
+    st:  { w: 300, h: 533 },
+    bn:  { w: 540, h: 270 },
+  };
+
   const doDownload = () => {
     const card = cardRef.current as HTMLElement | null;
     if (!card) return;
@@ -346,19 +354,16 @@ export default function GeneradorPauta() {
     const script = document.createElement("script");
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
     const run = () => {
-      // Capture at 1024px wide, keeping aspect ratio
-      const w = card.offsetWidth;
-      const h = card.offsetHeight;
-      const outputW = 1024;
-      const outputH = Math.round((h / w) * 1024);
-      const captureScale = outputW / w;
+      // Use known CSS sizes for the current format
+      const size = FORMAT_SIZES[fmt] || { w: card.offsetWidth, h: card.offsetHeight };
+      const captureScale = 1024 / size.w;
       (window as any).html2canvas(card, {
         scale: captureScale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
-        width: w,
-        height: h,
+        width: size.w,
+        height: size.h,
       }).then((captured: HTMLCanvasElement) => {
         restore();
         const a = document.createElement("a");
