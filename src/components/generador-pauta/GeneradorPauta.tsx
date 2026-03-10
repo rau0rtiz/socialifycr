@@ -350,10 +350,10 @@ export default function GeneradorPauta() {
   // ── Sidebar + Preview use design system tokens ──
 
   return (
-    <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <div className="flex flex-col lg:flex-row min-h-[500px] max-h-[80vh] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
 
       {/* ── SIDEBAR ── */}
-      <div className="w-[300px] flex-shrink-0 border-r border-border bg-card overflow-y-auto p-4" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      <div className="w-full lg:w-[300px] flex-shrink-0 border-b lg:border-b-0 lg:border-r border-border bg-card overflow-y-auto p-4 max-h-[40vh] lg:max-h-none" style={{ fontFamily: "'Montserrat', sans-serif" }}>
 
         {/* Imagen */}
         <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">🖼 Imagen del Producto</div>

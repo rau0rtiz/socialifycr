@@ -310,9 +310,10 @@ const Contenido = () => {
         </div>
       )}
 
-      {/* Generador de Pauta */}
+      {/* Generador de Estáticos */}
       {(isAgency || flags.generador_pauta) && selectedClient && (
         <div className="mb-6">
+          <h2 className="text-lg font-semibold text-foreground mb-3">Generador de Estáticos</h2>
           <Suspense fallback={
             <div className="flex items-center justify-center h-96">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
