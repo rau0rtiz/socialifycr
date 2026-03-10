@@ -223,7 +223,7 @@ export default function GeneradorPauta() {
       <div className="gp-noimgph"><span style={{ fontSize: "2rem" }}>📦</span><span>Sin imagen</span></div>
     );
 
-  const PriceBadge = ({ big }) => (
+  const PriceBadge = ({ big }: { big?: boolean }) => (
     <div className="gp-price" style={big ? { width: "80%", flexDirection: "row", justifyContent: "center", gap: 8, padding: "8px 14px", borderRadius: 12 } : {}}>
       <span className="gp-pfrom">DESDE</span>
       <span className="gp-pamt" style={{ ...fontStyle, fontSize: big ? "2rem" : undefined }}>{pAmt}</span>
