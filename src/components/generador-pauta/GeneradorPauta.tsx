@@ -364,9 +364,9 @@ export default function GeneradorPauta() {
   // ── Descarga PNG ──
   // CSS pixel sizes (for capture) and final export sizes
   const FORMAT_SIZES: Record<string, { w: number; h: number }> = {
-    sq:  { w: 460, h: 460 },
-    v45: { w: 400, h: 500 },
-    st:  { w: 300, h: 533 },
+    sq:  { w: 480, h: 480 },
+    v45: { w: 480, h: 600 },
+    st:  { w: 270, h: 480 },
     bn:  { w: 540, h: 270 },
   };
   const EXPORT_SIZES: Record<string, { w: number; h: number }> = {
