@@ -11,6 +11,7 @@ import {
   Image,
   Eye,
   KeyRound,
+  Mail,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
