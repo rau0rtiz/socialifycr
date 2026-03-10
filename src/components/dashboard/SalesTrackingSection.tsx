@@ -84,7 +84,29 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     }
   }, [showSaleDialog, salePrefill]);
 
-  const { sales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
+  const { sales: allSales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
+
+  // Extract unique setters and products for filters
+  const uniqueSetters = useMemo(() => {
+    const names = new Set<string>();
+    allSales.forEach(s => { if (s.customer_name) names.add(s.customer_name); });
+    return Array.from(names).sort();
+  }, [allSales]);
+
+  const uniqueProducts = useMemo(() => {
+    const names = new Set<string>();
+    allSales.forEach(s => { if (s.product) names.add(s.product); });
+    return Array.from(names).sort();
+  }, [allSales]);
+
+  // Apply filters
+  const sales = useMemo(() => {
+    return allSales.filter(s => {
+      if (filterSetter !== 'all' && s.customer_name !== filterSetter) return false;
+      if (filterProduct !== 'all' && s.product !== filterProduct) return false;
+      return true;
+    });
+  }, [allSales, filterSetter, filterProduct]);
 
   const handleAddSale = (sale: any, appointmentId?: string) => {
     if (editingSale) {
