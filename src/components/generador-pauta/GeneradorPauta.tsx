@@ -245,9 +245,12 @@ export default function GeneradorPauta() {
     </div>
   );
 
-  const LogoCorner = () => (
-    <img className="gp-logo" src={logoSrc} alt="logo" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
-  );
+  const logoTransform = `translate(${logoX}px,${logoY}px) scale(${logoScale})`;
+
+  const LogoCorner = () =>
+    logoSrc ? (
+      <img className="gp-logo" src={logoSrc} alt="logo" style={{ transform: logoTransform, transformOrigin: "center" }} onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+    ) : null;
 
   const renderCard = () => {
     if (fmt === "st") {
