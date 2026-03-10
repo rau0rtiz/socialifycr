@@ -205,21 +205,10 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
                         <p className="text-[10px] text-muted-foreground italic">{apt.notes}</p>
                       )}
 
-                      {/* Convert to sale button — prominent, below lead info */}
-                      {canConvertToSale && onConvertToSale && (
-                        <Button
-                          size="sm"
-                          className="mt-1 h-8 text-xs px-4 bg-emerald-600 hover:bg-emerald-700 text-white"
-                          onClick={() => onConvertToSale(apt)}
-                        >
-                          <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                          Registrar Venta
-                        </Button>
-                      )}
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
+                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                       {/* Quick status change */}
                       <Select
                         value={apt.status}
