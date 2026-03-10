@@ -203,9 +203,27 @@ export default function GeneradorPauta() {
     readFile(file, (src, fname) => { setImgSrc(src); setPreviewName(fname); });
   };
 
-  const handleLogoFile = (file) => {
+  const handleLogoFile = async (file: File | undefined) => {
     if (!file?.type.startsWith("image/")) return;
-    readFile(file, (src) => setLogoSrc(src));
+    // Upload to storage and save URL to client
+    if (selectedClient) {
+      const ext = file.name.split('.').pop() || 'png';
+      const path = `${selectedClient.id}/logo.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from('content-images')
+        .upload(path, file, { upsert: true });
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage
+          .from('content-images')
+          .getPublicUrl(path);
+        const publicUrl = urlData.publicUrl;
+        setLogoSrc(publicUrl);
+        await supabase.from('clients').update({ logo_url: publicUrl }).eq('id', selectedClient.id);
+        return;
+      }
+    }
+    // Fallback: use data URL
+    readFile(file, (src: string) => setLogoSrc(src));
   };
 
   const applyUrl = () => {
