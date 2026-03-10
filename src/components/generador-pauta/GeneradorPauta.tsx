@@ -286,7 +286,7 @@ export default function GeneradorPauta() {
               <div className="gp-pn" style={fontStyle}>{name}</div>
               {sub && <div className="gp-psub">{sub}</div>}
               <div className="gp-bot">
-                <PriceBadge />
+                <PriceBadge big={false} />
                 <div className="gp-pts">
                   {activePts.map((p, i) => (
                     <div key={i} className="gp-pt"><span className="ic">{p.e}</span><span>{p.t}</span></div>
