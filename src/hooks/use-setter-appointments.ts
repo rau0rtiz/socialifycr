@@ -138,6 +138,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
       if (input.sale_id !== undefined) updateData.sale_id = input.sale_id;
       if (input.notes !== undefined) updateData.notes = input.notes || null;
       if (input.source !== undefined) updateData.source = input.source;
+      if (input.product !== undefined) updateData.product = input.product || null;
 
       const { error } = await supabase
         .from('setter_appointments')
