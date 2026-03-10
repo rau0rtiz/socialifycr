@@ -213,6 +213,7 @@ export type Database = {
           content_grid: boolean
           created_at: string | null
           dashboard: boolean
+          email_marketing_section: boolean
           funnel: boolean
           id: string
           instagram_posts: boolean
@@ -235,6 +236,7 @@ export type Database = {
           content_grid?: boolean
           created_at?: string | null
           dashboard?: boolean
+          email_marketing_section?: boolean
           funnel?: boolean
           id?: string
           instagram_posts?: boolean
@@ -257,6 +259,7 @@ export type Database = {
           content_grid?: boolean
           created_at?: string | null
           dashboard?: boolean
+          email_marketing_section?: boolean
           funnel?: boolean
           id?: string
           instagram_posts?: boolean
