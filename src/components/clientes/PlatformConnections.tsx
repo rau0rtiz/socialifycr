@@ -479,6 +479,59 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     }
   };
 
+  const handleSaveTikTokConnection = async (
+    account: { openId: string; displayName: string },
+    accessToken: string,
+    refreshToken: string,
+    expiresIn: number,
+  ) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tiktok-oauth?action=save-connection`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            clientId,
+            openId: account.openId,
+            displayName: account.displayName,
+            accessToken,
+            refreshToken,
+            expiresIn,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.error) throw new Error(result.error);
+
+      await logAction({
+        action: 'platform.connect',
+        entityType: 'platform_connection',
+        entityName: `TikTok - ${account.displayName}`,
+        details: { platform: 'tiktok', display_name: account.displayName },
+      });
+
+      toast({
+        title: 'Conexión exitosa',
+        description: `Conectado a TikTok: ${account.displayName}`,
+      });
+
+      fetchConnections();
+    } catch (err) {
+      console.error('Error saving TikTok connection:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Error al guardar la conexión',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleConnectTikTok = async () => {
     setConnecting('tiktok');
     
