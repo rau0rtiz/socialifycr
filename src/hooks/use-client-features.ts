@@ -20,6 +20,7 @@ export interface ClientFeatureFlags {
   ventas_section: boolean;
   contenido_section: boolean;
   reportes_section: boolean;
+  email_marketing_section: boolean;
 }
 
 const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
