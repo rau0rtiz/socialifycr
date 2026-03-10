@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle } from 'lucide-react';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
-import { RegisterSaleDialog } from './RegisterSaleDialog';
+import { RegisterSaleDialog, SalePrefill } from './RegisterSaleDialog';
 import { LinkAdDialog } from './LinkAdDialog';
 import { CampaignInsights } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
