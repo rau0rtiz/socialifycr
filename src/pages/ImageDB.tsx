@@ -100,7 +100,10 @@ const ImageDBContent = () => {
       }
       
       const folder = selectedFolder || 'general';
-      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+      const sanitized = file.name
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove accents
+        .replace(/[^a-zA-Z0-9._-]/g, '_'); // only safe chars
+      const fileName = `${Date.now()}-${sanitized}`;
       const path = `imgdb/${folder}/${fileName}`;
 
       if (pin) {
