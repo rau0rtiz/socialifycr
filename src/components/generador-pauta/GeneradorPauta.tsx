@@ -387,16 +387,23 @@ export default function GeneradorPauta() {
     const card = cardRef.current as HTMLElement | null;
     if (!card) return;
 
-    const scaleWrapper = card.parentElement;
-    const origTransform = scaleWrapper?.style.transform || '';
-    if (scaleWrapper) scaleWrapper.style.transform = 'none';
+    // For story, parent chain: card -> scale(0.25) wrapper -> main scale wrapper
+    // For others: card -> main scale wrapper
+    const immediateParent = card.parentElement;
+    const origImmediateTransform = immediateParent?.style.transform || '';
+    const origImmediateMargin = (immediateParent as HTMLElement)?.style.marginBottom || '';
+    if (immediateParent) { immediateParent.style.transform = 'none'; immediateParent.style.marginBottom = '0'; }
+    const grandParent = immediateParent?.parentElement;
+    const origGrandTransform = grandParent?.style.transform || '';
+    if (grandParent) grandParent.style.transform = 'none';
 
     const noExport = card.querySelectorAll(".no-export");
     noExport.forEach((el) => ((el as HTMLElement).style.visibility = "hidden"));
 
     const restore = () => {
       noExport.forEach((el) => ((el as HTMLElement).style.visibility = ""));
-      if (scaleWrapper) scaleWrapper.style.transform = origTransform;
+      if (immediateParent) { immediateParent.style.transform = origImmediateTransform; (immediateParent as HTMLElement).style.marginBottom = origImmediateMargin; }
+      if (grandParent) grandParent.style.transform = origGrandTransform;
     };
 
     const script = document.createElement("script");
