@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, createContext, useContext } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,9 @@ import { cn } from '@/lib/utils';
 
 const CORRECT_PIN = '6780';
 
+// Context to pass PIN for unauthenticated access
+const PinContext = createContext<string | null>(null);
+
 const ImageDBContent = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,23 +26,23 @@ const ImageDBContent = () => {
   const [newFolder, setNewFolder] = useState('');
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const pin = useContext(PinContext);
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
   // Fetch all images from content-images bucket
   const { data: images, isLoading } = useQuery({
     queryKey: ['image-db-files'],
     queryFn: async () => {
-      // List all folders first
       const { data: folders } = await supabase.storage
         .from('content-images')
         .list('imgdb', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
 
       const allFiles: { name: string; folder: string; fullPath: string; url: string; created_at: string }[] = [];
 
-      // List root files
       if (folders) {
         for (const item of folders) {
           if (item.id) {
-            // It's a file
             const { data: urlData } = supabase.storage.from('content-images').getPublicUrl(`imgdb/${item.name}`);
             allFiles.push({
               name: item.name,
@@ -49,7 +52,6 @@ const ImageDBContent = () => {
               created_at: item.created_at || '',
             });
           } else {
-            // It's a folder - list its contents
             const { data: subFiles } = await supabase.storage
               .from('content-images')
               .list(`imgdb/${item.name}`, { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
@@ -76,10 +78,8 @@ const ImageDBContent = () => {
     },
   });
 
-  // Get unique folders
   const folders = [...new Set((images || []).map(img => img.folder).filter(Boolean))];
 
-  // Filter images
   const filteredImages = (images || []).filter(img => {
     const matchesSearch = !searchTerm || img.name.toLowerCase().includes(searchTerm.toLowerCase()) || img.folder.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFolder = selectedFolder === null || img.folder === selectedFolder;
@@ -103,15 +103,35 @@ const ImageDBContent = () => {
       const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
       const path = `imgdb/${folder}/${fileName}`;
 
-      const { error } = await supabase.storage.from('content-images').upload(path, file, {
-        cacheControl: '31536000',
-        upsert: false,
-      });
+      if (pin) {
+        // Use edge function for PIN-based access
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('path', path);
 
-      if (error) {
-        toast.error(`Error subiendo ${file.name}: ${error.message}`);
+        try {
+          const res = await fetch(`${supabaseUrl}/functions/v1/imgdb-upload`, {
+            method: 'POST',
+            headers: { 'x-imgdb-pin': pin },
+            body: formData,
+          });
+          const result = await res.json();
+          if (!res.ok) throw new Error(result.error);
+          successCount++;
+        } catch (err: any) {
+          toast.error(`Error subiendo ${file.name}: ${err.message}`);
+        }
       } else {
-        successCount++;
+        // Direct storage API for authenticated users
+        const { error } = await supabase.storage.from('content-images').upload(path, file, {
+          cacheControl: '31536000',
+          upsert: false,
+        });
+        if (error) {
+          toast.error(`Error subiendo ${file.name}: ${error.message}`);
+        } else {
+          successCount++;
+        }
       }
     }
 
@@ -121,12 +141,22 @@ const ImageDBContent = () => {
     }
     setUploading(false);
     e.target.value = '';
-  }, [selectedFolder, queryClient]);
+  }, [selectedFolder, queryClient, pin, supabaseUrl]);
 
   const deleteImage = useMutation({
     mutationFn: async (fullPath: string) => {
-      const { error } = await supabase.storage.from('content-images').remove([fullPath]);
-      if (error) throw error;
+      if (pin) {
+        const res = await fetch(`${supabaseUrl}/functions/v1/imgdb-upload`, {
+          method: 'DELETE',
+          headers: { 'x-imgdb-pin': pin, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: fullPath }),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+      } else {
+        const { error } = await supabase.storage.from('content-images').remove([fullPath]);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       toast.success('Imagen eliminada');
@@ -192,7 +222,6 @@ const ImageDBContent = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {/* New folder input */}
           {showNewFolder && (
             <div className="flex items-center gap-2 mb-4 p-3 bg-muted/50 rounded-lg border border-border">
               <Input
@@ -211,7 +240,6 @@ const ImageDBContent = () => {
             </div>
           )}
 
-          {/* Folder tabs */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
               onClick={() => setSelectedFolder(null)}
@@ -240,7 +268,6 @@ const ImageDBContent = () => {
             ))}
           </div>
 
-          {/* Images Grid */}
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {Array.from({ length: 10 }).map((_, i) => (
@@ -265,7 +292,6 @@ const ImageDBContent = () => {
                       loading="lazy"
                     />
                   </div>
-                  {/* Overlay on hover */}
                   <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                     <div className="flex items-center gap-1">
                       <Button variant="secondary" size="sm" className="h-7 text-[10px]" onClick={() => copyUrl(img.url)}>
@@ -286,7 +312,6 @@ const ImageDBContent = () => {
                       Eliminar
                     </Button>
                   </div>
-                  {/* Info */}
                   <div className="p-1.5">
                     <p className="text-[10px] font-medium truncate">{img.name}</p>
                     {img.folder && (
@@ -313,10 +338,12 @@ const ImageDBContent = () => {
 const ImageDBPinGate = () => {
   const [pin, setPin] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
+  const [validPin, setValidPin] = useState('');
 
   const handlePinSubmit = () => {
     if (pin === CORRECT_PIN) {
       setAuthenticated(true);
+      setValidPin(pin);
     } else {
       toast.error('PIN incorrecto');
       setPin('');
@@ -355,7 +382,13 @@ const ImageDBPinGate = () => {
     );
   }
 
-  return <ImageDBContent />;
+  return (
+    <PinContext.Provider value={validPin}>
+      <div className="min-h-screen bg-background p-4 md:p-8">
+        <ImageDBContent />
+      </div>
+    </PinContext.Provider>
+  );
 };
 
 // Main page for sidebar (authenticated users)
