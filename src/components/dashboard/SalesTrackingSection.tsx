@@ -351,12 +351,13 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
 
       <RegisterSaleDialog
         open={dialogOpen}
-        onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingSale(null); }}
+        onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingSale(null); setCurrentPrefill(null); } }}
         onSubmit={handleAddSale}
         clientId={clientId}
         hasAdAccount={hasAdAccount}
         isSubmitting={addSale.isPending || updateSale.isPending}
         editingSale={editingSale}
+        prefill={currentPrefill}
       />
 
       <LinkAdDialog
