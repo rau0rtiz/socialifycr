@@ -327,20 +327,37 @@ export default function GeneradorPauta() {
 
   // ── Descarga PNG ──
   const doDownload = () => {
-    const card = cardRef.current;
+    const card = cardRef.current as HTMLElement | null;
     if (!card) return;
+
+    // Temporarily remove preview scaling from the wrapper to ensure pixel-perfect capture
+    const scaleWrapper = card.parentElement;
+    const origTransform = scaleWrapper?.style.transform || '';
+    if (scaleWrapper) scaleWrapper.style.transform = 'none';
+
     const noExport = card.querySelectorAll(".no-export");
-    noExport.forEach((el) => (el.style.visibility = "hidden"));
+    noExport.forEach((el) => ((el as HTMLElement).style.visibility = "hidden"));
 
     const script = document.createElement("script");
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
     const run = () => {
-      (window as any).html2canvas(card, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null }).then((c: HTMLCanvasElement) => {
+      (window as any).html2canvas(card, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        windowWidth: card.scrollWidth,
+        windowHeight: card.scrollHeight,
+      }).then((c: HTMLCanvasElement) => {
         noExport.forEach((el) => ((el as HTMLElement).style.visibility = ""));
+        if (scaleWrapper) scaleWrapper.style.transform = origTransform;
         const a = document.createElement("a");
         a.download = `petshop2go-${tpl}-${fmt}.png`;
         a.href = c.toDataURL("image/png");
         a.click();
+      }).catch(() => {
+        noExport.forEach((el) => ((el as HTMLElement).style.visibility = ""));
+        if (scaleWrapper) scaleWrapper.style.transform = origTransform;
       });
     };
     if (!(window as any).html2canvas) { script.onload = run; document.head.appendChild(script); }
