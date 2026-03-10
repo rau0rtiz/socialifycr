@@ -174,7 +174,14 @@ export default function GeneradorPauta() {
   const [dragging, setDragging] = useState(false);
   const cardRef = useRef(null);
 
-  // Inyectar CSS una vez
+  // Load client logo from DB
+  useEffect(() => {
+    if (clientLogoUrl) {
+      setLogoSrc(clientLogoUrl);
+    } else {
+      setLogoSrc(LOGO_DEFAULT);
+    }
+  }, [clientLogoUrl]);
   useEffect(() => {
     if (!document.getElementById("gp-style")) {
       const style = document.createElement("style");
