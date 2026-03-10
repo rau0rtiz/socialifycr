@@ -334,17 +334,17 @@ export default function GeneradorPauta() {
 
     const script = document.createElement("script");
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-    script.onload = () => {
-      window.html2canvas(card, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null }).then((c) => {
-        noExport.forEach((el) => (el.style.visibility = ""));
+    const run = () => {
+      (window as any).html2canvas(card, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null }).then((c: HTMLCanvasElement) => {
+        noExport.forEach((el) => ((el as HTMLElement).style.visibility = ""));
         const a = document.createElement("a");
         a.download = `petshop2go-${tpl}-${fmt}.png`;
         a.href = c.toDataURL("image/png");
         a.click();
       });
     };
-    if (!window.html2canvas) document.head.appendChild(script);
-    else script.onload();
+    if (!(window as any).html2canvas) { script.onload = run; document.head.appendChild(script); }
+    else run();
   };
 
   // ── Sidebar styles (Tailwind) ──
