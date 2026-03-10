@@ -27,6 +27,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ImageDB = lazy(() => import("./pages/ImageDB"));
 const Accesos = lazy(() => import("./pages/Accesos"));
+const EmailMarketing = lazy(() => import("./pages/EmailMarketing"));
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
 const YouTubeOAuthCallback = lazy(() => import("./pages/YouTubeOAuthCallback").then(m => ({ default: m.YouTubeOAuthCallback })));
@@ -97,6 +98,13 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <Accesos />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/email-marketing" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <EmailMarketing />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
