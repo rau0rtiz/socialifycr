@@ -347,26 +347,26 @@ export default function GeneradorPauta() {
     else run();
   };
 
-  // ── Sidebar styles (Tailwind) ──
-  const SB = "w-[300px] flex-shrink-0 bg-white border-r border-black/10 overflow-y-auto p-4 shadow-md";
-  const SEC = "text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-orange-500 mt-4 mb-2 first:mt-0";
-  const INP = "w-full bg-[#f5f4f0] border border-black/10 rounded-lg text-sm px-3 py-2 mb-2 outline-none focus:border-orange-400 font-[Montserrat]";
-  const BTN_TPL = (on) => `border-2 rounded-lg p-2 cursor-pointer text-center transition-all text-xs font-extrabold ${on ? "border-orange-400 bg-orange-50" : "border-black/10 bg-[#f5f4f0] text-black/40"}`;
-  const BTN_FMT = (on) => `border rounded-lg px-3 py-1 cursor-pointer text-xs font-extrabold transition-all ${on ? "border-teal-500 bg-teal-50 text-teal-600" : "border-black/10 bg-[#f5f4f0] text-black/40"}`;
+  // ── Sidebar + Preview use design system tokens ──
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", display: "flex", height: "100%", background: "#e8e6df", overflow: "hidden" }}>
+    <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card shadow-sm">
 
       {/* ── SIDEBAR ── */}
-      <div className={SB} style={{ width: 300, flexShrink: 0, background: "#fff", borderRight: "1px solid rgba(0,0,0,0.08)", overflowY: "auto", padding: 16 }}>
+      <div className="w-[300px] flex-shrink-0 border-r border-border bg-card overflow-y-auto p-4" style={{ fontFamily: "'Montserrat', sans-serif" }}>
 
         {/* Imagen */}
-        <div className={SEC} style={{ color: "#FF6B1A", fontSize: "0.58rem", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", marginBottom: 8 }}>🖼 Imagen del Producto</div>
-        <div style={{ background: "#f5f4f0", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: 12, marginBottom: 10 }}>
-          <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-            {["upload", "url"].map((t) => (
+        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">🖼 Imagen del Producto</div>
+        <div className="bg-muted/50 border border-border rounded-[10px] p-3 mb-3">
+          <div className="flex gap-1.5 mb-2.5">
+            {(["upload", "url"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)}
-                style={{ flex: 1, padding: "6px", borderRadius: 7, cursor: "pointer", fontSize: "0.68rem", fontWeight: 800, border: `1.5px solid ${tab === t ? "#00A896" : "rgba(0,0,0,0.1)"}`, background: tab === t ? "rgba(0,168,150,0.08)" : "transparent", color: tab === t ? "#00A896" : "rgba(0,0,0,0.4)", fontFamily: "Montserrat" }}>
+                className={`flex-1 py-1.5 rounded-lg text-[0.68rem] font-extrabold border-[1.5px] transition-all ${
+                  tab === t
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-transparent text-muted-foreground"
+                }`}
+                style={{ fontFamily: "Montserrat" }}>
                 {t === "upload" ? "⬆ Subir" : "🔗 URL"}
               </button>
             ))}
@@ -376,68 +376,71 @@ export default function GeneradorPauta() {
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
               onDrop={(e) => { e.preventDefault(); setDragging(false); handleImgFile(e.dataTransfer.files[0]); }}
-              style={{ border: `2px dashed ${dragging ? "#00A896" : "rgba(0,168,150,0.35)"}`, borderRadius: 8, padding: "16px 10px", textAlign: "center", cursor: "pointer", position: "relative", background: dragging ? "rgba(0,168,150,0.08)" : "rgba(0,168,150,0.03)" }}>
-              <input type="file" accept="image/*" onChange={(e) => handleImgFile(e.target.files[0])} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-              <div style={{ fontSize: "1.4rem" }}>📂</div>
-              <div style={{ fontSize: "0.68rem", fontWeight: 700, color: "#00A896" }}>Arrastrá o seleccioná</div>
-              <div style={{ fontSize: "0.6rem", color: "rgba(0,0,0,0.35)", marginTop: 2 }}>PNG transparente recomendado</div>
+              className={`border-2 border-dashed rounded-lg py-4 px-2.5 text-center cursor-pointer relative transition-colors ${
+                dragging ? "border-primary bg-primary/10" : "border-primary/30 bg-primary/5"
+              }`}>
+              <input type="file" accept="image/*" onChange={(e) => handleImgFile(e.target.files?.[0])} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+              <div className="text-2xl">📂</div>
+              <div className="text-[0.68rem] font-bold text-primary">Arrastrá o seleccioná</div>
+              <div className="text-[0.6rem] text-muted-foreground mt-0.5">PNG transparente recomendado</div>
             </div>
           )}
           {tab === "url" && (
             <div>
-              <input className={INP} value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} onBlur={applyUrl} onKeyDown={(e) => e.key === "Enter" && applyUrl()} placeholder="https://..." style={{ background: "#f5f4f0", border: "1.5px solid rgba(0,0,0,0.1)", borderRadius: 7, padding: "8px 11px", fontSize: "0.8rem", width: "100%", marginBottom: 4, fontFamily: "Montserrat" }} />
-              <div style={{ fontSize: "0.6rem", color: "rgba(0,168,150,0.7)" }}>💡 PNG transparente para mejor resultado</div>
+              <input value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} onBlur={applyUrl} onKeyDown={(e) => e.key === "Enter" && applyUrl()} placeholder="https://..."
+                className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary mb-1" style={{ fontFamily: "Montserrat" }} />
+              <div className="text-[0.6rem] text-primary/70">💡 PNG transparente para mejor resultado</div>
             </div>
           )}
           {imgSrc && (
-            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, background: "rgba(0,0,0,0.04)", borderRadius: 8, padding: "6px 8px" }}>
-              <img src={imgSrc} alt="" style={{ width: 42, height: 42, objectFit: "contain", borderRadius: 6, background: "#fff", border: "1px solid rgba(0,0,0,0.08)" }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "0.68rem", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{previewName}</div>
-                <div style={{ fontSize: "0.6rem", color: "rgba(0,0,0,0.4)" }}>Imagen cargada ✅</div>
+            <div className="mt-2 flex items-center gap-2 bg-muted/60 rounded-lg p-1.5">
+              <img src={imgSrc} alt="" className="w-[42px] h-[42px] object-contain rounded-md bg-background border border-border" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.68rem] font-bold text-foreground truncate">{previewName}</div>
+                <div className="text-[0.6rem] text-muted-foreground">Imagen cargada ✅</div>
               </div>
-              <button onClick={() => { setImgSrc(null); setPreviewName(""); }} style={{ background: "none", border: "none", color: "rgba(200,60,60,0.5)", cursor: "pointer", fontSize: "1rem" }}>✕</button>
+              <button onClick={() => { setImgSrc(null); setPreviewName(""); }} className="bg-transparent border-none text-destructive/50 cursor-pointer text-base hover:text-destructive">✕</button>
             </div>
           )}
         </div>
 
         {/* Escala + posición */}
         {[
-          { label: "🔍 ESCALA", val: Math.round(imgScale * 100) + "%", min: 50, max: 200, value: Math.round(imgScale * 100), onChange: (v) => setImgScale(v / 100) },
+          { label: "🔍 ESCALA", val: Math.round(imgScale * 100) + "%", min: 50, max: 200, value: Math.round(imgScale * 100), onChange: (v: number) => setImgScale(v / 100) },
           { label: "↔ X", val: imgX, min: -100, max: 100, value: imgX, onChange: setImgX },
           { label: "↕ Y", val: imgY, min: -100, max: 100, value: imgY, onChange: setImgY },
         ].map(({ label, val, min, max, value, onChange }) => (
-          <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <label style={{ fontSize: "0.68rem", fontWeight: 700, color: "rgba(0,0,0,0.45)", whiteSpace: "nowrap" }}>{label}</label>
+          <div key={label} className="flex items-center gap-2 mb-2.5">
+            <label className="text-[0.68rem] font-bold text-muted-foreground whitespace-nowrap">{label}</label>
             <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(+e.target.value)}
-              style={{ flex: 1, accentColor: "#FF6B1A" }} />
-            <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#FF6B1A", minWidth: 32, textAlign: "right" }}>{val}</span>
+              className="flex-1 accent-primary" />
+            <span className="text-[0.68rem] font-extrabold text-primary min-w-[32px] text-right">{val}</span>
           </div>
         ))}
 
         {/* Producto */}
-        <div style={{ color: "#FF6B1A", fontSize: "0.58rem", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", marginBottom: 8, marginTop: 8 }}>📦 Producto</div>
+        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2 mt-2">📦 Producto</div>
         {[
           { label: "NOMBRE", value: name, onChange: setName, placeholder: "Nombre del producto" },
           { label: "VARIANTE / DESCRIPCIÓN (opcional)", value: sub, onChange: setSub, placeholder: "ej. Razas medianas · Pollo · 2kg" },
           { label: "PRECIO (₡)", value: price, onChange: setPrice, placeholder: "12,750" },
         ].map(({ label, value, onChange, placeholder }) => (
           <div key={label}>
-            <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "rgba(0,0,0,0.45)", marginBottom: 4 }}>{label}</label>
+            <label className="block text-[0.68rem] font-bold text-muted-foreground mb-1">{label}</label>
             <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-              style={{ width: "100%", background: "#f5f4f0", border: "1.5px solid rgba(0,0,0,0.1)", borderRadius: 7, padding: "8px 11px", fontSize: "0.8rem", marginBottom: 9, fontFamily: "Montserrat", outline: "none" }} />
+              className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm mb-2 outline-none focus:border-primary" style={{ fontFamily: "Montserrat" }} />
           </div>
         ))}
 
         {/* Puntos clave */}
-        <div style={{ color: "#FF6B1A", fontSize: "0.58rem", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", marginBottom: 8, marginTop: 8 }}>✅ Puntos Clave</div>
+        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2 mt-2">✅ Puntos Clave</div>
         {points.map((p, i) => (
-          <div key={i} style={{ display: "flex", gap: 6, marginBottom: 7, alignItems: "center", position: "relative" }}>
+          <div key={i} className="flex gap-1.5 mb-[7px] items-center relative">
             <input value={p.t} onChange={(e) => { const np = [...points]; np[i] = { ...np[i], t: e.target.value }; setPoints(np); }}
               placeholder={`Punto ${i + 1}${i === 2 ? " (opcional)" : ""}`}
-              style={{ flex: 1, background: "#f5f4f0", border: "1.5px solid rgba(0,0,0,0.1)", borderRadius: 7, padding: "8px 11px", fontSize: "0.8rem", fontFamily: "Montserrat", outline: "none" }} />
-            <button onClick={(e) => { const rect = e.currentTarget.getBoundingClientRect(); setPicker({ open: picker.open && picker.index === i ? false : true, index: i, x: rect.left - 180, y: rect.bottom + 4 }); }}
-              style={{ width: 36, height: 36, borderRadius: 7, background: "#f0ede6", border: "1.5px solid rgba(0,0,0,0.1)", fontSize: "1rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              className="flex-1 bg-muted border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" style={{ fontFamily: "Montserrat" }} />
+            <button onClick={(e) => { const rect = (e.currentTarget as HTMLElement).getBoundingClientRect(); setPicker({ open: picker.open && picker.index === i ? false : true, index: i, x: rect.left - 180, y: rect.bottom + 4 }); }}
+              className="w-9 h-9 rounded-lg bg-muted border border-border text-base cursor-pointer flex items-center justify-center hover:bg-accent transition-colors">
               {p.e}
             </button>
           </div>
@@ -445,11 +448,13 @@ export default function GeneradorPauta() {
 
         {/* Emoji Picker */}
         {picker.open && (
-          <div style={{ position: "fixed", zIndex: 9999, background: "#fff", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 12, padding: 10, width: 220, boxShadow: "0 12px 40px rgba(0,0,0,0.18)", top: picker.y, left: Math.max(4, picker.x) }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3 }}>
+          <div className="fixed z-[9999] bg-popover border border-border rounded-xl p-2.5 w-[220px] shadow-lg" style={{ top: picker.y, left: Math.max(4, picker.x) }}>
+            <div className="grid grid-cols-7 gap-[3px]">
               {EMOJIS.map((e, i) => (
-                <div key={i} onClick={() => { const np = [...points]; np[picker.index] = { ...np[picker.index], e }; setPoints(np); setPicker({ ...picker, open: false }); }}
-                  style={{ width: 28, height: 28, borderRadius: 6, fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: points[picker.index]?.e === e ? "rgba(255,107,26,0.22)" : "transparent" }}>
+                <div key={i} onClick={() => { const np = [...points]; np[picker.index!] = { ...np[picker.index!], e }; setPoints(np); setPicker({ ...picker, open: false }); }}
+                  className={`w-7 h-7 rounded-md text-base flex items-center justify-center cursor-pointer transition-colors hover:bg-accent ${
+                    points[picker.index!]?.e === e ? "bg-primary/20" : ""
+                  }`}>
                   {e}
                 </div>
               ))}
@@ -457,82 +462,101 @@ export default function GeneradorPauta() {
           </div>
         )}
 
-        <div style={{ height: 1, background: "rgba(0,0,0,0.08)", margin: "14px 0" }} />
+        <div className="h-px bg-border my-3.5" />
 
         {/* Fuente */}
-        <div style={{ color: "#FF6B1A", fontSize: "0.58rem", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", marginBottom: 8 }}>🔤 Fuente del Título</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
+        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">🔤 Fuente del Título</div>
+        <div className="grid grid-cols-2 gap-1.5 mb-2">
           {FONTS.map((f) => (
             <div key={f.key} onClick={() => setFont(f.key)}
-              style={{ border: `2px solid ${font === f.key ? "#FF6B1A" : "rgba(0,0,0,0.1)"}`, borderRadius: 8, padding: "8px 6px", cursor: "pointer", textAlign: "center", background: font === f.key ? "rgba(255,107,26,0.08)" : "#f5f4f0" }}>
+              className={`border-2 rounded-lg py-2 px-1.5 cursor-pointer text-center transition-all ${
+                font === f.key
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-muted text-muted-foreground"
+              }`}>
               <div style={{ fontFamily: `'${f.key}', sans-serif`, fontWeight: 800, fontSize: "1rem", lineHeight: 1, marginBottom: 2 }}>{f.label}</div>
-              <div style={{ fontSize: "0.58rem", color: "rgba(0,0,0,0.4)" }}>{f.sub}</div>
+              <div className="text-[0.58rem] text-muted-foreground">{f.sub}</div>
             </div>
           ))}
         </div>
 
         {/* Plantilla */}
-        <div style={{ color: "#FF6B1A", fontSize: "0.58rem", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", marginBottom: 8 }}>🎨 Plantilla</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
+        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">🎨 Plantilla</div>
+        <div className="grid grid-cols-2 gap-1.5 mb-2">
           {TEMPLATES.map((t) => (
             <div key={t.key} onClick={() => setTpl(t.key)}
-              style={{ border: `2px solid ${tpl === t.key ? "#FF6B1A" : "rgba(0,0,0,0.1)"}`, borderRadius: 8, padding: "8px 6px", cursor: "pointer", textAlign: "center", background: tpl === t.key ? "rgba(255,107,26,0.1)" : "#f5f4f0" }}>
-              <div style={{ fontSize: "1.1rem", marginBottom: 2 }}>{t.icon}</div>
-              <div style={{ fontSize: "0.6rem", fontWeight: 800, letterSpacing: "0.5px", color: "rgba(0,0,0,0.55)" }}>{t.name}</div>
+              className={`border-2 rounded-lg py-2 px-1.5 cursor-pointer text-center transition-all ${
+                tpl === t.key
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-muted"
+              }`}>
+              <div className="text-lg mb-0.5">{t.icon}</div>
+              <div className="text-[0.6rem] font-extrabold tracking-[0.5px] text-muted-foreground">{t.name}</div>
             </div>
           ))}
         </div>
 
         {/* Formato */}
-        <div style={{ color: "#FF6B1A", fontSize: "0.58rem", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", marginBottom: 8 }}>📐 Formato</div>
-        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 8 }}>
+        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">📐 Formato</div>
+        <div className="flex gap-[5px] flex-wrap mb-2">
           {FORMATS.map((f) => (
             <button key={f.key} onClick={() => setFmt(f.key)}
-              style={{ border: `1.5px solid ${fmt === f.key ? "#00A896" : "rgba(0,0,0,0.1)"}`, borderRadius: 7, padding: "5px 9px", cursor: "pointer", fontSize: "0.65rem", fontWeight: 800, background: fmt === f.key ? "rgba(0,168,150,0.1)" : "#f5f4f0", color: fmt === f.key ? "#00A896" : "rgba(0,0,0,0.45)", fontFamily: "Montserrat" }}>
+              className={`border-[1.5px] rounded-lg px-2.5 py-1 cursor-pointer text-[0.65rem] font-extrabold transition-all ${
+                fmt === f.key
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-muted text-muted-foreground"
+              }`}
+              style={{ fontFamily: "Montserrat" }}>
               {f.label}
             </button>
           ))}
         </div>
 
-        <div style={{ height: 1, background: "rgba(0,0,0,0.08)", margin: "14px 0" }} />
+        <div className="h-px bg-border my-3.5" />
 
         {/* Logo */}
-        <div style={{ color: "#FF6B1A", fontSize: "0.58rem", fontWeight: 800, letterSpacing: "2.5px", textTransform: "uppercase", marginBottom: 8 }}>🏷 Logo de la Tienda</div>
-        <div style={{ background: "#f5f4f0", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: 12, marginBottom: 10 }}>
-          <div style={{ position: "relative", border: "2px dashed rgba(255,107,26,0.3)", borderRadius: 8, padding: 10, textAlign: "center", cursor: "pointer", background: "rgba(255,107,26,0.03)" }}>
-            <input type="file" accept="image/*" onChange={(e) => handleLogoFile(e.target.files[0])} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }} />
-            <div style={{ fontSize: "0.65rem", fontWeight: 700, color: "#FF6B1A" }}>📁 Subir logo</div>
+        <div className="text-[0.58rem] font-extrabold tracking-[2.5px] uppercase text-primary mb-2">🏷 Logo de la Tienda</div>
+        <div className="bg-muted/50 border border-border rounded-[10px] p-3 mb-2.5">
+          <div className="relative border-2 border-dashed border-primary/30 rounded-lg p-2.5 text-center cursor-pointer bg-primary/5">
+            <input type="file" accept="image/*" onChange={(e) => handleLogoFile(e.target.files?.[0])} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+            <div className="text-[0.65rem] font-bold text-primary">📁 Subir logo</div>
           </div>
           {logoSrc !== LOGO_DEFAULT && (
-            <button onClick={() => setLogoSrc(LOGO_DEFAULT)} style={{ marginTop: 6, fontSize: "0.6rem", background: "none", border: "none", color: "rgba(200,60,60,0.5)", cursor: "pointer" }}>✕ Restaurar logo original</button>
+            <button onClick={() => setLogoSrc(LOGO_DEFAULT)} className="mt-1.5 text-[0.6rem] bg-transparent border-none text-destructive/50 cursor-pointer hover:text-destructive">✕ Restaurar logo original</button>
           )}
         </div>
       </div>
 
       {/* ── PREVIEW ── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", padding: 24, gap: 16, overflowY: "auto", background: "#ddd9cf" }}>
+      <div className="flex-1 flex flex-col items-center p-6 gap-4 overflow-y-auto bg-muted/40">
         {/* Barra de formatos + descarga */}
-        <div style={{ display: "flex", gap: 6, width: "100%", maxWidth: 560, alignItems: "center", flexWrap: "wrap" }}>
+        <div className="flex gap-1.5 w-full max-w-[560px] items-center flex-wrap">
           {FORMATS.map((f) => (
             <button key={f.key} onClick={() => setFmt(f.key)}
-              style={{ border: `1.5px solid ${fmt === f.key ? "#00A896" : "rgba(0,0,0,0.1)"}`, borderRadius: 7, padding: "5px 9px", cursor: "pointer", fontSize: "0.65rem", fontWeight: 800, background: fmt === f.key ? "rgba(0,168,150,0.1)" : "#f5f4f0", color: fmt === f.key ? "#00A896" : "rgba(0,0,0,0.45)", fontFamily: "Montserrat" }}>
+              className={`border-[1.5px] rounded-lg px-2.5 py-1 cursor-pointer text-[0.65rem] font-extrabold transition-all ${
+                fmt === f.key
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-muted text-muted-foreground"
+              }`}
+              style={{ fontFamily: "Montserrat" }}>
               {f.label}
             </button>
           ))}
           <button onClick={doDownload}
-            style={{ marginLeft: "auto", background: "#00A896", border: "none", borderRadius: 7, color: "#fff", padding: "7px 16px", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer", fontFamily: "Montserrat" }}>
+            className="ml-auto bg-primary text-primary-foreground border-none rounded-lg px-4 py-[7px] text-[0.72rem] font-extrabold cursor-pointer hover:opacity-90 transition-opacity"
+            style={{ fontFamily: "Montserrat" }}>
             ⬇ Descargar PNG
           </button>
         </div>
 
         {/* Tarjeta */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, width: "100%" }}>
+        <div className="flex items-center justify-center flex-1 w-full">
           {renderCard()}
         </div>
       </div>
 
       {/* Cerrar picker al click fuera */}
-      {picker.open && <div onClick={() => setPicker({ ...picker, open: false })} style={{ position: "fixed", inset: 0, zIndex: 9998 }} />}
+      {picker.open && <div onClick={() => setPicker({ ...picker, open: false })} className="fixed inset-0 z-[9998]" />}
     </div>
   );
 }
