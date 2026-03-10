@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,8 @@ import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, DollarSign, Settings, CalendarDays } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface SalePrefill {
   customer_name?: string;
@@ -50,6 +51,13 @@ const PLATFORM_OPTIONS = [
   { value: 'other', label: 'Otro' },
 ];
 
+const STEP_META = [
+  { icon: DollarSign, label: 'Monto' },
+  { icon: Settings, label: 'Detalles' },
+  { icon: CalendarDays, label: 'Contexto' },
+  { icon: Megaphone, label: 'Anuncio' },
+];
+
 export const RegisterSaleDialog = ({
   open,
   onOpenChange,
@@ -60,7 +68,7 @@ export const RegisterSaleDialog = ({
   editingSale,
   prefill,
 }: RegisterSaleDialogProps) => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
@@ -80,9 +88,19 @@ export const RegisterSaleDialog = ({
   const isEditing = !!editingSale;
   const isPrefilled = !!prefill && !editingSale;
 
-  // For prefilled mode, skip ad step since ad is already linked
+  // For prefilled mode, skip source/details step and ad step
   const needsAdStep = !isPrefilled && source === 'ad' && hasAdAccount;
-  const maxStep = needsAdStep ? 2 : 1;
+  // Steps: 0=Amount, 1=Details (source, product, customer), 2=Context (platform, notes), 3=Ad (optional)
+  // Prefilled: 0=Amount, 1=Context (platform, notes) — skip details & ad
+  const buildSteps = () => {
+    if (isPrefilled) return ['Monto', 'Notas'];
+    const steps = ['Monto', 'Detalles', 'Contexto'];
+    if (needsAdStep) steps.push('Anuncio');
+    return steps;
+  };
+  const stepNames = buildSteps();
+  const totalSteps = stepNames.length;
+  const lastStep = totalSteps - 1;
 
   const { data: allAdsResult, isLoading: adsLoading } = useAllAds(
     clientId || null,
@@ -93,7 +111,7 @@ export const RegisterSaleDialog = ({
 
   useEffect(() => {
     if (!open) return;
-    setStep(1);
+    setStep(0);
     setShowNewProduct(false);
     setNewProductName('');
     if (editingSale) {
@@ -169,27 +187,41 @@ export const RegisterSaleDialog = ({
     }
   };
 
-  const validateForm = () => {
-    if (!amount) {
-      toast.error('El monto es requerido');
-      return false;
+  const canAdvance = (s: number) => {
+    if (isPrefilled) {
+      // Step 0: amount required
+      if (s === 0) return !!amount;
+      return true;
     }
-    if (!isPrefilled && !source) {
-      toast.error('La fuente es requerida');
-      return false;
-    }
+    // Step 0: amount required
+    if (s === 0) return !!amount;
+    // Step 1: source required
+    if (s === 1) return !!source;
     return true;
   };
 
   const handleNext = () => {
-    if (step === 1 && !validateForm()) return;
-    setStep((s) => Math.min(s + 1, maxStep));
+    if (!canAdvance(step)) {
+      if (step === 0 && !amount) toast.error('El monto es requerido');
+      if (step === 1 && !source) toast.error('La fuente es requerida');
+      return;
+    }
+    if (step < lastStep) setStep(s => s + 1);
   };
 
-  const handleBack = () => setStep((s) => Math.max(s - 1, 1));
+  const handleBack = () => {
+    if (step > 0) setStep(s => s - 1);
+  };
 
   const handleSubmit = () => {
-    if (!validateForm()) return;
+    if (!amount) {
+      toast.error('El monto es requerido');
+      return;
+    }
+    if (!isPrefilled && !source) {
+      toast.error('La fuente es requerida');
+      return;
+    }
 
     const sale: SaleInput = {
       sale_date: saleDate,
@@ -213,97 +245,196 @@ export const RegisterSaleDialog = ({
     onSubmit(sale, prefill?.appointmentId);
   };
 
-  const isLastStep = step >= maxStep;
-
   const allProductOptions = product && !productNames.includes(product)
     ? [product, ...productNames]
     : productNames;
 
   const sourceLabel = SOURCE_OPTIONS.find(o => o.value === source)?.label || source;
 
+  // Step titles and descriptions
+  const getStepTitle = () => {
+    if (isPrefilled) {
+      return step === 0 ? '¿Cuánto fue la venta?' : 'Notas adicionales';
+    }
+    if (step === 0) return '¿Cuánto fue la venta?';
+    if (step === 1) return 'Detalles de la venta';
+    if (step === 2) return 'Contexto adicional';
+    return 'Vincular anuncio';
+  };
+
+  const getStepDescription = () => {
+    if (isPrefilled) {
+      return step === 0 ? 'Ingresa el monto y la fecha de la venta' : 'Plataforma del mensaje y notas';
+    }
+    if (step === 0) return 'Ingresa el monto y la fecha';
+    if (step === 1) return 'Fuente, producto y cliente';
+    if (step === 2) return 'Plataforma del mensaje y notas';
+    return 'Selecciona el anuncio que originó esta venta';
+  };
+
+  const stepIcons = isPrefilled
+    ? [STEP_META[0], STEP_META[2]]
+    : needsAdStep
+      ? STEP_META
+      : STEP_META.slice(0, 3);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? 'Editar Venta' : isPrefilled ? 'Registrar Venta de Lead' : 'Registrar Venta'}
-          </DialogTitle>
-          <DialogDescription>
-            {isPrefilled && prefill?.customer_name
-              ? `Completa los datos faltantes para cerrar la venta`
-              : maxStep > 1 ? `Paso ${step} de ${maxStep}` : (isEditing ? 'Modifica los datos de la venta' : 'Ingresa los datos de la nueva venta')}
-          </DialogDescription>
-          {maxStep > 1 && (
-            <div className="flex gap-1.5 pt-1">
-              {Array.from({ length: maxStep }, (_, i) => (
-                <div
-                  key={i}
-                  className={`h-1 flex-1 rounded-full transition-colors ${i < step ? 'bg-primary' : 'bg-muted'}`}
-                />
-              ))}
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden p-0">
+        {/* Header with dots indicator */}
+        <div className="px-6 pt-6 pb-2 space-y-3">
+          <DialogHeader className="space-y-0.5">
+            <DialogTitle className="text-base text-center">
+              {isEditing ? 'Editar Venta' : isPrefilled ? 'Registrar Venta de Lead' : 'Registrar Venta'}
+            </DialogTitle>
+            <DialogDescription className="text-center text-xs">
+              {getStepTitle()}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Prefilled summary badges */}
+          {isPrefilled && step === 0 && (
+            <div className="flex flex-wrap justify-center gap-2">
+              {prefill?.customer_name && (
+                <Badge variant="secondary" className="gap-1.5 text-xs">
+                  <User className="h-3 w-3" /> {prefill.customer_name}
+                </Badge>
+              )}
+              {prefill?.product && (
+                <Badge variant="secondary" className="gap-1.5 text-xs">
+                  <Package className="h-3 w-3" /> {prefill.product}
+                </Badge>
+              )}
+              {source && (
+                <Badge variant="secondary" className="gap-1.5 text-xs">
+                  <Tag className="h-3 w-3" /> {sourceLabel}
+                </Badge>
+              )}
+              {selectedAd && (
+                <Badge variant="secondary" className="gap-1.5 text-xs">
+                  <Megaphone className="h-3 w-3" /> {selectedAd.name}
+                </Badge>
+              )}
             </div>
           )}
-        </DialogHeader>
 
-        {/* Prefilled summary badges — show what's already known from the lead */}
-        {isPrefilled && step === 1 && (
-          <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-muted/50 border border-border">
-            {prefill?.customer_name && (
-              <Badge variant="secondary" className="gap-1.5 text-xs">
-                <User className="h-3 w-3" /> {prefill.customer_name}
-              </Badge>
-            )}
-            {prefill?.product && (
-              <Badge variant="secondary" className="gap-1.5 text-xs">
-                <Package className="h-3 w-3" /> {prefill.product}
-              </Badge>
-            )}
-            {source && (
-              <Badge variant="secondary" className="gap-1.5 text-xs">
-                <Tag className="h-3 w-3" /> {sourceLabel}
-              </Badge>
-            )}
-            {selectedAd && (
-              <Badge variant="secondary" className="gap-1.5 text-xs">
-                <Megaphone className="h-3 w-3" /> {selectedAd.name}
-              </Badge>
-            )}
+          {/* Instagram-style dots */}
+          <div className="flex items-center justify-center gap-2">
+            {Array.from({ length: totalSteps }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => { if (i < step && canAdvance(i)) setStep(i); }}
+                className={cn(
+                  'rounded-full transition-all duration-300',
+                  i === step
+                    ? 'w-6 h-2 bg-primary'
+                    : i < step
+                      ? 'w-2 h-2 bg-primary/40 cursor-pointer hover:bg-primary/60'
+                      : 'w-2 h-2 bg-muted-foreground/20'
+                )}
+              />
+            ))}
           </div>
-        )}
+        </div>
 
-        {/* Step 1: Info */}
-        {step === 1 && (
-          <div className="space-y-4">
-            {/* Amount + Currency — always shown */}
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Label>Monto *</Label>
-                <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
+        {/* Content area */}
+        <div className="px-6 overflow-y-auto" style={{ minHeight: '200px', maxHeight: '50vh' }}>
+          {/* === PREFILLED FLOW === */}
+          {isPrefilled && step === 0 && (
+            <div className="space-y-4 py-4">
+              <div className="flex gap-2">
+                <div className="flex-1 space-y-2">
+                  <Label className="text-xs font-medium">Monto *</Label>
+                  <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-10 text-sm" autoFocus />
+                </div>
+                <div className="w-24 space-y-2">
+                  <Label className="text-xs font-medium">Moneda</Label>
+                  <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CRC">₡ CRC</SelectItem>
+                      <SelectItem value="USD">$ USD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="w-24">
-                <Label>Moneda</Label>
-                <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Fecha</Label>
+                <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-10 text-sm" />
+              </div>
+              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
+            </div>
+          )}
+
+          {isPrefilled && step === 1 && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Plataforma del mensaje</Label>
+                <Select value={messagePlatform} onValueChange={setMessagePlatform}>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CRC">₡ CRC</SelectItem>
-                    <SelectItem value="USD">$ USD</SelectItem>
+                    {PLATFORM_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Notas</Label>
+                <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="text-sm" />
+              </div>
+              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
             </div>
+          )}
 
-            {/* Date — always shown */}
-            <div>
-              <Label>Fecha</Label>
-              <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} />
+          {/* === STANDARD FLOW === */}
+          {/* Step 0: Amount + Date */}
+          {!isPrefilled && step === 0 && (
+            <div className="space-y-4 py-4">
+              <div className="flex gap-2">
+                <div className="flex-1 space-y-2">
+                  <Label className="text-xs font-medium">Monto *</Label>
+                  <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-10 text-sm" autoFocus />
+                </div>
+                <div className="w-24 space-y-2">
+                  <Label className="text-xs font-medium">Moneda</Label>
+                  <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CRC">₡ CRC</SelectItem>
+                      <SelectItem value="USD">$ USD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Fecha</Label>
+                <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-10 text-sm" />
+              </div>
+              {isEditing && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Estado</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="completed">Completada</SelectItem>
+                      <SelectItem value="pending">Pendiente</SelectItem>
+                      <SelectItem value="cancelled">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
             </div>
+          )}
 
-            {/* Source — hide when prefilled (already shown in badges) */}
-            {!isPrefilled && (
-              <div>
-                <Label>Fuente *</Label>
+          {/* Step 1: Source + Product + Customer */}
+          {!isPrefilled && step === 1 && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Fuente *</Label>
                 <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
-                  <SelectTrigger><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
                   <SelectContent>
                     {SOURCE_OPTIONS.map(opt => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -311,63 +442,33 @@ export const RegisterSaleDialog = ({
                   </SelectContent>
                 </Select>
               </div>
-            )}
 
-            {/* Status — only when editing */}
-            {isEditing && (
-              <div>
-                <Label>Estado</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="completed">Completada</SelectItem>
-                    <SelectItem value="pending">Pendiente</SelectItem>
-                    <SelectItem value="cancelled">Cancelada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Platform — always shown */}
-            <div>
-              <Label>Plataforma del mensaje</Label>
-              <Select value={messagePlatform} onValueChange={setMessagePlatform}>
-                <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
-                <SelectContent>
-                  {PLATFORM_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Product — hide when prefilled with product */}
-            {!(isPrefilled && prefill?.product) && (
-              <div>
-                <Label className="flex items-center gap-1.5">
+              {/* Product */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5" /> Producto / Servicio
                 </Label>
                 {showNewProduct ? (
-                  <div className="flex gap-2 mt-1">
+                  <div className="flex gap-2">
                     <Input
                       placeholder="Nombre del producto"
                       value={newProductName}
                       onChange={e => setNewProductName(e.target.value)}
-                      className="flex-1"
+                      className="h-10 text-sm flex-1"
                       autoFocus
                       onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }}
                     />
-                    <Button size="sm" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>
+                    <Button size="sm" className="h-10 text-xs" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>
                       {addProduct.isPending ? '...' : 'OK'}
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setShowNewProduct(false)}>
-                      <X className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewProduct(false)}>
+                      <X className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex gap-2 mt-1">
+                  <div className="flex gap-2">
                     <Select value={product || '_none'} onValueChange={v => setProduct(v === '_none' ? '' : v)}>
-                      <SelectTrigger className="flex-1"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                      <SelectTrigger className="h-10 text-sm flex-1"><SelectValue placeholder="Opcional" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none">Sin producto</SelectItem>
                         {allProductOptions.map(name => (
@@ -375,66 +476,81 @@ export const RegisterSaleDialog = ({
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button variant="outline" size="sm" onClick={() => setShowNewProduct(true)}>
+                    <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewProduct(true)}>
                       <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
                     </Button>
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Customer name — hide when prefilled with name */}
-            {!(isPrefilled && prefill?.customer_name) && (
-              <div>
-                <Label>Cliente</Label>
-                <Input placeholder="Opcional" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+              {/* Customer */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Cliente</Label>
+                <Input placeholder="Opcional" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="h-10 text-sm" />
               </div>
-            )}
 
-            {/* Notes — always shown */}
-            <div>
-              <Label>Notas</Label>
-              <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Step 2: Ad selection (only for non-prefilled ad source) */}
-        {step === 2 && needsAdStep && (
-          <div className="space-y-3">
-            <div>
-              <Label className="text-sm font-medium">Selecciona el anuncio vinculado</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Elige el anuncio que originó esta venta</p>
+          {/* Step 2: Platform + Notes */}
+          {!isPrefilled && step === 2 && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Plataforma del mensaje</Label>
+                <Select value={messagePlatform} onValueChange={setMessagePlatform}>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                  <SelectContent>
+                    {PLATFORM_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Notas</Label>
+                <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="text-sm" />
+              </div>
+              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
             </div>
-            <AdGridSelector
-              ads={allAds}
-              isLoading={adsLoading}
-              selectedAd={selectedAd}
-              onSelect={setSelectedAd}
-              currency={adsCurrency}
-            />
-          </div>
-        )}
+          )}
 
-        <DialogFooter className="flex-row justify-between sm:justify-between gap-2">
-          {step > 1 ? (
-            <Button variant="ghost" onClick={handleBack}>
+          {/* Step 3: Ad selection (only for non-prefilled ad source) */}
+          {!isPrefilled && step === 3 && needsAdStep && (
+            <div className="space-y-3 py-4">
+              <AdGridSelector
+                ads={allAds}
+                isLoading={adsLoading}
+                selectedAd={selectedAd}
+                onSelect={setSelectedAd}
+                currency={adsCurrency}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 pb-6 pt-2">
+          {step > 0 ? (
+            <Button variant="ghost" size="sm" onClick={handleBack} className="text-xs">
               <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
             </Button>
           ) : (
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="text-xs">
+              Cancelar
+            </Button>
           )}
 
-          {isLastStep ? (
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Registrar'}
-            </Button>
-          ) : (
-            <Button onClick={handleNext}>
+          {step < lastStep ? (
+            <Button size="sm" onClick={handleNext} className="text-xs">
               Continuar <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
+          ) : (
+            <Button size="sm" onClick={handleSubmit} disabled={isSubmitting} className="text-xs">
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Registrar'}
+            </Button>
           )}
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

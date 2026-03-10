@@ -205,62 +205,64 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
                         <p className="text-[10px] text-muted-foreground italic">{apt.notes}</p>
                       )}
 
-                      {/* Convert to sale button — prominent, below lead info */}
-                      {canConvertToSale && onConvertToSale && (
-                        <Button
-                          size="sm"
-                          className="mt-1 h-8 text-xs px-4 bg-emerald-600 hover:bg-emerald-700 text-white"
-                          onClick={() => onConvertToSale(apt)}
-                        >
-                          <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                          Registrar Venta
-                        </Button>
-                      )}
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
-                      {/* Quick status change */}
-                      <Select
-                        value={apt.status}
-                        onValueChange={v => handleStatusChange(apt, v as AppointmentStatus)}
-                      >
-                        <SelectTrigger className="h-6 text-[10px] w-24 border-dashed">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(STATUS_CONFIG).map(([val, c]) => (
-                            <SelectItem key={val} value={val} className="text-xs">{c.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => { setEditing(apt); setShowForm(true); }}
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      {confirmDelete === apt.id ? (
-                        <div className="flex gap-0.5">
-                          <Button variant="destructive" size="sm" className="h-6 text-[10px] px-2" onClick={() => handleDelete(apt.id)}>
-                            Sí
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => setConfirmDelete(null)}>
-                            No
-                          </Button>
-                        </div>
-                      ) : (
+                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                      {/* Convert to sale button */}
+                      {canConvertToSale && onConvertToSale && (
+                        <Button
+                          size="sm"
+                          className="h-7 text-[11px] px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+                          onClick={() => onConvertToSale(apt)}
+                        >
+                          <ShoppingCart className="h-3 w-3 mr-1" />
+                          Venta
+                        </Button>
+                      )}
+                      <div className="flex items-center gap-1">
+                        {/* Quick status change */}
+                        <Select
+                          value={apt.status}
+                          onValueChange={v => handleStatusChange(apt, v as AppointmentStatus)}
+                        >
+                          <SelectTrigger className="h-6 text-[10px] w-24 border-dashed">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(STATUS_CONFIG).map(([val, c]) => (
+                              <SelectItem key={val} value={val} className="text-xs">{c.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                          onClick={() => setConfirmDelete(apt.id)}
+                          className="h-6 w-6 p-0"
+                          onClick={() => { setEditing(apt); setShowForm(true); }}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Pencil className="h-3 w-3" />
                         </Button>
-                      )}
+                        {confirmDelete === apt.id ? (
+                          <div className="flex gap-0.5">
+                            <Button variant="destructive" size="sm" className="h-6 text-[10px] px-2" onClick={() => handleDelete(apt.id)}>
+                              Sí
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => setConfirmDelete(null)}>
+                              No
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => setConfirmDelete(apt.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
