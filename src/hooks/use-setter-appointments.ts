@@ -110,6 +110,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
         ad_name: input.ad_name || null,
         notes: input.notes || null,
         source: input.source || 'ads',
+        product: input.product || null,
       } as any);
       if (error) throw error;
     },
