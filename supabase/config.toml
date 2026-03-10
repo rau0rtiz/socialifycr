@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.capture-stories]
 verify_jwt = false
+
+[functions.imgdb-upload]
+verify_jwt = false
