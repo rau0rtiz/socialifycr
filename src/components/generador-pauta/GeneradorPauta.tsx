@@ -362,19 +362,24 @@ export default function GeneradorPauta() {
   };
 
   // ── Descarga PNG ──
-  // Known pixel sizes per format
+  // CSS pixel sizes (for capture) and final export sizes
   const FORMAT_SIZES: Record<string, { w: number; h: number }> = {
     sq:  { w: 460, h: 460 },
     v45: { w: 400, h: 500 },
     st:  { w: 300, h: 533 },
     bn:  { w: 540, h: 270 },
   };
+  const EXPORT_SIZES: Record<string, { w: number; h: number }> = {
+    sq:  { w: 1080, h: 1080 },
+    v45: { w: 1080, h: 1350 },
+    st:  { w: 1080, h: 1920 },
+    bn:  { w: 1080, h: 540 },
+  };
 
   const doDownload = () => {
     const card = cardRef.current as HTMLElement | null;
     if (!card) return;
 
-    // Remove preview scaling from wrapper
     const scaleWrapper = card.parentElement;
     const origTransform = scaleWrapper?.style.transform || '';
     if (scaleWrapper) scaleWrapper.style.transform = 'none';
@@ -390,9 +395,10 @@ export default function GeneradorPauta() {
     const script = document.createElement("script");
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
     const run = () => {
-      // Use known CSS sizes for the current format
       const size = FORMAT_SIZES[fmt] || { w: card.offsetWidth, h: card.offsetHeight };
-      const captureScale = 1024 / size.w;
+      const exp = EXPORT_SIZES[fmt] || { w: 1080, h: 1080 };
+      // Capture at high res then resize to exact export dimensions
+      const captureScale = Math.max(exp.w / size.w, exp.h / size.h, 2);
       (window as any).html2canvas(card, {
         scale: captureScale,
         useCORS: true,
@@ -402,9 +408,14 @@ export default function GeneradorPauta() {
         height: size.h,
       }).then((captured: HTMLCanvasElement) => {
         restore();
+        const output = document.createElement("canvas");
+        output.width = exp.w;
+        output.height = exp.h;
+        const ctx = output.getContext("2d")!;
+        ctx.drawImage(captured, 0, 0, exp.w, exp.h);
         const a = document.createElement("a");
         a.download = `petshop2go-${tpl}-${fmt}.png`;
-        a.href = captured.toDataURL("image/png");
+        a.href = output.toDataURL("image/png");
         a.click();
       }).catch(() => restore());
     };
