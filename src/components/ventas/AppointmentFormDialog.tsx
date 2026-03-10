@@ -74,6 +74,7 @@ export const AppointmentFormDialog = ({
   const [notes, setNotes] = useState('');
 
   const { products, addProduct } = useClientProducts(clientId || null);
+  const { addSetter: addSetterMutation } = useClientSetters(clientId || null);
 
   const needsAdStep = source === 'ads' && hasAdAccount;
   const totalSteps = needsAdStep ? 4 : 3;
