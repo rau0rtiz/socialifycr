@@ -28,7 +28,7 @@ export const useClientSetters = (clientId: string | null) => {
         .select()
         .single();
       if (error) throw error;
-      return data as { id: string; name: string };
+      return data as unknown as { id: string; name: string };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client-setters', clientId] });
