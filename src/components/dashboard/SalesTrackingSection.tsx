@@ -229,6 +229,44 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
           </div>
         </CardHeader>
 
+        {/* Filters */}
+        {(uniqueSetters.length > 0 || uniqueProducts.length > 0) && (
+          <div className="px-6 pb-2 flex flex-wrap items-center gap-2">
+            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            {uniqueSetters.length > 0 && (
+              <Select value={filterSetter} onValueChange={setFilterSetter}>
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue placeholder="Vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">Todos los vendedores</SelectItem>
+                  {uniqueSetters.map(name => (
+                    <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {uniqueProducts.length > 0 && (
+              <Select value={filterProduct} onValueChange={setFilterProduct}>
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue placeholder="Producto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">Todos los productos</SelectItem>
+                  {uniqueProducts.map(name => (
+                    <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {(filterSetter !== 'all' || filterProduct !== 'all') && (
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setFilterSetter('all'); setFilterProduct('all'); }}>
+                Limpiar filtros
+              </Button>
+            )}
+          </div>
+        )}
+
         <CardContent className="space-y-4">
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
