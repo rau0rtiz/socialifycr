@@ -313,7 +313,7 @@ export default function GeneradorPauta() {
             <CardImg />
           </div>
           <div className="gp-bot">
-            <PriceBadge />
+            <PriceBadge big={false} />
             <div className="gp-pts">
               {activePts.map((p, i) => (
                 <div key={i} className="gp-pt"><span className="ic">{p.e}</span><span>{p.t}</span></div>
