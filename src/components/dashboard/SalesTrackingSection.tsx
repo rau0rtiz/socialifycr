@@ -32,6 +32,9 @@ interface SalesTrackingSectionProps {
   adSpend?: number;
   adCurrency?: string;
   hasAdAccount?: boolean;
+  salePrefill?: SalePrefill | null;
+  showSaleDialog?: boolean;
+  onSaleFromSetter?: (appointmentId?: string) => void;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
