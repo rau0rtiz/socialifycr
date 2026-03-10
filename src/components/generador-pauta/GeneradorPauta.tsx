@@ -58,7 +58,7 @@ const CARD_CSS = `
 .gp-diag::before{content:'';position:absolute;top:0;left:0;width:48%;height:100%;background:linear-gradient(160deg,rgba(255,107,26,0.07) 0%,transparent 100%);clip-path:polygon(0 0,100% 0,70% 100%,0 100%);}
 .gp-ci{position:relative;z-index:2;width:100%;height:100%;display:flex;flex-direction:column;}
 .gp-tb{display:flex;align-items:center;justify-content:flex-end;padding:13px 15px 0;}
-.gp-logo{width:34px;height:34px;border-radius:8px;background:rgba(0,0,0,0.05);object-fit:contain;padding:3px;border:1px solid rgba(0,0,0,0.08);}
+.gp-logo{max-height:40px;max-width:80px;object-fit:contain;pointer-events:none;}
 .gp-pn{letter-spacing:1.5px;line-height:0.92;padding:8px 15px 0;}
 .bg-orange .gp-pn,.bg-split .gp-pn{color:#1a0d00;}.bg-teal .gp-pn{color:#001a17;}.bg-night .gp-pn{color:#1a0505;}
 .gp-psub{padding:4px 15px 0;font-size:0.75rem;font-weight:600;letter-spacing:0.3px;line-height:1.3;}
