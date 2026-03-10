@@ -14,7 +14,7 @@ export const useClientSetters = (clientId: string | null) => {
         .eq('client_id', clientId)
         .order('name');
       if (error) throw error;
-      return (data || []) as { id: string; client_id: string; name: string; created_at: string }[];
+      return (data || []) as unknown as { id: string; client_id: string; name: string; created_at: string }[];
     },
     enabled: !!clientId,
   });
