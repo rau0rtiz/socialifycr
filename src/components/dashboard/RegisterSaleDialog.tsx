@@ -7,18 +7,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
+import { useClientProducts } from '@/hooks/use-client-products';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package } from 'lucide-react';
+
+export interface SalePrefill {
+  customer_name?: string;
+  product?: string;
+  source?: string;
+  ad_id?: string;
+  ad_name?: string;
+  ad_campaign_id?: string;
+  ad_campaign_name?: string;
+  appointmentId?: string;
+}
 
 interface RegisterSaleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (sale: SaleInput) => void;
+  onSubmit: (sale: SaleInput, appointmentId?: string) => void;
   clientId?: string;
   hasAdAccount?: boolean;
   isSubmitting?: boolean;
   editingSale?: MessageSale | null;
+  prefill?: SalePrefill | null;
 }
 
 const SOURCE_OPTIONS = [
@@ -44,6 +57,7 @@ export const RegisterSaleDialog = ({
   hasAdAccount = false,
   isSubmitting,
   editingSale,
+  prefill,
 }: RegisterSaleDialogProps) => {
   const [step, setStep] = useState(1);
   const [amount, setAmount] = useState('');
@@ -53,9 +67,14 @@ export const RegisterSaleDialog = ({
   const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
   const [customerName, setCustomerName] = useState('');
   const [product, setProduct] = useState('');
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [newProductName, setNewProductName] = useState('');
   const [messagePlatform, setMessagePlatform] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<string>('completed');
+
+  const { products, addProduct } = useClientProducts(clientId || null);
+  const productNames = products.map(p => p.name);
 
   const needsAdStep = source === 'ad' && hasAdAccount;
   const maxStep = needsAdStep ? 2 : 1;
@@ -67,10 +86,12 @@ export const RegisterSaleDialog = ({
   const allAds = allAdsResult?.ads || [];
   const adsCurrency = allAdsResult?.currency || 'USD';
 
-  // Populate form when editing or reset
+  // Populate form when editing, prefilling, or reset
   useEffect(() => {
     if (!open) return;
     setStep(1);
+    setShowNewProduct(false);
+    setNewProductName('');
     if (editingSale) {
       setAmount(String(editingSale.amount));
       setCurrency(editingSale.currency);
@@ -94,6 +115,29 @@ export const RegisterSaleDialog = ({
       } else {
         setSelectedAd(null);
       }
+    } else if (prefill) {
+      setAmount('');
+      setCurrency('CRC');
+      setSaleDate(new Date().toISOString().split('T')[0]);
+      setSource(prefill.ad_id ? 'ad' : prefill.source || '');
+      setCustomerName(prefill.customer_name || '');
+      setProduct(prefill.product || '');
+      setMessagePlatform('');
+      setNotes('');
+      setStatus('completed');
+      if (prefill.ad_id) {
+        setSelectedAd({
+          id: prefill.ad_id,
+          name: prefill.ad_name || '',
+          campaignId: prefill.ad_campaign_id || '',
+          campaignName: prefill.ad_campaign_name || '',
+          thumbnailUrl: null,
+          spend: 0,
+          effectiveStatus: '',
+        });
+      } else {
+        setSelectedAd(null);
+      }
     } else {
       setAmount('');
       setCurrency('CRC');
@@ -106,7 +150,20 @@ export const RegisterSaleDialog = ({
       setNotes('');
       setStatus('completed');
     }
-  }, [editingSale, open]);
+  }, [editingSale, prefill, open]);
+
+  const handleAddProduct = async () => {
+    if (!newProductName.trim()) return;
+    try {
+      const result = await addProduct.mutateAsync({ name: newProductName.trim() });
+      setProduct(result.name);
+      setShowNewProduct(false);
+      setNewProductName('');
+      toast.success('Producto creado');
+    } catch {
+      toast.error('Error creando producto');
+    }
+  };
 
   const validateStep1 = () => {
     if (!amount || !source) {
@@ -145,19 +202,29 @@ export const RegisterSaleDialog = ({
       sale.ad_campaign_name = selectedAd.campaignName;
     }
 
-    onSubmit(sale);
+    onSubmit(sale, prefill?.appointmentId);
   };
 
   const isEditing = !!editingSale;
   const isLastStep = step >= maxStep;
+  const isPrefilled = !!prefill && !editingSale;
+
+  // Build product options
+  const allProductOptions = product && !productNames.includes(product)
+    ? [product, ...productNames]
+    : productNames;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Editar Venta' : 'Registrar Venta'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? 'Editar Venta' : isPrefilled ? 'Registrar Venta de Lead' : 'Registrar Venta'}
+          </DialogTitle>
           <DialogDescription>
-            {maxStep > 1 ? `Paso ${step} de ${maxStep}` : (isEditing ? 'Modifica los datos de la venta' : 'Ingresa los datos de la nueva venta')}
+            {isPrefilled && prefill?.customer_name
+              ? `Convierte el lead de ${prefill.customer_name} en una venta`
+              : maxStep > 1 ? `Paso ${step} de ${maxStep}` : (isEditing ? 'Modifica los datos de la venta' : 'Ingresa los datos de la nueva venta')}
           </DialogDescription>
           {maxStep > 1 && (
             <div className="flex gap-1.5 pt-1">
@@ -177,7 +244,7 @@ export const RegisterSaleDialog = ({
             <div className="flex gap-2">
               <div className="flex-1">
                 <Label>Monto *</Label>
-                <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
               </div>
               <div className="w-24">
                 <Label>Moneda</Label>
@@ -234,9 +301,44 @@ export const RegisterSaleDialog = ({
               </Select>
             </div>
 
+            {/* Product with create-new */}
             <div>
-              <Label>Producto / Servicio</Label>
-              <Input placeholder="Opcional" value={product} onChange={(e) => setProduct(e.target.value)} />
+              <Label className="flex items-center gap-1.5">
+                <Package className="h-3.5 w-3.5" /> Producto / Servicio
+              </Label>
+              {showNewProduct ? (
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    placeholder="Nombre del producto"
+                    value={newProductName}
+                    onChange={e => setNewProductName(e.target.value)}
+                    className="flex-1"
+                    autoFocus
+                    onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }}
+                  />
+                  <Button size="sm" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>
+                    {addProduct.isPending ? '...' : 'OK'}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setShowNewProduct(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2 mt-1">
+                  <Select value={product || '_none'} onValueChange={v => setProduct(v === '_none' ? '' : v)}>
+                    <SelectTrigger className="flex-1"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Sin producto</SelectItem>
+                      {allProductOptions.map(name => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={() => setShowNewProduct(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div>

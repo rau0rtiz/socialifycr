@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle } from 'lucide-react';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
-import { RegisterSaleDialog } from './RegisterSaleDialog';
+import { RegisterSaleDialog, SalePrefill } from './RegisterSaleDialog';
 import { LinkAdDialog } from './LinkAdDialog';
 import { CampaignInsights } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,6 +32,9 @@ interface SalesTrackingSectionProps {
   adSpend?: number;
   adCurrency?: string;
   hasAdAccount?: boolean;
+  salePrefill?: SalePrefill | null;
+  showSaleDialog?: boolean;
+  onSaleFromSetter?: (appointmentId?: string) => void;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -63,21 +66,32 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 };
 
-export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false }: SalesTrackingSectionProps) => {
+export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false, salePrefill, showSaleDialog, onSaleFromSetter }: SalesTrackingSectionProps) => {
   const [month, setMonth] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<MessageSale | null>(null);
   const [linkAdSaleId, setLinkAdSaleId] = useState<string | null>(null);
+  const [currentPrefill, setCurrentPrefill] = useState<SalePrefill | null>(null);
+
+  // Open dialog when triggered from setter
+  useEffect(() => {
+    if (showSaleDialog && salePrefill) {
+      setEditingSale(null);
+      setCurrentPrefill(salePrefill);
+      setDialogOpen(true);
+    }
+  }, [showSaleDialog, salePrefill]);
 
   const { sales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
 
-  const handleAddSale = (sale: any) => {
+  const handleAddSale = (sale: any, appointmentId?: string) => {
     if (editingSale) {
       updateSale.mutate({ saleId: editingSale.id, updates: sale }, {
         onSuccess: () => {
           toast.success('Venta actualizada');
           setDialogOpen(false);
           setEditingSale(null);
+          setCurrentPrefill(null);
         },
         onError: () => toast.error('Error al actualizar venta'),
       });
@@ -86,6 +100,8 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
         onSuccess: () => {
           toast.success('Venta registrada');
           setDialogOpen(false);
+          setCurrentPrefill(null);
+          if (onSaleFromSetter) onSaleFromSetter(appointmentId);
         },
         onError: () => toast.error('Error al registrar venta'),
       });
@@ -181,7 +197,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <Button size="sm" onClick={() => { setEditingSale(null); setDialogOpen(true); }}>
+            <Button size="sm" onClick={() => { setEditingSale(null); setCurrentPrefill(null); setDialogOpen(true); }}>
               <Plus className="h-4 w-4 mr-1" />
               Registrar Venta
             </Button>
@@ -335,12 +351,13 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
 
       <RegisterSaleDialog
         open={dialogOpen}
-        onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingSale(null); }}
+        onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingSale(null); setCurrentPrefill(null); } }}
         onSubmit={handleAddSale}
         clientId={clientId}
         hasAdAccount={hasAdAccount}
         isSubmitting={addSale.isPending || updateSale.isPending}
         editingSale={editingSale}
+        prefill={currentPrefill}
       />
 
       <LinkAdDialog

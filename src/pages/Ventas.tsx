@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SalesTrackingSection } from '@/components/dashboard/SalesTrackingSection';
 import { AdSalesRanking } from '@/components/dashboard/AdSalesRanking';
@@ -7,8 +8,10 @@ import { useUserRole } from '@/hooks/use-user-role';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useCampaigns } from '@/hooks/use-ads-data';
 import { useClientFeatures } from '@/hooks/use-client-features';
+import { useSetterAppointments, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2 } from 'lucide-react';
+import { SalePrefill } from '@/components/dashboard/RegisterSaleDialog';
 
 const Ventas = () => {
   const { selectedClient, clientsLoading } = useBrand();
@@ -23,6 +26,48 @@ const Ventas = () => {
   const campaigns = campaignsResult?.campaigns || [];
   const adCurrency = campaignsResult?.currency || 'USD';
   const totalAdSpend = campaigns.reduce((sum, c) => sum + c.spend, 0);
+
+  // Prefill state for converting setter lead → sale
+  const [salePrefill, setSalePrefill] = useState<SalePrefill | null>(null);
+  const [showSaleFromSetter, setShowSaleFromSetter] = useState(false);
+  const salesRef = useRef<HTMLDivElement>(null);
+
+  const { updateAppointment } = useSetterAppointments(clientId, 'last_30d');
+
+  const handleConvertToSale = (appointment: SetterAppointment) => {
+    const prefill: SalePrefill = {
+      customer_name: appointment.lead_name,
+      product: (appointment as any).product || undefined,
+      appointmentId: appointment.id,
+    };
+    // Pass ad info if available
+    if (appointment.ad_id) {
+      prefill.source = 'ad';
+      prefill.ad_id = appointment.ad_id;
+      prefill.ad_name = appointment.ad_name || undefined;
+      prefill.ad_campaign_id = appointment.ad_campaign_id || undefined;
+      prefill.ad_campaign_name = appointment.ad_campaign_name || undefined;
+    }
+    setSalePrefill(prefill);
+    setShowSaleFromSetter(true);
+    // Scroll to sales section
+    setTimeout(() => {
+      salesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  const handleSaleRegistered = async (appointmentId?: string) => {
+    // Mark the setter appointment as sold
+    if (appointmentId) {
+      try {
+        await updateAppointment.mutateAsync({ id: appointmentId, status: 'sold' } as any);
+      } catch {
+        // silent - the sale was registered even if status update fails
+      }
+    }
+    setSalePrefill(null);
+    setShowSaleFromSetter(false);
+  };
 
   if (clientsLoading || roleLoading) {
     return (
@@ -65,16 +110,22 @@ const Ventas = () => {
           <SetterTracker
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
+            onConvertToSale={handleConvertToSale}
           />
         )}
         {/* Sales tracking */}
-        <SalesTrackingSection
-          clientId={selectedClient.id}
-          campaigns={campaigns}
-          adSpend={totalAdSpend}
-          adCurrency={adCurrency}
-          hasAdAccount={hasAdAccount}
-        />
+        <div ref={salesRef}>
+          <SalesTrackingSection
+            clientId={selectedClient.id}
+            campaigns={campaigns}
+            adSpend={totalAdSpend}
+            adCurrency={adCurrency}
+            hasAdAccount={hasAdAccount}
+            salePrefill={salePrefill}
+            showSaleDialog={showSaleFromSetter}
+            onSaleFromSetter={handleSaleRegistered}
+          />
+        </div>
         {/* Ad ranking last */}
         <AdSalesRanking
           clientId={selectedClient.id}
