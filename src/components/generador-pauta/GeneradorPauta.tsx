@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useBrand } from "@/contexts/BrandContext";
+import { supabase } from "@/integrations/supabase/client";
 
 // ── Fuentes (cargadas via <link> en index.html de Lovable) ──────────────────
 // Agregar en el <head> de index.html:
