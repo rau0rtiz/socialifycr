@@ -399,6 +399,8 @@ export default function GeneradorPauta() {
       const exp = EXPORT_SIZES[fmt] || { w: 1080, h: 1080 };
       // Capture at high res then resize to exact export dimensions
       const captureScale = Math.max(exp.w / size.w, exp.h / size.h, 2);
+      // Remove border-radius for export
+      card.style.borderRadius = '0';
       (window as any).html2canvas(card, {
         scale: captureScale,
         useCORS: true,
@@ -407,6 +409,7 @@ export default function GeneradorPauta() {
         width: size.w,
         height: size.h,
       }).then((captured: HTMLCanvasElement) => {
+        card.style.borderRadius = '';
         restore();
         const output = document.createElement("canvas");
         output.width = exp.w;
