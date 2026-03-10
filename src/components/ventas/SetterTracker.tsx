@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSetterAppointments, SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
+import { useClientSetters } from '@/hooks/use-client-setters';
 import { AppointmentFormDialog } from './AppointmentFormDialog';
 
 import { toast } from 'sonner';
