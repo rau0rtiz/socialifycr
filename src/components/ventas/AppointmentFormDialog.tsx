@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { AppointmentInput, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
-import { X, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Plus, ChevronLeft, ChevronRight, User, Target, Settings, Megaphone } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AppointmentFormDialogProps {
   open: boolean;
@@ -37,6 +38,13 @@ const SOURCE_OPTIONS = [
   { value: 'other', label: 'Otro' },
 ];
 
+const STEP_META = [
+  { icon: User, label: 'Lead' },
+  { icon: Target, label: 'Detalles' },
+  { icon: Settings, label: 'Estado' },
+  { icon: Megaphone, label: 'Anuncio' },
+];
+
 export const AppointmentFormDialog = ({
   open,
   onOpenChange,
@@ -47,7 +55,7 @@ export const AppointmentFormDialog = ({
   editing,
   existingSetters = [],
 }: AppointmentFormDialogProps) => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [leadName, setLeadName] = useState('');
   const [leadGoal, setLeadGoal] = useState('');
   const [setterName, setSetterName] = useState('');
@@ -60,7 +68,9 @@ export const AppointmentFormDialog = ({
   const [notes, setNotes] = useState('');
 
   const needsAdStep = source === 'ads' && hasAdAccount;
-  const maxStep = needsAdStep ? 2 : 1;
+  // Steps: 0=Lead, 1=Details, 2=Status/Source, 3=Ad (conditional)
+  const totalSteps = needsAdStep ? 4 : 3;
+  const lastStep = totalSteps - 1;
 
   const { data: adsResult, isLoading: adsLoading } = useAllAds(
     needsAdStep ? clientId || null : null,
@@ -71,7 +81,7 @@ export const AppointmentFormDialog = ({
 
   useEffect(() => {
     if (!open) return;
-    setStep(1);
+    setStep(0);
     setShowNewSetter(false);
     setNewSetterName('');
     if (editing) {
@@ -115,14 +125,19 @@ export const AppointmentFormDialog = ({
     }
   };
 
-  const validateStep1 = () => !!leadName.trim();
-
-  const handleNext = () => {
-    if (step === 1 && !validateStep1()) return;
-    setStep((s) => Math.min(s + 1, maxStep));
+  const canAdvance = (s: number) => {
+    if (s === 0) return !!leadName.trim();
+    return true;
   };
 
-  const handleBack = () => setStep((s) => Math.max(s - 1, 1));
+  const handleNext = () => {
+    if (!canAdvance(step)) return;
+    if (step < lastStep) setStep(s => s + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 0) setStep(s => s - 1);
+  };
 
   const handleSubmit = () => {
     if (!leadName.trim()) return;
@@ -143,162 +158,228 @@ export const AppointmentFormDialog = ({
     } as any);
   };
 
-  const isLastStep = step >= maxStep;
+  const stepTitles = [
+    '¿Quién es el lead?',
+    'Detalles del lead',
+    'Estado y fuente',
+    ...(needsAdStep ? ['Vincular anuncio'] : []),
+  ];
+
+  const stepDescriptions = [
+    'Ingresa el nombre del cliente potencial',
+    'Meta del cliente y vendedor asignado',
+    'Define el estado actual y origen del lead',
+    ...(needsAdStep ? ['Selecciona el anuncio que originó este lead'] : []),
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-base">
-            {editing ? 'Editar Lead' : 'Nuevo Lead'}
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            {maxStep > 1 ? `Paso ${step} de ${maxStep}` : 'Registra un lead para trackear el pipeline de ventas high-ticket.'}
-          </DialogDescription>
-          {maxStep > 1 && (
-            <div className="flex gap-1.5 pt-1">
-              {Array.from({ length: maxStep }, (_, i) => (
-                <div
-                  key={i}
-                  className={`h-1 flex-1 rounded-full transition-colors ${i < step ? 'bg-primary' : 'bg-muted'}`}
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden p-0">
+        {/* Header with dots indicator */}
+        <div className="px-6 pt-6 pb-2 space-y-3">
+          <DialogHeader className="space-y-0.5">
+            <DialogTitle className="text-base text-center">
+              {editing ? 'Editar Lead' : 'Nuevo Lead'}
+            </DialogTitle>
+            <DialogDescription className="text-center text-xs">
+              {stepTitles[step]}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Instagram-style dots */}
+          <div className="flex items-center justify-center gap-2">
+            {Array.from({ length: totalSteps }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => { if (i < step && canAdvance(i)) setStep(i); }}
+                className={cn(
+                  'rounded-full transition-all duration-300',
+                  i === step
+                    ? 'w-6 h-2 bg-primary'
+                    : i < step
+                      ? 'w-2 h-2 bg-primary/40 cursor-pointer hover:bg-primary/60'
+                      : 'w-2 h-2 bg-muted-foreground/20'
+                )}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Content area with fixed height for carousel feel */}
+        <div className="px-6 overflow-y-auto" style={{ minHeight: '200px', maxHeight: '50vh' }}>
+          {/* Step 0: Lead name */}
+          {step === 0 && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Nombre del Cliente *</Label>
+                <Input
+                  placeholder="Nombre completo del lead"
+                  value={leadName}
+                  onChange={e => setLeadName(e.target.value)}
+                  className="h-10 text-sm"
+                  autoFocus
                 />
-              ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground text-center">
+                {stepDescriptions[step]}
+              </p>
             </div>
           )}
-        </DialogHeader>
 
-        {/* Step 1: Lead info */}
-        {step === 1 && (
-          <div className="grid gap-3 py-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Nombre del Cliente *</Label>
-              <Input
-                placeholder="Nombre completo del lead"
-                value={leadName}
-                onChange={e => setLeadName(e.target.value)}
-                className="h-8 text-xs"
+          {/* Step 1: Goal + Setter */}
+          {step === 1 && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Meta del Cliente</Label>
+                <Input
+                  placeholder="Ej: Generar 50 leads mensuales, Escalar ventas..."
+                  value={leadGoal}
+                  onChange={e => setLeadGoal(e.target.value)}
+                  className="h-10 text-sm"
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Vendedor Asignado</Label>
+                {showNewSetter ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nombre del vendedor"
+                      value={newSetterName}
+                      onChange={e => setNewSetterName(e.target.value)}
+                      className="h-10 text-sm flex-1"
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter') handleAddSetter(); }}
+                    />
+                    <Button size="sm" className="h-10 text-xs" onClick={handleAddSetter} disabled={!newSetterName.trim()}>
+                      OK
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewSetter(false)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Select value={setterName || '_none'} onValueChange={v => setSetterName(v === '_none' ? '' : v)}>
+                      <SelectTrigger className="h-10 text-sm flex-1">
+                        <SelectValue placeholder="Sin asignar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                        {existingSetters.map(s => (
+                          <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewSetter(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Status + Source + Notes */}
+          {step === 2 && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Estado</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map(o => (
+                      <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Fuente</Label>
+                <Select value={source} onValueChange={v => { setSource(v); setSelectedAd(null); }}>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_OPTIONS.map(o => (
+                      <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Notas</Label>
+                <Textarea
+                  placeholder="Notas adicionales..."
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  className="text-sm min-h-[70px]"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Ad selection (conditional) */}
+          {step === 3 && needsAdStep && (
+            <div className="space-y-3 py-4">
+              <AdGridSelector
+                ads={adsList}
+                isLoading={adsLoading}
+                selectedAd={selectedAd}
+                onSelect={setSelectedAd}
+                currency={adsCurrency}
               />
             </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">Meta del Cliente</Label>
-              <Input
-                placeholder="Ej: Generar 50 leads mensuales, Escalar ventas..."
-                value={leadGoal}
-                onChange={e => setLeadGoal(e.target.value)}
-                className="h-8 text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">Vendedor Asignado</Label>
-              {showNewSetter ? (
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Nombre del vendedor"
-                    value={newSetterName}
-                    onChange={e => setNewSetterName(e.target.value)}
-                    className="h-8 text-xs flex-1"
-                    autoFocus
-                    onKeyDown={e => { if (e.key === 'Enter') handleAddSetter(); }}
-                  />
-                  <Button size="sm" className="h-8 text-xs" onClick={handleAddSetter} disabled={!newSetterName.trim()}>
-                    Agregar
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setShowNewSetter(false)}>
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <Select value={setterName || '_none'} onValueChange={v => setSetterName(v === '_none' ? '' : v)}>
-                    <SelectTrigger className="h-8 text-xs flex-1">
-                      <SelectValue placeholder="Sin asignar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
-                      {existingSetters.map(s => (
-                        <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowNewSetter(true)}>
-                    <Plus className="h-3 w-3 mr-1" /> Nuevo
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">Estado</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map(o => (
-                    <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">Fuente</Label>
-              <Select value={source} onValueChange={v => { setSource(v); setSelectedAd(null); }}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {SOURCE_OPTIONS.map(o => (
-                    <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">Notas</Label>
-              <Textarea placeholder="Notas adicionales..." value={notes} onChange={e => setNotes(e.target.value)} className="text-xs min-h-[60px]" />
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Ad selection */}
-        {step === 2 && needsAdStep && (
-          <div className="space-y-3 py-2">
-            <div>
-              <Label className="text-sm font-medium">Selecciona el anuncio vinculado</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">Elige el anuncio que originó este lead</p>
-            </div>
-            <AdGridSelector
-              ads={adsList}
-              isLoading={adsLoading}
-              selectedAd={selectedAd}
-              onSelect={setSelectedAd}
-              currency={adsCurrency}
-            />
-          </div>
-        )}
-
-        <DialogFooter className="flex-row justify-between sm:justify-between gap-2">
-          {step > 1 ? (
-            <Button variant="ghost" size="sm" onClick={handleBack} className="text-xs">
-              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="text-xs">
-              Cancelar
-            </Button>
           )}
+        </div>
 
-          {isLastStep ? (
-            <Button size="sm" onClick={handleSubmit} disabled={!leadName.trim() || isSubmitting} className="text-xs">
-              {isSubmitting ? 'Guardando...' : editing ? 'Guardar' : 'Registrar'}
-            </Button>
-          ) : (
-            <Button size="sm" onClick={handleNext} className="text-xs">
-              Continuar <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          )}
-        </DialogFooter>
+        {/* Footer: centered navigation */}
+        <div className="px-6 pb-6 pt-3 border-t border-border">
+          <div className="flex items-center justify-center gap-3">
+            {step === 0 ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onOpenChange(false)}
+                className="text-xs px-6"
+              >
+                Cancelar
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBack}
+                className="text-xs px-4"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Atrás
+              </Button>
+            )}
+
+            {step < lastStep ? (
+              <Button
+                size="sm"
+                onClick={handleNext}
+                disabled={!canAdvance(step)}
+                className="text-xs px-6"
+              >
+                Continuar
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={handleSubmit}
+                disabled={!leadName.trim() || isSubmitting}
+                className="text-xs px-6"
+              >
+                {isSubmitting ? 'Guardando...' : editing ? 'Guardar' : 'Registrar Lead'}
+              </Button>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
