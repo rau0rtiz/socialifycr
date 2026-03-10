@@ -370,10 +370,10 @@ export default function GeneradorPauta() {
     bn:  { w: 540, h: 270 },
   };
   const EXPORT_SIZES: Record<string, { w: number; h: number }> = {
-    sq:  { w: 1080, h: 1080 },
-    v45: { w: 1080, h: 1350 },
+    sq:  { w: 1920, h: 1920 },
+    v45: { w: 1920, h: 2400 },
     st:  { w: 1080, h: 1920 },
-    bn:  { w: 1080, h: 540 },
+    bn:  { w: 1920, h: 960 },
   };
 
   const doDownload = () => {
