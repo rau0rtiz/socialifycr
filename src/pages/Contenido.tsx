@@ -8,6 +8,7 @@ import { useVideoIdeas } from '@/hooks/use-video-ideas';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useSocialFollowers } from '@/hooks/use-social-followers';
+import { useClientFeatures } from '@/hooks/use-client-features';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { ContentCalendar } from '@/components/dashboard/ContentCalendar';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
@@ -22,6 +23,10 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw, Wifi } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
+
+const GeneradorPauta = lazy(() => import('@/components/generador-pauta/GeneradorPauta'));
 
 const platformConfig: Record<NetworkType, { 
   label: string; 
@@ -90,6 +95,7 @@ const Contenido = () => {
   const hasAdAccount = !!metaConnection?.ad_account_id;
 
   const { isAgency, clientAccess } = useUserRole();
+  const { flags } = useClientFeatures(clientId);
 
   // Social followers
   const { 
@@ -301,6 +307,19 @@ const Contenido = () => {
             clientId={selectedClient.id}
             canEdit={isAgency || clientAccess.some(c => c.clientId === selectedClient.id && (c.role === 'editor' || c.role === 'account_manager'))}
           />
+        </div>
+      )}
+
+      {/* Generador de Pauta */}
+      {(isAgency || flags.generador_pauta) && selectedClient && (
+        <div className="mb-6">
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-96">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          }>
+            <GeneradorPauta />
+          </Suspense>
         </div>
       )}
 

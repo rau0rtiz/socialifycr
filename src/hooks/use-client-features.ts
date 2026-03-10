@@ -21,6 +21,7 @@ export interface ClientFeatureFlags {
   contenido_section: boolean;
   reportes_section: boolean;
   email_marketing_section: boolean;
+  generador_pauta: boolean;
 }
 
 const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
@@ -41,6 +42,7 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
   contenido_section: false,
   reportes_section: false,
   email_marketing_section: false,
+  generador_pauta: false,
 };
 
 // Navigation section flags — these control sidebar visibility
@@ -71,6 +73,7 @@ export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
   ai_insights: 'Insights de IA',
   video_ideas: 'Ideas de Video',
   competitors: 'Competidores',
+  generador_pauta: 'Generador de Pauta',
 };
 
 // Combined for backward compat
@@ -119,6 +122,7 @@ export const useClientFeatures = (clientId: string | null) => {
         contenido_section: data.contenido_section,
         reportes_section: data.reportes_section,
         email_marketing_section: data.email_marketing_section,
+        generador_pauta: data.generador_pauta,
       }
     : DEFAULT_FLAGS;
 
