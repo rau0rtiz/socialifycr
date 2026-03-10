@@ -124,9 +124,9 @@ const CARD_CSS = `
 .gp-pi-zone .gp-pi{position:absolute;inset:0;padding:0;}
 .gp-pi-zone .gp-pi img{max-width:70%;max-height:75%;}
 .gp-st-bottom{flex-shrink:0;padding:16px 40px 0;display:flex;flex-direction:column;align-items:center;gap:12px;}
-.gp-st .gp-price{width:75%;flex-direction:row;justify-content:center;gap:20px;padding:24px 40px;border-radius:32px;box-shadow:0 8px 40px rgba(0,0,0,0.12);}
-.gp-st .gp-pfrom{font-size:22px;}
-.gp-st .gp-pamt{font-size:72px;letter-spacing:0;}
+.gp-st .gp-price{width:85%;flex-direction:row;justify-content:center;gap:20px;padding:28px 48px;border-radius:36px;box-shadow:0 8px 40px rgba(0,0,0,0.12);}
+.gp-st .gp-pfrom{font-size:28px;}
+.gp-st .gp-pamt{font-size:110px;letter-spacing:0;}
 .gp-msgbar{width:100%;height:130px;flex-shrink:0;margin-top:8px;}
 .gp-st .g1{width:1400px!important;height:1400px!important;}
 .gp-st .g2{width:900px!important;height:900px!important;}
