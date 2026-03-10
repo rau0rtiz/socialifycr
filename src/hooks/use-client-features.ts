@@ -20,6 +20,7 @@ export interface ClientFeatureFlags {
   ventas_section: boolean;
   contenido_section: boolean;
   reportes_section: boolean;
+  email_marketing_section: boolean;
 }
 
 const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
@@ -39,6 +40,7 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
   ventas_section: false,
   contenido_section: false,
   reportes_section: false,
+  email_marketing_section: false,
 };
 
 // Navigation section flags — these control sidebar visibility
@@ -46,6 +48,7 @@ export const SECTION_LABELS: Record<string, string> = {
   ventas_section: 'Ventas',
   contenido_section: 'Contenido',
   reportes_section: 'Reportes',
+  email_marketing_section: 'Email Marketing',
 };
 
 // Dashboard widget flags grouped by section
@@ -115,6 +118,7 @@ export const useClientFeatures = (clientId: string | null) => {
         ventas_section: data.ventas_section,
         contenido_section: data.contenido_section,
         reportes_section: data.reportes_section,
+        email_marketing_section: data.email_marketing_section,
       }
     : DEFAULT_FLAGS;
 

@@ -1,0 +1,1 @@
+ALTER TABLE public.client_feature_flags ADD COLUMN email_marketing_section boolean NOT NULL DEFAULT false;
