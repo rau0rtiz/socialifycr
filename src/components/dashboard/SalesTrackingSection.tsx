@@ -222,8 +222,8 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <Button size="sm" onClick={() => { setEditingSale(null); setCurrentPrefill(null); setDialogOpen(true); }}>
-              <Plus className="h-4 w-4 mr-1" />
+            <Button size="sm" className="h-9 text-sm px-5 gap-2 shadow-sm" onClick={() => { setEditingSale(null); setCurrentPrefill(null); setDialogOpen(true); }}>
+              <Plus className="h-4 w-4" />
               Registrar Venta
             </Button>
           </div>
