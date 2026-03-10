@@ -122,6 +122,7 @@ export const useClientFeatures = (clientId: string | null) => {
         contenido_section: data.contenido_section,
         reportes_section: data.reportes_section,
         email_marketing_section: data.email_marketing_section,
+        generador_pauta: data.generador_pauta,
       }
     : DEFAULT_FLAGS;
 
