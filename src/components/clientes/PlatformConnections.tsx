@@ -205,6 +205,22 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
           variant: 'destructive',
         });
         setConnecting(null);
+      } else if (event.data?.type === 'TIKTOK_OAUTH_ACCOUNT') {
+        // Auto-save TikTok connection (no selector needed — single account)
+        handleSaveTikTokConnection(
+          event.data.account,
+          event.data.accessToken,
+          event.data.refreshToken,
+          event.data.expiresIn,
+        );
+        setConnecting(null);
+      } else if (event.data?.type === 'TIKTOK_OAUTH_ERROR') {
+        toast({
+          title: 'Error de conexión',
+          description: event.data.error || 'Error al conectar con TikTok',
+          variant: 'destructive',
+        });
+        setConnecting(null);
       }
     };
 
