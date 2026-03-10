@@ -84,13 +84,14 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
 
   const { sales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
 
-  const handleAddSale = (sale: any) => {
+  const handleAddSale = (sale: any, appointmentId?: string) => {
     if (editingSale) {
       updateSale.mutate({ saleId: editingSale.id, updates: sale }, {
         onSuccess: () => {
           toast.success('Venta actualizada');
           setDialogOpen(false);
           setEditingSale(null);
+          setCurrentPrefill(null);
         },
         onError: () => toast.error('Error al actualizar venta'),
       });
@@ -99,6 +100,8 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
         onSuccess: () => {
           toast.success('Venta registrada');
           setDialogOpen(false);
+          setCurrentPrefill(null);
+          if (onSaleFromSetter) onSaleFromSetter(appointmentId);
         },
         onError: () => toast.error('Error al registrar venta'),
       });
