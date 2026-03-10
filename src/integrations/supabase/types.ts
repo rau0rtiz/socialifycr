@@ -1225,6 +1225,7 @@ export type Database = {
           lead_name: string
           lead_phone: string | null
           notes: string | null
+          product: string | null
           sale_id: string | null
           setter_name: string | null
           source: string | null
@@ -1248,6 +1249,7 @@ export type Database = {
           lead_name: string
           lead_phone?: string | null
           notes?: string | null
+          product?: string | null
           sale_id?: string | null
           setter_name?: string | null
           source?: string | null
@@ -1271,6 +1273,7 @@ export type Database = {
           lead_name?: string
           lead_phone?: string | null
           notes?: string | null
+          product?: string | null
           sale_id?: string | null
           setter_name?: string | null
           source?: string | null
