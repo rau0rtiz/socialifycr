@@ -1030,10 +1030,11 @@ serve(async (req) => {
         }
 
         // Fetch active stories (only returns non-expired stories within 24h)
-        const storiesUrl = `https://graph.facebook.com/v18.0/${instagramId}/stories?` +
+        const storiesUrl = `https://graph.facebook.com/v21.0/${instagramId}/stories?` +
           `fields=id,media_type,media_url,thumbnail_url,timestamp,permalink` +
           `&access_token=${accessToken}`;
         
+        console.log(`Fetching stories for client ${clientId}`);
         const storiesResponse = await fetch(storiesUrl);
         const storiesData = await storiesResponse.json();
 
@@ -1051,10 +1052,12 @@ serve(async (req) => {
             let insights = { impressions: 0, reach: 0, replies: 0 };
 
             try {
-              const insightsUrl = `https://graph.facebook.com/v18.0/${story.id}/insights?` +
+              const insightsUrl = `https://graph.facebook.com/v21.0/${story.id}/insights?` +
                 `metric=impressions,reach,replies&access_token=${accessToken}`;
               const insightsRes = await fetch(insightsUrl);
               const insightsData = await insightsRes.json();
+
+              console.log(`Story ${story.id} insights response:`, JSON.stringify(insightsData));
 
               if (insightsData.data) {
                 for (const metric of insightsData.data) {
@@ -1063,6 +1066,8 @@ serve(async (req) => {
                   if (metric.name === 'reach') insights.reach = value;
                   if (metric.name === 'replies') insights.replies = value;
                 }
+              } else if (insightsData.error) {
+                console.warn(`Insights error for story ${story.id}:`, insightsData.error.message);
               }
             } catch (err) {
               console.warn(`Could not fetch insights for story ${story.id}:`, err);
@@ -1075,6 +1080,7 @@ serve(async (req) => {
           })
         );
 
+        console.log(`Successfully fetched stories with insights: ${enrichedStories.length} stories`);
         result = { stories: enrichedStories };
         break;
       }
