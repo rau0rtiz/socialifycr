@@ -105,7 +105,7 @@ serve(async (req) => {
         ].join(',');
 
         const response = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}/insights?` +
+          `https://graph.facebook.com/v21.0/${pageId}/insights?` +
           `metric=${metrics}&period=${period}&since=${since}&until=${until}&access_token=${accessToken}`
         );
         result = await response.json();
@@ -130,7 +130,7 @@ serve(async (req) => {
 
         const period = params.period || 'day';
         const response = await fetch(
-          `https://graph.facebook.com/v18.0/${instagramId}/insights?` +
+          `https://graph.facebook.com/v21.0/${instagramId}/insights?` +
           `metric=${metrics}&period=${period}&access_token=${accessToken}`
         );
         result = await response.json();
@@ -148,7 +148,7 @@ serve(async (req) => {
         // Get recent Instagram posts
         const limit = params.limit || 10;
         const response = await fetch(
-          `https://graph.facebook.com/v18.0/${instagramId}/media?` +
+          `https://graph.facebook.com/v21.0/${instagramId}/media?` +
           `fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count` +
           `&limit=${limit}&access_token=${accessToken}`
         );
@@ -160,7 +160,7 @@ serve(async (req) => {
         // Get recent Facebook page posts
         const limit = params.limit || 10;
         const response = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}/posts?` +
+          `https://graph.facebook.com/v21.0/${pageId}/posts?` +
           `fields=id,message,created_time,full_picture,permalink_url,shares,reactions.summary(true),comments.summary(true)` +
           `&limit=${limit}&access_token=${accessToken}`
         );
@@ -179,7 +179,7 @@ serve(async (req) => {
         // Get ads insights
         const datePreset = params.datePreset || 'last_30d';
         const response = await fetch(
-          `https://graph.facebook.com/v18.0/${adAccountId}/insights?` +
+          `https://graph.facebook.com/v21.0/${adAccountId}/insights?` +
           `fields=impressions,reach,spend,cpc,cpm,clicks,actions` +
           `&date_preset=${datePreset}&access_token=${userAccessToken}`
         );
@@ -208,7 +208,7 @@ serve(async (req) => {
         let currency = 'USD';
         try {
           const accountResponse = await fetch(
-            `https://graph.facebook.com/v18.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
+            `https://graph.facebook.com/v21.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
           );
           const accountData = await accountResponse.json();
           if (accountData.currency) {
@@ -220,7 +220,7 @@ serve(async (req) => {
 
         // Get campaigns first
         const campaignsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?` +
+          `https://graph.facebook.com/v21.0/${adAccountId}/campaigns?` +
           `fields=id,name,status,effective_status,objective,daily_budget,lifetime_budget,start_time,stop_time` +
           `&filtering=[{"field":"effective_status","operator":"IN","value":["ACTIVE"]}]` +
           `&limit=50&access_token=${userAccessToken}`
@@ -238,7 +238,7 @@ serve(async (req) => {
           (campaignsData.data || []).map(async (campaign: any) => {
             try {
               const insightsResponse = await fetch(
-                `https://graph.facebook.com/v18.0/${campaign.id}/insights?` +
+                `https://graph.facebook.com/v21.0/${campaign.id}/insights?` +
                 `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type,purchase_roas` +
                 `${timeRangeParam}&access_token=${userAccessToken}`
               );
@@ -297,7 +297,7 @@ serve(async (req) => {
         let currency = 'USD';
         try {
           const accountResponse = await fetch(
-            `https://graph.facebook.com/v18.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
+            `https://graph.facebook.com/v21.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
           );
           const accountData = await accountResponse.json();
           if (accountData.currency) {
@@ -309,7 +309,7 @@ serve(async (req) => {
 
         // Get ad sets for a specific campaign
         const adsetsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${campaignId}/adsets?` +
+          `https://graph.facebook.com/v21.0/${campaignId}/adsets?` +
           `fields=id,name,status,effective_status,daily_budget,lifetime_budget,start_time,end_time,optimization_goal,billing_event` +
           `&limit=50&access_token=${userAccessToken}`
         );
@@ -326,7 +326,7 @@ serve(async (req) => {
           (adsetsData.data || []).map(async (adset: any) => {
             try {
               const insightsResponse = await fetch(
-                `https://graph.facebook.com/v18.0/${adset.id}/insights?` +
+                `https://graph.facebook.com/v21.0/${adset.id}/insights?` +
                 `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type` +
                 `${timeRangeParam}&access_token=${userAccessToken}`
               );
@@ -375,7 +375,7 @@ serve(async (req) => {
         let currency = 'USD';
         try {
           const accountResponse = await fetch(
-            `https://graph.facebook.com/v18.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
+            `https://graph.facebook.com/v21.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
           );
           const accountData = await accountResponse.json();
           if (accountData.currency) {
@@ -387,7 +387,7 @@ serve(async (req) => {
 
         // Get ads for a specific ad set with creative info
         const adsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${adsetId}/ads?` +
+          `https://graph.facebook.com/v21.0/${adsetId}/ads?` +
           `fields=id,name,status,effective_status,creative{id,name,thumbnail_url}` +
           `&limit=50&access_token=${userAccessToken}`
         );
@@ -404,7 +404,7 @@ serve(async (req) => {
           (adsData.data || []).map(async (ad: any) => {
             try {
               const insightsResponse = await fetch(
-                `https://graph.facebook.com/v18.0/${ad.id}/insights?` +
+                `https://graph.facebook.com/v21.0/${ad.id}/insights?` +
                 `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type` +
                 `${timeRangeParam}&access_token=${userAccessToken}`
               );
@@ -446,7 +446,7 @@ serve(async (req) => {
         let allAdsCurrency = 'USD';
         try {
           const accountResponse = await fetch(
-            `https://graph.facebook.com/v18.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
+            `https://graph.facebook.com/v21.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
           );
           const accountData = await accountResponse.json();
           if (accountData.currency) {
@@ -458,7 +458,7 @@ serve(async (req) => {
 
         // Get all ads from ad account with active campaigns filter
         const allAdsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${adAccountId}/ads?` +
+          `https://graph.facebook.com/v21.0/${adAccountId}/ads?` +
           `fields=id,name,status,effective_status,creative{id,name,thumbnail_url,image_url,object_story_spec},campaign{id,name}` +
           `&filtering=[{"field":"campaign.effective_status","operator":"IN","value":["ACTIVE"]}]` +
           `&limit=100&access_token=${userAccessToken}`
@@ -476,7 +476,7 @@ serve(async (req) => {
           (allAdsData.data || []).map(async (ad: any) => {
             try {
               const insightsResponse = await fetch(
-                `https://graph.facebook.com/v18.0/${ad.id}/insights?` +
+                `https://graph.facebook.com/v21.0/${ad.id}/insights?` +
                 `fields=impressions,reach,spend,clicks,cpc,cpm,actions,cost_per_action_type` +
                 `${timeRangeParam}&access_token=${userAccessToken}`
               );
@@ -499,7 +499,7 @@ serve(async (req) => {
       case 'page-info': {
         // Get basic page and Instagram info
         const pageResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}?` +
+          `https://graph.facebook.com/v21.0/${pageId}?` +
           `fields=id,name,fan_count,followers_count,picture,category&access_token=${accessToken}`
         );
         const pageData = await pageResponse.json();
@@ -507,7 +507,7 @@ serve(async (req) => {
         let instagramData = null;
         if (instagramId) {
           const igResponse = await fetch(
-            `https://graph.facebook.com/v18.0/${instagramId}?` +
+            `https://graph.facebook.com/v21.0/${instagramId}?` +
             `fields=id,username,name,profile_picture_url,followers_count,follows_count,media_count` +
             `&access_token=${accessToken}`
           );
@@ -538,7 +538,7 @@ serve(async (req) => {
 
         // Fetch pages until we have enough posts or no more pages
         while (allMedia.length < targetLimit && pagesProcessed < maxPages) {
-          let url = `https://graph.facebook.com/v18.0/${instagramId}/media?` +
+          let url = `https://graph.facebook.com/v21.0/${instagramId}/media?` +
             `fields=id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count` +
             `&limit=${perPageLimit}&access_token=${accessToken}`;
           
@@ -762,7 +762,7 @@ serve(async (req) => {
           try {
             // Get basic account info
             const accountResponse = await fetch(
-              `https://graph.facebook.com/v18.0/${instagramId}?` +
+              `https://graph.facebook.com/v21.0/${instagramId}?` +
               `fields=followers_count,follows_count,media_count,username&access_token=${accessToken}`
             );
             const accountData = await accountResponse.json();
@@ -783,7 +783,7 @@ serve(async (req) => {
             ].join(',');
 
             const insightsResponse = await fetch(
-              `https://graph.facebook.com/v18.0/${instagramId}/insights?` +
+              `https://graph.facebook.com/v21.0/${instagramId}/insights?` +
               `metric=${insightsMetrics}&period=day&since=${since}&until=${now}&access_token=${accessToken}`
             );
             const insightsData = await insightsResponse.json();
@@ -836,7 +836,7 @@ serve(async (req) => {
 
             // Calculate engagement from recent media
             const mediaResponse = await fetch(
-              `https://graph.facebook.com/v18.0/${instagramId}/media?` +
+              `https://graph.facebook.com/v21.0/${instagramId}/media?` +
               `fields=like_count,comments_count&limit=20&access_token=${accessToken}`
             );
             const mediaData = await mediaResponse.json();
@@ -866,7 +866,7 @@ serve(async (req) => {
         if (pageId) {
           try {
             const pageResponse = await fetch(
-              `https://graph.facebook.com/v18.0/${pageId}?` +
+              `https://graph.facebook.com/v21.0/${pageId}?` +
               `fields=fan_count,followers_count,name&access_token=${accessToken}`
             );
             const pageData = await pageResponse.json();
@@ -879,7 +879,7 @@ serve(async (req) => {
 
             // Get page insights using the same date range
             const pageInsightsResponse = await fetch(
-              `https://graph.facebook.com/v18.0/${pageId}/insights?` +
+              `https://graph.facebook.com/v21.0/${pageId}/insights?` +
               `metric=page_impressions,page_post_engagements,page_fans&period=day` +
               `&since=${since}&until=${now}&access_token=${accessToken}`
             );
@@ -917,7 +917,7 @@ serve(async (req) => {
         if (instagramId) {
           try {
             const insightsResponse = await fetch(
-              `https://graph.facebook.com/v18.0/${instagramId}/insights?` +
+              `https://graph.facebook.com/v21.0/${instagramId}/insights?` +
               `metric=reach,impressions,profile_views&period=day&access_token=${accessToken}`
             );
             const insightsData = await insightsResponse.json();
@@ -976,7 +976,7 @@ serve(async (req) => {
             const daysAgo = now - (days * 24 * 60 * 60);
 
             const pageInsightsResponse = await fetch(
-              `https://graph.facebook.com/v18.0/${pageId}/insights?` +
+              `https://graph.facebook.com/v21.0/${pageId}/insights?` +
               `metric=page_impressions,page_impressions_unique,page_post_engagements&period=day` +
               `&since=${daysAgo}&until=${now}&access_token=${accessToken}`
             );
