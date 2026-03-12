@@ -628,7 +628,7 @@ serve(async (req) => {
 
               if (metrics.length > 0) {
                 const insightsResponse = await fetch(
-                  `https://graph.facebook.com/v18.0/${media.id}/insights?` +
+                  `https://graph.facebook.com/v21.0/${media.id}/insights?` +
                   `metric=${metrics.join(',')}&access_token=${accessToken}`
                 );
                 const insightsData = await insightsResponse.json();
