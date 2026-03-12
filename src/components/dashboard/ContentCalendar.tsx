@@ -26,13 +26,14 @@ import { ContentPost, NetworkType } from '@/data/mockData';
 const typeConfig: Record<string, { 
   label: string; 
   icon: React.ComponentType<{ className?: string }>; 
-  class: string;
+  color: string;
+  border: string;
 }> = {
-  reel: { label: 'Reel', icon: Play, class: 'bg-violet-500 text-white' },
-  video: { label: 'Video', icon: Film, class: 'bg-blue-500 text-white' },
-  carousel: { label: 'Carrusel', icon: LayoutGrid, class: 'bg-amber-500 text-white' },
-  image: { label: 'Post', icon: ImageIcon, class: 'bg-emerald-500 text-white' },
-  story: { label: 'Historia', icon: Clock, class: 'bg-pink-500 text-white' },
+  reel: { label: 'Reel', icon: Play, color: 'bg-violet-500', border: 'border-violet-500' },
+  video: { label: 'Video', icon: Film, color: 'bg-blue-500', border: 'border-blue-500' },
+  carousel: { label: 'Carrusel', icon: LayoutGrid, color: 'bg-amber-500', border: 'border-amber-500' },
+  image: { label: 'Post', icon: ImageIcon, color: 'bg-emerald-500', border: 'border-emerald-500' },
+  story: { label: 'Historia', icon: Clock, color: 'bg-pink-500', border: 'border-pink-500' },
 };
 
 const platformColors: Record<NetworkType, string> = {
@@ -217,38 +218,38 @@ export const ContentCalendar = ({
 
                 {/* Content thumbnails */}
                 <div className="space-y-1">
-                  {dayContent.slice(0, 3).map(post => (
-                    <button
-                      key={post.id}
-                      onClick={() => onPostClick(post)}
-                      className={cn(
-                        "w-full flex items-center gap-1 p-1 rounded text-left hover:bg-muted/50 transition-colors group",
-                        "ring-2 ring-offset-1 ring-offset-background",
-                        platformColors[post.network]
-                      )}
-                    >
-                      {post.thumbnail ? (
-                        <img 
-                          src={post.thumbnail} 
-                          alt="" 
-                          className="w-8 h-8 rounded object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className={cn(
-                          "w-8 h-8 rounded flex items-center justify-center flex-shrink-0",
-                          typeConfig[post.type || 'image']?.class || "bg-muted"
-                        )}>
-                          {(() => {
-                            const Icon = typeConfig[post.type || 'image']?.icon || ImageIcon;
-                            return <Icon className="h-3 w-3" />;
-                          })()}
-                        </div>
-                      )}
-                      <span className="text-[10px] text-muted-foreground truncate flex-1 group-hover:text-foreground">
-                        {post.type ? typeConfig[post.type]?.label : 'Post'}
-                      </span>
-                    </button>
-                  ))}
+                  {dayContent.slice(0, 3).map(post => {
+                    const config = typeConfig[post.type || 'image'] || typeConfig.image;
+                    return (
+                      <button
+                        key={post.id}
+                        onClick={() => onPostClick(post)}
+                        className={cn(
+                          "w-full flex items-center gap-1.5 p-0.5 rounded transition-colors group",
+                          "border-l-[3px]",
+                          config.border
+                        )}
+                      >
+                        {post.thumbnail ? (
+                          <img 
+                            src={post.thumbnail} 
+                            alt="" 
+                            className="w-8 h-8 rounded object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className={cn(
+                            "w-8 h-8 rounded flex items-center justify-center flex-shrink-0 text-white",
+                            config.color
+                          )}>
+                            {(() => {
+                              const Icon = config.icon;
+                              return <Icon className="h-3.5 w-3.5" />;
+                            })()}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                   
                   {dayContent.length > 3 && (
                     <div className="text-[10px] text-muted-foreground text-center">
@@ -261,14 +262,18 @@ export const ContentCalendar = ({
           })}
         </div>
 
-        {/* Legend */}
-        <div className="mt-4 pt-3 border-t flex flex-wrap gap-3 justify-center">
-          {availablePlatforms.map(platform => (
-            <div key={platform} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className={cn("w-3 h-3 rounded ring-2", platformColors[platform])} />
-              <span className="capitalize">{platform}</span>
-            </div>
-          ))}
+        {/* Legend - content types */}
+        <div className="mt-4 pt-3 border-t flex flex-wrap gap-4 justify-center">
+          {Object.entries(typeConfig).map(([key, config]) => {
+            const Icon = config.icon;
+            return (
+              <div key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className={cn("w-3 h-3 rounded-sm", config.color)} />
+                <Icon className="h-3 w-3" />
+                <span>{config.label}</span>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
