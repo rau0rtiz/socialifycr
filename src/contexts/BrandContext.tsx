@@ -114,9 +114,11 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
 
       setClients(data || []);
       
-      // Auto-select first client if none selected
+      // Restore previously selected client or auto-select first
       if (data && data.length > 0 && !selectedClient) {
-        setSelectedClient(data[0]);
+        const savedClientId = localStorage.getItem('selected-client-id');
+        const savedClient = savedClientId ? data.find(c => c.id === savedClientId) : null;
+        setSelectedClient(savedClient || data[0]);
       }
     } finally {
       setClientsLoading(false);

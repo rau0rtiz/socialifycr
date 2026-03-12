@@ -33,18 +33,7 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <TopBar />
-          <main ref={mainRef} className="flex-1 p-3 md:p-6 overflow-auto relative">
-            {pulling && (
-              <div 
-                className="flex items-center justify-center transition-transform"
-                style={{ height: pullDistance, minHeight: pullDistance > 10 ? 24 : 0 }}
-              >
-                <Loader2 
-                  className="h-5 w-5 text-muted-foreground animate-spin" 
-                  style={{ opacity: Math.min(pullDistance / 60, 1) }}
-                />
-              </div>
-            )}
+          <main className="flex-1 p-3 md:p-6 overflow-auto relative">
             {children}
           </main>
         </div>
