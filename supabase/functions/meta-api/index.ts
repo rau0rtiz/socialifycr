@@ -575,7 +575,7 @@ serve(async (req) => {
 
         // Also fetch live Stories (only returns active/non-expired stories within 24h)
         try {
-          const storiesUrl = `https://graph.facebook.com/v18.0/${instagramId}/stories?` +
+          const storiesUrl = `https://graph.facebook.com/v21.0/${instagramId}/stories?` +
             `fields=id,media_type,media_url,thumbnail_url,timestamp,permalink` +
             `&access_token=${accessToken}`;
           
