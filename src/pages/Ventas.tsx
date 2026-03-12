@@ -142,6 +142,9 @@ const Ventas = () => {
           />
         </div>
 
+        {/* WhatsApp Conversations (Beta) */}
+        <WhatsAppConversationsWidget clientId={selectedClient.id} />
+
         {/* Sales by product pie chart */}
         <SalesByProductChart sales={allSales} />
 
