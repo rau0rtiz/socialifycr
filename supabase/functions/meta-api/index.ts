@@ -1085,6 +1085,138 @@ serve(async (req) => {
         break;
       }
 
+      case 'whatsapp-conversations': {
+        // Step 1: Discover WABA ID via the user token (not page token)
+        const waToken = userAccessToken;
+        if (!waToken) {
+          return new Response(JSON.stringify({ error: 'No user access token available' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Try to get WABA from stored connection first
+        let wabaId = (connection as any).waba_id || null;
+
+        if (!wabaId) {
+          // Discover WABA via the business account that owns the ad account or page
+          // First try via debug_token to get the app-scoped business ID
+          try {
+            // Use the page's business to find WABAs
+            const businessRes = await fetch(
+              `https://graph.facebook.com/v21.0/${pageId}?fields=business&access_token=${waToken}`
+            );
+            const businessData = await businessRes.json();
+            console.log('Business discovery response:', JSON.stringify(businessData));
+
+            const businessId = businessData?.business?.id;
+            if (businessId) {
+              const wabaRes = await fetch(
+                `https://graph.facebook.com/v21.0/${businessId}/owned_whatsapp_business_accounts?access_token=${waToken}`
+              );
+              const wabaData = await wabaRes.json();
+              console.log('WABA discovery response:', JSON.stringify(wabaData));
+
+              if (wabaData.data && wabaData.data.length > 0) {
+                wabaId = wabaData.data[0].id;
+                console.log('Discovered WABA ID:', wabaId);
+              } else if (wabaData.error) {
+                console.warn('WABA discovery error:', wabaData.error.message);
+                return new Response(JSON.stringify({ 
+                  error: 'whatsapp_permission_missing',
+                  message: 'El token no tiene permiso whatsapp_business_management. Es necesario reconectar Meta con ese permiso.',
+                  details: wabaData.error.message
+                }), {
+                  status: 403,
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                });
+              }
+            }
+          } catch (err) {
+            console.error('Error discovering WABA:', err);
+          }
+        }
+
+        if (!wabaId) {
+          return new Response(JSON.stringify({ 
+            error: 'no_waba_found',
+            message: 'No se encontró una cuenta de WhatsApp Business vinculada al portafolio comercial.'
+          }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Step 2: Fetch conversation analytics
+        const waSince = params.since || Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
+        const waUntil = params.until || Math.floor(Date.now() / 1000);
+        const granularity = params.granularity || 'DAILY';
+
+        const conversationUrl = `https://graph.facebook.com/v21.0/${wabaId}?` +
+          `fields=conversation_analytics.start(${waSince}).end(${waUntil}).granularity(${granularity}).dimensions(["CONVERSATION_CATEGORY","CONVERSATION_TYPE","COUNTRY","PHONE"])` +
+          `&access_token=${waToken}`;
+
+        console.log('Fetching WhatsApp conversation analytics...');
+        const waResponse = await fetch(conversationUrl);
+        const waData = await waResponse.json();
+        console.log('WhatsApp conversations response:', JSON.stringify(waData).substring(0, 500));
+
+        if (waData.error) {
+          return new Response(JSON.stringify({ 
+            error: 'whatsapp_api_error',
+            message: waData.error.message,
+            code: waData.error.code
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        result = { 
+          waba_id: wabaId,
+          conversations: waData.conversation_analytics || waData
+        };
+        break;
+      }
+
+      case 'whatsapp-check': {
+        // Quick check to see if WhatsApp Business access is available
+        const checkToken = userAccessToken;
+        if (!checkToken) {
+          result = { hasAccess: false, reason: 'no_token' };
+          break;
+        }
+
+        try {
+          const bizRes = await fetch(
+            `https://graph.facebook.com/v21.0/${pageId}?fields=business&access_token=${checkToken}`
+          );
+          const bizData = await bizRes.json();
+          const bizId = bizData?.business?.id;
+
+          if (!bizId) {
+            result = { hasAccess: false, reason: 'no_business' };
+            break;
+          }
+
+          const wabaCheckRes = await fetch(
+            `https://graph.facebook.com/v21.0/${bizId}/owned_whatsapp_business_accounts?access_token=${checkToken}`
+          );
+          const wabaCheckData = await wabaCheckRes.json();
+
+          if (wabaCheckData.error) {
+            result = { hasAccess: false, reason: 'permission_missing', error: wabaCheckData.error.message };
+          } else if (wabaCheckData.data && wabaCheckData.data.length > 0) {
+            result = { hasAccess: true, wabaId: wabaCheckData.data[0].id, wabaName: wabaCheckData.data[0].name };
+          } else {
+            result = { hasAccess: false, reason: 'no_waba_linked' };
+          }
+        } catch (err) {
+          result = { hasAccess: false, reason: 'error', error: String(err) };
+        }
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({ error: 'Unknown endpoint' }), {
           status: 400,
