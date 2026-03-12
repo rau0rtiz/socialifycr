@@ -43,7 +43,7 @@ serve(async (req) => {
         }
 
         // Fetch active stories
-        const storiesUrl = `https://graph.facebook.com/v18.0/${conn.instagram_account_id}/stories?fields=id,media_type,media_url,thumbnail_url,timestamp,permalink&access_token=${accessToken}`;
+        const storiesUrl = `https://graph.facebook.com/v21.0/${conn.instagram_account_id}/stories?fields=id,media_type,media_url,thumbnail_url,timestamp,permalink&access_token=${accessToken}`;
         const storiesRes = await fetch(storiesUrl);
         const storiesData = await storiesRes.json();
 
@@ -63,7 +63,7 @@ serve(async (req) => {
           let insights = { impressions: 0, reach: 0, replies: 0, exits: 0, taps_forward: 0, taps_back: 0 };
           
           try {
-            const insightsUrl = `https://graph.facebook.com/v18.0/${story.id}/insights?metric=impressions,reach,replies,exits,taps_forward,taps_back&access_token=${accessToken}`;
+            const insightsUrl = `https://graph.facebook.com/v21.0/${story.id}/insights?metric=impressions,reach,replies,exits,taps_forward,taps_back&access_token=${accessToken}`;
             const insightsRes = await fetch(insightsUrl);
             const insightsData = await insightsRes.json();
 

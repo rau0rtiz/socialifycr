@@ -62,7 +62,7 @@ serve(async (req) => {
       const state = JSON.stringify({ clientId, timestamp: Date.now() });
       const encodedState = btoa(state);
 
-      const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?` +
+      const authUrl = `https://www.facebook.com/v21.0/dialog/oauth?` +
         `client_id=${META_APP_ID}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scopes)}` +
@@ -110,7 +110,7 @@ serve(async (req) => {
 
       // Exchange code for short-lived token
       const tokenResponse = await fetch(
-        `https://graph.facebook.com/v18.0/oauth/access_token?` +
+        `https://graph.facebook.com/v21.0/oauth/access_token?` +
         `client_id=${META_APP_ID}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&client_secret=${META_APP_SECRET}` +
@@ -130,7 +130,7 @@ serve(async (req) => {
 
       // Exchange for long-lived token
       const longLivedResponse = await fetch(
-        `https://graph.facebook.com/v18.0/oauth/access_token?` +
+        `https://graph.facebook.com/v21.0/oauth/access_token?` +
         `grant_type=fb_exchange_token` +
         `&client_id=${META_APP_ID}` +
         `&client_secret=${META_APP_SECRET}` +
@@ -153,7 +153,7 @@ serve(async (req) => {
 
       // Get user's pages
       const pagesResponse = await fetch(
-        `https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}&limit=100`
+        `https://graph.facebook.com/v21.0/me/accounts?access_token=${accessToken}&limit=100`
       );
       const pagesData = await pagesResponse.json();
       console.log('Pages fetched:', pagesData.data?.length || 0);
@@ -163,7 +163,7 @@ serve(async (req) => {
       if (pagesData.data) {
         for (const page of pagesData.data) {
           const igResponse = await fetch(
-            `https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
+            `https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
           );
           const igData = await igResponse.json();
           if (igData.instagram_business_account) {
@@ -180,7 +180,7 @@ serve(async (req) => {
 
       // Get ad accounts with names
       const adAccountsResponse = await fetch(
-        `https://graph.facebook.com/v18.0/me/adaccounts?fields=id,name,account_status&access_token=${accessToken}&limit=100`
+        `https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status&access_token=${accessToken}&limit=100`
       );
       const adAccountsData = await adAccountsResponse.json();
       console.log('Ad accounts fetched:', adAccountsData.data?.length || 0);
