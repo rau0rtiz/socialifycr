@@ -218,38 +218,38 @@ export const ContentCalendar = ({
 
                 {/* Content thumbnails */}
                 <div className="space-y-1">
-                  {dayContent.slice(0, 3).map(post => (
-                    <button
-                      key={post.id}
-                      onClick={() => onPostClick(post)}
-                      className={cn(
-                        "w-full flex items-center gap-1 p-1 rounded text-left hover:bg-muted/50 transition-colors group",
-                        "ring-2 ring-offset-1 ring-offset-background",
-                        platformColors[post.network]
-                      )}
-                    >
-                      {post.thumbnail ? (
-                        <img 
-                          src={post.thumbnail} 
-                          alt="" 
-                          className="w-8 h-8 rounded object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className={cn(
-                          "w-8 h-8 rounded flex items-center justify-center flex-shrink-0",
-                          typeConfig[post.type || 'image']?.class || "bg-muted"
-                        )}>
-                          {(() => {
-                            const Icon = typeConfig[post.type || 'image']?.icon || ImageIcon;
-                            return <Icon className="h-3 w-3" />;
-                          })()}
-                        </div>
-                      )}
-                      <span className="text-[10px] text-muted-foreground truncate flex-1 group-hover:text-foreground">
-                        {post.type ? typeConfig[post.type]?.label : 'Post'}
-                      </span>
-                    </button>
-                  ))}
+                  {dayContent.slice(0, 3).map(post => {
+                    const config = typeConfig[post.type || 'image'] || typeConfig.image;
+                    return (
+                      <button
+                        key={post.id}
+                        onClick={() => onPostClick(post)}
+                        className={cn(
+                          "w-full flex items-center gap-1.5 p-0.5 rounded transition-colors group",
+                          "border-l-[3px]",
+                          config.border
+                        )}
+                      >
+                        {post.thumbnail ? (
+                          <img 
+                            src={post.thumbnail} 
+                            alt="" 
+                            className="w-8 h-8 rounded object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className={cn(
+                            "w-8 h-8 rounded flex items-center justify-center flex-shrink-0 text-white",
+                            config.color
+                          )}>
+                            {(() => {
+                              const Icon = config.icon;
+                              return <Icon className="h-3.5 w-3.5" />;
+                            })()}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                   
                   {dayContent.length > 3 && (
                     <div className="text-[10px] text-muted-foreground text-center">
