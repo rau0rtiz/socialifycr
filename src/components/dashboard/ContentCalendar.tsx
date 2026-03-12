@@ -262,14 +262,18 @@ export const ContentCalendar = ({
           })}
         </div>
 
-        {/* Legend */}
-        <div className="mt-4 pt-3 border-t flex flex-wrap gap-3 justify-center">
-          {availablePlatforms.map(platform => (
-            <div key={platform} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className={cn("w-3 h-3 rounded ring-2", platformColors[platform])} />
-              <span className="capitalize">{platform}</span>
-            </div>
-          ))}
+        {/* Legend - content types */}
+        <div className="mt-4 pt-3 border-t flex flex-wrap gap-4 justify-center">
+          {Object.entries(typeConfig).map(([key, config]) => {
+            const Icon = config.icon;
+            return (
+              <div key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className={cn("w-3 h-3 rounded-sm", config.color)} />
+                <Icon className="h-3 w-3" />
+                <span>{config.label}</span>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
