@@ -77,7 +77,16 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
   const [platformBrand, setPlatformBrand] = useState<PlatformBrand>(getInitialPlatformBrand);
   const [clients, setClients] = useState<Client[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClientState] = useState<Client | null>(null);
+
+  const setSelectedClient = (client: Client | null) => {
+    setSelectedClientState(client);
+    if (client) {
+      localStorage.setItem('selected-client-id', client.id);
+    } else {
+      localStorage.removeItem('selected-client-id');
+    }
+  };
   const [clientBrands, setClientBrands] = useState<Record<string, ClientBrand>>(getInitialClientBrands);
   const [savedState, setSavedState] = useState<string>(() => 
     JSON.stringify({ platformBrand: getInitialPlatformBrand(), clientBrands: getInitialClientBrands() })
@@ -105,9 +114,11 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
 
       setClients(data || []);
       
-      // Auto-select first client if none selected
+      // Restore previously selected client or auto-select first
       if (data && data.length > 0 && !selectedClient) {
-        setSelectedClient(data[0]);
+        const savedClientId = localStorage.getItem('selected-client-id');
+        const savedClient = savedClientId ? data.find(c => c.id === savedClientId) : null;
+        setSelectedClient(savedClient || data[0]);
       }
     } finally {
       setClientsLoading(false);
