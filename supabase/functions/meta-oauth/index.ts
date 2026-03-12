@@ -161,20 +161,29 @@ serve(async (req) => {
       // Get Instagram accounts linked to pages
       const instagramAccounts: any[] = [];
       if (pagesData.data) {
-        for (const page of pagesData.data) {
-          const igResponse = await fetch(
-            `https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
-          );
-          const igData = await igResponse.json();
-          if (igData.instagram_business_account) {
-            instagramAccounts.push({
-              pageId: page.id,
-              pageName: page.name,
-              instagramId: igData.instagram_business_account.id,
-              pageAccessToken: page.access_token
-            });
-          }
-        }
+        // Fetch all Instagram accounts in parallel for speed
+        const igResults = await Promise.all(
+          pagesData.data.map(async (page: any) => {
+            try {
+              const igResponse = await fetch(
+                `https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
+              );
+              const igData = await igResponse.json();
+              if (igData.instagram_business_account) {
+                return {
+                  pageId: page.id,
+                  pageName: page.name,
+                  instagramId: igData.instagram_business_account.id,
+                  pageAccessToken: page.access_token
+                };
+              }
+            } catch (e) {
+              console.error(`Error fetching IG for page ${page.id}:`, e);
+            }
+            return null;
+          })
+        );
+        instagramAccounts.push(...igResults.filter(Boolean));
       }
       console.log('Instagram accounts found:', instagramAccounts.length);
 
