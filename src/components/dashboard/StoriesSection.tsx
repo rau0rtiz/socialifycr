@@ -96,20 +96,26 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
         )}
 
         {/* Bottom info */}
-        <div className="absolute bottom-0 left-0 right-0 p-2 space-y-1">
+        <div className="absolute bottom-0 left-0 right-0 p-2.5 space-y-1.5">
           <div className="flex items-center gap-1 text-white/80 text-[10px]">
             <Clock className="h-3 w-3" />
             {timeAgo}
           </div>
-          <div className="flex items-center gap-2 text-white text-xs">
-            <span className="flex items-center gap-0.5">
-              <Eye className="h-3 w-3" />
-              {story.impressions?.toLocaleString() || 0}
-            </span>
-            <span className="flex items-center gap-0.5">
-              <Users className="h-3 w-3" />
-              {story.reach?.toLocaleString() || 0}
-            </span>
+          <div className="grid grid-cols-2 gap-1">
+            <div className="bg-black/50 backdrop-blur-sm rounded px-1.5 py-1 text-center">
+              <div className="flex items-center justify-center gap-1 text-white text-xs font-semibold">
+                <Eye className="h-3 w-3" />
+                {story.impressions?.toLocaleString() || 0}
+              </div>
+              <div className="text-[8px] text-white/70">Vistas</div>
+            </div>
+            <div className="bg-black/50 backdrop-blur-sm rounded px-1.5 py-1 text-center">
+              <div className="flex items-center justify-center gap-1 text-white text-xs font-semibold">
+                <Users className="h-3 w-3" />
+                {story.reach?.toLocaleString() || 0}
+              </div>
+              <div className="text-[8px] text-white/70">Alcance</div>
+            </div>
           </div>
         </div>
       </div>
