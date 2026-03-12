@@ -77,7 +77,16 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
   const [platformBrand, setPlatformBrand] = useState<PlatformBrand>(getInitialPlatformBrand);
   const [clients, setClients] = useState<Client[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClientState] = useState<Client | null>(null);
+
+  const setSelectedClient = (client: Client | null) => {
+    setSelectedClientState(client);
+    if (client) {
+      localStorage.setItem('selected-client-id', client.id);
+    } else {
+      localStorage.removeItem('selected-client-id');
+    }
+  };
   const [clientBrands, setClientBrands] = useState<Record<string, ClientBrand>>(getInitialClientBrands);
   const [savedState, setSavedState] = useState<string>(() => 
     JSON.stringify({ platformBrand: getInitialPlatformBrand(), clientBrands: getInitialClientBrands() })
