@@ -26,13 +26,14 @@ import { ContentPost, NetworkType } from '@/data/mockData';
 const typeConfig: Record<string, { 
   label: string; 
   icon: React.ComponentType<{ className?: string }>; 
-  class: string;
+  color: string;
+  border: string;
 }> = {
-  reel: { label: 'Reel', icon: Play, class: 'bg-violet-500 text-white' },
-  video: { label: 'Video', icon: Film, class: 'bg-blue-500 text-white' },
-  carousel: { label: 'Carrusel', icon: LayoutGrid, class: 'bg-amber-500 text-white' },
-  image: { label: 'Post', icon: ImageIcon, class: 'bg-emerald-500 text-white' },
-  story: { label: 'Historia', icon: Clock, class: 'bg-pink-500 text-white' },
+  reel: { label: 'Reel', icon: Play, color: 'bg-violet-500', border: 'border-violet-500' },
+  video: { label: 'Video', icon: Film, color: 'bg-blue-500', border: 'border-blue-500' },
+  carousel: { label: 'Carrusel', icon: LayoutGrid, color: 'bg-amber-500', border: 'border-amber-500' },
+  image: { label: 'Post', icon: ImageIcon, color: 'bg-emerald-500', border: 'border-emerald-500' },
+  story: { label: 'Historia', icon: Clock, color: 'bg-pink-500', border: 'border-pink-500' },
 };
 
 const platformColors: Record<NetworkType, string> = {
