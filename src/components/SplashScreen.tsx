@@ -77,7 +77,7 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
   }, [client, prefetchAll]);
 
   useEffect(() => {
-    const timer = setTimeout(onComplete, 8000);
+    const timer = setTimeout(onComplete, 4000);
     return () => clearTimeout(timer);
   }, [onComplete]);
 
