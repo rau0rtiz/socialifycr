@@ -81,22 +81,7 @@ const platformConfig = {
   },
 };
 
-const PUBLISHED_APP_URL = 'https://socialifycr.lovable.app';
-
-const isPreviewEnvironment = () => {
-  const hostname = window.location.hostname;
-
-  try {
-    return window.self !== window.top || hostname.includes('lovableproject.com');
-  } catch {
-    return true;
-  }
-};
-
-const getPublishedClientsUrl = () => {
-  const path = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-  return `${PUBLISHED_APP_URL}${path.startsWith('/') ? path : `/${path}`}`;
-};
+// No preview guard needed — OAuth popups work from any origin
 
 const statusConfig = {
   active: { label: 'Activo', icon: CheckCircle2, variant: 'default' as const },
@@ -311,16 +296,6 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   };
 
   const handleConnectMeta = async () => {
-    if (isPreviewEnvironment()) {
-      setConnecting(null);
-      toast({
-        title: 'Abrí la app publicada para conectar Meta',
-        description: 'Facebook bloquea este flujo dentro del preview. Te abrimos la versión publicada en una pestaña nueva.',
-      });
-      window.open(getPublishedClientsUrl(), '_blank', 'noopener,noreferrer');
-      return;
-    }
-
     setConnecting('meta');
     
     try {
