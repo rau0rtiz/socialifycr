@@ -385,7 +385,24 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         'pages_read_user_content',
       ].join(',');
 
+      // Set a timeout to detect if FB.login silently fails (e.g. blocked in iframe)
+      let loginResponded = false;
+      const loginTimeout = setTimeout(() => {
+        if (!loginResponded) {
+          loginResponded = true;
+          setConnecting(null);
+          toast({
+            title: 'Popup bloqueado',
+            description: 'No se pudo abrir el login de Facebook. Si estás en el preview, prueba en la URL publicada (socialifycr.lovable.app). También revisa que no tengas popups bloqueados.',
+            variant: 'destructive',
+          });
+        }
+      }, 5000);
+
       FB.login(async (loginResponse) => {
+        loginResponded = true;
+        clearTimeout(loginTimeout);
+
         if (loginResponse.status !== 'connected' || !loginResponse.authResponse) {
           toast({
             title: 'Conexión cancelada',
