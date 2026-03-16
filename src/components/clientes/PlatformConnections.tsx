@@ -347,56 +347,11 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       return;
     }
 
-    const scopes = [
-      'pages_read_engagement',
-      'pages_show_list',
-      'instagram_basic',
-      'instagram_manage_insights',
-      'ads_read',
-      'business_management',
-      'pages_read_user_content',
-    ].join(',');
-
-    FB.login(async (response) => {
-      if (response.status !== 'connected' || !response.authResponse) {
-        toast({
-          title: 'Conexión cancelada',
-          description: 'No se completó la autorización con Meta.',
-          variant: 'destructive',
-        });
-        setConnecting(null);
-        return;
-      }
-
+    // If user is already connected to FB, skip the login popup
+    const processToken = async (accessToken: string) => {
       try {
-        const shortLivedToken = response.authResponse.accessToken;
-
-        const { data: { session } } = await supabase.auth.getSession();
-        const accessToken = session?.access_token;
-
-        if (!accessToken) {
-          throw new Error('No hay sesión activa. Por favor inicia sesión primero.');
-        }
-
-        const apiResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=fetch-accounts-token`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({ shortLivedToken, clientId })
-          }
-        );
-
-        const result = await apiResponse.json();
-
-        if (result.error) {
-          throw new Error(result.error);
-        }
-
-        setMetaAccountsData(result.accounts);
+        const accounts = await fetchMetaAccountsFromToken(accessToken);
+        setMetaAccountsData(accounts);
         setShowAccountSelector(true);
       } catch (err) {
         console.error('Error fetching Meta accounts:', err);
@@ -408,7 +363,43 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       } finally {
         setConnecting(null);
       }
-    }, { scope: scopes, auth_type: 'rerequest' });
+    };
+
+    // Check current status first
+    FB.getLoginStatus(async (statusResponse) => {
+      if (statusResponse.status === 'connected' && statusResponse.authResponse) {
+        // Already authorized — use existing token directly
+        console.log('FB already connected, using existing token');
+        await processToken(statusResponse.authResponse.accessToken);
+        return;
+      }
+
+      // Not connected — trigger login popup
+      const scopes = [
+        'pages_read_engagement',
+        'pages_show_list',
+        'instagram_basic',
+        'instagram_manage_insights',
+        'ads_read',
+        'business_management',
+        'pages_read_user_content',
+      ].join(',');
+
+      FB.login(async (loginResponse) => {
+        if (loginResponse.status !== 'connected' || !loginResponse.authResponse) {
+          toast({
+            title: 'Conexión cancelada',
+            description: 'No se completó la autorización con Meta.',
+            variant: 'destructive',
+          });
+          setConnecting(null);
+          return;
+        }
+
+        setFbLoginStatus('connected');
+        await processToken(loginResponse.authResponse.accessToken);
+      }, { scope: scopes, auth_type: 'rerequest' });
+    });
   };
 
   const handleConnectYouTube = async () => {
