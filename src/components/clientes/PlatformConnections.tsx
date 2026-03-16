@@ -428,6 +428,28 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
 
   const handleConnectYouTube = async () => {
     setConnecting('youtube');
+
+    // Open popup IMMEDIATELY on user click to preserve gesture context
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const popup = window.open(
+      'about:blank',
+      'youtube-oauth',
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+
+    if (!popup) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
+        variant: 'destructive',
+      });
+      setConnecting(null);
+      return;
+    }
     
     try {
       const redirectUri = `${window.location.origin}/oauth/youtube/callback`;
@@ -444,34 +466,13 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       const data = await response.json();
 
       if (data.error) {
-        toast({
-          title: 'Error',
-          description: data.error,
-          variant: 'destructive',
-        });
+        popup.close();
+        toast({ title: 'Error', description: data.error, variant: 'destructive' });
         setConnecting(null);
         return;
       }
 
-      const width = 600;
-      const height = 700;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-      
-      const popup = window.open(
-        data.authUrl,
-        'youtube-oauth',
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
-
-      if (!popup) {
-        toast({
-          title: 'Error',
-          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
-          variant: 'destructive',
-        });
-        setConnecting(null);
-      }
+      popup.location.href = data.authUrl;
 
       const checkPopup = setInterval(() => {
         if (popup?.closed) {
@@ -481,12 +482,9 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       }, 1000);
 
     } catch (err) {
+      popup.close();
       console.error('Error initiating YouTube OAuth:', err);
-      toast({
-        title: 'Error',
-        description: 'Error al iniciar la conexión con YouTube',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Error al iniciar la conexión con YouTube', variant: 'destructive' });
       setConnecting(null);
     }
   };
