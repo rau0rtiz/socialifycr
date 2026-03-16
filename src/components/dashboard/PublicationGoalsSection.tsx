@@ -43,7 +43,7 @@ export const PublicationGoalsSection = ({ clientId, currentMonth, content }: Pub
 
     return {
       postCount: monthPosts.length,
-      totalReach: monthPosts.reduce((sum, p) => sum + (p.reach || 0), 0),
+      totalReach: monthPosts.reduce((sum, p) => sum + (p.views || p.engagement || 0), 0),
     };
   }, [content, currentMonth]);
 
