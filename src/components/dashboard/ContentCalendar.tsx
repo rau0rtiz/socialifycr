@@ -58,6 +58,7 @@ interface ContentCalendarProps {
   isLoading: boolean;
   availablePlatforms: NetworkType[];
   onPostClick: (post: ContentPost) => void;
+  clientId?: string;
 }
 
 export const ContentCalendar = ({ 
