@@ -54,6 +54,26 @@ const platformConfig = {
     icon: Facebook,
     color: 'bg-blue-500',
   },
+};
+
+const PUBLISHED_APP_URL = 'https://socialifycr.lovable.app';
+
+const isPreviewEnvironment = () => {
+  const hostname = window.location.hostname;
+
+  try {
+    return window.self !== window.top || hostname.includes('lovableproject.com');
+  } catch {
+    return true;
+  }
+};
+
+const getPublishedClientsUrl = () => {
+  const path = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  return `${PUBLISHED_APP_URL}${path.startsWith('/') ? path : `/${path}`}`;
+};
+
+const platformConfigContinuation = {
   youtube: {
     name: 'YouTube',
     icon: Youtube,
