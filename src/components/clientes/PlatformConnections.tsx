@@ -607,7 +607,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     setConnecting('tiktok');
     
     try {
-      const redirectUri = `${window.location.origin}/oauth/tiktok/callback`;
+      const redirectUri = 'https://socialifycr.lovable.app/oauth/tiktok/callback';
       
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tiktok-oauth?action=authorize`,
