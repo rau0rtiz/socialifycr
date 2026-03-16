@@ -1192,6 +1192,47 @@ export type Database = {
         }
         Relationships: []
       }
+      publication_goals: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string
+          id: string
+          month: string
+          target_posts: number
+          target_reach: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          month: string
+          target_posts?: number
+          target_reach?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          month?: string
+          target_posts?: number
+          target_reach?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_goals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_goals: {
         Row: {
           client_id: string
