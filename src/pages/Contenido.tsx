@@ -259,6 +259,7 @@ const Contenido = () => {
           isLoading={contentLoading}
           availablePlatforms={availablePlatforms}
           onPostClick={handlePostClick}
+          clientId={selectedClient.id}
         />
       </div>
 
