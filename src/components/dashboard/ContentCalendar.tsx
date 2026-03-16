@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Play, Film, LayoutGrid, ImageIcon, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ContentPost, NetworkType } from '@/data/mockData';
+import { PublicationGoalsSection } from './PublicationGoalsSection';
 
 const typeConfig: Record<string, { 
   label: string; 
@@ -57,13 +58,15 @@ interface ContentCalendarProps {
   isLoading: boolean;
   availablePlatforms: NetworkType[];
   onPostClick: (post: ContentPost) => void;
+  clientId?: string;
 }
 
 export const ContentCalendar = ({ 
   content, 
   isLoading, 
   availablePlatforms,
-  onPostClick 
+  onPostClick,
+  clientId,
 }: ContentCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedPlatform, setSelectedPlatform] = useState<string>('__all__');
@@ -275,6 +278,17 @@ export const ContentCalendar = ({
             );
           })}
         </div>
+
+        {/* Publication Goals */}
+        {clientId && (
+          <div className="mt-4">
+            <PublicationGoalsSection
+              clientId={clientId}
+              currentMonth={currentMonth}
+              content={content}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
