@@ -36,9 +36,9 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
     return () => clearInterval(interval);
   }, []);
 
-  // Time-based progress: fills gradually over 8 seconds
+  // Time-based progress: fills gradually over 4 seconds
   useEffect(() => {
-    const duration = 8000;
+    const duration = 4000;
     const interval = 50;
     const totalSteps = duration / interval;
     let step = 0;
