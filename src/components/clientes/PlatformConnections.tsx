@@ -347,7 +347,6 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       return;
     }
 
-    // If user is already connected to FB, skip the login popup
     const processToken = async (accessToken: string) => {
       try {
         const accounts = await fetchMetaAccountsFromToken(accessToken);
@@ -365,58 +364,66 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       }
     };
 
-    // Check current status first
-    FB.getLoginStatus(async (statusResponse) => {
-      if (statusResponse.status === 'connected' && statusResponse.authResponse) {
-        // Already authorized — use existing token directly
-        console.log('FB already connected, using existing token');
-        await processToken(statusResponse.authResponse.accessToken);
-        return;
-      }
-
-      // Not connected — trigger login popup
-      const scopes = [
-        'pages_read_engagement',
-        'pages_show_list',
-        'instagram_basic',
-        'instagram_manage_insights',
-        'ads_read',
-        'business_management',
-        'pages_read_user_content',
-      ].join(',');
-
-      // Set a timeout to detect if FB.login silently fails (e.g. blocked in iframe)
-      let loginResponded = false;
-      const loginTimeout = setTimeout(() => {
-        if (!loginResponded) {
-          loginResponded = true;
-          setConnecting(null);
-          toast({
-            title: 'Popup bloqueado',
-            description: 'No se pudo abrir el login de Facebook. Si estás en el preview, prueba en la URL publicada (socialifycr.lovable.app). También revisa que no tengas popups bloqueados.',
-            variant: 'destructive',
-          });
-        }
-      }, 5000);
-
-      FB.login(async (loginResponse) => {
-        loginResponded = true;
-        clearTimeout(loginTimeout);
-
-        if (loginResponse.status !== 'connected' || !loginResponse.authResponse) {
-          toast({
-            title: 'Conexión cancelada',
-            description: 'No se completó la autorización con Meta.',
-            variant: 'destructive',
-          });
-          setConnecting(null);
+    if (fbLoginStatus === 'connected') {
+      FB.getLoginStatus(async (statusResponse) => {
+        if (statusResponse.status === 'connected' && statusResponse.authResponse) {
+          console.log('FB already connected, using existing token');
+          await processToken(statusResponse.authResponse.accessToken);
           return;
         }
 
-        setFbLoginStatus('connected');
-        await processToken(loginResponse.authResponse.accessToken);
-      }, { scope: scopes, auth_type: 'rerequest' });
-    });
+        setFbLoginStatus(statusResponse.status);
+        setConnecting(null);
+        toast({
+          title: 'Sesión de Facebook no disponible',
+          description: 'Volvé a intentar para abrir el login de Meta.',
+          variant: 'destructive',
+        });
+      });
+      return;
+    }
+
+    const scopes = [
+      'pages_read_engagement',
+      'pages_show_list',
+      'instagram_basic',
+      'instagram_manage_insights',
+      'ads_read',
+      'business_management',
+      'pages_read_user_content',
+    ].join(',');
+
+    let loginResponded = false;
+    const loginTimeout = setTimeout(() => {
+      if (!loginResponded) {
+        loginResponded = true;
+        setConnecting(null);
+        toast({
+          title: 'Popup bloqueado',
+          description: 'No se pudo abrir el login de Facebook. Si estás en el preview, prueba en la URL publicada (socialifycr.lovable.app). También revisa que no tengas popups bloqueados.',
+          variant: 'destructive',
+        });
+      }
+    }, 5000);
+
+    FB.login(async (loginResponse) => {
+      loginResponded = true;
+      clearTimeout(loginTimeout);
+
+      if (loginResponse.status !== 'connected' || !loginResponse.authResponse) {
+        setFbLoginStatus(loginResponse.status ?? 'unknown');
+        toast({
+          title: 'Conexión cancelada',
+          description: 'No se completó la autorización con Meta.',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+        return;
+      }
+
+      setFbLoginStatus('connected');
+      await processToken(loginResponse.authResponse.accessToken);
+    }, { scope: scopes, auth_type: 'rerequest' });
   };
 
   const handleConnectYouTube = async () => {
