@@ -295,64 +295,79 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
 
   const handleConnectMeta = async () => {
     setConnecting('meta');
-    
-    try {
-      const redirectUri = `${window.location.origin}/oauth/meta/callback`;
-      
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=authorize&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`
-      );
-      
-      const data = await response.json();
 
-      if (data.error) {
+    if (typeof FB === 'undefined') {
+      toast({
+        title: 'Error',
+        description: 'El SDK de Facebook no se ha cargado. Recarga la página e intenta de nuevo.',
+        variant: 'destructive',
+      });
+      setConnecting(null);
+      return;
+    }
+
+    const scopes = [
+      'pages_read_engagement',
+      'pages_show_list',
+      'instagram_basic',
+      'instagram_manage_insights',
+      'ads_read',
+      'business_management',
+      'pages_read_user_content',
+    ].join(',');
+
+    FB.login(async (response) => {
+      if (response.status !== 'connected' || !response.authResponse) {
         toast({
-          title: 'Error',
-          description: data.error,
+          title: 'Conexión cancelada',
+          description: 'No se completó la autorización con Meta.',
           variant: 'destructive',
         });
         setConnecting(null);
         return;
       }
 
-      // Open OAuth popup
-      const width = 600;
-      const height = 700;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-      
-      const popup = window.open(
-        data.authUrl,
-        'meta-oauth',
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
+      try {
+        const shortLivedToken = response.authResponse.accessToken;
 
-      if (!popup) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
+
+        if (!accessToken) {
+          throw new Error('No hay sesión activa. Por favor inicia sesión primero.');
+        }
+
+        const apiResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=fetch-accounts-token`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ shortLivedToken, clientId })
+          }
+        );
+
+        const result = await apiResponse.json();
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        setMetaAccountsData(result.accounts);
+        setShowAccountSelector(true);
+      } catch (err) {
+        console.error('Error fetching Meta accounts:', err);
         toast({
-          title: 'Error',
-          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
+          title: 'Error de conexión',
+          description: err instanceof Error ? err.message : 'Error al conectar con Meta',
           variant: 'destructive',
         });
+      } finally {
         setConnecting(null);
       }
-
-      // Check if popup was closed without completing
-      const checkPopup = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkPopup);
-          setConnecting(null);
-        }
-      }, 1000);
-
-    } catch (err) {
-      console.error('Error initiating OAuth:', err);
-      toast({
-        title: 'Error',
-        description: 'Error al iniciar la conexión con Meta',
-        variant: 'destructive',
-      });
-      setConnecting(null);
-    }
+    }, { scope: scopes, auth_type: 'rerequest' });
   };
 
   const handleConnectYouTube = async () => {
