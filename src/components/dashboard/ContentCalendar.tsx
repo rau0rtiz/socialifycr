@@ -278,6 +278,17 @@ export const ContentCalendar = ({
             );
           })}
         </div>
+
+        {/* Publication Goals */}
+        {clientId && (
+          <div className="mt-4">
+            <PublicationGoalsSection
+              clientId={clientId}
+              currentMonth={currentMonth}
+              content={content}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
