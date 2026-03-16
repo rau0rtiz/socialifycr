@@ -38,7 +38,7 @@ export const TikTokOAuthCallback = () => {
       try {
         const stateData = JSON.parse(atob(state));
         const clientId = stateData.clientId;
-        const redirectUri = 'https://socialifycr.lovable.app/oauth/tiktok/callback';
+        const redirectUri = `${window.location.origin}/oauth/tiktok/callback`;
 
         const { data: { session } } = await supabase.auth.getSession();
         const accessToken = session?.access_token;

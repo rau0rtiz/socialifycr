@@ -100,7 +100,6 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [connectionToDisconnect, setConnectionToDisconnect] = useState<PlatformConnection | null>(null);
-  const [fbLoginStatus, setFbLoginStatus] = useState<'connected' | 'not_authorized' | 'unknown' | null>(null);
   const { toast } = useToast();
   const { logAction } = useAuditLog();
 
@@ -118,49 +117,9 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     setLoading(false);
   }, [clientId]);
 
-  // Shared helper: given a short-lived token, fetch accounts from backend
-  const fetchMetaAccountsFromToken = useCallback(async (shortLivedToken: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const accessToken = session?.access_token;
-
-    if (!accessToken) {
-      throw new Error('No hay sesión activa. Por favor inicia sesión primero.');
-    }
-
-    const apiResponse = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=fetch-accounts-token`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ shortLivedToken, clientId })
-      }
-    );
-
-    const result = await apiResponse.json();
-
-    if (result.error) {
-      throw new Error(result.error);
-    }
-
-    return result.accounts as MetaAccountsData;
-  }, [clientId]);
-
   useEffect(() => {
     fetchConnections();
   }, [fetchConnections]);
-
-  // Check FB login status on mount
-  useEffect(() => {
-    if (typeof FB !== 'undefined') {
-      FB.getLoginStatus((response) => {
-        setFbLoginStatus(response.status);
-        console.log('FB login status:', response.status);
-      });
-    }
-  }, []);
 
   // Handle META_OAUTH_CODE: parent makes the authenticated API call
   const handleMetaOAuthCode = useCallback(async (code: string, oauthClientId: string, redirectUri: string) => {
@@ -336,109 +295,68 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
 
   const handleConnectMeta = async () => {
     setConnecting('meta');
+    
+    try {
+      const redirectUri = `${window.location.origin}/oauth/meta/callback`;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth?action=authorize&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`
+      );
+      
+      const data = await response.json();
 
-    if (typeof FB === 'undefined') {
-      toast({
-        title: 'Error',
-        description: 'El SDK de Facebook no se ha cargado. Recarga la página e intenta de nuevo.',
-        variant: 'destructive',
-      });
-      setConnecting(null);
-      return;
-    }
-
-    const scopes = [
-      'pages_read_engagement',
-      'pages_show_list',
-      'instagram_basic',
-      'instagram_manage_insights',
-      'ads_read',
-      'business_management',
-      'pages_read_user_content',
-    ].join(',');
-
-    const processToken = async (accessToken: string) => {
-      try {
-        const accounts = await fetchMetaAccountsFromToken(accessToken);
-        setMetaAccountsData(accounts);
-        setShowAccountSelector(true);
-      } catch (err) {
-        console.error('Error fetching Meta accounts:', err);
+      if (data.error) {
         toast({
-          title: 'Error de conexión',
-          description: err instanceof Error ? err.message : 'Error al conectar con Meta',
+          title: 'Error',
+          description: data.error,
           variant: 'destructive',
         });
-      } finally {
         setConnecting(null);
-      }
-    };
-
-    FB.getLoginStatus(async (statusResponse) => {
-      if (statusResponse.status === 'connected' && statusResponse.authResponse) {
-        console.log('FB already connected, using existing token');
-        await processToken(statusResponse.authResponse.accessToken);
         return;
       }
 
-      // Not connected — trigger login popup
-      let loginResponded = false;
-      const loginTimeout = setTimeout(() => {
-        if (!loginResponded) {
-          loginResponded = true;
+      // Open OAuth popup
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const popup = window.open(
+        data.authUrl,
+        'meta-oauth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!popup) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      }
+
+      // Check if popup was closed without completing
+      const checkPopup = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkPopup);
           setConnecting(null);
-          toast({
-            title: 'Popup bloqueado',
-            description: 'No se pudo abrir el login de Facebook. Si estás en el preview, prueba en la URL publicada (socialifycr.lovable.app). También revisa que no tengas popups bloqueados.',
-            variant: 'destructive',
-          });
         }
-      }, 5000);
+      }, 1000);
 
-      FB.login(async (loginResponse) => {
-        loginResponded = true;
-        clearTimeout(loginTimeout);
-
-        if (loginResponse.status !== 'connected' || !loginResponse.authResponse) {
-          toast({
-            title: 'Conexión cancelada',
-            description: 'No se completó la autorización con Meta.',
-            variant: 'destructive',
-          });
-          setConnecting(null);
-          return;
-        }
-
-        setFbLoginStatus('connected');
-        await processToken(loginResponse.authResponse.accessToken);
-      }, { scope: scopes, auth_type: 'rerequest' });
-    });
+    } catch (err) {
+      console.error('Error initiating OAuth:', err);
+      toast({
+        title: 'Error',
+        description: 'Error al iniciar la conexión con Meta',
+        variant: 'destructive',
+      });
+      setConnecting(null);
+    }
   };
 
   const handleConnectYouTube = async () => {
     setConnecting('youtube');
-
-    // Open popup IMMEDIATELY on user click to preserve gesture context
-    const width = 600;
-    const height = 700;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-
-    const popup = window.open(
-      'about:blank',
-      'youtube-oauth',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
-
-    if (!popup) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
-        variant: 'destructive',
-      });
-      setConnecting(null);
-      return;
-    }
     
     try {
       const redirectUri = `${window.location.origin}/oauth/youtube/callback`;
@@ -455,13 +373,34 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       const data = await response.json();
 
       if (data.error) {
-        popup.close();
-        toast({ title: 'Error', description: data.error, variant: 'destructive' });
+        toast({
+          title: 'Error',
+          description: data.error,
+          variant: 'destructive',
+        });
         setConnecting(null);
         return;
       }
 
-      popup.location.href = data.authUrl;
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const popup = window.open(
+        data.authUrl,
+        'youtube-oauth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!popup) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      }
 
       const checkPopup = setInterval(() => {
         if (popup?.closed) {
@@ -471,9 +410,12 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       }, 1000);
 
     } catch (err) {
-      popup.close();
       console.error('Error initiating YouTube OAuth:', err);
-      toast({ title: 'Error', description: 'Error al iniciar la conexión con YouTube', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: 'Error al iniciar la conexión con YouTube',
+        variant: 'destructive',
+      });
       setConnecting(null);
     }
   };
@@ -592,31 +534,9 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
 
   const handleConnectTikTok = async () => {
     setConnecting('tiktok');
-
-    // Open popup IMMEDIATELY on user click to preserve gesture context
-    const width = 600;
-    const height = 700;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-
-    const popup = window.open(
-      'about:blank',
-      'tiktok-oauth',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
-
-    if (!popup) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
-        variant: 'destructive',
-      });
-      setConnecting(null);
-      return;
-    }
     
     try {
-      const redirectUri = 'https://socialifycr.lovable.app/oauth/tiktok/callback';
+      const redirectUri = `${window.location.origin}/oauth/tiktok/callback`;
       
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tiktok-oauth?action=authorize`,
@@ -630,14 +550,30 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       const data = await response.json();
 
       if (data.error) {
-        popup.close();
         toast({ title: 'Error', description: data.error, variant: 'destructive' });
         setConnecting(null);
         return;
       }
 
-      // Navigate the already-open popup to the auth URL
-      popup.location.href = data.authUrl;
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const popup = window.open(
+        data.authUrl,
+        'tiktok-oauth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!popup) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      }
 
       const checkPopup = setInterval(() => {
         if (popup?.closed) {
@@ -647,7 +583,6 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       }, 1000);
 
     } catch (err) {
-      popup.close();
       console.error('Error initiating TikTok OAuth:', err);
       toast({ title: 'Error', description: 'Error al iniciar la conexión con TikTok', variant: 'destructive' });
       setConnecting(null);
