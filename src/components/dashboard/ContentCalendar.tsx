@@ -65,7 +65,8 @@ export const ContentCalendar = ({
   content, 
   isLoading, 
   availablePlatforms,
-  onPostClick 
+  onPostClick,
+  clientId,
 }: ContentCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedPlatform, setSelectedPlatform] = useState<string>('__all__');
