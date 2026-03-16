@@ -311,6 +311,16 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   };
 
   const handleConnectMeta = async () => {
+    if (isPreviewEnvironment()) {
+      setConnecting(null);
+      toast({
+        title: 'Abrí la app publicada para conectar Meta',
+        description: 'Facebook bloquea este flujo dentro del preview. Te abrimos la versión publicada en una pestaña nueva.',
+      });
+      window.open(getPublishedClientsUrl(), '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     setConnecting('meta');
     
     try {
