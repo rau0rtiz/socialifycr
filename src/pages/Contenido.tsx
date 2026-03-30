@@ -16,6 +16,7 @@ import { StoriesSection } from '@/components/dashboard/StoriesSection';
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel';
 import { VideoIdeasSection } from '@/components/dashboard/VideoIdeasSection';
 import { CompetitorsPanel } from '@/components/dashboard/CompetitorsPanel';
+import { GiveawayWidget } from '@/components/dashboard/GiveawayWidget';
 import { ContentPost, NetworkType } from '@/data/mockData';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -249,6 +250,16 @@ const Contenido = () => {
       {selectedClient && (
         <div className="mb-6">
           <StoriesSection clientId={selectedClient.id} />
+        </div>
+      )}
+
+      {/* Giveaway Widget — only for petshop2go */}
+      {selectedClient && selectedClient.name.toLowerCase().includes('petshop2go') && (
+        <div className="mb-6">
+          <GiveawayWidget
+            clientId={selectedClient.id}
+            instagramContent={content}
+          />
         </div>
       )}
 
