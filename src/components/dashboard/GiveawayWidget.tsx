@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { ContentPost } from '@/data/mockData';
-import { Gift, Loader2, Trophy, Users, Shuffle, Check, X, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Gift, Loader2, Trophy, Users, Shuffle, Check, X, ChevronRight, ArrowLeft, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -47,6 +47,7 @@ export const GiveawayWidget = ({ clientId, instagramContent }: GiveawayWidgetPro
   });
   const [winner, setWinner] = useState<GiveawayComment | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const igPosts = useMemo(
     () => instagramContent.filter(p => p.network === 'instagram' && p.isLiveData),
@@ -78,7 +79,15 @@ export const GiveawayWidget = ({ clientId, instagramContent }: GiveawayWidgetPro
         setLoadProgress(0);
         return;
       }
-      setComments(data.comments || []);
+      
+      const fetchedComments = data.comments || [];
+      
+      // Log sample for debugging
+      if (fetchedComments.length > 0) {
+        console.log('Sample comment:', JSON.stringify(fetchedComments[0]));
+      }
+      
+      setComments(fetchedComments);
       toast.success(`${data.totalCount} comentarios cargados`);
       setStep('results');
     } catch (err) {
@@ -90,12 +99,17 @@ export const GiveawayWidget = ({ clientId, instagramContent }: GiveawayWidgetPro
     }
   }, [clientId, selectedMediaId]);
 
+  // Get display username for a comment
+  const getUsername = (c: GiveawayComment): string => {
+    return c.username || c.from?.username || `user_${c.id.slice(-6)}`;
+  };
+
   const uniqueParticipants = useMemo(() => {
     if (!conditions.uniquePerUser) return comments;
     const seen = new Map<string, GiveawayComment>();
     comments.forEach(c => {
-      const uname = (c.username || c.from?.username || '').toLowerCase();
-      if (uname && !seen.has(uname)) seen.set(uname, c);
+      const uname = getUsername(c).toLowerCase();
+      if (!seen.has(uname)) seen.set(uname, c);
     });
     return Array.from(seen.values());
   }, [comments, conditions.uniquePerUser]);
@@ -133,6 +147,9 @@ export const GiveawayWidget = ({ clientId, instagramContent }: GiveawayWidgetPro
 
   const stepIndex = step === 'select-post' ? 0 : step === 'configure' ? 1 : 2;
   const overallProgress = step === 'select-post' ? 0 : step === 'configure' ? 50 : 100;
+
+  // Check if any comment has a real username
+  const hasUsernames = comments.length > 0 && comments.some(c => c.username || c.from?.username);
 
   return (
     <Card className="border-2 border-primary/20 overflow-hidden">
@@ -188,7 +205,6 @@ export const GiveawayWidget = ({ clientId, instagramContent }: GiveawayWidgetPro
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
-                    {/* Hover overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-end p-1.5 opacity-0 group-hover:opacity-100">
                       <div className="text-white text-[10px] leading-tight space-y-0.5 w-full">
                         <div className="flex justify-between">
@@ -197,11 +213,10 @@ export const GiveawayWidget = ({ clientId, instagramContent }: GiveawayWidgetPro
                         </div>
                       </div>
                     </div>
-                    {/* Type badge */}
                     <div className="absolute top-1 right-1">
-                      <Badge variant="secondary" className="text-[8px] px-1 py-0 bg-black/60 text-white border-0">
+                      <span className="text-[8px] px-1 py-0 bg-black/60 text-white rounded">
                         {post.type === 'reel' ? '🎬' : post.type === 'carousel' ? '📸' : '🖼️'}
-                      </Badge>
+                      </span>
                     </div>
                   </button>
                 ))}
@@ -292,7 +307,7 @@ export const GiveawayWidget = ({ clientId, instagramContent }: GiveawayWidgetPro
         {step === 'results' && (
           <div className="animate-fade-in space-y-4">
             <div className="flex items-center justify-between">
-              <Button variant="ghost" size="sm" onClick={() => { setStep('configure'); setComments([]); setWinner(null); }} className="-ml-2">
+              <Button variant="ghost" size="sm" onClick={() => { setStep('configure'); setComments([]); setWinner(null); setShowPreview(false); }} className="-ml-2">
                 <ArrowLeft className="h-4 w-4 mr-1" /> Volver
               </Button>
               <div className="flex items-center gap-2 text-sm">
@@ -307,34 +322,86 @@ export const GiveawayWidget = ({ clientId, instagramContent }: GiveawayWidgetPro
               </div>
             </div>
 
-            {/* Participants list */}
-            <ScrollArea className="h-52 rounded-lg border bg-muted/30 p-2">
-              <div className="space-y-0.5">
-                {uniqueParticipants.map(c => {
-                  const isValid = validParticipants.includes(c);
-                  const isWinnerHighlight = winner?.id === c.id && !isSpinning;
-                  return (
+            {/* Warning if no usernames */}
+            {!hasUsernames && comments.length > 0 && (
+              <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
+                ⚠️ La API de Instagram no devolvió nombres de usuario para estos comentarios. 
+                La deduplicación por usuario no será posible — cada comentario se tratará como una entrada individual.
+              </div>
+            )}
+
+            {/* Comment preview toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPreview(!showPreview)}
+              className="w-full"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              {showPreview ? 'Ocultar preview de comentarios' : `Ver preview de comentarios (${comments.length})`}
+            </Button>
+
+            {/* Comment preview */}
+            {showPreview && (
+              <ScrollArea className="h-64 rounded-lg border bg-muted/30 p-2">
+                <div className="space-y-1">
+                  {comments.slice(0, 100).map((c, i) => (
                     <div
                       key={c.id}
-                      className={cn(
-                        'flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-all duration-150',
-                        isWinnerHighlight && 'bg-primary/20 ring-2 ring-primary scale-[1.02]',
-                        !isValid && 'opacity-30',
-                        isValid && !isWinnerHighlight && 'hover:bg-muted'
-                      )}
+                      className="flex items-start gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-muted"
                     >
-                      {isValid ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                      ) : (
-                        <X className="h-3.5 w-3.5 text-destructive shrink-0" />
-                      )}
-                      <span className="font-semibold text-xs min-w-[100px]">@{c.username || c.from?.username}</span>
-                      <span className="text-xs text-muted-foreground truncate flex-1">{c.text}</span>
+                      <span className="text-xs text-muted-foreground w-6 shrink-0 text-right">{i + 1}.</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-semibold text-xs text-primary">
+                          @{getUsername(c)}
+                        </span>
+                        <p className="text-xs text-muted-foreground mt-0.5 break-words">{c.text}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground shrink-0">
+                        {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+                  ))}
+                  {comments.length > 100 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      ... y {comments.length - 100} comentarios más
+                    </p>
+                  )}
+                </div>
+              </ScrollArea>
+            )}
+
+            {/* Participants list */}
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">Participantes válidos:</p>
+              <ScrollArea className="h-52 rounded-lg border bg-muted/30 p-2">
+                <div className="space-y-0.5">
+                  {uniqueParticipants.map(c => {
+                    const isValid = validParticipants.includes(c);
+                    const isWinnerHighlight = winner?.id === c.id && !isSpinning;
+                    return (
+                      <div
+                        key={c.id}
+                        className={cn(
+                          'flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-all duration-150',
+                          isWinnerHighlight && 'bg-primary/20 ring-2 ring-primary scale-[1.02]',
+                          !isValid && 'opacity-30',
+                          isValid && !isWinnerHighlight && 'hover:bg-muted'
+                        )}
+                      >
+                        {isValid ? (
+                          <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                        ) : (
+                          <X className="h-3.5 w-3.5 text-destructive shrink-0" />
+                        )}
+                        <span className="font-semibold text-xs min-w-[100px]">@{getUsername(c)}</span>
+                        <span className="text-xs text-muted-foreground truncate flex-1">{c.text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </div>
 
             {/* Winner section */}
             <div className="space-y-3">
@@ -361,7 +428,7 @@ export const GiveawayWidget = ({ clientId, instagramContent }: GiveawayWidgetPro
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Ganador/a</p>
-                        <p className="font-bold text-xl">@{winner.username || winner.from?.username}</p>
+                        <p className="font-bold text-xl">@{getUsername(winner)}</p>
                         <p className="text-sm text-muted-foreground truncate max-w-md mt-0.5">{winner.text}</p>
                       </div>
                     </CardContent>
