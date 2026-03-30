@@ -1217,6 +1217,56 @@ serve(async (req) => {
         break;
       }
 
+      case 'instagram-comments': {
+        if (!instagramId) {
+          return new Response(JSON.stringify({ error: 'No Instagram account connected' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const mediaId = params.mediaId;
+        if (!mediaId) {
+          return new Response(JSON.stringify({ error: 'Missing mediaId parameter' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Fetch all comments with pagination
+        const allComments: any[] = [];
+        let commentsUrl = `https://graph.facebook.com/v21.0/${mediaId}/comments?fields=id,text,timestamp,username,from{id,username}&limit=100&access_token=${accessToken}`;
+        
+        let pageCount = 0;
+        const maxPages = 20; // Safety limit: 20 pages × 100 = 2000 comments max
+        
+        while (commentsUrl && pageCount < maxPages) {
+          const commentsResponse = await fetch(commentsUrl);
+          const commentsData = await commentsResponse.json();
+          
+          if (commentsData.error) {
+            console.error('Comments API error:', commentsData.error);
+            result = { error: commentsData.error.message };
+            break;
+          }
+
+          if (commentsData.data) {
+            allComments.push(...commentsData.data);
+          }
+
+          commentsUrl = commentsData.paging?.next || null;
+          pageCount++;
+        }
+
+        console.log(`Fetched ${allComments.length} comments for media ${mediaId}`);
+        
+        result = {
+          comments: allComments,
+          totalCount: allComments.length,
+        };
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({ error: 'Unknown endpoint' }), {
           status: 400,
