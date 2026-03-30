@@ -1251,6 +1251,10 @@ serve(async (req) => {
           }
 
           if (commentsData.data) {
+            // Log first comment structure for debugging
+            if (pageCount === 0 && commentsData.data.length > 0) {
+              console.log('Sample comment structure:', JSON.stringify(commentsData.data[0]));
+            }
             allComments.push(...commentsData.data);
           }
 
@@ -1260,9 +1264,18 @@ serve(async (req) => {
 
         console.log(`Fetched ${allComments.length} comments for media ${mediaId}`);
         
+        // Normalize comment data - ensure username is available
+        const normalizedComments = allComments.map(c => ({
+          id: c.id,
+          text: c.text || '',
+          timestamp: c.timestamp,
+          username: c.username || c.from?.username || '',
+          from: c.from || null,
+        }));
+        
         result = {
-          comments: allComments,
-          totalCount: allComments.length,
+          comments: normalizedComments,
+          totalCount: normalizedComments.length,
         };
         break;
       }
