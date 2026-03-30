@@ -16,6 +16,7 @@ import { StoriesSection } from '@/components/dashboard/StoriesSection';
 import { AIInsightsPanel } from '@/components/dashboard/AIInsightsPanel';
 import { VideoIdeasSection } from '@/components/dashboard/VideoIdeasSection';
 import { CompetitorsPanel } from '@/components/dashboard/CompetitorsPanel';
+import { GiveawayWidget } from '@/components/dashboard/GiveawayWidget';
 import { ContentPost, NetworkType } from '@/data/mockData';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
