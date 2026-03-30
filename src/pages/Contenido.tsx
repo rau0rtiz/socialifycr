@@ -253,6 +253,16 @@ const Contenido = () => {
         </div>
       )}
 
+      {/* Giveaway Widget — only for petshop2go */}
+      {selectedClient && selectedClient.name.toLowerCase().includes('petshop2go') && (
+        <div className="mb-6">
+          <GiveawayWidget
+            clientId={selectedClient.id}
+            instagramContent={content}
+          />
+        </div>
+      )}
+
       {/* Content Calendar */}
       <div className="mb-6">
         <ContentCalendar
