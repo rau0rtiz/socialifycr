@@ -35,6 +35,7 @@ export interface AppointmentInput {
   lead_phone?: string;
   lead_email?: string;
   appointment_date: string;
+  sales_call_date?: string;
   setter_name?: string;
   estimated_value?: number;
   currency?: 'CRC' | 'USD';
