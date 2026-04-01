@@ -1,0 +1,86 @@
+import { useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SetterAppointment } from '@/hooks/use-setter-appointments';
+import { PieChart as PieChartIcon, User } from 'lucide-react';
+import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+
+interface ClosureRateWidgetProps {
+  appointments: SetterAppointment[];
+}
+
+export const ClosureRateWidget = ({ appointments }: ClosureRateWidgetProps) => {
+  const setterClosureData = useMemo(() => {
+    const setterMap = new Map<string, { sold: number; notSold: number }>();
+    appointments.forEach(a => {
+      const setter = a.setter_name || 'Sin asignar';
+      if (a.status === 'sold' || (a.status as string) === 'not_sold') {
+        const entry = setterMap.get(setter) || { sold: 0, notSold: 0 };
+        if (a.status === 'sold') entry.sold++;
+        else entry.notSold++;
+        setterMap.set(setter, entry);
+      }
+    });
+    return Array.from(setterMap.entries()).map(([name, data]) => ({
+      name,
+      rate: data.sold + data.notSold > 0 ? Math.round((data.sold / (data.sold + data.notSold)) * 100) : 0,
+      sold: data.sold,
+      total: data.sold + data.notSold,
+    }));
+  }, [appointments]);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <PieChartIcon className="h-4 w-4" />
+          Tasa de Cierre por Vendedor
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {setterClosureData.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <PieChartIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            <p className="text-sm font-medium">Sin datos de cierre</p>
+            <p className="text-xs mt-1">Marca leads como vendidos o no vendidos para ver las tasas de cierre.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {setterClosureData.map((setter) => (
+              <div key={setter.name} className="p-3 rounded-lg border border-border bg-muted/30 flex items-center gap-4">
+                <div className="w-20 h-20">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPie>
+                      <Pie
+                        data={[
+                          { name: 'Vendido', value: setter.sold },
+                          { name: 'No vendido', value: setter.total - setter.sold },
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={18}
+                        outerRadius={32}
+                        dataKey="value"
+                        strokeWidth={0}
+                      >
+                        <Cell fill="hsl(142, 70%, 45%)" />
+                        <Cell fill="hsl(0, 70%, 55%)" />
+                      </Pie>
+                      <Tooltip />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                </div>
+                <div>
+                  <p className="text-sm font-medium flex items-center gap-1">
+                    <User className="h-3 w-3" /> {setter.name}
+                  </p>
+                  <p className="text-2xl font-bold text-foreground">{setter.rate}%</p>
+                  <p className="text-[10px] text-muted-foreground">{setter.sold}/{setter.total} cerrados</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};

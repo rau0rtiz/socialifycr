@@ -5,6 +5,7 @@ import { AdSalesRanking } from '@/components/dashboard/AdSalesRanking';
 import { SetterTracker } from '@/components/ventas/SetterTracker';
 import { SalesGoalBar } from '@/components/ventas/SalesGoalBar';
 import { SalesByProductChart } from '@/components/ventas/SalesByProductChart';
+import { ClosureRateWidget } from '@/components/ventas/ClosureRateWidget';
 
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
@@ -39,7 +40,7 @@ const Ventas = () => {
   const [showSaleFromSetter, setShowSaleFromSetter] = useState(false);
   const salesRef = useRef<HTMLDivElement>(null);
 
-  const { updateAppointment } = useSetterAppointments(clientId, 'last_30d');
+  const { appointments, updateAppointment } = useSetterAppointments(clientId, 'last_30d');
 
   const handleConvertToSale = (appointment: SetterAppointment) => {
     const prefill: SalePrefill = {
@@ -150,6 +151,9 @@ const Ventas = () => {
 
         {/* Sales by product pie chart */}
         <SalesByProductChart sales={allSales} />
+
+        {/* Closure rate per seller */}
+        <ClosureRateWidget appointments={appointments} />
       </div>
     </DashboardLayout>
   );
