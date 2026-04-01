@@ -238,16 +238,29 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
         </CardHeader>
 
         {/* Filters */}
-        {(uniqueSetters.length > 0 || uniqueProducts.length > 0) && (
+        {(uniqueSetters.length > 0 || uniqueProducts.length > 0 || uniqueClosers.length > 0) && (
           <div className="px-6 pb-2 flex flex-wrap items-center gap-2">
             <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            {uniqueClosers.length > 0 && (
+              <Select value={filterCloser} onValueChange={setFilterCloser}>
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue placeholder="Closer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">Todos los closers</SelectItem>
+                  {uniqueClosers.map(name => (
+                    <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {uniqueSetters.length > 0 && (
               <Select value={filterSetter} onValueChange={setFilterSetter}>
                 <SelectTrigger className="h-8 w-[150px] text-xs">
-                  <SelectValue placeholder="Vendedor" />
+                  <SelectValue placeholder="Cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" className="text-xs">Todos los vendedores</SelectItem>
+                  <SelectItem value="all" className="text-xs">Todos los clientes</SelectItem>
                   {uniqueSetters.map(name => (
                     <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
                   ))}
@@ -267,8 +280,8 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                 </SelectContent>
               </Select>
             )}
-            {(filterSetter !== 'all' || filterProduct !== 'all') && (
-              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setFilterSetter('all'); setFilterProduct('all'); }}>
+            {(filterSetter !== 'all' || filterProduct !== 'all' || filterCloser !== 'all') && (
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setFilterSetter('all'); setFilterProduct('all'); setFilterCloser('all'); }}>
                 Limpiar filtros
               </Button>
             )}
