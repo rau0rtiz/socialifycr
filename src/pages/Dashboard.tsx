@@ -34,6 +34,7 @@ const Dashboard = () => {
   
   const { selectedClient, clientBrands, clients, clientsLoading, setSelectedClient } = useBrand();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const { isAgency, isClient, clientAccess, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
