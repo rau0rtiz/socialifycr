@@ -70,7 +70,7 @@ export const ClientBanner = ({ clientId, bannerUrl, canEdit, onBannerUpdate }: C
     try {
       const { error } = await supabase
         .from('clients')
-        .update({ banner_url: null } as any)
+        .update({ banner_url: null })
         .eq('id', clientId);
 
       if (error) throw error;
