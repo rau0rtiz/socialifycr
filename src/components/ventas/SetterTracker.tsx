@@ -297,10 +297,6 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
             <TabsList className="h-8">
               <TabsTrigger value="pipeline" className="text-xs">Pipeline ({activeAppointments.length})</TabsTrigger>
               <TabsTrigger value="lost" className="text-xs">No vendidos ({lostAppointments.length})</TabsTrigger>
-              <TabsTrigger value="closure" className="text-xs">
-                <PieChart className="h-3 w-3 mr-1" />
-                Cierre
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="pipeline" className="mt-3">
