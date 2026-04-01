@@ -102,6 +102,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
         lead_phone: input.lead_phone || null,
         lead_email: input.lead_email || null,
         appointment_date: input.appointment_date,
+        sales_call_date: input.sales_call_date || null,
         setter_name: input.setter_name || null,
         estimated_value: input.estimated_value || 0,
         currency: input.currency || 'CRC',
