@@ -19,6 +19,7 @@ export interface MessageSale {
   product: string | null;
   message_platform: string | null;
   status: 'completed' | 'pending' | 'cancelled';
+  closer_name: string | null;
   created_at: string;
 }
 
