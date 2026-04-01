@@ -12,8 +12,6 @@ import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { X, Plus, ChevronLeft, ChevronRight, User, CalendarDays, Megaphone, PhoneCall, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 interface AppointmentFormDialogProps {
   open: boolean;
