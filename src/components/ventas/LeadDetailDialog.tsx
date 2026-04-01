@@ -41,21 +41,35 @@ const CHECKLIST_ITEMS = [
 ];
 
 export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist }: LeadDetailDialogProps) => {
+  // Local checklist state - hooks must be before early return
+  const [checklist, setChecklist] = useState({
+    checklist_quiz: false,
+    checklist_video: false,
+    checklist_whatsapp: false,
+    checklist_testimonials: false,
+  });
+  const [dirty, setDirty] = useState(false);
+
+  // Sync checklist when appointment changes
+  const aptId = appointment?.id;
+  useState(() => {
+    if (appointment) {
+      setChecklist({
+        checklist_quiz: (appointment as any).checklist_quiz || false,
+        checklist_video: (appointment as any).checklist_video || false,
+        checklist_whatsapp: (appointment as any).checklist_whatsapp || false,
+        checklist_testimonials: (appointment as any).checklist_testimonials || false,
+      });
+      setDirty(false);
+    }
+  });
+
   if (!appointment) return null;
 
   const apt = appointment;
   const statusCfg = STATUS_CONFIG[apt.status] || STATUS_CONFIG.scheduled;
   const salesCallDate = (apt as any).sales_call_date;
   const leadContext = (apt as any).lead_context || '';
-
-  // Local checklist state
-  const [checklist, setChecklist] = useState({
-    checklist_quiz: (apt as any).checklist_quiz || false,
-    checklist_video: (apt as any).checklist_video || false,
-    checklist_whatsapp: (apt as any).checklist_whatsapp || false,
-    checklist_testimonials: (apt as any).checklist_testimonials || false,
-  });
-  const [dirty, setDirty] = useState(false);
 
   const toggleCheck = (key: string) => {
     setChecklist(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }));

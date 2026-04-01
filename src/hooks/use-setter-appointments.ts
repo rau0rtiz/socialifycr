@@ -111,6 +111,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
         lead_goal: input.lead_goal || null,
         lead_phone: input.lead_phone || null,
         lead_email: input.lead_email || null,
+        lead_context: input.lead_context || null,
         appointment_date: input.appointment_date,
         sales_call_date: input.sales_call_date || null,
         setter_name: input.setter_name || null,
@@ -124,6 +125,10 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
         notes: input.notes || null,
         source: input.source || 'ads',
         product: input.product || null,
+        checklist_quiz: input.checklist_quiz || false,
+        checklist_video: input.checklist_video || false,
+        checklist_whatsapp: input.checklist_whatsapp || false,
+        checklist_testimonials: input.checklist_testimonials || false,
       } as any);
       if (error) throw error;
     },
