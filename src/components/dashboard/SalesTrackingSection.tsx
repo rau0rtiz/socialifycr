@@ -94,6 +94,12 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     return Array.from(names).sort();
   }, [allSales]);
 
+  const uniqueClosers = useMemo(() => {
+    const names = new Set<string>();
+    allSales.forEach(s => { if ((s as any).closer_name) names.add((s as any).closer_name); });
+    return Array.from(names).sort();
+  }, [allSales]);
+
   const uniqueProducts = useMemo(() => {
     const names = new Set<string>();
     allSales.forEach(s => { if (s.product) names.add(s.product); });
