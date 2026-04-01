@@ -125,6 +125,7 @@ export const RegisterSaleDialog = ({
       setMessagePlatform(editingSale.message_platform || '');
       setNotes(editingSale.notes || '');
       setStatus(editingSale.status);
+      setCloserName((editingSale as any).closer_name || '');
       if (editingSale.ad_id) {
         setSelectedAd({
           id: editingSale.ad_id,
@@ -148,6 +149,7 @@ export const RegisterSaleDialog = ({
       setMessagePlatform('');
       setNotes('');
       setStatus('completed');
+      setCloserName('');
       if (prefill.ad_id) {
         setSelectedAd({
           id: prefill.ad_id,
@@ -172,6 +174,7 @@ export const RegisterSaleDialog = ({
       setMessagePlatform('');
       setNotes('');
       setStatus('completed');
+      setCloserName('');
     }
   }, [editingSale, prefill, open]);
 
