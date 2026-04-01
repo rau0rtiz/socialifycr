@@ -971,6 +971,7 @@ export type Database = {
           ad_name: string | null
           amount: number
           client_id: string
+          closer_name: string | null
           created_at: string | null
           created_by: string
           currency: string
@@ -991,6 +992,7 @@ export type Database = {
           ad_name?: string | null
           amount: number
           client_id: string
+          closer_name?: string | null
           created_at?: string | null
           created_by: string
           currency?: string
@@ -1011,6 +1013,7 @@ export type Database = {
           ad_name?: string | null
           amount?: number
           client_id?: string
+          closer_name?: string | null
           created_at?: string | null
           created_by?: string
           currency?: string
@@ -1344,6 +1347,7 @@ export type Database = {
           notes: string | null
           product: string | null
           sale_id: string | null
+          sales_call_date: string | null
           setter_name: string | null
           source: string | null
           status: string
@@ -1368,6 +1372,7 @@ export type Database = {
           notes?: string | null
           product?: string | null
           sale_id?: string | null
+          sales_call_date?: string | null
           setter_name?: string | null
           source?: string | null
           status?: string
@@ -1392,6 +1397,7 @@ export type Database = {
           notes?: string | null
           product?: string | null
           sale_id?: string | null
+          sales_call_date?: string | null
           setter_name?: string | null
           source?: string | null
           status?: string
