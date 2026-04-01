@@ -93,7 +93,7 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
 
   const updateSale = useMutation({
     mutationFn: async ({ saleId, updates }: { saleId: string; updates: Partial<SaleInput & { ad_id?: string; ad_name?: string }> }) => {
-      const { error } = await supabase.from('message_sales').update(updates).eq('id', saleId);
+      const { error } = await supabase.from('message_sales').update(updates as any).eq('id', saleId);
       if (error) throw error;
     },
     onSuccess: () => {
