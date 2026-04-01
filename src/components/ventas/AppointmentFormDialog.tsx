@@ -269,9 +269,23 @@ export const AppointmentFormDialog = ({
             </div>
           )}
 
-          {/* Step 1: Product + Goal + Setter */}
+          {/* Step 1: Product + Goal + Setter + Sales Call Date */}
           {step === 1 && (
             <div className="space-y-4 py-4">
+              {/* Sales Call Date */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <PhoneCall className="h-3.5 w-3.5" />
+                  Fecha de Llamada de Venta
+                </Label>
+                <Input
+                  type="datetime-local"
+                  value={salesCallDate}
+                  onChange={e => setSalesCallDate(e.target.value)}
+                  className="h-10 text-sm"
+                />
+              </div>
+
               {/* Product selector */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
