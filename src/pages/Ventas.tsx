@@ -119,7 +119,13 @@ const Ventas = () => {
           accentColor={selectedClient.accent_color || undefined}
         />
 
-        {/* Setter pipeline first (lead → sale flow) */}
+        {/* Ad ranking up top */}
+        <AdSalesRanking
+          clientId={selectedClient.id}
+          hasAdAccount={hasAdAccount}
+        />
+
+        {/* Setter pipeline (lead → sale flow) */}
         {flags.setter_tracker && (
           <SetterTracker
             clientId={selectedClient.id}
@@ -142,15 +148,8 @@ const Ventas = () => {
           />
         </div>
 
-
         {/* Sales by product pie chart */}
         <SalesByProductChart sales={allSales} />
-
-        {/* Ad ranking last */}
-        <AdSalesRanking
-          clientId={selectedClient.id}
-          hasAdAccount={hasAdAccount}
-        />
       </div>
     </DashboardLayout>
   );
