@@ -227,7 +227,7 @@ export const RegisterSaleDialog = ({
       return;
     }
 
-    const sale: SaleInput = {
+    const sale: any = {
       sale_date: saleDate,
       amount: parseFloat(amount),
       currency,
@@ -237,6 +237,7 @@ export const RegisterSaleDialog = ({
       message_platform: messagePlatform || undefined,
       notes: notes || undefined,
       status: status as SaleInput['status'],
+      closer_name: closerName || undefined,
     };
 
     if (source === 'ad' && selectedAd) {
