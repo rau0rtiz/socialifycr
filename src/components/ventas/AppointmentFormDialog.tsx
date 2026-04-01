@@ -232,6 +232,9 @@ export const AppointmentFormDialog = ({
           <DialogHeader className="space-y-0.5">
             <DialogTitle className="text-base text-center">
               {editing ? 'Editar Lead' : 'Nuevo Lead'}
+              {!editing && draftRef.current && (
+                <span className="ml-2 text-[10px] font-normal text-amber-500">(borrador recuperado)</span>
+              )}
             </DialogTitle>
             <DialogDescription className="text-center text-xs">
               {stepTitles[step]}
