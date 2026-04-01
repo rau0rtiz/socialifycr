@@ -37,6 +37,7 @@ export interface SaleInput {
   product?: string;
   message_platform?: string;
   status?: 'completed' | 'pending' | 'cancelled';
+  closer_name?: string;
 }
 
 export const useSalesTracking = (clientId: string | null, month?: Date) => {
