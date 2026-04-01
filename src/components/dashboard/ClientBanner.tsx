@@ -50,7 +50,7 @@ export const ClientBanner = ({ clientId, bannerUrl, canEdit, onBannerUpdate }: C
 
       const { error: updateError } = await supabase
         .from('clients')
-        .update({ banner_url: urlWithCacheBust } as any)
+        .update({ banner_url: urlWithCacheBust })
         .eq('id', clientId);
 
       if (updateError) throw updateError;
