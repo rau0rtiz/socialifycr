@@ -402,6 +402,14 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
         open={!!detailLead}
         onOpenChange={(open) => { if (!open) setDetailLead(null); }}
         appointment={detailLead}
+        onUpdateChecklist={async (id, updates) => {
+          try {
+            await updateAppointment.mutateAsync({ id, ...updates } as any);
+            toast.success('Checklist actualizado');
+          } catch {
+            toast.error('Error actualizando checklist');
+          }
+        }}
       />
 
       {/* No-sale confirmation dialog */}

@@ -1334,12 +1334,17 @@ export type Database = {
           ad_id: string | null
           ad_name: string | null
           appointment_date: string
+          checklist_quiz: boolean
+          checklist_testimonials: boolean
+          checklist_video: boolean
+          checklist_whatsapp: boolean
           client_id: string
           created_at: string | null
           created_by: string
           currency: string
           estimated_value: number | null
           id: string
+          lead_context: string | null
           lead_email: string | null
           lead_goal: string | null
           lead_name: string
@@ -1359,12 +1364,17 @@ export type Database = {
           ad_id?: string | null
           ad_name?: string | null
           appointment_date: string
+          checklist_quiz?: boolean
+          checklist_testimonials?: boolean
+          checklist_video?: boolean
+          checklist_whatsapp?: boolean
           client_id: string
           created_at?: string | null
           created_by: string
           currency?: string
           estimated_value?: number | null
           id?: string
+          lead_context?: string | null
           lead_email?: string | null
           lead_goal?: string | null
           lead_name: string
@@ -1384,12 +1394,17 @@ export type Database = {
           ad_id?: string | null
           ad_name?: string | null
           appointment_date?: string
+          checklist_quiz?: boolean
+          checklist_testimonials?: boolean
+          checklist_video?: boolean
+          checklist_whatsapp?: boolean
           client_id?: string
           created_at?: string | null
           created_by?: string
           currency?: string
           estimated_value?: number | null
           id?: string
+          lead_context?: string | null
           lead_email?: string | null
           lead_goal?: string | null
           lead_name?: string

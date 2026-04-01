@@ -1,7 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
-import { User, Phone, Mail, Package, Target, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall } from 'lucide-react';
+import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -9,6 +13,7 @@ interface LeadDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   appointment: SetterAppointment | null;
+  onUpdateChecklist?: (id: string, updates: Record<string, any>) => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -28,14 +33,56 @@ const SOURCE_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
-export const LeadDetailDialog = ({ open, onOpenChange, appointment }: LeadDetailDialogProps) => {
+const CHECKLIST_ITEMS = [
+  { key: 'checklist_quiz', label: 'Ya realizó el quiz' },
+  { key: 'checklist_video', label: 'Ya vio el video antes de la llamada' },
+  { key: 'checklist_whatsapp', label: 'Ya se creó el grupo de WhatsApp' },
+  { key: 'checklist_testimonials', label: 'Ya se enviaron los testimonios' },
+];
+
+export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist }: LeadDetailDialogProps) => {
+  // Local checklist state - hooks must be before early return
+  const [checklist, setChecklist] = useState({
+    checklist_quiz: false,
+    checklist_video: false,
+    checklist_whatsapp: false,
+    checklist_testimonials: false,
+  });
+  const [dirty, setDirty] = useState(false);
+
+  // Sync checklist when appointment changes
+  useEffect(() => {
+    if (appointment) {
+      setChecklist({
+        checklist_quiz: (appointment as any).checklist_quiz || false,
+        checklist_video: (appointment as any).checklist_video || false,
+        checklist_whatsapp: (appointment as any).checklist_whatsapp || false,
+        checklist_testimonials: (appointment as any).checklist_testimonials || false,
+      });
+      setDirty(false);
+    }
+  }, [appointment?.id]);
+
   if (!appointment) return null;
 
   const apt = appointment;
   const statusCfg = STATUS_CONFIG[apt.status] || STATUS_CONFIG.scheduled;
-  const product = (apt as any).product;
-  const leadGoal = (apt as any).lead_goal;
   const salesCallDate = (apt as any).sales_call_date;
+  const leadContext = (apt as any).lead_context || '';
+
+  const toggleCheck = (key: string) => {
+    setChecklist(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }));
+    setDirty(true);
+  };
+
+  const saveChecklist = () => {
+    if (onUpdateChecklist) {
+      onUpdateChecklist(apt.id, checklist);
+      setDirty(false);
+    }
+  };
+
+  const completedCount = Object.values(checklist).filter(Boolean).length;
 
   const InfoRow = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) => {
     if (!value) return null;
@@ -52,7 +99,7 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment }: LeadDetail
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             {apt.lead_name}
@@ -61,69 +108,103 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment }: LeadDetail
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Detalle del lead — Creado {format(new Date(apt.created_at), "dd MMM yyyy", { locale: es })}
+            Creado {format(new Date(apt.created_at), "dd MMM yyyy", { locale: es })}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="divide-y divide-border">
-          {/* Contact info */}
-          <div className="pb-3 space-y-0.5">
-            <InfoRow icon={Phone} label="Teléfono" value={apt.lead_phone} />
-            <InfoRow icon={Mail} label="Email" value={apt.lead_email} />
-            <InfoRow icon={User} label="Vendedor" value={apt.setter_name} />
-          </div>
+        <div className="space-y-4">
+          {/* Context box */}
+          {leadContext && (
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+                <MessageSquare className="h-3.5 w-3.5" />
+                Contexto del Lead
+              </div>
+              <p className="text-sm text-foreground whitespace-pre-wrap">{leadContext}</p>
+            </div>
+          )}
 
-          {/* Product & Goal */}
-          <div className="py-3 space-y-0.5">
-            <InfoRow icon={Package} label="Producto" value={product} />
-            <InfoRow icon={Target} label="Meta del cliente" value={leadGoal} />
-          </div>
-
-          {/* Dates */}
-          <div className="py-3 space-y-0.5">
-            <InfoRow
-              icon={CalendarDays}
-              label="Fecha de cita"
-              value={format(new Date(apt.appointment_date), "dd MMM yyyy, HH:mm", { locale: es })}
-            />
-            {salesCallDate && (
-              <InfoRow
-                icon={PhoneCall}
-                label="Llamada de venta"
-                value={format(new Date(salesCallDate), "dd MMM yyyy, HH:mm", { locale: es })}
-              />
+          {/* Checklist */}
+          <div className="rounded-lg border border-border p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-medium">
+                <ClipboardCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                Checklist Pre-llamada
+              </div>
+              <Badge variant="outline" className="text-[10px]">
+                {completedCount}/{CHECKLIST_ITEMS.length}
+              </Badge>
+            </div>
+            <div className="space-y-2.5">
+              {CHECKLIST_ITEMS.map(item => (
+                <label key={item.key} className="flex items-center gap-2.5 cursor-pointer group">
+                  <Checkbox
+                    checked={checklist[item.key as keyof typeof checklist]}
+                    onCheckedChange={() => toggleCheck(item.key)}
+                  />
+                  <span className={`text-sm transition-colors ${checklist[item.key as keyof typeof checklist] ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                    {item.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+            {dirty && onUpdateChecklist && (
+              <Button size="sm" className="w-full h-8 text-xs" onClick={saveChecklist}>
+                <Save className="h-3 w-3 mr-1" />
+                Guardar checklist
+              </Button>
             )}
           </div>
 
-          {/* Value */}
-          {(apt.estimated_value || 0) > 0 && (
-            <div className="py-3">
+          {/* Contact & details */}
+          <div className="divide-y divide-border">
+            <div className="pb-3 space-y-0.5">
+              <InfoRow icon={Phone} label="Teléfono" value={apt.lead_phone} />
+              <InfoRow icon={Mail} label="Email" value={apt.lead_email} />
+              <InfoRow icon={User} label="Vendedor" value={apt.setter_name} />
+            </div>
+
+            <div className="py-3 space-y-0.5">
               <InfoRow
-                icon={DollarSign}
-                label="Valor estimado"
-                value={`${apt.currency === 'CRC' ? '₡' : '$'}${(apt.estimated_value || 0).toLocaleString()}`}
+                icon={CalendarDays}
+                label="Fecha de cita"
+                value={format(new Date(apt.appointment_date), "dd MMM yyyy, HH:mm", { locale: es })}
               />
+              {salesCallDate && (
+                <InfoRow
+                  icon={PhoneCall}
+                  label="Llamada de venta"
+                  value={format(new Date(salesCallDate), "dd MMM yyyy, HH:mm", { locale: es })}
+                />
+              )}
             </div>
-          )}
 
-          {/* Ad attribution */}
-          {apt.ad_name && (
+            {(apt.estimated_value || 0) > 0 && (
+              <div className="py-3">
+                <InfoRow
+                  icon={DollarSign}
+                  label="Valor estimado"
+                  value={`${apt.currency === 'CRC' ? '₡' : '$'}${(apt.estimated_value || 0).toLocaleString()}`}
+                />
+              </div>
+            )}
+
+            {apt.ad_name && (
+              <div className="py-3">
+                <InfoRow icon={Megaphone} label="Anuncio" value={`${apt.ad_name} — ${apt.ad_campaign_name}`} />
+              </div>
+            )}
+
             <div className="py-3">
-              <InfoRow icon={Megaphone} label="Anuncio" value={`${apt.ad_name} — ${apt.ad_campaign_name}`} />
+              <InfoRow icon={Clock} label="Fuente" value={SOURCE_LABELS[apt.source] || apt.source} />
             </div>
-          )}
 
-          {/* Source */}
-          <div className="py-3">
-            <InfoRow icon={Clock} label="Fuente" value={SOURCE_LABELS[apt.source] || apt.source} />
+            {apt.notes && (
+              <div className="pt-3">
+                <InfoRow icon={FileText} label="Notas" value={apt.notes} />
+              </div>
+            )}
           </div>
-
-          {/* Notes */}
-          {apt.notes && (
-            <div className="pt-3">
-              <InfoRow icon={FileText} label="Notas" value={apt.notes} />
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>

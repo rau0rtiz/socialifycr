@@ -11,6 +11,7 @@ export interface SetterAppointment {
   lead_goal: string | null;
   lead_phone: string | null;
   lead_email: string | null;
+  lead_context: string | null;
   appointment_date: string;
   sales_call_date: string | null;
   setter_name: string | null;
@@ -24,6 +25,10 @@ export interface SetterAppointment {
   sale_id: string | null;
   notes: string | null;
   source: string;
+  checklist_quiz: boolean;
+  checklist_video: boolean;
+  checklist_whatsapp: boolean;
+  checklist_testimonials: boolean;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -34,6 +39,7 @@ export interface AppointmentInput {
   lead_goal?: string;
   lead_phone?: string;
   lead_email?: string;
+  lead_context?: string;
   appointment_date: string;
   sales_call_date?: string;
   setter_name?: string;
@@ -48,6 +54,10 @@ export interface AppointmentInput {
   notes?: string;
   source?: string;
   product?: string;
+  checklist_quiz?: boolean;
+  checklist_video?: boolean;
+  checklist_whatsapp?: boolean;
+  checklist_testimonials?: boolean;
 }
 
 export const useSetterAppointments = (clientId: string | null, period?: string) => {
@@ -101,6 +111,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
         lead_goal: input.lead_goal || null,
         lead_phone: input.lead_phone || null,
         lead_email: input.lead_email || null,
+        lead_context: input.lead_context || null,
         appointment_date: input.appointment_date,
         sales_call_date: input.sales_call_date || null,
         setter_name: input.setter_name || null,
@@ -114,6 +125,10 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
         notes: input.notes || null,
         source: input.source || 'ads',
         product: input.product || null,
+        checklist_quiz: input.checklist_quiz || false,
+        checklist_video: input.checklist_video || false,
+        checklist_whatsapp: input.checklist_whatsapp || false,
+        checklist_testimonials: input.checklist_testimonials || false,
       } as any);
       if (error) throw error;
     },
@@ -143,6 +158,11 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
       if (input.notes !== undefined) updateData.notes = input.notes || null;
       if (input.source !== undefined) updateData.source = input.source;
       if (input.product !== undefined) updateData.product = input.product || null;
+      if ((input as any).lead_context !== undefined) updateData.lead_context = (input as any).lead_context || null;
+      if (input.checklist_quiz !== undefined) updateData.checklist_quiz = input.checklist_quiz;
+      if (input.checklist_video !== undefined) updateData.checklist_video = input.checklist_video;
+      if (input.checklist_whatsapp !== undefined) updateData.checklist_whatsapp = input.checklist_whatsapp;
+      if (input.checklist_testimonials !== undefined) updateData.checklist_testimonials = input.checklist_testimonials;
 
       const { error } = await supabase
         .from('setter_appointments')

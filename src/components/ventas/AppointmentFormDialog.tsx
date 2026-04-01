@@ -6,13 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { AppointmentInput, SetterAppointment } from '@/hooks/use-setter-appointments';
-import { useClientProducts } from '@/hooks/use-client-products';
 import { useClientSetters } from '@/hooks/use-client-setters';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
-import { X, Plus, ChevronLeft, ChevronRight, User, Target, Settings, Megaphone, Package, PhoneCall } from 'lucide-react';
+import { X, Plus, ChevronLeft, ChevronRight, User, CalendarDays, Megaphone, PhoneCall } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 interface AppointmentFormDialogProps {
   open: boolean;
@@ -25,15 +23,6 @@ interface AppointmentFormDialogProps {
   existingSetters?: string[];
 }
 
-const STATUS_OPTIONS = [
-  { value: 'scheduled', label: 'Agendada' },
-  { value: 'confirmed', label: 'Confirmada' },
-  { value: 'completed', label: 'Realizada' },
-  { value: 'no_show', label: 'No Show' },
-  { value: 'sold', label: 'Venta' },
-  { value: 'cancelled', label: 'Cancelada' },
-];
-
 const SOURCE_OPTIONS = [
   { value: 'ads', label: 'Publicidad' },
   { value: 'organic', label: 'Orgánico' },
@@ -43,8 +32,8 @@ const SOURCE_OPTIONS = [
 
 const STEP_META = [
   { icon: User, label: 'Lead' },
-  { icon: Target, label: 'Detalles' },
-  { icon: Settings, label: 'Estado' },
+  { icon: CalendarDays, label: 'Asignar' },
+  { icon: Megaphone, label: 'Fuente' },
   { icon: Megaphone, label: 'Anuncio' },
 ];
 
@@ -59,22 +48,21 @@ export const AppointmentFormDialog = ({
   existingSetters = [],
 }: AppointmentFormDialogProps) => {
   const [step, setStep] = useState(0);
+  // Step 0: Lead info
   const [leadName, setLeadName] = useState('');
-  const [leadGoal, setLeadGoal] = useState('');
+  const [leadPhone, setLeadPhone] = useState('');
+  const [leadEmail, setLeadEmail] = useState('');
+  const [leadContext, setLeadContext] = useState('');
+  // Step 1: Setter + call date
   const [setterName, setSetterName] = useState('');
   const [showNewSetter, setShowNewSetter] = useState(false);
   const [newSetterName, setNewSetterName] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState('');
-  const [showNewProduct, setShowNewProduct] = useState(false);
-  const [newProductName, setNewProductName] = useState('');
-  const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
-  const [status, setStatus] = useState('scheduled');
-  const [source, setSource] = useState('ads');
-  const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
-  const [notes, setNotes] = useState('');
   const [salesCallDate, setSalesCallDate] = useState('');
+  // Step 2: Source
+  const [source, setSource] = useState('ads');
+  // Step 3: Ad (conditional)
+  const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
 
-  const { products, addProduct } = useClientProducts(clientId || null);
   const { addSetter: addSetterMutation } = useClientSetters(clientId || null);
 
   const needsAdStep = source === 'ads' && hasAdAccount;
@@ -93,18 +81,14 @@ export const AppointmentFormDialog = ({
     setStep(0);
     setShowNewSetter(false);
     setNewSetterName('');
-    setShowNewProduct(false);
-    setNewProductName('');
     if (editing) {
       setLeadName(editing.lead_name);
-      setLeadGoal((editing as any).lead_goal || '');
+      setLeadPhone(editing.lead_phone || '');
+      setLeadEmail(editing.lead_email || '');
+      setLeadContext((editing as any).lead_context || '');
       setSetterName(editing.setter_name || '');
-      setSelectedProduct((editing as any).product || '');
-      setCurrency(editing.currency as 'CRC' | 'USD');
-      setStatus(editing.status);
-      setSource(editing.source || 'ads');
-      setNotes(editing.notes || '');
       setSalesCallDate(editing.sales_call_date ? new Date(editing.sales_call_date).toISOString().slice(0, 16) : '');
+      setSource(editing.source || 'ads');
       if (editing.ad_id) {
         setSelectedAd({
           id: editing.ad_id,
@@ -120,15 +104,13 @@ export const AppointmentFormDialog = ({
       }
     } else {
       setLeadName('');
-      setLeadGoal('');
+      setLeadPhone('');
+      setLeadEmail('');
+      setLeadContext('');
       setSetterName('');
-      setSelectedProduct('');
-      setCurrency('CRC');
-      setStatus('scheduled');
+      setSalesCallDate('');
       setSource('ads');
       setSelectedAd(null);
-      setNotes('');
-      setSalesCallDate('');
     }
   }, [open, editing]);
 
@@ -138,25 +120,11 @@ export const AppointmentFormDialog = ({
       setSetterName(name);
       setShowNewSetter(false);
       setNewSetterName('');
-      // Persist the new setter
       try {
         await addSetterMutation.mutateAsync(name);
       } catch {
-        // Ignore duplicate errors silently
+        // Ignore duplicate errors
       }
-    }
-  };
-
-  const handleAddProduct = async () => {
-    if (!newProductName.trim()) return;
-    try {
-      const result = await addProduct.mutateAsync({ name: newProductName.trim() });
-      setSelectedProduct(result.name);
-      setShowNewProduct(false);
-      setNewProductName('');
-      toast.success('Producto creado');
-    } catch {
-      toast.error('Error creando producto');
     }
   };
 
@@ -178,47 +146,39 @@ export const AppointmentFormDialog = ({
     if (!leadName.trim()) return;
     onSubmit({
       lead_name: leadName.trim(),
-      lead_goal: leadGoal.trim() || undefined,
+      lead_phone: leadPhone.trim() || undefined,
+      lead_email: leadEmail.trim() || undefined,
+      lead_context: leadContext.trim() || undefined,
       appointment_date: new Date().toISOString(),
       sales_call_date: salesCallDate ? new Date(salesCallDate).toISOString() : undefined,
       setter_name: setterName || undefined,
       estimated_value: 0,
-      currency,
-      status: status as any,
+      currency: 'CRC',
       source,
-      product: selectedProduct || undefined,
       ad_campaign_id: selectedAd?.campaignId || undefined,
       ad_campaign_name: selectedAd?.campaignName || undefined,
       ad_id: selectedAd?.id || undefined,
       ad_name: selectedAd?.name || undefined,
-      notes: notes.trim() || undefined,
     } as any);
   };
 
   const stepTitles = [
-    '¿Quién es el lead?',
-    'Detalles del lead',
-    'Estado y fuente',
-    ...(needsAdStep ? ['Vincular anuncio'] : []),
+    'Información del Lead',
+    'Asignar Vendedor',
+    'Fuente del Lead',
+    ...(needsAdStep ? ['Vincular Anuncio'] : []),
   ];
 
   const stepDescriptions = [
-    'Ingresa el nombre del cliente potencial',
-    'Producto de interés, meta y vendedor',
-    'Define el estado actual y origen del lead',
+    'Nombre, contacto y contexto del lead',
+    'Asigna un vendedor y programa la llamada',
+    '¿De dónde vino este lead?',
     ...(needsAdStep ? ['Selecciona el anuncio que originó este lead'] : []),
   ];
-
-  // Build product options including current selection if not in list
-  const productNames = products.map(p => p.name);
-  const allProductOptions = selectedProduct && !productNames.includes(selectedProduct)
-    ? [selectedProduct, ...productNames]
-    : productNames;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden p-0">
-        {/* Header with dots indicator */}
         <div className="px-6 pt-6 pb-2 space-y-3">
           <DialogHeader className="space-y-0.5">
             <DialogTitle className="text-base text-center">
@@ -229,7 +189,6 @@ export const AppointmentFormDialog = ({
             </DialogDescription>
           </DialogHeader>
 
-          {/* Instagram-style dots */}
           <div className="flex items-center justify-center gap-2">
             {Array.from({ length: totalSteps }, (_, i) => (
               <button
@@ -248,97 +207,55 @@ export const AppointmentFormDialog = ({
           </div>
         </div>
 
-        {/* Content area */}
         <div className="px-6 overflow-y-auto" style={{ minHeight: '200px', maxHeight: '50vh' }}>
-          {/* Step 0: Lead name */}
+          {/* Step 0: Lead info */}
           {step === 0 && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label className="text-xs font-medium">Nombre del Cliente *</Label>
+                <Label className="text-xs font-medium">Nombre del Lead *</Label>
                 <Input
-                  placeholder="Nombre completo del lead"
+                  placeholder="Nombre completo"
                   value={leadName}
                   onChange={e => setLeadName(e.target.value)}
                   className="h-10 text-sm"
                   autoFocus
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground text-center">
-                {stepDescriptions[step]}
-              </p>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Teléfono</Label>
+                <Input
+                  placeholder="+506 8888-8888"
+                  value={leadPhone}
+                  onChange={e => setLeadPhone(e.target.value)}
+                  className="h-10 text-sm"
+                  type="tel"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Correo</Label>
+                <Input
+                  placeholder="correo@ejemplo.com"
+                  value={leadEmail}
+                  onChange={e => setLeadEmail(e.target.value)}
+                  className="h-10 text-sm"
+                  type="email"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Contexto del Lead</Label>
+                <Textarea
+                  placeholder="Info relevante para el closer: qué busca, situación actual, objeciones..."
+                  value={leadContext}
+                  onChange={e => setLeadContext(e.target.value)}
+                  className="text-sm min-h-[80px]"
+                />
+              </div>
             </div>
           )}
 
-          {/* Step 1: Product + Goal + Setter + Sales Call Date */}
+          {/* Step 1: Setter + Sales Call Date */}
           {step === 1 && (
             <div className="space-y-4 py-4">
-              {/* Sales Call Date */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium flex items-center gap-1.5">
-                  <PhoneCall className="h-3.5 w-3.5" />
-                  Fecha de Llamada de Venta
-                </Label>
-                <Input
-                  type="datetime-local"
-                  value={salesCallDate}
-                  onChange={e => setSalesCallDate(e.target.value)}
-                  className="h-10 text-sm"
-                />
-              </div>
-
-              {/* Product selector */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium flex items-center gap-1.5">
-                  <Package className="h-3.5 w-3.5" />
-                  Producto de Interés
-                </Label>
-                {showNewProduct ? (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Nombre del producto"
-                      value={newProductName}
-                      onChange={e => setNewProductName(e.target.value)}
-                      className="h-10 text-sm flex-1"
-                      autoFocus
-                      onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }}
-                    />
-                    <Button size="sm" className="h-10 text-xs" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>
-                      {addProduct.isPending ? '...' : 'OK'}
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewProduct(false)}>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Select value={selectedProduct || '_none'} onValueChange={v => setSelectedProduct(v === '_none' ? '' : v)}>
-                      <SelectTrigger className="h-10 text-sm flex-1">
-                        <SelectValue placeholder="Sin producto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none" className="text-xs">Sin producto</SelectItem>
-                        {allProductOptions.map(name => (
-                          <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewProduct(true)}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Meta del Cliente</Label>
-                <Input
-                  placeholder="Ej: Generar 50 leads mensuales, Escalar ventas..."
-                  value={leadGoal}
-                  onChange={e => setLeadGoal(e.target.value)}
-                  className="h-10 text-sm"
-                />
-              </div>
-
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Vendedor Asignado</Label>
                 {showNewSetter ? (
@@ -380,26 +297,31 @@ export const AppointmentFormDialog = ({
                   </div>
                 )}
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <PhoneCall className="h-3.5 w-3.5" />
+                  Fecha de Llamada de Venta
+                </Label>
+                <Input
+                  type="datetime-local"
+                  value={salesCallDate}
+                  onChange={e => setSalesCallDate(e.target.value)}
+                  className="h-10 text-sm"
+                />
+              </div>
+
+              <p className="text-[11px] text-muted-foreground text-center">
+                {stepDescriptions[step]}
+              </p>
             </div>
           )}
 
-          {/* Step 2: Status + Source + Notes */}
+          {/* Step 2: Source */}
           {step === 2 && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label className="text-xs font-medium">Estado</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.map(o => (
-                      <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Fuente</Label>
+                <Label className="text-xs font-medium">Fuente del Lead</Label>
                 <Select value={source} onValueChange={v => { setSource(v); setSelectedAd(null); }}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -409,16 +331,9 @@ export const AppointmentFormDialog = ({
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Notas</Label>
-                <Textarea
-                  placeholder="Notas adicionales..."
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  className="text-sm min-h-[70px]"
-                />
-              </div>
+              <p className="text-[11px] text-muted-foreground text-center">
+                {stepDescriptions[step]}
+              </p>
             </div>
           )}
 
@@ -440,43 +355,23 @@ export const AppointmentFormDialog = ({
         <div className="px-6 pb-6 pt-3 border-t border-border">
           <div className="flex items-center justify-center gap-3">
             {step === 0 ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onOpenChange(false)}
-                className="text-xs px-6"
-              >
+              <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-xs px-6">
                 Cancelar
               </Button>
             ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBack}
-                className="text-xs px-4"
-              >
+              <Button variant="ghost" size="sm" onClick={handleBack} className="text-xs px-4">
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 Atrás
               </Button>
             )}
 
             {step < lastStep ? (
-              <Button
-                size="sm"
-                onClick={handleNext}
-                disabled={!canAdvance(step)}
-                className="text-xs px-6"
-              >
+              <Button size="sm" onClick={handleNext} disabled={!canAdvance(step)} className="text-xs px-6">
                 Continuar
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
-              <Button
-                size="sm"
-                onClick={handleSubmit}
-                disabled={!leadName.trim() || isSubmitting}
-                className="text-xs px-6"
-              >
+              <Button size="sm" onClick={handleSubmit} disabled={!leadName.trim() || isSubmitting} className="text-xs px-6">
                 {isSubmitting ? 'Guardando...' : editing ? 'Guardar' : 'Registrar Lead'}
               </Button>
             )}
