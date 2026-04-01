@@ -34,7 +34,7 @@ export const ClientBanner = ({ clientId, bannerUrl, canEdit, onBannerUpdate }: C
     setUploading(true);
     try {
       const ext = file.name.split('.').pop();
-      const path = `${clientId}/banner.${ext}`;
+      const path = `${clientId}/banner-${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('content-images')
