@@ -1,0 +1,1 @@
+ALTER TABLE public.clients ADD COLUMN banner_url text DEFAULT NULL;

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { ClientBanner } from '@/components/dashboard/ClientBanner';
 
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -33,6 +34,7 @@ const Dashboard = () => {
   
   const { selectedClient, clientBrands, clients, clientsLoading, setSelectedClient } = useBrand();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const { isAgency, isClient, clientAccess, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
@@ -60,6 +62,11 @@ const Dashboard = () => {
       }
     }
   }, [isClient, clientAccess, clients, selectedClient, setSelectedClient, roleLoading]);
+
+  // Sync banner URL from selectedClient
+  useEffect(() => {
+    setBannerUrl((selectedClient as any)?.banner_url || null);
+  }, [selectedClient]);
 
   // All hooks must be called before any conditional returns
   const clientId = selectedClient?.id || null;
@@ -237,6 +244,14 @@ const Dashboard = () => {
           </Button>
         </div>
       )}
+
+      {/* Client Banner */}
+      <ClientBanner
+        clientId={selectedClient.id}
+        bannerUrl={bannerUrl}
+        canEdit={isAgency}
+        onBannerUpdate={setBannerUrl}
+      />
 
       {/* Client Header */}
       <div className="flex flex-col gap-3 mb-4 md:mb-6">
