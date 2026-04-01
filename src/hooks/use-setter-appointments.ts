@@ -11,6 +11,7 @@ export interface SetterAppointment {
   lead_goal: string | null;
   lead_phone: string | null;
   lead_email: string | null;
+  lead_context: string | null;
   appointment_date: string;
   sales_call_date: string | null;
   setter_name: string | null;
@@ -24,6 +25,10 @@ export interface SetterAppointment {
   sale_id: string | null;
   notes: string | null;
   source: string;
+  checklist_quiz: boolean;
+  checklist_video: boolean;
+  checklist_whatsapp: boolean;
+  checklist_testimonials: boolean;
   created_by: string;
   created_at: string;
   updated_at: string;
