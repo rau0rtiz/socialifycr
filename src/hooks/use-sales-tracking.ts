@@ -73,7 +73,7 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
         client_id: clientId,
         created_by: user.id,
         ...input,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
