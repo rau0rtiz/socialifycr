@@ -315,21 +315,12 @@ export const AppointmentFormDialog = ({
                   <CalendarDays className="h-3.5 w-3.5" />
                   Fecha de Llamada
                 </Label>
-                <div className="flex justify-center">
-                  <Calendar
-                    mode="single"
-                    selected={salesCallDay}
-                    onSelect={setSalesCallDay}
-                    locale={es}
-                    className={cn("rounded-md border p-2 pointer-events-auto")}
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  />
-                </div>
-                {salesCallDay && (
-                  <p className="text-xs text-center text-muted-foreground">
-                    {format(salesCallDay, "EEEE d 'de' MMMM", { locale: es })}
-                  </p>
-                )}
+                <Input
+                  type="date"
+                  value={salesCallDate}
+                  onChange={e => setSalesCallDate(e.target.value)}
+                  className="h-10 text-sm"
+                />
               </div>
 
               <div className="space-y-2">
@@ -337,29 +328,13 @@ export const AppointmentFormDialog = ({
                   <Clock className="h-3.5 w-3.5" />
                   Hora de la Llamada
                 </Label>
-                <div className="flex items-center justify-center gap-2">
-                  <Select value={salesCallHour} onValueChange={setSalesCallHour}>
-                    <SelectTrigger className="w-20 h-10 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(h => (
-                        <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <span className="text-lg font-bold text-muted-foreground">:</span>
-                  <Select value={salesCallMinute} onValueChange={setSalesCallMinute}>
-                    <SelectTrigger className="w-20 h-10 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['00', '15', '30', '45'].map(m => (
-                        <SelectItem key={m} value={m} className="text-xs">{m}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Input
+                  type="time"
+                  value={salesCallTime}
+                  onChange={e => setSalesCallTime(e.target.value)}
+                  className="h-10 text-sm"
+                  step="900"
+                />
               </div>
 
               <p className="text-[11px] text-muted-foreground text-center">
