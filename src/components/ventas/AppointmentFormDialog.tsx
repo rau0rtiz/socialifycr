@@ -65,6 +65,15 @@ export const AppointmentFormDialog = ({
   // Step 3: Ad (conditional)
   const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
 
+
+  // Draft persistence: save form state when dialog closes without submitting
+  const draftRef = useRef<{
+    leadName: string; leadPhone: string; leadEmail: string; leadContext: string;
+    setterName: string; salesCallDate: string; salesCallTime: string;
+    source: string; selectedAd: AllAdItem | null; step: number;
+  } | null>(null);
+  const didSubmitRef = useRef(false);
+
   const { addSetter: addSetterMutation } = useClientSetters(clientId || null);
 
   const needsAdStep = source === 'ads' && hasAdAccount;
@@ -78,12 +87,24 @@ export const AppointmentFormDialog = ({
   const adsList = adsResult?.ads || [];
   const adsCurrency = adsResult?.currency || 'USD';
 
+  // Save draft when closing without submitting
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen && !didSubmitRef.current && !editing) {
+      const hasData = leadName.trim() || leadPhone.trim() || leadEmail.trim() || leadContext.trim();
+      if (hasData) {
+        draftRef.current = { leadName, leadPhone, leadEmail, leadContext, setterName, salesCallDate, salesCallTime, source, selectedAd, step };
+      }
+    }
+    onOpenChange(nextOpen);
+  }, [leadName, leadPhone, leadEmail, leadContext, setterName, salesCallDate, salesCallTime, source, selectedAd, step, editing, onOpenChange]);
+
   useEffect(() => {
     if (!open) return;
-    setStep(0);
+    didSubmitRef.current = false;
     setShowNewSetter(false);
     setNewSetterName('');
     if (editing) {
+      setStep(0);
       setLeadName(editing.lead_name);
       setLeadPhone(editing.lead_phone || '');
       setLeadEmail(editing.lead_email || '');
@@ -111,7 +132,21 @@ export const AppointmentFormDialog = ({
       } else {
         setSelectedAd(null);
       }
+    } else if (draftRef.current) {
+      // Restore draft
+      const d = draftRef.current;
+      setStep(d.step);
+      setLeadName(d.leadName);
+      setLeadPhone(d.leadPhone);
+      setLeadEmail(d.leadEmail);
+      setLeadContext(d.leadContext);
+      setSetterName(d.setterName);
+      setSalesCallDate(d.salesCallDate);
+      setSalesCallTime(d.salesCallTime);
+      setSource(d.source);
+      setSelectedAd(d.selectedAd);
     } else {
+      setStep(0);
       setLeadName('');
       setLeadPhone('');
       setLeadEmail('');
