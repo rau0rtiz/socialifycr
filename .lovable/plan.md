@@ -1,66 +1,52 @@
 
 
-# Widget de Giveaways para Instagram
+## Análisis: ¿Qué ya tenemos vs qué falta?
 
-## Resumen
-Crear un widget de sorteos (giveaways) en la sección de Contenido que permita seleccionar una publicación de Instagram, obtener sus comentarios, validar condiciones y elegir un ganador aleatorio. Solo visible para el cliente "petshop2go".
+Ya tienen un sistema bastante completo. Aquí el desglose:
 
-## Arquitectura
+### Lo que YA existe
 
-```text
-┌─────────────────────────────────────┐
-│  GiveawayWidget (componente UI)     │
-│  ├─ Selector de publicación (IG)    │
-│  ├─ Condiciones del giveaway        │
-│  ├─ Lista de participantes válidos  │
-│  └─ Botón "Elegir ganador"          │
-└──────────────┬──────────────────────┘
-               │ invoca
-               ▼
-┌─────────────────────────────────────┐
-│  meta-api edge function             │
-│  nuevo endpoint: 'instagram-comments│
-│  GET /{media-id}/comments           │
-│  + GET /{comment-user}/             │
-│  (followers_count, following, etc)  │
-└─────────────────────────────────────┘
-```
+| Funcionalidad | Estado |
+|---|---|
+| Setter Pipeline con leads, estados, vendedores | ✅ Completo |
+| Fuente del lead (ads, orgánico, referencia) | ✅ Completo |
+| Conversión lead → venta con prefill | ✅ Completo |
+| Show Rate y Close Rate generales | ✅ Completo |
+| Cierre por vendedor (pie chart) | ✅ Completo |
+| No Show tracking | ✅ Completo |
+| Registro de ventas con atribución a anuncio | ✅ Completo |
+| Productos vinculados a leads | ✅ Completo |
+| Ventas por producto (pie chart) | ✅ Completo |
+| Meta del lead (lead_goal) | ✅ Completo |
 
-## Plan de implementación
+### Lo que FALTA implementar
 
-### 1. Nuevo endpoint en `meta-api` edge function
-- Agregar case `'instagram-comments'` que reciba un `mediaId`
-- Llama a `GET /{mediaId}/comments?fields=id,text,timestamp,username,from&limit=500` con paginación
-- Deduplica comentarios por username (una entrada por persona)
-- Retorna lista de comentarios con info del usuario
+| Funcionalidad | Esfuerzo |
+|---|---|
+| **Campo "fecha de llamada de venta"** en setter_appointments | Bajo — agregar columna `sales_call_date` a la tabla y al formulario |
+| **Vista compacta del pipeline** (solo nombre + fecha de llamada) | Medio — rediseñar `renderLeadCard` para mostrar solo nombre y fecha, con click para abrir popup |
+| **Popup de detalle del lead** al hacer click en el nombre | Medio — crear un `LeadDetailDialog` con toda la info actual del lead |
+| **Conteo de conversaciones desde pauta** vs orgánicas | Bajo — ya tienen el campo `source`, solo falta un widget de resumen visual (ads vs organic vs referral) |
+| **Ventas por closer (vendedor)** | Bajo — cruzar `message_sales` con el `setter_name` del appointment vinculado, o agregar campo `closer_name` a ventas |
+| **Métricas avanzadas de Show Rate** desglosadas por vendedor/closer | Bajo — extender la lógica de stats existente |
 
-### 2. Componente `GiveawayWidget`
-Ubicación: `src/components/dashboard/GiveawayWidget.tsx`
+### Plan de implementación
 
-Funcionalidad:
-- **Selector de publicación**: dropdown con las publicaciones de Instagram del cliente (reusar data de `useContentData`)
-- **Configuración de condiciones**: checkboxes para filtros como "debe seguir a X cuenta", "debe mencionar a N amigos en el comentario", "debe usar hashtag X"
-- **Carga de comentarios**: botón para obtener comentarios de la publicación seleccionada vía el nuevo endpoint
-- **Deduplicación**: agrupar por username, mostrar solo una entrada por persona
-- **Tabla de participantes**: lista filtrable mostrando username, comentario, si cumple condiciones
-- **Sorteo**: botón que selecciona aleatoriamente un ganador de los participantes válidos, con animación visual
-- **Resultado**: card destacada con el ganador
+1. **Migración DB**: Agregar columna `sales_call_date` (timestamp) a `setter_appointments`
+2. **Formulario de lead**: Agregar campo "Fecha de llamada de venta" al paso 1 o 2 del `AppointmentFormDialog`
+3. **Vista compacta del pipeline**: Cambiar las tarjetas de lead para mostrar solo nombre + fecha de llamada + badge de estado. Al hacer click en el nombre → abrir popup
+4. **LeadDetailDialog**: Nuevo componente popup con toda la info del lead (teléfono, email, producto, meta, anuncio, notas, valor estimado, historial de estados)
+5. **Widget de origen de leads**: Mini card que muestre "X de pauta | Y orgánicos | Z referencia" con barras proporcionales
+6. **Agregar campo `closer_name`** a `message_sales` para trackear quién cerró la venta (o derivarlo del setter_appointment vinculado)
+7. **Tab "Ventas por Closer"**: Tabla/chart que agrupe ventas por closer con montos y tasa de cierre
 
-### 3. Integrar en `Contenido.tsx`
-- Mostrar el widget solo cuando `selectedClient?.name` incluya "petshop2go" (o mejor, agregar un feature flag `giveaway` en el futuro)
-- Colocarlo después de la sección de Stories y antes del Content Calendar
+### Resumen
 
-### 4. Validación de condiciones del giveaway
-Las condiciones se configuran en el UI antes de ejecutar el sorteo:
-- **Menciones mínimas**: filtrar comentarios que mencionen al menos N cuentas (@usuario)
-- **Hashtag requerido**: comentario debe incluir cierto hashtag
-- **Seguidor requerido**: (si la API lo permite) verificar que el usuario siga ciertas cuentas — nota: la Graph API no expone esto para usuarios arbitrarios, así que esta condición sería manual/honor-based
-- **Comentarios duplicados**: automáticamente se toma solo el primer comentario de cada usuario
+Aproximadamente un **60-70% ya está construido**. Lo principal que falta es:
+- El campo de fecha de llamada de venta
+- Simplificar la vista del pipeline (nombre + fecha, click → popup)
+- Un desglose visual de origen de conversaciones
+- Métricas de ventas por closer
 
-## Detalles técnicos
-
-- El endpoint de comentarios de Instagram Graph API v21.0: `GET /{media-id}/comments?fields=id,text,timestamp,username,from{id,username}`
-- Paginación con cursor `after` para obtener todos los comentarios
-- La deduplicación por username se hace en el frontend para que el usuario vea el conteo total vs. participantes únicos
-- No se requiere nueva tabla en base de datos (el widget es stateless — solo consulta y sortea en tiempo real)
+¿Quieres que proceda con la implementación completa?
 
