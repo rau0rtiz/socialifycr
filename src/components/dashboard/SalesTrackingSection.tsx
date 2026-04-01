@@ -112,9 +112,10 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     return allSales.filter(s => {
       if (filterSetter !== 'all' && s.customer_name !== filterSetter) return false;
       if (filterProduct !== 'all' && s.product !== filterProduct) return false;
+      if (filterCloser !== 'all' && (s as any).closer_name !== filterCloser) return false;
       return true;
     });
-  }, [allSales, filterSetter, filterProduct]);
+  }, [allSales, filterSetter, filterProduct, filterCloser]);
 
   const handleAddSale = (sale: any, appointmentId?: string) => {
     if (editingSale) {
