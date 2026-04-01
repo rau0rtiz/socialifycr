@@ -30,7 +30,7 @@ import {
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+
 
 interface SetterTrackerProps {
   clientId: string;
