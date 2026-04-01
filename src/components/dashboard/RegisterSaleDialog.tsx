@@ -81,6 +81,7 @@ export const RegisterSaleDialog = ({
   const [messagePlatform, setMessagePlatform] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<string>('completed');
+  const [closerName, setCloserName] = useState('');
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const productNames = products.map(p => p.name);
