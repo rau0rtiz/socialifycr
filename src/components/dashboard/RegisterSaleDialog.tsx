@@ -506,6 +506,10 @@ export const RegisterSaleDialog = ({
           {!isPrefilled && step === 2 && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
+                <Label className="text-xs font-medium">Closer / Vendedor</Label>
+                <Input placeholder="¿Quién cerró la venta?" value={closerName} onChange={(e) => setCloserName(e.target.value)} className="h-10 text-sm" />
+              </div>
+              <div className="space-y-2">
                 <Label className="text-xs font-medium">Plataforma del mensaje</Label>
                 <Select value={messagePlatform} onValueChange={setMessagePlatform}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
