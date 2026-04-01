@@ -130,6 +130,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
       if (input.lead_phone !== undefined) updateData.lead_phone = input.lead_phone || null;
       if (input.lead_email !== undefined) updateData.lead_email = input.lead_email || null;
       if (input.appointment_date !== undefined) updateData.appointment_date = input.appointment_date;
+      if (input.sales_call_date !== undefined) updateData.sales_call_date = input.sales_call_date || null;
       if (input.setter_name !== undefined) updateData.setter_name = input.setter_name || null;
       if (input.estimated_value !== undefined) updateData.estimated_value = input.estimated_value;
       if (input.currency !== undefined) updateData.currency = input.currency;
