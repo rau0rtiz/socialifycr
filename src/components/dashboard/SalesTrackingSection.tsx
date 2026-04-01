@@ -349,6 +349,9 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                           {SOURCE_LABELS[sale.source] || sale.source}
                         </Badge>
                       </TableCell>
+                      <TableCell className="hidden md:table-cell text-sm">
+                        {(sale as any).closer_name || '—'}
+                      </TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                         {sale.ad_name || sale.ad_campaign_name || '—'}
                       </TableCell>
