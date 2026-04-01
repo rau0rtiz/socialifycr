@@ -166,7 +166,9 @@ export const AppointmentFormDialog = ({
       lead_email: leadEmail.trim() || undefined,
       lead_context: leadContext.trim() || undefined,
       appointment_date: new Date().toISOString(),
-      sales_call_date: salesCallDate ? new Date(salesCallDate).toISOString() : undefined,
+      sales_call_date: salesCallDay
+        ? (() => { const d = new Date(salesCallDay); d.setHours(parseInt(salesCallHour), parseInt(salesCallMinute), 0, 0); return d.toISOString(); })()
+        : undefined,
       setter_name: setterName || undefined,
       estimated_value: 0,
       currency: 'CRC',
