@@ -104,6 +104,7 @@ export const AppointmentFormDialog = ({
       setStatus(editing.status);
       setSource(editing.source || 'ads');
       setNotes(editing.notes || '');
+      setSalesCallDate(editing.sales_call_date ? new Date(editing.sales_call_date).toISOString().slice(0, 16) : '');
       if (editing.ad_id) {
         setSelectedAd({
           id: editing.ad_id,
@@ -127,6 +128,7 @@ export const AppointmentFormDialog = ({
       setSource('ads');
       setSelectedAd(null);
       setNotes('');
+      setSalesCallDate('');
     }
   }, [open, editing]);
 
