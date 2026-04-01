@@ -331,6 +331,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                     <TableHead>Fecha</TableHead>
                     <TableHead>Monto</TableHead>
                     <TableHead>Fuente</TableHead>
+                    <TableHead className="hidden md:table-cell">Closer</TableHead>
                     <TableHead className="hidden md:table-cell">Anuncio</TableHead>
                     <TableHead className="hidden md:table-cell">Cliente</TableHead>
                     <TableHead className="w-20"></TableHead>
