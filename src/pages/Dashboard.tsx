@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { ClientBanner } from '@/components/dashboard/ClientBanner';
 
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
