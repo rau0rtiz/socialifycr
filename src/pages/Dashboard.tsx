@@ -245,6 +245,14 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Client Banner */}
+      <ClientBanner
+        clientId={selectedClient.id}
+        bannerUrl={bannerUrl}
+        canEdit={isAgency}
+        onBannerUpdate={setBannerUrl}
+      />
+
       {/* Client Header */}
       <div className="flex flex-col gap-3 mb-4 md:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
