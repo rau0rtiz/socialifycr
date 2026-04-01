@@ -72,8 +72,8 @@ serve(async (req) => {
 
     if (!connection) {
       return new Response(
-        JSON.stringify({ error: 'No active YouTube connection found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ connected: false, data: null, error: null }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
