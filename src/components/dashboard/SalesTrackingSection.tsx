@@ -75,6 +75,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
   const [currentPrefill, setCurrentPrefill] = useState<SalePrefill | null>(null);
   const [filterSetter, setFilterSetter] = useState<string>('all');
   const [filterProduct, setFilterProduct] = useState<string>('all');
+  const [filterCloser, setFilterCloser] = useState<string>('all');
 
   // Open dialog when triggered from setter
   useEffect(() => {
