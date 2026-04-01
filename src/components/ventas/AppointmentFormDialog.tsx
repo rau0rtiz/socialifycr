@@ -60,7 +60,9 @@ export const AppointmentFormDialog = ({
   const [setterName, setSetterName] = useState('');
   const [showNewSetter, setShowNewSetter] = useState(false);
   const [newSetterName, setNewSetterName] = useState('');
-  const [salesCallDate, setSalesCallDate] = useState('');
+  const [salesCallDay, setSalesCallDay] = useState<Date | undefined>(undefined);
+  const [salesCallHour, setSalesCallHour] = useState('10');
+  const [salesCallMinute, setSalesCallMinute] = useState('00');
   // Step 2: Source
   const [source, setSource] = useState('ads');
   // Step 3: Ad (conditional)
