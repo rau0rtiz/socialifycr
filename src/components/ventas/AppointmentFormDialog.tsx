@@ -122,7 +122,9 @@ export const AppointmentFormDialog = ({
       setLeadEmail('');
       setLeadContext('');
       setSetterName('');
-      setSalesCallDate('');
+      setSalesCallDay(undefined);
+      setSalesCallHour('10');
+      setSalesCallMinute('00');
       setSource('ads');
       setSelectedAd(null);
     }
