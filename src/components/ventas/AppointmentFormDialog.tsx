@@ -72,6 +72,7 @@ export const AppointmentFormDialog = ({
   const [source, setSource] = useState('ads');
   const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
   const [notes, setNotes] = useState('');
+  const [salesCallDate, setSalesCallDate] = useState('');
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const { addSetter: addSetterMutation } = useClientSetters(clientId || null);
