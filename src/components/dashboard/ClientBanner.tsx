@@ -34,7 +34,7 @@ export const ClientBanner = ({ clientId, bannerUrl, canEdit, onBannerUpdate }: C
     setUploading(true);
     try {
       const ext = file.name.split('.').pop();
-      const path = `${clientId}/banner.${ext}`;
+      const path = `${clientId}/banner-${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('content-images')
@@ -50,7 +50,7 @@ export const ClientBanner = ({ clientId, bannerUrl, canEdit, onBannerUpdate }: C
 
       const { error: updateError } = await supabase
         .from('clients')
-        .update({ banner_url: urlWithCacheBust } as any)
+        .update({ banner_url: urlWithCacheBust })
         .eq('id', clientId);
 
       if (updateError) throw updateError;
@@ -70,7 +70,7 @@ export const ClientBanner = ({ clientId, bannerUrl, canEdit, onBannerUpdate }: C
     try {
       const { error } = await supabase
         .from('clients')
-        .update({ banner_url: null } as any)
+        .update({ banner_url: null })
         .eq('id', clientId);
 
       if (error) throw error;
