@@ -509,6 +509,7 @@ export type Database = {
         Row: {
           accent_color: string | null
           ai_context: string | null
+          banner_url: string | null
           created_at: string | null
           default_campaign_goal: string | null
           id: string
@@ -522,6 +523,7 @@ export type Database = {
         Insert: {
           accent_color?: string | null
           ai_context?: string | null
+          banner_url?: string | null
           created_at?: string | null
           default_campaign_goal?: string | null
           id?: string
@@ -535,6 +537,7 @@ export type Database = {
         Update: {
           accent_color?: string | null
           ai_context?: string | null
+          banner_url?: string | null
           created_at?: string | null
           default_campaign_goal?: string | null
           id?: string
