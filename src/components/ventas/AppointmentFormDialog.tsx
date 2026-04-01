@@ -92,7 +92,16 @@ export const AppointmentFormDialog = ({
       setLeadEmail(editing.lead_email || '');
       setLeadContext((editing as any).lead_context || '');
       setSetterName(editing.setter_name || '');
-      setSalesCallDate(editing.sales_call_date ? new Date(editing.sales_call_date).toISOString().slice(0, 16) : '');
+      if (editing.sales_call_date) {
+        const d = new Date(editing.sales_call_date);
+        setSalesCallDay(d);
+        setSalesCallHour(String(d.getHours()).padStart(2, '0'));
+        setSalesCallMinute(String(d.getMinutes()).padStart(2, '0'));
+      } else {
+        setSalesCallDay(undefined);
+        setSalesCallHour('10');
+        setSalesCallMinute('00');
+      }
       setSource(editing.source || 'ads');
       if (editing.ad_id) {
         setSelectedAd({
