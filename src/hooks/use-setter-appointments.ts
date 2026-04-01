@@ -12,6 +12,7 @@ export interface SetterAppointment {
   lead_phone: string | null;
   lead_email: string | null;
   appointment_date: string;
+  sales_call_date: string | null;
   setter_name: string | null;
   estimated_value: number;
   currency: 'CRC' | 'USD';
