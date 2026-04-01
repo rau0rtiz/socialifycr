@@ -5,6 +5,7 @@ import { AdSalesRanking } from '@/components/dashboard/AdSalesRanking';
 import { SetterTracker } from '@/components/ventas/SetterTracker';
 import { SalesGoalBar } from '@/components/ventas/SalesGoalBar';
 import { SalesByProductChart } from '@/components/ventas/SalesByProductChart';
+import { ClosureRateWidget } from '@/components/ventas/ClosureRateWidget';
 
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
