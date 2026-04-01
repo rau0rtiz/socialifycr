@@ -151,6 +151,9 @@ const Ventas = () => {
 
         {/* Sales by product pie chart */}
         <SalesByProductChart sales={allSales} />
+
+        {/* Closure rate per seller */}
+        <ClosureRateWidget appointments={appointments} />
       </div>
     </DashboardLayout>
   );
