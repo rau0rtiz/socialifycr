@@ -5,15 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar } from '@/components/ui/calendar';
+
 import { AppointmentInput, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useClientSetters } from '@/hooks/use-client-setters';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { X, Plus, ChevronLeft, ChevronRight, User, CalendarDays, Megaphone, PhoneCall, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 interface AppointmentFormDialogProps {
   open: boolean;
@@ -60,9 +58,8 @@ export const AppointmentFormDialog = ({
   const [setterName, setSetterName] = useState('');
   const [showNewSetter, setShowNewSetter] = useState(false);
   const [newSetterName, setNewSetterName] = useState('');
-  const [salesCallDay, setSalesCallDay] = useState<Date | undefined>(undefined);
-  const [salesCallHour, setSalesCallHour] = useState('10');
-  const [salesCallMinute, setSalesCallMinute] = useState('00');
+  const [salesCallDate, setSalesCallDate] = useState('');
+  const [salesCallTime, setSalesCallTime] = useState('10:00');
   // Step 2: Source
   const [source, setSource] = useState('ads');
   // Step 3: Ad (conditional)
@@ -94,13 +91,11 @@ export const AppointmentFormDialog = ({
       setSetterName(editing.setter_name || '');
       if (editing.sales_call_date) {
         const d = new Date(editing.sales_call_date);
-        setSalesCallDay(d);
-        setSalesCallHour(String(d.getHours()).padStart(2, '0'));
-        setSalesCallMinute(String(d.getMinutes()).padStart(2, '0'));
+        setSalesCallDate(d.toISOString().slice(0, 10));
+        setSalesCallTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
       } else {
-        setSalesCallDay(undefined);
-        setSalesCallHour('10');
-        setSalesCallMinute('00');
+        setSalesCallDate('');
+        setSalesCallTime('10:00');
       }
       setSource(editing.source || 'ads');
       if (editing.ad_id) {
@@ -122,9 +117,8 @@ export const AppointmentFormDialog = ({
       setLeadEmail('');
       setLeadContext('');
       setSetterName('');
-      setSalesCallDay(undefined);
-      setSalesCallHour('10');
-      setSalesCallMinute('00');
+      setSalesCallDate('');
+      setSalesCallTime('10:00');
       setSource('ads');
       setSelectedAd(null);
     }
@@ -166,8 +160,8 @@ export const AppointmentFormDialog = ({
       lead_email: leadEmail.trim() || undefined,
       lead_context: leadContext.trim() || undefined,
       appointment_date: new Date().toISOString(),
-      sales_call_date: salesCallDay
-        ? (() => { const d = new Date(salesCallDay); d.setHours(parseInt(salesCallHour), parseInt(salesCallMinute), 0, 0); return d.toISOString(); })()
+      sales_call_date: salesCallDate
+        ? new Date(`${salesCallDate}T${salesCallTime}:00`).toISOString()
         : undefined,
       setter_name: setterName || undefined,
       estimated_value: 0,
@@ -321,21 +315,12 @@ export const AppointmentFormDialog = ({
                   <CalendarDays className="h-3.5 w-3.5" />
                   Fecha de Llamada
                 </Label>
-                <div className="flex justify-center">
-                  <Calendar
-                    mode="single"
-                    selected={salesCallDay}
-                    onSelect={setSalesCallDay}
-                    locale={es}
-                    className={cn("rounded-md border p-2 pointer-events-auto")}
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  />
-                </div>
-                {salesCallDay && (
-                  <p className="text-xs text-center text-muted-foreground">
-                    {format(salesCallDay, "EEEE d 'de' MMMM", { locale: es })}
-                  </p>
-                )}
+                <Input
+                  type="date"
+                  value={salesCallDate}
+                  onChange={e => setSalesCallDate(e.target.value)}
+                  className="h-10 text-sm"
+                />
               </div>
 
               <div className="space-y-2">
@@ -343,29 +328,13 @@ export const AppointmentFormDialog = ({
                   <Clock className="h-3.5 w-3.5" />
                   Hora de la Llamada
                 </Label>
-                <div className="flex items-center justify-center gap-2">
-                  <Select value={salesCallHour} onValueChange={setSalesCallHour}>
-                    <SelectTrigger className="w-20 h-10 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(h => (
-                        <SelectItem key={h} value={h} className="text-xs">{h}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <span className="text-lg font-bold text-muted-foreground">:</span>
-                  <Select value={salesCallMinute} onValueChange={setSalesCallMinute}>
-                    <SelectTrigger className="w-20 h-10 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['00', '15', '30', '45'].map(m => (
-                        <SelectItem key={m} value={m} className="text-xs">{m}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Input
+                  type="time"
+                  value={salesCallTime}
+                  onChange={e => setSalesCallTime(e.target.value)}
+                  className="h-10 text-sm"
+                  step="900"
+                />
               </div>
 
               <p className="text-[11px] text-muted-foreground text-center">
