@@ -92,25 +92,6 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
     return { total, scheduled, completed, noShows, sold, notSold, soldValue, showRate, closeRate };
   }, [appointments]);
 
-  // Closure rate per setter for pie chart
-  const setterClosureData = useMemo(() => {
-    const setterMap = new Map<string, { sold: number; notSold: number }>();
-    appointments.forEach(a => {
-      const setter = a.setter_name || 'Sin asignar';
-      if (a.status === 'sold' || (a.status as string) === 'not_sold') {
-        const entry = setterMap.get(setter) || { sold: 0, notSold: 0 };
-        if (a.status === 'sold') entry.sold++;
-        else entry.notSold++;
-        setterMap.set(setter, entry);
-      }
-    });
-    return Array.from(setterMap.entries()).map(([name, data]) => ({
-      name,
-      rate: data.sold + data.notSold > 0 ? Math.round((data.sold / (data.sold + data.notSold)) * 100) : 0,
-      sold: data.sold,
-      total: data.sold + data.notSold,
-    }));
-  }, [appointments]);
 
   const handleSubmit = async (input: any) => {
     try {
