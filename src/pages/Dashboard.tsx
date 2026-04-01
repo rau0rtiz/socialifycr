@@ -63,6 +63,11 @@ const Dashboard = () => {
     }
   }, [isClient, clientAccess, clients, selectedClient, setSelectedClient, roleLoading]);
 
+  // Sync banner URL from selectedClient
+  useEffect(() => {
+    setBannerUrl((selectedClient as any)?.banner_url || null);
+  }, [selectedClient]);
+
   // All hooks must be called before any conditional returns
   const clientId = selectedClient?.id || null;
 
