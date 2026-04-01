@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useSetterAppointments, SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
 import { useClientSetters } from '@/hooks/use-client-setters';
 import { AppointmentFormDialog } from './AppointmentFormDialog';
+import { LeadDetailDialog } from './LeadDetailDialog';
+import { LeadSourceWidget } from './LeadSourceWidget';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,9 +25,11 @@ import { toast } from 'sonner';
 import {
   UserPlus, User, DollarSign,
   Trash2, Pencil, TrendingUp,
-  CheckCircle2, XCircle, Clock, AlertTriangle, ShoppingCart, Package, ThumbsDown, PieChart
+  CheckCircle2, XCircle, Clock, AlertTriangle, ShoppingCart, ThumbsDown, PieChart, PhoneCall
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface SetterTrackerProps {
@@ -44,21 +48,20 @@ const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; col
   cancelled: { label: 'Cancelada', color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle },
 };
 
-const PIE_COLORS = ['hsl(142, 70%, 45%)', 'hsl(0, 70%, 55%)', 'hsl(220, 70%, 55%)', 'hsl(45, 80%, 50%)'];
-
 export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: SetterTrackerProps) => {
   const [period, setPeriod] = useState('last_30d');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SetterAppointment | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('pipeline');
+  const [detailLead, setDetailLead] = useState<SetterAppointment | null>(null);
 
   // No-sale confirmation state
   const [noSaleTarget, setNoSaleTarget] = useState<SetterAppointment | null>(null);
   const [noSaleReason, setNoSaleReason] = useState('');
 
   const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, period);
-  const { setterNames: existingSetters, addSetter } = useClientSetters(clientId);
+  const { setterNames: existingSetters } = useClientSetters(clientId);
 
   // Split appointments
   const activeAppointments = useMemo(() => 
@@ -169,90 +172,73 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
     }
   };
 
-  const renderLeadCard = (apt: SetterAppointment) => {
+  // Compact lead card - shows only name, sales call date, and status badge
+  const renderCompactLeadCard = (apt: SetterAppointment) => {
     const status = apt.status as AppointmentStatus | 'not_sold';
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.scheduled;
     const StatusIcon = cfg.icon;
-    const leadGoal = (apt as any).lead_goal;
-    const product = (apt as any).product;
+    const salesCallDate = (apt as any).sales_call_date;
     const canConvertToSale = apt.status !== 'sold' && (apt.status as string) !== 'not_sold' && apt.status !== 'cancelled';
-    const canMarkNotSold = canConvertToSale;
 
     return (
       <div
         key={apt.id}
-        className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors bg-card"
+        className="flex items-center gap-3 p-2.5 rounded-lg border border-border hover:border-primary/30 transition-colors bg-card group"
       >
         <div className={cn('p-1.5 rounded-md border', cfg.color)}>
           <StatusIcon className="h-3.5 w-3.5" />
         </div>
 
-        <div className="flex-1 min-w-0 space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium">{apt.lead_name}</span>
-            <Badge variant="outline" className={cn('text-[10px] border', cfg.color)}>
-              {cfg.label}
-            </Badge>
-            {apt.setter_name && (
-              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                <User className="h-2.5 w-2.5" /> {apt.setter_name}
-              </span>
-            )}
-          </div>
-          {product && (
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Package className="h-3 w-3" /> {product}
-            </p>
+        {/* Clickable name */}
+        <button
+          className="flex-1 min-w-0 text-left hover:underline"
+          onClick={() => setDetailLead(apt)}
+        >
+          <span className="text-sm font-medium truncate block">{apt.lead_name}</span>
+          {salesCallDate ? (
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <PhoneCall className="h-2.5 w-2.5" />
+              {format(new Date(salesCallDate), "dd MMM, HH:mm", { locale: es })}
+            </span>
+          ) : (
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <Clock className="h-2.5 w-2.5" />
+              {format(new Date(apt.appointment_date), "dd MMM", { locale: es })}
+            </span>
           )}
-          {leadGoal && (
-            <p className="text-xs text-muted-foreground">🎯 {leadGoal}</p>
-          )}
-          {apt.ad_name && (
-            <p className="text-[10px] text-muted-foreground">📢 {apt.ad_name} — {apt.ad_campaign_name}</p>
-          )}
-          {apt.status === 'sold' && (apt.estimated_value || 0) > 0 && (
-            <p className="text-xs font-medium text-foreground">
-              {apt.currency === 'CRC' ? '₡' : '$'}{(apt.estimated_value || 0).toLocaleString()}
-            </p>
-          )}
-          {apt.notes && (
-            <p className="text-[10px] text-muted-foreground italic">{apt.notes}</p>
-          )}
-        </div>
+        </button>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
-          {/* Convert to sale */}
+        <Badge variant="outline" className={cn('text-[10px] border shrink-0', cfg.color)}>
+          {cfg.label}
+        </Badge>
+
+        {/* Actions - visible on hover */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           {canConvertToSale && onConvertToSale && (
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-[10px] px-2 border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400"
+              className="h-6 text-[10px] px-1.5 border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400"
               onClick={() => onConvertToSale(apt)}
             >
-              <ShoppingCart className="h-3 w-3 mr-1" />
-              Venta
+              <ShoppingCart className="h-3 w-3" />
             </Button>
           )}
-
-          {/* Mark not sold */}
-          {canMarkNotSold && (
+          {canConvertToSale && (
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-[10px] px-2 border-rose-500/40 text-rose-700 hover:bg-rose-500/10 dark:text-rose-400"
+              className="h-6 text-[10px] px-1.5 border-rose-500/40 text-rose-700 hover:bg-rose-500/10 dark:text-rose-400"
               onClick={() => handleStatusChange(apt, 'not_sold')}
             >
-              <ThumbsDown className="h-3 w-3 mr-1" />
-              No vendido
+              <ThumbsDown className="h-3 w-3" />
             </Button>
           )}
-
-          {/* Status + edit */}
           <Select
             value={apt.status}
             onValueChange={v => handleStatusChange(apt, v as any)}
           >
-            <SelectTrigger className="h-6 text-[10px] w-24 border-dashed">
+            <SelectTrigger className="h-6 text-[10px] w-20 border-dashed">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -322,6 +308,9 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
             />
           </div>
 
+          {/* Lead source breakdown */}
+          <LeadSourceWidget appointments={appointments} />
+
           {/* Tabs: Pipeline / No vendidos / Cierre por vendedor */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="h-8">
@@ -343,7 +332,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
                   <p className="text-xs mt-1">Registra leads para trackear tu pipeline de ventas.</p>
                 </div>
               ) : (
-                <div className="space-y-2">{activeAppointments.map(renderLeadCard)}</div>
+                <div className="space-y-1.5">{activeAppointments.map(renderCompactLeadCard)}</div>
               )}
             </TabsContent>
 
@@ -355,7 +344,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
                   <p className="text-xs mt-1">Los leads marcados como "No vendido" aparecerán aquí.</p>
                 </div>
               ) : (
-                <div className="space-y-2">{lostAppointments.map(renderLeadCard)}</div>
+                <div className="space-y-1.5">{lostAppointments.map(renderCompactLeadCard)}</div>
               )}
             </TabsContent>
 
@@ -368,7 +357,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {setterClosureData.map((setter, idx) => (
+                  {setterClosureData.map((setter) => (
                     <div key={setter.name} className="p-3 rounded-lg border border-border bg-muted/30 flex items-center gap-4">
                       <div className="w-20 h-20">
                         <ResponsiveContainer width="100%" height="100%">
@@ -407,6 +396,13 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Lead Detail Dialog */}
+      <LeadDetailDialog
+        open={!!detailLead}
+        onOpenChange={(open) => { if (!open) setDetailLead(null); }}
+        appointment={detailLead}
+      />
 
       {/* No-sale confirmation dialog */}
       <AlertDialog open={!!noSaleTarget} onOpenChange={(open) => { if (!open) { setNoSaleTarget(null); setNoSaleReason(''); } }}>

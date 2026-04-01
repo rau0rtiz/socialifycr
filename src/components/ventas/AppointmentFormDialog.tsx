@@ -10,7 +10,7 @@ import { useClientProducts } from '@/hooks/use-client-products';
 import { useClientSetters } from '@/hooks/use-client-setters';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
-import { X, Plus, ChevronLeft, ChevronRight, User, Target, Settings, Megaphone, Package } from 'lucide-react';
+import { X, Plus, ChevronLeft, ChevronRight, User, Target, Settings, Megaphone, Package, PhoneCall } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -72,6 +72,7 @@ export const AppointmentFormDialog = ({
   const [source, setSource] = useState('ads');
   const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
   const [notes, setNotes] = useState('');
+  const [salesCallDate, setSalesCallDate] = useState('');
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const { addSetter: addSetterMutation } = useClientSetters(clientId || null);
@@ -103,6 +104,7 @@ export const AppointmentFormDialog = ({
       setStatus(editing.status);
       setSource(editing.source || 'ads');
       setNotes(editing.notes || '');
+      setSalesCallDate(editing.sales_call_date ? new Date(editing.sales_call_date).toISOString().slice(0, 16) : '');
       if (editing.ad_id) {
         setSelectedAd({
           id: editing.ad_id,
@@ -126,6 +128,7 @@ export const AppointmentFormDialog = ({
       setSource('ads');
       setSelectedAd(null);
       setNotes('');
+      setSalesCallDate('');
     }
   }, [open, editing]);
 
@@ -177,6 +180,7 @@ export const AppointmentFormDialog = ({
       lead_name: leadName.trim(),
       lead_goal: leadGoal.trim() || undefined,
       appointment_date: new Date().toISOString(),
+      sales_call_date: salesCallDate ? new Date(salesCallDate).toISOString() : undefined,
       setter_name: setterName || undefined,
       estimated_value: 0,
       currency,
@@ -265,9 +269,23 @@ export const AppointmentFormDialog = ({
             </div>
           )}
 
-          {/* Step 1: Product + Goal + Setter */}
+          {/* Step 1: Product + Goal + Setter + Sales Call Date */}
           {step === 1 && (
             <div className="space-y-4 py-4">
+              {/* Sales Call Date */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <PhoneCall className="h-3.5 w-3.5" />
+                  Fecha de Llamada de Venta
+                </Label>
+                <Input
+                  type="datetime-local"
+                  value={salesCallDate}
+                  onChange={e => setSalesCallDate(e.target.value)}
+                  className="h-10 text-sm"
+                />
+              </div>
+
               {/* Product selector */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium flex items-center gap-1.5">

@@ -81,6 +81,7 @@ export const RegisterSaleDialog = ({
   const [messagePlatform, setMessagePlatform] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<string>('completed');
+  const [closerName, setCloserName] = useState('');
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const productNames = products.map(p => p.name);
@@ -124,6 +125,7 @@ export const RegisterSaleDialog = ({
       setMessagePlatform(editingSale.message_platform || '');
       setNotes(editingSale.notes || '');
       setStatus(editingSale.status);
+      setCloserName((editingSale as any).closer_name || '');
       if (editingSale.ad_id) {
         setSelectedAd({
           id: editingSale.ad_id,
@@ -147,6 +149,7 @@ export const RegisterSaleDialog = ({
       setMessagePlatform('');
       setNotes('');
       setStatus('completed');
+      setCloserName('');
       if (prefill.ad_id) {
         setSelectedAd({
           id: prefill.ad_id,
@@ -171,6 +174,7 @@ export const RegisterSaleDialog = ({
       setMessagePlatform('');
       setNotes('');
       setStatus('completed');
+      setCloserName('');
     }
   }, [editingSale, prefill, open]);
 
@@ -223,7 +227,7 @@ export const RegisterSaleDialog = ({
       return;
     }
 
-    const sale: SaleInput = {
+    const sale: any = {
       sale_date: saleDate,
       amount: parseFloat(amount),
       currency,
@@ -233,6 +237,7 @@ export const RegisterSaleDialog = ({
       message_platform: messagePlatform || undefined,
       notes: notes || undefined,
       status: status as SaleInput['status'],
+      closer_name: closerName || undefined,
     };
 
     if (source === 'ad' && selectedAd) {
@@ -369,6 +374,10 @@ export const RegisterSaleDialog = ({
           {isPrefilled && step === 1 && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
+                <Label className="text-xs font-medium">Closer / Vendedor</Label>
+                <Input placeholder="¿Quién cerró la venta?" value={closerName} onChange={(e) => setCloserName(e.target.value)} className="h-10 text-sm" />
+              </div>
+              <div className="space-y-2">
                 <Label className="text-xs font-medium">Plataforma del mensaje</Label>
                 <Select value={messagePlatform} onValueChange={setMessagePlatform}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
@@ -496,6 +505,10 @@ export const RegisterSaleDialog = ({
           {/* Step 2: Platform + Notes */}
           {!isPrefilled && step === 2 && (
             <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Closer / Vendedor</Label>
+                <Input placeholder="¿Quién cerró la venta?" value={closerName} onChange={(e) => setCloserName(e.target.value)} className="h-10 text-sm" />
+              </div>
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Plataforma del mensaje</Label>
                 <Select value={messagePlatform} onValueChange={setMessagePlatform}>

@@ -19,6 +19,7 @@ export interface MessageSale {
   product: string | null;
   message_platform: string | null;
   status: 'completed' | 'pending' | 'cancelled';
+  closer_name: string | null;
   created_at: string;
 }
 
@@ -36,6 +37,7 @@ export interface SaleInput {
   product?: string;
   message_platform?: string;
   status?: 'completed' | 'pending' | 'cancelled';
+  closer_name?: string;
 }
 
 export const useSalesTracking = (clientId: string | null, month?: Date) => {
@@ -71,7 +73,7 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
         client_id: clientId,
         created_by: user.id,
         ...input,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -91,7 +93,7 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
 
   const updateSale = useMutation({
     mutationFn: async ({ saleId, updates }: { saleId: string; updates: Partial<SaleInput & { ad_id?: string; ad_name?: string }> }) => {
-      const { error } = await supabase.from('message_sales').update(updates).eq('id', saleId);
+      const { error } = await supabase.from('message_sales').update(updates as any).eq('id', saleId);
       if (error) throw error;
     },
     onSuccess: () => {

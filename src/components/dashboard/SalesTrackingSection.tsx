@@ -75,6 +75,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
   const [currentPrefill, setCurrentPrefill] = useState<SalePrefill | null>(null);
   const [filterSetter, setFilterSetter] = useState<string>('all');
   const [filterProduct, setFilterProduct] = useState<string>('all');
+  const [filterCloser, setFilterCloser] = useState<string>('all');
 
   // Open dialog when triggered from setter
   useEffect(() => {
@@ -94,6 +95,12 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     return Array.from(names).sort();
   }, [allSales]);
 
+  const uniqueClosers = useMemo(() => {
+    const names = new Set<string>();
+    allSales.forEach(s => { if ((s as any).closer_name) names.add((s as any).closer_name); });
+    return Array.from(names).sort();
+  }, [allSales]);
+
   const uniqueProducts = useMemo(() => {
     const names = new Set<string>();
     allSales.forEach(s => { if (s.product) names.add(s.product); });
@@ -105,9 +112,10 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     return allSales.filter(s => {
       if (filterSetter !== 'all' && s.customer_name !== filterSetter) return false;
       if (filterProduct !== 'all' && s.product !== filterProduct) return false;
+      if (filterCloser !== 'all' && (s as any).closer_name !== filterCloser) return false;
       return true;
     });
-  }, [allSales, filterSetter, filterProduct]);
+  }, [allSales, filterSetter, filterProduct, filterCloser]);
 
   const handleAddSale = (sale: any, appointmentId?: string) => {
     if (editingSale) {
@@ -230,16 +238,29 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
         </CardHeader>
 
         {/* Filters */}
-        {(uniqueSetters.length > 0 || uniqueProducts.length > 0) && (
+        {(uniqueSetters.length > 0 || uniqueProducts.length > 0 || uniqueClosers.length > 0) && (
           <div className="px-6 pb-2 flex flex-wrap items-center gap-2">
             <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            {uniqueClosers.length > 0 && (
+              <Select value={filterCloser} onValueChange={setFilterCloser}>
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue placeholder="Closer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">Todos los closers</SelectItem>
+                  {uniqueClosers.map(name => (
+                    <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {uniqueSetters.length > 0 && (
               <Select value={filterSetter} onValueChange={setFilterSetter}>
                 <SelectTrigger className="h-8 w-[150px] text-xs">
-                  <SelectValue placeholder="Vendedor" />
+                  <SelectValue placeholder="Cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" className="text-xs">Todos los vendedores</SelectItem>
+                  <SelectItem value="all" className="text-xs">Todos los clientes</SelectItem>
                   {uniqueSetters.map(name => (
                     <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
                   ))}
@@ -259,8 +280,8 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                 </SelectContent>
               </Select>
             )}
-            {(filterSetter !== 'all' || filterProduct !== 'all') && (
-              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setFilterSetter('all'); setFilterProduct('all'); }}>
+            {(filterSetter !== 'all' || filterProduct !== 'all' || filterCloser !== 'all') && (
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setFilterSetter('all'); setFilterProduct('all'); setFilterCloser('all'); }}>
                 Limpiar filtros
               </Button>
             )}
@@ -325,6 +346,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                     <TableHead>Fecha</TableHead>
                     <TableHead>Monto</TableHead>
                     <TableHead>Fuente</TableHead>
+                    <TableHead className="hidden md:table-cell">Closer</TableHead>
                     <TableHead className="hidden md:table-cell">Anuncio</TableHead>
                     <TableHead className="hidden md:table-cell">Cliente</TableHead>
                     <TableHead className="w-20"></TableHead>
@@ -341,6 +363,9 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                         <Badge variant="outline" className="text-xs">
                           {SOURCE_LABELS[sale.source] || sale.source}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-sm">
+                        {(sale as any).closer_name || '—'}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                         {sale.ad_name || sale.ad_campaign_name || '—'}
