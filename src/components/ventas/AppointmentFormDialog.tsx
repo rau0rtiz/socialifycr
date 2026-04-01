@@ -91,13 +91,11 @@ export const AppointmentFormDialog = ({
       setSetterName(editing.setter_name || '');
       if (editing.sales_call_date) {
         const d = new Date(editing.sales_call_date);
-        setSalesCallDay(d);
-        setSalesCallHour(String(d.getHours()).padStart(2, '0'));
-        setSalesCallMinute(String(d.getMinutes()).padStart(2, '0'));
+        setSalesCallDate(d.toISOString().slice(0, 10));
+        setSalesCallTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
       } else {
-        setSalesCallDay(undefined);
-        setSalesCallHour('10');
-        setSalesCallMinute('00');
+        setSalesCallDate('');
+        setSalesCallTime('10:00');
       }
       setSource(editing.source || 'ads');
       if (editing.ad_id) {
