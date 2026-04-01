@@ -418,7 +418,7 @@ export const AppointmentFormDialog = ({
         <div className="px-6 pb-6 pt-3 border-t border-border">
           <div className="flex items-center justify-center gap-3">
             {step === 0 ? (
-              <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-xs px-6">
+              <Button variant="ghost" size="sm" onClick={() => handleOpenChange(false)} className="text-xs px-6">
                 Cancelar
               </Button>
             ) : (
