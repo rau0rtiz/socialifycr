@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 import {
   UserPlus, User, DollarSign,
   Trash2, Pencil, TrendingUp,
-  CheckCircle2, XCircle, Clock, AlertTriangle, ShoppingCart, ThumbsDown, PieChart, PhoneCall
+  CheckCircle2, XCircle, Clock, AlertTriangle, ShoppingCart, ThumbsDown, PhoneCall
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
