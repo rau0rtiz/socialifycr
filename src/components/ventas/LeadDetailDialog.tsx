@@ -51,8 +51,7 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
   const [dirty, setDirty] = useState(false);
 
   // Sync checklist when appointment changes
-  const aptId = appointment?.id;
-  useState(() => {
+  useEffect(() => {
     if (appointment) {
       setChecklist({
         checklist_quiz: (appointment as any).checklist_quiz || false,
@@ -62,7 +61,7 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
       });
       setDirty(false);
     }
-  });
+  }, [appointment?.id]);
 
   if (!appointment) return null;
 
