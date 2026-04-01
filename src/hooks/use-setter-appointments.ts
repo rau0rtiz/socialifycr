@@ -39,6 +39,7 @@ export interface AppointmentInput {
   lead_goal?: string;
   lead_phone?: string;
   lead_email?: string;
+  lead_context?: string;
   appointment_date: string;
   sales_call_date?: string;
   setter_name?: string;
@@ -53,6 +54,10 @@ export interface AppointmentInput {
   notes?: string;
   source?: string;
   product?: string;
+  checklist_quiz?: boolean;
+  checklist_video?: boolean;
+  checklist_whatsapp?: boolean;
+  checklist_testimonials?: boolean;
 }
 
 export const useSetterAppointments = (clientId: string | null, period?: string) => {
