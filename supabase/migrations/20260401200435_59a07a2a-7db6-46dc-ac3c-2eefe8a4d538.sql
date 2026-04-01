@@ -1,0 +1,1 @@
+UPDATE clients SET logo_url = 'https://petshop2gocr.com/wp-content/uploads/New-2025-11-02T112409.500-2.png' WHERE id = '32b6e8aa-4644-4e02-8ee6-1ef79106711b';
