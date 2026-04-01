@@ -158,6 +158,11 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
       if (input.notes !== undefined) updateData.notes = input.notes || null;
       if (input.source !== undefined) updateData.source = input.source;
       if (input.product !== undefined) updateData.product = input.product || null;
+      if ((input as any).lead_context !== undefined) updateData.lead_context = (input as any).lead_context || null;
+      if (input.checklist_quiz !== undefined) updateData.checklist_quiz = input.checklist_quiz;
+      if (input.checklist_video !== undefined) updateData.checklist_video = input.checklist_video;
+      if (input.checklist_whatsapp !== undefined) updateData.checklist_whatsapp = input.checklist_whatsapp;
+      if (input.checklist_testimonials !== undefined) updateData.checklist_testimonials = input.checklist_testimonials;
 
       const { error } = await supabase
         .from('setter_appointments')
