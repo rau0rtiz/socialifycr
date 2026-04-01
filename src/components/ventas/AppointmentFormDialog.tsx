@@ -226,8 +226,8 @@ export const AppointmentFormDialog = ({
   ];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden p-0">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden p-0" onInteractOutside={(e) => e.preventDefault()}>
         <div className="px-6 pt-6 pb-2 space-y-3">
           <DialogHeader className="space-y-0.5">
             <DialogTitle className="text-base text-center">
