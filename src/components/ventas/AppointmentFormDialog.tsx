@@ -10,7 +10,7 @@ import { useClientProducts } from '@/hooks/use-client-products';
 import { useClientSetters } from '@/hooks/use-client-setters';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
-import { X, Plus, ChevronLeft, ChevronRight, User, Target, Settings, Megaphone, Package } from 'lucide-react';
+import { X, Plus, ChevronLeft, ChevronRight, User, Target, Settings, Megaphone, Package, PhoneCall } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
