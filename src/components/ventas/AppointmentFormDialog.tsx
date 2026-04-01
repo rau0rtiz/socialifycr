@@ -180,6 +180,7 @@ export const AppointmentFormDialog = ({
       lead_name: leadName.trim(),
       lead_goal: leadGoal.trim() || undefined,
       appointment_date: new Date().toISOString(),
+      sales_call_date: salesCallDate ? new Date(salesCallDate).toISOString() : undefined,
       setter_name: setterName || undefined,
       estimated_value: 0,
       currency,
