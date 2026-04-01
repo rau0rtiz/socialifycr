@@ -189,6 +189,8 @@ export const AppointmentFormDialog = ({
 
   const handleSubmit = () => {
     if (!leadName.trim()) return;
+    didSubmitRef.current = true;
+    draftRef.current = null;
     onSubmit({
       lead_name: leadName.trim(),
       lead_phone: leadPhone.trim() || undefined,
