@@ -63,8 +63,8 @@ serve(async (req) => {
 
     if (connectionError || !connection) {
       console.log('No active Meta connection for client:', clientId);
-      return new Response(JSON.stringify({ error: 'No active Meta connection found' }), {
-        status: 404,
+      return new Response(JSON.stringify({ connected: false, data: null, error: null }), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
