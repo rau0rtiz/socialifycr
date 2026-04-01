@@ -40,7 +40,7 @@ const Ventas = () => {
   const [showSaleFromSetter, setShowSaleFromSetter] = useState(false);
   const salesRef = useRef<HTMLDivElement>(null);
 
-  const { updateAppointment } = useSetterAppointments(clientId, 'last_30d');
+  const { appointments, updateAppointment } = useSetterAppointments(clientId, 'last_30d');
 
   const handleConvertToSale = (appointment: SetterAppointment) => {
     const prefill: SalePrefill = {
