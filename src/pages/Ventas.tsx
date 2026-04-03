@@ -120,11 +120,13 @@ const Ventas = () => {
           accentColor={selectedClient.accent_color || undefined}
         />
 
-        {/* Ad ranking up top */}
-        <AdSalesRanking
-          clientId={selectedClient.id}
-          hasAdAccount={hasAdAccount}
-        />
+        {/* Ad ranking - at top for most clients, at bottom for Mind Coach */}
+        {!selectedClient?.name?.toLowerCase().includes('mind coach') && (
+          <AdSalesRanking
+            clientId={selectedClient.id}
+            hasAdAccount={hasAdAccount}
+          />
+        )}
 
         {/* Setter pipeline (lead → sale flow) */}
         {flags.setter_tracker && (
