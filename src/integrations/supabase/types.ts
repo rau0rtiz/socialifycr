@@ -1428,6 +1428,56 @@ export type Database = {
           },
         ]
       }
+      setter_daily_reports: {
+        Row: {
+          appointments_made: number
+          client_id: string
+          created_at: string | null
+          created_by: string
+          day_notes: string | null
+          followups: number
+          id: string
+          ig_conversations: number
+          report_date: string
+          updated_at: string | null
+          wa_conversations: number
+        }
+        Insert: {
+          appointments_made?: number
+          client_id: string
+          created_at?: string | null
+          created_by: string
+          day_notes?: string | null
+          followups?: number
+          id?: string
+          ig_conversations?: number
+          report_date: string
+          updated_at?: string | null
+          wa_conversations?: number
+        }
+        Update: {
+          appointments_made?: number
+          client_id?: string
+          created_at?: string | null
+          created_by?: string
+          day_notes?: string | null
+          followups?: number
+          id?: string
+          ig_conversations?: number
+          report_date?: string
+          updated_at?: string | null
+          wa_conversations?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setter_daily_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           billing_interval: string
