@@ -88,10 +88,15 @@ export const YouTubeOAuthCallback = () => {
           }, window.location.origin);
           window.close();
         } else {
-          toast({
-            title: 'Error',
-            description: 'Por favor usa la ventana emergente para conectar',
-          });
+          // Redirect flow — store data in sessionStorage and navigate back
+          sessionStorage.setItem('youtube_oauth_result', JSON.stringify({
+            type: 'YOUTUBE_OAUTH_ACCOUNTS',
+            accounts: result.accounts,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            expiresIn: result.expiresIn,
+            clientId,
+          }));
           navigate('/clientes');
         }
       } catch (err) {
