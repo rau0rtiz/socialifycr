@@ -181,6 +181,14 @@ const Ventas = () => {
           />
         </div>
 
+        {/* === MIND COACH: Meta Campaigns Drilldown === */}
+        {isMindCoach && hasAdAccount && (
+          <CampaignsDrilldown
+            clientId={selectedClient.id}
+            hasAdAccount={hasAdAccount}
+          />
+        )}
+
         {/* Sales by product pie chart */}
         <SalesByProductChart sales={allSales} />
 
