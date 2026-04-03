@@ -123,6 +123,29 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     fetchConnections();
   }, [fetchConnections]);
 
+  // Check for YouTube OAuth redirect result stored in sessionStorage
+  useEffect(() => {
+    const stored = sessionStorage.getItem('youtube_oauth_result');
+    if (stored) {
+      sessionStorage.removeItem('youtube_oauth_result');
+      try {
+        const data = JSON.parse(stored);
+        if (data.type === 'YOUTUBE_OAUTH_ACCOUNTS' && data.clientId === clientId) {
+          setYoutubeAccountsData({
+            accounts: data.accounts,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            expiresIn: data.expiresIn,
+            clientId: data.clientId,
+          });
+          setShowYouTubeSelector(true);
+        }
+      } catch (e) {
+        console.error('Error parsing YouTube OAuth result:', e);
+      }
+    }
+  }, [clientId]);
+
   // Handle META_OAUTH_CODE: parent makes the authenticated API call
   const handleMetaOAuthCode = useCallback(async (code: string, oauthClientId: string, redirectUri: string) => {
     try {
