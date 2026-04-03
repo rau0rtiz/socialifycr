@@ -158,14 +158,6 @@ const Ventas = () => {
           />
         )}
 
-        {/* === MIND COACH: Meta Campaigns Drilldown === */}
-        {isMindCoach && hasAdAccount && (
-          <CampaignsDrilldown
-            clientId={selectedClient.id}
-            hasAdAccount={hasAdAccount}
-          />
-        )}
-
         {/* Setter pipeline (lead → sale flow) */}
         {flags.setter_tracker && (
           <SetterTracker
@@ -188,6 +180,14 @@ const Ventas = () => {
             onSaleFromSetter={handleSaleRegistered}
           />
         </div>
+
+        {/* === MIND COACH: Meta Campaigns Drilldown === */}
+        {isMindCoach && hasAdAccount && (
+          <CampaignsDrilldown
+            clientId={selectedClient.id}
+            hasAdAccount={hasAdAccount}
+          />
+        )}
 
         {/* Sales by product pie chart */}
         <SalesByProductChart sales={allSales} />
