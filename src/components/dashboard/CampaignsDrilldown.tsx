@@ -139,6 +139,60 @@ const MetricCard = ({
 );
 
 // Campaign Row Component
+// Compact grid card for campaigns overview
+const CampaignGridCard = ({
+  campaign,
+  currency,
+  onClick,
+  configuredGoal,
+}: {
+  campaign: CampaignInsights;
+  currency: string;
+  onClick: () => void;
+  configuredGoal?: GoalType | null;
+}) => {
+  const goalLabel = configuredGoal ? getGoalLabel(configuredGoal) : null;
+
+  return (
+    <div
+      className="p-3 border border-border rounded-lg hover:border-primary/40 hover:bg-muted/30 cursor-pointer transition-all"
+      onClick={onClick}
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <h3 className="font-medium text-xs leading-tight line-clamp-2 flex-1">{campaign.name}</h3>
+        <Badge variant="outline" className={cn('text-[9px] shrink-0 px-1.5 py-0', statusConfig[campaign.effectiveStatus]?.class)}>
+          {statusConfig[campaign.effectiveStatus]?.label || campaign.effectiveStatus}
+        </Badge>
+      </div>
+      {goalLabel && (
+        <Badge variant="secondary" className="text-[9px] mb-2 gap-0.5">
+          <Target className="h-2 w-2" />
+          {goalLabel}
+        </Badge>
+      )}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+        <div>
+          <p className="text-[9px] text-muted-foreground">Gastado</p>
+          <p className="text-xs font-semibold">{formatCurrency(campaign.spend, currency)}</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground">{campaign.resultType}</p>
+          <p className="text-xs font-semibold">{formatNumber(campaign.results)}</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground">Alcance</p>
+          <p className="text-xs font-semibold">{formatNumber(campaign.reach)}</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground">Costo/Resultado</p>
+          <p className="text-xs font-semibold">{campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult, currency) : '-'}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Full detail row used inside the campaign detail dialog
 const CampaignRow = ({ 
   campaign, 
   currency, 
@@ -157,25 +211,18 @@ const CampaignRow = ({
   const goalLabel = configuredGoal ? getGoalLabel(configuredGoal) : null;
   
   return (
-  <div
-    className="p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors"
-  >
+  <div className="p-4 border border-border rounded-lg">
     <div className="flex items-start justify-between mb-3">
-      <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
-        <div className="flex items-center gap-2 mb-1">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <h3 className="font-medium text-sm truncate">{campaign.name}</h3>
           <Badge variant="outline" className={cn('text-xs shrink-0', statusConfig[campaign.effectiveStatus]?.class)}>
             {statusConfig[campaign.effectiveStatus]?.label || campaign.effectiveStatus}
           </Badge>
-          {goalLabel ? (
+          {goalLabel && (
             <Badge variant="secondary" className="text-[10px] shrink-0 gap-1">
               <Target className="h-2.5 w-2.5" />
               {goalLabel}
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="text-[10px] shrink-0 gap-1 border-amber-500/30 text-amber-600">
-              <AlertTriangle className="h-2.5 w-2.5" />
-              Sin meta
             </Badge>
           )}
         </div>
@@ -200,7 +247,7 @@ const CampaignRow = ({
       </div>
     </div>
 
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 cursor-pointer" onClick={onClick}>
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
       <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(campaign.spend, currency)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(campaign.reach)} />
       <MetricCard icon={Target} label={campaign.resultType} value={formatNumber(campaign.results)} />
