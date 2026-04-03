@@ -1,52 +1,81 @@
 
 
-## Análisis: ¿Qué ya tenemos vs qué falta?
+# Plan: Pipeline Dashboard para The Mind Coach
 
-Ya tienen un sistema bastante completo. Aquí el desglose:
+## Resumen
 
-### Lo que YA existe
+Crear un sistema de métricas unificado para el Pipeline de The Mind Coach con: widget resumen con selector de periodo, calendario de reporte diario del setter, tabla de campañas Meta, y métricas de show rate/no show mejoradas.
 
-| Funcionalidad | Estado |
-|---|---|
-| Setter Pipeline con leads, estados, vendedores | ✅ Completo |
-| Fuente del lead (ads, orgánico, referencia) | ✅ Completo |
-| Conversión lead → venta con prefill | ✅ Completo |
-| Show Rate y Close Rate generales | ✅ Completo |
-| Cierre por vendedor (pie chart) | ✅ Completo |
-| No Show tracking | ✅ Completo |
-| Registro de ventas con atribución a anuncio | ✅ Completo |
-| Productos vinculados a leads | ✅ Completo |
-| Ventas por producto (pie chart) | ✅ Completo |
-| Meta del lead (lead_goal) | ✅ Completo |
+## Cambios necesarios
 
-### Lo que FALTA implementar
+### 1. Nueva tabla: `setter_daily_reports`
 
-| Funcionalidad | Esfuerzo |
-|---|---|
-| **Campo "fecha de llamada de venta"** en setter_appointments | Bajo — agregar columna `sales_call_date` a la tabla y al formulario |
-| **Vista compacta del pipeline** (solo nombre + fecha de llamada) | Medio — rediseñar `renderLeadCard` para mostrar solo nombre y fecha, con click para abrir popup |
-| **Popup de detalle del lead** al hacer click en el nombre | Medio — crear un `LeadDetailDialog` con toda la info actual del lead |
-| **Conteo de conversaciones desde pauta** vs orgánicas | Bajo — ya tienen el campo `source`, solo falta un widget de resumen visual (ads vs organic vs referral) |
-| **Ventas por closer (vendedor)** | Bajo — cruzar `message_sales` con el `setter_name` del appointment vinculado, o agregar campo `closer_name` a ventas |
-| **Métricas avanzadas de Show Rate** desglosadas por vendedor/closer | Bajo — extender la lógica de stats existente |
+Migración para crear tabla donde el setter guarda su reporte diario:
 
-### Plan de implementación
+```sql
+CREATE TABLE public.setter_daily_reports (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL,
+  report_date date NOT NULL,
+  ig_conversations integer NOT NULL DEFAULT 0,
+  wa_conversations integer NOT NULL DEFAULT 0,
+  followups integer NOT NULL DEFAULT 0,
+  appointments_made integer NOT NULL DEFAULT 0,
+  day_notes text,
+  created_by uuid NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(client_id, report_date)
+);
 
-1. **Migración DB**: Agregar columna `sales_call_date` (timestamp) a `setter_appointments`
-2. **Formulario de lead**: Agregar campo "Fecha de llamada de venta" al paso 1 o 2 del `AppointmentFormDialog`
-3. **Vista compacta del pipeline**: Cambiar las tarjetas de lead para mostrar solo nombre + fecha de llamada + badge de estado. Al hacer click en el nombre → abrir popup
-4. **LeadDetailDialog**: Nuevo componente popup con toda la info del lead (teléfono, email, producto, meta, anuncio, notas, valor estimado, historial de estados)
-5. **Widget de origen de leads**: Mini card que muestre "X de pauta | Y orgánicos | Z referencia" con barras proporcionales
-6. **Agregar campo `closer_name`** a `message_sales` para trackear quién cerró la venta (o derivarlo del setter_appointment vinculado)
-7. **Tab "Ventas por Closer"**: Tabla/chart que agrupe ventas por closer con montos y tasa de cierre
+ALTER TABLE public.setter_daily_reports ENABLE ROW LEVEL SECURITY;
+-- RLS: team members can CRUD, admins can manage all
+```
 
-### Resumen
+### 2. Nuevo componente: `PipelineSummaryWidget`
+- **Ubicacion**: `src/components/ventas/PipelineSummaryWidget.tsx`
+- Selector de periodo (7d, 30d, este mes, personalizado)
+- KPIs en grid: Gasto de campaña (con multi-selector de campañas), Total conversaciones (IG + WA sumadas del calendario), Agendas realizadas, Show Rate %, No Show %, Ventas cerradas, Close Rate %
+- Todas las metricas calculadas del periodo seleccionado
+- Se ubica **hasta arriba** del Pipeline (solo Mind Coach)
 
-Aproximadamente un **60-70% ya está construido**. Lo principal que falta es:
-- El campo de fecha de llamada de venta
-- Simplificar la vista del pipeline (nombre + fecha, click → popup)
-- Un desglose visual de origen de conversaciones
-- Métricas de ventas por closer
+### 3. Nuevo componente: `SetterDailyCalendar`
+- **Ubicacion**: `src/components/ventas/SetterDailyCalendar.tsx`
+- Calendario visual basado en `<Calendar />` de shadcn
+- Color-coded: verde = tiene reporte, rojo = no tiene reporte, borde especial para hoy (hora Costa Rica)
+- Al hacer clic en un día: abre dialog para ver/editar el reporte con campos: conversaciones IG, conversaciones WA, seguimientos, notas del día, agendas realizadas
+- Hook: `src/hooks/use-setter-daily-reports.ts` para CRUD contra la nueva tabla
 
-¿Quieres que proceda con la implementación completa?
+### 4. Widget de Campañas Meta en Pipeline
+- Reusar `CampaignsDrilldown` (o `CampaignsTable`) existente dentro de la pagina Ventas, condicionado a Mind Coach
+- Mostrar campañas activas del ad account conectado
+
+### 5. Mejoras al flujo de estados del SetterTracker
+- Agregar distincion explicita entre "show" (asistio a la llamada) y las demas opciones
+- Actualmente `completed` = show y `no_show` = no show. Verificar que el calculo de show rate sea: `completed / (completed + no_show)` excluyendo los que aun estan `scheduled`/`confirmed`
+- El calculo actual ya lo hace correctamente (linea 89 del SetterTracker). No se requieren cambios de schema.
+
+### 6. Cambios en `Ventas.tsx`
+- Para Mind Coach: insertar `PipelineSummaryWidget` como primer widget (antes de SalesGoalBar)
+- Insertar `SetterDailyCalendar` despues del summary
+- Insertar `CampaignsTable`/`CampaignsDrilldown` en el pipeline
+- El periodo seleccionado en el summary widget se propaga a los demas widgets para filtrar consistentemente
+
+## Orden de implementacion
+
+1. Migración DB (setter_daily_reports)
+2. Hook `use-setter-daily-reports.ts`
+3. Componente `SetterDailyCalendar`
+4. Componente `PipelineSummaryWidget`
+5. Integrar campañas Meta
+6. Actualizar `Ventas.tsx` con layout condicional Mind Coach
+
+## Archivos a crear
+- `src/hooks/use-setter-daily-reports.ts`
+- `src/components/ventas/SetterDailyCalendar.tsx`
+- `src/components/ventas/PipelineSummaryWidget.tsx`
+
+## Archivos a modificar
+- `src/pages/Ventas.tsx` — layout condicional
+- Migración SQL nueva
 
