@@ -6,6 +6,9 @@ import { SetterTracker } from '@/components/ventas/SetterTracker';
 import { SalesGoalBar } from '@/components/ventas/SalesGoalBar';
 import { SalesByProductChart } from '@/components/ventas/SalesByProductChart';
 import { ClosureRateWidget } from '@/components/ventas/ClosureRateWidget';
+import { PipelineSummaryWidget, PipelinePeriod } from '@/components/ventas/PipelineSummaryWidget';
+import { SetterDailyCalendar } from '@/components/ventas/SetterDailyCalendar';
+import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
@@ -14,6 +17,7 @@ import { useCampaigns } from '@/hooks/use-ads-data';
 import { useClientFeatures } from '@/hooks/use-client-features';
 import { useSetterAppointments, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useSalesTracking } from '@/hooks/use-sales-tracking';
+import { useSetterDailyReports } from '@/hooks/use-setter-daily-reports';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2 } from 'lucide-react';
 import { SalePrefill } from '@/components/dashboard/RegisterSaleDialog';
@@ -27,7 +31,12 @@ const Ventas = () => {
   const hasAdAccount = !!metaConnection?.ad_account_id;
   const { flags } = useClientFeatures(clientId);
 
-  const { data: campaignsResult } = useCampaigns(clientId, hasAdAccount, 'last_30d');
+  const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
+
+  // Pipeline period state (shared across Mind Coach widgets)
+  const [pipelinePeriod, setPipelinePeriod] = useState<PipelinePeriod>('last_30d');
+
+  const { data: campaignsResult } = useCampaigns(clientId, hasAdAccount, pipelinePeriod);
   const campaigns = campaignsResult?.campaigns || [];
   const adCurrency = campaignsResult?.currency || 'USD';
   const totalAdSpend = campaigns.reduce((sum, c) => sum + c.spend, 0);
@@ -35,12 +44,15 @@ const Ventas = () => {
   // Get all-time sales for the goal bar (current year)
   const { sales: allSales, summary } = useSalesTracking(clientId);
 
+  // Daily reports for Mind Coach
+  const { reports: dailyReports } = useSetterDailyReports(clientId);
+
   // Prefill state for converting setter lead → sale
   const [salePrefill, setSalePrefill] = useState<SalePrefill | null>(null);
   const [showSaleFromSetter, setShowSaleFromSetter] = useState(false);
   const salesRef = useRef<HTMLDivElement>(null);
 
-  const { appointments, updateAppointment } = useSetterAppointments(clientId, 'last_30d');
+  const { appointments, updateAppointment } = useSetterAppointments(clientId, pipelinePeriod);
 
   const handleConvertToSale = (appointment: SetterAppointment) => {
     const prefill: SalePrefill = {
@@ -108,8 +120,21 @@ const Ventas = () => {
     <DashboardLayout>
       <div className="mb-4 md:mb-6 space-y-4">
         <h1 className="text-lg md:text-xl font-semibold text-foreground">
-          {selectedClient?.name?.toLowerCase().includes('mind coach') ? 'Pipeline' : 'Ventas'}
+          {isMindCoach ? 'Pipeline' : 'Ventas'}
         </h1>
+
+        {/* === MIND COACH: Pipeline Summary at top === */}
+        {isMindCoach && (
+          <PipelineSummaryWidget
+            appointments={appointments}
+            sales={allSales}
+            dailyReports={dailyReports}
+            campaigns={campaigns}
+            adCurrency={adCurrency}
+            period={pipelinePeriod}
+            onPeriodChange={setPipelinePeriod}
+          />
+        )}
 
         {/* Sales Goal Bar */}
         <SalesGoalBar
@@ -120,9 +145,22 @@ const Ventas = () => {
           accentColor={selectedClient.accent_color || undefined}
         />
 
-        {/* Ad ranking - at top for most clients, at bottom for Mind Coach */}
-        {!selectedClient?.name?.toLowerCase().includes('mind coach') && (
+        {/* === MIND COACH: Setter Daily Calendar === */}
+        {isMindCoach && (
+          <SetterDailyCalendar clientId={selectedClient.id} />
+        )}
+
+        {/* Ad ranking - at top for most clients, hidden for Mind Coach here (shown at bottom) */}
+        {!isMindCoach && (
           <AdSalesRanking
+            clientId={selectedClient.id}
+            hasAdAccount={hasAdAccount}
+          />
+        )}
+
+        {/* === MIND COACH: Meta Campaigns Drilldown === */}
+        {isMindCoach && hasAdAccount && (
+          <CampaignsDrilldown
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
           />
@@ -158,7 +196,7 @@ const Ventas = () => {
         <ClosureRateWidget appointments={appointments} />
 
         {/* Ad ranking at bottom for Mind Coach */}
-        {selectedClient?.name?.toLowerCase().includes('mind coach') && (
+        {isMindCoach && (
           <AdSalesRanking
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
