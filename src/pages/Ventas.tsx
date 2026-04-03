@@ -158,14 +158,6 @@ const Ventas = () => {
           />
         )}
 
-        {/* === MIND COACH: Meta Campaigns Drilldown === */}
-        {isMindCoach && hasAdAccount && (
-          <CampaignsDrilldown
-            clientId={selectedClient.id}
-            hasAdAccount={hasAdAccount}
-          />
-        )}
-
         {/* Setter pipeline (lead → sale flow) */}
         {flags.setter_tracker && (
           <SetterTracker
