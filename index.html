@@ -30,6 +30,10 @@
     <script>
       (function () {
         var RETRY_KEY = '__lovable_module_retry_count__';
+        var MAX_RETRIES = 4;
+        var BOOT_TIMEOUT_MS = 4500;
+        window.__lovableAppBooted = false;
+        window.__lovableRecoveryInProgress = false;
 
         function readRetryCount() {
           try {
@@ -43,6 +47,14 @@
           try {
             window.sessionStorage.setItem(RETRY_KEY, String(count));
           } catch (_) {}
+        }
+
+        function hasMountedApp() {
+          var root = document.getElementById('root');
+          return Boolean(
+            window.__lovableAppBooted ||
+              (root && (root.childElementCount > 0 || (root.textContent && root.textContent.trim())))
+          );
         }
 
         function isModuleLoadError(event) {
@@ -63,17 +75,13 @@
           return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|module script|Load failed/i.test(parts.join(' '));
         }
 
-        function recoverFromModuleError() {
-          var retryCount = readRetryCount();
-          if (retryCount >= 2) return;
-          writeRetryCount(retryCount + 1);
-
+        function clearRuntimeCaches() {
           var tasks = [];
 
           if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
             tasks.push(
               navigator.serviceWorker.getRegistrations().then(function (registrations) {
-                return Promise.all(
+                return Promise.allSettled(
                   registrations.map(function (registration) {
                     return registration.unregister();
                   })
@@ -85,7 +93,7 @@
           if ('caches' in window && window.caches.keys) {
             tasks.push(
               window.caches.keys().then(function (keys) {
-                return Promise.all(
+                return Promise.allSettled(
                   keys.map(function (key) {
                     return window.caches.delete(key);
                   })
@@ -94,18 +102,41 @@
             );
           }
 
-          Promise.all(
-            tasks.map(function (task) {
-              return task.catch(function () {
+          return Promise.allSettled(tasks);
+        }
+
+        function reloadWithCacheBust() {
+          var url = new URL(window.location.href);
+          url.searchParams.set('__reload', String(Date.now()));
+          window.location.replace(url.toString());
+        }
+
+        function recoverFromModuleError() {
+          if (window.__lovableRecoveryInProgress) return;
+          window.__lovableRecoveryInProgress = true;
+
+          var retryCount = readRetryCount();
+          if (retryCount >= MAX_RETRIES) {
+            reloadWithCacheBust();
+            return;
+          }
+
+          writeRetryCount(retryCount + 1);
+
+          clearRuntimeCaches()
+            .catch(function () {
+              return undefined;
+            })
+            .then(function () {
+              return fetch(window.location.pathname + window.location.search, {
+                cache: 'no-store',
+                credentials: 'same-origin',
+              }).catch(function () {
                 return undefined;
               });
             })
-          )
-            .then(function () {}, function () {})
             .then(function () {
-              var url = new URL(window.location.href);
-              url.searchParams.set('__reload', String(Date.now()));
-              window.location.replace(url.toString());
+              reloadWithCacheBust();
             });
         }
 
@@ -130,6 +161,12 @@
           if (event.preventDefault) event.preventDefault();
           recoverFromModuleError();
         });
+
+        window.setTimeout(function () {
+          if (document.visibilityState === 'visible' && !hasMountedApp()) {
+            recoverFromModuleError();
+          }
+        }, BOOT_TIMEOUT_MS);
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
