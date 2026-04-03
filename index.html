@@ -28,12 +28,109 @@
   <body>
     <div id="root"></div>
     <script>
-      window.addEventListener('error', function(e) {
-        var msg = (e.message || '') + (e.filename || '');
-        if (msg.indexOf('Failed to fetch dynamically imported module') !== -1 || msg.indexOf('Importing a module script failed') !== -1) {
-          window.location.reload();
+      (function () {
+        var RETRY_KEY = '__lovable_module_retry_count__';
+
+        function readRetryCount() {
+          try {
+            return Number(window.sessionStorage.getItem(RETRY_KEY) || '0');
+          } catch (_) {
+            return 0;
+          }
         }
-      });
+
+        function writeRetryCount(count) {
+          try {
+            window.sessionStorage.setItem(RETRY_KEY, String(count));
+          } catch (_) {}
+        }
+
+        function isModuleLoadError(event) {
+          if (!event) return false;
+          if (event.target && event.target.tagName === 'SCRIPT') return true;
+
+          var parts = [];
+          if (typeof event === 'string') {
+            parts.push(event);
+          } else {
+            if (event.message) parts.push(event.message);
+            if (event.filename) parts.push(event.filename);
+            if (event.reason && event.reason.message) parts.push(event.reason.message);
+            if (event.target && event.target.src) parts.push(event.target.src);
+            if (event.target && event.target.href) parts.push(event.target.href);
+          }
+
+          return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|module script|Load failed/i.test(parts.join(' '));
+        }
+
+        function recoverFromModuleError() {
+          var retryCount = readRetryCount();
+          if (retryCount >= 2) return;
+          writeRetryCount(retryCount + 1);
+
+          var tasks = [];
+
+          if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+            tasks.push(
+              navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                return Promise.all(
+                  registrations.map(function (registration) {
+                    return registration.unregister();
+                  })
+                );
+              })
+            );
+          }
+
+          if ('caches' in window && window.caches.keys) {
+            tasks.push(
+              window.caches.keys().then(function (keys) {
+                return Promise.all(
+                  keys.map(function (key) {
+                    return window.caches.delete(key);
+                  })
+                );
+              })
+            );
+          }
+
+          Promise.all(
+            tasks.map(function (task) {
+              return task.catch(function () {
+                return undefined;
+              });
+            })
+          )
+            .then(function () {}, function () {})
+            .then(function () {
+              var url = new URL(window.location.href);
+              url.searchParams.set('__reload', String(Date.now()));
+              window.location.replace(url.toString());
+            });
+        }
+
+        window.addEventListener(
+          'error',
+          function (event) {
+            if (isModuleLoadError(event)) {
+              recoverFromModuleError();
+            }
+          },
+          true
+        );
+
+        window.addEventListener('unhandledrejection', function (event) {
+          if (isModuleLoadError(event.reason || event)) {
+            if (event.preventDefault) event.preventDefault();
+            recoverFromModuleError();
+          }
+        });
+
+        window.addEventListener('vite:preloadError', function (event) {
+          if (event.preventDefault) event.preventDefault();
+          recoverFromModuleError();
+        });
+      })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
