@@ -75,13 +75,23 @@
           return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|module script|Load failed/i.test(parts.join(' '));
         }
 
+        function settleTasks(tasks) {
+          return Promise.all(
+            tasks.map(function (task) {
+              return Promise.resolve(task).catch(function () {
+                return undefined;
+              });
+            })
+          );
+        }
+
         function clearRuntimeCaches() {
           var tasks = [];
 
           if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
             tasks.push(
               navigator.serviceWorker.getRegistrations().then(function (registrations) {
-                return Promise.allSettled(
+                return settleTasks(
                   registrations.map(function (registration) {
                     return registration.unregister();
                   })
@@ -93,7 +103,7 @@
           if ('caches' in window && window.caches.keys) {
             tasks.push(
               window.caches.keys().then(function (keys) {
-                return Promise.allSettled(
+                return settleTasks(
                   keys.map(function (key) {
                     return window.caches.delete(key);
                   })
@@ -102,7 +112,7 @@
             );
           }
 
-          return Promise.allSettled(tasks);
+          return settleTasks(tasks);
         }
 
         function reloadWithCacheBust() {

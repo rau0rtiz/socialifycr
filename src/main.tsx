@@ -11,6 +11,13 @@ declare global {
 
 const MODULE_LOAD_RETRY_KEY = "__lovable_module_retry_count__";
 
+const settleTasks = (tasks: Array<Promise<unknown>>) =>
+  Promise.all(
+    tasks.map((task) =>
+      Promise.resolve(task).catch(() => undefined),
+    ),
+  );
+
 const cleanupLegacyRuntimeCaches = async () => {
   const tasks: Promise<unknown>[] = [];
 
@@ -19,7 +26,7 @@ const cleanupLegacyRuntimeCaches = async () => {
       navigator.serviceWorker
         .getRegistrations()
         .then((registrations) =>
-          Promise.allSettled(registrations.map((registration) => registration.unregister())),
+          settleTasks(registrations.map((registration) => registration.unregister())),
         ),
     );
   }
@@ -28,11 +35,11 @@ const cleanupLegacyRuntimeCaches = async () => {
     tasks.push(
       window.caches
         .keys()
-        .then((keys) => Promise.allSettled(keys.map((key) => window.caches.delete(key)))),
+        .then((keys) => settleTasks(keys.map((key) => window.caches.delete(key)))),
     );
   }
 
-  await Promise.allSettled(tasks);
+  await settleTasks(tasks);
 };
 
 void cleanupLegacyRuntimeCaches();
