@@ -156,6 +156,14 @@ const Ventas = () => {
 
         {/* Closure rate per seller */}
         <ClosureRateWidget appointments={appointments} />
+
+        {/* Ad ranking at bottom for Mind Coach */}
+        {selectedClient?.name?.toLowerCase().includes('mind coach') && (
+          <AdSalesRanking
+            clientId={selectedClient.id}
+            hasAdAccount={hasAdAccount}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
