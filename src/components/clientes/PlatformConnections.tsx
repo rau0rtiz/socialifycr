@@ -395,13 +395,10 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         `width=${width},height=${height},left=${left},top=${top}`
       );
 
-      if (!popup) {
-        toast({
-          title: 'Error',
-          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
-          variant: 'destructive',
-        });
-        setConnecting(null);
+      if (!popup || popup.closed) {
+        // Popup blocked — redirect in current tab instead
+        window.location.href = data.authUrl;
+        return;
       }
 
       const checkPopup = setInterval(() => {
