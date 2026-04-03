@@ -139,6 +139,60 @@ const MetricCard = ({
 );
 
 // Campaign Row Component
+// Compact grid card for campaigns overview
+const CampaignGridCard = ({
+  campaign,
+  currency,
+  onClick,
+  configuredGoal,
+}: {
+  campaign: CampaignInsights;
+  currency: string;
+  onClick: () => void;
+  configuredGoal?: GoalType | null;
+}) => {
+  const goalLabel = configuredGoal ? getGoalLabel(configuredGoal) : null;
+
+  return (
+    <div
+      className="p-3 border border-border rounded-lg hover:border-primary/40 hover:bg-muted/30 cursor-pointer transition-all"
+      onClick={onClick}
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <h3 className="font-medium text-xs leading-tight line-clamp-2 flex-1">{campaign.name}</h3>
+        <Badge variant="outline" className={cn('text-[9px] shrink-0 px-1.5 py-0', statusConfig[campaign.effectiveStatus]?.class)}>
+          {statusConfig[campaign.effectiveStatus]?.label || campaign.effectiveStatus}
+        </Badge>
+      </div>
+      {goalLabel && (
+        <Badge variant="secondary" className="text-[9px] mb-2 gap-0.5">
+          <Target className="h-2 w-2" />
+          {goalLabel}
+        </Badge>
+      )}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+        <div>
+          <p className="text-[9px] text-muted-foreground">Gastado</p>
+          <p className="text-xs font-semibold">{formatCurrency(campaign.spend, currency)}</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground">{campaign.resultType}</p>
+          <p className="text-xs font-semibold">{formatNumber(campaign.results)}</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground">Alcance</p>
+          <p className="text-xs font-semibold">{formatNumber(campaign.reach)}</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground">Costo/Resultado</p>
+          <p className="text-xs font-semibold">{campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult, currency) : '-'}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Full detail row used inside the campaign detail dialog
 const CampaignRow = ({ 
   campaign, 
   currency, 
@@ -157,25 +211,18 @@ const CampaignRow = ({
   const goalLabel = configuredGoal ? getGoalLabel(configuredGoal) : null;
   
   return (
-  <div
-    className="p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors"
-  >
+  <div className="p-4 border border-border rounded-lg">
     <div className="flex items-start justify-between mb-3">
-      <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
-        <div className="flex items-center gap-2 mb-1">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <h3 className="font-medium text-sm truncate">{campaign.name}</h3>
           <Badge variant="outline" className={cn('text-xs shrink-0', statusConfig[campaign.effectiveStatus]?.class)}>
             {statusConfig[campaign.effectiveStatus]?.label || campaign.effectiveStatus}
           </Badge>
-          {goalLabel ? (
+          {goalLabel && (
             <Badge variant="secondary" className="text-[10px] shrink-0 gap-1">
               <Target className="h-2.5 w-2.5" />
               {goalLabel}
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="text-[10px] shrink-0 gap-1 border-amber-500/30 text-amber-600">
-              <AlertTriangle className="h-2.5 w-2.5" />
-              Sin meta
             </Badge>
           )}
         </div>
@@ -200,7 +247,7 @@ const CampaignRow = ({
       </div>
     </div>
 
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 cursor-pointer" onClick={onClick}>
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
       <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(campaign.spend, currency)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(campaign.reach)} />
       <MetricCard icon={Target} label={campaign.resultType} value={formatNumber(campaign.results)} />
@@ -437,9 +484,7 @@ const datePresetLabels: Record<DatePresetKey, string> = {
 };
 
 export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldownProps) => {
-  const [viewLevel, setViewLevel] = useState<ViewLevel>('campaigns');
   const [selectedCampaign, setSelectedCampaign] = useState<CampaignInsights | null>(null);
-  const [selectedAdSet, setSelectedAdSet] = useState<AdSetInsights | null>(null);
   const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -472,26 +517,25 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
     );
   }, [campaigns, campaignGoalsData]);
 
+  // Dialog-based drilldown state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogViewLevel, setDialogViewLevel] = useState<'detail' | 'adsets' | 'ads'>('detail');
+  const [dialogSelectedAdSet, setDialogSelectedAdSet] = useState<AdSetInsights | null>(null);
+
   const {
     data: adsets,
     isLoading: adsetsLoading,
-    error: adsetsError,
-    refetch: refetchAdsets,
   } = useAdSets(clientId, selectedCampaign?.id || null, selectedCampaign?.objective || '', datePreset, customRange);
 
   const {
     data: ads,
     isLoading: adsLoading,
-    error: adsError,
-    refetch: refetchAds,
-  } = useAds(clientId, selectedAdSet?.id || null, selectedCampaign?.objective || '', datePreset, customRange);
+  } = useAds(clientId, dialogSelectedAdSet?.id || null, selectedCampaign?.objective || '', datePreset, customRange);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      if (viewLevel === 'campaigns') await refetchCampaigns();
-      else if (viewLevel === 'adsets') await refetchAdsets();
-      else await refetchAds();
+      await refetchCampaigns();
     } finally {
       setIsRefreshing(false);
     }
@@ -514,38 +558,32 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
 
   const handleCampaignClick = (campaign: CampaignInsights) => {
     setSelectedCampaign(campaign);
-    setViewLevel('adsets');
+    setDialogViewLevel('detail');
+    setDialogSelectedAdSet(null);
+    setDialogOpen(true);
   };
 
-  const handleAdSetClick = (adset: AdSetInsights) => {
-    setSelectedAdSet(adset);
-    setViewLevel('ads');
-  };
-
-  const handleBack = () => {
-    if (viewLevel === 'ads') {
-      setSelectedAdSet(null);
-      setViewLevel('adsets');
-    } else if (viewLevel === 'adsets') {
-      setSelectedCampaign(null);
-      setViewLevel('campaigns');
+  const handleDialogBack = () => {
+    if (dialogViewLevel === 'ads') {
+      setDialogSelectedAdSet(null);
+      setDialogViewLevel('adsets');
+    } else if (dialogViewLevel === 'adsets') {
+      setDialogViewLevel('detail');
     }
   };
 
-  const getBreadcrumb = () => {
-    const parts = ['Campañas'];
-    if (selectedCampaign) parts.push(selectedCampaign.name);
-    if (selectedAdSet) parts.push(selectedAdSet.name);
-    return parts;
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setSelectedCampaign(null);
+    setDialogSelectedAdSet(null);
+    setDialogViewLevel('detail');
   };
 
-  const isLoading = viewLevel === 'campaigns' ? campaignsLoading : viewLevel === 'adsets' ? adsetsLoading : adsLoading;
+  const campaignsError2 = campaignsError;
+  const currentErrorMessage = campaignsError2 instanceof Error ? campaignsError2.message : campaignsError2 ? String(campaignsError2) : '';
 
-  const currentData = viewLevel === 'campaigns' ? campaigns : viewLevel === 'adsets' ? adsets : ads;
-
-  const currentError = viewLevel === 'campaigns' ? campaignsError : viewLevel === 'adsets' ? adsetsError : adsError;
-
-  const currentErrorMessage = currentError instanceof Error ? currentError.message : currentError ? String(currentError) : '';
+  const campaignGoal = selectedCampaign ? (campaignGoalsData?.goals?.[selectedCampaign.id]?.goal_type as GoalType | undefined) : undefined;
+  const isPurchaseCampaign = campaignGoal === 'purchases' || selectedCampaign?.resultType === 'Compras';
 
   return (
     <>
@@ -561,35 +599,23 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            {viewLevel !== 'campaigns' && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBack}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            )}
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className="text-sm md:text-base font-medium">
-                  {viewLevel === 'campaigns'
-                    ? 'Campañas Activas'
-                    : viewLevel === 'adsets'
-                      ? 'Conjuntos de Anuncios'
-                      : 'Anuncios'}
+                  Campañas Activas
                 </CardTitle>
-                {hasAdAccount && !isLoading && !currentError && (
+                {hasAdAccount && !campaignsLoading && !campaignsError2 && (
                   <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/30 text-emerald-600">
                     <Radio className="h-2.5 w-2.5 animate-pulse" />
                     En vivo
                   </Badge>
                 )}
               </div>
-              {viewLevel !== 'campaigns' && (
-                <p className="text-xs text-muted-foreground mt-0.5">{getBreadcrumb().join(' → ')}</p>
-              )}
             </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-2">
-            {viewLevel === 'campaigns' && clientId && (
+            {clientId && (
               <Select 
                 value={defaultGoal || '_none'} 
                 onValueChange={(value) => {
@@ -665,7 +691,7 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
               size="icon"
               className="h-8 w-8"
               onClick={handleRefresh}
-              disabled={isRefreshing || isLoading}
+              disabled={isRefreshing || campaignsLoading}
             >
               <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
             </Button>
@@ -678,7 +704,7 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
             <p>No hay cuenta de anuncios conectada</p>
             <p className="text-sm mt-1">Conecta una cuenta de Meta Ads para ver tus campañas</p>
           </div>
-        ) : currentError ? (
+        ) : campaignsError2 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p>No se pudieron cargar los datos de Meta Ads.</p>
             <p className="text-sm mt-1">Vuelve a conectar la cuenta publicitaria del cliente.</p>
@@ -687,40 +713,107 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldow
               <Link to="/clientes">Ir a Conexiones</Link>
             </Button>
           </div>
-        ) : isLoading ? (
+        ) : campaignsLoading ? (
           <LoadingSkeleton />
-        ) : (viewLevel === 'campaigns' ? campaigns.length === 0 : !currentData || (currentData as any[]).length === 0) ? (
+        ) : campaigns.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            {viewLevel === 'campaigns' && 'No hay campañas activas'}
-            {viewLevel === 'adsets' && 'No hay conjuntos de anuncios en esta campaña'}
-            {viewLevel === 'ads' && 'No hay anuncios en este conjunto'}
+            No hay campañas activas
           </div>
         ) : (
-          <div className="space-y-4">
-            {viewLevel === 'campaigns' && (campaigns || []).map((campaign) => (
-              <CampaignRow 
-                key={campaign.id} 
-                campaign={campaign} 
-                currency={currency} 
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {campaigns.map((campaign) => (
+              <CampaignGridCard
+                key={campaign.id}
+                campaign={campaign}
+                currency={currency}
                 onClick={() => handleCampaignClick(campaign)}
-                clientId={clientId!}
                 configuredGoal={campaignGoalsData?.goals?.[campaign.id]?.goal_type as GoalType | undefined}
               />
             ))}
-            {viewLevel === 'adsets' && (adsets || []).map((adset) => {
-              const campaignGoal = selectedCampaign ? (campaignGoalsData?.goals?.[selectedCampaign.id]?.goal_type as GoalType | undefined) : undefined;
-              const isPurchase = campaignGoal === 'purchases' || selectedCampaign?.resultType === 'Compras';
-              return <AdSetRow key={adset.id} adset={adset} currency={currency} onClick={() => handleAdSetClick(adset)} isPurchaseGoal={isPurchase} />;
-            })}
-            {viewLevel === 'ads' && (ads || []).map((ad) => {
-              const campaignGoal = selectedCampaign ? (campaignGoalsData?.goals?.[selectedCampaign.id]?.goal_type as GoalType | undefined) : undefined;
-              const isPurchase = campaignGoal === 'purchases' || selectedCampaign?.resultType === 'Compras';
-              return <AdRow key={ad.id} ad={ad} currency={currency} isPurchaseGoal={isPurchase} />;
-            })}
           </div>
         )}
       </CardContent>
     </Card>
+
+    {/* Campaign Detail Dialog */}
+    <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) handleDialogClose(); }}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            {dialogViewLevel !== 'detail' && (
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={handleDialogBack}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <div>
+              <DialogTitle className="text-sm">
+                {dialogViewLevel === 'detail' && selectedCampaign?.name}
+                {dialogViewLevel === 'adsets' && 'Conjuntos de anuncios'}
+                {dialogViewLevel === 'ads' && dialogSelectedAdSet?.name}
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                {dialogViewLevel === 'detail' && 'Detalle de campaña'}
+                {dialogViewLevel === 'adsets' && selectedCampaign?.name}
+                {dialogViewLevel === 'ads' && `${selectedCampaign?.name} → ${dialogSelectedAdSet?.name}`}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        {/* Detail view: full metrics + navigate to adsets */}
+        {dialogViewLevel === 'detail' && selectedCampaign && clientId && (
+          <div className="space-y-4">
+            <CampaignRow
+              campaign={selectedCampaign}
+              currency={currency}
+              onClick={() => setDialogViewLevel('adsets')}
+              clientId={clientId}
+              configuredGoal={campaignGoal}
+            />
+            <Button variant="outline" className="w-full text-xs" onClick={() => setDialogViewLevel('adsets')}>
+              <ChevronRight className="h-3.5 w-3.5 mr-1" />
+              Ver conjuntos de anuncios
+            </Button>
+          </div>
+        )}
+
+        {/* AdSets view */}
+        {dialogViewLevel === 'adsets' && (
+          <div className="space-y-3">
+            {adsetsLoading ? (
+              <LoadingSkeleton />
+            ) : !adsets || adsets.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground text-sm">Sin conjuntos de anuncios</div>
+            ) : (
+              adsets.map((adset) => (
+                <AdSetRow
+                  key={adset.id}
+                  adset={adset}
+                  currency={currency}
+                  onClick={() => { setDialogSelectedAdSet(adset); setDialogViewLevel('ads'); }}
+                  isPurchaseGoal={isPurchaseCampaign}
+                />
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Ads view */}
+        {dialogViewLevel === 'ads' && (
+          <div className="space-y-3">
+            {adsLoading ? (
+              <LoadingSkeleton />
+            ) : !ads || ads.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground text-sm">Sin anuncios</div>
+            ) : (
+              ads.map((ad) => (
+                <AdRow key={ad.id} ad={ad} currency={currency} isPurchaseGoal={isPurchaseCampaign} />
+              ))
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
     </>
   );
 };
