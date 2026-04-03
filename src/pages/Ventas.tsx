@@ -108,7 +108,7 @@ const Ventas = () => {
     <DashboardLayout>
       <div className="mb-4 md:mb-6 space-y-4">
         <h1 className="text-lg md:text-xl font-semibold text-foreground">
-          Ventas
+          {selectedClient?.name?.toLowerCase().includes('mind coach') ? 'Pipeline' : 'Ventas'}
         </h1>
 
         {/* Sales Goal Bar */}

@@ -89,7 +89,8 @@ export const Sidebar = () => {
   const showEmailMarketing = effectiveAgency || flags.email_marketing_section;
 
   if (showVentas) {
-    menuItems.push({ title: 'Ventas', url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
+    const ventasLabel = selectedClient?.name?.toLowerCase().includes('mind coach') ? 'Pipeline' : 'Ventas';
+    menuItems.push({ title: ventasLabel, url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
   }
   if (showContenido) {
     menuItems.push({ title: 'Contenido', url: '/content', icon: FileText, dataTour: 'contenido-link' });
