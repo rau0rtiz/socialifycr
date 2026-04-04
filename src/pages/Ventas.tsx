@@ -9,7 +9,7 @@ import { ClosureRateWidget } from '@/components/ventas/ClosureRateWidget';
 import { PipelineSummaryWidget } from '@/components/ventas/PipelineSummaryWidget';
 import { SetterDailyCalendar } from '@/components/ventas/SetterDailyCalendar';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
-import { ProductsManager } from '@/components/ventas/ProductsManager';
+
 
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
