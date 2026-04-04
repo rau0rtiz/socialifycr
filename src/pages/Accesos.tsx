@@ -466,6 +466,9 @@ const Accesos = () => {
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="media_buyer">Media Buyer</SelectItem>
+                  <SelectItem value="closer">Closer</SelectItem>
+                  <SelectItem value="setter">Setter</SelectItem>
                   <SelectItem value="analyst">Analista</SelectItem>
                   <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
