@@ -100,10 +100,10 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
   const { reports, reportsByDate, isLoading, upsertReport } = useSetterDailyReports(clientId, currentMonth);
 
   // Form state
-  const [igConversations, setIgConversations] = useState(0);
-  const [waConversations, setWaConversations] = useState(0);
-  const [followups, setFollowups] = useState(0);
-  const [appointmentsMade, setAppointmentsMade] = useState(0);
+  const [igConversations, setIgConversations] = useState<string>('');
+  const [waConversations, setWaConversations] = useState<string>('');
+  const [followups, setFollowups] = useState<string>('');
+  const [appointmentsMade, setAppointmentsMade] = useState<string>('');
   const [dayNotes, setDayNotes] = useState('');
 
   const crToday = getCostaRicaToday();
