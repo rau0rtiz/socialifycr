@@ -340,7 +340,7 @@ const Ventas = () => {
         {/* Bottom section: charts side by side */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Sales by product pie chart */}
-          <SalesByProductChart sales={allSales} />
+          <SalesByProductChart sales={allSales} products={clientProducts} />
 
           {/* Closure rate per seller */}
           <ClosureRateWidget appointments={appointments} />
