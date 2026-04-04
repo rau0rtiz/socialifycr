@@ -9,6 +9,7 @@ import { ClosureRateWidget } from '@/components/ventas/ClosureRateWidget';
 import { PipelineSummaryWidget } from '@/components/ventas/PipelineSummaryWidget';
 import { SetterDailyCalendar } from '@/components/ventas/SetterDailyCalendar';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
+import { CollectionsWidget } from '@/components/ventas/CollectionsWidget';
 
 
 import { useBrand } from '@/contexts/BrandContext';
@@ -328,7 +329,10 @@ const Ventas = () => {
           />
         </div>
 
-        {/* === MIND COACH: Meta Campaigns Drilldown === */}
+        {/* Collections (pending installments) */}
+        <CollectionsWidget clientId={selectedClient.id} />
+
+
         {isMindCoach && hasAdAccount && (
           <CampaignsDrilldown
             clientId={selectedClient.id}

@@ -12,6 +12,7 @@ import { useClientProducts } from '@/hooks/use-client-products';
 import { useClientClosers } from '@/hooks/use-client-closers';
 import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
+import { FREQUENCY_LABELS, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,7 +33,7 @@ export interface SalePrefill {
 interface RegisterSaleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (sale: SaleInput, appointmentId?: string) => void;
+  onSubmit: (sale: SaleInput, appointmentId?: string, collectionMeta?: { frequency: string; startInstallment: number; totalInstallments: number; installmentAmount: number; currency: string }) => void;
   clientId?: string;
   hasAdAccount?: boolean;
   isSubmitting?: boolean;
@@ -89,6 +90,7 @@ export const RegisterSaleDialog = ({
   const [installmentsPaid, setInstallmentsPaid] = useState(1);
   const [installmentAmount, setInstallmentAmount] = useState(0);
   const [totalSaleAmount, setTotalSaleAmount] = useState(0);
+  const [collectionFrequency, setCollectionFrequency] = useState<string>('monthly');
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
@@ -273,7 +275,18 @@ export const RegisterSaleDialog = ({
       sale.ad_campaign_name = selectedAd.campaignName;
     }
 
-    onSubmit(sale, prefill?.appointmentId);
+    const hasRemainingInstallments = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
+    const collectionMeta = hasRemainingInstallments
+      ? {
+          frequency: collectionFrequency,
+          startInstallment: installmentsPaid + 1,
+          totalInstallments: numInstallments,
+          installmentAmount,
+          currency,
+        }
+      : undefined;
+
+    onSubmit(sale, prefill?.appointmentId, collectionMeta);
   };
 
   const allProductOptions = product && !productNames.includes(product)
@@ -490,6 +503,22 @@ export const RegisterSaleDialog = ({
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                  )}
+                  {selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments && (
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px]">Frecuencia de cobro</Label>
+                      <Select value={collectionFrequency} onValueChange={setCollectionFrequency}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(FREQUENCY_LABELS).map(([key, label]) => (
+                            <SelectItem key={key} value={key} className="text-xs">{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground">
+                        Se generarán {numInstallments - installmentsPaid} cobros pendientes
+                      </p>
                     </div>
                   )}
                 </div>

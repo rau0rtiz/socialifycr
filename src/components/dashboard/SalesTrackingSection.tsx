@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle, Filter, CreditCard, Wallet } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
+import { usePaymentCollections, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { RegisterSaleDialog, SalePrefill } from './RegisterSaleDialog';
 import { LinkAdDialog } from './LinkAdDialog';
 import { useBrand } from '@/contexts/BrandContext';
@@ -91,6 +92,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
   }, [showSaleDialog, salePrefill]);
 
   const { sales: allSales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
+  const { generateCollections } = usePaymentCollections(clientId);
 
   // Extract unique setters and products for filters
   const uniqueSetters = useMemo(() => {
@@ -121,7 +123,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     });
   }, [allSales, filterSetter, filterProduct, filterCloser]);
 
-  const handleAddSale = (sale: any, appointmentId?: string) => {
+  const handleAddSale = (sale: any, appointmentId?: string, collectionMeta?: { frequency: string; startInstallment: number; totalInstallments: number; installmentAmount: number; currency: string }) => {
     if (editingSale) {
       updateSale.mutate({ saleId: editingSale.id, updates: sale }, {
         onSuccess: () => {
@@ -134,11 +136,40 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
       });
     } else {
       addSale.mutate(sale, {
-        onSuccess: () => {
+        onSuccess: async (_, variables) => {
           toast.success('Venta registrada');
           setDialogOpen(false);
           setCurrentPrefill(null);
           if (onSaleFromSetter) onSaleFromSetter(appointmentId);
+
+          // Generate collection records for remaining installments
+          if (collectionMeta) {
+            try {
+              // We need the sale ID — fetch the latest sale
+              const { data: latestSales } = await (await import('@/integrations/supabase/client')).supabase
+                .from('message_sales')
+                .select('id')
+                .eq('client_id', clientId)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+              if (latestSales && latestSales.length > 0) {
+                await generateCollections.mutateAsync({
+                  saleId: latestSales[0].id,
+                  clientId,
+                  installmentAmount: collectionMeta.installmentAmount,
+                  currency: collectionMeta.currency,
+                  startDate: sale.sale_date || new Date().toISOString().split('T')[0],
+                  frequency: collectionMeta.frequency as CollectionFrequency,
+                  startInstallment: collectionMeta.startInstallment,
+                  totalInstallments: collectionMeta.totalInstallments,
+                });
+                toast.success(`${collectionMeta.totalInstallments - collectionMeta.startInstallment + 1} cobros generados`);
+              }
+            } catch {
+              toast.error('Error generando cobros pendientes');
+            }
+          }
         },
         onError: () => toast.error('Error al registrar venta'),
       });
