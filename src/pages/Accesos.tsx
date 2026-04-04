@@ -48,6 +48,9 @@ const roleLabels: Record<string, { label: string; color: string }> = {
   owner: { label: 'Owner', color: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20' },
   admin: { label: 'Admin', color: 'bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/20' },
   manager: { label: 'Manager', color: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20' },
+  media_buyer: { label: 'Media Buyer', color: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 border-cyan-500/20' },
+  closer: { label: 'Closer', color: 'bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/20' },
+  setter: { label: 'Setter', color: 'bg-teal-500/15 text-teal-700 dark:text-teal-400 border-teal-500/20' },
   analyst: { label: 'Analista', color: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20' },
   viewer: { label: 'Viewer', color: 'bg-muted text-muted-foreground border-border' },
   account_manager: { label: 'Account Manager', color: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20' },
@@ -249,7 +252,7 @@ const Accesos = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Roles de sistema</CardTitle>
                 <CardDescription>
-                  Usuarios con permisos globales en la plataforma (owner, admin, manager, analyst, viewer)
+                  Usuarios con permisos globales en la plataforma
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -463,6 +466,9 @@ const Accesos = () => {
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="media_buyer">Media Buyer</SelectItem>
+                  <SelectItem value="closer">Closer</SelectItem>
+                  <SelectItem value="setter">Setter</SelectItem>
                   <SelectItem value="analyst">Analista</SelectItem>
                   <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>

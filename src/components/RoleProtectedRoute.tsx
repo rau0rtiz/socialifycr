@@ -4,15 +4,16 @@ import { useUserRole } from '@/hooks/use-user-role';
 interface RoleProtectedRouteProps {
   children: React.ReactNode;
   requireAgency?: boolean;
+  requireManage?: boolean;
 }
 
 export const RoleProtectedRoute = ({ 
   children, 
-  requireAgency = true 
+  requireAgency = false,
+  requireManage = false,
 }: RoleProtectedRouteProps) => {
-  const { isAgency, loading } = useUserRole();
+  const { isAgency, canManage, loading } = useUserRole();
 
-  // Show loading state while checking role
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -21,7 +22,10 @@ export const RoleProtectedRoute = ({
     );
   }
 
-  // Redirect to dashboard if user doesn't have required role
+  if (requireManage && !canManage) {
+    return <Navigate to="/" replace />;
+  }
+
   if (requireAgency && !isAgency) {
     return <Navigate to="/" replace />;
   }

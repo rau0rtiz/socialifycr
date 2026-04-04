@@ -99,7 +99,7 @@ const App = () => (
                   } />
                   <Route path="/accesos" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
+                      <RoleProtectedRoute requireManage>
                         <Accesos />
                       </RoleProtectedRoute>
                     </ProtectedRoute>

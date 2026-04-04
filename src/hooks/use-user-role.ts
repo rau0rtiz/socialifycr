@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type SystemRole = 'owner' | 'admin' | 'manager' | 'analyst' | 'viewer';
+export type SystemRole = 'owner' | 'admin' | 'manager' | 'media_buyer' | 'closer' | 'setter' | 'analyst' | 'viewer';
 export type ClientRole = 'account_manager' | 'editor' | 'viewer';
 
 interface ClientAccess {
@@ -13,6 +13,7 @@ interface ClientAccess {
 interface UserRoleData {
   isAgency: boolean;
   isClient: boolean;
+  canManage: boolean;
   systemRole: SystemRole | null;
   clientAccess: ClientAccess[];
   loading: boolean;
@@ -40,7 +41,7 @@ export const useUserRole = (): UserRoleData => {
       if (!data || data.length === 0) return null;
       
       // Pick highest priority role
-      const priority: SystemRole[] = ['owner', 'admin', 'manager', 'analyst', 'viewer'];
+      const priority: SystemRole[] = ['owner', 'admin', 'manager', 'media_buyer', 'closer', 'setter', 'analyst', 'viewer'];
       const roles = data.map(d => d.role as SystemRole);
       return priority.find(r => roles.includes(r)) || roles[0];
     },
@@ -78,8 +79,13 @@ export const useUserRole = (): UserRoleData => {
   const clientAccess = clientAccessData || [];
 
   // Agency users are those with owner, admin, or manager system roles
-  const isAgency = systemRole === 'owner' || systemRole === 'admin' || systemRole === 'manager';
+  // Media buyer, closer, setter can see all tools but not manage clients/team
+  const isAgency = systemRole === 'owner' || systemRole === 'admin' || systemRole === 'manager'
+    || systemRole === 'media_buyer' || systemRole === 'closer' || systemRole === 'setter';
   
+  // Whether user can manage clients, team members, brand settings
+  const canManage = systemRole === 'owner' || systemRole === 'admin' || systemRole === 'manager';
+
   // Client users are those without agency roles but with client access
   // OR those with analyst/viewer system roles
   const isClient = !isAgency && (clientAccess.length > 0 || systemRole === 'analyst' || systemRole === 'viewer');
@@ -87,6 +93,7 @@ export const useUserRole = (): UserRoleData => {
   return {
     isAgency,
     isClient,
+    canManage,
     systemRole,
     clientAccess,
     loading,

@@ -52,7 +52,7 @@ export const Sidebar = () => {
   const collapsed = state === 'collapsed';
   const { platformBrand, selectedClient } = useBrand();
   const { signOut } = useAuth();
-  const { isAgency, systemRole, clientAccess, loading: roleLoading } = useUserRole();
+  const { isAgency, canManage, systemRole, clientAccess, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
 
   const isPreviewMode = !!searchParams.get('preview');
@@ -102,8 +102,9 @@ export const Sidebar = () => {
   if (showEmailMarketing) {
     menuItems.push({ title: 'Email Marketing', url: '/email-marketing', icon: Mail });
   }
-  // Show Business Setup for agency users (owner/admin/manager) and account_manager client role
-  const showBusinessSetup = effectiveAgency || (!isPreviewMode && clientAccess.some(a => a.role === 'account_manager'));
+  // Show Business Setup for management roles (owner/admin/manager) and account_manager client role
+  const effectiveCanManage = canManage && !isPreviewMode;
+  const showBusinessSetup = effectiveCanManage || (!isPreviewMode && clientAccess.some(a => a.role === 'account_manager'));
   if (showBusinessSetup) {
     menuItems.push({ title: 'Business Setup', url: '/business-setup', icon: Briefcase });
   }
@@ -177,7 +178,7 @@ export const Sidebar = () => {
           </SidebarGroup>
         )}
 
-        {effectiveAgency && (
+        {effectiveCanManage && (
           <SidebarGroup>
             <SidebarGroupLabel>Gestión</SidebarGroupLabel>
             <SidebarGroupContent>
