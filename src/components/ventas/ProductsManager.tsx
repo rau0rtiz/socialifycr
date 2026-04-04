@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
-import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -33,6 +34,9 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const [cost, setCost] = useState('');
   const [currency, setCurrency] = useState('CRC');
   const [description, setDescription] = useState('');
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openNew = () => {
     setEditing(null);
@@ -41,6 +45,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
     setCost('');
     setCurrency('CRC');
     setDescription('');
+    setPhotoUrl(null);
     setDialogOpen(true);
   };
 
@@ -51,7 +56,46 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
     setCost(p.cost != null ? String(p.cost) : '');
     setCurrency(p.currency);
     setDescription(p.description || '');
+    setPhotoUrl(p.photo_url || null);
     setDialogOpen(true);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Solo se permiten imágenes');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen no puede superar 5MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${clientId}/products/product-${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('content-images')
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('content-images')
+        .getPublicUrl(path);
+
+      setPhotoUrl(`${publicUrl}?t=${Date.now()}`);
+      toast.success('Foto subida');
+    } catch (err: any) {
+      toast.error(err.message || 'Error al subir foto');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleSave = async () => {
@@ -65,6 +109,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
       cost: cost ? parseFloat(cost) : null,
       currency,
       description: description.trim(),
+      photo_url: photoUrl,
     };
     try {
       if (editing) {
@@ -134,6 +179,14 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                     className="group p-3.5 rounded-xl border border-border/50 bg-card hover:shadow-sm transition-all"
                   >
                     <div className="flex items-start justify-between gap-3">
+                      {/* Photo thumbnail */}
+                      {p.photo_url && (
+                        <img
+                          src={p.photo_url}
+                          alt={p.name}
+                          className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0"
+                        />
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h4 className="text-sm font-semibold text-foreground truncate">{p.name}</h4>
@@ -197,6 +250,63 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            {/* Photo upload */}
+            <div>
+              <Label className="text-xs">Foto del producto</Label>
+              <div className="mt-1.5 flex items-center gap-3">
+                {photoUrl ? (
+                  <div className="relative">
+                    <img
+                      src={photoUrl}
+                      alt="Producto"
+                      className="w-20 h-20 rounded-lg object-cover border border-border/50"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full"
+                      onClick={() => setPhotoUrl(null)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => !uploading && fileInputRef.current?.click()}
+                    className="w-20 h-20 rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:border-muted-foreground/40 transition-colors"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                    ) : (
+                      <>
+                        <Camera className="h-5 w-5 text-muted-foreground/50" />
+                        <span className="text-[10px] text-muted-foreground mt-1">Subir</span>
+                      </>
+                    )}
+                  </div>
+                )}
+                {photoUrl && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Camera className="h-3.5 w-3.5 mr-1" />}
+                    Cambiar
+                  </Button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
             <div>
               <Label className="text-xs">Nombre <span className="text-destructive">*</span></Label>
               <Input
@@ -263,7 +373,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
           </div>
           <DialogFooter className="pt-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)} size="sm">Cancelar</Button>
-            <Button onClick={handleSave} disabled={addProduct.isPending || updateProduct.isPending} size="sm">
+            <Button onClick={handleSave} disabled={addProduct.isPending || updateProduct.isPending || uploading} size="sm">
               {(addProduct.isPending || updateProduct.isPending) ? 'Guardando...' : 'Guardar'}
             </Button>
           </DialogFooter>
