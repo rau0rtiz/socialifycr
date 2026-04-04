@@ -95,13 +95,11 @@ export const RegisterSaleDialog = ({
   const isEditing = !!editingSale;
   const isPrefilled = !!prefill && !editingSale;
 
-  // New flow:
-  // Standard: Step 0 = Product + Payment, Step 1 = Lead info + source, Step 2 = Ad (if source=ad) / Notes
-  // Prefilled: Step 0 = Amount confirm, Step 1 = Notes
-  const needsAdStep = !isPrefilled && source === 'ad' && hasAdAccount;
+  // All flows use the same steps: Product → Info → Ad (optional) → Notes
+  // Prefilled data just pre-populates fields
+  const needsAdStep = source === 'ad' && hasAdAccount;
 
   const buildSteps = () => {
-    if (isPrefilled) return ['Monto', 'Notas'];
     const steps = ['Producto', 'Información'];
     if (needsAdStep) steps.push('Anuncio');
     steps.push('Notas');
