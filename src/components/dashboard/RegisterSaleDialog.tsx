@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
+import { useClientClosers } from '@/hooks/use-client-closers';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, DollarSign, Settings, CalendarDays } from 'lucide-react';
