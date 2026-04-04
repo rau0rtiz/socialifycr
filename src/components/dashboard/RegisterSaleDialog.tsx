@@ -592,7 +592,7 @@ export const RegisterSaleDialog = ({
           )}
 
           {/* Ad selection step (only if source=ad) */}
-          {!isPrefilled && step === adStepIndex && needsAdStep && (
+          {step === adStepIndex && needsAdStep && (
             <div className="space-y-3 py-4">
               <AdGridSelector
                 ads={allAds}
