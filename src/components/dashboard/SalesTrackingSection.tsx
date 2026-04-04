@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { RegisterSaleDialog, SalePrefill } from './RegisterSaleDialog';
 import { LinkAdDialog } from './LinkAdDialog';
+import { useBrand } from '@/contexts/BrandContext';
 import { CampaignInsights } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -68,6 +69,9 @@ const formatCurrency = (amount: number, currency: string) => {
 };
 
 export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false, salePrefill, showSaleDialog, onSaleFromSetter }: SalesTrackingSectionProps) => {
+  const { selectedClient } = useBrand();
+  const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
+  const salesLabel = isMindCoach ? 'Pipeline' : 'Ventas';
   const [month, setMonth] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<MessageSale | null>(null);
@@ -214,7 +218,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
           <div>
             <CardTitle className="text-base md:text-lg flex items-center gap-2">
               <ShoppingCart className="h-5 w-5" />
-              Ventas
+              {salesLabel}
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
@@ -292,7 +296,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">Ventas</p>
+              <p className="text-xs text-muted-foreground">{salesLabel}</p>
               <p className="text-xl font-bold">{summary.totalCount}</p>
             </div>
             <div className="rounded-lg border p-3">
@@ -431,7 +435,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              No hay ventas registradas este mes
+              No hay {isMindCoach ? 'registros' : 'ventas registradas'} este mes
             </div>
           )}
         </CardContent>

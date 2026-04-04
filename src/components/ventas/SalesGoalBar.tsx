@@ -10,6 +10,7 @@ import { useSalesGoal } from '@/hooks/use-sales-goals';
 import { toast } from 'sonner';
 import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useBrand } from '@/contexts/BrandContext';
 
 interface SalesGoalBarProps {
   clientId: string;
@@ -25,6 +26,9 @@ const formatCurrency = (amount: number, currency: string) => {
 };
 
 export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, primaryColor, accentColor }: SalesGoalBarProps) => {
+  const { selectedClient } = useBrand();
+  const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
+  const goalLabel = isMindCoach ? 'Meta de Pipeline' : 'Meta de Ventas';
   const { goal, isLoading, upsertGoal } = useSalesGoal(clientId);
   const [editOpen, setEditOpen] = useState(false);
   const [targetAmount, setTargetAmount] = useState('');
@@ -76,7 +80,7 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
                 <Target className="h-4 w-4" style={{ color: barBg }} />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Meta de Ventas</h3>
+                <h3 className="font-semibold text-sm">{goalLabel}</h3>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   {format(new Date(goal.start_date), 'dd MMM', { locale: es })} — {format(new Date(goal.end_date), 'dd MMM yyyy', { locale: es })}
@@ -120,7 +124,7 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Editar Meta de Ventas</DialogTitle>
+            <DialogTitle>Editar {goalLabel}</DialogTitle>
             <DialogDescription>Configura la meta de ingresos para este cliente</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
