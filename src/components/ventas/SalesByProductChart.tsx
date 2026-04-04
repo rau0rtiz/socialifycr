@@ -27,7 +27,7 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 };
 
-export const SalesByProductChart = ({ sales }: SalesByProductChartProps) => {
+export const SalesByProductChart = ({ sales, products = [] }: SalesByProductChartProps) => {
   const data = useMemo(() => {
     const completed = sales.filter(s => s.status === 'completed');
     const byProduct: Record<string, { amount: number; count: number; currency: string }> = {};
