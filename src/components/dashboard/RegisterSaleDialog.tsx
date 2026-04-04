@@ -494,6 +494,22 @@ export const RegisterSaleDialog = ({
                       </Select>
                     </div>
                   )}
+                  {selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments && (
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px]">Frecuencia de cobro</Label>
+                      <Select value={collectionFrequency} onValueChange={setCollectionFrequency}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(FREQUENCY_LABELS).map(([key, label]) => (
+                            <SelectItem key={key} value={key} className="text-xs">{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground">
+                        Se generarán {numInstallments - installmentsPaid} cobros pendientes
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
