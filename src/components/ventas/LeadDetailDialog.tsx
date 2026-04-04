@@ -262,8 +262,54 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
               </p>
             </div>
           )}
+
+          {/* Delete button */}
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1" />
+              Eliminar agenda
+            </Button>
+          )}
         </div>
       </DialogContent>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta agenda?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará permanentemente el lead <strong>"{apt.lead_name}"</strong>. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                setIsDeleting(true);
+                try {
+                  await onDelete(apt.id);
+                  setShowDeleteConfirm(false);
+                  onOpenChange(false);
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
