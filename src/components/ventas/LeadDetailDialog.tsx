@@ -30,6 +30,7 @@ const SOURCE_LABELS: Record<string, string> = {
   ads: 'Publicidad',
   organic: 'Orgánico',
   referral: 'Referencia',
+  followup: 'Seguimiento',
   other: 'Otro',
 };
 
