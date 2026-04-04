@@ -154,30 +154,6 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
 
   const reportedDates = new Set(reports.map(r => r.report_date));
 
-  // Streak calculation
-  const streak = useMemo(() => {
-    let count = 0;
-    let checkDate = crToday;
-    // If today has no report yet, start from yesterday
-    if (!reportedDates.has(format(checkDate, 'yyyy-MM-dd'))) {
-      checkDate = subDays(checkDate, 1);
-    }
-    while (true) {
-      const dayOfWeek = getDay(checkDate);
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        checkDate = subDays(checkDate, 1);
-        continue;
-      }
-      if (reportedDates.has(format(checkDate, 'yyyy-MM-dd'))) {
-        count++;
-        checkDate = subDays(checkDate, 1);
-      } else {
-        break;
-      }
-    }
-    return count;
-  }, [reports, crToday]);
-
   // % reported calculation
   const { reportedCount, workdayCount } = useMemo(() => {
     let workdays = 0;
