@@ -97,6 +97,25 @@ export const PipelineSummaryWidget = ({
   const totalSalesUSD = filteredSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
   const totalSalesCRC = filteredSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
 
+  // Cash collected = amount (what was actually received)
+  const cashCollectedUSD = totalSalesUSD;
+  const cashCollectedCRC = totalSalesCRC;
+  // Total contract value
+  const totalContractUSD = filteredSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
+  const totalContractCRC = filteredSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
+  const cashLabel = cashCollectedUSD > 0
+    ? `$${cashCollectedUSD.toLocaleString()}`
+    : cashCollectedCRC > 0
+    ? `₡${cashCollectedCRC.toLocaleString()}`
+    : '$0';
+  const pendingUSD = totalContractUSD - cashCollectedUSD;
+  const pendingCRC = totalContractCRC - cashCollectedCRC;
+  const pendingSub = pendingUSD > 0
+    ? `$${pendingUSD.toLocaleString()} pendiente`
+    : pendingCRC > 0
+    ? `₡${pendingCRC.toLocaleString()} pendiente`
+    : 'Todo cobrado';
+
   const toggleCampaign = (id: string) => {
     setSelectedCampaignIds(prev => 
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
