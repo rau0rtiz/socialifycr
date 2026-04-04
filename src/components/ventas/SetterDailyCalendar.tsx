@@ -113,10 +113,10 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const existing = reportsByDate[dateStr];
     setSelectedDate(date);
-    setIgConversations(existing?.ig_conversations || 0);
-    setWaConversations(existing?.wa_conversations || 0);
-    setFollowups(existing?.followups || 0);
-    setAppointmentsMade(existing?.appointments_made || 0);
+    setIgConversations(existing ? String(existing.ig_conversations) : '');
+    setWaConversations(existing ? String(existing.wa_conversations) : '');
+    setFollowups(existing ? String(existing.followups) : '');
+    setAppointmentsMade(existing ? String(existing.appointments_made) : '');
     setDayNotes(existing?.day_notes || '');
     setDialogOpen(true);
   };
