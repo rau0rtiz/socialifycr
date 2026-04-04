@@ -485,10 +485,13 @@ const datePresetLabels: Record<DatePresetKey, string> = {
   custom: 'Personalizado',
 };
 
-export const CampaignsDrilldown = ({ clientId, hasAdAccount }: CampaignsDrilldownProps) => {
+export const CampaignsDrilldown = ({ clientId, hasAdAccount, datePreset: externalPreset, customRange: externalCustomRange }: CampaignsDrilldownProps) => {
   const [selectedCampaign, setSelectedCampaign] = useState<CampaignInsights | null>(null);
-  const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
-  const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [internalPreset, setInternalPreset] = useState<DatePresetKey>('last_30d');
+  const [internalCustomRange, setInternalCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const datePreset = externalPreset ?? internalPreset;
+  const customRange = externalCustomRange ?? internalCustomRange;
+  const hasExternalPeriod = !!externalPreset;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [showGoalDialog, setShowGoalDialog] = useState(true);
