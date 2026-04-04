@@ -309,13 +309,6 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
             <div className="lg:w-56 space-y-4">
               {/* Streak & progress */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-amber-500/5 border border-orange-500/10">
-                  <Flame className="h-4 w-4 text-orange-500" />
-                  <div>
-                    <p className="text-lg font-bold text-foreground leading-none">{streak}</p>
-                    <p className="text-[10px] text-muted-foreground">días de racha</p>
-                  </div>
-                </div>
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
