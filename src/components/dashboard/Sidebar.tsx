@@ -52,7 +52,7 @@ export const Sidebar = () => {
   const collapsed = state === 'collapsed';
   const { platformBrand, selectedClient } = useBrand();
   const { signOut } = useAuth();
-  const { isAgency, systemRole, loading: roleLoading } = useUserRole();
+  const { isAgency, systemRole, clientAccess, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
 
   const isPreviewMode = !!searchParams.get('preview');
