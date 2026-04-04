@@ -340,6 +340,11 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
             handleStatusChange({ id } as any, status as any);
           }
         }}
+        onDelete={async (id) => {
+          await deleteAppointment.mutateAsync(id);
+          toast.success('Lead eliminado');
+          setDetailLead(null);
+        }}
       />
 
       {/* No-sale confirmation dialog */}
