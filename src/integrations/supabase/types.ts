@@ -986,12 +986,17 @@ export type Database = {
           currency: string
           customer_name: string | null
           id: string
+          installment_amount: number | null
+          installments_paid: number | null
           message_platform: string | null
           notes: string | null
+          num_installments: number | null
+          payment_scheme_id: string | null
           product: string | null
           sale_date: string
           source: string
           status: string
+          total_sale_amount: number | null
           updated_at: string | null
         }
         Insert: {
@@ -1007,12 +1012,17 @@ export type Database = {
           currency?: string
           customer_name?: string | null
           id?: string
+          installment_amount?: number | null
+          installments_paid?: number | null
           message_platform?: string | null
           notes?: string | null
+          num_installments?: number | null
+          payment_scheme_id?: string | null
           product?: string | null
           sale_date?: string
           source: string
           status?: string
+          total_sale_amount?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -1028,12 +1038,17 @@ export type Database = {
           currency?: string
           customer_name?: string | null
           id?: string
+          installment_amount?: number | null
+          installments_paid?: number | null
           message_platform?: string | null
           notes?: string | null
+          num_installments?: number | null
+          payment_scheme_id?: string | null
           product?: string | null
           sale_date?: string
           source?: string
           status?: string
+          total_sale_amount?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1042,6 +1057,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_sales_payment_scheme_id_fkey"
+            columns: ["payment_scheme_id"]
+            isOneToOne: false
+            referencedRelation: "product_payment_schemes"
             referencedColumns: ["id"]
           },
         ]
@@ -1173,6 +1195,63 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_payment_schemes: {
+        Row: {
+          client_id: string
+          created_at: string
+          currency: string
+          id: string
+          installment_amount: number
+          name: string
+          num_installments: number
+          product_id: string
+          sort_order: number
+          total_price: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          installment_amount?: number
+          name: string
+          num_installments?: number
+          product_id: string
+          sort_order?: number
+          total_price?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          installment_amount?: number
+          name?: string
+          num_installments?: number
+          product_id?: string
+          sort_order?: number
+          total_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_payment_schemes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_payment_schemes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "client_products"
             referencedColumns: ["id"]
           },
         ]

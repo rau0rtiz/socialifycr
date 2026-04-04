@@ -7,9 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
+import { usePaymentSchemes, PaymentSchemeInput } from '@/hooks/use-payment-schemes';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard, Hash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -22,11 +24,187 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
 };
 
+// Sub-component: Payment Schemes for a product
+const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { productId: string; clientId: string; productCurrency: string }) => {
+  const { schemes, addScheme, updateScheme, deleteScheme } = usePaymentSchemes(productId, clientId);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [sName, setSName] = useState('');
+  const [sTotal, setSTotal] = useState('');
+  const [sInstallments, setSInstallments] = useState('1');
+  const [sCurrency, setSCurrency] = useState(productCurrency);
+  const [adding, setAdding] = useState(false);
+
+  const installmentAmount = sTotal && sInstallments && parseInt(sInstallments) > 0
+    ? parseFloat(sTotal) / parseInt(sInstallments)
+    : 0;
+
+  const resetForm = () => {
+    setSName('');
+    setSTotal('');
+    setSInstallments('1');
+    setSCurrency(productCurrency);
+    setEditing(null);
+    setAdding(false);
+  };
+
+  const openEdit = (s: any) => {
+    setEditing(s.id);
+    setSName(s.name);
+    setSTotal(String(s.total_price));
+    setSInstallments(String(s.num_installments));
+    setSCurrency(s.currency);
+    setAdding(true);
+  };
+
+  const handleSave = async () => {
+    if (!sName.trim() || !sTotal) {
+      toast.error('Nombre y precio total son obligatorios');
+      return;
+    }
+    const input: PaymentSchemeInput = {
+      name: sName.trim(),
+      total_price: parseFloat(sTotal),
+      num_installments: parseInt(sInstallments) || 1,
+      installment_amount: Math.round(installmentAmount * 100) / 100,
+      currency: sCurrency,
+      sort_order: schemes.length,
+    };
+    try {
+      if (editing) {
+        await updateScheme.mutateAsync({ id: editing, ...input });
+        toast.success('Esquema actualizado');
+      } else {
+        await addScheme.mutateAsync(input);
+        toast.success('Esquema creado');
+      }
+      resetForm();
+    } catch {
+      toast.error('Error al guardar esquema');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteScheme.mutateAsync(id);
+      toast.success('Esquema eliminado');
+    } catch {
+      toast.error('Error al eliminar');
+    }
+  };
+
+  return (
+    <div className="space-y-2 pt-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium flex items-center gap-1.5">
+          <CreditCard className="h-3.5 w-3.5 text-primary" />
+          Esquemas de pago
+        </Label>
+        {!adding && (
+          <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1" onClick={() => setAdding(true)}>
+            <Plus className="h-3 w-3" /> Agregar
+          </Button>
+        )}
+      </div>
+
+      {/* Existing schemes */}
+      {schemes.length > 0 && (
+        <div className="space-y-1.5">
+          {schemes.map(s => (
+            <div key={s.id} className="group flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/30 text-xs">
+              <div className="flex-1 min-w-0">
+                <span className="font-medium text-foreground">{s.name}</span>
+                <span className="text-muted-foreground ml-1.5">
+                  {formatCurrency(s.total_price, s.currency)}
+                </span>
+                {s.num_installments > 1 && (
+                  <Badge variant="secondary" className="ml-1.5 text-[9px] py-0">
+                    {s.num_installments}x {formatCurrency(s.installment_amount, s.currency)}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEdit(s)}>
+                  <Pencil className="h-2.5 w-2.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => handleDelete(s.id)}>
+                  <Trash2 className="h-2.5 w-2.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add/Edit form */}
+      {adding && (
+        <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2.5">
+          <Input
+            placeholder="Ej: Pago único, 3 cuotas..."
+            value={sName}
+            onChange={e => setSName(e.target.value)}
+            className="h-8 text-xs"
+          />
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label className="text-[10px]">Precio total</Label>
+              <Input
+                type="number"
+                min={0}
+                placeholder="0"
+                value={sTotal}
+                onChange={e => setSTotal(e.target.value)}
+                className="h-8 text-xs mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-[10px]">Cuotas</Label>
+              <Input
+                type="number"
+                min={1}
+                max={36}
+                value={sInstallments}
+                onChange={e => setSInstallments(e.target.value)}
+                className="h-8 text-xs mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-[10px]">Moneda</Label>
+              <Select value={sCurrency} onValueChange={setSCurrency}>
+                <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CRC">₡ CRC</SelectItem>
+                  <SelectItem value="USD">$ USD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {installmentAmount > 0 && parseInt(sInstallments) > 1 && (
+            <p className="text-[10px] text-muted-foreground">
+              Cuota: <span className="font-semibold text-foreground">{formatCurrency(Math.round(installmentAmount * 100) / 100, sCurrency)}</span> × {sInstallments}
+            </p>
+          )}
+          <div className="flex gap-2 justify-end">
+            <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={resetForm}>Cancelar</Button>
+            <Button size="sm" className="h-7 text-[10px]" onClick={handleSave} disabled={addScheme.isPending || updateScheme.isPending}>
+              {editing ? 'Actualizar' : 'Agregar'}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {schemes.length === 0 && !adding && (
+        <p className="text-[10px] text-muted-foreground">Sin esquemas de pago definidos.</p>
+      )}
+    </div>
+  );
+};
+
 export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const { products, isLoading, addProduct, updateProduct, deleteProduct } = useClientProducts(clientId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ClientProduct | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
 
   // Form state
   const [name, setName] = useState('');
@@ -172,64 +350,80 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                 const margin = (p.price != null && p.cost != null && p.cost > 0)
                   ? Math.round(((p.price - p.cost) / p.price) * 100)
                   : null;
+                const isExpanded = expandedProduct === p.id;
 
                 return (
                   <div
                     key={p.id}
-                    className="group p-3.5 rounded-xl border border-border/50 bg-card hover:shadow-sm transition-all"
+                    className="group rounded-xl border border-border/50 bg-card hover:shadow-sm transition-all"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      {/* Photo thumbnail */}
-                      {p.photo_url && (
-                        <img
-                          src={p.photo_url}
-                          alt={p.name}
-                          className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-foreground truncate">{p.name}</h4>
-                          {margin !== null && (
-                            <span className={cn(
-                              'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
-                              margin >= 50 ? 'bg-emerald-500/10 text-emerald-600' :
-                              margin >= 20 ? 'bg-amber-500/10 text-amber-600' :
-                              'bg-red-500/10 text-red-600'
-                            )}>
-                              {margin}% margen
-                            </span>
-                          )}
-                        </div>
-                        {p.description && (
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
+                    <div
+                      className="p-3.5 cursor-pointer"
+                      onClick={() => setExpandedProduct(isExpanded ? null : p.id)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        {p.photo_url && (
+                          <img
+                            src={p.photo_url}
+                            alt={p.name}
+                            className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0"
+                          />
                         )}
-                        <div className="flex items-center gap-4 mt-2">
-                          {p.price != null && (
-                            <div className="flex items-center gap-1 text-xs">
-                              <DollarSign className="h-3 w-3 text-emerald-500" />
-                              <span className="font-medium text-foreground">{formatCurrency(p.price, p.currency)}</span>
-                              <span className="text-muted-foreground">precio</span>
-                            </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-semibold text-foreground truncate">{p.name}</h4>
+                            {margin !== null && (
+                              <span className={cn(
+                                'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
+                                margin >= 50 ? 'bg-emerald-500/10 text-emerald-600' :
+                                margin >= 20 ? 'bg-amber-500/10 text-amber-600' :
+                                'bg-red-500/10 text-red-600'
+                              )}>
+                                {margin}% margen
+                              </span>
+                            )}
+                          </div>
+                          {p.description && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
                           )}
-                          {p.cost != null && (
-                            <div className="flex items-center gap-1 text-xs">
-                              <TrendingUp className="h-3 w-3 text-blue-500" />
-                              <span className="font-medium text-foreground">{formatCurrency(p.cost, p.currency)}</span>
-                              <span className="text-muted-foreground">costo</span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-4 mt-2">
+                            {p.price != null && (
+                              <div className="flex items-center gap-1 text-xs">
+                                <DollarSign className="h-3 w-3 text-emerald-500" />
+                                <span className="font-medium text-foreground">{formatCurrency(p.price, p.currency)}</span>
+                                <span className="text-muted-foreground">precio</span>
+                              </div>
+                            )}
+                            {p.cost != null && (
+                              <div className="flex items-center gap-1 text-xs">
+                                <TrendingUp className="h-3 w-3 text-blue-500" />
+                                <span className="font-medium text-foreground">{formatCurrency(p.cost, p.currency)}</span>
+                                <span className="text-muted-foreground">costo</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}>
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteConfirm(p.id)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteConfirm(p.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Expandable payment schemes section */}
+                    {isExpanded && (
+                      <div className="px-3.5 pb-3.5 border-t border-border/30">
+                        <PaymentSchemesSection
+                          productId={p.id}
+                          clientId={clientId}
+                          productCurrency={p.currency}
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -328,7 +522,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
             <Separator />
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <Label className="text-xs">Precio final</Label>
+                <Label className="text-xs">Precio base</Label>
                 <Input
                   type="number"
                   min={0}
@@ -370,6 +564,9 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                 </span>
               </div>
             )}
+            <p className="text-[10px] text-muted-foreground">
+              💡 Después de crear el producto, haz clic en él para agregar esquemas de pago (cuotas, pago único, etc.)
+            </p>
           </div>
           <DialogFooter className="pt-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)} size="sm">Cancelar</Button>

@@ -10,9 +10,10 @@ import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { useClientClosers } from '@/hooks/use-client-closers';
+import { useClientPaymentSchemes, PaymentScheme } from '@/hooks/use-payment-schemes';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, DollarSign, Settings, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, DollarSign, Settings, CalendarDays, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface SalePrefill {
@@ -85,9 +86,15 @@ export const RegisterSaleDialog = ({
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<string>('completed');
   const [closerName, setCloserName] = useState('');
+  const [selectedSchemeId, setSelectedSchemeId] = useState<string>('');
+  const [numInstallments, setNumInstallments] = useState(1);
+  const [installmentsPaid, setInstallmentsPaid] = useState(1);
+  const [installmentAmount, setInstallmentAmount] = useState(0);
+  const [totalSaleAmount, setTotalSaleAmount] = useState(0);
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
+  const { data: allSchemes = [] } = useClientPaymentSchemes(clientId || null);
   const productNames = products.map(p => p.name);
 
   const isEditing = !!editingSale;
@@ -119,6 +126,11 @@ export const RegisterSaleDialog = ({
     setStep(0);
     setShowNewProduct(false);
     setNewProductName('');
+    setSelectedSchemeId('');
+    setNumInstallments(1);
+    setInstallmentsPaid(1);
+    setInstallmentAmount(0);
+    setTotalSaleAmount(0);
     if (editingSale) {
       setAmount(String(editingSale.amount));
       setCurrency(editingSale.currency);
@@ -130,6 +142,11 @@ export const RegisterSaleDialog = ({
       setNotes(editingSale.notes || '');
       setStatus(editingSale.status);
       setCloserName((editingSale as any).closer_name || '');
+      setSelectedSchemeId((editingSale as any).payment_scheme_id || '');
+      setNumInstallments((editingSale as any).num_installments || 1);
+      setInstallmentsPaid((editingSale as any).installments_paid || 1);
+      setInstallmentAmount((editingSale as any).installment_amount || 0);
+      setTotalSaleAmount((editingSale as any).total_sale_amount || 0);
       if (editingSale.ad_id) {
         setSelectedAd({
           id: editingSale.ad_id,
@@ -242,6 +259,11 @@ export const RegisterSaleDialog = ({
       notes: notes || undefined,
       status: status as SaleInput['status'],
       closer_name: closerName || undefined,
+      payment_scheme_id: selectedSchemeId || undefined,
+      total_sale_amount: totalSaleAmount || parseFloat(amount) || undefined,
+      num_installments: numInstallments,
+      installments_paid: installmentsPaid,
+      installment_amount: installmentAmount || undefined,
     };
 
     if (source === 'ad' && selectedAd) {
@@ -258,17 +280,53 @@ export const RegisterSaleDialog = ({
     ? [product, ...productNames]
     : productNames;
 
+  // Get schemes for selected product
+  const selectedProduct = products.find(p => p.name === product);
+  const productSchemes = selectedProduct
+    ? allSchemes.filter(s => s.product_id === selectedProduct.id)
+    : [];
+
   // Auto-fill amount when selecting a product with a price
   const handleProductChange = (v: string) => {
     const selectedName = v === '_none' ? '' : v;
     setProduct(selectedName);
+    setSelectedSchemeId('');
+    setNumInstallments(1);
+    setInstallmentsPaid(1);
+    setInstallmentAmount(0);
+    setTotalSaleAmount(0);
     if (selectedName) {
       const matched = products.find(p => p.name === selectedName);
       if (matched?.price != null && !amount) {
         setAmount(String(matched.price));
         setCurrency(matched.currency as 'CRC' | 'USD');
+        setTotalSaleAmount(matched.price);
       }
     }
+  };
+
+  const handleSchemeChange = (schemeId: string) => {
+    if (schemeId === '_none') {
+      setSelectedSchemeId('');
+      if (selectedProduct?.price != null) {
+        setAmount(String(selectedProduct.price));
+        setTotalSaleAmount(selectedProduct.price);
+      }
+      setNumInstallments(1);
+      setInstallmentsPaid(1);
+      setInstallmentAmount(0);
+      return;
+    }
+    const scheme = allSchemes.find(s => s.id === schemeId);
+    if (!scheme) return;
+    setSelectedSchemeId(schemeId);
+    setTotalSaleAmount(scheme.total_price);
+    setNumInstallments(scheme.num_installments);
+    setInstallmentAmount(scheme.installment_amount);
+    setInstallmentsPaid(1);
+    // amount = first installment
+    setAmount(String(scheme.installment_amount));
+    setCurrency(scheme.currency as 'CRC' | 'USD');
   };
 
   const sourceLabel = SOURCE_OPTIONS.find(o => o.value === source)?.label || source;
@@ -528,7 +586,46 @@ export const RegisterSaleDialog = ({
                 )}
               </div>
 
-              {/* Customer */}
+              {/* Payment scheme selector */}
+              {product && productSchemes.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5" /> Esquema de pago
+                  </Label>
+                  <Select value={selectedSchemeId || '_none'} onValueChange={handleSchemeChange}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Seleccionar esquema" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Pago directo (sin esquema)</SelectItem>
+                      {productSchemes.map(s => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name} — {s.currency === 'CRC' ? '₡' : '$'}{s.total_price.toLocaleString()}
+                          {s.num_installments > 1 && ` (${s.num_installments}x ${s.currency === 'CRC' ? '₡' : '$'}${s.installment_amount.toLocaleString()})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedSchemeId && numInstallments > 1 && (
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px]">Cuotas pagadas al registrar</Label>
+                      <Select value={String(installmentsPaid)} onValueChange={v => {
+                        const paid = parseInt(v);
+                        setInstallmentsPaid(paid);
+                        setAmount(String(installmentAmount * paid));
+                      }}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: numInstallments }, (_, i) => (
+                            <SelectItem key={i + 1} value={String(i + 1)}>
+                              {i + 1} de {numInstallments} cuotas
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Cliente</Label>
                 <Input placeholder="Opcional" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="h-10 text-sm" />
