@@ -100,10 +100,10 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
   const { reports, reportsByDate, isLoading, upsertReport } = useSetterDailyReports(clientId, currentMonth);
 
   // Form state
-  const [igConversations, setIgConversations] = useState(0);
-  const [waConversations, setWaConversations] = useState(0);
-  const [followups, setFollowups] = useState(0);
-  const [appointmentsMade, setAppointmentsMade] = useState(0);
+  const [igConversations, setIgConversations] = useState<string>('');
+  const [waConversations, setWaConversations] = useState<string>('');
+  const [followups, setFollowups] = useState<string>('');
+  const [appointmentsMade, setAppointmentsMade] = useState<string>('');
   const [dayNotes, setDayNotes] = useState('');
 
   const crToday = getCostaRicaToday();
@@ -113,23 +113,27 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const existing = reportsByDate[dateStr];
     setSelectedDate(date);
-    setIgConversations(existing?.ig_conversations || 0);
-    setWaConversations(existing?.wa_conversations || 0);
-    setFollowups(existing?.followups || 0);
-    setAppointmentsMade(existing?.appointments_made || 0);
+    setIgConversations(existing ? String(existing.ig_conversations) : '');
+    setWaConversations(existing ? String(existing.wa_conversations) : '');
+    setFollowups(existing ? String(existing.followups) : '');
+    setAppointmentsMade(existing ? String(existing.appointments_made) : '');
     setDayNotes(existing?.day_notes || '');
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
     if (!selectedDate) return;
+    if (!dayNotes.trim()) {
+      toast.error('Las notas del día son obligatorias');
+      return;
+    }
     const input: DailyReportInput = {
       report_date: format(selectedDate, 'yyyy-MM-dd'),
-      ig_conversations: igConversations,
-      wa_conversations: waConversations,
-      followups,
-      appointments_made: appointmentsMade,
-      day_notes: dayNotes || undefined,
+      ig_conversations: parseInt(igConversations) || 0,
+      wa_conversations: parseInt(waConversations) || 0,
+      followups: parseInt(followups) || 0,
+      appointments_made: parseInt(appointmentsMade) || 0,
+      day_notes: dayNotes.trim(),
     };
     try {
       await upsertReport.mutateAsync(input);
@@ -410,7 +414,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
                     type="number"
                     min={0}
                     value={value}
-                    onChange={e => set(parseInt(e.target.value) || 0)}
+                    onChange={e => set(e.target.value)}
                     className="h-9"
                   />
                 </div>
@@ -418,12 +422,14 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
             </div>
             <Separator />
             <div>
-              <Label className="text-[10px] mb-1.5 block text-muted-foreground">Notas / Sensación del día</Label>
+              <Label className="text-[10px] mb-1.5 block text-muted-foreground">
+                Notas / Sensación del día <span className="text-destructive">*</span>
+              </Label>
               <Textarea
                 value={dayNotes}
                 onChange={e => setDayNotes(e.target.value)}
-                placeholder="¿Cómo estuvo el día? ¿Qué observaste?"
-                className="min-h-[80px] text-sm"
+                placeholder="¿Cómo estuvo el día? ¿Qué observaste? (obligatorio)"
+                className={cn('min-h-[80px] text-sm', !dayNotes.trim() && 'border-destructive/50')}
               />
             </div>
           </div>
