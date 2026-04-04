@@ -341,97 +341,31 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
             </div>
           )}
 
-          {/* Sales Table */}
+          {/* Sales Grid */}
           {sales.length > 0 ? (
-            <div className="rounded-md border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Monto</TableHead>
-                    <TableHead>Fuente</TableHead>
-                    <TableHead className="hidden md:table-cell">Closer</TableHead>
-                    <TableHead className="hidden md:table-cell">Anuncio</TableHead>
-                    <TableHead className="hidden md:table-cell">Cliente</TableHead>
-                    <TableHead className="w-20"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sales.map((sale) => (
-                    <TableRow key={sale.id}>
-                      <TableCell className="text-sm">{format(new Date(sale.sale_date), 'dd/MM')}</TableCell>
-                      <TableCell className="font-medium text-sm">
-                        {formatCurrency(Number(sale.amount), sale.currency)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {SOURCE_LABELS[sale.source] || sale.source}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm">
-                        {(sale as any).closer_name || '—'}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {sale.ad_name || sale.ad_campaign_name || '—'}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm">
-                        {sale.customer_name || '—'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            title="Editar venta"
-                            onClick={() => handleEdit(sale)}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          {hasAdAccount && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              title="Vincular anuncio"
-                              onClick={() => setLinkAdSaleId(sale.id)}
-                            >
-                              <Link2 className="h-3 w-3" />
-                            </Button>
-                          )}
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <Trash2 className="h-3 w-3 text-destructive" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-2">
-                                  <AlertTriangle className="h-6 w-6 text-destructive" />
-                                </div>
-                                <AlertDialogTitle className="text-center">¿Eliminar esta venta?</AlertDialogTitle>
-                                <AlertDialogDescription className="text-center">
-                                  Esta acción no se puede deshacer.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter className="sm:justify-center gap-2">
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  onClick={() => handleDelete(sale.id)}
-                                >
-                                  Eliminar
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+              {sales.map((sale) => (
+                <div
+                  key={sale.id}
+                  className="flex flex-col items-start gap-1.5 p-3 rounded-xl border border-border hover:border-primary/40 hover:shadow-sm transition-all bg-card group cursor-pointer"
+                  onClick={() => handleEdit(sale)}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                      {SOURCE_LABELS[sale.source] || sale.source}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground">
+                      {format(new Date(sale.sale_date), 'dd/MM')}
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold truncate w-full">
+                    {sale.customer_name || 'Sin nombre'}
+                  </span>
+                  <span className="text-base font-bold text-primary">
+                    {formatCurrency(Number(sale.amount), sale.currency)}
+                  </span>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
