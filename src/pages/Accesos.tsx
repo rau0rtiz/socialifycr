@@ -252,7 +252,7 @@ const Accesos = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Roles de sistema</CardTitle>
                 <CardDescription>
-                  Usuarios con permisos globales en la plataforma (owner, admin, manager, analyst, viewer)
+                  Usuarios con permisos globales en la plataforma
                 </CardDescription>
               </CardHeader>
               <CardContent>
