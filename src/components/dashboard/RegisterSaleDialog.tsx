@@ -13,7 +13,7 @@ import { useClientClosers } from '@/hooks/use-client-closers';
 import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface SalePrefill {
@@ -81,6 +81,9 @@ export const RegisterSaleDialog = ({
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<string>('completed');
   const [closerName, setCloserName] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [showNewPaymentMethod, setShowNewPaymentMethod] = useState(false);
+  const [newPaymentMethodName, setNewPaymentMethodName] = useState('');
   const [selectedSchemeId, setSelectedSchemeId] = useState<string>('');
   const [numInstallments, setNumInstallments] = useState(1);
   const [installmentsPaid, setInstallmentsPaid] = useState(1);
@@ -128,6 +131,9 @@ export const RegisterSaleDialog = ({
     setTotalSaleAmount(0);
     setCustomerPhone('');
     setCustomerEmail('');
+    setPaymentMethod('');
+    setShowNewPaymentMethod(false);
+    setNewPaymentMethodName('');
     if (editingSale) {
       setAmount(String(editingSale.amount));
       setCurrency(editingSale.currency);
@@ -139,6 +145,7 @@ export const RegisterSaleDialog = ({
       setNotes(editingSale.notes || '');
       setStatus(editingSale.status);
       setCloserName((editingSale as any).closer_name || '');
+      setPaymentMethod((editingSale as any).payment_method || '');
       setSelectedSchemeId((editingSale as any).payment_scheme_id || '');
       setNumInstallments((editingSale as any).num_installments || 1);
       setInstallmentsPaid((editingSale as any).installments_paid || 1);
@@ -256,6 +263,7 @@ export const RegisterSaleDialog = ({
       num_installments: numInstallments,
       installments_paid: installmentsPaid,
       installment_amount: installmentAmount || undefined,
+      payment_method: paymentMethod || undefined,
     };
 
     if (source === 'ad' && selectedAd) {
@@ -554,6 +562,47 @@ export const RegisterSaleDialog = ({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Wallet className="h-3.5 w-3.5" /> Método de pago
+                </Label>
+                {showNewPaymentMethod ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nombre del método"
+                      value={newPaymentMethodName}
+                      onChange={e => setNewPaymentMethodName(e.target.value)}
+                      className="h-10 text-sm flex-1"
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter' && newPaymentMethodName.trim()) { setPaymentMethod(newPaymentMethodName.trim()); setShowNewPaymentMethod(false); setNewPaymentMethodName(''); } }}
+                    />
+                    <Button size="sm" className="h-10 text-xs" onClick={() => { setPaymentMethod(newPaymentMethodName.trim()); setShowNewPaymentMethod(false); setNewPaymentMethodName(''); }} disabled={!newPaymentMethodName.trim()}>
+                      OK
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewPaymentMethod(false)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Select value={paymentMethod || '_none'} onValueChange={v => setPaymentMethod(v === '_none' ? '' : v)}>
+                      <SelectTrigger className="h-10 text-sm flex-1"><SelectValue placeholder="Seleccionar método" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none" className="text-xs">Sin especificar</SelectItem>
+                        <SelectItem value="stripe">Stripe</SelectItem>
+                        <SelectItem value="transferencia_bancaria">Transferencia Bancaria</SelectItem>
+                        {paymentMethod && !['stripe', 'transferencia_bancaria'].includes(paymentMethod) && (
+                          <SelectItem value={paymentMethod}>{paymentMethod}</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewPaymentMethod(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Otro
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
