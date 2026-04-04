@@ -101,22 +101,14 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
             <Clock className="h-3 w-3" />
             {timeAgo}
           </div>
-          <div className="grid grid-cols-2 gap-1">
-            <div className="bg-black/50 backdrop-blur-sm rounded px-1.5 py-1 text-center">
-              <div className="flex items-center justify-center gap-1 text-white text-xs font-semibold">
-                <Eye className="h-3 w-3" />
-                {story.impressions?.toLocaleString() || 0}
+          {(story.replies != null && story.replies > 0) && (
+            <div className="bg-black/50 backdrop-blur-sm rounded px-1.5 py-1 text-center w-fit">
+              <div className="flex items-center gap-1 text-white text-xs font-semibold">
+                <MessageCircle className="h-3 w-3" />
+                {story.replies}
               </div>
-              <div className="text-[8px] text-white/70">Vistas</div>
             </div>
-            <div className="bg-black/50 backdrop-blur-sm rounded px-1.5 py-1 text-center">
-              <div className="flex items-center justify-center gap-1 text-white text-xs font-semibold">
-                <Users className="h-3 w-3" />
-                {story.reach?.toLocaleString() || 0}
-              </div>
-              <div className="text-[8px] text-white/70">Alcance</div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     );
