@@ -317,42 +317,79 @@ export const AppointmentFormDialog = ({
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Vendedor Asignado</Label>
-                {showNewSetter ? (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Nombre del vendedor"
-                      value={newSetterName}
-                      onChange={e => setNewSetterName(e.target.value)}
-                      className="h-10 text-sm flex-1"
-                      autoFocus
-                      onKeyDown={e => { if (e.key === 'Enter') handleAddSetter(); }}
-                    />
-                    <Button size="sm" className="h-10 text-xs" onClick={handleAddSetter} disabled={!newSetterName.trim()}>
-                      OK
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewSetter(false)}>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
+
+                {/* Closers with avatars */}
+                {closers.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Closers</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {closers.map(c => (
+                        <button
+                          key={c.userId}
+                          type="button"
+                          onClick={() => setSetterName(c.fullName)}
+                          className={cn(
+                            'flex items-center gap-2.5 p-2.5 rounded-lg border text-left transition-all text-sm',
+                            setterName === c.fullName
+                              ? 'border-primary bg-primary/10 ring-1 ring-primary'
+                              : 'border-border hover:border-primary/40 hover:bg-muted/50'
+                          )}
+                        >
+                          <Avatar className="h-8 w-8 shrink-0">
+                            {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.fullName} />}
+                            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                              {c.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate font-medium">{c.fullName}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Select value={setterName || '_none'} onValueChange={v => setSetterName(v === '_none' ? '' : v)}>
-                      <SelectTrigger className="h-10 text-sm flex-1">
-                        <SelectValue placeholder="Sin asignar" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
-                        {setterName && !existingSetters.includes(setterName) && (
-                          <SelectItem key={setterName} value={setterName} className="text-xs">{setterName}</SelectItem>
-                        )}
-                        {existingSetters.map(s => (
-                          <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewSetter(true)}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
-                    </Button>
+                )}
+
+                {/* Existing setters + manual add */}
+                {(existingSetters.length > 0 || closers.length === 0) && (
+                  <div className="space-y-1.5">
+                    {closers.length > 0 && <p className="text-[10px] text-muted-foreground uppercase tracking-wider pt-1">Otros vendedores</p>}
+                    {showNewSetter ? (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Nombre del vendedor"
+                          value={newSetterName}
+                          onChange={e => setNewSetterName(e.target.value)}
+                          className="h-10 text-sm flex-1"
+                          autoFocus
+                          onKeyDown={e => { if (e.key === 'Enter') handleAddSetter(); }}
+                        />
+                        <Button size="sm" className="h-10 text-xs" onClick={handleAddSetter} disabled={!newSetterName.trim()}>
+                          OK
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewSetter(false)}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Select value={setterName || '_none'} onValueChange={v => setSetterName(v === '_none' ? '' : v)}>
+                          <SelectTrigger className="h-10 text-sm flex-1">
+                            <SelectValue placeholder="Sin asignar" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                            {setterName && !existingSetters.includes(setterName) && !closers.some(c => c.fullName === setterName) && (
+                              <SelectItem key={setterName} value={setterName} className="text-xs">{setterName}</SelectItem>
+                            )}
+                            {existingSetters.filter(s => !closers.some(c => c.fullName === s)).map(s => (
+                              <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewSetter(true)}>
+                          <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
