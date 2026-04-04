@@ -26,6 +26,9 @@ const formatCurrency = (amount: number, currency: string) => {
 };
 
 export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, primaryColor, accentColor }: SalesGoalBarProps) => {
+  const { selectedClient } = useBrand();
+  const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
+  const goalLabel = isMindCoach ? 'Meta de Pipeline' : 'Meta de Ventas';
   const { goal, isLoading, upsertGoal } = useSalesGoal(clientId);
   const [editOpen, setEditOpen] = useState(false);
   const [targetAmount, setTargetAmount] = useState('');
