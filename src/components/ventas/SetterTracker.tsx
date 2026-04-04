@@ -36,6 +36,7 @@ interface SetterTrackerProps {
   clientId: string;
   hasAdAccount?: boolean;
   onConvertToSale?: (appointment: SetterAppointment) => void;
+  periodStartIso?: string;
 }
 
 const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; color: string; icon: React.ElementType }> = {
@@ -48,8 +49,7 @@ const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; col
   cancelled: { label: 'Cancelada', color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle },
 };
 
-export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: SetterTrackerProps) => {
-  const [period, setPeriod] = useState('last_30d');
+export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodStartIso }: SetterTrackerProps) => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SetterAppointment | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -60,7 +60,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
   const [noSaleTarget, setNoSaleTarget] = useState<SetterAppointment | null>(null);
   const [noSaleReason, setNoSaleReason] = useState('');
 
-  const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, period);
+  const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, undefined, periodStartIso);
   const { setterNames: existingSetters } = useClientSetters(clientId);
 
   // Split appointments
@@ -256,16 +256,6 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
               Agendas
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Select value={period} onValueChange={setPeriod}>
-                <SelectTrigger className="h-7 text-xs w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="last_7d" className="text-xs">Últimos 7 días</SelectItem>
-                  <SelectItem value="last_30d" className="text-xs">Últimos 30 días</SelectItem>
-                  <SelectItem value="this_month" className="text-xs">Este mes</SelectItem>
-                </SelectContent>
-              </Select>
               <Button size="sm" className="h-7 text-xs" onClick={() => { setEditing(null); setShowForm(true); }}>
                 <UserPlus className="h-3.5 w-3.5 mr-1" />
                 Nuevo Lead

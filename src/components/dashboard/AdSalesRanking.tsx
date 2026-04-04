@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface AdSalesRankingProps {
   clientId: string;
   hasAdAccount: boolean;
+  datePreset?: DatePresetKey;
 }
 
 const formatCurrency = (amount: number, currency: string) => {
@@ -63,8 +64,9 @@ interface AdRankItem {
   roas: number | null;
 }
 
-export const AdSalesRanking = ({ clientId, hasAdAccount }: AdSalesRankingProps) => {
-  const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
+export const AdSalesRanking = ({ clientId, hasAdAccount, datePreset: externalPreset }: AdSalesRankingProps) => {
+  const [internalPreset, setInternalPreset] = useState<DatePresetKey>('last_30d');
+  const datePreset = externalPreset ?? internalPreset;
   const { data: allAdsResult, isLoading: adsLoading } = useAllAds(clientId, hasAdAccount, datePreset);
   const allAds = allAdsResult?.ads || [];
   const adCurrency = allAdsResult?.currency || 'USD';
@@ -110,16 +112,18 @@ export const AdSalesRanking = ({ clientId, hasAdAccount }: AdSalesRankingProps) 
           <Trophy className="h-5 w-5 text-yellow-500" />
           Ranking de Anuncios por Ventas
         </CardTitle>
-        <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePresetKey)}>
-          <SelectTrigger className="w-[180px] h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {PERIOD_OPTIONS.map(opt => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!externalPreset && (
+          <Select value={datePreset} onValueChange={(v) => setInternalPreset(v as DatePresetKey)}>
+            <SelectTrigger className="w-[180px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIOD_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (
