@@ -29,6 +29,7 @@ export interface SetterAppointment {
   checklist_video: boolean;
   checklist_whatsapp: boolean;
   checklist_testimonials: boolean;
+  not_sold_reason: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -58,6 +59,7 @@ export interface AppointmentInput {
   checklist_video?: boolean;
   checklist_whatsapp?: boolean;
   checklist_testimonials?: boolean;
+  not_sold_reason?: string;
 }
 
 export const useSetterAppointments = (clientId: string | null, period?: string, startIso?: string) => {
@@ -166,6 +168,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string, 
       if (input.checklist_video !== undefined) updateData.checklist_video = input.checklist_video;
       if (input.checklist_whatsapp !== undefined) updateData.checklist_whatsapp = input.checklist_whatsapp;
       if (input.checklist_testimonials !== undefined) updateData.checklist_testimonials = input.checklist_testimonials;
+      if ((input as any).not_sold_reason !== undefined) updateData.not_sold_reason = (input as any).not_sold_reason;
 
       const { error } = await supabase
         .from('setter_appointments')

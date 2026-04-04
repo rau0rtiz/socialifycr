@@ -54,10 +54,10 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
   useEffect(() => {
     if (appointment) {
       setChecklist({
-        checklist_quiz: (appointment as any).checklist_quiz || false,
-        checklist_video: (appointment as any).checklist_video || false,
-        checklist_whatsapp: (appointment as any).checklist_whatsapp || false,
-        checklist_testimonials: (appointment as any).checklist_testimonials || false,
+        checklist_quiz: appointment.checklist_quiz || false,
+        checklist_video: appointment.checklist_video || false,
+        checklist_whatsapp: appointment.checklist_whatsapp || false,
+        checklist_testimonials: appointment.checklist_testimonials || false,
       });
       setDirty(false);
     }
@@ -67,8 +67,9 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
 
   const apt = appointment;
   const statusCfg = STATUS_CONFIG[apt.status] || STATUS_CONFIG.scheduled;
-  const salesCallDate = (apt as any).sales_call_date;
-  const leadContext = (apt as any).lead_context || '';
+  const salesCallDate = apt.sales_call_date;
+  const leadContext = apt.lead_context || '';
+  const notSoldReason = apt.not_sold_reason || '';
 
   const toggleCheck = (key: string) => {
     setChecklist(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }));
@@ -124,7 +125,16 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
             </div>
           )}
 
-          {/* Checklist */}
+          {/* Not sold reason */}
+          {notSoldReason && (
+            <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-3 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-rose-700 dark:text-rose-400">
+                <ThumbsDown className="h-3.5 w-3.5" />
+                Motivo de no venta
+              </div>
+              <p className="text-sm text-foreground whitespace-pre-wrap">{notSoldReason}</p>
+            </div>
+          )}
           <div className="rounded-lg border border-border p-3 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-medium">
