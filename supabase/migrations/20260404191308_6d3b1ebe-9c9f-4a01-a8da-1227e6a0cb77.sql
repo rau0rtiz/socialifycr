@@ -1,0 +1,1 @@
+ALTER TABLE public.client_products ADD COLUMN photo_url text DEFAULT NULL;
