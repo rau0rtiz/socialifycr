@@ -253,7 +253,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
-              Setter & Pipeline
+              Agendas
             </CardTitle>
             <div className="flex items-center gap-2">
               <Select value={period} onValueChange={setPeriod}>
