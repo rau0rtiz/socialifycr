@@ -1,42 +1,42 @@
 
 
-# Rediseño: Calendario Premium con Tooltips para Reporte Diario del Setter
+# Plan: Nueva sección "Business Setup" en el menú lateral
 
 ## Resumen
+Crear una nueva página `/business-setup` que centralice toda la configuración del negocio del cliente seleccionado: ajustes de marca (colores, logo), gestión de productos y equipo/accesos. Se agrega como item del menú principal debajo de Email Marketing.
 
-Rediseñar el `SetterDailyCalendar` manteniendo el calendario pero elevando significativamente la estética: celdas más grandes con mini indicadores visuales dentro de cada día, tooltips con resumen al hover, y panel lateral con sparklines de tendencia semanal.
+## Cambios
 
-## Cambios en `SetterDailyCalendar.tsx`
+### 1. Nueva página `src/pages/BusinessSetup.tsx`
+- Página con `DashboardLayout` que muestra 3 secciones en tabs o cards apiladas:
+  - **Marca del Cliente**: colores primario/acento, logo, industria (extraído de la lógica actual del `ClientDetailPanel`)
+  - **Productos**: reutiliza el componente `ProductsManager` pasándole el `selectedClient.id`
+  - **Equipo y Accesos**: reutiliza el componente `TeamMembers` del cliente seleccionado
+- Depende del `selectedClient` del `BrandContext`; si no hay cliente seleccionado, muestra un estado vacío
 
-### Calendario mejorado
-- Celdas con mayor padding y bordes redondeados suaves
-- Dentro de cada día reportado: 4 mini dots/barras de color representando cada métrica (IG rosa, WA verde, seguimientos azul, agendas púrpura) con tamaño proporcional al valor
-- Días sin reporte: sutil indicador de punto rojo en esquina, sin el fondo rojo agresivo actual
-- Día actual: borde con gradiente sutil usando el color primario del cliente
-- Hover en cualquier día reportado muestra un `HoverCard` (ya existe en UI) con:
-  - Fecha formateada
-  - Las 4 métricas con iconos y valores
-  - Nota del día (si existe) truncada
+### 2. Actualizar `Sidebar.tsx`
+- Agregar "Business Setup" como nuevo item en la sección Principal, debajo de Email Marketing
+- Icono: `Briefcase` o `Settings2` de lucide
+- Visible para todos los usuarios (agency y clientes), sin restricción de feature flag por ahora
+- URL: `/business-setup`
 
-### Panel lateral rediseñado
-- Título del mes con tipografía más grande y capitalizada
-- Las 4 tarjetas de resumen con fondo de gradiente sutil por color (rosa, verde, azul, púrpura)
-- Agregar sparklines (mini gráficos de 7 puntos) debajo de cada métrica mostrando tendencia de las últimas 4 semanas
-- Indicador de "racha" (streak): cuántos días consecutivos se ha reportado
-- Barra de progreso circular o lineal mostrando % de días reportados del mes
-- Leyenda más elegante con dots en vez de badges
+### 3. Actualizar `App.tsx`
+- Agregar ruta `/business-setup` como `ProtectedRoute` (accesible para agency y clientes)
+- Lazy-load del componente
 
-### Dialog de edición
-- Inputs con bordes de color por métrica (borde izquierdo coloreado)
-- Layout más espacioso con separadores sutiles
-- Animación suave al abrir
+### 4. Limpiar duplicados
+- Remover `ProductsManager` de `Ventas.tsx` (ya vive en Business Setup)
+- Mantener "Ajustes del Dashboard" en el menú de Gestión (es configuración de la plataforma Socialify, no del cliente)
+- La ruta `/accesos` sigue existiendo para la gestión centralizada del owner; Business Setup muestra solo el equipo del cliente seleccionado
 
-## Archivos a modificar
-- `src/components/ventas/SetterDailyCalendar.tsx` — rediseño completo del componente
+## Archivos a crear/modificar
+- **Crear**: `src/pages/BusinessSetup.tsx`
+- **Modificar**: `src/components/dashboard/Sidebar.tsx` (nuevo item de menú)
+- **Modificar**: `src/App.tsx` (nueva ruta)
+- **Modificar**: `src/pages/Ventas.tsx` (remover ProductsManager)
 
 ## Detalle técnico
-- Usar `HoverCard` de shadcn para tooltips (ya disponible en el proyecto)
-- Sparklines con SVG inline (path simple, sin librería adicional)
-- Calcular streak y % reportado desde los datos existentes de `reports`
-- Mantener toda la lógica de negocio y hook `useSetterDailyReports` sin cambios
+- Reutilizar `ProductsManager` y `TeamMembers` tal cual, solo pasando `clientId` desde `useBrand().selectedClient`
+- Para la sección de marca del cliente, crear un mini formulario inline que permita editar `logo_url`, `primary_color`, `accent_color` e `industry` directamente en la tabla `clients` via Supabase update
+- No se requieren cambios de base de datos
 
