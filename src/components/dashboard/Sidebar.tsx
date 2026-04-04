@@ -13,6 +13,7 @@ import {
   KeyRound,
   Mail,
   X,
+  Briefcase,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -101,6 +102,7 @@ export const Sidebar = () => {
   if (showEmailMarketing) {
     menuItems.push({ title: 'Email Marketing', url: '/email-marketing', icon: Mail });
   }
+  menuItems.push({ title: 'Business Setup', url: '/business-setup', icon: Briefcase });
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">
