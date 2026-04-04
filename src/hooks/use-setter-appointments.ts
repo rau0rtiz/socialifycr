@@ -29,6 +29,7 @@ export interface SetterAppointment {
   checklist_video: boolean;
   checklist_whatsapp: boolean;
   checklist_testimonials: boolean;
+  not_sold_reason: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
