@@ -307,20 +307,6 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
 
             {/* Sidebar panel */}
             <div className="lg:w-56 space-y-4">
-              {/* Streak & progress */}
-              <div className="space-y-3">
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-medium text-muted-foreground">Cobertura del mes</span>
-                    <span className="text-xs font-semibold text-foreground">{reportPercentage}%</span>
-                  </div>
-                  <Progress value={reportPercentage} className="h-1.5" />
-                  <p className="text-[10px] text-muted-foreground">{reportedCount} de {workdayCount} días hábiles</p>
-                </div>
-              </div>
-
-              <Separator />
 
               {/* Metric summary cards with sparklines */}
               <div className="space-y-2">
