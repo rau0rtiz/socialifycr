@@ -319,21 +319,14 @@ export const RegisterSaleDialog = ({
   };
 
   const getStepTitle = () => {
-    if (isPrefilled) {
-      return step === 0 ? '¿Cuánto fue la venta?' : 'Notas adicionales';
-    }
     if (step === 0) return '¿Qué se vendió?';
     if (step === 1) return 'Información del cliente';
-    // Ad step or Notes step
     const adStepIdx = needsAdStep ? 2 : -1;
     if (step === adStepIdx) return 'Vincular anuncio';
     return 'Detalles finales';
   };
 
   const getStepDescription = () => {
-    if (isPrefilled) {
-      return step === 0 ? 'Ingresa el monto y la fecha de la venta' : 'Plataforma del mensaje y notas';
-    }
     if (step === 0) return 'Selecciona el producto y esquema de pago';
     if (step === 1) return 'Nombre, contacto, closer y fuente de la venta';
     const adStepIdx = needsAdStep ? 2 : -1;
