@@ -294,24 +294,59 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
 
         <CardContent className="space-y-4">
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">{salesLabel}</p>
-              <p className="text-xl font-bold">{summary.totalCount}</p>
-            </div>
-            <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">Total ₡</p>
-              <p className="text-xl font-bold">{formatCurrency(summary.totalCRC, 'CRC')}</p>
-            </div>
-            <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">Total $</p>
-              <p className="text-xl font-bold">{formatCurrency(summary.totalUSD, 'USD')}</p>
-            </div>
-            <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" /> ROAS</p>
-              <p className="text-xl font-bold">{roas ? `${roas}x` : '—'}</p>
-            </div>
-          </div>
+          {(() => {
+            // Cash collected = amount (what was actually paid)
+            const cashCollectedCRC = sales.filter(s => s.status === 'completed' && s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
+            const cashCollectedUSD = sales.filter(s => s.status === 'completed' && s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
+            // Total contract value = total_sale_amount when available, otherwise amount
+            const totalContractCRC = sales.filter(s => s.status === 'completed' && s.currency === 'CRC').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
+            const totalContractUSD = sales.filter(s => s.status === 'completed' && s.currency === 'USD').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
+            const hasPending = totalContractCRC > cashCollectedCRC || totalContractUSD > cashCollectedUSD;
+
+            return (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">{salesLabel}</p>
+                  <p className="text-xl font-bold">{summary.totalCount}</p>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Wallet className="h-3 w-3 text-emerald-500" /> Cash ₡
+                  </p>
+                  <p className="text-xl font-bold text-emerald-600">{formatCurrency(cashCollectedCRC, 'CRC')}</p>
+                  {totalContractCRC > cashCollectedCRC && (
+                    <p className="text-[10px] text-muted-foreground">de {formatCurrency(totalContractCRC, 'CRC')}</p>
+                  )}
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Wallet className="h-3 w-3 text-emerald-500" /> Cash $
+                  </p>
+                  <p className="text-xl font-bold text-emerald-600">{formatCurrency(cashCollectedUSD, 'USD')}</p>
+                  {totalContractUSD > cashCollectedUSD && (
+                    <p className="text-[10px] text-muted-foreground">de {formatCurrency(totalContractUSD, 'USD')}</p>
+                  )}
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" /> ROAS</p>
+                  <p className="text-xl font-bold">{roas ? `${roas}x` : '—'}</p>
+                </div>
+                {hasPending && (
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                    <p className="text-xs text-amber-600 flex items-center gap-1">
+                      <CreditCard className="h-3 w-3" /> Pendiente
+                    </p>
+                    {totalContractCRC > cashCollectedCRC && (
+                      <p className="text-sm font-semibold text-amber-600">{formatCurrency(totalContractCRC - cashCollectedCRC, 'CRC')}</p>
+                    )}
+                    {totalContractUSD > cashCollectedUSD && (
+                      <p className="text-sm font-semibold text-amber-600">{formatCurrency(totalContractUSD - cashCollectedUSD, 'USD')}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Daily Sales Chart */}
           {sales.length > 0 && (
