@@ -54,10 +54,10 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
   useEffect(() => {
     if (appointment) {
       setChecklist({
-        checklist_quiz: (appointment as any).checklist_quiz || false,
-        checklist_video: (appointment as any).checklist_video || false,
-        checklist_whatsapp: (appointment as any).checklist_whatsapp || false,
-        checklist_testimonials: (appointment as any).checklist_testimonials || false,
+        checklist_quiz: appointment.checklist_quiz || false,
+        checklist_video: appointment.checklist_video || false,
+        checklist_whatsapp: appointment.checklist_whatsapp || false,
+        checklist_testimonials: appointment.checklist_testimonials || false,
       });
       setDirty(false);
     }
