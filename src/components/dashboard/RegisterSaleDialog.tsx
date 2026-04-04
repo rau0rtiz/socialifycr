@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
+import { useClientClosers } from '@/hooks/use-client-closers';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, DollarSign, Settings, CalendarDays } from 'lucide-react';
@@ -23,6 +24,8 @@ export interface SalePrefill {
   ad_campaign_id?: string;
   ad_campaign_name?: string;
   appointmentId?: string;
+  closer_name?: string;
+  message_platform?: string;
 }
 
 interface RegisterSaleDialogProps {
@@ -84,6 +87,7 @@ export const RegisterSaleDialog = ({
   const [closerName, setCloserName] = useState('');
 
   const { products, addProduct } = useClientProducts(clientId || null);
+  const { data: closers = [] } = useClientClosers(clientId || null);
   const productNames = products.map(p => p.name);
 
   const isEditing = !!editingSale;
@@ -146,10 +150,10 @@ export const RegisterSaleDialog = ({
       setSource(prefill.ad_id ? 'ad' : prefill.source || '');
       setCustomerName(prefill.customer_name || '');
       setProduct(prefill.product || '');
-      setMessagePlatform('');
+      setMessagePlatform(prefill.message_platform || '');
       setNotes('');
       setStatus('completed');
-      setCloserName('');
+      setCloserName(prefill.closer_name || '');
       if (prefill.ad_id) {
         setSelectedAd({
           id: prefill.ad_id,
@@ -388,9 +392,18 @@ export const RegisterSaleDialog = ({
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Closer / Vendedor</Label>
-                <Input placeholder="¿Quién cerró la venta?" value={closerName} onChange={(e) => setCloserName(e.target.value)} className="h-10 text-sm" />
-              </div>
-              <div className="space-y-2">
+                <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿Quién cerró la venta?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                    {closerName && !closers.some(c => c.fullName === closerName) && (
+                      <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>
+                    )}
+                    {closers.map(c => (
+                      <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Label className="text-xs font-medium">Plataforma del mensaje</Label>
                 <Select value={messagePlatform} onValueChange={setMessagePlatform}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
@@ -530,7 +543,18 @@ export const RegisterSaleDialog = ({
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Closer / Vendedor</Label>
-                <Input placeholder="¿Quién cerró la venta?" value={closerName} onChange={(e) => setCloserName(e.target.value)} className="h-10 text-sm" />
+                <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿Quién cerró la venta?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                    {closerName && !closers.some(c => c.fullName === closerName) && (
+                      <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>
+                    )}
+                    {closers.map(c => (
+                      <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Plataforma del mensaje</Label>

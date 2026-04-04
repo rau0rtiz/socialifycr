@@ -127,6 +127,8 @@ const Ventas = () => {
       customer_name: appointment.lead_name,
       product: (appointment as any).product || undefined,
       appointmentId: appointment.id,
+      closer_name: appointment.setter_name || undefined,
+      message_platform: appointment.source === 'ads' ? 'whatsapp' : undefined,
     };
     if (appointment.ad_id) {
       prefill.source = 'ad';
