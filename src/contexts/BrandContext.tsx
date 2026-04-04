@@ -105,7 +105,7 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name, industry, logo_url, primary_color, accent_color, ai_context, preferred_region, default_campaign_goal')
+        .select('id, name, industry, logo_url, banner_url, primary_color, accent_color, ai_context, preferred_region, default_campaign_goal')
         .order('name');
 
       if (error) {
