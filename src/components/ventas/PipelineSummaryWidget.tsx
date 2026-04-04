@@ -72,7 +72,14 @@ export const PipelineSummaryWidget = ({
     return targetCampaigns.reduce((sum, c) => sum + c.spend, 0);
   }, [campaigns, selectedCampaignIds]);
 
-  const totalConversations = filteredReports.reduce((s, r) => s + r.ig_conversations + r.wa_conversations, 0);
+  const totalConversations = useMemo(() => {
+    const targetCampaigns = selectedCampaignIds.length > 0
+      ? campaigns.filter(c => selectedCampaignIds.includes(c.id))
+      : campaigns;
+    return targetCampaigns
+      .filter(c => c.objective === 'MESSAGES' || c.resultType?.toLowerCase().includes('messaging'))
+      .reduce((sum, c) => sum + c.results, 0);
+  }, [campaigns, selectedCampaignIds]);
   const totalFollowups = filteredReports.reduce((s, r) => s + r.followups, 0);
 
   const completed = filteredAppointments.filter(a => 
