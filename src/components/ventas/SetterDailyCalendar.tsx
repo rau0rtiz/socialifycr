@@ -123,13 +123,17 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
 
   const handleSave = async () => {
     if (!selectedDate) return;
+    if (!dayNotes.trim()) {
+      toast.error('Las notas del día son obligatorias');
+      return;
+    }
     const input: DailyReportInput = {
       report_date: format(selectedDate, 'yyyy-MM-dd'),
-      ig_conversations: igConversations,
-      wa_conversations: waConversations,
-      followups,
-      appointments_made: appointmentsMade,
-      day_notes: dayNotes || undefined,
+      ig_conversations: parseInt(igConversations) || 0,
+      wa_conversations: parseInt(waConversations) || 0,
+      followups: parseInt(followups) || 0,
+      appointments_made: parseInt(appointmentsMade) || 0,
+      day_notes: dayNotes.trim(),
     };
     try {
       await upsertReport.mutateAsync(input);
