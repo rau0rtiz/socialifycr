@@ -516,7 +516,7 @@ export const RegisterSaleDialog = ({
           )}
 
           {/* Step 1: Lead info — name, phone, email, closer, source, date */}
-          {!isPrefilled && step === 1 && (
+          {step === 1 && (
             <div className="space-y-3 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
