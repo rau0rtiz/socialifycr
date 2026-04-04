@@ -92,6 +92,7 @@ export const useUserRole = (): UserRoleData => {
   return {
     isAgency,
     isClient,
+    canManage,
     systemRole,
     clientAccess,
     loading,
