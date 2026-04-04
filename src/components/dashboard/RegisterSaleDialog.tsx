@@ -145,6 +145,7 @@ export const RegisterSaleDialog = ({
       setNotes(editingSale.notes || '');
       setStatus(editingSale.status);
       setCloserName((editingSale as any).closer_name || '');
+      setPaymentMethod((editingSale as any).payment_method || '');
       setSelectedSchemeId((editingSale as any).payment_scheme_id || '');
       setNumInstallments((editingSale as any).num_installments || 1);
       setInstallmentsPaid((editingSale as any).installments_paid || 1);
