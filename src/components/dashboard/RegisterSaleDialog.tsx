@@ -259,6 +259,11 @@ export const RegisterSaleDialog = ({
       notes: notes || undefined,
       status: status as SaleInput['status'],
       closer_name: closerName || undefined,
+      payment_scheme_id: selectedSchemeId || undefined,
+      total_sale_amount: totalSaleAmount || parseFloat(amount) || undefined,
+      num_installments: numInstallments,
+      installments_paid: installmentsPaid,
+      installment_amount: installmentAmount || undefined,
     };
 
     if (source === 'ad' && selectedAd) {
