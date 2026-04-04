@@ -112,6 +112,7 @@ const getCostPerResultLabel = (resultType: string): string => {
     'Reproducciones': 'Costo por reproducción',
     'Interacciones': 'Costo por interacción',
     'Resultados': 'Costo por resultado',
+    'Landing Page Views': 'Costo por LPV',
   };
   return labelMap[resultType] || `Costo por ${resultType.toLowerCase()}`;
 };
