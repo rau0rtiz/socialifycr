@@ -10,10 +10,10 @@ import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { useClientClosers } from '@/hooks/use-client-closers';
-import { useClientPaymentSchemes, PaymentScheme } from '@/hooks/use-payment-schemes';
+import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, DollarSign, Settings, CalendarDays, CreditCard } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface SalePrefill {
@@ -41,8 +41,8 @@ interface RegisterSaleDialogProps {
 }
 
 const SOURCE_OPTIONS = [
-  { value: 'story', label: 'Historia' },
   { value: 'ad', label: 'Publicidad' },
+  { value: 'story', label: 'Historia' },
   { value: 'referral', label: 'Referencia' },
   { value: 'organic', label: 'Orgánico' },
   { value: 'other', label: 'Otro' },
@@ -53,13 +53,6 @@ const PLATFORM_OPTIONS = [
   { value: 'instagram_dm', label: 'Instagram DM' },
   { value: 'messenger', label: 'Messenger' },
   { value: 'other', label: 'Otro' },
-];
-
-const STEP_META = [
-  { icon: DollarSign, label: 'Monto' },
-  { icon: Settings, label: 'Detalles' },
-  { icon: CalendarDays, label: 'Contexto' },
-  { icon: Megaphone, label: 'Anuncio' },
 ];
 
 export const RegisterSaleDialog = ({
@@ -79,6 +72,8 @@ export const RegisterSaleDialog = ({
   const [source, setSource] = useState<string>('');
   const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
   const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [product, setProduct] = useState('');
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProductName, setNewProductName] = useState('');
@@ -100,14 +95,16 @@ export const RegisterSaleDialog = ({
   const isEditing = !!editingSale;
   const isPrefilled = !!prefill && !editingSale;
 
-  // For prefilled mode, skip source/details step and ad step
+  // New flow:
+  // Standard: Step 0 = Product + Payment, Step 1 = Lead info + source, Step 2 = Ad (if source=ad) / Notes
+  // Prefilled: Step 0 = Amount confirm, Step 1 = Notes
   const needsAdStep = !isPrefilled && source === 'ad' && hasAdAccount;
-  // Steps: 0=Amount, 1=Details (source, product, customer), 2=Context (platform, notes), 3=Ad (optional)
-  // Prefilled: 0=Amount, 1=Context (platform, notes) — skip details & ad
+
   const buildSteps = () => {
     if (isPrefilled) return ['Monto', 'Notas'];
-    const steps = ['Monto', 'Detalles', 'Contexto'];
+    const steps = ['Producto', 'Información'];
     if (needsAdStep) steps.push('Anuncio');
+    steps.push('Notas');
     return steps;
   };
   const stepNames = buildSteps();
@@ -116,7 +113,7 @@ export const RegisterSaleDialog = ({
 
   const { data: allAdsResult, isLoading: adsLoading } = useAllAds(
     clientId || null,
-    hasAdAccount && open && needsAdStep
+    hasAdAccount && open && source === 'ad'
   );
   const allAds = allAdsResult?.ads || [];
   const adsCurrency = allAdsResult?.currency || 'USD';
@@ -131,6 +128,8 @@ export const RegisterSaleDialog = ({
     setInstallmentsPaid(1);
     setInstallmentAmount(0);
     setTotalSaleAmount(0);
+    setCustomerPhone('');
+    setCustomerEmail('');
     if (editingSale) {
       setAmount(String(editingSale.amount));
       setCurrency(editingSale.currency);
@@ -214,21 +213,20 @@ export const RegisterSaleDialog = ({
 
   const canAdvance = (s: number) => {
     if (isPrefilled) {
-      // Step 0: amount required
       if (s === 0) return !!amount;
       return true;
     }
-    // Step 0: amount required
-    if (s === 0) return !!amount;
-    // Step 1: source required
-    if (s === 1) return !!source;
+    // Step 0: product not strictly required but encouraged
+    if (s === 0) return true;
+    // Step 1: source required, amount required
+    if (s === 1) return !!source && !!amount;
     return true;
   };
 
   const handleNext = () => {
     if (!canAdvance(step)) {
-      if (step === 0 && !amount) toast.error('El monto es requerido');
       if (step === 1 && !source) toast.error('La fuente es requerida');
+      if (step === 1 && !amount) toast.error('El monto es requerido');
       return;
     }
     if (step < lastStep) setStep(s => s + 1);
@@ -280,13 +278,11 @@ export const RegisterSaleDialog = ({
     ? [product, ...productNames]
     : productNames;
 
-  // Get schemes for selected product
   const selectedProduct = products.find(p => p.name === product);
   const productSchemes = selectedProduct
     ? allSchemes.filter(s => s.product_id === selectedProduct.id)
     : [];
 
-  // Auto-fill amount when selecting a product with a price
   const handleProductChange = (v: string) => {
     const selectedName = v === '_none' ? '' : v;
     setProduct(selectedName);
@@ -297,7 +293,7 @@ export const RegisterSaleDialog = ({
     setTotalSaleAmount(0);
     if (selectedName) {
       const matched = products.find(p => p.name === selectedName);
-      if (matched?.price != null && !amount) {
+      if (matched?.price != null) {
         setAmount(String(matched.price));
         setCurrency(matched.currency as 'CRC' | 'USD');
         setTotalSaleAmount(matched.price);
@@ -324,39 +320,36 @@ export const RegisterSaleDialog = ({
     setNumInstallments(scheme.num_installments);
     setInstallmentAmount(scheme.installment_amount);
     setInstallmentsPaid(1);
-    // amount = first installment
     setAmount(String(scheme.installment_amount));
     setCurrency(scheme.currency as 'CRC' | 'USD');
   };
 
-  const sourceLabel = SOURCE_OPTIONS.find(o => o.value === source)?.label || source;
-
-  // Step titles and descriptions
   const getStepTitle = () => {
     if (isPrefilled) {
       return step === 0 ? '¿Cuánto fue la venta?' : 'Notas adicionales';
     }
-    if (step === 0) return '¿Cuánto fue la venta?';
-    if (step === 1) return 'Detalles de la venta';
-    if (step === 2) return 'Contexto adicional';
-    return 'Vincular anuncio';
+    if (step === 0) return '¿Qué se vendió?';
+    if (step === 1) return 'Información del cliente';
+    // Ad step or Notes step
+    const adStepIdx = needsAdStep ? 2 : -1;
+    if (step === adStepIdx) return 'Vincular anuncio';
+    return 'Detalles finales';
   };
 
   const getStepDescription = () => {
     if (isPrefilled) {
       return step === 0 ? 'Ingresa el monto y la fecha de la venta' : 'Plataforma del mensaje y notas';
     }
-    if (step === 0) return 'Ingresa el monto y la fecha';
-    if (step === 1) return 'Fuente, producto y cliente';
-    if (step === 2) return 'Plataforma del mensaje y notas';
-    return 'Selecciona el anuncio que originó esta venta';
+    if (step === 0) return 'Selecciona el producto y esquema de pago';
+    if (step === 1) return 'Nombre, contacto, closer y fuente de la venta';
+    const adStepIdx = needsAdStep ? 2 : -1;
+    if (step === adStepIdx) return 'Selecciona el anuncio que originó esta venta';
+    return 'Plataforma, notas y fecha';
   };
 
-  const stepIcons = isPrefilled
-    ? [STEP_META[0], STEP_META[2]]
-    : needsAdStep
-      ? STEP_META
-      : STEP_META.slice(0, 3);
+  // Determine which step index is the "ad" step and which is "notes"
+  const adStepIndex = needsAdStep ? 2 : -1;
+  const notesStepIndex = needsAdStep ? 3 : 2;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -387,7 +380,7 @@ export const RegisterSaleDialog = ({
               )}
               {source && (
                 <Badge variant="secondary" className="gap-1.5 text-xs">
-                  <Tag className="h-3 w-3" /> {sourceLabel}
+                  <Tag className="h-3 w-3" /> {SOURCE_OPTIONS.find(o => o.value === source)?.label || source}
                 </Badge>
               )}
               {selectedAd && (
@@ -476,66 +469,13 @@ export const RegisterSaleDialog = ({
                 <Label className="text-xs font-medium">Notas</Label>
                 <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="text-sm" />
               </div>
-              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
             </div>
           )}
 
           {/* === STANDARD FLOW === */}
-          {/* Step 0: Amount + Date */}
+          {/* Step 0: Product + Payment Scheme */}
           {!isPrefilled && step === 0 && (
             <div className="space-y-4 py-4">
-              <div className="flex gap-2">
-                <div className="flex-1 space-y-2">
-                  <Label className="text-xs font-medium">Monto *</Label>
-                  <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-10 text-sm" autoFocus />
-                </div>
-                <div className="w-24 space-y-2">
-                  <Label className="text-xs font-medium">Moneda</Label>
-                  <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CRC">₡ CRC</SelectItem>
-                      <SelectItem value="USD">$ USD</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Fecha</Label>
-                <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-10 text-sm" />
-              </div>
-              {isEditing && (
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">Estado</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="completed">Completada</SelectItem>
-                      <SelectItem value="pending">Pendiente</SelectItem>
-                      <SelectItem value="cancelled">Cancelada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
-            </div>
-          )}
-
-          {/* Step 1: Source + Product + Customer */}
-          {!isPrefilled && step === 1 && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Fuente *</Label>
-                <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
-                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
-                  <SelectContent>
-                    {SOURCE_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Product */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
@@ -561,19 +501,24 @@ export const RegisterSaleDialog = ({
                 ) : (
                   <div className="flex gap-2">
                     <Select value={product || '_none'} onValueChange={handleProductChange}>
-                      <SelectTrigger className="h-10 text-sm flex-1"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                      <SelectTrigger className="h-10 text-sm flex-1"><SelectValue placeholder="Seleccionar producto" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none">Sin producto</SelectItem>
                         {allProductOptions.map(name => {
                           const matched = products.find(p => p.name === name);
                           return (
                             <SelectItem key={name} value={name}>
-                              {name}
-                              {matched?.price != null && (
-                                <span className="text-muted-foreground ml-1">
-                                  ({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})
-                                </span>
-                              )}
+                              <div className="flex items-center gap-2">
+                                {matched?.photo_url && (
+                                  <img src={matched.photo_url} className="w-5 h-5 rounded object-cover" alt="" />
+                                )}
+                                <span>{name}</span>
+                                {matched?.price != null && (
+                                  <span className="text-muted-foreground ml-1">
+                                    ({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})
+                                  </span>
+                                )}
+                              </div>
                             </SelectItem>
                           );
                         })}
@@ -626,18 +571,59 @@ export const RegisterSaleDialog = ({
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Cliente</Label>
-                <Input placeholder="Opcional" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="h-10 text-sm" />
+              {/* Amount summary (auto-filled or manual) */}
+              <div className="flex gap-2">
+                <div className="flex-1 space-y-2">
+                  <Label className="text-xs font-medium">Monto a cobrar *</Label>
+                  <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-10 text-sm" />
+                </div>
+                <div className="w-24 space-y-2">
+                  <Label className="text-xs font-medium">Moneda</Label>
+                  <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CRC">₡ CRC</SelectItem>
+                      <SelectItem value="USD">$ USD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              {totalSaleAmount > 0 && totalSaleAmount !== parseFloat(amount || '0') && (
+                <p className="text-[10px] text-muted-foreground text-center">
+                  Total de la venta: {currency === 'CRC' ? '₡' : '$'}{totalSaleAmount.toLocaleString()}
+                </p>
+              )}
 
               <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
             </div>
           )}
 
-          {/* Step 2: Platform + Notes */}
-          {!isPrefilled && step === 2 && (
-            <div className="space-y-4 py-4">
+          {/* Step 1: Lead info — name, phone, email, closer, source, date */}
+          {!isPrefilled && step === 1 && (
+            <div className="space-y-3 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" /> Nombre del cliente
+                </Label>
+                <Input placeholder="Nombre completo" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="h-10 text-sm" autoFocus />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5" /> Teléfono
+                  </Label>
+                  <Input placeholder="Opcional" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="h-10 text-sm" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5" /> Correo
+                  </Label>
+                  <Input placeholder="Opcional" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} className="h-10 text-sm" />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Closer / Vendedor</Label>
                 <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
@@ -653,6 +639,58 @@ export const RegisterSaleDialog = ({
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Fuente de la venta *</Label>
+                <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Fecha de venta</Label>
+                <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-10 text-sm" />
+              </div>
+
+              {isEditing && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Estado</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="completed">Completada</SelectItem>
+                      <SelectItem value="pending">Pendiente</SelectItem>
+                      <SelectItem value="cancelled">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
+            </div>
+          )}
+
+          {/* Ad selection step (only if source=ad) */}
+          {!isPrefilled && step === adStepIndex && needsAdStep && (
+            <div className="space-y-3 py-4">
+              <AdGridSelector
+                ads={allAds}
+                isLoading={adsLoading}
+                selectedAd={selectedAd}
+                onSelect={setSelectedAd}
+                currency={adsCurrency}
+              />
+            </div>
+          )}
+
+          {/* Notes step (last step for standard flow) */}
+          {!isPrefilled && step === notesStepIndex && (
+            <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Plataforma del mensaje</Label>
                 <Select value={messagePlatform} onValueChange={setMessagePlatform}>
@@ -669,19 +707,6 @@ export const RegisterSaleDialog = ({
                 <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="text-sm" />
               </div>
               <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
-            </div>
-          )}
-
-          {/* Step 3: Ad selection (only for non-prefilled ad source) */}
-          {!isPrefilled && step === 3 && needsAdStep && (
-            <div className="space-y-3 py-4">
-              <AdGridSelector
-                ads={allAds}
-                isLoading={adsLoading}
-                selectedAd={selectedAd}
-                onSelect={setSelectedAd}
-                currency={adsCurrency}
-              />
             </div>
           )}
         </div>
