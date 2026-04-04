@@ -399,6 +399,12 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                   <span className="text-base font-bold text-primary">
                     {formatCurrency(Number(sale.amount), sale.currency)}
                   </span>
+                  {sale.num_installments && sale.num_installments > 1 && (
+                    <Badge variant="outline" className="text-[8px] px-1 py-0 gap-0.5">
+                      <CreditCard className="h-2.5 w-2.5" />
+                      {sale.installments_paid || 1}/{sale.num_installments}
+                    </Badge>
+                  )}
                 </div>
               ))}
             </div>
