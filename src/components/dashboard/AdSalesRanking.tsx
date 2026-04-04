@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface AdSalesRankingProps {
   clientId: string;
   hasAdAccount: boolean;
+  datePreset?: DatePresetKey;
 }
 
 const formatCurrency = (amount: number, currency: string) => {
