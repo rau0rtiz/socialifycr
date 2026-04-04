@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
 import { usePaymentSchemes, PaymentSchemeInput } from '@/hooks/use-payment-schemes';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard, Hash } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -24,7 +24,7 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
 };
 
-// Sub-component: Payment Schemes for a product
+// Sub-component: Payment Schemes for a product (used inside the detail dialog)
 const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { productId: string; clientId: string; productCurrency: string }) => {
   const { schemes, addScheme, updateScheme, deleteScheme } = usePaymentSchemes(productId, clientId);
   const [editing, setEditing] = useState<string | null>(null);
@@ -93,15 +93,15 @@ const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { produ
   };
 
   return (
-    <div className="space-y-2 pt-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <Label className="text-xs font-medium flex items-center gap-1.5">
+        <Label className="text-xs font-semibold flex items-center gap-1.5">
           <CreditCard className="h-3.5 w-3.5 text-primary" />
           Esquemas de pago
         </Label>
         {!adding && (
-          <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1" onClick={() => setAdding(true)}>
-            <Plus className="h-3 w-3" /> Agregar
+          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setAdding(true)}>
+            <Plus className="h-3 w-3" /> Agregar esquema
           </Button>
         )}
       </div>
@@ -110,7 +110,7 @@ const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { produ
       {schemes.length > 0 && (
         <div className="space-y-1.5">
           {schemes.map(s => (
-            <div key={s.id} className="group flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/30 text-xs">
+            <div key={s.id} className="group flex items-center gap-2 p-2.5 rounded-lg bg-muted/40 border border-border/40 text-xs">
               <div className="flex-1 min-w-0">
                 <span className="font-medium text-foreground">{s.name}</span>
                 <span className="text-muted-foreground ml-1.5">
@@ -123,10 +123,10 @@ const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { produ
                 )}
               </div>
               <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEdit(s)}>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(s)}>
                   <Pencil className="h-2.5 w-2.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => handleDelete(s.id)}>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDelete(s.id)}>
                   <Trash2 className="h-2.5 w-2.5" />
                 </Button>
               </div>
@@ -143,29 +143,16 @@ const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { produ
             value={sName}
             onChange={e => setSName(e.target.value)}
             className="h-8 text-xs"
+            autoFocus
           />
           <div className="grid grid-cols-3 gap-2">
             <div>
               <Label className="text-[10px]">Precio total</Label>
-              <Input
-                type="number"
-                min={0}
-                placeholder="0"
-                value={sTotal}
-                onChange={e => setSTotal(e.target.value)}
-                className="h-8 text-xs mt-1"
-              />
+              <Input type="number" min={0} placeholder="0" value={sTotal} onChange={e => setSTotal(e.target.value)} className="h-8 text-xs mt-1" />
             </div>
             <div>
               <Label className="text-[10px]">Cuotas</Label>
-              <Input
-                type="number"
-                min={1}
-                max={36}
-                value={sInstallments}
-                onChange={e => setSInstallments(e.target.value)}
-                className="h-8 text-xs mt-1"
-              />
+              <Input type="number" min={1} max={36} value={sInstallments} onChange={e => setSInstallments(e.target.value)} className="h-8 text-xs mt-1" />
             </div>
             <div>
               <Label className="text-[10px]">Moneda</Label>
@@ -193,7 +180,11 @@ const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { produ
       )}
 
       {schemes.length === 0 && !adding && (
-        <p className="text-[10px] text-muted-foreground">Sin esquemas de pago definidos.</p>
+        <div className="text-center py-4 rounded-lg border border-dashed border-border/50">
+          <CreditCard className="h-5 w-5 text-muted-foreground/30 mx-auto mb-1.5" />
+          <p className="text-[11px] text-muted-foreground">Sin esquemas de pago</p>
+          <p className="text-[10px] text-muted-foreground/70 mt-0.5">Agrega opciones de pago como cuotas o pago único</p>
+        </div>
       )}
     </div>
   );
@@ -204,7 +195,8 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ClientProduct | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
+  // Detail dialog — clicking a product card opens this
+  const [detailProduct, setDetailProduct] = useState<ClientProduct | null>(null);
 
   // Form state
   const [name, setName] = useState('');
@@ -236,36 +228,22 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
     setDescription(p.description || '');
     setPhotoUrl(p.photo_url || null);
     setDialogOpen(true);
+    setDetailProduct(null); // close detail when opening edit
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Solo se permiten imágenes');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('La imagen no puede superar 5MB');
-      return;
-    }
+    if (!file.type.startsWith('image/')) { toast.error('Solo se permiten imágenes'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('La imagen no puede superar 5MB'); return; }
 
     setUploading(true);
     try {
       const ext = file.name.split('.').pop();
       const path = `${clientId}/products/product-${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('content-images')
-        .upload(path, file, { upsert: true });
-
+      const { error: uploadError } = await supabase.storage.from('content-images').upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('content-images')
-        .getPublicUrl(path);
-
+      const { data: { publicUrl } } = supabase.storage.from('content-images').getPublicUrl(path);
       setPhotoUrl(`${publicUrl}?t=${Date.now()}`);
       toast.success('Foto subida');
     } catch (err: any) {
@@ -277,10 +255,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   };
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      toast.error('El nombre es obligatorio');
-      return;
-    }
+    if (!name.trim()) { toast.error('El nombre es obligatorio'); return; }
     const input: ProductInput = {
       name: name.trim(),
       price: price ? parseFloat(price) : null,
@@ -294,8 +269,10 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
         await updateProduct.mutateAsync({ id: editing.id, ...input });
         toast.success('Producto actualizado');
       } else {
-        await addProduct.mutateAsync(input);
+        const result = await addProduct.mutateAsync(input);
         toast.success('Producto creado');
+        // Open the detail dialog for the new product so user can add schemes
+        setDetailProduct(result);
       }
       setDialogOpen(false);
     } catch {
@@ -308,6 +285,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
       await deleteProduct.mutateAsync(id);
       toast.success('Producto eliminado');
       setDeleteConfirm(null);
+      setDetailProduct(null);
     } catch {
       toast.error('Error al eliminar producto');
     }
@@ -339,7 +317,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                 <Package className="h-5 w-5 text-muted-foreground/40" />
               </div>
               <p className="text-sm font-medium text-muted-foreground">Sin productos</p>
-              <p className="text-xs text-muted-foreground mt-1">Agrega productos para vincularlos con el pipeline.</p>
+              <p className="text-xs text-muted-foreground mt-1">Agrega productos para vincularlos con ventas.</p>
               <Button size="sm" variant="outline" onClick={openNew} className="mt-3 h-8 text-xs gap-1.5">
                 <Plus className="h-3.5 w-3.5" /> Crear primer producto
               </Button>
@@ -350,80 +328,50 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                 const margin = (p.price != null && p.cost != null && p.cost > 0)
                   ? Math.round(((p.price - p.cost) / p.price) * 100)
                   : null;
-                const isExpanded = expandedProduct === p.id;
 
                 return (
                   <div
                     key={p.id}
-                    className="group rounded-xl border border-border/50 bg-card hover:shadow-sm transition-all"
+                    className="group rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer p-3.5"
+                    onClick={() => setDetailProduct(p)}
                   >
-                    <div
-                      className="p-3.5 cursor-pointer"
-                      onClick={() => setExpandedProduct(isExpanded ? null : p.id)}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        {p.photo_url && (
-                          <img
-                            src={p.photo_url}
-                            alt={p.name}
-                            className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-semibold text-foreground truncate">{p.name}</h4>
-                            {margin !== null && (
-                              <span className={cn(
-                                'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
-                                margin >= 50 ? 'bg-emerald-500/10 text-emerald-600' :
-                                margin >= 20 ? 'bg-amber-500/10 text-amber-600' :
-                                'bg-red-500/10 text-red-600'
-                              )}>
-                                {margin}% margen
-                              </span>
-                            )}
-                          </div>
-                          {p.description && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
+                    <div className="flex items-start gap-3">
+                      {p.photo_url ? (
+                        <img src={p.photo_url} alt={p.name} className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center shrink-0">
+                          <Package className="h-5 w-5 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-semibold text-foreground truncate">{p.name}</h4>
+                          {margin !== null && (
+                            <span className={cn(
+                              'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
+                              margin >= 50 ? 'bg-emerald-500/10 text-emerald-600' :
+                              margin >= 20 ? 'bg-amber-500/10 text-amber-600' :
+                              'bg-red-500/10 text-red-600'
+                            )}>
+                              {margin}% margen
+                            </span>
                           )}
-                          <div className="flex items-center gap-4 mt-2">
-                            {p.price != null && (
-                              <div className="flex items-center gap-1 text-xs">
-                                <DollarSign className="h-3 w-3 text-emerald-500" />
-                                <span className="font-medium text-foreground">{formatCurrency(p.price, p.currency)}</span>
-                                <span className="text-muted-foreground">precio</span>
-                              </div>
-                            )}
-                            {p.cost != null && (
-                              <div className="flex items-center gap-1 text-xs">
-                                <TrendingUp className="h-3 w-3 text-blue-500" />
-                                <span className="font-medium text-foreground">{formatCurrency(p.cost, p.currency)}</span>
-                                <span className="text-muted-foreground">costo</span>
-                              </div>
-                            )}
-                          </div>
                         </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}>
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteConfirm(p.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                        {p.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-1.5">
+                          {p.price != null && (
+                            <span className="text-xs font-medium text-foreground">
+                              {formatCurrency(p.price, p.currency)}
+                            </span>
+                          )}
                         </div>
+                      </div>
+                      <div className="text-muted-foreground/30 group-hover:text-primary/50 transition-colors">
+                        <Pencil className="h-3.5 w-3.5" />
                       </div>
                     </div>
-
-                    {/* Expandable payment schemes section */}
-                    {isExpanded && (
-                      <div className="px-3.5 pb-3.5 border-t border-border/30">
-                        <PaymentSchemesSection
-                          productId={p.id}
-                          clientId={clientId}
-                          productCurrency={p.currency}
-                        />
-                      </div>
-                    )}
                   </div>
                 );
               })}
@@ -431,6 +379,85 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
           )}
         </CardContent>
       </Card>
+
+      {/* ========== PRODUCT DETAIL DIALOG ========== */}
+      <Dialog open={!!detailProduct} onOpenChange={(open) => { if (!open) setDetailProduct(null); }}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden p-0">
+          {detailProduct && (
+            <>
+              {/* Header with product info */}
+              <div className="px-6 pt-6 pb-4 space-y-4">
+                <DialogHeader className="space-y-0">
+                  <DialogTitle className="sr-only">{detailProduct.name}</DialogTitle>
+                </DialogHeader>
+                <div className="flex items-start gap-4">
+                  {detailProduct.photo_url ? (
+                    <img src={detailProduct.photo_url} alt={detailProduct.name} className="w-16 h-16 rounded-xl object-cover border border-border/50 shrink-0" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center shrink-0">
+                      <Package className="h-6 w-6 text-muted-foreground/40" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-bold text-foreground">{detailProduct.name}</h3>
+                    {detailProduct.description && (
+                      <p className="text-xs text-muted-foreground mt-1">{detailProduct.description}</p>
+                    )}
+                    <div className="flex items-center gap-4 mt-2">
+                      {detailProduct.price != null && (
+                        <div className="flex items-center gap-1 text-xs">
+                          <DollarSign className="h-3 w-3 text-emerald-500" />
+                          <span className="font-semibold text-foreground">{formatCurrency(detailProduct.price, detailProduct.currency)}</span>
+                          <span className="text-muted-foreground">precio</span>
+                        </div>
+                      )}
+                      {detailProduct.cost != null && (
+                        <div className="flex items-center gap-1 text-xs">
+                          <TrendingUp className="h-3 w-3 text-blue-500" />
+                          <span className="font-semibold text-foreground">{formatCurrency(detailProduct.cost, detailProduct.currency)}</span>
+                          <span className="text-muted-foreground">costo</span>
+                        </div>
+                      )}
+                      {detailProduct.price != null && detailProduct.cost != null && detailProduct.cost > 0 && (
+                        <span className={cn(
+                          'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
+                          (() => {
+                            const m = Math.round(((detailProduct.price! - detailProduct.cost!) / detailProduct.price!) * 100);
+                            return m >= 50 ? 'bg-emerald-500/10 text-emerald-600' :
+                              m >= 20 ? 'bg-amber-500/10 text-amber-600' :
+                              'bg-red-500/10 text-red-600';
+                          })()
+                        )}>
+                          {Math.round(((detailProduct.price! - detailProduct.cost!) / detailProduct.price!) * 100)}% margen
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => openEdit(detailProduct)}>
+                    <Pencil className="h-3 w-3" /> Editar producto
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(detailProduct.id)}>
+                    <Trash2 className="h-3 w-3" /> Eliminar
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Payment schemes section */}
+              <div className="px-6 py-4 overflow-y-auto" style={{ maxHeight: '40vh' }}>
+                <PaymentSchemesSection
+                  productId={detailProduct.id}
+                  clientId={clientId}
+                  productCurrency={detailProduct.currency}
+                />
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Create/Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -450,17 +477,8 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
               <div className="mt-1.5 flex items-center gap-3">
                 {photoUrl ? (
                   <div className="relative">
-                    <img
-                      src={photoUrl}
-                      alt="Producto"
-                      className="w-20 h-20 rounded-lg object-cover border border-border/50"
-                    />
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute -top-2 -right-2 h-5 w-5 rounded-full"
-                      onClick={() => setPhotoUrl(null)}
-                    >
+                    <img src={photoUrl} alt="Producto" className="w-20 h-20 rounded-lg object-cover border border-border/50" />
+                    <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setPhotoUrl(null)}>
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
@@ -480,68 +498,32 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                   </div>
                 )}
                 {photoUrl && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                  >
+                  <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
                     {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Camera className="h-3.5 w-3.5 mr-1" />}
                     Cambiar
                   </Button>
                 )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
               </div>
             </div>
 
             <div>
               <Label className="text-xs">Nombre <span className="text-destructive">*</span></Label>
-              <Input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Nombre del producto"
-                className="mt-1.5"
-              />
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Nombre del producto" className="mt-1.5" />
             </div>
             <div>
               <Label className="text-xs">Descripción</Label>
-              <Textarea
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="Descripción del producto o servicio..."
-                className="mt-1.5 min-h-[70px] text-sm"
-              />
+              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Descripción del producto o servicio..." className="mt-1.5 min-h-[70px] text-sm" />
             </div>
             <Separator />
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label className="text-xs">Precio base</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={price}
-                  onChange={e => setPrice(e.target.value)}
-                  placeholder="0"
-                  className="mt-1.5"
-                />
+                <Input type="number" min={0} value={price} onChange={e => setPrice(e.target.value)} placeholder="0" className="mt-1.5" />
               </div>
               <div>
                 <Label className="text-xs">Costo</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={cost}
-                  onChange={e => setCost(e.target.value)}
-                  placeholder="0"
-                  className="mt-1.5"
-                />
+                <Input type="number" min={0} value={cost} onChange={e => setCost(e.target.value)} placeholder="0" className="mt-1.5" />
               </div>
               <div>
                 <Label className="text-xs">Moneda</Label>
@@ -564,9 +546,6 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                 </span>
               </div>
             )}
-            <p className="text-[10px] text-muted-foreground">
-              💡 Después de crear el producto, haz clic en él para agregar esquemas de pago (cuotas, pago único, etc.)
-            </p>
           </div>
           <DialogFooter className="pt-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)} size="sm">Cancelar</Button>
