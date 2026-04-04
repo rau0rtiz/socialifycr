@@ -318,6 +318,17 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
             toast.error('Error actualizando checklist');
           }
         }}
+        onStatusChange={(id, status) => {
+          if (status === 'sold' && detailLead && onConvertToSale) {
+            onConvertToSale(detailLead);
+          } else if (status === 'not_sold' && detailLead) {
+            setNoSaleTarget(detailLead);
+            setNoSaleReason('');
+          } else {
+            handleStatusChange({ id } as any, status as any);
+          }
+          setDetailLead(null);
+        }}
       />
 
       {/* No-sale confirmation dialog */}
