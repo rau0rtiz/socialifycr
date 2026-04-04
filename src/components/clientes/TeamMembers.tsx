@@ -151,7 +151,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
   const handleUpdateRole = async (memberId: string, newRole: string) => {
     const { error } = await supabase
       .from('client_team_members')
-      .update({ role: newRole })
+      .update({ role: newRole } as any)
       .eq('id', memberId);
 
     if (error) {
