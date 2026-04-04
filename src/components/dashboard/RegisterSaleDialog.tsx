@@ -87,6 +87,7 @@ export const RegisterSaleDialog = ({
   const [closerName, setCloserName] = useState('');
 
   const { products, addProduct } = useClientProducts(clientId || null);
+  const { data: closers = [] } = useClientClosers(clientId || null);
   const productNames = products.map(p => p.name);
 
   const isEditing = !!editingSale;
