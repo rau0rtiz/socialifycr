@@ -10,9 +10,10 @@ import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { useClientClosers } from '@/hooks/use-client-closers';
+import { useClientPaymentSchemes, PaymentScheme } from '@/hooks/use-payment-schemes';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, DollarSign, Settings, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, DollarSign, Settings, CalendarDays, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface SalePrefill {
