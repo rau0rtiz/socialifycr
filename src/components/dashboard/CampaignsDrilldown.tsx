@@ -643,52 +643,56 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount, datePreset: externa
               </Select>
             )}
             
-            <Select value={datePreset} onValueChange={handleDatePresetChange}>
-              <SelectTrigger className="w-36 md:w-44 bg-background h-8 text-xs md:text-sm">
-                <SelectValue>{getDateDisplayText()}</SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                {Object.entries(datePresetLabels).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            {datePreset === 'custom' && (
-              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "h-8 text-xs md:text-sm gap-1",
-                      !customRange.from && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {customRange.from && customRange.to
-                      ? `${format(customRange.from, 'dd/MM/yy')} - ${format(customRange.to, 'dd/MM/yy')}`
-                      : 'Seleccionar fechas'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="range"
-                    selected={customRange.from ? { from: customRange.from, to: customRange.to } : undefined}
-                    onSelect={(range) => {
-                      setInternalCustomRange({ from: range?.from, to: range?.to });
-                      if (range?.from && range?.to) {
-                        setIsCalendarOpen(false);
-                      }
-                    }}
-                    numberOfMonths={2}
-                    disabled={(date) => date > new Date()}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                    locale={es}
-                  />
-                </PopoverContent>
-              </Popover>
+            {!hasExternalPeriod && (
+              <>
+                <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                  <SelectTrigger className="w-36 md:w-44 bg-background h-8 text-xs md:text-sm">
+                    <SelectValue>{getDateDisplayText()}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    {Object.entries(datePresetLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {datePreset === 'custom' && (
+                  <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "h-8 text-xs md:text-sm gap-1",
+                          !customRange.from && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        {customRange.from && customRange.to
+                          ? `${format(customRange.from, 'dd/MM/yy')} - ${format(customRange.to, 'dd/MM/yy')}`
+                          : 'Seleccionar fechas'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="range"
+                        selected={customRange.from ? { from: customRange.from, to: customRange.to } : undefined}
+                        onSelect={(range) => {
+                          setInternalCustomRange({ from: range?.from, to: range?.to });
+                          if (range?.from && range?.to) {
+                            setIsCalendarOpen(false);
+                          }
+                        }}
+                        numberOfMonths={2}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                        locale={es}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </>
             )}
             
             <Button
