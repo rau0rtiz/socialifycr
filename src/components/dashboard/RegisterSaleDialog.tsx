@@ -142,6 +142,11 @@ export const RegisterSaleDialog = ({
       setNotes(editingSale.notes || '');
       setStatus(editingSale.status);
       setCloserName((editingSale as any).closer_name || '');
+      setSelectedSchemeId((editingSale as any).payment_scheme_id || '');
+      setNumInstallments((editingSale as any).num_installments || 1);
+      setInstallmentsPaid((editingSale as any).installments_paid || 1);
+      setInstallmentAmount((editingSale as any).installment_amount || 0);
+      setTotalSaleAmount((editingSale as any).total_sale_amount || 0);
       if (editingSale.ad_id) {
         setSelectedAd({
           id: editingSale.ad_id,
