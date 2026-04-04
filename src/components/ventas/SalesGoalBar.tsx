@@ -80,7 +80,7 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
                 <Target className="h-4 w-4" style={{ color: barBg }} />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Meta de Ventas</h3>
+                <h3 className="font-semibold text-sm">{goalLabel}</h3>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   {format(new Date(goal.start_date), 'dd MMM', { locale: es })} — {format(new Date(goal.end_date), 'dd MMM yyyy', { locale: es })}
