@@ -257,12 +257,6 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
             <StatsCard label="Show Rate" value={`${stats.showRate.toFixed(0)}%`} sub={`${stats.noShows} no shows`} icon={TrendingUp} />
             <StatsCard label="Close Rate" value={`${stats.closeRate.toFixed(0)}%`} sub={`${stats.sold} ventas`} icon={CheckCircle2} />
             <StatsCard label="No Vendidos" value={stats.notSold} sub={`de ${stats.sold + stats.notSold} cerrados`} icon={ThumbsDown} />
-            <StatsCard
-              label="Ventas Cerradas"
-              value={`$${stats.soldValue.toLocaleString('en', { maximumFractionDigits: 0 })}`}
-              sub={`${stats.sold} ventas`}
-              icon={DollarSign}
-            />
           </div>
 
           {/* Lead source breakdown */}
