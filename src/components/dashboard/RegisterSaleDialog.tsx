@@ -263,6 +263,7 @@ export const RegisterSaleDialog = ({
       num_installments: numInstallments,
       installments_paid: installmentsPaid,
       installment_amount: installmentAmount || undefined,
+      payment_method: paymentMethod || undefined,
     };
 
     if (source === 'ad' && selectedAd) {
