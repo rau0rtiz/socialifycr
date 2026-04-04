@@ -20,6 +20,11 @@ export interface MessageSale {
   message_platform: string | null;
   status: 'completed' | 'pending' | 'cancelled';
   closer_name: string | null;
+  payment_scheme_id: string | null;
+  total_sale_amount: number | null;
+  num_installments: number | null;
+  installments_paid: number | null;
+  installment_amount: number | null;
   created_at: string;
 }
 
