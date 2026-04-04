@@ -78,8 +78,13 @@ export const useUserRole = (): UserRoleData => {
   const clientAccess = clientAccessData || [];
 
   // Agency users are those with owner, admin, or manager system roles
-  const isAgency = systemRole === 'owner' || systemRole === 'admin' || systemRole === 'manager';
+  // Media buyer, closer, setter can see all tools but not manage clients/team
+  const isAgency = systemRole === 'owner' || systemRole === 'admin' || systemRole === 'manager'
+    || systemRole === 'media_buyer' || systemRole === 'closer' || systemRole === 'setter';
   
+  // Whether user can manage clients, team members, brand settings
+  const canManage = systemRole === 'owner' || systemRole === 'admin' || systemRole === 'manager';
+
   // Client users are those without agency roles but with client access
   // OR those with analyst/viewer system roles
   const isClient = !isAgency && (clientAccess.length > 0 || systemRole === 'analyst' || systemRole === 'viewer');
