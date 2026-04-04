@@ -422,12 +422,14 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
             </div>
             <Separator />
             <div>
-              <Label className="text-[10px] mb-1.5 block text-muted-foreground">Notas / Sensación del día</Label>
+              <Label className="text-[10px] mb-1.5 block text-muted-foreground">
+                Notas / Sensación del día <span className="text-destructive">*</span>
+              </Label>
               <Textarea
                 value={dayNotes}
                 onChange={e => setDayNotes(e.target.value)}
-                placeholder="¿Cómo estuvo el día? ¿Qué observaste?"
-                className="min-h-[80px] text-sm"
+                placeholder="¿Cómo estuvo el día? ¿Qué observaste? (obligatorio)"
+                className={cn('min-h-[80px] text-sm', !dayNotes.trim() && 'border-destructive/50')}
               />
             </div>
           </div>
