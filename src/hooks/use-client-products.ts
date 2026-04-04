@@ -6,8 +6,19 @@ export interface ClientProduct {
   client_id: string;
   name: string;
   price: number | null;
+  cost: number | null;
   currency: string;
+  description: string | null;
   created_at: string;
+  updated_at: string;
+}
+
+export interface ProductInput {
+  name: string;
+  price?: number | null;
+  cost?: number | null;
+  currency?: string;
+  description?: string;
 }
 
 export const useClientProducts = (clientId: string | null) => {
@@ -29,7 +40,7 @@ export const useClientProducts = (clientId: string | null) => {
   });
 
   const addProduct = useMutation({
-    mutationFn: async (input: { name: string; price?: number; currency?: string }) => {
+    mutationFn: async (input: ProductInput) => {
       if (!clientId) throw new Error('No client');
       const { data, error } = await supabase
         .from('client_products' as any)
@@ -37,7 +48,9 @@ export const useClientProducts = (clientId: string | null) => {
           client_id: clientId,
           name: input.name.trim(),
           price: input.price ?? null,
+          cost: input.cost ?? null,
           currency: input.currency || 'CRC',
+          description: input.description?.trim() || null,
         } as any)
         .select()
         .single();
@@ -49,9 +62,43 @@ export const useClientProducts = (clientId: string | null) => {
     },
   });
 
+  const updateProduct = useMutation({
+    mutationFn: async ({ id, ...input }: ProductInput & { id: string }) => {
+      const { error } = await supabase
+        .from('client_products' as any)
+        .update({
+          name: input.name.trim(),
+          price: input.price ?? null,
+          cost: input.cost ?? null,
+          currency: input.currency || 'CRC',
+          description: input.description?.trim() || null,
+        } as any)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-products', clientId] });
+    },
+  });
+
+  const deleteProduct = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('client_products' as any)
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-products', clientId] });
+    },
+  });
+
   return {
     products: query.data || [],
     isLoading: query.isLoading,
     addProduct,
+    updateProduct,
+    deleteProduct,
   };
 };
