@@ -254,6 +254,19 @@ export const RegisterSaleDialog = ({
     ? [product, ...productNames]
     : productNames;
 
+  // Auto-fill amount when selecting a product with a price
+  const handleProductChange = (v: string) => {
+    const selectedName = v === '_none' ? '' : v;
+    setProduct(selectedName);
+    if (selectedName) {
+      const matched = products.find(p => p.name === selectedName);
+      if (matched?.price != null && !amount) {
+        setAmount(String(matched.price));
+        setCurrency(matched.currency as 'CRC' | 'USD');
+      }
+    }
+  };
+
   const sourceLabel = SOURCE_OPTIONS.find(o => o.value === source)?.label || source;
 
   // Step titles and descriptions
@@ -476,13 +489,23 @@ export const RegisterSaleDialog = ({
                   </div>
                 ) : (
                   <div className="flex gap-2">
-                    <Select value={product || '_none'} onValueChange={v => setProduct(v === '_none' ? '' : v)}>
+                    <Select value={product || '_none'} onValueChange={handleProductChange}>
                       <SelectTrigger className="h-10 text-sm flex-1"><SelectValue placeholder="Opcional" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none">Sin producto</SelectItem>
-                        {allProductOptions.map(name => (
-                          <SelectItem key={name} value={name}>{name}</SelectItem>
-                        ))}
+                        {allProductOptions.map(name => {
+                          const matched = products.find(p => p.name === name);
+                          return (
+                            <SelectItem key={name} value={name}>
+                              {name}
+                              {matched?.price != null && (
+                                <span className="text-muted-foreground ml-1">
+                                  ({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})
+                                </span>
+                              )}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewProduct(true)}>

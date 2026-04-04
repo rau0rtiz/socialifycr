@@ -9,6 +9,7 @@ import { ClosureRateWidget } from '@/components/ventas/ClosureRateWidget';
 import { PipelineSummaryWidget, PipelinePeriod } from '@/components/ventas/PipelineSummaryWidget';
 import { SetterDailyCalendar } from '@/components/ventas/SetterDailyCalendar';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
+import { ProductsManager } from '@/components/ventas/ProductsManager';
 
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
@@ -151,9 +152,12 @@ const Ventas = () => {
           accentColor={selectedClient.accent_color || undefined}
         />
 
-        {/* === MIND COACH: Setter Daily Calendar === */}
+        {/* === MIND COACH: Setter Daily Calendar + Products side by side === */}
         {isMindCoach && (
-          <SetterDailyCalendar clientId={selectedClient.id} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SetterDailyCalendar clientId={selectedClient.id} />
+            <ProductsManager clientId={selectedClient.id} />
+          </div>
         )}
 
         {/* Ad ranking - at top for most clients, hidden for Mind Coach here (shown at bottom) */}
