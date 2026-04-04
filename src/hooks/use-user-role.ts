@@ -13,6 +13,7 @@ interface ClientAccess {
 interface UserRoleData {
   isAgency: boolean;
   isClient: boolean;
+  canManage: boolean;
   systemRole: SystemRole | null;
   clientAccess: ClientAccess[];
   loading: boolean;
