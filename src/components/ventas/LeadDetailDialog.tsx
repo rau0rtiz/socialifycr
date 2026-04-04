@@ -52,6 +52,8 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
     checklist_testimonials: false,
   });
   const [dirty, setDirty] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Sync checklist when appointment changes
   useEffect(() => {
