@@ -64,8 +64,9 @@ interface AdRankItem {
   roas: number | null;
 }
 
-export const AdSalesRanking = ({ clientId, hasAdAccount }: AdSalesRankingProps) => {
-  const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
+export const AdSalesRanking = ({ clientId, hasAdAccount, datePreset: externalPreset }: AdSalesRankingProps) => {
+  const [internalPreset, setInternalPreset] = useState<DatePresetKey>('last_30d');
+  const datePreset = externalPreset ?? internalPreset;
   const { data: allAdsResult, isLoading: adsLoading } = useAllAds(clientId, hasAdAccount, datePreset);
   const allAds = allAdsResult?.ads || [];
   const adCurrency = allAdsResult?.currency || 'USD';
