@@ -514,7 +514,7 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount, datePreset: externa
   
   // Fetch campaign goals for this client
   const { data: campaignGoalsData } = useCampaignGoals(clientId, defaultGoal);
-  const setDefaultGoalMutation = useSetDefaultCampaignGoal();
+  
 
   const {
     data: campaignsResult,
