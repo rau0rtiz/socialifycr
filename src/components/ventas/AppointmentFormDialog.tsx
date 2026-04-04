@@ -10,8 +10,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 import { AppointmentInput, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useClientSetters } from '@/hooks/use-client-setters';
+import { useClientClosers } from '@/hooks/use-client-closers';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { X, Plus, ChevronLeft, ChevronRight, User, CalendarDays, Megaphone, PhoneCall, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
