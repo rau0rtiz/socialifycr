@@ -95,13 +95,11 @@ export const RegisterSaleDialog = ({
   const isEditing = !!editingSale;
   const isPrefilled = !!prefill && !editingSale;
 
-  // New flow:
-  // Standard: Step 0 = Product + Payment, Step 1 = Lead info + source, Step 2 = Ad (if source=ad) / Notes
-  // Prefilled: Step 0 = Amount confirm, Step 1 = Notes
-  const needsAdStep = !isPrefilled && source === 'ad' && hasAdAccount;
+  // All flows use the same steps: Product → Info → Ad (optional) → Notes
+  // Prefilled data just pre-populates fields
+  const needsAdStep = source === 'ad' && hasAdAccount;
 
   const buildSteps = () => {
-    if (isPrefilled) return ['Monto', 'Notas'];
     const steps = ['Producto', 'Información'];
     if (needsAdStep) steps.push('Anuncio');
     steps.push('Notas');
@@ -212,10 +210,6 @@ export const RegisterSaleDialog = ({
   };
 
   const canAdvance = (s: number) => {
-    if (isPrefilled) {
-      if (s === 0) return !!amount;
-      return true;
-    }
     // Step 0: product not strictly required but encouraged
     if (s === 0) return true;
     // Step 1: source required, amount required
@@ -241,7 +235,7 @@ export const RegisterSaleDialog = ({
       toast.error('El monto es requerido');
       return;
     }
-    if (!isPrefilled && !source) {
+    if (!source) {
       toast.error('La fuente es requerida');
       return;
     }
@@ -325,21 +319,14 @@ export const RegisterSaleDialog = ({
   };
 
   const getStepTitle = () => {
-    if (isPrefilled) {
-      return step === 0 ? '¿Cuánto fue la venta?' : 'Notas adicionales';
-    }
     if (step === 0) return '¿Qué se vendió?';
     if (step === 1) return 'Información del cliente';
-    // Ad step or Notes step
     const adStepIdx = needsAdStep ? 2 : -1;
     if (step === adStepIdx) return 'Vincular anuncio';
     return 'Detalles finales';
   };
 
   const getStepDescription = () => {
-    if (isPrefilled) {
-      return step === 0 ? 'Ingresa el monto y la fecha de la venta' : 'Plataforma del mensaje y notas';
-    }
     if (step === 0) return 'Selecciona el producto y esquema de pago';
     if (step === 1) return 'Nombre, contacto, closer y fuente de la venta';
     const adStepIdx = needsAdStep ? 2 : -1;
@@ -366,26 +353,16 @@ export const RegisterSaleDialog = ({
           </DialogHeader>
 
           {/* Prefilled summary badges */}
-          {isPrefilled && step === 0 && (
+          {isPrefilled && (
             <div className="flex flex-wrap justify-center gap-2">
               {prefill?.customer_name && (
                 <Badge variant="secondary" className="gap-1.5 text-xs">
                   <User className="h-3 w-3" /> {prefill.customer_name}
                 </Badge>
               )}
-              {prefill?.product && (
+              {prefill?.ad_name && (
                 <Badge variant="secondary" className="gap-1.5 text-xs">
-                  <Package className="h-3 w-3" /> {prefill.product}
-                </Badge>
-              )}
-              {source && (
-                <Badge variant="secondary" className="gap-1.5 text-xs">
-                  <Tag className="h-3 w-3" /> {SOURCE_OPTIONS.find(o => o.value === source)?.label || source}
-                </Badge>
-              )}
-              {selectedAd && (
-                <Badge variant="secondary" className="gap-1.5 text-xs">
-                  <Megaphone className="h-3 w-3" /> {selectedAd.name}
+                  <Megaphone className="h-3 w-3" /> {prefill.ad_name}
                 </Badge>
               )}
             </div>
@@ -412,69 +389,8 @@ export const RegisterSaleDialog = ({
 
         {/* Content area */}
         <div className="px-6 overflow-y-auto" style={{ minHeight: '200px', maxHeight: '50vh' }}>
-          {/* === PREFILLED FLOW === */}
-          {isPrefilled && step === 0 && (
-            <div className="space-y-4 py-4">
-              <div className="flex gap-2">
-                <div className="flex-1 space-y-2">
-                  <Label className="text-xs font-medium">Monto *</Label>
-                  <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-10 text-sm" autoFocus />
-                </div>
-                <div className="w-24 space-y-2">
-                  <Label className="text-xs font-medium">Moneda</Label>
-                  <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CRC">₡ CRC</SelectItem>
-                      <SelectItem value="USD">$ USD</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Fecha</Label>
-                <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-10 text-sm" />
-              </div>
-              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
-            </div>
-          )}
-
-          {isPrefilled && step === 1 && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Closer / Vendedor</Label>
-                <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
-                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿Quién cerró la venta?" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
-                    {closerName && !closers.some(c => c.fullName === closerName) && (
-                      <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>
-                    )}
-                    {closers.map(c => (
-                      <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Label className="text-xs font-medium">Plataforma del mensaje</Label>
-                <Select value={messagePlatform} onValueChange={setMessagePlatform}>
-                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
-                  <SelectContent>
-                    {PLATFORM_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Notas</Label>
-                <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="text-sm" />
-              </div>
-            </div>
-          )}
-
-          {/* === STANDARD FLOW === */}
           {/* Step 0: Product + Payment Scheme */}
-          {!isPrefilled && step === 0 && (
+          {step === 0 && (
             <div className="space-y-4 py-4">
               {/* Product */}
               <div className="space-y-2">
@@ -600,7 +516,7 @@ export const RegisterSaleDialog = ({
           )}
 
           {/* Step 1: Lead info — name, phone, email, closer, source, date */}
-          {!isPrefilled && step === 1 && (
+          {step === 1 && (
             <div className="space-y-3 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
@@ -676,7 +592,7 @@ export const RegisterSaleDialog = ({
           )}
 
           {/* Ad selection step (only if source=ad) */}
-          {!isPrefilled && step === adStepIndex && needsAdStep && (
+          {step === adStepIndex && needsAdStep && (
             <div className="space-y-3 py-4">
               <AdGridSelector
                 ads={allAds}
@@ -689,7 +605,7 @@ export const RegisterSaleDialog = ({
           )}
 
           {/* Notes step (last step for standard flow) */}
-          {!isPrefilled && step === notesStepIndex && (
+          {step === notesStepIndex && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Plataforma del mensaje</Label>
