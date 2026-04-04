@@ -143,7 +143,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
       await updateAppointment.mutateAsync({
         id: noSaleTarget.id,
         status: 'not_sold' as any,
-        notes: noSaleReason ? `❌ Motivo: ${noSaleReason}` : noSaleTarget.notes,
+        not_sold_reason: noSaleReason || null,
       } as any);
       toast.success('Lead marcado como no vendido');
       setNoSaleTarget(null);
