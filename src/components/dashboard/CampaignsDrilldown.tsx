@@ -190,6 +190,14 @@ const CampaignGridCard = ({
           <p className="text-[9px] text-muted-foreground">Costo/Resultado</p>
           <p className="text-xs font-semibold">{campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult, currency) : '-'}</p>
         </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground">LPV</p>
+          <p className="text-xs font-semibold">{formatNumber(campaign.landingPageViews)}</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground">Costo/LPV</p>
+          <p className="text-xs font-semibold">{campaign.landingPageViews > 0 ? formatCurrency(campaign.spend / campaign.landingPageViews, currency) : '-'}</p>
+        </div>
       </div>
     </div>
   );
