@@ -288,9 +288,7 @@ const Ventas = () => {
 
         {/* === MIND COACH: Setter Daily Calendar + Products side by side === */}
         {isMindCoach && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SetterDailyCalendar clientId={selectedClient.id} />
-          </div>
+          <SetterDailyCalendar clientId={selectedClient.id} />
         )}
 
         {/* Ad ranking - at top for most clients, hidden for Mind Coach here (shown at bottom) */}
