@@ -86,9 +86,15 @@ export const RegisterSaleDialog = ({
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<string>('completed');
   const [closerName, setCloserName] = useState('');
+  const [selectedSchemeId, setSelectedSchemeId] = useState<string>('');
+  const [numInstallments, setNumInstallments] = useState(1);
+  const [installmentsPaid, setInstallmentsPaid] = useState(1);
+  const [installmentAmount, setInstallmentAmount] = useState(0);
+  const [totalSaleAmount, setTotalSaleAmount] = useState(0);
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
+  const { data: allSchemes = [] } = useClientPaymentSchemes(clientId || null);
   const productNames = products.map(p => p.name);
 
   const isEditing = !!editingSale;
