@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 import { AppointmentInput, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useClientSetters } from '@/hooks/use-client-setters';
@@ -12,6 +14,8 @@ import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { X, Plus, ChevronLeft, ChevronRight, User, CalendarDays, Megaphone, PhoneCall, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface AppointmentFormDialogProps {
   open: boolean;
