@@ -9,6 +9,7 @@ export interface ClientProduct {
   cost: number | null;
   currency: string;
   description: string | null;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -19,6 +20,7 @@ export interface ProductInput {
   cost?: number | null;
   currency?: string;
   description?: string;
+  photo_url?: string | null;
 }
 
 export const useClientProducts = (clientId: string | null) => {
@@ -51,6 +53,7 @@ export const useClientProducts = (clientId: string | null) => {
           cost: input.cost ?? null,
           currency: input.currency || 'CRC',
           description: input.description?.trim() || null,
+          photo_url: input.photo_url ?? null,
         } as any)
         .select()
         .single();
@@ -72,6 +75,7 @@ export const useClientProducts = (clientId: string | null) => {
           cost: input.cost ?? null,
           currency: input.currency || 'CRC',
           description: input.description?.trim() || null,
+          photo_url: input.photo_url ?? null,
         } as any)
         .eq('id', id);
       if (error) throw error;
