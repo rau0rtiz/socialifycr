@@ -63,13 +63,17 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
   const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, undefined, periodStartIso);
   const { setterNames: existingSetters } = useClientSetters(clientId);
 
-  // Split appointments
+  // Split appointments into sections
   const activeAppointments = useMemo(() => 
-    appointments.filter(a => a.status !== 'not_sold' as any), 
+    appointments.filter(a => a.status !== 'not_sold' as any && a.status !== 'sold' && a.status !== 'no_show'), 
     [appointments]
   );
   const lostAppointments = useMemo(() => 
     appointments.filter(a => (a.status as string) === 'not_sold'), 
+    [appointments]
+  );
+  const noShowAppointments = useMemo(() => 
+    appointments.filter(a => a.status === 'no_show'), 
     [appointments]
   );
 
