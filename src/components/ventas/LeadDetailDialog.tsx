@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
-import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save } from 'lucide-react';
+import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save, ShoppingCart, ThumbsDown, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -14,6 +13,7 @@ interface LeadDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   appointment: SetterAppointment | null;
   onUpdateChecklist?: (id: string, updates: Record<string, any>) => void;
+  onStatusChange?: (id: string, status: string) => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -40,7 +40,7 @@ const CHECKLIST_ITEMS = [
   { key: 'checklist_testimonials', label: 'Ya se enviaron los testimonios' },
 ];
 
-export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist }: LeadDetailDialogProps) => {
+export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange }: LeadDetailDialogProps) => {
   // Local checklist state - hooks must be before early return
   const [checklist, setChecklist] = useState({
     checklist_quiz: false,
@@ -205,6 +205,44 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
               </div>
             )}
           </div>
+
+          {/* Action buttons */}
+          {onStatusChange && apt.status !== 'sold' && (apt.status as string) !== 'not_sold' && apt.status !== 'no_show' && (
+            <div className="rounded-lg border border-border p-3 space-y-2.5">
+              <p className="text-xs font-medium text-muted-foreground">Resultado de la llamada</p>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  size="sm"
+                  className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => { onStatusChange(apt.id, 'sold'); onOpenChange(false); }}
+                >
+                  <ShoppingCart className="h-3.5 w-3.5 mr-1" />
+                  Venta
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 text-xs border-rose-500/40 text-rose-700 hover:bg-rose-500/10 dark:text-rose-400"
+                  onClick={() => { onStatusChange(apt.id, 'not_sold'); onOpenChange(false); }}
+                >
+                  <ThumbsDown className="h-3.5 w-3.5 mr-1" />
+                  No Venta
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 text-xs border-red-500/40 text-red-700 hover:bg-red-500/10 dark:text-red-400"
+                  onClick={() => { onStatusChange(apt.id, 'no_show'); onOpenChange(false); }}
+                >
+                  <XCircle className="h-3.5 w-3.5 mr-1" />
+                  No Show
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground text-center">
+                Venta y No Venta implican que sí hubo llamada
+              </p>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
