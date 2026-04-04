@@ -131,6 +131,9 @@ export const RegisterSaleDialog = ({
     setTotalSaleAmount(0);
     setCustomerPhone('');
     setCustomerEmail('');
+    setPaymentMethod('');
+    setShowNewPaymentMethod(false);
+    setNewPaymentMethodName('');
     if (editingSale) {
       setAmount(String(editingSale.amount));
       setCurrency(editingSale.currency);
