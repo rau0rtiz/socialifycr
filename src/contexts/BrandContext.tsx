@@ -8,6 +8,7 @@ export interface Client {
   name: string;
   industry: string | null;
   logo_url: string | null;
+  banner_url: string | null;
   primary_color: string | null;
   accent_color: string | null;
   ai_context: string | null;
