@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
-import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save } from 'lucide-react';
+import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save, ShoppingCart, ThumbsDown, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -14,6 +13,7 @@ interface LeadDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   appointment: SetterAppointment | null;
   onUpdateChecklist?: (id: string, updates: Record<string, any>) => void;
+  onStatusChange?: (id: string, status: string) => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
