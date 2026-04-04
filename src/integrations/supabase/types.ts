@@ -991,6 +991,7 @@ export type Database = {
           message_platform: string | null
           notes: string | null
           num_installments: number | null
+          payment_method: string | null
           payment_scheme_id: string | null
           product: string | null
           sale_date: string
@@ -1017,6 +1018,7 @@ export type Database = {
           message_platform?: string | null
           notes?: string | null
           num_installments?: number | null
+          payment_method?: string | null
           payment_scheme_id?: string | null
           product?: string | null
           sale_date?: string
@@ -1043,6 +1045,7 @@ export type Database = {
           message_platform?: string | null
           notes?: string | null
           num_installments?: number | null
+          payment_method?: string | null
           payment_scheme_id?: string | null
           product?: string | null
           sale_date?: string
