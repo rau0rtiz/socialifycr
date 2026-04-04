@@ -290,7 +290,6 @@ const Ventas = () => {
         {isMindCoach && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <SetterDailyCalendar clientId={selectedClient.id} />
-            <ProductsManager clientId={selectedClient.id} />
           </div>
         )}
 
