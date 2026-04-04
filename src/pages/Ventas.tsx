@@ -112,6 +112,7 @@ const Ventas = () => {
 
   // Get all-time sales for the goal bar (current year)
   const { sales: allSales, summary } = useSalesTracking(clientId);
+  const { products: clientProducts } = useClientProducts(clientId);
 
   // Daily reports for Mind Coach
   const { reports: dailyReports } = useSetterDailyReports(clientId);
