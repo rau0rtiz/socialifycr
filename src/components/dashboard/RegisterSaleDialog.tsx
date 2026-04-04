@@ -586,7 +586,46 @@ export const RegisterSaleDialog = ({
                 )}
               </div>
 
-              {/* Customer */}
+              {/* Payment scheme selector */}
+              {product && productSchemes.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5" /> Esquema de pago
+                  </Label>
+                  <Select value={selectedSchemeId || '_none'} onValueChange={handleSchemeChange}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Seleccionar esquema" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Pago directo (sin esquema)</SelectItem>
+                      {productSchemes.map(s => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name} — {s.currency === 'CRC' ? '₡' : '$'}{s.total_price.toLocaleString()}
+                          {s.num_installments > 1 && ` (${s.num_installments}x ${s.currency === 'CRC' ? '₡' : '$'}${s.installment_amount.toLocaleString()})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedSchemeId && numInstallments > 1 && (
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px]">Cuotas pagadas al registrar</Label>
+                      <Select value={String(installmentsPaid)} onValueChange={v => {
+                        const paid = parseInt(v);
+                        setInstallmentsPaid(paid);
+                        setAmount(String(installmentAmount * paid));
+                      }}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: numInstallments }, (_, i) => (
+                            <SelectItem key={i + 1} value={String(i + 1)}>
+                              {i + 1} de {numInstallments} cuotas
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Cliente</Label>
                 <Input placeholder="Opcional" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="h-10 text-sm" />
