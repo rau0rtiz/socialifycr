@@ -10,6 +10,7 @@ import { useSalesGoal } from '@/hooks/use-sales-goals';
 import { toast } from 'sonner';
 import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useBrand } from '@/contexts/BrandContext';
 
 interface SalesGoalBarProps {
   clientId: string;
