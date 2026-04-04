@@ -605,7 +605,7 @@ export const RegisterSaleDialog = ({
           )}
 
           {/* Notes step (last step for standard flow) */}
-          {!isPrefilled && step === notesStepIndex && (
+          {step === notesStepIndex && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Plataforma del mensaje</Label>
