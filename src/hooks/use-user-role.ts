@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type SystemRole = 'owner' | 'admin' | 'manager' | 'analyst' | 'viewer';
+export type SystemRole = 'owner' | 'admin' | 'manager' | 'media_buyer' | 'closer' | 'setter' | 'analyst' | 'viewer';
 export type ClientRole = 'account_manager' | 'editor' | 'viewer';
 
 interface ClientAccess {
