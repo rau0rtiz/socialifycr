@@ -11,14 +11,17 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { AppointmentInput, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useClientSetters } from '@/hooks/use-client-setters';
 import { useClientClosers } from '@/hooks/use-client-closers';
+import { useClientProducts } from '@/hooks/use-client-products';
+import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { X, Plus, ChevronLeft, ChevronRight, User, CalendarDays, Megaphone, PhoneCall, Clock } from 'lucide-react';
+import { X, Plus, ChevronLeft, ChevronRight, User, CalendarDays, Megaphone, PhoneCall, Clock, Package, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ScrollTimePicker } from '@/components/ui/scroll-time-picker';
+import { toast } from 'sonner';
 
 interface AppointmentFormDialogProps {
   open: boolean;
@@ -39,13 +42,6 @@ const SOURCE_OPTIONS = [
   { value: 'other', label: 'Otro' },
 ];
 
-const STEP_META = [
-  { icon: User, label: 'Lead' },
-  { icon: CalendarDays, label: 'Asignar' },
-  { icon: Megaphone, label: 'Fuente' },
-  { icon: Megaphone, label: 'Anuncio' },
-];
-
 export const AppointmentFormDialog = ({
   open,
   onOpenChange,
@@ -62,21 +58,26 @@ export const AppointmentFormDialog = ({
   const [leadPhone, setLeadPhone] = useState('');
   const [leadEmail, setLeadEmail] = useState('');
   const [leadContext, setLeadContext] = useState('');
-  // Step 1: Setter + call date
+  // Step 1: Product + Payment Scheme
+  const [product, setProduct] = useState('');
+  const [selectedSchemeId, setSelectedSchemeId] = useState('');
+  const [estimatedValue, setEstimatedValue] = useState(0);
+  const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
+  // Step 2: Setter + call date
   const [setterName, setSetterName] = useState('');
   const [showNewSetter, setShowNewSetter] = useState(false);
   const [newSetterName, setNewSetterName] = useState('');
   const [salesCallDate, setSalesCallDate] = useState('');
   const [salesCallTime, setSalesCallTime] = useState('10:00');
-  // Step 2: Source
+  // Step 3: Source
   const [source, setSource] = useState('ads');
-  // Step 3: Ad (conditional)
+  // Step 4: Ad (conditional)
   const [selectedAd, setSelectedAd] = useState<AllAdItem | null>(null);
 
-
-  // Draft persistence: save form state when dialog closes without submitting
+  // Draft persistence
   const draftRef = useRef<{
     leadName: string; leadPhone: string; leadEmail: string; leadContext: string;
+    product: string; selectedSchemeId: string; estimatedValue: number; currency: 'CRC' | 'USD';
     setterName: string; salesCallDate: string; salesCallTime: string;
     source: string; selectedAd: AllAdItem | null; step: number;
   } | null>(null);
@@ -84,9 +85,12 @@ export const AppointmentFormDialog = ({
 
   const { addSetter: addSetterMutation } = useClientSetters(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
+  const { products: clientProducts, addProduct } = useClientProducts(clientId || null);
+  const { data: allSchemes = [] } = useClientPaymentSchemes(clientId || null);
 
   const needsAdStep = source === 'ads' && hasAdAccount;
-  const totalSteps = needsAdStep ? 4 : 3;
+  // Steps: 0=Lead, 1=Product, 2=Setter, 3=Source, 4=Ad(conditional)
+  const totalSteps = needsAdStep ? 5 : 4;
   const lastStep = totalSteps - 1;
 
   const { data: adsResult, isLoading: adsLoading } = useAllAds(
@@ -96,16 +100,53 @@ export const AppointmentFormDialog = ({
   const adsList = adsResult?.ads || [];
   const adsCurrency = adsResult?.currency || 'USD';
 
+  const selectedProduct = clientProducts.find(p => p.name === product);
+  const productSchemes = selectedProduct
+    ? allSchemes.filter(s => s.product_id === selectedProduct.id)
+    : [];
+
+  const handleProductChange = (v: string) => {
+    const selectedName = v === '_none' ? '' : v;
+    setProduct(selectedName);
+    setSelectedSchemeId('');
+    if (selectedName) {
+      const matched = clientProducts.find(p => p.name === selectedName);
+      if (matched?.price != null) {
+        setEstimatedValue(matched.price);
+        setCurrency(matched.currency as 'CRC' | 'USD');
+      } else {
+        setEstimatedValue(0);
+      }
+    } else {
+      setEstimatedValue(0);
+    }
+  };
+
+  const handleSchemeChange = (schemeId: string) => {
+    if (schemeId === '_none') {
+      setSelectedSchemeId('');
+      if (selectedProduct?.price != null) {
+        setEstimatedValue(selectedProduct.price);
+      }
+      return;
+    }
+    const scheme = allSchemes.find(s => s.id === schemeId);
+    if (!scheme) return;
+    setSelectedSchemeId(schemeId);
+    setEstimatedValue(scheme.total_price);
+    setCurrency(scheme.currency as 'CRC' | 'USD');
+  };
+
   // Save draft when closing without submitting
   const handleOpenChange = useCallback((nextOpen: boolean) => {
     if (!nextOpen && !didSubmitRef.current && !editing) {
       const hasData = leadName.trim() || leadPhone.trim() || leadEmail.trim() || leadContext.trim();
       if (hasData) {
-        draftRef.current = { leadName, leadPhone, leadEmail, leadContext, setterName, salesCallDate, salesCallTime, source, selectedAd, step };
+        draftRef.current = { leadName, leadPhone, leadEmail, leadContext, product, selectedSchemeId, estimatedValue, currency, setterName, salesCallDate, salesCallTime, source, selectedAd, step };
       }
     }
     onOpenChange(nextOpen);
-  }, [leadName, leadPhone, leadEmail, leadContext, setterName, salesCallDate, salesCallTime, source, selectedAd, step, editing, onOpenChange]);
+  }, [leadName, leadPhone, leadEmail, leadContext, product, selectedSchemeId, estimatedValue, currency, setterName, salesCallDate, salesCallTime, source, selectedAd, step, editing, onOpenChange]);
 
   useEffect(() => {
     if (!open) return;
@@ -118,6 +159,10 @@ export const AppointmentFormDialog = ({
       setLeadPhone(editing.lead_phone || '');
       setLeadEmail(editing.lead_email || '');
       setLeadContext((editing as any).lead_context || '');
+      setProduct((editing as any).product || '');
+      setSelectedSchemeId('');
+      setEstimatedValue(editing.estimated_value || 0);
+      setCurrency(editing.currency || 'CRC');
       setSetterName(editing.setter_name || '');
       if (editing.sales_call_date) {
         const d = new Date(editing.sales_call_date);
@@ -142,13 +187,16 @@ export const AppointmentFormDialog = ({
         setSelectedAd(null);
       }
     } else if (draftRef.current) {
-      // Restore draft
       const d = draftRef.current;
       setStep(d.step);
       setLeadName(d.leadName);
       setLeadPhone(d.leadPhone);
       setLeadEmail(d.leadEmail);
       setLeadContext(d.leadContext);
+      setProduct(d.product);
+      setSelectedSchemeId(d.selectedSchemeId);
+      setEstimatedValue(d.estimatedValue);
+      setCurrency(d.currency);
       setSetterName(d.setterName);
       setSalesCallDate(d.salesCallDate);
       setSalesCallTime(d.salesCallTime);
@@ -160,6 +208,10 @@ export const AppointmentFormDialog = ({
       setLeadPhone('');
       setLeadEmail('');
       setLeadContext('');
+      setProduct('');
+      setSelectedSchemeId('');
+      setEstimatedValue(0);
+      setCurrency('CRC');
       setSetterName('');
       setSalesCallDate('');
       setSalesCallTime('10:00');
@@ -179,6 +231,22 @@ export const AppointmentFormDialog = ({
       } catch {
         // Ignore duplicate errors
       }
+    }
+  };
+
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [newProductName, setNewProductName] = useState('');
+
+  const handleAddProduct = async () => {
+    if (!newProductName.trim()) return;
+    try {
+      const result = await addProduct.mutateAsync({ name: newProductName.trim() });
+      setProduct(result.name);
+      setShowNewProduct(false);
+      setNewProductName('');
+      toast.success('Producto creado');
+    } catch {
+      toast.error('Error creando producto');
     }
   };
 
@@ -210,9 +278,10 @@ export const AppointmentFormDialog = ({
         ? new Date(`${salesCallDate}T${salesCallTime}:00`).toISOString()
         : undefined,
       setter_name: setterName || undefined,
-      estimated_value: 0,
-      currency: 'CRC',
+      estimated_value: estimatedValue,
+      currency,
       source,
+      product: product || undefined,
       ad_campaign_id: selectedAd?.campaignId || undefined,
       ad_campaign_name: selectedAd?.campaignName || undefined,
       ad_id: selectedAd?.id || undefined,
@@ -220,8 +289,15 @@ export const AppointmentFormDialog = ({
     } as any);
   };
 
+  // Step indices
+  const productStepIdx = 1;
+  const setterStepIdx = 2;
+  const sourceStepIdx = 3;
+  const adStepIdx = needsAdStep ? 4 : -1;
+
   const stepTitles = [
     'Información del Lead',
+    'Producto / Servicio',
     'Asignar Vendedor',
     'Fuente del Lead',
     ...(needsAdStep ? ['Vincular Anuncio'] : []),
@@ -229,10 +305,15 @@ export const AppointmentFormDialog = ({
 
   const stepDescriptions = [
     'Nombre, contacto y contexto del lead',
+    'Selecciona el producto de interés y esquema de pago',
     'Asigna un vendedor y programa la llamada',
     '¿De dónde vino este lead?',
     ...(needsAdStep ? ['Selecciona el anuncio que originó este lead'] : []),
   ];
+
+  const allProductOptions = product && !clientProducts.some(p => p.name === product)
+    ? [product, ...clientProducts.map(p => p.name)]
+    : clientProducts.map(p => p.name);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -314,8 +395,102 @@ export const AppointmentFormDialog = ({
             </div>
           )}
 
-          {/* Step 1: Setter + Sales Call Date */}
-          {step === 1 && (
+          {/* Step 1: Product + Payment Scheme */}
+          {step === productStepIdx && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5" /> Producto de interés
+                </Label>
+                {showNewProduct ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nombre del producto"
+                      value={newProductName}
+                      onChange={e => setNewProductName(e.target.value)}
+                      className="h-10 text-sm flex-1"
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }}
+                    />
+                    <Button size="sm" className="h-10 text-xs" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>
+                      {addProduct.isPending ? '...' : 'OK'}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewProduct(false)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Select value={product || '_none'} onValueChange={handleProductChange}>
+                      <SelectTrigger className="h-10 text-sm flex-1 min-w-0"><SelectValue placeholder="Seleccionar producto" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">Sin producto</SelectItem>
+                        {allProductOptions.map(name => {
+                          const matched = clientProducts.find(p => p.name === name);
+                          return (
+                            <SelectItem key={name} value={name}>
+                              <div className="flex items-center gap-2">
+                                {matched?.photo_url && (
+                                  <img src={matched.photo_url} className="w-5 h-5 rounded object-cover" alt="" />
+                                )}
+                                <span className="truncate">{name}</span>
+                                {matched?.price != null && (
+                                  <span className="text-muted-foreground ml-1">
+                                    ({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewProduct(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Payment scheme selector */}
+              {product && productSchemes.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5" /> Esquema de pago
+                  </Label>
+                  <Select value={selectedSchemeId || '_none'} onValueChange={handleSchemeChange}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Seleccionar esquema" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Pago directo (sin esquema)</SelectItem>
+                      {productSchemes.map(s => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name} — {s.currency === 'CRC' ? '₡' : '$'}{s.total_price.toLocaleString()}
+                          {s.num_installments > 1 && ` (${s.num_installments}x ${s.currency === 'CRC' ? '₡' : '$'}${s.installment_amount.toLocaleString()})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Value summary */}
+              {estimatedValue > 0 && (
+                <div className="rounded-lg border border-border bg-muted/30 p-3 text-center">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Valor estimado</p>
+                  <p className="text-lg font-semibold text-foreground">
+                    {currency === 'CRC' ? '₡' : '$'}{estimatedValue.toLocaleString()}
+                  </p>
+                </div>
+              )}
+
+              <p className="text-[11px] text-muted-foreground text-center">
+                {stepDescriptions[step]}
+              </p>
+            </div>
+          )}
+
+          {/* Step 2: Setter + Sales Call Date */}
+          {step === setterStepIdx && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Vendedor Asignado</Label>
@@ -449,8 +624,8 @@ export const AppointmentFormDialog = ({
             </div>
           )}
 
-          {/* Step 2: Source */}
-          {step === 2 && (
+          {/* Step 3: Source */}
+          {step === sourceStepIdx && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Fuente del Lead</Label>
@@ -469,8 +644,8 @@ export const AppointmentFormDialog = ({
             </div>
           )}
 
-          {/* Step 3: Ad selection (conditional) */}
-          {step === 3 && needsAdStep && (
+          {/* Step 4: Ad selection (conditional) */}
+          {step === adStepIdx && needsAdStep && (
             <div className="space-y-3 py-4">
               <AdGridSelector
                 ads={adsList}
