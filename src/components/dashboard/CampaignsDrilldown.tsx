@@ -676,7 +676,7 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount, datePreset: externa
                     mode="range"
                     selected={customRange.from ? { from: customRange.from, to: customRange.to } : undefined}
                     onSelect={(range) => {
-                      setCustomRange({ from: range?.from, to: range?.to });
+                      setInternalCustomRange({ from: range?.from, to: range?.to });
                       if (range?.from && range?.to) {
                         setIsCalendarOpen(false);
                       }
