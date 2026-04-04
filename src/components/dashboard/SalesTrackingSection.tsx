@@ -92,6 +92,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
   }, [showSaleDialog, salePrefill]);
 
   const { sales: allSales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
+  const { generateCollections } = usePaymentCollections(clientId);
 
   // Extract unique setters and products for filters
   const uniqueSetters = useMemo(() => {
