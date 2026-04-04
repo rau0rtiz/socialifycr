@@ -43,7 +43,7 @@ export const InviteClientDialog = ({
 }: InviteClientDialogProps) => {
   const [email, setEmail] = useState('');
   const [inviteeName, setInviteeName] = useState('');
-  const [role, setRole] = useState<'account_manager' | 'editor' | 'viewer'>('viewer');
+  const [role, setRole] = useState<string>('viewer');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
@@ -214,6 +214,9 @@ export const InviteClientDialog = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="account_manager">Account Manager</SelectItem>
+                  <SelectItem value="media_buyer">Media Buyer</SelectItem>
+                  <SelectItem value="closer">Closer</SelectItem>
+                  <SelectItem value="setter">Setter</SelectItem>
                   <SelectItem value="editor">Editor</SelectItem>
                   <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>

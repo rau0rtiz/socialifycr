@@ -1766,7 +1766,13 @@ export type Database = {
       }
     }
     Enums: {
-      client_role: "account_manager" | "editor" | "viewer"
+      client_role:
+        | "account_manager"
+        | "editor"
+        | "viewer"
+        | "media_buyer"
+        | "closer"
+        | "setter"
       connection_status: "active" | "expired" | "revoked" | "pending"
       payment_provider: "tilopay" | "onvopay" | "bac_compra_click"
       payment_status:
@@ -1925,7 +1931,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      client_role: ["account_manager", "editor", "viewer"],
+      client_role: [
+        "account_manager",
+        "editor",
+        "viewer",
+        "media_buyer",
+        "closer",
+        "setter",
+      ],
       connection_status: ["active", "expired", "revoked", "pending"],
       payment_provider: ["tilopay", "onvopay", "bac_compra_click"],
       payment_status: [

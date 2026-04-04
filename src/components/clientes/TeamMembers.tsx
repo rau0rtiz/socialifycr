@@ -18,7 +18,7 @@ import { InviteClientDialog } from './InviteClientDialog';
 interface TeamMember {
   id: string;
   user_id: string;
-  role: 'account_manager' | 'editor' | 'viewer';
+  role: 'account_manager' | 'editor' | 'viewer' | 'media_buyer' | 'closer' | 'setter';
   profile: {
     full_name: string | null;
     email: string | null;
@@ -40,10 +40,13 @@ interface TeamMembersProps {
   clientName: string;
 }
 
-const roleLabels = {
+const roleLabels: Record<string, string> = {
   account_manager: 'Account Manager',
   editor: 'Editor',
   viewer: 'Viewer',
+  media_buyer: 'Media Buyer',
+  closer: 'Closer',
+  setter: 'Setter',
 };
 
 export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
@@ -82,7 +85,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
       const transformedData = (data || []).map((member: any) => ({
         id: member.id,
         user_id: member.user_id,
-        role: member.role as 'account_manager' | 'editor' | 'viewer',
+        role: member.role as TeamMember['role'],
         profile: member.profiles,
       }));
       setMembers(transformedData);
@@ -145,10 +148,10 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
     }
   };
 
-  const handleUpdateRole = async (memberId: string, newRole: 'account_manager' | 'editor' | 'viewer') => {
+  const handleUpdateRole = async (memberId: string, newRole: string) => {
     const { error } = await supabase
       .from('client_team_members')
-      .update({ role: newRole })
+      .update({ role: newRole } as any)
       .eq('id', memberId);
 
     if (error) {
@@ -276,13 +279,16 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
             <div className="flex items-center gap-2">
               <Select
                 value={member.role}
-                onValueChange={(value: 'account_manager' | 'editor' | 'viewer') => handleUpdateRole(member.id, value)}
+                onValueChange={(value) => handleUpdateRole(member.id, value)}
               >
                 <SelectTrigger className="w-32 h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="account_manager">Account Manager</SelectItem>
+                  <SelectItem value="media_buyer">Media Buyer</SelectItem>
+                  <SelectItem value="closer">Closer</SelectItem>
+                  <SelectItem value="setter">Setter</SelectItem>
                   <SelectItem value="editor">Editor</SelectItem>
                   <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>

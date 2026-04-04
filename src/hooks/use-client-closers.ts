@@ -16,29 +16,40 @@ export const useClientClosers = (clientId: string | null) => {
       // Get team members for this client
       const { data: members, error: mErr } = await supabase
         .from('client_team_members')
-        .select('user_id')
+        .select('user_id, role')
         .eq('client_id', clientId);
 
       if (mErr || !members?.length) return [];
 
-      const userIds = members.map(m => m.user_id);
+      // Collect user IDs that are closers by client role
+      const clientCloserIds = members
+        .filter(m => m.role === 'closer')
+        .map(m => m.user_id);
 
-      // Check which of these users have the "closer" system role
-      const { data: closerRoles, error: rErr } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'closer' as any)
-        .in('user_id', userIds);
+      // Also check system roles for remaining members
+      const nonClientCloserIds = members
+        .filter(m => m.role !== 'closer')
+        .map(m => m.user_id);
 
-      if (rErr || !closerRoles?.length) return [];
+      let systemCloserIds: string[] = [];
+      if (nonClientCloserIds.length > 0) {
+        const { data: closerRoles } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'closer' as any)
+          .in('user_id', nonClientCloserIds);
 
-      const closerIds = closerRoles.map(r => r.user_id);
+        systemCloserIds = (closerRoles || []).map(r => r.user_id);
+      }
+
+      const allCloserIds = [...new Set([...clientCloserIds, ...systemCloserIds])];
+      if (allCloserIds.length === 0) return [];
 
       // Fetch profiles
       const { data: profiles, error: pErr } = await supabase
         .from('profiles')
         .select('id, full_name, avatar_url')
-        .in('id', closerIds);
+        .in('id', allCloserIds);
 
       if (pErr || !profiles?.length) return [];
 
