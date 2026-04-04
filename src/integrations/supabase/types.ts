@@ -336,8 +336,10 @@ export type Database = {
       client_products: {
         Row: {
           client_id: string
+          cost: number | null
           created_at: string
           currency: string
+          description: string | null
           id: string
           name: string
           price: number | null
@@ -345,8 +347,10 @@ export type Database = {
         }
         Insert: {
           client_id: string
+          cost?: number | null
           created_at?: string
           currency?: string
+          description?: string | null
           id?: string
           name: string
           price?: number | null
@@ -354,8 +358,10 @@ export type Database = {
         }
         Update: {
           client_id?: string
+          cost?: number | null
           created_at?: string
           currency?: string
+          description?: string | null
           id?: string
           name?: string
           price?: number | null
