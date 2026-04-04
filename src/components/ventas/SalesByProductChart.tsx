@@ -4,9 +4,11 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { PieChart, Pie, Cell } from 'recharts';
 import { Package } from 'lucide-react';
 import { MessageSale } from '@/hooks/use-sales-tracking';
+import { ClientProduct } from '@/hooks/use-client-products';
 
 interface SalesByProductChartProps {
   sales: MessageSale[];
+  products?: ClientProduct[];
 }
 
 const COLORS = [
