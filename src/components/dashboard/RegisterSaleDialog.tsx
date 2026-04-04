@@ -489,13 +489,23 @@ export const RegisterSaleDialog = ({
                   </div>
                 ) : (
                   <div className="flex gap-2">
-                    <Select value={product || '_none'} onValueChange={v => setProduct(v === '_none' ? '' : v)}>
+                    <Select value={product || '_none'} onValueChange={handleProductChange}>
                       <SelectTrigger className="h-10 text-sm flex-1"><SelectValue placeholder="Opcional" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none">Sin producto</SelectItem>
-                        {allProductOptions.map(name => (
-                          <SelectItem key={name} value={name}>{name}</SelectItem>
-                        ))}
+                        {allProductOptions.map(name => {
+                          const matched = products.find(p => p.name === name);
+                          return (
+                            <SelectItem key={name} value={name}>
+                              {name}
+                              {matched?.price != null && (
+                                <span className="text-muted-foreground ml-1">
+                                  ({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})
+                                </span>
+                              )}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewProduct(true)}>
