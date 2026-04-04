@@ -319,6 +319,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
           }
         }}
         onStatusChange={(id, status) => {
+          setDetailLead(null);
           if (status === 'sold' && detailLead && onConvertToSale) {
             onConvertToSale(detailLead);
           } else if (status === 'not_sold' && detailLead) {
@@ -327,7 +328,6 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
           } else {
             handleStatusChange({ id } as any, status as any);
           }
-          setDetailLead(null);
         }}
       />
 
