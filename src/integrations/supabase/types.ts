@@ -1358,6 +1358,7 @@ export type Database = {
           lead_goal: string | null
           lead_name: string
           lead_phone: string | null
+          not_sold_reason: string | null
           notes: string | null
           product: string | null
           sale_id: string | null
@@ -1388,6 +1389,7 @@ export type Database = {
           lead_goal?: string | null
           lead_name: string
           lead_phone?: string | null
+          not_sold_reason?: string | null
           notes?: string | null
           product?: string | null
           sale_id?: string | null
@@ -1418,6 +1420,7 @@ export type Database = {
           lead_goal?: string | null
           lead_name?: string
           lead_phone?: string | null
+          not_sold_reason?: string | null
           notes?: string | null
           product?: string | null
           sale_id?: string | null

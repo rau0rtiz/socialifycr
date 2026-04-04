@@ -1,0 +1,1 @@
+ALTER TABLE public.setter_appointments ADD COLUMN not_sold_reason text DEFAULT NULL;
