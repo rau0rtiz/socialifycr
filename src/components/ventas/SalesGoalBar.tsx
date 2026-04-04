@@ -124,7 +124,7 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Editar Meta de Ventas</DialogTitle>
+            <DialogTitle>Editar {goalLabel}</DialogTitle>
             <DialogDescription>Configura la meta de ingresos para este cliente</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
