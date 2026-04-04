@@ -43,6 +43,11 @@ export interface SaleInput {
   message_platform?: string;
   status?: 'completed' | 'pending' | 'cancelled';
   closer_name?: string;
+  payment_scheme_id?: string;
+  total_sale_amount?: number;
+  num_installments?: number;
+  installments_paid?: number;
+  installment_amount?: number;
 }
 
 export const useSalesTracking = (clientId: string | null, month?: Date) => {
