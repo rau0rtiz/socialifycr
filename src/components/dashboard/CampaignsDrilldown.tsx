@@ -54,7 +54,7 @@ import {
   DatePresetKey,
   DateRange,
 } from '@/hooks/use-ads-data';
-import { useCampaignGoals, GoalType, useSetDefaultCampaignGoal, useSetCampaignGoal, GOAL_OPTIONS, getGoalLabel } from '@/hooks/use-campaign-goals';
+import { useCampaignGoals, GoalType, useSetCampaignGoal, GOAL_OPTIONS, getGoalLabel } from '@/hooks/use-campaign-goals';
 import { CampaignGoalSelector } from './CampaignGoalSelector';
 import { useBrand } from '@/contexts/BrandContext';
 import { toast } from 'sonner';
