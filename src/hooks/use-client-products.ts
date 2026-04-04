@@ -9,6 +9,7 @@ export interface ClientProduct {
   cost: number | null;
   currency: string;
   description: string | null;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -19,6 +20,7 @@ export interface ProductInput {
   cost?: number | null;
   currency?: string;
   description?: string;
+  photo_url?: string | null;
 }
 
 export const useClientProducts = (clientId: string | null) => {
