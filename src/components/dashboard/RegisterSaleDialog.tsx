@@ -126,6 +126,11 @@ export const RegisterSaleDialog = ({
     setStep(0);
     setShowNewProduct(false);
     setNewProductName('');
+    setSelectedSchemeId('');
+    setNumInstallments(1);
+    setInstallmentsPaid(1);
+    setInstallmentAmount(0);
+    setTotalSaleAmount(0);
     if (editingSale) {
       setAmount(String(editingSale.amount));
       setCurrency(editingSale.currency);
