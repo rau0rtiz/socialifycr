@@ -81,6 +81,7 @@ export const AppointmentFormDialog = ({
   const didSubmitRef = useRef(false);
 
   const { addSetter: addSetterMutation } = useClientSetters(clientId || null);
+  const { data: closers = [] } = useClientClosers(clientId || null);
 
   const needsAdStep = source === 'ads' && hasAdAccount;
   const totalSteps = needsAdStep ? 4 : 3;
