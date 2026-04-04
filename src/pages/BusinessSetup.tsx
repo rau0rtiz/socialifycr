@@ -12,6 +12,7 @@ import { ProductsManager } from '@/components/ventas/ProductsManager';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
 import { AIContextEditor } from '@/components/clientes/AIContextEditor';
+import { ClientBanner } from '@/components/dashboard/ClientBanner';
 import { Building2, Palette, Package, Users, Save, Loader2, Plug } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -126,6 +127,22 @@ const BusinessSetup = () => {
 
           {/* ── Brand tab ─────────────────────────────── */}
           <TabsContent value="brand" className="space-y-6 mt-4">
+            {/* Banner */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Banner</CardTitle>
+                <CardDescription>Imagen de portada del dashboard del cliente</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ClientBanner
+                  clientId={selectedClient.id}
+                  bannerUrl={selectedClient.banner_url}
+                  canEdit={true}
+                  onBannerUpdate={() => queryClient.invalidateQueries({ queryKey: ['clients'] })}
+                />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Identidad de Marca</CardTitle>
