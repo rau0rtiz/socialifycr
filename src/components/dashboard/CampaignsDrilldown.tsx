@@ -62,6 +62,8 @@ import { toast } from 'sonner';
 interface CampaignsDrilldownProps {
   clientId: string | null;
   hasAdAccount: boolean;
+  datePreset?: DatePresetKey;
+  customRange?: DateRange;
 }
 
 type ViewLevel = 'campaigns' | 'adsets' | 'ads';
