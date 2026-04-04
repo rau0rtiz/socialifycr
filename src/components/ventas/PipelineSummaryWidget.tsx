@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import {
   BarChart3, DollarSign, MessageCircle, CalendarDays,
-  CheckCircle2, XCircle, TrendingUp, ShoppingCart, Filter,
+  CheckCircle2, XCircle, TrendingUp, ShoppingCart, Filter, Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isWithinInterval, parseISO } from 'date-fns';
@@ -97,6 +97,25 @@ export const PipelineSummaryWidget = ({
   const totalSalesUSD = filteredSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
   const totalSalesCRC = filteredSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
 
+  // Cash collected = amount (what was actually received)
+  const cashCollectedUSD = totalSalesUSD;
+  const cashCollectedCRC = totalSalesCRC;
+  // Total contract value
+  const totalContractUSD = filteredSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
+  const totalContractCRC = filteredSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
+  const cashLabel = cashCollectedUSD > 0
+    ? `$${cashCollectedUSD.toLocaleString()}`
+    : cashCollectedCRC > 0
+    ? `₡${cashCollectedCRC.toLocaleString()}`
+    : '$0';
+  const pendingUSD = totalContractUSD - cashCollectedUSD;
+  const pendingCRC = totalContractCRC - cashCollectedCRC;
+  const pendingSub = pendingUSD > 0
+    ? `$${pendingUSD.toLocaleString()} pendiente`
+    : pendingCRC > 0
+    ? `₡${pendingCRC.toLocaleString()} pendiente`
+    : 'Todo cobrado';
+
   const toggleCampaign = (id: string) => {
     setSelectedCampaignIds(prev => 
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
@@ -152,6 +171,14 @@ export const PipelineSummaryWidget = ({
       color: 'text-amber-500',
       bg: 'bg-amber-500/10',
     },
+    {
+      icon: Wallet,
+      label: 'Cash Collected',
+      value: cashLabel,
+      sub: pendingSub,
+      color: 'text-teal-500',
+      bg: 'bg-teal-500/10',
+    },
   ];
 
   return (
@@ -168,7 +195,7 @@ export const PipelineSummaryWidget = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-0">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           <div className="p-4 rounded-xl border border-border/50 bg-card hover:shadow-sm transition-shadow space-y-1.5">
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <div className="p-1 rounded-md bg-green-500/10">
