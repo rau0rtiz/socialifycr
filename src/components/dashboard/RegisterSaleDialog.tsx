@@ -235,7 +235,7 @@ export const RegisterSaleDialog = ({
       toast.error('El monto es requerido');
       return;
     }
-    if (!isPrefilled && !source) {
+    if (!source) {
       toast.error('La fuente es requerida');
       return;
     }
