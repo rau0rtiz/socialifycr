@@ -38,12 +38,11 @@ export const PipelineSummaryWidget = ({
   dailyReports,
   campaigns,
   adCurrency,
-  period,
-  onPeriodChange,
+  dateRange,
 }: PipelineSummaryWidgetProps) => {
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([]);
   
-  const range = useMemo(() => getDateRange(period), [period]);
+  const range = dateRange;
 
   const filteredAppointments = useMemo(() => {
     return appointments.filter(a => {
