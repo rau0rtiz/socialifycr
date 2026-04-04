@@ -275,7 +275,18 @@ export const RegisterSaleDialog = ({
       sale.ad_campaign_name = selectedAd.campaignName;
     }
 
-    onSubmit(sale, prefill?.appointmentId);
+    const hasRemainingInstallments = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
+    const collectionMeta = hasRemainingInstallments
+      ? {
+          frequency: collectionFrequency,
+          startInstallment: installmentsPaid + 1,
+          totalInstallments: numInstallments,
+          installmentAmount,
+          currency,
+        }
+      : undefined;
+
+    onSubmit(sale, prefill?.appointmentId, collectionMeta);
   };
 
   const allProductOptions = product && !productNames.includes(product)
