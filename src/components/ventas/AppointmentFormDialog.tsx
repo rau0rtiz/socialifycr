@@ -429,20 +429,26 @@ export const AppointmentFormDialog = ({
                 </Popover>
               </div>
 
-              {/* Time grid selector */}
+              {/* Time selector */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
                   Hora
                 </Label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <Input
+                  type="time"
+                  value={salesCallTime}
+                  onChange={e => setSalesCallTime(e.target.value)}
+                  className="h-10 text-sm w-full"
+                />
+                <div className="flex flex-wrap gap-1.5">
                   {['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'].map(t => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => setSalesCallTime(t)}
                       className={cn(
-                        'py-1.5 px-2 rounded-lg text-xs font-medium border transition-all',
+                        'py-1 px-2.5 rounded-md text-[11px] font-medium border transition-all',
                         salesCallTime === t
                           ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                           : 'bg-muted/40 border-border text-foreground hover:bg-muted hover:border-primary/30'
