@@ -85,7 +85,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
       const transformedData = (data || []).map((member: any) => ({
         id: member.id,
         user_id: member.user_id,
-        role: member.role as 'account_manager' | 'editor' | 'viewer',
+        role: member.role as TeamMember['role'],
         profile: member.profiles,
       }));
       setMembers(transformedData);
