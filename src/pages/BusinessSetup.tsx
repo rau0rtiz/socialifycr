@@ -127,6 +127,22 @@ const BusinessSetup = () => {
 
           {/* ── Brand tab ─────────────────────────────── */}
           <TabsContent value="brand" className="space-y-6 mt-4">
+            {/* Banner */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Banner</CardTitle>
+                <CardDescription>Imagen de portada del dashboard del cliente</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ClientBanner
+                  clientId={selectedClient.id}
+                  bannerUrl={selectedClient.banner_url}
+                  canEdit={true}
+                  onBannerUpdate={() => queryClient.invalidateQueries({ queryKey: ['clients'] })}
+                />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Identidad de Marca</CardTitle>
