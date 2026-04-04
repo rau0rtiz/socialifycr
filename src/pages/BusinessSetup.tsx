@@ -12,6 +12,7 @@ import { ProductsManager } from '@/components/ventas/ProductsManager';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
 import { AIContextEditor } from '@/components/clientes/AIContextEditor';
+import { ClientBanner } from '@/components/dashboard/ClientBanner';
 import { Building2, Palette, Package, Users, Save, Loader2, Plug } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
