@@ -296,7 +296,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="rounded-lg border p-3">
-              <p className="text-xs text-muted-foreground">Ventas</p>
+              <p className="text-xs text-muted-foreground">{salesLabel}</p>
               <p className="text-xl font-bold">{summary.totalCount}</p>
             </div>
             <div className="rounded-lg border p-3">
