@@ -204,6 +204,8 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
                 <InfoRow icon={FileText} label="Notas" value={apt.notes} />
               </div>
             )}
+          </div>
+
           {/* Action buttons */}
           {onStatusChange && apt.status !== 'sold' && (apt.status as string) !== 'not_sold' && apt.status !== 'no_show' && (
             <div className="rounded-lg border border-border p-3 space-y-2.5">
