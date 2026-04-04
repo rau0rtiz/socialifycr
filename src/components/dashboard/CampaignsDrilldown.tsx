@@ -54,7 +54,7 @@ import {
   DatePresetKey,
   DateRange,
 } from '@/hooks/use-ads-data';
-import { useCampaignGoals, GoalType, useSetDefaultCampaignGoal, useSetCampaignGoal, GOAL_OPTIONS, getGoalLabel } from '@/hooks/use-campaign-goals';
+import { useCampaignGoals, GoalType, useSetCampaignGoal, GOAL_OPTIONS, getGoalLabel } from '@/hooks/use-campaign-goals';
 import { CampaignGoalSelector } from './CampaignGoalSelector';
 import { useBrand } from '@/contexts/BrandContext';
 import { toast } from 'sonner';
@@ -514,7 +514,7 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount, datePreset: externa
   
   // Fetch campaign goals for this client
   const { data: campaignGoalsData } = useCampaignGoals(clientId, defaultGoal);
-  const setDefaultGoalMutation = useSetDefaultCampaignGoal();
+  
 
   const {
     data: campaignsResult,
@@ -632,28 +632,6 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount, datePreset: externa
           </div>
           
           <div className="flex flex-wrap items-center gap-2">
-            {clientId && (
-              <Select 
-                value={defaultGoal || '_none'} 
-                onValueChange={(value) => {
-                  const goalValue = value === '_none' ? null : value as GoalType;
-                  setDefaultGoalMutation.mutate({ clientId, goalType: goalValue }, {
-                    onSuccess: () => refetchClients()
-                  });
-                }}
-              >
-                <SelectTrigger className="w-36 md:w-44 bg-background h-8 text-xs md:text-sm">
-                  <Target className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-                  <SelectValue placeholder="Meta por defecto" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  <SelectItem value="_none">Sin meta por defecto</SelectItem>
-                  {GOAL_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
             
             {!hasExternalPeriod && (
               <>
