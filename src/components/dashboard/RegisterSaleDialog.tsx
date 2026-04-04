@@ -89,6 +89,7 @@ export const RegisterSaleDialog = ({
   const [installmentsPaid, setInstallmentsPaid] = useState(1);
   const [installmentAmount, setInstallmentAmount] = useState(0);
   const [totalSaleAmount, setTotalSaleAmount] = useState(0);
+  const [collectionFrequency, setCollectionFrequency] = useState<string>('monthly');
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
