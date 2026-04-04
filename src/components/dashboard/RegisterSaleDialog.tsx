@@ -33,7 +33,7 @@ export interface SalePrefill {
 interface RegisterSaleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (sale: SaleInput, appointmentId?: string) => void;
+  onSubmit: (sale: SaleInput, appointmentId?: string, collectionMeta?: { frequency: string; startInstallment: number; totalInstallments: number; installmentAmount: number; currency: string }) => void;
   clientId?: string;
   hasAdAccount?: boolean;
   isSubmitting?: boolean;
