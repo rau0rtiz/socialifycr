@@ -565,7 +565,46 @@ export const RegisterSaleDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-medium">Fuente de la venta *</Label>
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Wallet className="h-3.5 w-3.5" /> Método de pago
+                </Label>
+                {showNewPaymentMethod ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nombre del método"
+                      value={newPaymentMethodName}
+                      onChange={e => setNewPaymentMethodName(e.target.value)}
+                      className="h-10 text-sm flex-1"
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter' && newPaymentMethodName.trim()) { setPaymentMethod(newPaymentMethodName.trim()); setShowNewPaymentMethod(false); setNewPaymentMethodName(''); } }}
+                    />
+                    <Button size="sm" className="h-10 text-xs" onClick={() => { setPaymentMethod(newPaymentMethodName.trim()); setShowNewPaymentMethod(false); setNewPaymentMethodName(''); }} disabled={!newPaymentMethodName.trim()}>
+                      OK
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewPaymentMethod(false)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Select value={paymentMethod || '_none'} onValueChange={v => setPaymentMethod(v === '_none' ? '' : v)}>
+                      <SelectTrigger className="h-10 text-sm flex-1"><SelectValue placeholder="Seleccionar método" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none" className="text-xs">Sin especificar</SelectItem>
+                        <SelectItem value="stripe">Stripe</SelectItem>
+                        <SelectItem value="transferencia_bancaria">Transferencia Bancaria</SelectItem>
+                        {paymentMethod && !['stripe', 'transferencia_bancaria'].includes(paymentMethod) && (
+                          <SelectItem value={paymentMethod}>{paymentMethod}</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewPaymentMethod(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Otro
+                    </Button>
+                  </div>
+                )}
+              </div>
+
                 <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
                   <SelectContent>
