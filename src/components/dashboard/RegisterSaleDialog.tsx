@@ -280,17 +280,53 @@ export const RegisterSaleDialog = ({
     ? [product, ...productNames]
     : productNames;
 
+  // Get schemes for selected product
+  const selectedProduct = products.find(p => p.name === product);
+  const productSchemes = selectedProduct
+    ? allSchemes.filter(s => s.product_id === selectedProduct.id)
+    : [];
+
   // Auto-fill amount when selecting a product with a price
   const handleProductChange = (v: string) => {
     const selectedName = v === '_none' ? '' : v;
     setProduct(selectedName);
+    setSelectedSchemeId('');
+    setNumInstallments(1);
+    setInstallmentsPaid(1);
+    setInstallmentAmount(0);
+    setTotalSaleAmount(0);
     if (selectedName) {
       const matched = products.find(p => p.name === selectedName);
       if (matched?.price != null && !amount) {
         setAmount(String(matched.price));
         setCurrency(matched.currency as 'CRC' | 'USD');
+        setTotalSaleAmount(matched.price);
       }
     }
+  };
+
+  const handleSchemeChange = (schemeId: string) => {
+    if (schemeId === '_none') {
+      setSelectedSchemeId('');
+      if (selectedProduct?.price != null) {
+        setAmount(String(selectedProduct.price));
+        setTotalSaleAmount(selectedProduct.price);
+      }
+      setNumInstallments(1);
+      setInstallmentsPaid(1);
+      setInstallmentAmount(0);
+      return;
+    }
+    const scheme = allSchemes.find(s => s.id === schemeId);
+    if (!scheme) return;
+    setSelectedSchemeId(schemeId);
+    setTotalSaleAmount(scheme.total_price);
+    setNumInstallments(scheme.num_installments);
+    setInstallmentAmount(scheme.installment_amount);
+    setInstallmentsPaid(1);
+    // amount = first installment
+    setAmount(String(scheme.installment_amount));
+    setCurrency(scheme.currency as 'CRC' | 'USD');
   };
 
   const sourceLabel = SOURCE_OPTIONS.find(o => o.value === source)?.label || source;
