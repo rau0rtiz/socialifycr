@@ -195,7 +195,7 @@ export const PipelineSummaryWidget = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-0">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           <div className="p-4 rounded-xl border border-border/50 bg-card hover:shadow-sm transition-shadow space-y-1.5">
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <div className="p-1 rounded-md bg-green-500/10">
