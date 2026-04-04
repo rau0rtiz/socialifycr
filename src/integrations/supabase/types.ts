@@ -1071,6 +1071,69 @@ export type Database = {
           },
         ]
       }
+      payment_collections: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          currency: string
+          due_date: string
+          id: string
+          installment_number: number
+          notes: string | null
+          paid_at: string | null
+          payment_frequency: string
+          sale_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_id: string
+          created_at?: string
+          currency?: string
+          due_date: string
+          id?: string
+          installment_number?: number
+          notes?: string | null
+          paid_at?: string | null
+          payment_frequency?: string
+          sale_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          currency?: string
+          due_date?: string
+          id?: string
+          installment_number?: number
+          notes?: string | null
+          paid_at?: string | null
+          payment_frequency?: string
+          sale_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_collections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_collections_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "message_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_transactions: {
         Row: {
           amount: number
