@@ -66,52 +66,51 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
     );
   };
 
-  // Use client brand colors
   const barBg = primaryColor ? `hsl(${primaryColor})` : 'hsl(var(--primary))';
   const barAccent = accentColor ? `hsl(${accentColor})` : 'hsl(var(--accent))';
 
   return (
     <>
-      <Card className="overflow-hidden border-2" style={{ borderColor: barBg + '33' }}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: barBg + '15' }}>
-                <Target className="h-4 w-4" style={{ color: barBg }} />
+      <Card className="overflow-hidden border-border/50 shadow-sm">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: barBg + '15' }}>
+                <Target className="h-5 w-5" style={{ color: barBg }} />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">{goalLabel}</h3>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <h3 className="font-semibold text-sm text-foreground">{goalLabel}</h3>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                   <Calendar className="h-3 w-3" />
                   {format(new Date(goal.start_date), 'dd MMM', { locale: es })} — {format(new Date(goal.end_date), 'dd MMM yyyy', { locale: es })}
-                  {!expired && <span className="ml-1">({daysLeft} días restantes)</span>}
-                  {expired && <span className="ml-1 text-destructive font-medium">(Expirada)</span>}
+                  {!expired && <span className="text-foreground/60">· {daysLeft}d restantes</span>}
+                  {expired && <span className="text-destructive font-medium">· Expirada</span>}
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={openEdit}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={openEdit}>
               <Pencil className="h-3.5 w-3.5" />
             </Button>
           </div>
 
           {/* Progress bar */}
-          <div className="relative h-8 rounded-full overflow-hidden bg-muted">
+          <div className="relative h-10 rounded-xl overflow-hidden bg-muted/60">
             <div
-              className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+              className="absolute inset-y-0 left-0 rounded-xl transition-all duration-700 ease-out"
               style={{
                 width: `${progress}%`,
                 background: `linear-gradient(90deg, ${barBg}, ${barAccent})`,
               }}
             />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-bold mix-blend-difference text-white">
+              <span className="text-sm font-bold mix-blend-difference text-white tracking-wide">
                 {progress.toFixed(1)}%
               </span>
             </div>
           </div>
 
-          <div className="flex justify-between mt-2 text-xs">
-            <span className="font-medium" style={{ color: barBg }}>
+          <div className="flex justify-between mt-3 text-xs">
+            <span className="font-semibold" style={{ color: barBg }}>
               {formatCurrency(currentAmount, goal.currency)} logrado
             </span>
             <span className="text-muted-foreground">

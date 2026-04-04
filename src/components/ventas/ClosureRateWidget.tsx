@@ -29,25 +29,29 @@ export const ClosureRateWidget = ({ appointments }: ClosureRateWidgetProps) => {
   }, [appointments]);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <PieChartIcon className="h-4 w-4" />
+    <Card className="border-border/50 shadow-sm h-full">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2.5 text-foreground">
+          <div className="p-1.5 rounded-lg bg-amber-500/10">
+            <PieChartIcon className="h-4 w-4 text-amber-500" />
+          </div>
           Tasa de Cierre por Vendedor
         </CardTitle>
       </CardHeader>
       <CardContent>
         {setterClosureData.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <PieChartIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <div className="text-center py-10 text-muted-foreground">
+            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
+              <PieChartIcon className="h-5 w-5 opacity-40" />
+            </div>
             <p className="text-sm font-medium">Sin datos de cierre</p>
-            <p className="text-xs mt-1">Marca leads como vendidos o no vendidos para ver las tasas de cierre.</p>
+            <p className="text-xs mt-1 max-w-[200px] mx-auto">Marca leads como vendidos o no vendidos para ver las tasas.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-3">
             {setterClosureData.map((setter) => (
-              <div key={setter.name} className="p-3 rounded-lg border border-border bg-muted/30 flex items-center gap-4">
-                <div className="w-20 h-20">
+              <div key={setter.name} className="p-3 rounded-xl border border-border/50 bg-muted/20 flex items-center gap-4 hover:shadow-sm transition-shadow">
+                <div className="w-16 h-16 flex-shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPie>
                       <Pie
@@ -57,24 +61,26 @@ export const ClosureRateWidget = ({ appointments }: ClosureRateWidgetProps) => {
                         ]}
                         cx="50%"
                         cy="50%"
-                        innerRadius={18}
-                        outerRadius={32}
+                        innerRadius={16}
+                        outerRadius={28}
                         dataKey="value"
                         strokeWidth={0}
                       >
                         <Cell fill="hsl(142, 70%, 45%)" />
-                        <Cell fill="hsl(0, 70%, 55%)" />
+                        <Cell fill="hsl(var(--muted))" />
                       </Pie>
                       <Tooltip />
                     </RechartsPie>
                   </ResponsiveContainer>
                 </div>
-                <div>
-                  <p className="text-sm font-medium flex items-center gap-1">
-                    <User className="h-3 w-3" /> {setter.name}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium flex items-center gap-1.5 text-foreground">
+                    <User className="h-3.5 w-3.5 text-muted-foreground" /> {setter.name}
                   </p>
-                  <p className="text-2xl font-bold text-foreground">{setter.rate}%</p>
-                  <p className="text-[10px] text-muted-foreground">{setter.sold}/{setter.total} cerrados</p>
+                  <div className="flex items-baseline gap-2 mt-0.5">
+                    <p className="text-2xl font-bold text-foreground">{setter.rate}%</p>
+                    <p className="text-[11px] text-muted-foreground">{setter.sold}/{setter.total} cerrados</p>
+                  </div>
                 </div>
               </div>
             ))}

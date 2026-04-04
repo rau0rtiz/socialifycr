@@ -10,13 +10,13 @@ interface SalesByProductChartProps {
 }
 
 const COLORS = [
-  'hsl(220, 70%, 50%)',
+  'hsl(220, 70%, 55%)',
   'hsl(150, 60%, 45%)',
-  'hsl(280, 70%, 50%)',
+  'hsl(280, 60%, 55%)',
   'hsl(40, 90%, 50%)',
-  'hsl(0, 70%, 55%)',
+  'hsl(0, 65%, 55%)',
   'hsl(180, 60%, 45%)',
-  'hsl(320, 70%, 50%)',
+  'hsl(320, 65%, 55%)',
   'hsl(60, 80%, 45%)',
 ];
 
@@ -56,26 +56,29 @@ export const SalesByProductChart = ({ sales }: SalesByProductChartProps) => {
   }, {} as Record<string, { label: string; color: string }>);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Package className="h-5 w-5" />
+    <Card className="border-border/50 shadow-sm h-full">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2.5 text-foreground">
+          <div className="p-1.5 rounded-lg bg-blue-500/10">
+            <Package className="h-4 w-4 text-blue-500" />
+          </div>
           Ventas por Producto
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          <ChartContainer config={chartConfig} className="h-[200px] w-[200px] flex-shrink-0">
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          <ChartContainer config={chartConfig} className="h-[180px] w-[180px] flex-shrink-0">
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
                 cy="50%"
                 innerRadius={50}
-                outerRadius={80}
+                outerRadius={78}
                 dataKey="value"
                 nameKey="name"
-                paddingAngle={2}
+                paddingAngle={3}
+                strokeWidth={0}
               >
                 {data.map((entry, i) => (
                   <Cell key={i} fill={entry.fill} />
@@ -94,16 +97,16 @@ export const SalesByProductChart = ({ sales }: SalesByProductChartProps) => {
             </PieChart>
           </ChartContainer>
 
-          <div className="flex-1 space-y-1.5 w-full">
+          <div className="flex-1 space-y-2 w-full">
             {data.map((item, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
+              <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-2.5">
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.fill }} />
-                  <span className="truncate max-w-[150px]">{item.name}</span>
+                  <span className="truncate max-w-[160px] text-foreground">{item.name}</span>
                 </div>
                 <div className="text-right">
-                  <span className="font-medium">{formatCurrency(item.value, item.currency)}</span>
-                  <span className="text-muted-foreground ml-1 text-xs">({item.count})</span>
+                  <span className="font-semibold text-foreground">{formatCurrency(item.value, item.currency)}</span>
+                  <span className="text-muted-foreground ml-1.5 text-xs">({item.count})</span>
                 </div>
               </div>
             ))}
