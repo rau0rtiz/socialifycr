@@ -13,6 +13,7 @@ import {
   KeyRound,
   Mail,
   X,
+  Briefcase,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
