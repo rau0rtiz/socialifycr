@@ -57,6 +57,12 @@ export const GOAL_OPTIONS = [
     actionType: 'onsite_conversion.profile_visit',
     alternativeTypes: ['page_engagement']
   },
+  { 
+    value: 'landing_page_views', 
+    label: 'Landing Page Views', 
+    actionType: 'landing_page_view',
+    alternativeTypes: []
+  },
 ] as const;
 
 export type GoalType = typeof GOAL_OPTIONS[number]['value'];

@@ -268,9 +268,12 @@ const CampaignRow = ({
         label={getCostPerResultLabel(campaign.resultType)}
         value={campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult, currency) : '-'}
       />
-      {isPurchaseGoal && (
-        <MetricCard icon={Eye} label="Landing Page Views" value={formatNumber(campaign.landingPageViews)} />
-      )}
+      <MetricCard
+        icon={Eye}
+        label="LPV"
+        value={formatNumber(campaign.landingPageViews)}
+        subValue={campaign.landingPageViews > 0 ? `${formatCurrency(campaign.spend / campaign.landingPageViews, currency)}/LPV` : undefined}
+      />
       {isFollowersGoal && (
         <MetricCard icon={Users} label="New IG Followers" value={formatNumber(campaign.results)} />
       )}
