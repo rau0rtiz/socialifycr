@@ -256,16 +256,6 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
               Setter & Pipeline
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Select value={period} onValueChange={setPeriod}>
-                <SelectTrigger className="h-7 text-xs w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="last_7d" className="text-xs">Últimos 7 días</SelectItem>
-                  <SelectItem value="last_30d" className="text-xs">Últimos 30 días</SelectItem>
-                  <SelectItem value="this_month" className="text-xs">Este mes</SelectItem>
-                </SelectContent>
-              </Select>
               <Button size="sm" className="h-7 text-xs" onClick={() => { setEditing(null); setShowForm(true); }}>
                 <UserPlus className="h-3.5 w-3.5 mr-1" />
                 Nuevo Lead

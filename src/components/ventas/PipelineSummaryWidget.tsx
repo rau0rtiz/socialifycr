@@ -157,16 +157,7 @@ export const PipelineSummaryWidget = ({
             </div>
             Resumen del Pipeline
           </CardTitle>
-          <Select value={period} onValueChange={(v) => onPeriodChange(v as PipelinePeriod)}>
-            <SelectTrigger className="h-8 text-xs w-40 rounded-lg">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(periodLabels).map(([k, v]) => (
-                <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Period selector removed — now controlled globally */}
         </div>
       </CardHeader>
       <CardContent className="space-y-0">

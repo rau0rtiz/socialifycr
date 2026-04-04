@@ -112,16 +112,18 @@ export const AdSalesRanking = ({ clientId, hasAdAccount, datePreset: externalPre
           <Trophy className="h-5 w-5 text-yellow-500" />
           Ranking de Anuncios por Ventas
         </CardTitle>
-        <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePresetKey)}>
-          <SelectTrigger className="w-[180px] h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {PERIOD_OPTIONS.map(opt => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!externalPreset && (
+          <Select value={datePreset} onValueChange={(v) => setInternalPreset(v as DatePresetKey)}>
+            <SelectTrigger className="w-[180px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIOD_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (
