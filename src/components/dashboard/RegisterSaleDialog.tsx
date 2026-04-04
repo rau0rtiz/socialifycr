@@ -23,6 +23,8 @@ export interface SalePrefill {
   ad_campaign_id?: string;
   ad_campaign_name?: string;
   appointmentId?: string;
+  closer_name?: string;
+  message_platform?: string;
 }
 
 interface RegisterSaleDialogProps {
