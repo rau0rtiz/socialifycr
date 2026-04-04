@@ -14,7 +14,7 @@ interface ScrollColumnProps {
 function ScrollColumn({ items, value, onChange }: ScrollColumnProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const scrollToValue = useCallback((val: string, smooth = true) => {
     const idx = items.indexOf(val);
