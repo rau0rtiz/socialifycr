@@ -102,8 +102,9 @@ export const Sidebar = () => {
   if (showEmailMarketing) {
     menuItems.push({ title: 'Email Marketing', url: '/email-marketing', icon: Mail });
   }
-  // Show Business Setup for agency users (owner/admin/manager) and account_manager client role
-  const showBusinessSetup = effectiveAgency || (!isPreviewMode && clientAccess.some(a => a.role === 'account_manager'));
+  // Show Business Setup for management roles (owner/admin/manager) and account_manager client role
+  const effectiveCanManage = canManage && !isPreviewMode;
+  const showBusinessSetup = effectiveCanManage || (!isPreviewMode && clientAccess.some(a => a.role === 'account_manager'));
   if (showBusinessSetup) {
     menuItems.push({ title: 'Business Setup', url: '/business-setup', icon: Briefcase });
   }
