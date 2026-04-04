@@ -125,7 +125,16 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
             </div>
           )}
 
-          {/* Checklist */}
+          {/* Not sold reason */}
+          {notSoldReason && (
+            <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-3 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-rose-700 dark:text-rose-400">
+                <ThumbsDown className="h-3.5 w-3.5" />
+                Motivo de no venta
+              </div>
+              <p className="text-sm text-foreground whitespace-pre-wrap">{notSoldReason}</p>
+            </div>
+          )}
           <div className="rounded-lg border border-border p-3 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-medium">
