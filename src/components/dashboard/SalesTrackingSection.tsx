@@ -435,7 +435,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              No hay ventas registradas este mes
+              No hay {isMindCoach ? 'registros' : 'ventas registradas'} este mes
             </div>
           )}
         </CardContent>
