@@ -254,6 +254,19 @@ export const RegisterSaleDialog = ({
     ? [product, ...productNames]
     : productNames;
 
+  // Auto-fill amount when selecting a product with a price
+  const handleProductChange = (v: string) => {
+    const selectedName = v === '_none' ? '' : v;
+    setProduct(selectedName);
+    if (selectedName) {
+      const matched = products.find(p => p.name === selectedName);
+      if (matched?.price != null && !amount) {
+        setAmount(String(matched.price));
+        setCurrency(matched.currency as 'CRC' | 'USD');
+      }
+    }
+  };
+
   const sourceLabel = SOURCE_OPTIONS.find(o => o.value === source)?.label || source;
 
   // Step titles and descriptions
