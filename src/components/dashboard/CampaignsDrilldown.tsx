@@ -548,9 +548,9 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount, datePreset: externa
 
   const handleDatePresetChange = (value: string) => {
     const preset = value as DatePresetKey;
-    setDatePreset(preset);
+    setInternalPreset(preset);
     if (preset !== 'custom') {
-      setCustomRange({ from: undefined, to: undefined });
+      setInternalCustomRange({ from: undefined, to: undefined });
     }
   };
 
