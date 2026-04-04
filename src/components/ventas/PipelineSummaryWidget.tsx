@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SetterAppointment } from '@/hooks/use-setter-appointments';
 import { MessageSale } from '@/hooks/use-sales-tracking';
 import { SetterDailyReport } from '@/hooks/use-setter-daily-reports';
@@ -13,9 +12,7 @@ import {
   CheckCircle2, XCircle, TrendingUp, ShoppingCart, Filter,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { isWithinInterval, parseISO, subDays, startOfMonth, endOfMonth } from 'date-fns';
-
-export type PipelinePeriod = 'last_7d' | 'last_30d' | 'this_month';
+import { isWithinInterval, parseISO } from 'date-fns';
 
 interface PipelineSummaryWidgetProps {
   appointments: SetterAppointment[];
@@ -23,27 +20,8 @@ interface PipelineSummaryWidgetProps {
   dailyReports: SetterDailyReport[];
   campaigns: CampaignInsights[];
   adCurrency: string;
-  period: PipelinePeriod;
-  onPeriodChange: (p: PipelinePeriod) => void;
+  dateRange: { start: Date; end: Date };
 }
-
-const periodLabels: Record<PipelinePeriod, string> = {
-  last_7d: 'Últimos 7 días',
-  last_30d: 'Últimos 30 días',
-  this_month: 'Este mes',
-};
-
-const getDateRange = (period: PipelinePeriod): { start: Date; end: Date } => {
-  const now = new Date();
-  switch (period) {
-    case 'last_7d':
-      return { start: subDays(now, 7), end: now };
-    case 'last_30d':
-      return { start: subDays(now, 30), end: now };
-    case 'this_month':
-      return { start: startOfMonth(now), end: endOfMonth(now) };
-  }
-};
 
 const formatCurrency = (value: number, currency: string) => {
   return new Intl.NumberFormat(currency === 'CRC' ? 'es-CR' : 'en-US', {
