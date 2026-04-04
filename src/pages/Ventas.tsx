@@ -19,6 +19,7 @@ import { useClientFeatures } from '@/hooks/use-client-features';
 import { useSetterAppointments, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useSetterDailyReports } from '@/hooks/use-setter-daily-reports';
+import { useClientProducts } from '@/hooks/use-client-products';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CalendarIcon } from 'lucide-react';
 import { SalePrefill } from '@/components/dashboard/RegisterSaleDialog';
@@ -111,6 +112,7 @@ const Ventas = () => {
 
   // Get all-time sales for the goal bar (current year)
   const { sales: allSales, summary } = useSalesTracking(clientId);
+  const { products: clientProducts } = useClientProducts(clientId);
 
   // Daily reports for Mind Coach
   const { reports: dailyReports } = useSetterDailyReports(clientId);
@@ -339,7 +341,7 @@ const Ventas = () => {
         {/* Bottom section: charts side by side */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Sales by product pie chart */}
-          <SalesByProductChart sales={allSales} />
+          <SalesByProductChart sales={allSales} products={clientProducts} />
 
           {/* Closure rate per seller */}
           <ClosureRateWidget appointments={appointments} />

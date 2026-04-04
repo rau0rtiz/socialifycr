@@ -4,9 +4,11 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { PieChart, Pie, Cell } from 'recharts';
 import { Package } from 'lucide-react';
 import { MessageSale } from '@/hooks/use-sales-tracking';
+import { ClientProduct } from '@/hooks/use-client-products';
 
 interface SalesByProductChartProps {
   sales: MessageSale[];
+  products?: ClientProduct[];
 }
 
 const COLORS = [
@@ -25,7 +27,7 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 };
 
-export const SalesByProductChart = ({ sales }: SalesByProductChartProps) => {
+export const SalesByProductChart = ({ sales, products = [] }: SalesByProductChartProps) => {
   const data = useMemo(() => {
     const completed = sales.filter(s => s.status === 'completed');
     const byProduct: Record<string, { amount: number; count: number; currency: string }> = {};
@@ -98,18 +100,29 @@ export const SalesByProductChart = ({ sales }: SalesByProductChartProps) => {
           </ChartContainer>
 
           <div className="flex-1 space-y-2 w-full">
-            {data.map((item, i) => (
-              <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-muted/30 transition-colors">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.fill }} />
-                  <span className="truncate max-w-[160px] text-foreground">{item.name}</span>
+            {data.map((item, i) => {
+              const matchedProduct = products.find(p => p.name === item.name);
+              return (
+                <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    {matchedProduct?.photo_url ? (
+                      <img
+                        src={matchedProduct.photo_url}
+                        alt={item.name}
+                        className="w-7 h-7 rounded-md object-cover flex-shrink-0 border border-border/50"
+                      />
+                    ) : (
+                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.fill }} />
+                    )}
+                    <span className="truncate max-w-[160px] text-foreground">{item.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-semibold text-foreground">{formatCurrency(item.value, item.currency)}</span>
+                    <span className="text-muted-foreground ml-1.5 text-xs">({item.count})</span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="font-semibold text-foreground">{formatCurrency(item.value, item.currency)}</span>
-                  <span className="text-muted-foreground ml-1.5 text-xs">({item.count})</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </CardContent>
