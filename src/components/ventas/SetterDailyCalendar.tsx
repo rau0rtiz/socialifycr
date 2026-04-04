@@ -9,8 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useSetterDailyReports, DailyReportInput, SetterDailyReport } from '@/hooks/use-setter-daily-reports';
-import { CalendarDays, MessageCircle, Phone, Users, FileText, ChevronLeft, ChevronRight, Flame, TrendingUp } from 'lucide-react';
-import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isFuture, getDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday, isSameMonth, subDays, differenceInDays } from 'date-fns';
+import { CalendarDays, MessageCircle, Phone, Users, FileText, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isFuture, getDay, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -153,30 +153,6 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const reportedDates = new Set(reports.map(r => r.report_date));
-
-  // Streak calculation
-  const streak = useMemo(() => {
-    let count = 0;
-    let checkDate = crToday;
-    // If today has no report yet, start from yesterday
-    if (!reportedDates.has(format(checkDate, 'yyyy-MM-dd'))) {
-      checkDate = subDays(checkDate, 1);
-    }
-    while (true) {
-      const dayOfWeek = getDay(checkDate);
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        checkDate = subDays(checkDate, 1);
-        continue;
-      }
-      if (reportedDates.has(format(checkDate, 'yyyy-MM-dd'))) {
-        count++;
-        checkDate = subDays(checkDate, 1);
-      } else {
-        break;
-      }
-    }
-    return count;
-  }, [reports, crToday]);
 
   // % reported calculation
   const { reportedCount, workdayCount } = useMemo(() => {
@@ -333,13 +309,6 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
             <div className="lg:w-56 space-y-4">
               {/* Streak & progress */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-amber-500/5 border border-orange-500/10">
-                  <Flame className="h-4 w-4 text-orange-500" />
-                  <div>
-                    <p className="text-lg font-bold text-foreground leading-none">{streak}</p>
-                    <p className="text-[10px] text-muted-foreground">días de racha</p>
-                  </div>
-                </div>
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
