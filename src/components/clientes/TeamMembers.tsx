@@ -40,10 +40,13 @@ interface TeamMembersProps {
   clientName: string;
 }
 
-const roleLabels = {
+const roleLabels: Record<string, string> = {
   account_manager: 'Account Manager',
   editor: 'Editor',
   viewer: 'Viewer',
+  media_buyer: 'Media Buyer',
+  closer: 'Closer',
+  setter: 'Setter',
 };
 
 export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
