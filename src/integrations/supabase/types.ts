@@ -1789,7 +1789,15 @@ export type Database = {
         | "cancelled"
         | "expired"
         | "trialing"
-      system_role: "owner" | "admin" | "manager" | "analyst" | "viewer"
+      system_role:
+        | "owner"
+        | "admin"
+        | "manager"
+        | "analyst"
+        | "viewer"
+        | "media_buyer"
+        | "closer"
+        | "setter"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1943,7 +1951,16 @@ export const Constants = {
         "expired",
         "trialing",
       ],
-      system_role: ["owner", "admin", "manager", "analyst", "viewer"],
+      system_role: [
+        "owner",
+        "admin",
+        "manager",
+        "analyst",
+        "viewer",
+        "media_buyer",
+        "closer",
+        "setter",
+      ],
     },
   },
 } as const
