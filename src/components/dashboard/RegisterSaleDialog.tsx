@@ -210,10 +210,6 @@ export const RegisterSaleDialog = ({
   };
 
   const canAdvance = (s: number) => {
-    if (isPrefilled) {
-      if (s === 0) return !!amount;
-      return true;
-    }
     // Step 0: product not strictly required but encouraged
     if (s === 0) return true;
     // Step 1: source required, amount required
