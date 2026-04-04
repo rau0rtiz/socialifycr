@@ -59,6 +59,7 @@ export interface AppointmentInput {
   checklist_video?: boolean;
   checklist_whatsapp?: boolean;
   checklist_testimonials?: boolean;
+  not_sold_reason?: string;
 }
 
 export const useSetterAppointments = (clientId: string | null, period?: string, startIso?: string) => {
