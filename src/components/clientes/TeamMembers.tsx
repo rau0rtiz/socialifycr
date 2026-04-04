@@ -18,7 +18,7 @@ import { InviteClientDialog } from './InviteClientDialog';
 interface TeamMember {
   id: string;
   user_id: string;
-  role: 'account_manager' | 'editor' | 'viewer';
+  role: 'account_manager' | 'editor' | 'viewer' | 'media_buyer' | 'closer' | 'setter';
   profile: {
     full_name: string | null;
     email: string | null;
