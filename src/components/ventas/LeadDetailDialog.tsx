@@ -67,8 +67,9 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
 
   const apt = appointment;
   const statusCfg = STATUS_CONFIG[apt.status] || STATUS_CONFIG.scheduled;
-  const salesCallDate = (apt as any).sales_call_date;
-  const leadContext = (apt as any).lead_context || '';
+  const salesCallDate = apt.sales_call_date;
+  const leadContext = apt.lead_context || '';
+  const notSoldReason = apt.not_sold_reason || '';
 
   const toggleCheck = (key: string) => {
     setChecklist(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }));
