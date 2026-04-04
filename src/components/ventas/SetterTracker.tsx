@@ -252,7 +252,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
 
         <CardContent className="space-y-4">
           {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatsCard label="Leads" value={stats.total} sub={`${stats.scheduled} pendientes`} icon={UserPlus} />
             <StatsCard label="Show Rate" value={`${stats.showRate.toFixed(0)}%`} sub={`${stats.noShows} no shows`} icon={TrendingUp} />
             <StatsCard label="Close Rate" value={`${stats.closeRate.toFixed(0)}%`} sub={`${stats.sold} ventas`} icon={CheckCircle2} />
