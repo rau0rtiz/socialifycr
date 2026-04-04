@@ -357,28 +357,61 @@ export const AppointmentFormDialog = ({
               <div className="space-y-2">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
                   <CalendarDays className="h-3.5 w-3.5" />
-                  Fecha de Llamada
+                  Fecha y hora de la llamada
                 </Label>
-                <Input
-                  type="date"
-                  value={salesCallDate}
-                  onChange={e => setSalesCallDate(e.target.value)}
-                  className="h-10 text-sm"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-full h-10 justify-start text-left text-sm font-normal',
+                        !salesCallDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {salesCallDate
+                        ? format(new Date(salesCallDate), "EEEE d 'de' MMMM", { locale: es })
+                        : 'Seleccionar fecha'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={salesCallDate ? new Date(salesCallDate) : undefined}
+                      onSelect={(date) => {
+                        if (date) setSalesCallDate(format(date, 'yyyy-MM-dd'));
+                      }}
+                      initialFocus
+                      className={cn('p-3 pointer-events-auto')}
+                      locale={es}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
+              {/* Time grid selector */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
-                  Hora de la Llamada
+                  Hora
                 </Label>
-                <Input
-                  type="time"
-                  value={salesCallTime}
-                  onChange={e => setSalesCallTime(e.target.value)}
-                  className="h-10 text-sm"
-                  step="900"
-                />
+                <div className="grid grid-cols-4 gap-1.5">
+                  {['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'].map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setSalesCallTime(t)}
+                      className={cn(
+                        'py-1.5 px-2 rounded-lg text-xs font-medium border transition-all',
+                        salesCallTime === t
+                          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                          : 'bg-muted/40 border-border text-foreground hover:bg-muted hover:border-primary/30'
+                      )}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <p className="text-[11px] text-muted-foreground text-center">
