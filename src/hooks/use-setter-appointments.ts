@@ -60,12 +60,12 @@ export interface AppointmentInput {
   checklist_testimonials?: boolean;
 }
 
-export const useSetterAppointments = (clientId: string | null, period?: string) => {
+export const useSetterAppointments = (clientId: string | null, period?: string, startIso?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['setter-appointments', clientId, period],
+    queryKey: ['setter-appointments', clientId, period, startIso],
     queryFn: async () => {
       if (!clientId) return [];
 
@@ -75,7 +75,10 @@ export const useSetterAppointments = (clientId: string | null, period?: string) 
         .eq('client_id', clientId)
         .order('appointment_date', { ascending: false });
 
-      if (period) {
+      // If a raw ISO start date is provided, use it directly
+      if (startIso) {
+        q = q.gte('appointment_date', startIso);
+      } else if (period) {
         const now = new Date();
         let start: Date;
         switch (period) {
