@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import {
   BarChart3, DollarSign, MessageCircle, CalendarDays,
-  CheckCircle2, XCircle, TrendingUp, ShoppingCart, Filter,
+  CheckCircle2, XCircle, TrendingUp, ShoppingCart, Filter, Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isWithinInterval, parseISO } from 'date-fns';
