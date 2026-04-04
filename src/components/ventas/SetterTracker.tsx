@@ -153,96 +153,42 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
     }
   };
 
-  // Compact lead card - shows only name, sales call date, and status badge
-  const renderCompactLeadCard = (apt: SetterAppointment) => {
+  // Grid card - shows only name and date
+  const renderLeadGridCard = (apt: SetterAppointment) => {
     const status = apt.status as AppointmentStatus | 'not_sold';
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.scheduled;
     const StatusIcon = cfg.icon;
     const salesCallDate = (apt as any).sales_call_date;
-    const canConvertToSale = apt.status !== 'sold' && (apt.status as string) !== 'not_sold' && apt.status !== 'cancelled';
 
     return (
-      <div
+      <button
         key={apt.id}
-        className="flex items-center gap-3 p-2.5 rounded-lg border border-border hover:border-primary/30 transition-colors bg-card group"
+        className="flex flex-col items-start gap-1.5 p-3 rounded-xl border border-border hover:border-primary/40 hover:shadow-sm transition-all bg-card text-left group"
+        onClick={() => setDetailLead(apt)}
       >
-        <div className={cn('p-1.5 rounded-md border', cfg.color)}>
-          <StatusIcon className="h-3.5 w-3.5" />
+        <div className="flex items-center justify-between w-full">
+          <div className={cn('p-1 rounded-md border', cfg.color)}>
+            <StatusIcon className="h-3 w-3" />
+          </div>
+          <Badge variant="outline" className={cn('text-[9px] border shrink-0 px-1.5 py-0', cfg.color)}>
+            {cfg.label}
+          </Badge>
         </div>
-
-        {/* Clickable name */}
-        <button
-          className="flex-1 min-w-0 text-left hover:underline"
-          onClick={() => setDetailLead(apt)}
-        >
-          <span className="text-sm font-medium truncate block">{apt.lead_name}</span>
+        <span className="text-sm font-semibold truncate w-full">{apt.lead_name}</span>
+        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
           {salesCallDate ? (
-            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+            <>
               <PhoneCall className="h-2.5 w-2.5" />
               {format(new Date(salesCallDate), "dd MMM, HH:mm", { locale: es })}
-            </span>
+            </>
           ) : (
-            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+            <>
               <Clock className="h-2.5 w-2.5" />
               {format(new Date(apt.appointment_date), "dd MMM", { locale: es })}
-            </span>
+            </>
           )}
-        </button>
-
-        <Badge variant="outline" className={cn('text-[10px] border shrink-0', cfg.color)}>
-          {cfg.label}
-        </Badge>
-
-        {/* Actions - visible on hover */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          {canConvertToSale && onConvertToSale && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 text-[10px] px-1.5 border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400"
-              onClick={() => onConvertToSale(apt)}
-            >
-              <ShoppingCart className="h-3 w-3" />
-            </Button>
-          )}
-          {canConvertToSale && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 text-[10px] px-1.5 border-rose-500/40 text-rose-700 hover:bg-rose-500/10 dark:text-rose-400"
-              onClick={() => handleStatusChange(apt, 'not_sold')}
-            >
-              <ThumbsDown className="h-3 w-3" />
-            </Button>
-          )}
-          <Select
-            value={apt.status}
-            onValueChange={v => handleStatusChange(apt, v as any)}
-          >
-            <SelectTrigger className="h-6 text-[10px] w-20 border-dashed">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(STATUS_CONFIG).map(([val, c]) => (
-                <SelectItem key={val} value={val} className="text-xs">{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditing(apt); setShowForm(true); }}>
-            <Pencil className="h-3 w-3" />
-          </Button>
-          {confirmDelete === apt.id ? (
-            <div className="flex gap-0.5">
-              <Button variant="destructive" size="sm" className="h-6 text-[10px] px-2" onClick={() => handleDelete(apt.id)}>Sí</Button>
-              <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => setConfirmDelete(null)}>No</Button>
-            </div>
-          ) : (
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive" onClick={() => setConfirmDelete(apt.id)}>
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-      </div>
+        </span>
+      </button>
     );
   };
 
