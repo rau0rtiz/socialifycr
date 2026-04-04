@@ -40,7 +40,7 @@ const CHECKLIST_ITEMS = [
   { key: 'checklist_testimonials', label: 'Ya se enviaron los testimonios' },
 ];
 
-export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist }: LeadDetailDialogProps) => {
+export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange }: LeadDetailDialogProps) => {
   // Local checklist state - hooks must be before early return
   const [checklist, setChecklist] = useState({
     checklist_quiz: false,
