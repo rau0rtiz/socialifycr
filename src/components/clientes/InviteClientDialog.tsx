@@ -214,6 +214,9 @@ export const InviteClientDialog = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="account_manager">Account Manager</SelectItem>
+                  <SelectItem value="media_buyer">Media Buyer</SelectItem>
+                  <SelectItem value="closer">Closer</SelectItem>
+                  <SelectItem value="setter">Setter</SelectItem>
                   <SelectItem value="editor">Editor</SelectItem>
                   <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
