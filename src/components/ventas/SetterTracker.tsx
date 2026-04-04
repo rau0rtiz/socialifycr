@@ -49,8 +49,7 @@ const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; col
   cancelled: { label: 'Cancelada', color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle },
 };
 
-export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: SetterTrackerProps) => {
-  const [period, setPeriod] = useState('last_30d');
+export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodStartIso }: SetterTrackerProps) => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SetterAppointment | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -61,7 +60,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale }: Sette
   const [noSaleTarget, setNoSaleTarget] = useState<SetterAppointment | null>(null);
   const [noSaleReason, setNoSaleReason] = useState('');
 
-  const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, period);
+  const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, undefined, periodStartIso);
   const { setterNames: existingSetters } = useClientSetters(clientId);
 
   // Split appointments
