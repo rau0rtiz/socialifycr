@@ -19,6 +19,7 @@ import { useClientFeatures } from '@/hooks/use-client-features';
 import { useSetterAppointments, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useSetterDailyReports } from '@/hooks/use-setter-daily-reports';
+import { useClientProducts } from '@/hooks/use-client-products';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CalendarIcon } from 'lucide-react';
 import { SalePrefill } from '@/components/dashboard/RegisterSaleDialog';
