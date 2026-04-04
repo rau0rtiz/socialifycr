@@ -382,10 +382,40 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
               {sales.map((sale) => (
                 <div
                   key={sale.id}
-                  className="flex flex-col items-start gap-1.5 p-3 rounded-xl border border-border hover:border-primary/40 hover:shadow-sm transition-all bg-card group cursor-pointer"
+                  className="relative flex flex-col items-start gap-1.5 p-3 rounded-xl border border-border hover:border-primary/40 hover:shadow-sm transition-all bg-card group cursor-pointer"
                   onClick={() => handleEdit(sale)}
                 >
-                  <div className="flex items-center justify-between w-full">
+                  {/* Delete button */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 z-10"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Eliminar venta"
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Eliminar venta?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta acción no se puede deshacer. Se eliminará la venta de {sale.customer_name || 'Sin nombre'} por {formatCurrency(Number(sale.amount), sale.currency)}.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={() => handleDelete(sale.id)}
+                        >
+                          Eliminar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
+                  <div className="flex items-center justify-between w-full pr-5">
                     <Badge variant="outline" className="text-[9px] px-1.5 py-0">
                       {SOURCE_LABELS[sale.source] || sale.source}
                     </Badge>
