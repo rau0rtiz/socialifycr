@@ -40,7 +40,7 @@ export const useUserRole = (): UserRoleData => {
       if (!data || data.length === 0) return null;
       
       // Pick highest priority role
-      const priority: SystemRole[] = ['owner', 'admin', 'manager', 'analyst', 'viewer'];
+      const priority: SystemRole[] = ['owner', 'admin', 'manager', 'media_buyer', 'closer', 'setter', 'analyst', 'viewer'];
       const roles = data.map(d => d.role as SystemRole);
       return priority.find(r => roles.includes(r)) || roles[0];
     },
