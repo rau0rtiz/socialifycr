@@ -178,7 +178,7 @@ export const Sidebar = () => {
           </SidebarGroup>
         )}
 
-        {effectiveAgency && (
+        {effectiveCanManage && (
           <SidebarGroup>
             <SidebarGroupLabel>Gestión</SidebarGroupLabel>
             <SidebarGroupContent>
