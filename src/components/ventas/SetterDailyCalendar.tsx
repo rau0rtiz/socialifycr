@@ -414,7 +414,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
                     type="number"
                     min={0}
                     value={value}
-                    onChange={e => set(parseInt(e.target.value) || 0)}
+                    onChange={e => set(e.target.value)}
                     className="h-9"
                   />
                 </div>
