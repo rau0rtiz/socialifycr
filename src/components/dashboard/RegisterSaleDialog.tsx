@@ -605,6 +605,8 @@ export const RegisterSaleDialog = ({
                 )}
               </div>
 
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Fuente de la venta *</Label>
                 <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
                   <SelectContent>
