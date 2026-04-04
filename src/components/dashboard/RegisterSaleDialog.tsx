@@ -148,10 +148,10 @@ export const RegisterSaleDialog = ({
       setSource(prefill.ad_id ? 'ad' : prefill.source || '');
       setCustomerName(prefill.customer_name || '');
       setProduct(prefill.product || '');
-      setMessagePlatform('');
+      setMessagePlatform(prefill.message_platform || '');
       setNotes('');
       setStatus('completed');
-      setCloserName('');
+      setCloserName(prefill.closer_name || '');
       if (prefill.ad_id) {
         setSelectedAd({
           id: prefill.ad_id,
