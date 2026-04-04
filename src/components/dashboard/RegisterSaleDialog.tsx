@@ -12,6 +12,7 @@ import { useClientProducts } from '@/hooks/use-client-products';
 import { useClientClosers } from '@/hooks/use-client-closers';
 import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
+import { FREQUENCY_LABELS, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
