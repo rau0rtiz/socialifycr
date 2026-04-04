@@ -353,26 +353,16 @@ export const RegisterSaleDialog = ({
           </DialogHeader>
 
           {/* Prefilled summary badges */}
-          {isPrefilled && step === 0 && (
+          {isPrefilled && (
             <div className="flex flex-wrap justify-center gap-2">
               {prefill?.customer_name && (
                 <Badge variant="secondary" className="gap-1.5 text-xs">
                   <User className="h-3 w-3" /> {prefill.customer_name}
                 </Badge>
               )}
-              {prefill?.product && (
+              {prefill?.ad_name && (
                 <Badge variant="secondary" className="gap-1.5 text-xs">
-                  <Package className="h-3 w-3" /> {prefill.product}
-                </Badge>
-              )}
-              {source && (
-                <Badge variant="secondary" className="gap-1.5 text-xs">
-                  <Tag className="h-3 w-3" /> {SOURCE_OPTIONS.find(o => o.value === source)?.label || source}
-                </Badge>
-              )}
-              {selectedAd && (
-                <Badge variant="secondary" className="gap-1.5 text-xs">
-                  <Megaphone className="h-3 w-3" /> {selectedAd.name}
+                  <Megaphone className="h-3 w-3" /> {prefill.ad_name}
                 </Badge>
               )}
             </div>
@@ -399,69 +389,8 @@ export const RegisterSaleDialog = ({
 
         {/* Content area */}
         <div className="px-6 overflow-y-auto" style={{ minHeight: '200px', maxHeight: '50vh' }}>
-          {/* === PREFILLED FLOW === */}
-          {isPrefilled && step === 0 && (
-            <div className="space-y-4 py-4">
-              <div className="flex gap-2">
-                <div className="flex-1 space-y-2">
-                  <Label className="text-xs font-medium">Monto *</Label>
-                  <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-10 text-sm" autoFocus />
-                </div>
-                <div className="w-24 space-y-2">
-                  <Label className="text-xs font-medium">Moneda</Label>
-                  <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CRC">₡ CRC</SelectItem>
-                      <SelectItem value="USD">$ USD</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Fecha</Label>
-                <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-10 text-sm" />
-              </div>
-              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
-            </div>
-          )}
-
-          {isPrefilled && step === 1 && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Closer / Vendedor</Label>
-                <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
-                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿Quién cerró la venta?" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
-                    {closerName && !closers.some(c => c.fullName === closerName) && (
-                      <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>
-                    )}
-                    {closers.map(c => (
-                      <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Label className="text-xs font-medium">Plataforma del mensaje</Label>
-                <Select value={messagePlatform} onValueChange={setMessagePlatform}>
-                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
-                  <SelectContent>
-                    {PLATFORM_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Notas</Label>
-                <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="text-sm" />
-              </div>
-            </div>
-          )}
-
-          {/* === STANDARD FLOW === */}
           {/* Step 0: Product + Payment Scheme */}
-          {!isPrefilled && step === 0 && (
+          {step === 0 && (
             <div className="space-y-4 py-4">
               {/* Product */}
               <div className="space-y-2">
