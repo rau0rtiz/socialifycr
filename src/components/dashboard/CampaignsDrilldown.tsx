@@ -112,6 +112,7 @@ const getCostPerResultLabel = (resultType: string): string => {
     'Reproducciones': 'Costo por reproducción',
     'Interacciones': 'Costo por interacción',
     'Resultados': 'Costo por resultado',
+    'Landing Page Views': 'Costo por LPV',
   };
   return labelMap[resultType] || `Costo por ${resultType.toLowerCase()}`;
 };
@@ -189,6 +190,14 @@ const CampaignGridCard = ({
           <p className="text-[9px] text-muted-foreground">Costo/Resultado</p>
           <p className="text-xs font-semibold">{campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult, currency) : '-'}</p>
         </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground">LPV</p>
+          <p className="text-xs font-semibold">{formatNumber(campaign.landingPageViews)}</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-muted-foreground">Costo/LPV</p>
+          <p className="text-xs font-semibold">{campaign.landingPageViews > 0 ? formatCurrency(campaign.spend / campaign.landingPageViews, currency) : '-'}</p>
+        </div>
       </div>
     </div>
   );
@@ -208,7 +217,7 @@ const CampaignRow = ({
   clientId: string;
   configuredGoal?: GoalType | null;
 }) => {
-  const isPurchaseGoal = configuredGoal === 'purchases' || campaign.resultType === 'Compras';
+  // LPV is now always shown for all campaigns
   const isFollowersGoal = configuredGoal === 'followers' || campaign.resultType === 'Seguidores';
   const goalLabel = configuredGoal ? getGoalLabel(configuredGoal) : null;
   
@@ -259,9 +268,12 @@ const CampaignRow = ({
         label={getCostPerResultLabel(campaign.resultType)}
         value={campaign.costPerResult > 0 ? formatCurrency(campaign.costPerResult, currency) : '-'}
       />
-      {isPurchaseGoal && (
-        <MetricCard icon={Eye} label="Landing Page Views" value={formatNumber(campaign.landingPageViews)} />
-      )}
+      <MetricCard
+        icon={Eye}
+        label="LPV"
+        value={formatNumber(campaign.landingPageViews)}
+        subValue={campaign.landingPageViews > 0 ? `${formatCurrency(campaign.spend / campaign.landingPageViews, currency)}/LPV` : undefined}
+      />
       {isFollowersGoal && (
         <MetricCard icon={Users} label="New IG Followers" value={formatNumber(campaign.results)} />
       )}
