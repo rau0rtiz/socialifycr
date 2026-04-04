@@ -153,41 +153,67 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
     }
   };
 
-  // Grid card - shows only name and date
+  // Checklist readiness: count completed items out of 4
+  const getChecklistReadiness = (apt: SetterAppointment) => {
+    const items = [apt.checklist_quiz, apt.checklist_video, apt.checklist_whatsapp, apt.checklist_testimonials];
+    const done = items.filter(Boolean).length;
+    if (done === 4) return { level: 'ready' as const, label: 'Preparado', done, border: 'border-emerald-500/50', bg: 'bg-emerald-500/8', dot: 'bg-emerald-500' };
+    if (done === 0) return { level: 'none' as const, label: 'Sin preparar', done, border: 'border-red-500/50', bg: 'bg-red-500/8', dot: 'bg-red-500' };
+    return { level: 'partial' as const, label: `${done}/4 listo`, done, border: 'border-amber-500/50', bg: 'bg-amber-500/8', dot: 'bg-amber-500' };
+  };
+
+  // Grid card - shows only name and date with checklist color coding
   const renderLeadGridCard = (apt: SetterAppointment) => {
     const status = apt.status as AppointmentStatus | 'not_sold';
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.scheduled;
     const StatusIcon = cfg.icon;
     const salesCallDate = (apt as any).sales_call_date;
+    const readiness = getChecklistReadiness(apt);
 
     return (
       <button
         key={apt.id}
-        className="flex flex-col items-start gap-1.5 p-3 rounded-xl border border-border hover:border-primary/40 hover:shadow-sm transition-all bg-card text-left group"
+        className={cn(
+          'flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 hover:shadow-sm transition-all bg-card text-left group',
+          readiness.border, readiness.bg
+        )}
         onClick={() => setDetailLead(apt)}
       >
         <div className="flex items-center justify-between w-full">
           <div className={cn('p-1 rounded-md border', cfg.color)}>
             <StatusIcon className="h-3 w-3" />
           </div>
-          <Badge variant="outline" className={cn('text-[9px] border shrink-0 px-1.5 py-0', cfg.color)}>
-            {cfg.label}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <span className={cn('h-2 w-2 rounded-full shrink-0', readiness.dot)} title={readiness.label} />
+            <Badge variant="outline" className={cn('text-[9px] border shrink-0 px-1.5 py-0', cfg.color)}>
+              {cfg.label}
+            </Badge>
+          </div>
         </div>
         <span className="text-sm font-semibold truncate w-full">{apt.lead_name}</span>
-        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-          {salesCallDate ? (
-            <>
-              <PhoneCall className="h-2.5 w-2.5" />
-              {format(new Date(salesCallDate), "dd MMM, HH:mm", { locale: es })}
-            </>
-          ) : (
-            <>
-              <Clock className="h-2.5 w-2.5" />
-              {format(new Date(apt.appointment_date), "dd MMM", { locale: es })}
-            </>
-          )}
-        </span>
+        <div className="flex items-center justify-between w-full">
+          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+            {salesCallDate ? (
+              <>
+                <PhoneCall className="h-2.5 w-2.5" />
+                {format(new Date(salesCallDate), "dd MMM, HH:mm", { locale: es })}
+              </>
+            ) : (
+              <>
+                <Clock className="h-2.5 w-2.5" />
+                {format(new Date(apt.appointment_date), "dd MMM", { locale: es })}
+              </>
+            )}
+          </span>
+          <span className={cn(
+            'text-[9px] font-medium px-1.5 py-0.5 rounded-full',
+            readiness.level === 'ready' && 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+            readiness.level === 'partial' && 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
+            readiness.level === 'none' && 'bg-red-500/15 text-red-700 dark:text-red-400',
+          )}>
+            {readiness.label}
+          </span>
+        </div>
       </button>
     );
   };
