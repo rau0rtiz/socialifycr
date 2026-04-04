@@ -329,7 +329,10 @@ const Ventas = () => {
           />
         </div>
 
-        {/* === MIND COACH: Meta Campaigns Drilldown === */}
+        {/* Collections (pending installments) */}
+        <CollectionsWidget clientId={selectedClient.id} />
+
+
         {isMindCoach && hasAdAccount && (
           <CampaignsDrilldown
             clientId={selectedClient.id}
