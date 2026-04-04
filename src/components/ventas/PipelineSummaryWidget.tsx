@@ -189,7 +189,7 @@ export const PipelineSummaryWidget = ({
             <div className="p-1.5 rounded-lg bg-primary/10">
               <BarChart3 className="h-4 w-4 text-primary" />
             </div>
-            Resumen del Pipeline
+            Resumen de Ventas
           </CardTitle>
           {/* Period selector removed — now controlled globally */}
         </div>
