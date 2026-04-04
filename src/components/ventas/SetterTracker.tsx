@@ -171,50 +171,64 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
     const readiness = getChecklistReadiness(apt);
 
     return (
-      <button
+      <div
         key={apt.id}
         className={cn(
-          'flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 hover:shadow-sm transition-all bg-card text-left group',
+          'relative flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 hover:shadow-sm transition-all bg-card text-left group',
           readiness.border, readiness.bg
         )}
-        onClick={() => setDetailLead(apt)}
       >
-        <div className="flex items-center justify-between w-full">
-          <div className={cn('p-1 rounded-md border', cfg.color)}>
-            <StatusIcon className="h-3 w-3" />
+        {/* Edit button - top right on hover */}
+        <button
+          className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-muted"
+          onClick={(e) => { e.stopPropagation(); setEditing(apt); setShowForm(true); }}
+          title="Editar lead"
+        >
+          <Pencil className="h-3 w-3 text-muted-foreground" />
+        </button>
+
+        {/* Main clickable area */}
+        <button
+          className="flex flex-col items-start gap-1.5 w-full text-left"
+          onClick={() => setDetailLead(apt)}
+        >
+          <div className="flex items-center justify-between w-full pr-5">
+            <div className={cn('p-1 rounded-md border', cfg.color)}>
+              <StatusIcon className="h-3 w-3" />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className={cn('h-2 w-2 rounded-full shrink-0', readiness.dot)} title={readiness.label} />
+              <Badge variant="outline" className={cn('text-[9px] border shrink-0 px-1.5 py-0', cfg.color)}>
+                {cfg.label}
+              </Badge>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className={cn('h-2 w-2 rounded-full shrink-0', readiness.dot)} title={readiness.label} />
-            <Badge variant="outline" className={cn('text-[9px] border shrink-0 px-1.5 py-0', cfg.color)}>
-              {cfg.label}
-            </Badge>
+          <span className="text-sm font-semibold truncate w-full">{apt.lead_name}</span>
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+              {salesCallDate ? (
+                <>
+                  <PhoneCall className="h-2.5 w-2.5" />
+                  {format(new Date(salesCallDate), "dd MMM, HH:mm", { locale: es })}
+                </>
+              ) : (
+                <>
+                  <Clock className="h-2.5 w-2.5" />
+                  {format(new Date(apt.appointment_date), "dd MMM", { locale: es })}
+                </>
+              )}
+            </span>
+            <span className={cn(
+              'text-[9px] font-medium px-1.5 py-0.5 rounded-full',
+              readiness.level === 'ready' && 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+              readiness.level === 'partial' && 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
+              readiness.level === 'none' && 'bg-red-500/15 text-red-700 dark:text-red-400',
+            )}>
+              {readiness.label}
+            </span>
           </div>
-        </div>
-        <span className="text-sm font-semibold truncate w-full">{apt.lead_name}</span>
-        <div className="flex items-center justify-between w-full">
-          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-            {salesCallDate ? (
-              <>
-                <PhoneCall className="h-2.5 w-2.5" />
-                {format(new Date(salesCallDate), "dd MMM, HH:mm", { locale: es })}
-              </>
-            ) : (
-              <>
-                <Clock className="h-2.5 w-2.5" />
-                {format(new Date(apt.appointment_date), "dd MMM", { locale: es })}
-              </>
-            )}
-          </span>
-          <span className={cn(
-            'text-[9px] font-medium px-1.5 py-0.5 rounded-full',
-            readiness.level === 'ready' && 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
-            readiness.level === 'partial' && 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
-            readiness.level === 'none' && 'bg-red-500/15 text-red-700 dark:text-red-400',
-          )}>
-            {readiness.label}
-          </span>
-        </div>
-      </button>
+        </button>
+      </div>
     );
   };
 
