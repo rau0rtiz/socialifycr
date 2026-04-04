@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { RegisterSaleDialog, SalePrefill } from './RegisterSaleDialog';
 import { LinkAdDialog } from './LinkAdDialog';
+import { useBrand } from '@/contexts/BrandContext';
 import { CampaignInsights } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
