@@ -392,9 +392,18 @@ export const RegisterSaleDialog = ({
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Closer / Vendedor</Label>
-                <Input placeholder="¿Quién cerró la venta?" value={closerName} onChange={(e) => setCloserName(e.target.value)} className="h-10 text-sm" />
-              </div>
-              <div className="space-y-2">
+                <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿Quién cerró la venta?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                    {closerName && !closers.some(c => c.fullName === closerName) && (
+                      <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>
+                    )}
+                    {closers.map(c => (
+                      <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Label className="text-xs font-medium">Plataforma del mensaje</Label>
                 <Select value={messagePlatform} onValueChange={setMessagePlatform}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
