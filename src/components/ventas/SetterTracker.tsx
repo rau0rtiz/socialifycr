@@ -245,7 +245,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
                   <p className="text-xs mt-1">Registra leads para trackear tu pipeline de ventas.</p>
                 </div>
               ) : (
-                <div className="space-y-1.5">{activeAppointments.map(renderCompactLeadCard)}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">{activeAppointments.map(renderLeadGridCard)}</div>
               )}
             </TabsContent>
 
@@ -257,7 +257,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
                   <p className="text-xs mt-1">Los leads marcados como "No vendido" aparecerán aquí.</p>
                 </div>
               ) : (
-                <div className="space-y-1.5">{lostAppointments.map(renderCompactLeadCard)}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">{lostAppointments.map(renderLeadGridCard)}</div>
               )}
             </TabsContent>
 
