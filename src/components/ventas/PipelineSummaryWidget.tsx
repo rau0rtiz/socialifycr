@@ -171,6 +171,14 @@ export const PipelineSummaryWidget = ({
       color: 'text-amber-500',
       bg: 'bg-amber-500/10',
     },
+    {
+      icon: Wallet,
+      label: 'Cash Collected',
+      value: cashLabel,
+      sub: pendingSub,
+      color: 'text-teal-500',
+      bg: 'bg-teal-500/10',
+    },
   ];
 
   return (
