@@ -275,7 +275,8 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
           {/* Tabs: Pipeline / No vendidos / Cierre por vendedor */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="h-8">
-              <TabsTrigger value="pipeline" className="text-xs">Pipeline ({activeAppointments.length})</TabsTrigger>
+             <TabsTrigger value="pipeline" className="text-xs">Agenda ({activeAppointments.length})</TabsTrigger>
+              <TabsTrigger value="no_show" className="text-xs">No Show ({noShowAppointments.length})</TabsTrigger>
               <TabsTrigger value="lost" className="text-xs">No vendidos ({lostAppointments.length})</TabsTrigger>
             </TabsList>
 
@@ -285,11 +286,23 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
               ) : activeAppointments.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <UserPlus className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm font-medium">Sin leads registrados</p>
+                  <p className="text-sm font-medium">Sin leads activos</p>
                   <p className="text-xs mt-1">Registra leads para trackear tu pipeline de ventas.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">{activeAppointments.map(renderLeadGridCard)}</div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="no_show" className="mt-3">
+              {noShowAppointments.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <XCircle className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm font-medium">Sin no shows</p>
+                  <p className="text-xs mt-1">Los leads que no asistieron aparecerán aquí.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">{noShowAppointments.map(renderLeadGridCard)}</div>
               )}
             </TabsContent>
 
