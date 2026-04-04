@@ -48,6 +48,7 @@ export interface SaleInput {
   num_installments?: number;
   installments_paid?: number;
   installment_amount?: number;
+  payment_method?: string;
 }
 
 export const useSalesTracking = (clientId: string | null, month?: Date) => {
