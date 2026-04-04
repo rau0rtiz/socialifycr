@@ -118,10 +118,16 @@ const Ventas = () => {
 
   return (
     <DashboardLayout>
-      <div className="mb-4 md:mb-6 space-y-4">
-        <h1 className="text-lg md:text-xl font-semibold text-foreground">
-          {isMindCoach ? 'Pipeline' : 'Ventas'}
-        </h1>
+      <div className="mb-4 md:mb-8 space-y-6">
+        {/* Page header */}
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
+            {isMindCoach ? 'Pipeline' : 'Ventas'}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {isMindCoach ? 'Gestión integral del pipeline de ventas' : 'Seguimiento y análisis de ventas'}
+          </p>
+        </div>
 
         {/* === MIND COACH: Pipeline Summary at top === */}
         {isMindCoach && (
@@ -189,11 +195,14 @@ const Ventas = () => {
           />
         )}
 
-        {/* Sales by product pie chart */}
-        <SalesByProductChart sales={allSales} />
+        {/* Bottom section: charts side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Sales by product pie chart */}
+          <SalesByProductChart sales={allSales} />
 
-        {/* Closure rate per seller */}
-        <ClosureRateWidget appointments={appointments} />
+          {/* Closure rate per seller */}
+          <ClosureRateWidget appointments={appointments} />
+        </div>
 
         {/* Ad ranking at bottom for Mind Coach */}
         {isMindCoach && (

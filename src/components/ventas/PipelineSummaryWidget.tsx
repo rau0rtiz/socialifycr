@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { SetterAppointment } from '@/hooks/use-setter-appointments';
 import { MessageSale } from '@/hooks/use-sales-tracking';
 import { SetterDailyReport } from '@/hooks/use-setter-daily-reports';
@@ -68,7 +67,6 @@ export const PipelineSummaryWidget = ({
   
   const range = useMemo(() => getDateRange(period), [period]);
 
-  // Filter appointments by date range
   const filteredAppointments = useMemo(() => {
     return appointments.filter(a => {
       const d = parseISO(a.appointment_date);
@@ -76,7 +74,6 @@ export const PipelineSummaryWidget = ({
     });
   }, [appointments, range]);
 
-  // Filter sales by date range
   const filteredSales = useMemo(() => {
     return sales.filter(s => {
       const d = parseISO(s.sale_date);
@@ -84,7 +81,6 @@ export const PipelineSummaryWidget = ({
     });
   }, [sales, range]);
 
-  // Filter daily reports by date range
   const filteredReports = useMemo(() => {
     return dailyReports.filter(r => {
       const d = parseISO(r.report_date);
@@ -92,7 +88,6 @@ export const PipelineSummaryWidget = ({
     });
   }, [dailyReports, range]);
 
-  // Ad spend calculation (from selected campaigns or all)
   const adSpend = useMemo(() => {
     const targetCampaigns = selectedCampaignIds.length > 0
       ? campaigns.filter(c => selectedCampaignIds.includes(c.id))
@@ -100,11 +95,9 @@ export const PipelineSummaryWidget = ({
     return targetCampaigns.reduce((sum, c) => sum + c.spend, 0);
   }, [campaigns, selectedCampaignIds]);
 
-  // Conversation totals from daily reports
   const totalConversations = filteredReports.reduce((s, r) => s + r.ig_conversations + r.wa_conversations, 0);
   const totalFollowups = filteredReports.reduce((s, r) => s + r.followups, 0);
 
-  // Show rate calculation
   const completed = filteredAppointments.filter(a => 
     a.status === 'completed' || a.status === 'sold' || (a.status as string) === 'not_sold'
   ).length;
@@ -112,13 +105,11 @@ export const PipelineSummaryWidget = ({
   const showRate = (completed + noShows) > 0 ? (completed / (completed + noShows)) * 100 : 0;
   const noShowRate = (completed + noShows) > 0 ? (noShows / (completed + noShows)) * 100 : 0;
 
-  // Close rate
   const sold = filteredAppointments.filter(a => a.status === 'sold').length;
   const notSold = filteredAppointments.filter(a => (a.status as string) === 'not_sold').length;
   const closedCalls = sold + notSold;
   const closeRate = closedCalls > 0 ? (sold / closedCalls) * 100 : 0;
 
-  // Total sales amount
   const totalSalesUSD = filteredSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
   const totalSalesCRC = filteredSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
 
@@ -128,16 +119,69 @@ export const PipelineSummaryWidget = ({
     );
   };
 
+  const kpis = [
+    {
+      icon: MessageCircle,
+      label: 'Conversaciones',
+      value: totalConversations,
+      sub: `${totalFollowups} seguimientos`,
+      color: 'text-pink-500',
+      bg: 'bg-pink-500/10',
+    },
+    {
+      icon: CalendarDays,
+      label: 'Agendas',
+      value: filteredAppointments.length,
+      sub: `${filteredReports.reduce((s, r) => s + r.appointments_made, 0)} desde reportes`,
+      color: 'text-purple-500',
+      bg: 'bg-purple-500/10',
+    },
+    {
+      icon: CheckCircle2,
+      label: 'Show Rate',
+      value: `${showRate.toFixed(0)}%`,
+      sub: `${completed} asistieron`,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10',
+    },
+    {
+      icon: XCircle,
+      label: 'No Show',
+      value: `${noShowRate.toFixed(0)}%`,
+      sub: `${noShows} no asistieron`,
+      color: 'text-red-500',
+      bg: 'bg-red-500/10',
+    },
+    {
+      icon: ShoppingCart,
+      label: 'Ventas',
+      value: filteredSales.length.toString(),
+      sub: totalSalesUSD > 0 ? `$${totalSalesUSD.toLocaleString()}` : totalSalesCRC > 0 ? `₡${totalSalesCRC.toLocaleString()}` : '-',
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+    },
+    {
+      icon: TrendingUp,
+      label: 'Close Rate',
+      value: `${closeRate.toFixed(0)}%`,
+      sub: `${sold}/${closedCalls} cerrados`,
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+    },
+  ];
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="border-border/50 shadow-sm">
+      <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
+          <CardTitle className="text-sm flex items-center gap-2.5 text-foreground">
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <BarChart3 className="h-4 w-4 text-primary" />
+            </div>
             Resumen del Pipeline
           </CardTitle>
           <Select value={period} onValueChange={(v) => onPeriodChange(v as PipelinePeriod)}>
-            <SelectTrigger className="h-7 text-xs w-36">
+            <SelectTrigger className="h-8 text-xs w-40 rounded-lg">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -148,18 +192,18 @@ export const PipelineSummaryWidget = ({
           </Select>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* KPI Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-          {/* Ad Spend with campaign selector */}
-          <div className="p-3 rounded-lg border border-border bg-muted/30 space-y-1">
+      <CardContent className="space-y-0">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+          <div className="p-4 rounded-xl border border-border/50 bg-card hover:shadow-sm transition-shadow space-y-1.5">
             <div className="flex items-center gap-1.5 text-muted-foreground">
-              <DollarSign className="h-3 w-3" />
-              <span className="text-[10px] font-medium">Gasto ads</span>
+              <div className="p-1 rounded-md bg-green-500/10">
+                <DollarSign className="h-3 w-3 text-green-500" />
+              </div>
+              <span className="text-[10px] font-medium flex-1">Gasto ads</span>
               {campaigns.length > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-4 w-4 p-0 ml-auto">
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
                       <Filter className="h-2.5 w-2.5" />
                     </Button>
                   </PopoverTrigger>
@@ -185,31 +229,26 @@ export const PipelineSummaryWidget = ({
                 </Popover>
               )}
             </div>
-            <p className="text-lg font-bold text-foreground">{formatCurrency(adSpend, adCurrency)}</p>
+            <p className="text-xl font-bold text-foreground">{formatCurrency(adSpend, adCurrency)}</p>
             {selectedCampaignIds.length > 0 && (
               <p className="text-[10px] text-muted-foreground">{selectedCampaignIds.length} campañas</p>
             )}
           </div>
 
-          <KPICard icon={MessageCircle} label="Conversaciones" value={totalConversations} sub={`${totalFollowups} seguimientos`} />
-          <KPICard icon={CalendarDays} label="Agendas" value={filteredAppointments.length} sub={`${filteredReports.reduce((s, r) => s + r.appointments_made, 0)} desde reportes`} />
-          <KPICard icon={CheckCircle2} label="Show Rate" value={`${showRate.toFixed(0)}%`} sub={`${completed} asistieron`} />
-          <KPICard icon={XCircle} label="No Show" value={`${noShowRate.toFixed(0)}%`} sub={`${noShows} no asistieron`} />
-          <KPICard icon={ShoppingCart} label="Ventas" value={filteredSales.length.toString()} sub={totalSalesUSD > 0 ? `$${totalSalesUSD.toLocaleString()}` : totalSalesCRC > 0 ? `₡${totalSalesCRC.toLocaleString()}` : '-'} />
-          <KPICard icon={TrendingUp} label="Close Rate" value={`${closeRate.toFixed(0)}%`} sub={`${sold}/${closedCalls} cerrados`} />
+          {kpis.map(({ icon: Icon, label, value, sub, color, bg }) => (
+            <div key={label} className="p-4 rounded-xl border border-border/50 bg-card hover:shadow-sm transition-shadow space-y-1.5">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <div className={cn('p-1 rounded-md', bg)}>
+                  <Icon className={cn('h-3 w-3', color)} />
+                </div>
+                <span className="text-[10px] font-medium">{label}</span>
+              </div>
+              <p className="text-xl font-bold text-foreground">{value}</p>
+              <p className="text-[10px] text-muted-foreground">{sub}</p>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
   );
 };
-
-const KPICard = ({ icon: Icon, label, value, sub }: { icon: React.ElementType; label: string; value: string | number; sub: string }) => (
-  <div className="p-3 rounded-lg border border-border bg-muted/30 space-y-1">
-    <div className="flex items-center gap-1.5 text-muted-foreground">
-      <Icon className="h-3 w-3" />
-      <span className="text-[10px] font-medium">{label}</span>
-    </div>
-    <p className="text-lg font-bold text-foreground">{value}</p>
-    <p className="text-[10px] text-muted-foreground">{sub}</p>
-  </div>
-);
