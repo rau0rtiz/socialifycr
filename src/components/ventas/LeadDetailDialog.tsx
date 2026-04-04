@@ -15,6 +15,7 @@ interface LeadDetailDialogProps {
   appointment: SetterAppointment | null;
   onUpdateChecklist?: (id: string, updates: Record<string, any>) => void;
   onStatusChange?: (id: string, status: string) => void;
+  onDelete?: (id: string) => Promise<void>;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
