@@ -18,6 +18,7 @@ import { X, Plus, ChevronLeft, ChevronRight, User, CalendarDays, Megaphone, Phon
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ScrollTimePicker } from '@/components/ui/scroll-time-picker';
 
 interface AppointmentFormDialogProps {
   open: boolean;
@@ -436,29 +437,10 @@ export const AppointmentFormDialog = ({
                   <Clock className="h-3.5 w-3.5" />
                   Hora
                 </Label>
-                <Input
-                  type="time"
+                <ScrollTimePicker
                   value={salesCallTime}
-                  onChange={e => setSalesCallTime(e.target.value)}
-                  className="h-10 text-sm w-full"
+                  onChange={setSalesCallTime}
                 />
-                <div className="flex flex-wrap gap-1.5">
-                  {['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'].map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setSalesCallTime(t)}
-                      className={cn(
-                        'py-1 px-2.5 rounded-md text-[11px] font-medium border transition-all',
-                        salesCallTime === t
-                          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                          : 'bg-muted/40 border-border text-foreground hover:bg-muted hover:border-primary/30'
-                      )}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <p className="text-[11px] text-muted-foreground text-center">
