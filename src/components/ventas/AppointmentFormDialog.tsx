@@ -89,8 +89,8 @@ export const AppointmentFormDialog = ({
   const { data: allSchemes = [] } = useClientPaymentSchemes(clientId || null);
 
   const needsAdStep = source === 'ads' && hasAdAccount;
-  // Steps: 0=Lead, 1=Product, 2=Setter, 3=Source, 4=Ad(conditional)
-  const totalSteps = needsAdStep ? 5 : 4;
+  // Steps: 0=Lead, 1=Setter, 2=Source, 3=Ad(conditional)
+  const totalSteps = needsAdStep ? 4 : 3;
   const lastStep = totalSteps - 1;
 
   const { data: adsResult, isLoading: adsLoading } = useAllAds(
