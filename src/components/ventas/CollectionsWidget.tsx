@@ -235,7 +235,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
   // Mobile: tabs
   const renderMobileTabs = () => (
     <Tabs defaultValue="overdue" className="w-full">
-      <TabsList className="w-full grid grid-cols-4">
+      <TabsList className="w-full grid grid-cols-3">
         {COLUMNS.map(col => (
           <TabsTrigger key={col.key} value={col.key} className="text-[10px] gap-1 px-1">
             <span className={col.colorClass}>{col.icon}</span>
