@@ -438,7 +438,7 @@ export const RegisterSaleDialog = ({
                 ) : (
                   <div className="flex gap-2">
                     <Select value={product || '_none'} onValueChange={handleProductChange}>
-                      <SelectTrigger className="h-10 text-sm flex-1 min-w-0"><SelectValue placeholder="Seleccionar producto" className="truncate" /></SelectTrigger>
+                      <SelectTrigger className="h-10 text-sm flex-1 min-w-0 overflow-hidden"><SelectValue placeholder="Seleccionar producto" className="truncate block max-w-[200px]" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none">Sin producto</SelectItem>
                         {allProductOptions.map(name => {
