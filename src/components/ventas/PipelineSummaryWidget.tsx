@@ -54,7 +54,7 @@ export const PipelineSummaryWidget = ({
   const filteredSales = useMemo(() => {
     return sales.filter(s => {
       const d = parseISO(s.sale_date);
-      return isWithinInterval(d, { start: range.start, end: range.end }) && s.status === 'completed';
+      return isWithinInterval(d, { start: range.start, end: range.end }) && s.status !== 'cancelled';
     });
   }, [sales, range]);
 

@@ -22,6 +22,7 @@ export interface EnrichedCollection extends PaymentCollection {
   product: string | null;
   total_sale_amount: number | null;
   num_installments: number | null;
+  installment_amount: number | null;
 }
 
 export interface SaleGroup {
@@ -64,7 +65,7 @@ export const usePaymentCollections = (clientId: string | null) => {
       if (!clientId) return [];
       const { data, error } = await supabase
         .from('payment_collections')
-        .select('*, message_sales(customer_name, product, total_sale_amount, num_installments)')
+        .select('*, message_sales(customer_name, product, total_sale_amount, num_installments, installment_amount)')
         .eq('client_id', clientId)
         .order('due_date', { ascending: true });
       if (error) throw error;
@@ -86,12 +87,12 @@ export const usePaymentCollections = (clientId: string | null) => {
         product: row.message_sales?.product || null,
         total_sale_amount: row.message_sales?.total_sale_amount || null,
         num_installments: row.message_sales?.num_installments || null,
+        installment_amount: row.message_sales?.installment_amount || null,
       })) as EnrichedCollection[];
     },
     enabled: !!clientId,
   });
 
-  // Group by sale_id
   const saleGroups: SaleGroup[] = (() => {
     const map = new Map<string, EnrichedCollection[]>();
     for (const c of collections) {
@@ -99,15 +100,26 @@ export const usePaymentCollections = (clientId: string | null) => {
       existing.push(c);
       map.set(c.sale_id, existing);
     }
+
     const groups: SaleGroup[] = [];
     map.forEach((colls, saleId) => {
       const sorted = [...colls].sort((a, b) => a.due_date.localeCompare(b.due_date));
       const pending = sorted.filter(c => c.status !== 'paid');
-      const paid = sorted.filter(c => c.status === 'paid');
-      const totalCollected = paid.reduce((s, c) => s + Number(c.amount), 0);
-      const totalPending = pending.reduce((s, c) => s + Number(c.amount), 0);
-      const lastPaidAt = paid.length > 0
-        ? paid.reduce((latest, c) => (!latest || (c.paid_at && c.paid_at > latest) ? c.paid_at : latest), null as string | null)
+      const paidCollections = sorted.filter(c => c.status === 'paid');
+      const totalInstallments = Math.max(Number(colls[0].num_installments || sorted.length), sorted.length);
+      const basePaidCount = Math.max(totalInstallments - sorted.length, 0);
+      const paidCollectionsTotal = paidCollections.reduce((sum, c) => sum + Number(c.amount), 0);
+      const allCollectionsTotal = sorted.reduce((sum, c) => sum + Number(c.amount), 0);
+      const baseCollected = colls[0].total_sale_amount != null
+        ? Math.max(Number(colls[0].total_sale_amount) - allCollectionsTotal, 0)
+        : basePaidCount * Number(colls[0].installment_amount || 0);
+      const totalCollected = baseCollected + paidCollectionsTotal;
+      const totalPending = colls[0].total_sale_amount != null
+        ? Math.max(Number(colls[0].total_sale_amount) - totalCollected, 0)
+        : pending.reduce((sum, c) => sum + Number(c.amount), 0);
+      const paidCount = Math.min(basePaidCount + paidCollections.length, totalInstallments);
+      const lastPaidAt = paidCollections.length > 0
+        ? paidCollections.reduce((latest, c) => (!latest || (c.paid_at && c.paid_at > latest) ? c.paid_at : latest), null as string | null)
         : null;
 
       groups.push({
@@ -118,36 +130,49 @@ export const usePaymentCollections = (clientId: string | null) => {
         currency: colls[0].currency,
         collections: sorted,
         nextPendingCollection: pending[0] || null,
-        allPaid: pending.length === 0,
-        paidCount: paid.length,
-        totalCount: sorted.length,
+        allPaid: paidCount >= totalInstallments,
+        paidCount,
+        totalCount: totalInstallments,
         totalCollected,
         totalPending,
         lastPaidAt,
       });
     });
+
     return groups;
   })();
 
-  // Sync sale after collection update
   const syncSaleInstallments = async (saleId: string) => {
-    const { data: allInstallments } = await supabase
+    const { data: saleData, error: saleError } = await supabase
+      .from('message_sales')
+      .select('num_installments, total_sale_amount, installment_amount')
+      .eq('id', saleId)
+      .single();
+
+    if (saleError || !saleData) return;
+
+    const { data: allInstallments, error: collectionsError } = await supabase
       .from('payment_collections')
       .select('amount, status')
       .eq('sale_id', saleId);
 
-    if (!allInstallments) return;
+    if (collectionsError || !allInstallments) return;
 
-    const paidCount = allInstallments.filter(i => i.status === 'paid').length;
-    const totalCount = allInstallments.length;
-    const totalCollected = allInstallments
-      .filter(i => i.status === 'paid')
-      .reduce((sum, i) => sum + Number(i.amount), 0);
-    const allPaid = paidCount === totalCount;
+    const totalInstallments = Math.max(Number(saleData.num_installments || allInstallments.length), allInstallments.length);
+    const basePaidCount = Math.max(totalInstallments - allInstallments.length, 0);
+    const paidCollections = allInstallments.filter(i => i.status === 'paid');
+    const paidCollectionsTotal = paidCollections.reduce((sum, i) => sum + Number(i.amount), 0);
+    const allCollectionsTotal = allInstallments.reduce((sum, i) => sum + Number(i.amount), 0);
+    const baseCollected = saleData.total_sale_amount != null
+      ? Math.max(Number(saleData.total_sale_amount) - allCollectionsTotal, 0)
+      : basePaidCount * Number(saleData.installment_amount || 0);
+    const installmentsPaid = Math.min(basePaidCount + paidCollections.length, totalInstallments);
+    const totalCollected = baseCollected + paidCollectionsTotal;
+    const allPaid = installmentsPaid >= totalInstallments;
 
     await supabase.from('message_sales')
       .update({
-        installments_paid: paidCount,
+        installments_paid: installmentsPaid,
         amount: totalCollected,
         status: allPaid ? 'completed' : 'pending',
         updated_at: new Date().toISOString(),
@@ -217,14 +242,13 @@ export const usePaymentCollections = (clientId: string | null) => {
       const { error } = await supabase.from('payment_collections').update({ ...updates, updated_at: new Date().toISOString() } as any).eq('id', id);
       if (error) throw error;
 
-      // Sync sale when marking as paid
       if (saleId && updates.status === 'paid') {
         await syncSaleInstallments(saleId);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payment-collections', clientId] });
-      queryClient.invalidateQueries({ queryKey: ['message-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['message-sales', clientId] });
     },
   });
 

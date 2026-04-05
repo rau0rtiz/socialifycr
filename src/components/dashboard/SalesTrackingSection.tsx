@@ -342,10 +342,11 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
         <CardContent className="space-y-4">
           {/* Summary Cards */}
           {(() => {
-            const cashCollectedCRC = sales.filter(s => s.status === 'completed' && s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
-            const cashCollectedUSD = sales.filter(s => s.status === 'completed' && s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
-            const totalContractCRC = sales.filter(s => s.status === 'completed' && s.currency === 'CRC').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
-            const totalContractUSD = sales.filter(s => s.status === 'completed' && s.currency === 'USD').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
+            const activeSales = sales.filter(s => s.status !== 'cancelled');
+            const cashCollectedCRC = activeSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
+            const cashCollectedUSD = activeSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
+            const totalContractCRC = activeSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
+            const totalContractUSD = activeSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
 
             return (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
