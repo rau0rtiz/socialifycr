@@ -1,23 +1,43 @@
-import { useClientFeatures, FEATURE_LABELS, SECTION_LABELS, DASHBOARD_WIDGET_LABELS, VENTAS_WIDGET_LABELS, CONTENIDO_WIDGET_LABELS } from '@/hooks/use-client-features';
+import { useClientFeatures, SECTION_LABELS, FEATURE_LABELS, DASHBOARD_WIDGET_LABELS, VENTAS_WIDGET_LABELS, CONTENIDO_WIDGET_LABELS } from '@/hooks/use-client-features';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { LayoutDashboard, History, Palette, Lock } from 'lucide-react';
+import {
+  LayoutDashboard, ShoppingCart, FileText, BarChart3, Mail, Database, Lock, Settings2,
+} from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface ClientFeatureFlagsProps {
   clientId: string;
 }
+
+type SectionDef = {
+  key: string | null;       // null = always on (e.g. Dashboard)
+  label: string;
+  icon: React.ElementType;
+  locked?: boolean;
+  widgets: Record<string, string>;
+};
+
+const SECTIONS: SectionDef[] = [
+  { key: null, label: 'Dashboard', icon: LayoutDashboard, locked: true, widgets: DASHBOARD_WIDGET_LABELS },
+  { key: 'ventas_section', label: 'Ventas / Pipeline', icon: ShoppingCart, widgets: VENTAS_WIDGET_LABELS },
+  { key: 'contenido_section', label: 'Contenido', icon: FileText, widgets: CONTENIDO_WIDGET_LABELS },
+  { key: 'reportes_section', label: 'Reportes', icon: BarChart3, widgets: {} },
+  { key: 'email_marketing_section', label: 'Email Marketing', icon: Mail, widgets: {} },
+  { key: null, label: 'Client Database', icon: Database, locked: true, widgets: {} },
+];
 
 export const ClientFeatureFlags = ({ clientId }: ClientFeatureFlagsProps) => {
   const { flags, isLoading, updateFlag } = useClientFeatures(clientId);
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-8 w-full" />
+          <Skeleton key={i} className="h-28 w-full rounded-xl" />
         ))}
       </div>
     );
@@ -36,94 +56,86 @@ export const ClientFeatureFlags = ({ clientId }: ClientFeatureFlagsProps) => {
     );
   };
 
-  const defaultSections = [
-    { label: 'Dashboard', icon: LayoutDashboard },
-    { label: 'Historial', icon: History },
-    { label: 'Ajustes', icon: Palette },
-  ];
-
-  const sectionWithWidgets: {
-    sectionKey: string | null;
-    icon: React.ElementType;
-    locked?: boolean;
-    widgets: Record<string, string>;
-  }[] = [
-    { sectionKey: null, icon: LayoutDashboard, locked: true, widgets: DASHBOARD_WIDGET_LABELS },
-    { sectionKey: 'ventas_section', icon: LayoutDashboard, widgets: VENTAS_WIDGET_LABELS },
-    { sectionKey: 'contenido_section', icon: LayoutDashboard, widgets: CONTENIDO_WIDGET_LABELS },
-    { sectionKey: 'reportes_section', icon: LayoutDashboard, widgets: {} },
-    { sectionKey: 'email_marketing_section', icon: LayoutDashboard, widgets: {} },
-  ];
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
         Controla qué secciones y widgets ve el cliente.
       </p>
 
-      {/* Always-on: Historial & Ajustes */}
-      <div className="space-y-2 mb-2">
-        {defaultSections.map((s) => (
-          <div key={s.label} className="flex items-center justify-between opacity-60">
-            <div className="flex items-center gap-2">
-              <s.icon className="h-4 w-4 text-muted-foreground" />
-              <Label className="text-sm">{s.label}</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Lock className="h-3 w-3 text-muted-foreground" />
-              <Switch checked disabled />
-            </div>
-          </div>
-        ))}
-      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {SECTIONS.map((section, idx) => {
+          const sectionEnabled = section.locked || (section.key ? (flags as any)[section.key] ?? false : true);
+          const hasWidgets = Object.keys(section.widgets).length > 0;
+          const Icon = section.icon;
 
-      {sectionWithWidgets.map((section, idx) => {
-        const sectionLabel = section.sectionKey ? SECTION_LABELS[section.sectionKey] : 'Dashboard';
-        const sectionEnabled = section.locked || (section.sectionKey ? (flags as any)[section.sectionKey] ?? false : true);
-        const hasWidgets = Object.keys(section.widgets).length > 0;
+          const card = (
+            <div
+              key={idx}
+              className={cn(
+                'relative rounded-xl border p-4 flex flex-col items-center gap-2 transition-all',
+                sectionEnabled
+                  ? 'bg-card border-border shadow-sm'
+                  : 'bg-muted/40 border-border/50 opacity-60',
+              )}
+            >
+              <div className={cn(
+                'p-2.5 rounded-lg',
+                sectionEnabled ? 'bg-primary/10' : 'bg-muted',
+              )}>
+                <Icon className={cn('h-5 w-5', sectionEnabled ? 'text-primary' : 'text-muted-foreground')} />
+              </div>
 
-        return (
-          <div key={idx}>
-            <Separator className="mb-3" />
-            {/* Section toggle */}
-            <div className={`flex items-center justify-between ${section.locked ? 'opacity-60' : ''}`}>
-              <Label htmlFor={`section-${section.sectionKey}`} className="text-sm cursor-pointer font-semibold">
-                {sectionLabel}
-              </Label>
+              <span className="text-xs font-semibold text-center leading-tight">{section.label}</span>
+
               {section.locked ? (
-                <div className="flex items-center gap-2">
-                  <Lock className="h-3 w-3 text-muted-foreground" />
-                  <Switch checked disabled />
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Lock className="h-3 w-3" />
+                  <span>Siempre activo</span>
                 </div>
               ) : (
                 <Switch
-                  id={`section-${section.sectionKey}`}
                   checked={sectionEnabled}
-                  onCheckedChange={(checked) => handleToggle(section.sectionKey!, checked)}
+                  onCheckedChange={(checked) => handleToggle(section.key!, checked)}
+                  className="mt-0.5"
                 />
               )}
-            </div>
 
-            {/* Nested widgets */}
-            {hasWidgets && sectionEnabled && (
-              <div className="ml-4 mt-2 space-y-2 border-l-2 border-border pl-3">
-                {Object.keys(section.widgets).map((key) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <Label htmlFor={`flag-${key}`} className="text-sm cursor-pointer">
-                      {section.widgets[key]}
-                    </Label>
-                    <Switch
-                      id={`flag-${key}`}
-                      checked={(flags as any)[key] ?? false}
-                      onCheckedChange={(checked) => handleToggle(key, checked)}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
+              {/* Gear icon for widgets popup */}
+              {hasWidgets && sectionEnabled && (
+                <div className="absolute top-2 right-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="p-1 rounded-md hover:bg-accent transition-colors" title="Configurar widgets">
+                        <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-56 p-3">
+                      <p className="text-xs font-semibold mb-2">Widgets de {section.label}</p>
+                      <div className="space-y-2">
+                        {Object.entries(section.widgets).map(([key, label]) => (
+                          <div key={key} className="flex items-center justify-between">
+                            <Label htmlFor={`w-${key}`} className="text-xs cursor-pointer">
+                              {label}
+                            </Label>
+                            <Switch
+                              id={`w-${key}`}
+                              checked={(flags as any)[key] ?? false}
+                              onCheckedChange={(checked) => handleToggle(key, checked)}
+                              className="scale-90"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
+            </div>
+          );
+
+          return card;
+        })}
+      </div>
     </div>
   );
 };
