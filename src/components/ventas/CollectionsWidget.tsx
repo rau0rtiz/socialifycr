@@ -285,7 +285,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
           ) : isMobile ? (
             renderMobileTabs()
           ) : (
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {COLUMNS.map(col => renderColumn(col))}
             </div>
           )}
