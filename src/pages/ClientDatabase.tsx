@@ -268,6 +268,16 @@ const ClientDatabase = () => {
                         <TableCell className="text-muted-foreground whitespace-nowrap">
                           {lead.created_at ? format(new Date(lead.created_at), 'dd MMM yy', { locale: es }) : '—'}
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => setDeleteTarget(lead)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
