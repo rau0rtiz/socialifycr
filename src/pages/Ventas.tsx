@@ -149,23 +149,13 @@ const Ventas = () => {
     }, 100);
   };
 
-  const handleSaleRegistered = async (appointmentId?: string) => {
+  const handleSaleRegistered = async (appointmentId?: string, saleId?: string) => {
     if (appointmentId) {
       try {
-        // Find the latest sale to link back
-        const { supabase } = await import('@/integrations/supabase/client');
-        const { data: latestSales } = await supabase
-          .from('message_sales')
-          .select('id')
-          .eq('client_id', selectedClient!.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        const saleId = latestSales?.[0]?.id || null;
         await updateAppointment.mutateAsync({
           id: appointmentId,
           status: 'sold',
-          sale_id: saleId,
+          sale_id: saleId || null,
         } as any);
       } catch {
         // silent

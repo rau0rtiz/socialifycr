@@ -137,37 +137,27 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
       });
     } else {
       addSale.mutate(sale, {
-        onSuccess: async (_, variables) => {
+        onSuccess: async (saleId) => {
           toast.success('Venta registrada');
           setDialogOpen(false);
           setCurrentPrefill(null);
-          if (onSaleFromSetter) onSaleFromSetter(appointmentId);
+          if (onSaleFromSetter) onSaleFromSetter(appointmentId, saleId);
 
           // Generate collection records for remaining installments
-          if (collectionMeta) {
+          if (collectionMeta && saleId) {
             try {
-              // We need the sale ID — fetch the latest sale
-              const { data: latestSales } = await (await import('@/integrations/supabase/client')).supabase
-                .from('message_sales')
-                .select('id')
-                .eq('client_id', clientId)
-                .order('created_at', { ascending: false })
-                .limit(1);
-
-              if (latestSales && latestSales.length > 0) {
-                await generateCollections.mutateAsync({
-                  saleId: latestSales[0].id,
-                  clientId,
-                  installmentAmount: collectionMeta.installmentAmount,
-                  currency: collectionMeta.currency,
-                  startDate: collectionMeta.startDate || sale.sale_date || new Date().toISOString().split('T')[0],
-                  frequency: collectionMeta.frequency as CollectionFrequency,
-                  startInstallment: collectionMeta.startInstallment,
-                  totalInstallments: collectionMeta.totalInstallments,
-                  customDates: collectionMeta.customDates,
-                });
-                toast.success(`${collectionMeta.totalInstallments - collectionMeta.startInstallment + 1} cobros generados`);
-              }
+              await generateCollections.mutateAsync({
+                saleId,
+                clientId,
+                installmentAmount: collectionMeta.installmentAmount,
+                currency: collectionMeta.currency,
+                startDate: collectionMeta.startDate || sale.sale_date || new Date().toISOString().split('T')[0],
+                frequency: collectionMeta.frequency as CollectionFrequency,
+                startInstallment: collectionMeta.startInstallment,
+                totalInstallments: collectionMeta.totalInstallments,
+                customDates: collectionMeta.customDates,
+              });
+              toast.success(`${collectionMeta.totalInstallments - collectionMeta.startInstallment + 1} cobros generados`);
             } catch {
               toast.error('Error generando cobros pendientes');
             }
