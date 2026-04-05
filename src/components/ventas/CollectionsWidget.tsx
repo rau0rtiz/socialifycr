@@ -162,7 +162,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
     return (
       <button
         key={group.saleId}
-        onClick={() => setSelectedGroup(group)}
+        onClick={() => setSelectedGroupId(group.saleId)}
         className={cn(
           'rounded-lg border p-3 text-left transition-all hover:shadow-md w-full space-y-2',
           colDef.borderClass,
