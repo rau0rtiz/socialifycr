@@ -228,6 +228,9 @@ const ClientDatabase = () => {
                     <TableHead className="text-xs">Fuente</TableHead>
                     <TableHead className="text-xs">Vendedor</TableHead>
                     <TableHead className="text-xs">Fecha</TableHead>
+                    <TableHead className="text-xs w-[50px]"></TableHead>
+                    <TableHead className="text-xs">Vendedor</TableHead>
+                    <TableHead className="text-xs">Fecha</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
