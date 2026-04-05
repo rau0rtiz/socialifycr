@@ -707,9 +707,11 @@ export const RegisterSaleDialog = ({
                       <SelectTrigger className="h-10 text-sm flex-1"><SelectValue placeholder="Seleccionar método" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none" className="text-xs">Sin especificar</SelectItem>
-                        <SelectItem value="stripe">Stripe</SelectItem>
+                        <SelectItem value="efectivo">Efectivo</SelectItem>
+                        <SelectItem value="sinpe">SINPE</SelectItem>
                         <SelectItem value="transferencia_bancaria">Transferencia Bancaria</SelectItem>
-                        {paymentMethod && !['stripe', 'transferencia_bancaria'].includes(paymentMethod) && (
+                        <SelectItem value="stripe">Stripe</SelectItem>
+                        {paymentMethod && !['efectivo', 'sinpe', 'stripe', 'transferencia_bancaria'].includes(paymentMethod) && (
                           <SelectItem value={paymentMethod}>{paymentMethod}</SelectItem>
                         )}
                       </SelectContent>
