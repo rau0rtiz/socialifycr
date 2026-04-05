@@ -103,6 +103,7 @@ export const Sidebar = () => {
   if (showEmailMarketing) {
     menuItems.push({ title: 'Email Marketing', url: '/email-marketing', icon: Mail });
   }
+  menuItems.push({ title: 'Client Database', url: '/client-database', icon: Database });
   // Show Business Setup for management roles (owner/admin/manager) and account_manager client role
   const effectiveCanManage = canManage && !isPreviewMode;
   const showBusinessSetup = effectiveCanManage || (!isPreviewMode && clientAccess.some(a => a.role === 'account_manager'));
