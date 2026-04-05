@@ -136,7 +136,7 @@ const ClientDatabase = () => {
   return (
     <DashboardLayout>
       <div className="space-y-4">
-        <h1 className="text-xl font-bold text-foreground">Client Database</h1>
+        <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Student Database' : 'Client Database'}</h1>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
