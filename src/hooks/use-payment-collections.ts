@@ -17,6 +17,24 @@ export interface PaymentCollection {
   updated_at: string;
 }
 
+export interface EnrichedCollection extends PaymentCollection {
+  customer_name: string | null;
+  product: string | null;
+  total_sale_amount: number | null;
+  num_installments: number | null;
+}
+
+export interface SaleGroup {
+  saleId: string;
+  customerName: string;
+  product: string | null;
+  totalAmount: number | null;
+  currency: string;
+  collections: EnrichedCollection[];
+  nextPendingCollection: EnrichedCollection | null;
+  allPaid: boolean;
+}
+
 export type CollectionFrequency = 'weekly' | 'biweekly' | 'monthly' | 'custom';
 
 export const FREQUENCY_LABELS: Record<CollectionFrequency, string> = {
@@ -41,14 +59,58 @@ export const usePaymentCollections = (clientId: string | null) => {
       if (!clientId) return [];
       const { data, error } = await supabase
         .from('payment_collections')
-        .select('*')
+        .select('*, message_sales(customer_name, product, total_sale_amount, num_installments)')
         .eq('client_id', clientId)
         .order('due_date', { ascending: true });
       if (error) throw error;
-      return data as PaymentCollection[];
+      return (data || []).map((row: any) => ({
+        id: row.id,
+        sale_id: row.sale_id,
+        client_id: row.client_id,
+        installment_number: row.installment_number,
+        amount: row.amount,
+        currency: row.currency,
+        due_date: row.due_date,
+        status: row.status,
+        paid_at: row.paid_at,
+        notes: row.notes,
+        payment_frequency: row.payment_frequency,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        customer_name: row.message_sales?.customer_name || null,
+        product: row.message_sales?.product || null,
+        total_sale_amount: row.message_sales?.total_sale_amount || null,
+        num_installments: row.message_sales?.num_installments || null,
+      })) as EnrichedCollection[];
     },
     enabled: !!clientId,
   });
+
+  // Group by sale_id
+  const saleGroups: SaleGroup[] = (() => {
+    const map = new Map<string, EnrichedCollection[]>();
+    for (const c of collections) {
+      const existing = map.get(c.sale_id) || [];
+      existing.push(c);
+      map.set(c.sale_id, existing);
+    }
+    const groups: SaleGroup[] = [];
+    map.forEach((colls, saleId) => {
+      const sorted = [...colls].sort((a, b) => a.due_date.localeCompare(b.due_date));
+      const pending = sorted.filter(c => c.status !== 'paid');
+      groups.push({
+        saleId,
+        customerName: colls[0].customer_name || 'Sin nombre',
+        product: colls[0].product,
+        totalAmount: colls[0].total_sale_amount,
+        currency: colls[0].currency,
+        collections: sorted,
+        nextPendingCollection: pending[0] || null,
+        allPaid: pending.length === 0,
+      });
+    });
+    return groups;
+  })();
 
   const generateCollections = useMutation({
     mutationFn: async (params: {
@@ -127,5 +189,5 @@ export const usePaymentCollections = (clientId: string | null) => {
     },
   });
 
-  return { collections, isLoading, generateCollections, updateCollection, deleteCollection };
+  return { collections, saleGroups, isLoading, generateCollections, updateCollection, deleteCollection };
 };
