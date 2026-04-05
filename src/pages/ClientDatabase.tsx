@@ -287,7 +287,7 @@ const ClientDatabase = () => {
             </div>
             {filtered.length > 0 && (
               <div className="px-4 py-2 border-t text-xs text-muted-foreground">
-                Mostrando {filtered.length} de {totalLeads} leads
+                Mostrando {filtered.length} de {totalLeads} {isSpkUp ? 'students' : 'leads'}
               </div>
             )}
           </CardContent>
