@@ -35,10 +35,6 @@ export interface SalePrefill {
   closer_name?: string;
   message_platform?: string;
 }
-  appointmentId?: string;
-  closer_name?: string;
-  message_platform?: string;
-}
 
 interface RegisterSaleDialogProps {
   open: boolean;
