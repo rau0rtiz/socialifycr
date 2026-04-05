@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
-import { usePaymentSchemes, PaymentSchemeInput } from '@/hooks/use-payment-schemes';
+import { usePaymentSchemes, PaymentSchemeInput, useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { supabase } from '@/integrations/supabase/client';
 import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,8 +24,8 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
 };
 
-// Sub-component: Payment Schemes for a product (used inside the detail dialog)
-const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { productId: string; clientId: string; productCurrency: string }) => {
+// Sub-component: Variants for a product (used inside the detail dialog)
+const VariantsSection = ({ productId, clientId, productCurrency }: { productId: string; clientId: string; productCurrency: string }) => {
   const { schemes, addScheme, updateScheme, deleteScheme } = usePaymentSchemes(productId, clientId);
   const [editing, setEditing] = useState<string | null>(null);
   const [sName, setSName] = useState('');
@@ -72,23 +72,23 @@ const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { produ
     try {
       if (editing) {
         await updateScheme.mutateAsync({ id: editing, ...input });
-        toast.success('Esquema actualizado');
+        toast.success('Variante actualizada');
       } else {
         await addScheme.mutateAsync(input);
-        toast.success('Esquema creado');
+        toast.success('Variante creada');
       }
       resetForm();
     } catch {
-      toast.error('Error al guardar esquema');
+      toast.error('Error al guardar variante');
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteScheme.mutateAsync(id);
-      toast.success('Esquema eliminado');
+      toast.success('Variante eliminada');
     } catch {
-      toast.error('Error al eliminar');
+      toast.error('Error al eliminar variante');
     }
   };
 
@@ -97,11 +97,11 @@ const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { produ
       <div className="flex items-center justify-between">
         <Label className="text-xs font-semibold flex items-center gap-1.5">
           <CreditCard className="h-3.5 w-3.5 text-primary" />
-          Esquemas de pago
+          Variantes
         </Label>
         {!adding && (
           <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setAdding(true)}>
-            <Plus className="h-3 w-3" /> Agregar esquema
+            <Plus className="h-3 w-3" /> Agregar variante
           </Button>
         )}
       </div>
@@ -139,7 +139,7 @@ const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { produ
       {adding && (
         <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2.5">
           <Input
-            placeholder="Ej: Pago único, 3 cuotas..."
+            placeholder="Ej: 2 clases/semana, Intensivo, Premium..."
             value={sName}
             onChange={e => setSName(e.target.value)}
             className="h-8 text-xs"
@@ -182,8 +182,8 @@ const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { produ
       {schemes.length === 0 && !adding && (
         <div className="text-center py-4 rounded-lg border border-dashed border-border/50">
           <CreditCard className="h-5 w-5 text-muted-foreground/30 mx-auto mb-1.5" />
-          <p className="text-[11px] text-muted-foreground">Sin esquemas de pago</p>
-          <p className="text-[10px] text-muted-foreground/70 mt-0.5">Agrega opciones de pago como cuotas o pago único</p>
+          <p className="text-[11px] text-muted-foreground">Sin variantes</p>
+          <p className="text-[10px] text-muted-foreground/70 mt-0.5">Agrega variantes con diferentes precios y opciones de cuotas</p>
         </div>
       )}
     </div>
@@ -192,6 +192,7 @@ const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { produ
 
 export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const { products, isLoading, addProduct, updateProduct, deleteProduct } = useClientProducts(clientId);
+  const { data: allSchemes } = useClientPaymentSchemes(clientId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ClientProduct | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -325,9 +326,12 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
           ) : (
             <div className="space-y-2">
               {products.map(p => {
-                const margin = (p.price != null && p.cost != null && p.cost > 0)
-                  ? Math.round(((p.price - p.cost) / p.price) * 100)
-                  : null;
+                const productSchemes = (allSchemes || []).filter(s => s.product_id === p.id);
+                const variantCount = productSchemes.length;
+                const minPrice = variantCount > 0
+                  ? Math.min(...productSchemes.map(s => s.total_price))
+                  : p.price;
+                const minCurrency = variantCount > 0 ? productSchemes.reduce((prev, curr) => curr.total_price < prev.total_price ? curr : prev).currency : p.currency;
 
                 return (
                   <div
@@ -346,24 +350,19 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h4 className="text-sm font-semibold text-foreground truncate">{p.name}</h4>
-                          {margin !== null && (
-                            <span className={cn(
-                              'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
-                              margin >= 50 ? 'bg-emerald-500/10 text-emerald-600' :
-                              margin >= 20 ? 'bg-amber-500/10 text-amber-600' :
-                              'bg-red-500/10 text-red-600'
-                            )}>
-                              {margin}% margen
-                            </span>
+                          {variantCount > 0 && (
+                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+                              {variantCount} variante{variantCount > 1 ? 's' : ''}
+                            </Badge>
                           )}
                         </div>
                         {p.description && (
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</p>
                         )}
                         <div className="flex items-center gap-3 mt-1.5">
-                          {p.price != null && (
+                          {minPrice != null && (
                             <span className="text-xs font-medium text-foreground">
-                              {formatCurrency(p.price, p.currency)}
+                              {variantCount > 0 ? 'Desde ' : ''}{formatCurrency(minPrice, minCurrency)}
                             </span>
                           )}
                         </div>
@@ -446,9 +445,9 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
 
               <Separator />
 
-              {/* Payment schemes section */}
+               {/* Variants section */}
               <div className="px-6 py-4 overflow-y-auto" style={{ maxHeight: '40vh' }}>
-                <PaymentSchemesSection
+                <VariantsSection
                   productId={detailProduct.id}
                   clientId={clientId}
                   productCurrency={detailProduct.currency}
