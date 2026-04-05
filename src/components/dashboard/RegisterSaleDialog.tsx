@@ -284,6 +284,7 @@ export const RegisterSaleDialog = ({
           totalInstallments: numInstallments,
           installmentAmount,
           currency,
+          customDates: collectionFrequency === 'custom' ? customCollectionDates.filter(d => d !== '') : undefined,
         }
       : undefined;
 
