@@ -169,7 +169,7 @@ const ClientDatabase = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{activeCount}</p>
-                <p className="text-xs text-muted-foreground">Activos</p>
+                <p className="text-xs text-muted-foreground">{isSpkUp ? 'Active' : 'Activos'}</p>
               </div>
             </CardContent>
           </Card>
