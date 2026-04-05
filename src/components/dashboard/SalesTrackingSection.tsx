@@ -38,7 +38,7 @@ interface SalesTrackingSectionProps {
   hasAdAccount?: boolean;
   salePrefill?: SalePrefill | null;
   showSaleDialog?: boolean;
-  onSaleFromSetter?: (appointmentId?: string) => void;
+  onSaleFromSetter?: (appointmentId?: string, saleId?: string) => void;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
