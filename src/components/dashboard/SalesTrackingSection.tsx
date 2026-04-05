@@ -73,7 +73,7 @@ const formatCurrency = (amount: number, currency: string) => {
 export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false, salePrefill, showSaleDialog, onSaleFromSetter }: SalesTrackingSectionProps) => {
   const { selectedClient } = useBrand();
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
-  const salesLabel = isMindCoach ? 'Pipeline' : 'Ventas';
+  const salesLabel = 'Ventas';
   const [month, setMonth] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<MessageSale | null>(null);
