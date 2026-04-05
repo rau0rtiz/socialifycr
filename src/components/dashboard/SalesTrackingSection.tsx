@@ -159,7 +159,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                   clientId,
                   installmentAmount: collectionMeta.installmentAmount,
                   currency: collectionMeta.currency,
-                  startDate: sale.sale_date || new Date().toISOString().split('T')[0],
+                  startDate: collectionMeta.startDate || sale.sale_date || new Date().toISOString().split('T')[0],
                   frequency: collectionMeta.frequency as CollectionFrequency,
                   startInstallment: collectionMeta.startInstallment,
                   totalInstallments: collectionMeta.totalInstallments,
