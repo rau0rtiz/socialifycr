@@ -163,6 +163,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                   frequency: collectionMeta.frequency as CollectionFrequency,
                   startInstallment: collectionMeta.startInstallment,
                   totalInstallments: collectionMeta.totalInstallments,
+                  customDates: collectionMeta.customDates,
                 });
                 toast.success(`${collectionMeta.totalInstallments - collectionMeta.startInstallment + 1} cobros generados`);
               }
