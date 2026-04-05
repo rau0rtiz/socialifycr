@@ -23,6 +23,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 export interface SalePrefill {
   customer_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
   product?: string;
   source?: string;
   ad_id?: string;
@@ -178,6 +180,8 @@ export const RegisterSaleDialog = ({
       setSaleDate(new Date().toISOString().split('T')[0]);
       setSource(prefill.ad_id ? 'ad' : prefill.source || '');
       setCustomerName(prefill.customer_name || '');
+      setCustomerPhone(prefill.customer_phone || '');
+      setCustomerEmail(prefill.customer_email || '');
       setProduct(prefill.product || '');
       setMessagePlatform(prefill.message_platform || '');
       setNotes('');
