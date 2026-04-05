@@ -192,6 +192,7 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
 
 export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const { products, isLoading, addProduct, updateProduct, deleteProduct } = useClientProducts(clientId);
+  const { data: allSchemes } = useClientPaymentSchemes(clientId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ClientProduct | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
