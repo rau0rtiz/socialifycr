@@ -1,22 +1,37 @@
 
 
-# Modernizar el calendario de fecha inicial de cobro
-
-## Problema
-Actualmente se usa un `<Input type="date">` nativo del navegador para la fecha inicial de cobro y las fechas de cuotas personalizadas. Se ve anticuado e inconsistente con el resto de la UI.
+# Mejorar cuadrícula de selección de anuncios
 
 ## Cambios
 
-### `src/components/dashboard/RegisterSaleDialog.tsx`
+### 1. `src/hooks/use-ads-data.ts` — Ordenar por gasto
+- En `useAllAds`, después de mapear los ads, ordenar el array por `spend` descendente antes de retornarlo
 
-1. **Fecha inicial de cobro** (línea ~567): Reemplazar el `<Input type="date">` por un **Popover + Calendar** (Shadcn DatePicker) con formato legible en español (`dd MMM yyyy`), botón con ícono de calendario, y `pointer-events-auto` en el Calendar.
-
-2. **Fechas de cuotas personalizadas** (línea ~551): Reemplazar cada `<Input type="date">` por el mismo patrón de Popover + Calendar para mantener consistencia visual.
-
-3. **Conversión de estado**: Adaptar `collectionStartDate` (actualmente string `YYYY-MM-DD`) y `customCollectionDates` (array de strings) para trabajar con objetos `Date` internamente, convirtiendo a string ISO solo al momento del submit.
+### 2. `src/components/ventas/AdGridSelector.tsx` — Rediseño completo
+- **3 columnas** en vez de 2 (`grid-cols-3`) con thumbnails en aspect-ratio 4:3 más compactos
+- **Buscador** arriba de la cuadrícula: input de texto que filtra por nombre de anuncio o campaña
+- **"Sin anuncio"** como fila completa arriba del grid (no como celda de la cuadrícula)
+- **Gasto prominente**: mostrar el spend como texto destacado visible sin necesidad de leer detalles pequeños
+- Reducir padding/spacing para mostrar más ads por pantalla
+- Loading skeleton ajustado a 3 columnas
 
 ### Resultado visual
-- Botón estilizado con ícono de calendario y texto de fecha formateada
-- Popover con el componente Calendar de Shadcn al hacer clic
-- Consistente con el date picker usado en el filtro global de Ventas
+```text
+┌─────────────────────────────────┐
+│ 🔍 Buscar anuncio...            │
+├─────────────────────────────────┤
+│ [ ○ Sin anuncio              ]  │
+├──────────┬──────────┬──────────┤
+│ [4:3 img]│ [4:3 img]│ [4:3 img]│
+│ Ad name  │ Ad name  │ Ad name  │
+│ Campaign │ Campaign │ Campaign │
+│ $1,200   │ $800     │ $500     │
+├──────────┼──────────┼──────────┤
+│ ...      │ ...      │ ...      │
+└──────────┴──────────┴──────────┘
+```
+
+## Archivos
+- `src/hooks/use-ads-data.ts`
+- `src/components/ventas/AdGridSelector.tsx`
 
