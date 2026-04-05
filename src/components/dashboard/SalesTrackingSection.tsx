@@ -127,11 +127,35 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
   const handleAddSale = (sale: any, appointmentId?: string, collectionMeta?: { frequency: string; startInstallment: number; totalInstallments: number; installmentAmount: number; currency: string; customDates?: string[]; startDate?: string }) => {
     if (editingSale) {
       updateSale.mutate({ saleId: editingSale.id, updates: sale }, {
-        onSuccess: () => {
+        onSuccess: async () => {
           toast.success('Venta actualizada');
           setDialogOpen(false);
           setEditingSale(null);
           setCurrentPrefill(null);
+
+          // Generate collections if scheme was added/changed during edit
+          if (collectionMeta) {
+            try {
+              // First remove any existing collections for this sale
+              const { supabase } = await import('@/integrations/supabase/client');
+              await supabase.from('payment_collections').delete().eq('sale_id', editingSale.id);
+
+              await generateCollections.mutateAsync({
+                saleId: editingSale.id,
+                clientId,
+                installmentAmount: collectionMeta.installmentAmount,
+                currency: collectionMeta.currency,
+                startDate: collectionMeta.startDate || sale.sale_date || new Date().toISOString().split('T')[0],
+                frequency: collectionMeta.frequency as CollectionFrequency,
+                startInstallment: collectionMeta.startInstallment,
+                totalInstallments: collectionMeta.totalInstallments,
+                customDates: collectionMeta.customDates,
+              });
+              toast.success(`${collectionMeta.totalInstallments - collectionMeta.startInstallment + 1} cobros generados`);
+            } catch {
+              toast.error('Error generando cobros pendientes');
+            }
+          }
         },
         onError: () => toast.error('Error al actualizar venta'),
       });
