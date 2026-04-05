@@ -289,15 +289,13 @@ export const AppointmentFormDialog = ({
     } as any);
   };
 
-  // Step indices
-  const productStepIdx = 1;
-  const setterStepIdx = 2;
-  const sourceStepIdx = 3;
-  const adStepIdx = needsAdStep ? 4 : -1;
+  // Step indices (no product step — product is set when converting to sale)
+  const setterStepIdx = 1;
+  const sourceStepIdx = 2;
+  const adStepIdx = needsAdStep ? 3 : -1;
 
   const stepTitles = [
     'Información del Lead',
-    'Producto / Servicio',
     'Asignar Vendedor',
     'Fuente del Lead',
     ...(needsAdStep ? ['Vincular Anuncio'] : []),
@@ -305,7 +303,6 @@ export const AppointmentFormDialog = ({
 
   const stepDescriptions = [
     'Nombre, contacto y contexto del lead',
-    'Selecciona el producto de interés y esquema de pago',
     'Asigna un vendedor y programa la llamada',
     '¿De dónde vino este lead?',
     ...(needsAdStep ? ['Selecciona el anuncio que originó este lead'] : []),
