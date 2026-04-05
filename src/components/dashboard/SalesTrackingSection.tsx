@@ -467,6 +467,12 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                       {sale.installments_paid || 1}/{sale.num_installments}
                     </Badge>
                   )}
+                  {sale.ad_name && (
+                    <span className="text-[9px] text-muted-foreground truncate w-full flex items-center gap-1">
+                      <Megaphone className="h-2.5 w-2.5 shrink-0" />
+                      {sale.ad_name}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
