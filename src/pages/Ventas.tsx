@@ -361,8 +361,8 @@ const Ventas = () => {
           {/* Sales by product pie chart */}
           <SalesByProductChart sales={allSales} products={clientProducts} />
 
-          {/* Closure rate per seller */}
-          <ClosureRateWidget appointments={appointments} />
+          {/* Closure rate per seller — hidden for Speak Up */}
+          {!isSpkUp && <ClosureRateWidget appointments={appointments} />}
         </div>
 
         {/* Ad ranking at bottom for Mind Coach */}
