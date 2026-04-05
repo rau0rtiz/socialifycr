@@ -89,8 +89,8 @@ export const AppointmentFormDialog = ({
   const { data: allSchemes = [] } = useClientPaymentSchemes(clientId || null);
 
   const needsAdStep = source === 'ads' && hasAdAccount;
-  // Steps: 0=Lead, 1=Product, 2=Setter, 3=Source, 4=Ad(conditional)
-  const totalSteps = needsAdStep ? 5 : 4;
+  // Steps: 0=Lead, 1=Setter, 2=Source, 3=Ad(conditional)
+  const totalSteps = needsAdStep ? 4 : 3;
   const lastStep = totalSteps - 1;
 
   const { data: adsResult, isLoading: adsLoading } = useAllAds(
@@ -281,7 +281,6 @@ export const AppointmentFormDialog = ({
       estimated_value: estimatedValue,
       currency,
       source,
-      product: product || undefined,
       ad_campaign_id: selectedAd?.campaignId || undefined,
       ad_campaign_name: selectedAd?.campaignName || undefined,
       ad_id: selectedAd?.id || undefined,
@@ -289,15 +288,13 @@ export const AppointmentFormDialog = ({
     } as any);
   };
 
-  // Step indices
-  const productStepIdx = 1;
-  const setterStepIdx = 2;
-  const sourceStepIdx = 3;
-  const adStepIdx = needsAdStep ? 4 : -1;
+  // Step indices (no product step — product is set when converting to sale)
+  const setterStepIdx = 1;
+  const sourceStepIdx = 2;
+  const adStepIdx = needsAdStep ? 3 : -1;
 
   const stepTitles = [
     'Información del Lead',
-    'Producto / Servicio',
     'Asignar Vendedor',
     'Fuente del Lead',
     ...(needsAdStep ? ['Vincular Anuncio'] : []),
@@ -305,7 +302,6 @@ export const AppointmentFormDialog = ({
 
   const stepDescriptions = [
     'Nombre, contacto y contexto del lead',
-    'Selecciona el producto de interés y esquema de pago',
     'Asigna un vendedor y programa la llamada',
     '¿De dónde vino este lead?',
     ...(needsAdStep ? ['Selecciona el anuncio que originó este lead'] : []),
@@ -395,101 +391,8 @@ export const AppointmentFormDialog = ({
             </div>
           )}
 
-          {/* Step 1: Product + Payment Scheme */}
-          {step === productStepIdx && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium flex items-center gap-1.5">
-                  <Package className="h-3.5 w-3.5" /> Producto de interés
-                </Label>
-                {showNewProduct ? (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Nombre del producto"
-                      value={newProductName}
-                      onChange={e => setNewProductName(e.target.value)}
-                      className="h-10 text-sm flex-1"
-                      autoFocus
-                      onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }}
-                    />
-                    <Button size="sm" className="h-10 text-xs" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>
-                      {addProduct.isPending ? '...' : 'OK'}
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewProduct(false)}>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Select value={product || '_none'} onValueChange={handleProductChange}>
-                      <SelectTrigger className="h-10 text-sm flex-1 min-w-0"><SelectValue placeholder="Seleccionar producto" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none">Sin producto</SelectItem>
-                        {allProductOptions.map(name => {
-                          const matched = clientProducts.find(p => p.name === name);
-                          return (
-                            <SelectItem key={name} value={name}>
-                              <div className="flex items-center gap-2">
-                                {matched?.photo_url && (
-                                  <img src={matched.photo_url} className="w-5 h-5 rounded object-cover" alt="" />
-                                )}
-                                <span className="truncate">{name}</span>
-                                {matched?.price != null && (
-                                  <span className="text-muted-foreground ml-1">
-                                    ({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})
-                                  </span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewProduct(true)}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
-                    </Button>
-                  </div>
-                )}
-              </div>
 
-              {/* Payment scheme selector */}
-              {product && productSchemes.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium flex items-center gap-1.5">
-                    <CreditCard className="h-3.5 w-3.5" /> Esquema de pago
-                  </Label>
-                  <Select value={selectedSchemeId || '_none'} onValueChange={handleSchemeChange}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Seleccionar esquema" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Pago directo (sin esquema)</SelectItem>
-                      {productSchemes.map(s => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name} — {s.currency === 'CRC' ? '₡' : '$'}{s.total_price.toLocaleString()}
-                          {s.num_installments > 1 && ` (${s.num_installments}x ${s.currency === 'CRC' ? '₡' : '$'}${s.installment_amount.toLocaleString()})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Value summary */}
-              {estimatedValue > 0 && (
-                <div className="rounded-lg border border-border bg-muted/30 p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Valor estimado</p>
-                  <p className="text-lg font-semibold text-foreground">
-                    {currency === 'CRC' ? '₡' : '$'}{estimatedValue.toLocaleString()}
-                  </p>
-                </div>
-              )}
-
-              <p className="text-[11px] text-muted-foreground text-center">
-                {stepDescriptions[step]}
-              </p>
-            </div>
-          )}
-
-          {/* Step 2: Setter + Sales Call Date */}
+          {/* Step 1: Setter + Sales Call Date */}
           {step === setterStepIdx && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
