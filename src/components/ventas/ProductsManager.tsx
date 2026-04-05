@@ -86,9 +86,9 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
   const handleDelete = async (id: string) => {
     try {
       await deleteScheme.mutateAsync(id);
-      toast.success('Esquema eliminado');
+      toast.success('Variante eliminada');
     } catch {
-      toast.error('Error al eliminar');
+      toast.error('Error al eliminar variante');
     }
   };
 
