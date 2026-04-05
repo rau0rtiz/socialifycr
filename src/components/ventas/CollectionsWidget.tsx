@@ -301,7 +301,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
         <CollectionDetailDialog
           group={selectedGroup}
           open={!!selectedGroup}
-          onOpenChange={(open) => { if (!open) setSelectedGroup(null); }}
+          onOpenChange={(open) => { if (!open) setSelectedGroupId(null); }}
           onMarkPaid={handleMarkPaid}
           onDelete={(id) => setDeleteTarget(id)}
           isPending={updateCollection.isPending}
