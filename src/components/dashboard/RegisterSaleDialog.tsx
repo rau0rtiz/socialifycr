@@ -14,8 +14,12 @@ import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { FREQUENCY_LABELS, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet, CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export interface SalePrefill {
   customer_name?: string;
@@ -548,28 +552,50 @@ export const RegisterSaleDialog = ({
                               <span className="text-[10px] text-muted-foreground w-16 flex-shrink-0">
                                 Cuota {installmentsPaid + idx + 1}
                               </span>
-                              <Input
-                                type="date"
-                                value={date}
-                                onChange={(e) => {
-                                  const updated = [...customCollectionDates];
-                                  updated[idx] = e.target.value;
-                                  setCustomCollectionDates(updated);
-                                }}
-                                className="h-7 text-xs flex-1"
-                              />
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className={cn("h-7 text-xs flex-1 justify-start text-left font-normal", !date && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-1.5 h-3 w-3" />
+                                    {date ? format(new Date(date + 'T12:00:00'), 'dd MMM yyyy', { locale: es }) : 'Seleccionar'}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={date ? new Date(date + 'T12:00:00') : undefined}
+                                    onSelect={(d) => {
+                                      const updated = [...customCollectionDates];
+                                      updated[idx] = d ? d.toISOString().split('T')[0] : '';
+                                      setCustomCollectionDates(updated);
+                                    }}
+                                    initialFocus
+                                    className="p-3 pointer-events-auto"
+                                  />
+                                </PopoverContent>
+                              </Popover>
                             </div>
                           ))}
                         </div>
                       ) : (
                         <div className="space-y-1.5 mt-1">
                           <Label className="text-[10px]">Fecha inicial de cobro</Label>
-                          <Input
-                            type="date"
-                            value={collectionStartDate}
-                            onChange={(e) => setCollectionStartDate(e.target.value)}
-                            className="h-7 text-xs"
-                          />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className={cn("w-full h-7 text-xs justify-start text-left font-normal", !collectionStartDate && "text-muted-foreground")}>
+                                <CalendarIcon className="mr-1.5 h-3 w-3" />
+                                {collectionStartDate ? format(new Date(collectionStartDate + 'T12:00:00'), 'dd MMM yyyy', { locale: es }) : 'Seleccionar fecha'}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={collectionStartDate ? new Date(collectionStartDate + 'T12:00:00') : undefined}
+                                onSelect={(d) => setCollectionStartDate(d ? d.toISOString().split('T')[0] : '')}
+                                initialFocus
+                                className="p-3 pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
                           <p className="text-[10px] text-muted-foreground">
                             Se generarán {numInstallments - installmentsPaid} cobros pendientes
                           </p>
