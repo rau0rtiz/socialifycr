@@ -1,18 +1,19 @@
 import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useBrand } from '@/contexts/BrandContext';
-import { useSetterAppointments } from '@/hooks/use-setter-appointments';
-import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Search, Users, Phone, Mail, Calendar, DollarSign, Filter } from 'lucide-react';
+import { Building2, Search, Users, Phone, Mail, Calendar, DollarSign, Filter, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 type LeadRecord = {
   id: string;
@@ -55,10 +56,13 @@ const STATUS_COLORS: Record<string, string> = {
 const ClientDatabase = () => {
   const { selectedClient } = useBrand();
   const clientId = selectedClient?.id ?? null;
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const [deleteTarget, setDeleteTarget] = useState<LeadRecord | null>(null);
 
   // Fetch ALL leads for this client (no date filter)
   const { data: allLeads = [] } = useQuery<LeadRecord[]>({
@@ -99,6 +103,18 @@ const ClientDatabase = () => {
   const totalLeads = allLeads.length;
   const soldCount = allLeads.filter(l => l.status === 'sold').length;
   const activeCount = allLeads.filter(l => ['scheduled', 'confirmed', 'rescheduled'].includes(l.status)).length;
+
+  const handleDeleteLead = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from('setter_appointments').delete().eq('id', deleteTarget.id);
+    if (error) {
+      toast({ title: 'Error', description: 'No se pudo eliminar el lead', variant: 'destructive' });
+    } else {
+      toast({ title: 'Lead eliminado' });
+      queryClient.invalidateQueries({ queryKey: ['client-database-leads', clientId] });
+    }
+    setDeleteTarget(null);
+  };
 
   if (!selectedClient) {
     return (
@@ -212,12 +228,15 @@ const ClientDatabase = () => {
                     <TableHead className="text-xs">Fuente</TableHead>
                     <TableHead className="text-xs">Vendedor</TableHead>
                     <TableHead className="text-xs">Fecha</TableHead>
+                    <TableHead className="text-xs w-[50px]"></TableHead>
+                    <TableHead className="text-xs">Vendedor</TableHead>
+                    <TableHead className="text-xs">Fecha</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
                         No se encontraron leads
                       </TableCell>
                     </TableRow>
@@ -249,6 +268,16 @@ const ClientDatabase = () => {
                         <TableCell className="text-muted-foreground whitespace-nowrap">
                           {lead.created_at ? format(new Date(lead.created_at), 'dd MMM yy', { locale: es }) : '—'}
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => setDeleteTarget(lead)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -263,6 +292,26 @@ const ClientDatabase = () => {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar lead</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de eliminar a <strong>{deleteTarget?.lead_name}</strong>? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteLead}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
