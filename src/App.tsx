@@ -29,6 +29,7 @@ const ImageDB = lazy(() => import("./pages/ImageDB"));
 const Accesos = lazy(() => import("./pages/Accesos"));
 const EmailMarketing = lazy(() => import("./pages/EmailMarketing"));
 const BusinessSetup = lazy(() => import("./pages/BusinessSetup"));
+const ClientDatabase = lazy(() => import("./pages/ClientDatabase"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
