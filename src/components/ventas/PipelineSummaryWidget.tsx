@@ -118,114 +118,99 @@ export const PipelineSummaryWidget = ({
     );
   };
 
-  const groups = [
+  const items = [
     {
-      title: 'Adquisición',
-      items: [
-        {
-          icon: DollarSign,
-          label: 'Gasto Ads',
-          value: formatCurrency(adSpend, adCurrency),
-          color: 'text-green-500',
-          bg: 'bg-green-500/10',
-          filterNode: campaigns.length > 0 ? (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
-                  <Filter className="h-2.5 w-2.5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-2" align="start">
-                <p className="text-xs font-medium mb-2">Filtrar campañas</p>
-                <div className="space-y-1 max-h-40 overflow-y-auto">
-                  {campaigns.map(c => (
-                    <label key={c.id} className="flex items-center gap-2 text-xs cursor-pointer p-1 rounded hover:bg-muted">
-                      <Checkbox
-                        checked={selectedCampaignIds.includes(c.id)}
-                        onCheckedChange={() => toggleCampaign(c.id)}
-                      />
-                      <span className="truncate">{c.name}</span>
-                    </label>
-                  ))}
-                </div>
-                {selectedCampaignIds.length > 0 && (
-                  <Button variant="ghost" size="sm" className="w-full mt-1 h-6 text-[10px]" onClick={() => setSelectedCampaignIds([])}>
-                    Ver todas
-                  </Button>
-                )}
-              </PopoverContent>
-            </Popover>
-          ) : null,
-        },
-        {
-          icon: MessageCircle,
-          label: 'Conversaciones',
-          value: totalConversations.toString(),
-          sub: `${totalFollowups} seguimientos`,
-          color: 'text-pink-500',
-          bg: 'bg-pink-500/10',
-        },
-      ],
+      icon: DollarSign,
+      label: 'Gasto Ads',
+      value: formatCurrency(adSpend, adCurrency),
+      color: 'text-green-500',
+      bg: 'bg-green-500/10',
+      filterNode: campaigns.length > 0 ? (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+              <Filter className="h-2.5 w-2.5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-2" align="start">
+            <p className="text-xs font-medium mb-2">Filtrar campañas</p>
+            <div className="space-y-1 max-h-40 overflow-y-auto">
+              {campaigns.map(c => (
+                <label key={c.id} className="flex items-center gap-2 text-xs cursor-pointer p-1 rounded hover:bg-muted">
+                  <Checkbox
+                    checked={selectedCampaignIds.includes(c.id)}
+                    onCheckedChange={() => toggleCampaign(c.id)}
+                  />
+                  <span className="truncate">{c.name}</span>
+                </label>
+              ))}
+            </div>
+            {selectedCampaignIds.length > 0 && (
+              <Button variant="ghost" size="sm" className="w-full mt-1 h-6 text-[10px]" onClick={() => setSelectedCampaignIds([])}>
+                Ver todas
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+      ) : null,
     },
     {
-      title: 'Pipeline',
-      items: [
-        {
-          icon: CalendarDays,
-          label: 'Agendas',
-          value: filteredAppointments.length.toString(),
-          sub: `${filteredReports.reduce((s, r) => s + r.appointments_made, 0)} desde reportes`,
-          color: 'text-purple-500',
-          bg: 'bg-purple-500/10',
-        },
-        {
-          icon: CheckCircle2,
-          label: 'Show Rate',
-          value: `${showRate.toFixed(0)}%`,
-          sub: `${completed} asistieron`,
-          color: 'text-emerald-500',
-          bg: 'bg-emerald-500/10',
-          progress: showRate,
-        },
-        {
-          icon: XCircle,
-          label: 'No Show',
-          value: `${noShows}`,
-          sub: `de ${completed + noShows} citas`,
-          color: 'text-red-500',
-          bg: 'bg-red-500/10',
-        },
-      ],
+      icon: MessageCircle,
+      label: 'Conversaciones',
+      value: totalConversations.toString(),
+      sub: `${totalFollowups} seguimientos`,
+      color: 'text-pink-500',
+      bg: 'bg-pink-500/10',
     },
     {
-      title: 'Resultados',
-      items: [
-        {
-          icon: ShoppingCart,
-          label: 'Ventas',
-          value: filteredSales.length.toString(),
-          sub: totalSalesUSD > 0 ? `$${totalSalesUSD.toLocaleString()}` : totalSalesCRC > 0 ? `₡${totalSalesCRC.toLocaleString()}` : '-',
-          color: 'text-blue-500',
-          bg: 'bg-blue-500/10',
-        },
-        {
-          icon: TrendingUp,
-          label: 'Close Rate',
-          value: `${closeRate.toFixed(0)}%`,
-          sub: `${sold}/${closedCalls} cerrados`,
-          color: 'text-amber-500',
-          bg: 'bg-amber-500/10',
-          progress: closeRate,
-        },
-        {
-          icon: Wallet,
-          label: 'Cash Collected',
-          value: cashLabel,
-          sub: pendingSub,
-          color: 'text-teal-500',
-          bg: 'bg-teal-500/10',
-        },
-      ],
+      icon: CalendarDays,
+      label: 'Agendas',
+      value: filteredAppointments.length.toString(),
+      sub: `${filteredReports.reduce((s, r) => s + r.appointments_made, 0)} desde reportes`,
+      color: 'text-purple-500',
+      bg: 'bg-purple-500/10',
+    },
+    {
+      icon: CheckCircle2,
+      label: 'Show Rate',
+      value: `${showRate.toFixed(0)}%`,
+      sub: `${completed} asistieron`,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10',
+      progress: showRate,
+    },
+    {
+      icon: XCircle,
+      label: 'No Show',
+      value: `${noShows}`,
+      sub: `de ${completed + noShows} citas`,
+      color: 'text-red-500',
+      bg: 'bg-red-500/10',
+    },
+    {
+      icon: ShoppingCart,
+      label: 'Ventas',
+      value: filteredSales.length.toString(),
+      sub: totalSalesUSD > 0 ? `$${totalSalesUSD.toLocaleString()}` : totalSalesCRC > 0 ? `₡${totalSalesCRC.toLocaleString()}` : '-',
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+    },
+    {
+      icon: TrendingUp,
+      label: 'Close Rate',
+      value: `${closeRate.toFixed(0)}%`,
+      sub: `${sold}/${closedCalls} cerrados`,
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+      progress: closeRate,
+    },
+    {
+      icon: Wallet,
+      label: 'Cash Collected',
+      value: cashLabel,
+      sub: pendingSub,
+      color: 'text-teal-500',
+      bg: 'bg-teal-500/10',
     },
   ];
 
@@ -239,30 +224,25 @@ export const PipelineSummaryWidget = ({
           Resumen de Ventas
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {groups.map(({ title, items }) => (
-          <div key={title} className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{title}</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {items.map(({ icon: Icon, label, value, sub, color, bg, progress, filterNode }) => (
-                <div key={label} className="p-3 rounded-xl border border-border/50 bg-card hover:shadow-sm transition-shadow space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <div className={cn('p-1 rounded-md', bg)}>
-                      <Icon className={cn('h-3 w-3', color)} />
-                    </div>
-                    <span className="text-[10px] font-medium flex-1">{label}</span>
-                    {filterNode}
-                  </div>
-                  <p className="text-lg font-bold text-foreground leading-tight">{value}</p>
-                  {progress !== undefined && (
-                    <Progress value={progress} className="h-1.5" />
-                  )}
-                  {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+      <CardContent>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {items.map(({ icon: Icon, label, value, sub, color, bg, progress, filterNode }) => (
+            <div key={label} className="p-3 rounded-xl border border-border/50 bg-card hover:shadow-sm transition-shadow space-y-1.5">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <div className={cn('p-1 rounded-md', bg)}>
+                  <Icon className={cn('h-3 w-3', color)} />
                 </div>
-              ))}
+                <span className="text-[10px] font-medium flex-1">{label}</span>
+                {filterNode}
+              </div>
+              <p className="text-lg font-bold text-foreground leading-tight">{value}</p>
+              {progress !== undefined && (
+                <Progress value={progress} className="h-1.5" />
+              )}
+              {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
