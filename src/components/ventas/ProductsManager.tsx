@@ -139,7 +139,7 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
       {adding && (
         <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2.5">
           <Input
-            placeholder="Ej: Pago único, 3 cuotas..."
+            placeholder="Ej: 2 clases/semana, Intensivo, Premium..."
             value={sName}
             onChange={e => setSName(e.target.value)}
             className="h-8 text-xs"
