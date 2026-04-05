@@ -92,7 +92,8 @@ export const Sidebar = () => {
 
   if (showVentas) {
     const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
-    const ventasLabel = isMindCoach ? 'Pipeline' : 'Ventas';
+    const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
+    const ventasLabel = isMindCoach ? 'Pipeline' : isSpkUp ? 'Sales' : 'Ventas';
     menuItems.push({ title: ventasLabel, url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
   }
   if (showContenido) {

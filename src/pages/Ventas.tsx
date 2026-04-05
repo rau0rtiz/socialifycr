@@ -10,6 +10,7 @@ import { PipelineSummaryWidget } from '@/components/ventas/PipelineSummaryWidget
 import { SetterDailyCalendar } from '@/components/ventas/SetterDailyCalendar';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { CollectionsWidget } from '@/components/ventas/CollectionsWidget';
+import { SpeakUpSalesSummary } from '@/components/ventas/SpeakUpSalesSummary';
 
 
 import { useBrand } from '@/contexts/BrandContext';
@@ -90,6 +91,7 @@ const Ventas = () => {
   const { flags } = useClientFeatures(clientId);
 
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
+  const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
 
   // Global time range state
   const [globalPeriod, setGlobalPeriod] = useState<GlobalPeriod>('this_month');
@@ -221,10 +223,10 @@ const Ventas = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
-              Ventas
+              {isSpkUp ? 'Sales' : 'Ventas'}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Seguimiento y análisis de ventas
+              {isSpkUp ? 'Sales tracking & student management' : 'Seguimiento y análisis de ventas'}
             </p>
           </div>
 
@@ -291,6 +293,9 @@ const Ventas = () => {
           />
         )}
 
+        {/* === SPEAK UP: Simplified KPI Summary === */}
+        {isSpkUp && <SpeakUpSalesSummary clientId={selectedClient.id} />}
+
         {/* Sales Goal Bar */}
         <SalesGoalBar
           clientId={selectedClient.id}
@@ -305,8 +310,8 @@ const Ventas = () => {
           <SetterDailyCalendar clientId={selectedClient.id} />
         )}
 
-        {/* Ad ranking - at top for most clients, hidden for Mind Coach here (shown at bottom) */}
-        {!isMindCoach && (
+        {/* Ad ranking - at top for most clients, hidden for Mind Coach & Speak Up */}
+        {!isMindCoach && !isSpkUp && (
           <AdSalesRanking
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
@@ -314,8 +319,8 @@ const Ventas = () => {
           />
         )}
 
-        {/* Setter pipeline (lead → sale flow) */}
-        {flags.setter_tracker && (
+        {/* Setter pipeline (lead → sale flow) — hidden for Speak Up */}
+        {flags.setter_tracker && !isSpkUp && (
           <SetterTracker
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
@@ -356,8 +361,8 @@ const Ventas = () => {
           {/* Sales by product pie chart */}
           <SalesByProductChart sales={allSales} products={clientProducts} />
 
-          {/* Closure rate per seller */}
-          <ClosureRateWidget appointments={appointments} />
+          {/* Closure rate per seller — hidden for Speak Up */}
+          {!isSpkUp && <ClosureRateWidget appointments={appointments} />}
         </div>
 
         {/* Ad ranking at bottom for Mind Coach */}
