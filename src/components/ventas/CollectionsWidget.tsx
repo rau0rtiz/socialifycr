@@ -70,8 +70,13 @@ const COLUMNS: ColumnDef[] = [
 
 export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
   const { saleGroups, isLoading, updateCollection, deleteCollection } = usePaymentCollections(clientId);
-  const [selectedGroup, setSelectedGroup] = useState<SaleGroup | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  // Derive selectedGroup from latest data so it updates after mutations
+  const selectedGroup = selectedGroupId
+    ? saleGroups.find(g => g.saleId === selectedGroupId) || null
+    : null;
   const isMobile = useIsMobile();
 
   const { overdue, today, upcoming } = useMemo(() => {
@@ -157,7 +162,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
     return (
       <button
         key={group.saleId}
-        onClick={() => setSelectedGroup(group)}
+        onClick={() => setSelectedGroupId(group.saleId)}
         className={cn(
           'rounded-lg border p-3 text-left transition-all hover:shadow-md w-full space-y-2',
           colDef.borderClass,
@@ -296,7 +301,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
         <CollectionDetailDialog
           group={selectedGroup}
           open={!!selectedGroup}
-          onOpenChange={(open) => { if (!open) setSelectedGroup(null); }}
+          onOpenChange={(open) => { if (!open) setSelectedGroupId(null); }}
           onMarkPaid={handleMarkPaid}
           onDelete={(id) => setDeleteTarget(id)}
           isPending={updateCollection.isPending}
