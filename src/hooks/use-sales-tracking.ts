@@ -78,14 +78,15 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
   });
 
   const addSale = useMutation({
-    mutationFn: async (input: SaleInput) => {
+    mutationFn: async (input: SaleInput): Promise<string> => {
       if (!clientId || !user) throw new Error('Missing client or user');
-      const { error } = await supabase.from('message_sales').insert({
+      const { data, error } = await supabase.from('message_sales').insert({
         client_id: clientId,
         created_by: user.id,
         ...input,
-      } as any);
+      } as any).select('id').single();
       if (error) throw error;
+      return data.id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['message-sales', clientId] });
