@@ -59,7 +59,9 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
   const [isDeleting, setIsDeleting] = useState(false);
   const [showAdSelector, setShowAdSelector] = useState(false);
 
-  const { ads, isLoading: adsLoading } = useAllAds(clientId || '', hasAdAccount || false);
+  const allAdsQuery = useAllAds(clientId || '', hasAdAccount || false);
+  const ads = allAdsQuery.data?.ads || [];
+  const adsLoading = allAdsQuery.isLoading;
 
   useEffect(() => {
     if (appointment) {
