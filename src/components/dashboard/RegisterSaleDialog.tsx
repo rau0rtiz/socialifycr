@@ -33,7 +33,7 @@ export interface SalePrefill {
 interface RegisterSaleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (sale: SaleInput, appointmentId?: string, collectionMeta?: { frequency: string; startInstallment: number; totalInstallments: number; installmentAmount: number; currency: string }) => void;
+  onSubmit: (sale: SaleInput, appointmentId?: string, collectionMeta?: { frequency: string; startInstallment: number; totalInstallments: number; installmentAmount: number; currency: string; customDates?: string[] }) => void;
   clientId?: string;
   hasAdAccount?: boolean;
   isSubmitting?: boolean;
@@ -91,6 +91,7 @@ export const RegisterSaleDialog = ({
   const [installmentAmount, setInstallmentAmount] = useState(0);
   const [totalSaleAmount, setTotalSaleAmount] = useState(0);
   const [collectionFrequency, setCollectionFrequency] = useState<string>('monthly');
+  const [customCollectionDates, setCustomCollectionDates] = useState<string[]>([]);
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
@@ -249,6 +250,16 @@ export const RegisterSaleDialog = ({
       return;
     }
 
+    // Validate custom collection dates
+    const hasRemainingCheck = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
+    if (hasRemainingCheck && collectionFrequency === 'custom') {
+      const filledDates = customCollectionDates.filter(d => d !== '');
+      if (filledDates.length < (numInstallments - installmentsPaid)) {
+        toast.error('Completa todas las fechas de cobro');
+        return;
+      }
+    }
+
     const sale: any = {
       sale_date: saleDate,
       amount: parseFloat(amount),
@@ -283,6 +294,7 @@ export const RegisterSaleDialog = ({
           totalInstallments: numInstallments,
           installmentAmount,
           currency,
+          customDates: collectionFrequency === 'custom' ? customCollectionDates.filter(d => d !== '') : undefined,
         }
       : undefined;
 
@@ -508,7 +520,15 @@ export const RegisterSaleDialog = ({
                   {selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments && (
                     <div className="space-y-1.5">
                       <Label className="text-[10px]">Frecuencia de cobro</Label>
-                      <Select value={collectionFrequency} onValueChange={setCollectionFrequency}>
+                      <Select value={collectionFrequency} onValueChange={(v) => {
+                        setCollectionFrequency(v);
+                        if (v === 'custom') {
+                          const remaining = numInstallments - installmentsPaid;
+                          setCustomCollectionDates(Array(remaining).fill(''));
+                        } else {
+                          setCustomCollectionDates([]);
+                        }
+                      }}>
                         <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {Object.entries(FREQUENCY_LABELS).map(([key, label]) => (
@@ -516,9 +536,34 @@ export const RegisterSaleDialog = ({
                           ))}
                         </SelectContent>
                       </Select>
-                      <p className="text-[10px] text-muted-foreground">
-                        Se generarán {numInstallments - installmentsPaid} cobros pendientes
-                      </p>
+                      {collectionFrequency === 'custom' ? (
+                        <div className="space-y-2 mt-2">
+                          <p className="text-[10px] text-muted-foreground">
+                            Define la fecha de cada cuota pendiente ({numInstallments - installmentsPaid} cobros)
+                          </p>
+                          {customCollectionDates.map((date, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted-foreground w-16 flex-shrink-0">
+                                Cuota {installmentsPaid + idx + 1}
+                              </span>
+                              <Input
+                                type="date"
+                                value={date}
+                                onChange={(e) => {
+                                  const updated = [...customCollectionDates];
+                                  updated[idx] = e.target.value;
+                                  setCustomCollectionDates(updated);
+                                }}
+                                className="h-7 text-xs flex-1"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-muted-foreground">
+                          Se generarán {numInstallments - installmentsPaid} cobros pendientes
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

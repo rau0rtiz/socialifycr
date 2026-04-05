@@ -17,15 +17,16 @@ export interface PaymentCollection {
   updated_at: string;
 }
 
-export type CollectionFrequency = 'weekly' | 'biweekly' | 'monthly';
+export type CollectionFrequency = 'weekly' | 'biweekly' | 'monthly' | 'custom';
 
 export const FREQUENCY_LABELS: Record<CollectionFrequency, string> = {
   weekly: 'Semanal',
   biweekly: 'Quincenal',
   monthly: 'Mensual',
+  custom: 'Personalizado',
 };
 
-export const FREQUENCY_DAYS: Record<CollectionFrequency, number> = {
+export const FREQUENCY_DAYS: Record<string, number> = {
   weekly: 7,
   biweekly: 14,
   monthly: 30,
@@ -59,26 +60,42 @@ export const usePaymentCollections = (clientId: string | null) => {
       frequency: CollectionFrequency;
       startInstallment: number;
       totalInstallments: number;
+      customDates?: string[];
     }) => {
-      const { saleId, clientId: cId, installmentAmount, currency, startDate, frequency, startInstallment, totalInstallments } = params;
-      const daysInterval = FREQUENCY_DAYS[frequency];
+      const { saleId, clientId: cId, installmentAmount, currency, startDate, frequency, startInstallment, totalInstallments, customDates } = params;
       const records: any[] = [];
 
-      for (let i = startInstallment; i <= totalInstallments; i++) {
-        const offset = (i - startInstallment + 1) * daysInterval;
-        const dueDate = new Date(startDate);
-        dueDate.setDate(dueDate.getDate() + offset);
-
-        records.push({
-          sale_id: saleId,
-          client_id: cId,
-          installment_number: i,
-          amount: installmentAmount,
-          currency,
-          due_date: dueDate.toISOString().split('T')[0],
-          status: 'pending',
-          payment_frequency: frequency,
+      if (frequency === 'custom' && customDates && customDates.length > 0) {
+        customDates.forEach((dateStr, idx) => {
+          records.push({
+            sale_id: saleId,
+            client_id: cId,
+            installment_number: startInstallment + idx,
+            amount: installmentAmount,
+            currency,
+            due_date: dateStr,
+            status: 'pending',
+            payment_frequency: 'custom',
+          });
         });
+      } else {
+        const daysInterval = FREQUENCY_DAYS[frequency] || 30;
+        for (let i = startInstallment; i <= totalInstallments; i++) {
+          const offset = (i - startInstallment + 1) * daysInterval;
+          const dueDate = new Date(startDate);
+          dueDate.setDate(dueDate.getDate() + offset);
+
+          records.push({
+            sale_id: saleId,
+            client_id: cId,
+            installment_number: i,
+            amount: installmentAmount,
+            currency,
+            due_date: dueDate.toISOString().split('T')[0],
+            status: 'pending',
+            payment_frequency: frequency,
+          });
+        }
       }
 
       if (records.length === 0) return;
