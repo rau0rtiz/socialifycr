@@ -23,7 +23,7 @@ type SectionDef = {
 
 const SECTIONS: SectionDef[] = [
   { key: null, label: 'Dashboard', icon: LayoutDashboard, locked: true, widgets: DASHBOARD_WIDGET_LABELS },
-  { key: 'ventas_section', label: 'Ventas / Pipeline', icon: ShoppingCart, widgets: VENTAS_WIDGET_LABELS },
+  { key: 'ventas_section', label: 'Ventas', icon: ShoppingCart, widgets: VENTAS_WIDGET_LABELS },
   { key: 'contenido_section', label: 'Contenido', icon: FileText, widgets: CONTENIDO_WIDGET_LABELS },
   { key: 'reportes_section', label: 'Reportes', icon: BarChart3, widgets: {} },
   { key: 'email_marketing_section', label: 'Email Marketing', icon: Mail, widgets: {} },

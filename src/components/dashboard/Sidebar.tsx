@@ -91,7 +91,7 @@ export const Sidebar = () => {
   const showEmailMarketing = effectiveAgency || flags.email_marketing_section;
 
   if (showVentas) {
-    const ventasLabel = selectedClient?.name?.toLowerCase().includes('mind coach') ? 'Pipeline' : 'Ventas';
+    const ventasLabel = 'Ventas';
     menuItems.push({ title: ventasLabel, url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
   }
   if (showContenido) {
