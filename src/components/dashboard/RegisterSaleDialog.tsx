@@ -110,7 +110,8 @@ export const RegisterSaleDialog = ({
 
   // All flows use the same steps: Product → Info → Ad (optional) → Notes
   // Prefilled data just pre-populates fields
-  const needsAdStep = source === 'ad' && hasAdAccount;
+  const prefillHasAd = isPrefilled && !!prefill?.ad_id;
+  const needsAdStep = source === 'ad' && hasAdAccount && !prefillHasAd;
 
   const buildSteps = () => {
     const steps = ['Producto', 'Información'];
