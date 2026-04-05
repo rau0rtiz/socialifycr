@@ -371,7 +371,7 @@ export const RegisterSaleDialog = ({
   };
 
   const getStepDescription = () => {
-    if (step === 0) return 'Selecciona el producto y esquema de pago';
+    if (step === 0) return 'Selecciona el producto y variante';
     if (step === 1) return 'Nombre, contacto, closer y fuente de la venta';
     const adStepIdx = needsAdStep ? 2 : -1;
     if (step === adStepIdx) return 'Selecciona el anuncio que originó esta venta';
