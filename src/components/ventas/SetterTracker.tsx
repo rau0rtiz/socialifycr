@@ -1,4 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -62,6 +64,36 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
 
   const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, undefined, periodStartIso);
   const { setterNames: existingSetters } = useClientSetters(clientId);
+
+  // Fetch ALL completed leads (sold, not_sold, no_show) without date filter
+  const { data: allCompletedLeads = [], refetch: refetchCompleted } = useQuery({
+    queryKey: ['setter-appointments-completed', clientId],
+    queryFn: async () => {
+      if (!clientId) return [];
+      const { data, error } = await supabase
+        .from('setter_appointments')
+        .select('*')
+        .eq('client_id', clientId)
+        .in('status', ['sold', 'not_sold', 'no_show', 'completed'])
+        .order('appointment_date', { ascending: false });
+      if (error) throw error;
+      return data as SetterAppointment[];
+    },
+    enabled: !!clientId,
+  });
+
+  const [deleteCompletedId, setDeleteCompletedId] = useState<string | null>(null);
+
+  const handleDeleteCompleted = useCallback(async (id: string) => {
+    try {
+      await deleteAppointment.mutateAsync(id);
+      refetchCompleted();
+      toast.success('Lead eliminado permanentemente');
+      setDeleteCompletedId(null);
+    } catch {
+      toast.error('Error eliminando lead');
+    }
+  }, [deleteAppointment, refetchCompleted]);
 
   // Split appointments into sections
   const activeAppointments = useMemo(() => 
@@ -269,9 +301,10 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
           {/* Tabs: Pipeline / No vendidos / Cierre por vendedor */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="h-8">
-             <TabsTrigger value="pipeline" className="text-xs">Agenda ({activeAppointments.length})</TabsTrigger>
+              <TabsTrigger value="pipeline" className="text-xs">Agenda ({activeAppointments.length})</TabsTrigger>
               <TabsTrigger value="no_show" className="text-xs">No Show ({noShowAppointments.length})</TabsTrigger>
               <TabsTrigger value="lost" className="text-xs">No vendidos ({lostAppointments.length})</TabsTrigger>
+              <TabsTrigger value="completed" className="text-xs">Completadas ({allCompletedLeads.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="pipeline" className="mt-3">
@@ -312,7 +345,84 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
               )}
             </TabsContent>
 
+            <TabsContent value="completed" className="mt-3">
+              {allCompletedLeads.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle2 className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm font-medium">Sin leads completados</p>
+                  <p className="text-xs mt-1">Los leads con resultado final aparecerán aquí.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                  {allCompletedLeads.map((apt) => {
+                    const status = apt.status as AppointmentStatus | 'not_sold';
+                    const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.scheduled;
+                    const StatusIcon = cfg.icon;
+                    return (
+                      <div
+                        key={apt.id}
+                        className="relative flex flex-col items-start gap-1.5 p-3 rounded-xl border border-border/50 hover:shadow-sm transition-all bg-card group"
+                      >
+                        {/* Delete button */}
+                        <button
+                          className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10"
+                          onClick={(e) => { e.stopPropagation(); setDeleteCompletedId(apt.id); }}
+                          title="Eliminar permanentemente"
+                        >
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </button>
+
+                        <button
+                          className="flex flex-col items-start gap-1.5 w-full text-left"
+                          onClick={() => setDetailLead(apt)}
+                        >
+                          <div className="flex items-center justify-between w-full pr-5">
+                            <div className={cn('p-1 rounded-md border', cfg.color)}>
+                              <StatusIcon className="h-3 w-3" />
+                            </div>
+                            <Badge variant="outline" className={cn('text-[9px] border shrink-0 px-1.5 py-0', cfg.color)}>
+                              {cfg.label}
+                            </Badge>
+                          </div>
+                          <span className="text-sm font-semibold truncate w-full">{apt.lead_name}</span>
+                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-2.5 w-2.5" />
+                            {format(new Date(apt.appointment_date), "dd MMM yyyy", { locale: es })}
+                          </span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+
           </Tabs>
+
+          {/* Delete completed lead confirmation */}
+          <AlertDialog open={!!deleteCompletedId} onOpenChange={(open) => { if (!open) setDeleteCompletedId(null); }}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  ¿Eliminar lead permanentemente?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción es <strong>irreversible</strong>. Se eliminará el lead y todos sus datos asociados de la base de datos de forma permanente. No podrás recuperar esta información.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => deleteCompletedId && handleDeleteCompleted(deleteCompletedId)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Eliminar permanentemente
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
 
