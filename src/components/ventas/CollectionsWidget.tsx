@@ -5,7 +5,7 @@ import { usePaymentCollections, SaleGroup, EnrichedCollection } from '@/hooks/us
 import { toast } from 'sonner';
 import { CheckCircle2, Clock, AlertTriangle, DollarSign, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, parseISO, differenceInDays, isToday, isPast, subDays } from 'date-fns';
+import { format, parseISO, differenceInDays, isToday, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
