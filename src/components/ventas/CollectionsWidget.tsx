@@ -74,24 +74,17 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
-  const { overdue, today, upcoming, collected } = useMemo(() => {
+  const { overdue, today, upcoming } = useMemo(() => {
     const now = new Date();
     const todayStr = format(now, 'yyyy-MM-dd');
-    const thirtyDaysAgo = subDays(now, 30);
 
     const overdueItems: ColumnItem[] = [];
     const todayItems: ColumnItem[] = [];
     const upcomingItems: ColumnItem[] = [];
-    const collectedItems: ColumnItem[] = [];
 
     for (const group of saleGroups) {
-      // Completed groups (all paid, last payment within 30 days)
-      if (group.allPaid) {
-        if (group.lastPaidAt && new Date(group.lastPaidAt) >= thirtyDaysAgo) {
-          collectedItems.push({ group, daysLabel: '✓ Completo' });
-        }
-        continue;
-      }
+      // Skip completed groups — evidence stays on the sale card only
+      if (group.allPaid) continue;
 
       const next = group.nextPendingCollection;
       if (!next) continue;
@@ -107,10 +100,10 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
       }
     }
 
-    return { overdue: overdueItems, today: todayItems, upcoming: upcomingItems, collected: collectedItems };
+    return { overdue: overdueItems, today: todayItems, upcoming: upcomingItems };
   }, [saleGroups]);
 
-  const columnData: Record<ColumnType, ColumnItem[]> = { overdue, today, upcoming, collected };
+  const columnData: Record<ColumnType, ColumnItem[]> = { overdue, today, upcoming };
 
   const getColumnTotal = (items: ColumnItem[]) => {
     return items.reduce((sum, item) => {
