@@ -79,7 +79,7 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
       }
       resetForm();
     } catch {
-      toast.error('Error al guardar esquema');
+      toast.error('Error al guardar variante');
     }
   };
 
