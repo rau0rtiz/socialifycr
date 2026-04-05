@@ -223,10 +223,10 @@ const Ventas = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
-              Ventas
+              {isSpkUp ? 'Sales' : 'Ventas'}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Seguimiento y análisis de ventas
+              {isSpkUp ? 'Sales tracking & student management' : 'Seguimiento y análisis de ventas'}
             </p>
           </div>
 
