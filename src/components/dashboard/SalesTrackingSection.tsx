@@ -123,7 +123,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     });
   }, [allSales, filterSetter, filterProduct, filterCloser]);
 
-  const handleAddSale = (sale: any, appointmentId?: string, collectionMeta?: { frequency: string; startInstallment: number; totalInstallments: number; installmentAmount: number; currency: string }) => {
+  const handleAddSale = (sale: any, appointmentId?: string, collectionMeta?: { frequency: string; startInstallment: number; totalInstallments: number; installmentAmount: number; currency: string; customDates?: string[] }) => {
     if (editingSale) {
       updateSale.mutate({ saleId: editingSale.id, updates: sale }, {
         onSuccess: () => {
