@@ -24,8 +24,8 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
 };
 
-// Sub-component: Payment Schemes for a product (used inside the detail dialog)
-const PaymentSchemesSection = ({ productId, clientId, productCurrency }: { productId: string; clientId: string; productCurrency: string }) => {
+// Sub-component: Variants for a product (used inside the detail dialog)
+const VariantsSection = ({ productId, clientId, productCurrency }: { productId: string; clientId: string; productCurrency: string }) => {
   const { schemes, addScheme, updateScheme, deleteScheme } = usePaymentSchemes(productId, clientId);
   const [editing, setEditing] = useState<string | null>(null);
   const [sName, setSName] = useState('');
