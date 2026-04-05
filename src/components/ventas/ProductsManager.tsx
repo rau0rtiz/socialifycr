@@ -72,10 +72,10 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
     try {
       if (editing) {
         await updateScheme.mutateAsync({ id: editing, ...input });
-        toast.success('Esquema actualizado');
+        toast.success('Variante actualizada');
       } else {
         await addScheme.mutateAsync(input);
-        toast.success('Esquema creado');
+        toast.success('Variante creada');
       }
       resetForm();
     } catch {
