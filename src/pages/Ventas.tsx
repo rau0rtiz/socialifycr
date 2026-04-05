@@ -310,8 +310,8 @@ const Ventas = () => {
           <SetterDailyCalendar clientId={selectedClient.id} />
         )}
 
-        {/* Ad ranking - at top for most clients, hidden for Mind Coach here (shown at bottom) */}
-        {!isMindCoach && (
+        {/* Ad ranking - at top for most clients, hidden for Mind Coach & Speak Up */}
+        {!isMindCoach && !isSpkUp && (
           <AdSalesRanking
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
@@ -319,8 +319,8 @@ const Ventas = () => {
           />
         )}
 
-        {/* Setter pipeline (lead → sale flow) */}
-        {flags.setter_tracker && (
+        {/* Setter pipeline (lead → sale flow) — hidden for Speak Up */}
+        {flags.setter_tracker && !isSpkUp && (
           <SetterTracker
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
