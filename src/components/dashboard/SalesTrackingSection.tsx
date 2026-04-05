@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle, Filter, CreditCard, Wallet } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle, Filter, CreditCard, Wallet, Megaphone } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { usePaymentCollections, CollectionFrequency } from '@/hooks/use-payment-collections';
@@ -466,6 +466,12 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                       <CreditCard className="h-2.5 w-2.5" />
                       {sale.installments_paid || 1}/{sale.num_installments}
                     </Badge>
+                  )}
+                  {sale.ad_name && (
+                    <span className="text-[9px] text-muted-foreground truncate w-full flex items-center gap-1">
+                      <Megaphone className="h-2.5 w-2.5 shrink-0" />
+                      {sale.ad_name}
+                    </span>
                   )}
                 </div>
               ))}

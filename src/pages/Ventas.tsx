@@ -152,7 +152,21 @@ const Ventas = () => {
   const handleSaleRegistered = async (appointmentId?: string) => {
     if (appointmentId) {
       try {
-        await updateAppointment.mutateAsync({ id: appointmentId, status: 'sold' } as any);
+        // Find the latest sale to link back
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: latestSales } = await supabase
+          .from('message_sales')
+          .select('id')
+          .eq('client_id', selectedClient!.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        const saleId = latestSales?.[0]?.id || null;
+        await updateAppointment.mutateAsync({
+          id: appointmentId,
+          status: 'sold',
+          sale_id: saleId,
+        } as any);
       } catch {
         // silent
       }

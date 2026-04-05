@@ -4,10 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
-import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save, ShoppingCart, ThumbsDown, XCircle, Trash2, Loader2 } from 'lucide-react';
+import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save, ShoppingCart, ThumbsDown, XCircle, Trash2, Loader2, Pencil } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { AdGridSelector } from './AdGridSelector';
+import { useAllAds } from '@/hooks/use-ads-data';
 
 interface LeadDetailDialogProps {
   open: boolean;
@@ -16,6 +18,8 @@ interface LeadDetailDialogProps {
   onUpdateChecklist?: (id: string, updates: Record<string, any>) => void;
   onStatusChange?: (id: string, status: string) => void;
   onDelete?: (id: string) => Promise<void>;
+  clientId?: string;
+  hasAdAccount?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -43,8 +47,7 @@ const CHECKLIST_ITEMS = [
   { key: 'checklist_testimonials', label: 'Ya se enviaron los testimonios' },
 ];
 
-export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete }: LeadDetailDialogProps) => {
-  // Local checklist state - hooks must be before early return
+export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount }: LeadDetailDialogProps) => {
   const [checklist, setChecklist] = useState({
     checklist_quiz: false,
     checklist_video: false,
@@ -54,8 +57,12 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
   const [dirty, setDirty] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showAdSelector, setShowAdSelector] = useState(false);
 
-  // Sync checklist when appointment changes
+  const allAdsQuery = useAllAds(clientId || '', hasAdAccount || false);
+  const ads = allAdsQuery.data?.ads || [];
+  const adsLoading = allAdsQuery.isLoading;
+
   useEffect(() => {
     if (appointment) {
       setChecklist({
@@ -65,6 +72,7 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
         checklist_testimonials: appointment.checklist_testimonials || false,
       });
       setDirty(false);
+      setShowAdSelector(false);
     }
   }, [appointment?.id]);
 
@@ -88,17 +96,39 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
     }
   };
 
+  const handleAdChange = (ad: any) => {
+    if (onUpdateChecklist) {
+      if (ad) {
+        onUpdateChecklist(apt.id, {
+          ad_id: ad.id,
+          ad_name: ad.name,
+          ad_campaign_id: ad.campaignId,
+          ad_campaign_name: ad.campaignName,
+        });
+      } else {
+        onUpdateChecklist(apt.id, {
+          ad_id: null,
+          ad_name: null,
+          ad_campaign_id: null,
+          ad_campaign_name: null,
+        });
+      }
+      setShowAdSelector(false);
+    }
+  };
+
   const completedCount = Object.values(checklist).filter(Boolean).length;
 
-  const InfoRow = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) => {
-    if (!value) return null;
+  const InfoRow = ({ icon: Icon, label, value, action }: { icon: React.ElementType; label: string; value: string | null | undefined; action?: React.ReactNode }) => {
+    if (!value && !action) return null;
     return (
       <div className="flex items-start gap-3 py-2">
         <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
           <p className="text-sm text-foreground">{value}</p>
         </div>
+        {action}
       </div>
     );
   };
@@ -119,7 +149,6 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Context box */}
           {leadContext && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
@@ -130,7 +159,6 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
             </div>
           )}
 
-          {/* Not sold reason */}
           {notSoldReason && (
             <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-3 space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs font-medium text-rose-700 dark:text-rose-400">
@@ -171,7 +199,6 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
             )}
           </div>
 
-          {/* Contact & details */}
           <div className="divide-y divide-border">
             <div className="pb-3 space-y-0.5">
               <InfoRow icon={Phone} label="Teléfono" value={apt.lead_phone} />
@@ -204,11 +231,42 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
               </div>
             )}
 
-            {apt.ad_name && (
-              <div className="py-3">
-                <InfoRow icon={Megaphone} label="Anuncio" value={`${apt.ad_name} — ${apt.ad_campaign_name}`} />
-              </div>
-            )}
+            {/* Ad section with edit */}
+            <div className="py-3">
+              {showAdSelector ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium flex items-center gap-1.5">
+                      <Megaphone className="h-3.5 w-3.5 text-muted-foreground" />
+                      Cambiar anuncio
+                    </p>
+                    <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setShowAdSelector(false)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                  <AdGridSelector
+                    ads={ads}
+                    isLoading={adsLoading}
+                    selectedAd={ads.find(a => a.id === apt.ad_id) || null}
+                    onSelect={handleAdChange}
+                  />
+                </div>
+              ) : (
+                <InfoRow
+                  icon={Megaphone}
+                  label="Anuncio"
+                  value={apt.ad_name ? `${apt.ad_name} — ${apt.ad_campaign_name}` : 'Sin anuncio'}
+                  action={
+                    hasAdAccount && onUpdateChecklist ? (
+                      <Button variant="ghost" size="sm" className="h-6 text-[10px] shrink-0" onClick={() => setShowAdSelector(true)}>
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Cambiar
+                      </Button>
+                    ) : undefined
+                  }
+                />
+              )}
+            </div>
 
             <div className="py-3">
               <InfoRow icon={Clock} label="Fuente" value={SOURCE_LABELS[apt.source] || apt.source} />
@@ -221,7 +279,6 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
             )}
           </div>
 
-          {/* Action buttons */}
           {onStatusChange && (
             <div className="rounded-lg border border-border p-3 space-y-2.5">
               <p className="text-xs font-medium text-muted-foreground">
@@ -263,7 +320,6 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
             </div>
           )}
 
-          {/* Delete button */}
           {onDelete && (
             <Button
               variant="ghost"
@@ -278,7 +334,6 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
         </div>
       </DialogContent>
 
-      {/* Delete confirmation */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>

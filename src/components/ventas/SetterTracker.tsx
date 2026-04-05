@@ -431,12 +431,14 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
         open={!!detailLead}
         onOpenChange={(open) => { if (!open) setDetailLead(null); }}
         appointment={detailLead}
+        clientId={clientId}
+        hasAdAccount={hasAdAccount}
         onUpdateChecklist={async (id, updates) => {
           try {
             await updateAppointment.mutateAsync({ id, ...updates } as any);
-            toast.success('Checklist actualizado');
+            toast.success('Actualizado');
           } catch {
-            toast.error('Error actualizando checklist');
+            toast.error('Error actualizando');
           }
         }}
         onStatusChange={(id, status) => {
