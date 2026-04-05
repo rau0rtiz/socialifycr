@@ -56,10 +56,13 @@ const STATUS_COLORS: Record<string, string> = {
 const ClientDatabase = () => {
   const { selectedClient } = useBrand();
   const clientId = selectedClient?.id ?? null;
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const [deleteTarget, setDeleteTarget] = useState<LeadRecord | null>(null);
 
   // Fetch ALL leads for this client (no date filter)
   const { data: allLeads = [] } = useQuery<LeadRecord[]>({
