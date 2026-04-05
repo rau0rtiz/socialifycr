@@ -326,9 +326,12 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
           ) : (
             <div className="space-y-2">
               {products.map(p => {
-                const margin = (p.price != null && p.cost != null && p.cost > 0)
-                  ? Math.round(((p.price - p.cost) / p.price) * 100)
-                  : null;
+                const productSchemes = (allSchemes || []).filter(s => s.product_id === p.id);
+                const variantCount = productSchemes.length;
+                const minPrice = variantCount > 0
+                  ? Math.min(...productSchemes.map(s => s.total_price))
+                  : p.price;
+                const minCurrency = variantCount > 0 ? productSchemes.reduce((prev, curr) => curr.total_price < prev.total_price ? curr : prev).currency : p.currency;
 
                 return (
                   <div
@@ -347,24 +350,19 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h4 className="text-sm font-semibold text-foreground truncate">{p.name}</h4>
-                          {margin !== null && (
-                            <span className={cn(
-                              'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
-                              margin >= 50 ? 'bg-emerald-500/10 text-emerald-600' :
-                              margin >= 20 ? 'bg-amber-500/10 text-amber-600' :
-                              'bg-red-500/10 text-red-600'
-                            )}>
-                              {margin}% margen
-                            </span>
+                          {variantCount > 0 && (
+                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+                              {variantCount} variante{variantCount > 1 ? 's' : ''}
+                            </Badge>
                           )}
                         </div>
                         {p.description && (
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</p>
                         )}
                         <div className="flex items-center gap-3 mt-1.5">
-                          {p.price != null && (
+                          {minPrice != null && (
                             <span className="text-xs font-medium text-foreground">
-                              {formatCurrency(p.price, p.currency)}
+                              {variantCount > 0 ? 'Desde ' : ''}{formatCurrency(minPrice, minCurrency)}
                             </span>
                           )}
                         </div>
