@@ -439,19 +439,19 @@ export const RegisterSaleDialog = ({
                   <div className="flex gap-2">
                     <Select value={product || '_none'} onValueChange={handleProductChange}>
                       <SelectTrigger className="h-10 text-sm flex-1 min-w-0 overflow-hidden"><SelectValue placeholder="Seleccionar producto" className="truncate block max-w-[200px]" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-w-[320px]">
                         <SelectItem value="_none">Sin producto</SelectItem>
                         {allProductOptions.map(name => {
                           const matched = products.find(p => p.name === name);
                           return (
                             <SelectItem key={name} value={name}>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 max-w-[280px]">
                                 {matched?.photo_url && (
-                                  <img src={matched.photo_url} className="w-5 h-5 rounded object-cover" alt="" />
+                                  <img src={matched.photo_url} className="w-5 h-5 rounded object-cover flex-shrink-0" alt="" />
                                 )}
-                                <span>{name}</span>
+                                <span className="truncate">{name}</span>
                                 {matched?.price != null && (
-                                  <span className="text-muted-foreground ml-1">
+                                  <span className="text-muted-foreground ml-1 flex-shrink-0">
                                     ({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})
                                   </span>
                                 )}
