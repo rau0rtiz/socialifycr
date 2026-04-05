@@ -1,8 +1,10 @@
+import { useState, useMemo } from 'react';
 import { AllAdItem } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Image as ImageIcon, Check } from 'lucide-react';
+import { Image as ImageIcon, Check, Search, X } from 'lucide-react';
 
 interface AdGridSelectorProps {
   ads: AllAdItem[];
@@ -40,16 +42,31 @@ export const AdGridSelector = ({
   onSelect,
   currency = 'USD',
 }: AdGridSelectorProps) => {
+  const [search, setSearch] = useState('');
+
+  const filteredAds = useMemo(() => {
+    if (!search.trim()) return ads;
+    const q = search.toLowerCase();
+    return ads.filter(
+      (ad) =>
+        ad.name.toLowerCase().includes(q) ||
+        ad.campaignName.toLowerCase().includes(q)
+    );
+  }, [ads, search]);
+
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-lg border border-border p-2 space-y-2">
-            <Skeleton className="aspect-square w-full rounded-md" />
-            <Skeleton className="h-3 w-3/4" />
-            <Skeleton className="h-3 w-1/2" />
-          </div>
-        ))}
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-full rounded-md" />
+        <div className="grid grid-cols-3 gap-2">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="rounded-lg border border-border p-1.5 space-y-1.5">
+              <Skeleton className="aspect-[4/3] w-full rounded-md" />
+              <Skeleton className="h-3 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -65,71 +82,100 @@ export const AdGridSelector = ({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1">
-      {/* "None" option */}
+    <div className="space-y-2">
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input
+          placeholder="Buscar anuncio o campaña..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-8 pl-8 pr-8 text-xs"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* "Sin anuncio" option — full width */}
       <button
         type="button"
         onClick={() => onSelect(null)}
         className={cn(
-          'rounded-lg border-2 p-3 text-left transition-all hover:border-primary/50 flex flex-col items-center justify-center gap-2 min-h-[120px]',
+          'w-full rounded-lg border-2 px-3 py-2 text-left transition-all hover:border-primary/50 flex items-center gap-2',
           !selectedAd ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border'
         )}
       >
-        {!selectedAd && <Check className="h-5 w-5 text-primary" />}
+        {!selectedAd && <Check className="h-4 w-4 text-primary shrink-0" />}
         <span className="text-xs text-muted-foreground font-medium">Sin anuncio</span>
       </button>
 
-      {ads.map((ad) => {
-        const isSelected = selectedAd?.id === ad.id;
-        const spend = formatSpend(ad.spend, currency);
+      {/* Ad grid */}
+      <div className="grid grid-cols-3 gap-2 max-h-[45vh] overflow-y-auto pr-0.5">
+        {filteredAds.map((ad) => {
+          const isSelected = selectedAd?.id === ad.id;
+          const spend = formatSpend(ad.spend, currency);
 
-        return (
-          <button
-            key={ad.id}
-            type="button"
-            onClick={() => onSelect(ad)}
-            className={cn(
-              'rounded-lg border-2 p-2 text-left transition-all hover:border-primary/50 relative group',
-              isSelected ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border'
-            )}
-          >
-            {isSelected && (
-              <div className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full bg-primary flex items-center justify-center z-10">
-                <Check className="h-3 w-3 text-primary-foreground" />
-              </div>
-            )}
-
-            {/* Thumbnail */}
-            <div className="aspect-square w-full rounded-md overflow-hidden mb-2 bg-muted">
-              {ad.thumbnailUrl ? (
-                <img
-                  src={ad.thumbnailUrl}
-                  alt={ad.name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+          return (
+            <button
+              key={ad.id}
+              type="button"
+              onClick={() => onSelect(ad)}
+              className={cn(
+                'rounded-lg border-2 p-1.5 text-left transition-all hover:border-primary/50 relative group',
+                isSelected ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border'
+              )}
+            >
+              {isSelected && (
+                <div className="absolute top-1 right-1 h-4 w-4 rounded-full bg-primary flex items-center justify-center z-10">
+                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
                 </div>
               )}
-            </div>
 
-            {/* Info */}
-            <p className="text-xs font-medium truncate leading-tight">{ad.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{ad.campaignName}</p>
+              {/* Thumbnail 4:3 */}
+              <div className="aspect-[4/3] w-full rounded-md overflow-hidden mb-1 bg-muted">
+                {ad.thumbnailUrl ? (
+                  <img
+                    src={ad.thumbnailUrl}
+                    alt={ad.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
+                  </div>
+                )}
+              </div>
 
-            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-              <Badge variant={statusVariant(ad.effectiveStatus)} className="text-[9px] px-1.5 py-0 h-4">
-                {statusLabel(ad.effectiveStatus)}
-              </Badge>
-              {spend && (
-                <span className="text-[10px] text-muted-foreground font-medium">{spend}</span>
-              )}
-            </div>
-          </button>
-        );
-      })}
+              {/* Info */}
+              <p className="text-[10px] font-medium truncate leading-tight">{ad.name}</p>
+              <p className="text-[9px] text-muted-foreground truncate">{ad.campaignName}</p>
+
+              <div className="flex items-center gap-1 mt-1 flex-wrap">
+                <Badge variant={statusVariant(ad.effectiveStatus)} className="text-[8px] px-1 py-0 h-3.5 leading-none">
+                  {statusLabel(ad.effectiveStatus)}
+                </Badge>
+                {spend && (
+                  <span className="text-[10px] text-primary font-semibold">{spend}</span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+
+        {filteredAds.length === 0 && (
+          <div className="col-span-3 py-6 text-center">
+            <p className="text-xs text-muted-foreground">No se encontraron anuncios</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
