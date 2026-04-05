@@ -78,14 +78,15 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
   });
 
   const addSale = useMutation({
-    mutationFn: async (input: SaleInput) => {
+    mutationFn: async (input: SaleInput): Promise<string> => {
       if (!clientId || !user) throw new Error('Missing client or user');
-      const { error } = await supabase.from('message_sales').insert({
+      const { data, error } = await supabase.from('message_sales').insert({
         client_id: clientId,
         created_by: user.id,
         ...input,
-      } as any);
+      } as any).select('id').single();
       if (error) throw error;
+      return data.id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['message-sales', clientId] });
@@ -94,11 +95,28 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
 
   const deleteSale = useMutation({
     mutationFn: async (saleId: string) => {
+      // Clean up payment_collections linked to this sale
+      await supabase.from('payment_collections').delete().eq('sale_id', saleId);
+      // Unlink any setter_appointment pointing to this sale
+      const { data: linkedApts } = await supabase
+        .from('setter_appointments')
+        .select('id')
+        .eq('sale_id', saleId);
+      if (linkedApts && linkedApts.length > 0) {
+        for (const apt of linkedApts) {
+          await supabase.from('setter_appointments').update({
+            sale_id: null,
+            status: 'completed',
+          } as any).eq('id', apt.id);
+        }
+      }
       const { error } = await supabase.from('message_sales').delete().eq('id', saleId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['message-sales', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['setter-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['payment-collections'] });
     },
   });
 

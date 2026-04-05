@@ -221,7 +221,7 @@ export const usePaymentCollections = (clientId: string | null) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payment-collections', clientId] });
-      queryClient.invalidateQueries({ queryKey: ['sales-tracking'] });
+      queryClient.invalidateQueries({ queryKey: ['message-sales'] });
     },
   });
 

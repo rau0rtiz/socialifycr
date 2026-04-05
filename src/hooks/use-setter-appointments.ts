@@ -187,7 +187,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string, 
       if (apt?.sale_id) {
         const saleUpdates: Record<string, any> = {};
         if ('lead_name' in updateData) saleUpdates.customer_name = updateData.lead_name;
-        if ('lead_phone' in updateData) saleUpdates.message_platform = updateData.lead_phone; // keep phone in notes context
+        // lead_phone intentionally not synced to message_platform (semantic mismatch)
         if ('ad_id' in updateData) saleUpdates.ad_id = updateData.ad_id;
         if ('ad_name' in updateData) saleUpdates.ad_name = updateData.ad_name;
         if ('ad_campaign_id' in updateData) saleUpdates.ad_campaign_id = updateData.ad_campaign_id;
