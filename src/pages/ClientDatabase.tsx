@@ -104,6 +104,18 @@ const ClientDatabase = () => {
   const soldCount = allLeads.filter(l => l.status === 'sold').length;
   const activeCount = allLeads.filter(l => ['scheduled', 'confirmed', 'rescheduled'].includes(l.status)).length;
 
+  const handleDeleteLead = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from('setter_appointments').delete().eq('id', deleteTarget.id);
+    if (error) {
+      toast({ title: 'Error', description: 'No se pudo eliminar el lead', variant: 'destructive' });
+    } else {
+      toast({ title: 'Lead eliminado' });
+      queryClient.invalidateQueries({ queryKey: ['client-database-leads', clientId] });
+    }
+    setDeleteTarget(null);
+  };
+
   if (!selectedClient) {
     return (
       <DashboardLayout>
