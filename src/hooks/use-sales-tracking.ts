@@ -155,13 +155,13 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
   });
 
   // Summary calculations
-  const completedSales = sales.filter(s => s.status === 'completed');
-  const totalSalesCRC = completedSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
-  const totalSalesUSD = completedSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
-  const adAttributedCRC = completedSales.filter(s => s.source === 'ad' && s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
-  const adAttributedUSD = completedSales.filter(s => s.source === 'ad' && s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
+  const activeSales = sales.filter(s => s.status !== 'cancelled');
+  const totalSalesCRC = activeSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
+  const totalSalesUSD = activeSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
+  const adAttributedCRC = activeSales.filter(s => s.source === 'ad' && s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
+  const adAttributedUSD = activeSales.filter(s => s.source === 'ad' && s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
 
-  const sourceBreakdown = completedSales.reduce((acc, s) => {
+  const sourceBreakdown = activeSales.reduce((acc, s) => {
     acc[s.source] = (acc[s.source] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -173,7 +173,7 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
     deleteSale,
     updateSale,
     summary: {
-      totalCount: completedSales.length,
+      totalCount: activeSales.length,
       totalCRC: totalSalesCRC,
       totalUSD: totalSalesUSD,
       adAttributedCRC,

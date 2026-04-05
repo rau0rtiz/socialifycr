@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { usePaymentCollections, SaleGroup, EnrichedCollection } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
-import { Clock, AlertTriangle, DollarSign, CalendarDays } from 'lucide-react';
+import { Clock, AlertTriangle, DollarSign, CalendarDays, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO, differenceInDays, isToday, isPast } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -72,12 +72,24 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
   const { saleGroups, isLoading, updateCollection, deleteCollection } = usePaymentCollections(clientId);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'pending' | 'completed'>('pending');
 
-  // Derive selectedGroup from latest data so it updates after mutations
   const selectedGroup = selectedGroupId
     ? saleGroups.find(g => g.saleId === selectedGroupId) || null
     : null;
   const isMobile = useIsMobile();
+
+  const pendingGroups = useMemo(() => saleGroups.filter(g => !g.allPaid), [saleGroups]);
+  const completedGroups = useMemo(
+    () => [...saleGroups]
+      .filter(g => g.allPaid)
+      .sort((a, b) => {
+        const aTime = a.lastPaidAt ? new Date(a.lastPaidAt).getTime() : 0;
+        const bTime = b.lastPaidAt ? new Date(b.lastPaidAt).getTime() : 0;
+        return bTime - aTime;
+      }),
+    [saleGroups]
+  );
 
   const { overdue, today, upcoming } = useMemo(() => {
     const now = new Date();
@@ -87,12 +99,10 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
     const todayItems: ColumnItem[] = [];
     const upcomingItems: ColumnItem[] = [];
 
-    for (const group of saleGroups) {
-      // Skip completed groups — evidence stays on the sale card only
-      if (group.allPaid) continue;
-
+    for (const group of pendingGroups) {
       const next = group.nextPendingCollection;
       if (!next) continue;
+
       const dueDate = parseISO(next.due_date);
       const diff = differenceInDays(dueDate, now);
 
@@ -106,7 +116,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
     }
 
     return { overdue: overdueItems, today: todayItems, upcoming: upcomingItems };
-  }, [saleGroups]);
+  }, [pendingGroups]);
 
   const columnData: Record<ColumnType, ColumnItem[]> = { overdue, today, upcoming };
 
@@ -117,7 +127,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
     }, 0);
   };
 
-  const totalPending = saleGroups.filter(g => !g.allPaid).reduce((sum, g) => sum + g.totalPending, 0);
+  const totalPending = pendingGroups.reduce((sum, g) => sum + g.totalPending, 0);
   const mainCurrency = saleGroups[0]?.currency || 'USD';
   const sym = mainCurrency === 'CRC' ? '₡' : '$';
 
@@ -185,12 +195,45 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
             </span>
           )}
         </div>
-        {/* Progress */}
         <div className="space-y-1">
           <Progress value={progressPct} className="h-1.5" />
           <span className="text-[10px] text-muted-foreground">
             {group.paidCount}/{group.totalCount} cuotas
           </span>
+        </div>
+      </button>
+    );
+  };
+
+  const renderCompletedCard = (group: SaleGroup) => {
+    const cardSym = group.currency === 'CRC' ? '₡' : '$';
+    const progressPct = group.totalCount > 0 ? (group.paidCount / group.totalCount) * 100 : 0;
+
+    return (
+      <button
+        key={group.saleId}
+        onClick={() => setSelectedGroupId(group.saleId)}
+        className="w-full rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-left transition-all hover:shadow-md space-y-2"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-medium truncate">{group.customerName}</span>
+          <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="h-3 w-3" />
+            Completado
+          </Badge>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground truncate">{group.product || 'Sin producto'}</span>
+          <span className="text-sm font-semibold">{cardSym}{Number(group.totalCollected).toLocaleString()}</span>
+        </div>
+        <div className="space-y-1">
+          <Progress value={progressPct} className="h-1.5" />
+          <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+            <span>{group.paidCount}/{group.totalCount} cuotas</span>
+            <span className="truncate">
+              {group.lastPaidAt ? `Último pago ${format(parseISO(group.lastPaidAt), 'dd/MM/yy')}` : 'Pago completo'}
+            </span>
+          </div>
         </div>
       </button>
     );
@@ -202,7 +245,6 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
 
     return (
       <div key={colDef.key} className="flex flex-col min-w-0 flex-1">
-        {/* Column Header */}
         <div className={cn('rounded-t-lg px-3 py-2.5 border border-b-0', colDef.borderClass, colDef.headerBg)}>
           <div className="flex items-center gap-1.5">
             <span className={colDef.colorClass}>{colDef.icon}</span>
@@ -219,7 +261,6 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
             </p>
           )}
         </div>
-        {/* Column Body */}
         <div className={cn('rounded-b-lg border border-t-0 flex-1', colDef.borderClass)}>
           <ScrollArea className="h-[280px]">
             <div className="p-2 space-y-2">
@@ -237,7 +278,6 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
     );
   };
 
-  // Mobile: tabs
   const renderMobileTabs = () => (
     <Tabs defaultValue="overdue" className="w-full">
       <TabsList className="w-full grid grid-cols-3">
@@ -271,28 +311,68 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
     <>
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <CardTitle className="text-base flex items-center gap-2">
               <DollarSign className="h-4 w-4" /> Cobros
             </CardTitle>
             {hasAnyCollections && (
-              <span className="text-xs text-muted-foreground">
-                Pendiente: <span className="font-medium text-foreground">{sym}{totalPending.toLocaleString()}</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={activeView === 'pending' ? 'default' : 'outline'}
+                  className="h-8"
+                  onClick={() => setActiveView('pending')}
+                >
+                  Pendientes
+                  <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px]">{pendingGroups.length}</Badge>
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={activeView === 'completed' ? 'default' : 'outline'}
+                  className="h-8"
+                  onClick={() => setActiveView('completed')}
+                >
+                  Completados
+                  <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px]">{completedGroups.length}</Badge>
+                </Button>
+              </div>
             )}
           </div>
+          {hasAnyCollections && activeView === 'pending' && (
+            <p className="text-xs text-muted-foreground">
+              Pendiente: <span className="font-medium text-foreground">{sym}{totalPending.toLocaleString()}</span>
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           {!hasAnyCollections ? (
             <p className="text-sm text-muted-foreground text-center py-6">
               No hay cobros registrados
             </p>
-          ) : isMobile ? (
-            renderMobileTabs()
+          ) : activeView === 'pending' ? (
+            pendingGroups.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                No hay cobros pendientes
+              </p>
+            ) : isMobile ? (
+              renderMobileTabs()
+            ) : (
+              <div className="grid grid-cols-3 gap-3">
+                {COLUMNS.map(col => renderColumn(col))}
+              </div>
+            )
+          ) : completedGroups.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Aún no hay cobros completados
+            </p>
           ) : (
-            <div className="grid grid-cols-3 gap-3">
-              {COLUMNS.map(col => renderColumn(col))}
-            </div>
+            <ScrollArea className="h-[280px] pr-1">
+              <div className="space-y-2">
+                {completedGroups.map(renderCompletedCard)}
+              </div>
+            </ScrollArea>
           )}
         </CardContent>
       </Card>
