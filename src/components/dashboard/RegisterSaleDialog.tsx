@@ -250,6 +250,16 @@ export const RegisterSaleDialog = ({
       return;
     }
 
+    // Validate custom collection dates
+    const hasRemainingCheck = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
+    if (hasRemainingCheck && collectionFrequency === 'custom') {
+      const filledDates = customCollectionDates.filter(d => d !== '');
+      if (filledDates.length < (numInstallments - installmentsPaid)) {
+        toast.error('Completa todas las fechas de cobro');
+        return;
+      }
+    }
+
     const sale: any = {
       sale_date: saleDate,
       amount: parseFloat(amount),
