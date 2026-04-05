@@ -139,14 +139,17 @@ export const usePaymentCollections = (clientId: string | null) => {
     if (!allInstallments) return;
 
     const paidCount = allInstallments.filter(i => i.status === 'paid').length;
+    const totalCount = allInstallments.length;
     const totalCollected = allInstallments
       .filter(i => i.status === 'paid')
       .reduce((sum, i) => sum + Number(i.amount), 0);
+    const allPaid = paidCount === totalCount;
 
     await supabase.from('message_sales')
       .update({
         installments_paid: paidCount,
         amount: totalCollected,
+        status: allPaid ? 'completed' : 'pending',
         updated_at: new Date().toISOString(),
       } as any)
       .eq('id', saleId);
