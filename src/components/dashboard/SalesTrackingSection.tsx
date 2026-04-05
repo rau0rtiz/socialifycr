@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle, Filter, Wallet, Megaphone, CreditCard } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle, Filter, Wallet, Megaphone, CreditCard, CheckCircle2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { usePaymentCollections, CollectionFrequency } from '@/hooks/use-payment-collections';
@@ -401,10 +402,22 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
           {/* Sales Grid */}
           {sales.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-              {sales.map((sale) => (
+              {sales.map((sale) => {
+                const isInstallment = sale.num_installments && sale.num_installments > 1;
+                const allPaid = isInstallment && sale.installments_paid === sale.num_installments;
+                const borderColor = isInstallment
+                  ? allPaid
+                    ? 'border-emerald-500/40 bg-emerald-500/5'
+                    : 'border-amber-500/40 bg-amber-500/5'
+                  : 'border-emerald-500/40 bg-emerald-500/5';
+
+                return (
                 <div
                   key={sale.id}
-                  className="relative flex flex-col items-start gap-1.5 p-3 rounded-xl border border-border hover:border-primary/40 hover:shadow-sm transition-all bg-card group cursor-pointer"
+                  className={cn(
+                    'relative flex flex-col items-start gap-1.5 p-3 rounded-xl border hover:shadow-sm transition-all group cursor-pointer',
+                    borderColor,
+                  )}
                   onClick={() => handleEdit(sale)}
                 >
                   {/* Delete button */}
@@ -451,10 +464,22 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                   <span className="text-base font-bold text-primary">
                     {formatCurrency(Number(sale.amount), sale.currency)}
                   </span>
-                  {sale.num_installments && sale.num_installments > 1 && (
-                    <Badge variant="outline" className="text-[8px] px-1 py-0 gap-0.5">
+                  {isInstallment && (
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'text-[8px] px-1 py-0 gap-0.5',
+                        allPaid ? 'border-emerald-500/50 text-emerald-600 dark:text-emerald-400' : 'border-amber-500/50 text-amber-600 dark:text-amber-400',
+                      )}
+                    >
                       <CreditCard className="h-2.5 w-2.5" />
                       {sale.installments_paid || 1}/{sale.num_installments}
+                    </Badge>
+                  )}
+                  {!isInstallment && (
+                    <Badge variant="outline" className="text-[8px] px-1 py-0 gap-0.5 border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="h-2.5 w-2.5" />
+                      Pago único
                     </Badge>
                   )}
                   {sale.ad_name && (
@@ -464,7 +489,8 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                     </span>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">

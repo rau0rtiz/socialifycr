@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { usePaymentCollections, SaleGroup, EnrichedCollection } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
-import { CheckCircle2, Clock, AlertTriangle, DollarSign, CalendarDays } from 'lucide-react';
+import { Clock, AlertTriangle, DollarSign, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, parseISO, differenceInDays, isToday, isPast, subDays } from 'date-fns';
+import { format, parseISO, differenceInDays, isToday, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
@@ -21,7 +21,7 @@ interface CollectionsWidgetProps {
   clientId: string;
 }
 
-type ColumnType = 'overdue' | 'today' | 'upcoming' | 'collected';
+type ColumnType = 'overdue' | 'today' | 'upcoming';
 
 interface ColumnItem {
   group: SaleGroup;
@@ -66,15 +66,6 @@ const COLUMNS: ColumnDef[] = [
     borderClass: 'border-border',
     headerBg: 'bg-muted/50',
   },
-  {
-    key: 'collected',
-    title: 'Cobrado',
-    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-    colorClass: 'text-emerald-600 dark:text-emerald-400',
-    bgClass: 'bg-emerald-500/5',
-    borderClass: 'border-emerald-500/30',
-    headerBg: 'bg-emerald-500/10',
-  },
 ];
 
 export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
@@ -83,24 +74,17 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
-  const { overdue, today, upcoming, collected } = useMemo(() => {
+  const { overdue, today, upcoming } = useMemo(() => {
     const now = new Date();
     const todayStr = format(now, 'yyyy-MM-dd');
-    const thirtyDaysAgo = subDays(now, 30);
 
     const overdueItems: ColumnItem[] = [];
     const todayItems: ColumnItem[] = [];
     const upcomingItems: ColumnItem[] = [];
-    const collectedItems: ColumnItem[] = [];
 
     for (const group of saleGroups) {
-      // Completed groups (all paid, last payment within 30 days)
-      if (group.allPaid) {
-        if (group.lastPaidAt && new Date(group.lastPaidAt) >= thirtyDaysAgo) {
-          collectedItems.push({ group, daysLabel: '✓ Completo' });
-        }
-        continue;
-      }
+      // Skip completed groups — evidence stays on the sale card only
+      if (group.allPaid) continue;
 
       const next = group.nextPendingCollection;
       if (!next) continue;
@@ -116,10 +100,10 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
       }
     }
 
-    return { overdue: overdueItems, today: todayItems, upcoming: upcomingItems, collected: collectedItems };
+    return { overdue: overdueItems, today: todayItems, upcoming: upcomingItems };
   }, [saleGroups]);
 
-  const columnData: Record<ColumnType, ColumnItem[]> = { overdue, today, upcoming, collected };
+  const columnData: Record<ColumnType, ColumnItem[]> = { overdue, today, upcoming };
 
   const getColumnTotal = (items: ColumnItem[]) => {
     return items.reduce((sum, item) => {
@@ -209,7 +193,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
 
   const renderColumn = (colDef: ColumnDef) => {
     const items = columnData[colDef.key];
-    const colTotal = colDef.key !== 'collected' ? getColumnTotal(items) : items.reduce((s, i) => s + i.group.totalCollected, 0);
+    const colTotal = getColumnTotal(items);
 
     return (
       <div key={colDef.key} className="flex flex-col min-w-0 flex-1">
@@ -251,7 +235,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
   // Mobile: tabs
   const renderMobileTabs = () => (
     <Tabs defaultValue="overdue" className="w-full">
-      <TabsList className="w-full grid grid-cols-4">
+      <TabsList className="w-full grid grid-cols-3">
         {COLUMNS.map(col => (
           <TabsTrigger key={col.key} value={col.key} className="text-[10px] gap-1 px-1">
             <span className={col.colorClass}>{col.icon}</span>
@@ -301,7 +285,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
           ) : isMobile ? (
             renderMobileTabs()
           ) : (
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {COLUMNS.map(col => renderColumn(col))}
             </div>
           )}
