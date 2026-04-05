@@ -182,8 +182,8 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
       {schemes.length === 0 && !adding && (
         <div className="text-center py-4 rounded-lg border border-dashed border-border/50">
           <CreditCard className="h-5 w-5 text-muted-foreground/30 mx-auto mb-1.5" />
-          <p className="text-[11px] text-muted-foreground">Sin esquemas de pago</p>
-          <p className="text-[10px] text-muted-foreground/70 mt-0.5">Agrega opciones de pago como cuotas o pago único</p>
+          <p className="text-[11px] text-muted-foreground">Sin variantes</p>
+          <p className="text-[10px] text-muted-foreground/70 mt-0.5">Agrega variantes con diferentes precios y opciones de cuotas</p>
         </div>
       )}
     </div>
