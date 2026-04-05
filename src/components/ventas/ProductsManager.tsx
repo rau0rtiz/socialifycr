@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
-import { usePaymentSchemes, PaymentSchemeInput } from '@/hooks/use-payment-schemes';
+import { usePaymentSchemes, PaymentSchemeInput, useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { supabase } from '@/integrations/supabase/client';
 import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
