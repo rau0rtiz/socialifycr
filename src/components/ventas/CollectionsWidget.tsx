@@ -70,8 +70,13 @@ const COLUMNS: ColumnDef[] = [
 
 export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
   const { saleGroups, isLoading, updateCollection, deleteCollection } = usePaymentCollections(clientId);
-  const [selectedGroup, setSelectedGroup] = useState<SaleGroup | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  // Derive selectedGroup from latest data so it updates after mutations
+  const selectedGroup = selectedGroupId
+    ? saleGroups.find(g => g.saleId === selectedGroupId) || null
+    : null;
   const isMobile = useIsMobile();
 
   const { overdue, today, upcoming } = useMemo(() => {
