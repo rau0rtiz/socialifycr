@@ -281,7 +281,6 @@ export const AppointmentFormDialog = ({
       estimated_value: estimatedValue,
       currency,
       source,
-      product: product || undefined,
       ad_campaign_id: selectedAd?.campaignId || undefined,
       ad_campaign_name: selectedAd?.campaignName || undefined,
       ad_id: selectedAd?.id || undefined,
