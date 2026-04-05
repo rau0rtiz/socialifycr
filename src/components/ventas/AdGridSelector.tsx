@@ -3,6 +3,7 @@ import { AllAdItem } from '@/hooks/use-ads-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { Image as ImageIcon, Check, Search, X } from 'lucide-react';
 
@@ -43,20 +44,38 @@ export const AdGridSelector = ({
   currency = 'USD',
 }: AdGridSelectorProps) => {
   const [search, setSearch] = useState('');
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+
+  const campaigns = useMemo(() => {
+    const map = new Map<string, string>();
+    ads.forEach((ad) => {
+      if (!map.has(ad.campaignId)) {
+        map.set(ad.campaignId, ad.campaignName);
+      }
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [ads]);
 
   const filteredAds = useMemo(() => {
-    if (!search.trim()) return ads;
-    const q = search.toLowerCase();
-    return ads.filter(
-      (ad) =>
-        ad.name.toLowerCase().includes(q) ||
-        ad.campaignName.toLowerCase().includes(q)
-    );
-  }, [ads, search]);
+    let result = ads;
+    if (selectedCampaignId) {
+      result = result.filter((ad) => ad.campaignId === selectedCampaignId);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (ad) =>
+          ad.name.toLowerCase().includes(q) ||
+          ad.campaignName.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [ads, search, selectedCampaignId]);
 
   if (isLoading) {
     return (
       <div className="space-y-2">
+        <Skeleton className="h-8 w-full rounded-md" />
         <Skeleton className="h-8 w-full rounded-md" />
         <div className="grid grid-cols-3 gap-2">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -102,6 +121,26 @@ export const AdGridSelector = ({
           </button>
         )}
       </div>
+
+      {/* Campaign filter */}
+      {campaigns.length > 1 && (
+        <Select
+          value={selectedCampaignId ?? 'all'}
+          onValueChange={(v) => setSelectedCampaignId(v === 'all' ? null : v)}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue placeholder="Todas las campañas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las campañas</SelectItem>
+            {campaigns.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       {/* "Sin anuncio" option — full width */}
       <button
