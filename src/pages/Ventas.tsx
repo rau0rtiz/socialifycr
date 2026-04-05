@@ -128,6 +128,8 @@ const Ventas = () => {
   const handleConvertToSale = (appointment: SetterAppointment) => {
     const prefill: SalePrefill = {
       customer_name: appointment.lead_name,
+      customer_phone: appointment.lead_phone || undefined,
+      customer_email: appointment.lead_email || undefined,
       product: (appointment as any).product || undefined,
       appointmentId: appointment.id,
       closer_name: appointment.setter_name || undefined,

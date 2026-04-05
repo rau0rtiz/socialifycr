@@ -23,12 +23,18 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 export interface SalePrefill {
   customer_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
   product?: string;
   source?: string;
   ad_id?: string;
   ad_name?: string;
   ad_campaign_id?: string;
   ad_campaign_name?: string;
+  appointmentId?: string;
+  closer_name?: string;
+  message_platform?: string;
+}
   appointmentId?: string;
   closer_name?: string;
   message_platform?: string;
