@@ -522,6 +522,9 @@ export const useAllAds = (clientId: string | null, hasAdAccount: boolean, datePr
         };
       });
 
+      // Sort by spend descending so highest-budget ads appear first
+      ads.sort((a, b) => b.spend - a.spend);
+
       return { ads, currency: data?.currency || 'USD' };
     },
     enabled: !!clientId && hasAdAccount,
