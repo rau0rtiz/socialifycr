@@ -97,11 +97,11 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
       <div className="flex items-center justify-between">
         <Label className="text-xs font-semibold flex items-center gap-1.5">
           <CreditCard className="h-3.5 w-3.5 text-primary" />
-          Esquemas de pago
+          Variantes
         </Label>
         {!adding && (
           <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setAdding(true)}>
-            <Plus className="h-3 w-3" /> Agregar esquema
+            <Plus className="h-3 w-3" /> Agregar variante
           </Button>
         )}
       </div>
