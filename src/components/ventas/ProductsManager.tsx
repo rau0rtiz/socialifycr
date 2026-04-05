@@ -445,9 +445,9 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
 
               <Separator />
 
-              {/* Payment schemes section */}
+               {/* Variants section */}
               <div className="px-6 py-4 overflow-y-auto" style={{ maxHeight: '40vh' }}>
-                <PaymentSchemesSection
+                <VariantsSection
                   productId={detailProduct.id}
                   clientId={clientId}
                   productCurrency={detailProduct.currency}

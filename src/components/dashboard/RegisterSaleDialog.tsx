@@ -495,12 +495,12 @@ export const RegisterSaleDialog = ({
               {product && productSchemes.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-xs font-medium flex items-center gap-1.5">
-                    <CreditCard className="h-3.5 w-3.5" /> Esquema de pago
+                    <CreditCard className="h-3.5 w-3.5" /> Variante
                   </Label>
                   <Select value={selectedSchemeId || '_none'} onValueChange={handleSchemeChange}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Seleccionar esquema" /></SelectTrigger>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Seleccionar variante" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="_none">Pago directo (sin esquema)</SelectItem>
+                      <SelectItem value="_none">Pago directo (sin variante)</SelectItem>
                       {productSchemes.map(s => (
                         <SelectItem key={s.id} value={s.id}>
                           {s.name} — {s.currency === 'CRC' ? '₡' : '$'}{s.total_price.toLocaleString()}
