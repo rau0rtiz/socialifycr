@@ -33,6 +33,11 @@ export interface SaleGroup {
   collections: EnrichedCollection[];
   nextPendingCollection: EnrichedCollection | null;
   allPaid: boolean;
+  paidCount: number;
+  totalCount: number;
+  totalCollected: number;
+  totalPending: number;
+  lastPaidAt: string | null;
 }
 
 export type CollectionFrequency = 'weekly' | 'biweekly' | 'monthly' | 'custom';
@@ -98,6 +103,13 @@ export const usePaymentCollections = (clientId: string | null) => {
     map.forEach((colls, saleId) => {
       const sorted = [...colls].sort((a, b) => a.due_date.localeCompare(b.due_date));
       const pending = sorted.filter(c => c.status !== 'paid');
+      const paid = sorted.filter(c => c.status === 'paid');
+      const totalCollected = paid.reduce((s, c) => s + Number(c.amount), 0);
+      const totalPending = pending.reduce((s, c) => s + Number(c.amount), 0);
+      const lastPaidAt = paid.length > 0
+        ? paid.reduce((latest, c) => (!latest || (c.paid_at && c.paid_at > latest) ? c.paid_at : latest), null as string | null)
+        : null;
+
       groups.push({
         saleId,
         customerName: colls[0].customer_name || 'Sin nombre',
@@ -107,10 +119,38 @@ export const usePaymentCollections = (clientId: string | null) => {
         collections: sorted,
         nextPendingCollection: pending[0] || null,
         allPaid: pending.length === 0,
+        paidCount: paid.length,
+        totalCount: sorted.length,
+        totalCollected,
+        totalPending,
+        lastPaidAt,
       });
     });
     return groups;
   })();
+
+  // Sync sale after collection update
+  const syncSaleInstallments = async (saleId: string) => {
+    const { data: allInstallments } = await supabase
+      .from('payment_collections')
+      .select('amount, status')
+      .eq('sale_id', saleId);
+
+    if (!allInstallments) return;
+
+    const paidCount = allInstallments.filter(i => i.status === 'paid').length;
+    const totalCollected = allInstallments
+      .filter(i => i.status === 'paid')
+      .reduce((sum, i) => sum + Number(i.amount), 0);
+
+    await supabase.from('message_sales')
+      .update({
+        installments_paid: paidCount,
+        amount: totalCollected,
+        updated_at: new Date().toISOString(),
+      } as any)
+      .eq('id', saleId);
+  };
 
   const generateCollections = useMutation({
     mutationFn: async (params: {
@@ -170,12 +210,18 @@ export const usePaymentCollections = (clientId: string | null) => {
   });
 
   const updateCollection = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Pick<PaymentCollection, 'due_date' | 'amount' | 'notes' | 'status' | 'paid_at'>> }) => {
+    mutationFn: async ({ id, updates, saleId }: { id: string; updates: Partial<Pick<PaymentCollection, 'due_date' | 'amount' | 'notes' | 'status' | 'paid_at'>>; saleId?: string }) => {
       const { error } = await supabase.from('payment_collections').update({ ...updates, updated_at: new Date().toISOString() } as any).eq('id', id);
       if (error) throw error;
+
+      // Sync sale when marking as paid
+      if (saleId && updates.status === 'paid') {
+        await syncSaleInstallments(saleId);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payment-collections', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['sales-tracking'] });
     },
   });
 

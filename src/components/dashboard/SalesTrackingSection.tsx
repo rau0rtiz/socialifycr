@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle, Filter, CreditCard, Wallet, Megaphone } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, ShoppingCart, ChevronLeft, ChevronRight, Link2, Pencil, AlertTriangle, Filter, Wallet, Megaphone, CreditCard } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSalesTracking, MessageSale } from '@/hooks/use-sales-tracking';
 import { usePaymentCollections, CollectionFrequency } from '@/hooks/use-payment-collections';
@@ -327,55 +327,45 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
         <CardContent className="space-y-4">
           {/* Summary Cards */}
           {(() => {
-            // Cash collected = amount (what was actually paid)
             const cashCollectedCRC = sales.filter(s => s.status === 'completed' && s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
             const cashCollectedUSD = sales.filter(s => s.status === 'completed' && s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0);
-            // Total contract value = total_sale_amount when available, otherwise amount
             const totalContractCRC = sales.filter(s => s.status === 'completed' && s.currency === 'CRC').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
             const totalContractUSD = sales.filter(s => s.status === 'completed' && s.currency === 'USD').reduce((sum, s) => sum + Number(s.total_sale_amount || s.amount), 0);
-            const hasPending = totalContractCRC > cashCollectedCRC || totalContractUSD > cashCollectedUSD;
 
             return (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">{salesLabel}</p>
-                  <p className="text-xl font-bold">{summary.totalCount}</p>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Wallet className="h-3 w-3 text-emerald-500" /> Cash ₡
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Total Ventas */}
+                <div className="rounded-xl border p-4 space-y-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <ShoppingCart className="h-3.5 w-3.5 text-primary" /> Total {salesLabel}
                   </p>
-                  <p className="text-xl font-bold text-emerald-600">{formatCurrency(cashCollectedCRC, 'CRC')}</p>
-                  {totalContractCRC > cashCollectedCRC && (
-                    <p className="text-[10px] text-muted-foreground">de {formatCurrency(totalContractCRC, 'CRC')}</p>
-                  )}
+                  <p className="text-2xl font-bold">{summary.totalCount}</p>
                 </div>
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Wallet className="h-3 w-3 text-emerald-500" /> Cash $
+                {/* Cash Collected */}
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-1">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                    <Wallet className="h-3.5 w-3.5" /> Cash Collected
                   </p>
-                  <p className="text-xl font-bold text-emerald-600">{formatCurrency(cashCollectedUSD, 'USD')}</p>
-                  {totalContractUSD > cashCollectedUSD && (
-                    <p className="text-[10px] text-muted-foreground">de {formatCurrency(totalContractUSD, 'USD')}</p>
-                  )}
-                </div>
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" /> ROAS</p>
-                  <p className="text-xl font-bold">{roas ? `${roas}x` : '—'}</p>
-                </div>
-                {hasPending && (
-                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
-                    <p className="text-xs text-amber-600 flex items-center gap-1">
-                      <CreditCard className="h-3 w-3" /> Pendiente
-                    </p>
-                    {totalContractCRC > cashCollectedCRC && (
-                      <p className="text-sm font-semibold text-amber-600">{formatCurrency(totalContractCRC - cashCollectedCRC, 'CRC')}</p>
-                    )}
-                    {totalContractUSD > cashCollectedUSD && (
-                      <p className="text-sm font-semibold text-amber-600">{formatCurrency(totalContractUSD - cashCollectedUSD, 'USD')}</p>
-                    )}
+                  <div className="flex items-baseline gap-3">
+                    {cashCollectedCRC > 0 && <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(cashCollectedCRC, 'CRC')}</span>}
+                    {cashCollectedUSD > 0 && <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(cashCollectedUSD, 'USD')}</span>}
+                    {cashCollectedCRC === 0 && cashCollectedUSD === 0 && <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">$0</span>}
                   </div>
-                )}
+                  {(totalContractCRC > cashCollectedCRC || totalContractUSD > cashCollectedUSD) && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {totalContractCRC > cashCollectedCRC && `₡${(totalContractCRC - cashCollectedCRC).toLocaleString()} pendiente`}
+                      {totalContractCRC > cashCollectedCRC && totalContractUSD > cashCollectedUSD && ' · '}
+                      {totalContractUSD > cashCollectedUSD && `$${(totalContractUSD - cashCollectedUSD).toLocaleString()} pendiente`}
+                    </p>
+                  )}
+                </div>
+                {/* ROAS */}
+                <div className="rounded-xl border p-4 space-y-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <TrendingUp className="h-3.5 w-3.5 text-primary" /> ROAS
+                  </p>
+                  <p className="text-2xl font-bold">{roas ? `${roas}x` : '—'}</p>
+                </div>
               </div>
             );
           })()}
