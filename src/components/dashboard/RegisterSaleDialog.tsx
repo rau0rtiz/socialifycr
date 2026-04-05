@@ -180,6 +180,8 @@ export const RegisterSaleDialog = ({
       setSaleDate(new Date().toISOString().split('T')[0]);
       setSource(prefill.ad_id ? 'ad' : prefill.source || '');
       setCustomerName(prefill.customer_name || '');
+      setCustomerPhone(prefill.customer_phone || '');
+      setCustomerEmail(prefill.customer_email || '');
       setProduct(prefill.product || '');
       setMessagePlatform(prefill.message_platform || '');
       setNotes('');
