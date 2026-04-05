@@ -175,9 +175,38 @@ export const useSetterAppointments = (clientId: string | null, period?: string, 
         .update(updateData as any)
         .eq('id', id);
       if (error) throw error;
+
+      // Sync to linked sale if contact/ad fields changed
+      // First check if this appointment has a sale_id
+      const { data: apt } = await supabase
+        .from('setter_appointments')
+        .select('sale_id')
+        .eq('id', id)
+        .single();
+
+      if (apt?.sale_id) {
+        const saleUpdates: Record<string, any> = {};
+        if ('lead_name' in updateData) saleUpdates.customer_name = updateData.lead_name;
+        if ('lead_phone' in updateData) saleUpdates.message_platform = updateData.lead_phone; // keep phone in notes context
+        if ('ad_id' in updateData) saleUpdates.ad_id = updateData.ad_id;
+        if ('ad_name' in updateData) saleUpdates.ad_name = updateData.ad_name;
+        if ('ad_campaign_id' in updateData) saleUpdates.ad_campaign_id = updateData.ad_campaign_id;
+        if ('ad_campaign_name' in updateData) saleUpdates.ad_campaign_name = updateData.ad_campaign_name;
+        // Only sync meaningful fields
+        const meaningfulKeys = ['customer_name', 'ad_id', 'ad_name', 'ad_campaign_id', 'ad_campaign_name'];
+        const filtered: Record<string, any> = {};
+        for (const k of meaningfulKeys) {
+          if (k in saleUpdates) filtered[k] = saleUpdates[k];
+        }
+        if (Object.keys(filtered).length > 0) {
+          await supabase.from('message_sales').update(filtered as any).eq('id', apt.sale_id);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['setter-appointments', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['setter-appointments-completed', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['message-sales'] });
     },
   });
 

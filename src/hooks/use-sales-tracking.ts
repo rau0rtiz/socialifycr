@@ -106,9 +106,33 @@ export const useSalesTracking = (clientId: string | null, month?: Date) => {
     mutationFn: async ({ saleId, updates }: { saleId: string; updates: Partial<SaleInput & { ad_id?: string; ad_name?: string }> }) => {
       const { error } = await supabase.from('message_sales').update(updates as any).eq('id', saleId);
       if (error) throw error;
+
+      // Sync to linked appointment if contact/ad fields changed
+      const syncFields = ['customer_name', 'ad_id', 'ad_name', 'ad_campaign_id', 'ad_campaign_name'];
+      const hasSyncableChange = syncFields.some(f => f in updates);
+      if (hasSyncableChange) {
+        // Find linked appointment
+        const { data: linked } = await supabase
+          .from('setter_appointments')
+          .select('id')
+          .eq('sale_id', saleId)
+          .limit(1);
+        if (linked && linked.length > 0) {
+          const aptUpdates: Record<string, any> = {};
+          if ('customer_name' in updates) aptUpdates.lead_name = updates.customer_name;
+          if ('ad_id' in updates) aptUpdates.ad_id = updates.ad_id;
+          if ('ad_name' in updates) aptUpdates.ad_name = updates.ad_name;
+          if ('ad_campaign_id' in updates) aptUpdates.ad_campaign_id = updates.ad_campaign_id;
+          if ('ad_campaign_name' in updates) aptUpdates.ad_campaign_name = updates.ad_campaign_name;
+          if (Object.keys(aptUpdates).length > 0) {
+            await supabase.from('setter_appointments').update(aptUpdates as any).eq('id', linked[0].id);
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['message-sales', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['setter-appointments'] });
     },
   });
 
