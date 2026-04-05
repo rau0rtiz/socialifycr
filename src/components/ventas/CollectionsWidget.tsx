@@ -193,7 +193,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
 
   const renderColumn = (colDef: ColumnDef) => {
     const items = columnData[colDef.key];
-    const colTotal = colDef.key !== 'collected' ? getColumnTotal(items) : items.reduce((s, i) => s + i.group.totalCollected, 0);
+    const colTotal = getColumnTotal(items);
 
     return (
       <div key={colDef.key} className="flex flex-col min-w-0 flex-1">
