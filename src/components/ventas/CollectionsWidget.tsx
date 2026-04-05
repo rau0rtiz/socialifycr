@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { usePaymentCollections, SaleGroup, EnrichedCollection } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
-import { CheckCircle2, Clock, AlertTriangle, DollarSign, CalendarDays } from 'lucide-react';
+import { Clock, AlertTriangle, DollarSign, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO, differenceInDays, isToday, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
