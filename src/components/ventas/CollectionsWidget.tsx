@@ -21,7 +21,7 @@ interface CollectionsWidgetProps {
   clientId: string;
 }
 
-type ColumnType = 'overdue' | 'today' | 'upcoming' | 'collected';
+type ColumnType = 'overdue' | 'today' | 'upcoming';
 
 interface ColumnItem {
   group: SaleGroup;
@@ -65,15 +65,6 @@ const COLUMNS: ColumnDef[] = [
     bgClass: 'bg-muted/30',
     borderClass: 'border-border',
     headerBg: 'bg-muted/50',
-  },
-  {
-    key: 'collected',
-    title: 'Cobrado',
-    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-    colorClass: 'text-emerald-600 dark:text-emerald-400',
-    bgClass: 'bg-emerald-500/5',
-    borderClass: 'border-emerald-500/30',
-    headerBg: 'bg-emerald-500/10',
   },
 ];
 
