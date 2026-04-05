@@ -56,6 +56,7 @@ const STATUS_COLORS: Record<string, string> = {
 const ClientDatabase = () => {
   const { selectedClient } = useBrand();
   const clientId = selectedClient?.id ?? null;
+  const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
