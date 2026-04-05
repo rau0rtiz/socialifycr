@@ -238,7 +238,7 @@ const ClientDatabase = () => {
                   {filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
-                        No se encontraron leads
+                        {isSpkUp ? 'No students found' : 'No se encontraron leads'}
                       </TableCell>
                     </TableRow>
                   ) : (
