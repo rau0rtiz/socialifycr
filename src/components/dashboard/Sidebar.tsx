@@ -14,6 +14,7 @@ import {
   Mail,
   X,
   Briefcase,
+  Database,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
