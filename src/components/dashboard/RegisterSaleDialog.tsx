@@ -579,12 +579,23 @@ export const RegisterSaleDialog = ({
                       ) : (
                         <div className="space-y-1.5 mt-1">
                           <Label className="text-[10px]">Fecha inicial de cobro</Label>
-                          <Input
-                            type="date"
-                            value={collectionStartDate}
-                            onChange={(e) => setCollectionStartDate(e.target.value)}
-                            className="h-7 text-xs"
-                          />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className={cn("w-full h-7 text-xs justify-start text-left font-normal", !collectionStartDate && "text-muted-foreground")}>
+                                <CalendarIcon className="mr-1.5 h-3 w-3" />
+                                {collectionStartDate ? format(new Date(collectionStartDate + 'T12:00:00'), 'dd MMM yyyy', { locale: es }) : 'Seleccionar fecha'}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={collectionStartDate ? new Date(collectionStartDate + 'T12:00:00') : undefined}
+                                onSelect={(d) => setCollectionStartDate(d ? d.toISOString().split('T')[0] : '')}
+                                initialFocus
+                                className="p-3 pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
                           <p className="text-[10px] text-muted-foreground">
                             Se generarán {numInstallments - installmentsPaid} cobros pendientes
                           </p>
