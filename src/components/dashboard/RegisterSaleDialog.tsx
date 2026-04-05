@@ -561,9 +561,18 @@ export const RegisterSaleDialog = ({
                           ))}
                         </div>
                       ) : (
-                        <p className="text-[10px] text-muted-foreground">
-                          Se generarán {numInstallments - installmentsPaid} cobros pendientes
-                        </p>
+                        <div className="space-y-1.5 mt-1">
+                          <Label className="text-[10px]">Fecha inicial de cobro</Label>
+                          <Input
+                            type="date"
+                            value={collectionStartDate}
+                            onChange={(e) => setCollectionStartDate(e.target.value)}
+                            className="h-7 text-xs"
+                          />
+                          <p className="text-[10px] text-muted-foreground">
+                            Se generarán {numInstallments - installmentsPaid} cobros pendientes
+                          </p>
+                        </div>
                       )}
                     </div>
                   )}
