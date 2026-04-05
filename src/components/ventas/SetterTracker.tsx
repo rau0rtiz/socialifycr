@@ -65,6 +65,36 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
   const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, undefined, periodStartIso);
   const { setterNames: existingSetters } = useClientSetters(clientId);
 
+  // Fetch ALL completed leads (sold, not_sold, no_show) without date filter
+  const { data: allCompletedLeads = [], refetch: refetchCompleted } = useQuery({
+    queryKey: ['setter-appointments-completed', clientId],
+    queryFn: async () => {
+      if (!clientId) return [];
+      const { data, error } = await supabase
+        .from('setter_appointments')
+        .select('*')
+        .eq('client_id', clientId)
+        .in('status', ['sold', 'not_sold', 'no_show', 'completed'])
+        .order('appointment_date', { ascending: false });
+      if (error) throw error;
+      return data as SetterAppointment[];
+    },
+    enabled: !!clientId,
+  });
+
+  const [deleteCompletedId, setDeleteCompletedId] = useState<string | null>(null);
+
+  const handleDeleteCompleted = useCallback(async (id: string) => {
+    try {
+      await deleteAppointment.mutateAsync(id);
+      refetchCompleted();
+      toast.success('Lead eliminado permanentemente');
+      setDeleteCompletedId(null);
+    } catch {
+      toast.error('Error eliminando lead');
+    }
+  }, [deleteAppointment, refetchCompleted]);
+
   // Split appointments into sections
   const activeAppointments = useMemo(() => 
     appointments.filter(a => a.status !== 'not_sold' as any && a.status !== 'sold' && a.status !== 'no_show'), 
