@@ -17,15 +17,16 @@ export interface PaymentCollection {
   updated_at: string;
 }
 
-export type CollectionFrequency = 'weekly' | 'biweekly' | 'monthly';
+export type CollectionFrequency = 'weekly' | 'biweekly' | 'monthly' | 'custom';
 
 export const FREQUENCY_LABELS: Record<CollectionFrequency, string> = {
   weekly: 'Semanal',
   biweekly: 'Quincenal',
   monthly: 'Mensual',
+  custom: 'Personalizado',
 };
 
-export const FREQUENCY_DAYS: Record<CollectionFrequency, number> = {
+export const FREQUENCY_DAYS: Record<string, number> = {
   weekly: 7,
   biweekly: 14,
   monthly: 30,
