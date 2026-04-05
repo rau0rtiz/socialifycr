@@ -126,6 +126,8 @@ const Ventas = () => {
   const { appointments, updateAppointment } = useSetterAppointments(clientId, undefined, periodStartIso);
 
   const handleConvertToSale = (appointment: SetterAppointment) => {
+    // Map lead source → sale source
+    const sourceMap: Record<string, string> = { ads: 'ad', organic: 'organic', referral: 'referral', followup: 'organic', other: 'other' };
     const prefill: SalePrefill = {
       customer_name: appointment.lead_name,
       customer_phone: appointment.lead_phone || undefined,
@@ -134,6 +136,7 @@ const Ventas = () => {
       appointmentId: appointment.id,
       closer_name: appointment.setter_name || undefined,
       message_platform: appointment.source === 'ads' ? 'whatsapp' : undefined,
+      source: sourceMap[appointment.source || 'other'] || 'other',
     };
     if (appointment.ad_id) {
       prefill.source = 'ad';
