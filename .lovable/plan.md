@@ -1,57 +1,44 @@
-
-
-# Variantes de Producto en Business Setup
+# Cambiar sección Speak Up a español completo
 
 ## Problema
-Speak Up tiene productos principales (Clases Personalizadas, Clases Grupales, TOEIC) donde cada uno tiene variantes con precios distintos (ej: 2 clases/semana vs 3 clases/semana). Actualmente se usan "Esquemas de pago" que combinan variante + plan de cuotas, lo cual funciona pero la UI no es clara.
 
-## Solución
-Renombrar "Esquemas de pago" a **"Variantes"** en la UI y ajustar el flujo para que sea mas intuitivo. No se necesitan cambios en la base de datos: la tabla `product_payment_schemes` ya tiene `name`, `total_price`, `num_installments`, `installment_amount` y `currency` -- todo lo necesario para representar variantes con precios y opciones de cuotas.
-
-Esto aplica para todos los clientes, no solo Speak Up, porque el concepto es universal.
-
----
+La sección de Speak Up está en inglés ("Sales", "Register Sale", "Student Database", etc.) pero el usuario quiere todo en español. Además, "Cash Collected" no refleja bien el modelo — lo que realmente mide es el **ingreso total** del mes (monto de ventas registradas), no necesariamente efectivo cobrado.
 
 ## Cambios
 
-### 1. ProductsManager — Renombrar UI y mejorar flujo
-**Archivo:** `src/components/ventas/ProductsManager.tsx`
+### 2. Página Ventas (header)
 
-- Renombrar `PaymentSchemesSection` label de "Esquemas de pago" → **"Variantes"**
-- Boton: "Agregar esquema" → **"Agregar variante"**
-- Placeholder del nombre: "Ej: Pago unico, 3 cuotas..." → **"Ej: 2 clases/semana, Intensivo, Premium..."**
-- Empty state: "Sin esquemas de pago" → **"Sin variantes"**, "Agrega variantes con diferentes precios y opciones de cuotas"
-- En la card de producto en el listado, mostrar cantidad de variantes como badge (ej: "3 variantes")
-- Quitar el campo `price` del producto padre (ya que el precio vive en cada variante) — o dejarlo como "precio base/referencia" opcional
+`**src/pages/Ventas.tsx**`
 
-### 2. RegisterSaleDialog — Ajustar labels
-**Archivo:** `src/components/dashboard/RegisterSaleDialog.tsx`
+- Quitar condicionales `isSpkUp` del título y subtítulo — usar siempre "Ventas" / "Seguimiento y análisis de ventas"
 
-- Donde se selecciona el esquema de pago, cambiar label de "Esquema de pago" → **"Variante"**
-- El dropdown ya muestra las opciones por producto, solo cambiar textos
+### 3. SpeakUpSalesSummary (KPIs)
 
-### 3. Card de producto — Mostrar variantes inline
-**Archivo:** `src/components/ventas/ProductsManager.tsx`
+`**src/components/ventas/SpeakUpSalesSummary.tsx**`
 
-En la tarjeta de cada producto en el listado, en vez de mostrar solo el precio base, mostrar un resumen como:
-- "3 variantes · desde ₡85,000" (el precio mas bajo de sus variantes)
-- Esto da visibilidad sin abrir el detalle
+- "Total Sales" → **"Ventas del mes"**
+- "Cash Collected" → **"Ingresos"** (más preciso para el modelo: representa el monto total vendido)
+- "Pending" → **"Por cobrar"**
+- "New Students" → **"Nuevos estudiantes"**
 
----
+### 4. SalesTrackingSection
 
-## Detalle tecnico
+`**src/components/dashboard/SalesTrackingSection.tsx**`
 
-**Sin migraciones de DB** — la tabla `product_payment_schemes` ya soporta todo.
+- Quitar condicional `isSpkUp` para el botón — usar siempre "Registrar Venta"
+- Quitar condicional `isSpkUp` del título — usar siempre "Ventas"
 
-**Archivos a modificar:**
-1. `src/components/ventas/ProductsManager.tsx` — renombrar labels, mostrar badge de variantes, ajustar empty states
-2. `src/components/dashboard/RegisterSaleDialog.tsx` — renombrar label del selector de esquema
+### 5. Client Database
 
-**Logica de precio en card:**
-```typescript
-// En la card del producto, calcular rango de precios desde variantes
-const minPrice = schemes.length > 0 
-  ? Math.min(...schemes.map(s => s.total_price)) 
-  : product.price;
-```
+`**src/pages/ClientDatabase.tsx**`
 
+- "Student Database" → **"Base de Estudiantes"**
+- "Total Students" → **"Total estudiantes"**
+- "Sold" → **"Vendidos"** (ya existe)
+- "Active" → **"Activos"** (ya existe)
+- "No students found" → **"No se encontraron estudiantes"**
+- "students" → **"estudiantes"**
+
+## Nota sobre "Cash Collected" → "Ingresos"
+
+El KPI actual suma `amount` de ventas activas, que es el monto total de cada venta (no lo que se ha cobrado efectivamente). Renombrarlo a **"Ingresos"** es más preciso. El KPI de "Por cobrar" ya cubre las cuotas pendientes, así que queda claro: Ingresos = vendido total, Por cobrar = cuotas sin pagar.
