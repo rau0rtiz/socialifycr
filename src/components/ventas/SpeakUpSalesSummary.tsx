@@ -29,14 +29,14 @@ export const SpeakUpSalesSummary = ({ clientId }: SpeakUpSalesSummaryProps) => {
 
   const kpis = [
     {
-      label: 'Total Sales',
+      label: 'Ventas del mes',
       value: summary.totalCount.toString(),
       icon: ShoppingCart,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },
     {
-      label: 'Cash Collected',
+      label: 'Ingresos',
       value: cashCRC > 0 || cashUSD > 0
         ? [cashCRC > 0 && formatCurrency(cashCRC, 'CRC'), cashUSD > 0 && formatCurrency(cashUSD, 'USD')].filter(Boolean).join(' · ')
         : '$0',
@@ -45,7 +45,7 @@ export const SpeakUpSalesSummary = ({ clientId }: SpeakUpSalesSummaryProps) => {
       bgColor: 'bg-emerald-500/10',
     },
     {
-      label: 'Pending',
+      label: 'Por cobrar',
       value: pendingCRC > 0 || pendingUSD > 0
         ? [pendingCRC > 0 && formatCurrency(pendingCRC, 'CRC'), pendingUSD > 0 && formatCurrency(pendingUSD, 'USD')].filter(Boolean).join(' · ')
         : '$0',
@@ -54,7 +54,7 @@ export const SpeakUpSalesSummary = ({ clientId }: SpeakUpSalesSummaryProps) => {
       bgColor: 'bg-amber-500/10',
     },
     {
-      label: 'New Students',
+      label: 'Nuevos estudiantes',
       value: uniqueStudents.toString(),
       icon: GraduationCap,
       color: 'text-blue-600 dark:text-blue-400',

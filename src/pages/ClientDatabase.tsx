@@ -136,7 +136,7 @@ const ClientDatabase = () => {
   return (
     <DashboardLayout>
       <div className="space-y-4">
-        <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Student Database' : 'Client Database'}</h1>
+        <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : 'Base de Clientes'}</h1>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -147,7 +147,7 @@ const ClientDatabase = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalLeads}</p>
-                <p className="text-xs text-muted-foreground">{isSpkUp ? 'Total Students' : 'Total leads'}</p>
+                <p className="text-xs text-muted-foreground">{isSpkUp ? 'Total estudiantes' : 'Total leads'}</p>
               </div>
             </CardContent>
           </Card>
@@ -158,7 +158,7 @@ const ClientDatabase = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{soldCount}</p>
-                <p className="text-xs text-muted-foreground">{isSpkUp ? 'Sold' : 'Vendidos'}</p>
+                <p className="text-xs text-muted-foreground">Vendidos</p>
               </div>
             </CardContent>
           </Card>
@@ -169,7 +169,7 @@ const ClientDatabase = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{activeCount}</p>
-                <p className="text-xs text-muted-foreground">{isSpkUp ? 'Active' : 'Activos'}</p>
+                <p className="text-xs text-muted-foreground">Activos</p>
               </div>
             </CardContent>
           </Card>
@@ -238,7 +238,7 @@ const ClientDatabase = () => {
                   {filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
-                        {isSpkUp ? 'No students found' : 'No se encontraron leads'}
+                        {isSpkUp ? 'No se encontraron estudiantes' : 'No se encontraron leads'}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -287,7 +287,7 @@ const ClientDatabase = () => {
             </div>
             {filtered.length > 0 && (
               <div className="px-4 py-2 border-t text-xs text-muted-foreground">
-                Mostrando {filtered.length} de {totalLeads} {isSpkUp ? 'students' : 'leads'}
+                Mostrando {filtered.length} de {totalLeads} {isSpkUp ? 'estudiantes' : 'leads'}
               </div>
             )}
           </CardContent>
