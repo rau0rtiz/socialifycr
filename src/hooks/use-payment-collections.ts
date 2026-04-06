@@ -211,7 +211,7 @@ export const usePaymentCollections = (clientId: string | null) => {
       } else {
         const daysInterval = FREQUENCY_DAYS[frequency] || 30;
         for (let i = startInstallment; i <= totalInstallments; i++) {
-          const offset = (i - startInstallment + 1) * daysInterval;
+          const offset = (i - startInstallment) * daysInterval;
           const dueDate = new Date(startDate);
           dueDate.setDate(dueDate.getDate() + offset);
 
