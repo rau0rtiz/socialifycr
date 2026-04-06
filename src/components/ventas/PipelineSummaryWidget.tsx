@@ -181,7 +181,7 @@ export const PipelineSummaryWidget = ({
     },
     {
       icon: XCircle,
-      label: 'No Show',
+      label: 'No asistió',
       value: `${noShows}`,
       sub: `de ${completed + noShows} citas`,
       color: 'text-red-500',
