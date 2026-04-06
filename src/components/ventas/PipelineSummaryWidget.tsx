@@ -206,7 +206,7 @@ export const PipelineSummaryWidget = ({
     },
     {
       icon: Wallet,
-      label: 'Cash Collected',
+      label: 'Ingresos',
       value: cashLabel,
       sub: pendingSub,
       color: 'text-teal-500',
