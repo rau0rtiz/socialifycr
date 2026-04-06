@@ -382,6 +382,295 @@ export const RegisterSaleDialog = ({
   const adStepIndex = needsAdStep ? 2 : -1;
   const notesStepIndex = needsAdStep ? 3 : 2;
 
+  // Single-view edit mode
+  if (isEditing) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden p-0">
+          <div className="px-6 pt-6 pb-2">
+            <DialogHeader className="space-y-0.5">
+              <DialogTitle className="text-base">Editar Venta</DialogTitle>
+              <DialogDescription className="text-xs">Modifica los campos que necesites</DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="px-6 pb-2 overflow-y-auto" style={{ maxHeight: '65vh' }}>
+            <div className="space-y-5">
+              {/* Section: Product */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5" /> Producto
+                </p>
+                <div className="space-y-2">
+                  {showNewProduct ? (
+                    <div className="flex gap-2">
+                      <Input placeholder="Nombre del producto" value={newProductName} onChange={e => setNewProductName(e.target.value)} className="h-9 text-sm flex-1" autoFocus onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }} />
+                      <Button size="sm" className="h-9 text-xs" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>{addProduct.isPending ? '...' : 'OK'}</Button>
+                      <Button variant="ghost" size="sm" className="h-9" onClick={() => setShowNewProduct(false)}><X className="h-3.5 w-3.5" /></Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Select value={product || '_none'} onValueChange={handleProductChange}>
+                        <SelectTrigger className="h-9 text-sm flex-1"><SelectValue placeholder="Seleccionar producto" /></SelectTrigger>
+                        <SelectContent className="max-w-[320px]">
+                          <SelectItem value="_none">Sin producto</SelectItem>
+                          {allProductOptions.map(name => {
+                            const matched = products.find(p => p.name === name);
+                            return (
+                              <SelectItem key={name} value={name}>
+                                <div className="flex items-center gap-2 max-w-[280px]">
+                                  {matched?.photo_url && <img src={matched.photo_url} className="w-5 h-5 rounded object-cover flex-shrink-0" alt="" />}
+                                  <span className="truncate">{name}</span>
+                                  {matched?.price != null && <span className="text-muted-foreground ml-1 flex-shrink-0">({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})</span>}
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setShowNewProduct(true)}><Plus className="h-3.5 w-3.5 mr-1" /> Nuevo</Button>
+                    </div>
+                  )}
+
+                  {product && productSchemes.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5" /> Variante</Label>
+                      <Select value={selectedSchemeId || '_none'} onValueChange={handleSchemeChange}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Seleccionar variante" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">Pago directo (sin variante)</SelectItem>
+                          {productSchemes.map(s => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.name} — {s.currency === 'CRC' ? '₡' : '$'}{s.total_price.toLocaleString()}
+                              {s.num_installments > 1 && ` (${s.num_installments}x ${s.currency === 'CRC' ? '₡' : '$'}${s.installment_amount.toLocaleString()})`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {selectedSchemeId && numInstallments > 1 && (
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px]">Cuotas pagadas al registrar</Label>
+                          <Select value={String(installmentsPaid)} onValueChange={v => { const paid = parseInt(v); setInstallmentsPaid(paid); setAmount(String(installmentAmount * paid)); }}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: numInstallments }, (_, i) => (
+                                <SelectItem key={i + 1} value={String(i + 1)}>{i + 1} de {numInstallments} cuotas</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      {selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments && (
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px]">Frecuencia de cobro</Label>
+                          <Select value={collectionFrequency} onValueChange={(v) => { setCollectionFrequency(v); if (v === 'custom') { setCustomCollectionDates(Array(numInstallments - installmentsPaid).fill('')); } else { setCustomCollectionDates([]); } }}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(FREQUENCY_LABELS).map(([key, label]) => (
+                                <SelectItem key={key} value={key} className="text-xs">{label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {collectionFrequency === 'custom' ? (
+                            <div className="space-y-2 mt-2">
+                              <p className="text-[10px] text-muted-foreground">Define la fecha de cada cuota pendiente ({numInstallments - installmentsPaid} cobros)</p>
+                              {customCollectionDates.map((date, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <span className="text-[10px] text-muted-foreground w-16 flex-shrink-0">Cuota {installmentsPaid + idx + 1}</span>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="outline" className={cn("h-7 text-xs flex-1 justify-start text-left font-normal", !date && "text-muted-foreground")}>
+                                        <CalendarIcon className="mr-1.5 h-3 w-3" />
+                                        {date ? format(new Date(date + 'T12:00:00'), 'dd MMM yyyy', { locale: es }) : 'Seleccionar'}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar mode="single" selected={date ? new Date(date + 'T12:00:00') : undefined} onSelect={(d) => { const updated = [...customCollectionDates]; updated[idx] = d ? d.toISOString().split('T')[0] : ''; setCustomCollectionDates(updated); }} initialFocus className="p-3 pointer-events-auto" />
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="space-y-1.5 mt-1">
+                              <Label className="text-[10px]">Fecha inicial de cobro</Label>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className={cn("w-full h-7 text-xs justify-start text-left font-normal", !collectionStartDate && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-1.5 h-3 w-3" />
+                                    {collectionStartDate ? format(new Date(collectionStartDate + 'T12:00:00'), 'dd MMM yyyy', { locale: es }) : 'Seleccionar fecha'}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar mode="single" selected={collectionStartDate ? new Date(collectionStartDate + 'T12:00:00') : undefined} onSelect={(d) => setCollectionStartDate(d ? d.toISOString().split('T')[0] : '')} initialFocus className="p-3 pointer-events-auto" />
+                                </PopoverContent>
+                              </Popover>
+                              <p className="text-[10px] text-muted-foreground">Se generarán {numInstallments - installmentsPaid} cobros pendientes</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs font-medium">Monto *</Label>
+                      <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-9 text-sm" />
+                    </div>
+                    <div className="w-24 space-y-1">
+                      <Label className="text-xs font-medium">Moneda</Label>
+                      <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CRC">₡ CRC</SelectItem>
+                          <SelectItem value="USD">$ USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {totalSaleAmount > 0 && totalSaleAmount !== parseFloat(amount || '0') && (
+                    <p className="text-[10px] text-muted-foreground">Total de la venta: {currency === 'CRC' ? '₡' : '$'}{totalSaleAmount.toLocaleString()}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Section: Client Info */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" /> Cliente
+                </p>
+                <div className="space-y-2">
+                  <Input placeholder="Nombre completo" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="h-9 text-sm" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input placeholder="Teléfono" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="h-9 text-sm" />
+                    <Input placeholder="Correo" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} className="h-9 text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section: Sale Details */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5" /> Detalles
+                </p>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Closer</Label>
+                      <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                          {closerName && !closers.some(c => c.fullName === closerName) && <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>}
+                          {closers.map(c => <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Fuente *</Label>
+                      <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="¿De dónde?" /></SelectTrigger>
+                        <SelectContent>
+                          {SOURCE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Método de pago</Label>
+                      {showNewPaymentMethod ? (
+                        <div className="flex gap-1">
+                          <Input placeholder="Método" value={newPaymentMethodName} onChange={e => setNewPaymentMethodName(e.target.value)} className="h-9 text-sm flex-1" autoFocus onKeyDown={e => { if (e.key === 'Enter' && newPaymentMethodName.trim()) { setPaymentMethod(newPaymentMethodName.trim()); setShowNewPaymentMethod(false); setNewPaymentMethodName(''); } }} />
+                          <Button size="sm" className="h-9 text-xs px-2" onClick={() => { setPaymentMethod(newPaymentMethodName.trim()); setShowNewPaymentMethod(false); setNewPaymentMethodName(''); }} disabled={!newPaymentMethodName.trim()}>OK</Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1">
+                          <Select value={paymentMethod || '_none'} onValueChange={v => setPaymentMethod(v === '_none' ? '' : v)}>
+                            <SelectTrigger className="h-9 text-sm flex-1"><SelectValue placeholder="Sin especificar" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="_none">Sin especificar</SelectItem>
+                              <SelectItem value="efectivo">Efectivo</SelectItem>
+                              <SelectItem value="sinpe">SINPE</SelectItem>
+                              <SelectItem value="transferencia_bancaria">Transferencia</SelectItem>
+                              <SelectItem value="stripe">Stripe</SelectItem>
+                              {paymentMethod && !['efectivo', 'sinpe', 'stripe', 'transferencia_bancaria'].includes(paymentMethod) && <SelectItem value={paymentMethod}>{paymentMethod}</SelectItem>}
+                            </SelectContent>
+                          </Select>
+                          <Button variant="outline" size="sm" className="h-9 text-xs px-2" onClick={() => setShowNewPaymentMethod(true)}><Plus className="h-3 w-3" /></Button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Plataforma</Label>
+                      <Select value={messagePlatform || '_none'} onValueChange={v => setMessagePlatform(v === '_none' ? '' : v)}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">Sin especificar</SelectItem>
+                          {PLATFORM_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Fecha de venta</Label>
+                    <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-9 text-sm" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Estado</Label>
+                    <Select value={status} onValueChange={setStatus}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="completed">Completada</SelectItem>
+                        <SelectItem value="pending">Pendiente</SelectItem>
+                        <SelectItem value="cancelled">Cancelada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Notas</Label>
+                    <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Ad attribution (if ad source) */}
+              {source === 'ad' && hasAdAccount && (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Megaphone className="h-3.5 w-3.5" /> Anuncio vinculado
+                  </p>
+                  {selectedAd ? (
+                    <div className="flex items-center gap-2 p-2 rounded-lg border bg-muted/30">
+                      <span className="text-xs flex-1 truncate">{selectedAd.name}</span>
+                      <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setSelectedAd(null)}><X className="h-3 w-3" /></Button>
+                    </div>
+                  ) : (
+                    <AdGridSelector ads={allAds} isLoading={adsLoading} selectedAd={selectedAd} onSelect={setSelectedAd} currency={adsCurrency} />
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-2 px-6 pb-6 pt-2 border-t">
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="text-xs">Cancelar</Button>
+            <Button size="sm" onClick={handleSubmit} disabled={isSubmitting} className="text-xs">
+              {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Multi-step creation flow (unchanged)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden p-0">
@@ -389,7 +678,7 @@ export const RegisterSaleDialog = ({
         <div className="px-6 pt-6 pb-2 space-y-3">
           <DialogHeader className="space-y-0.5">
             <DialogTitle className="text-base text-center">
-              {isEditing ? 'Editar Venta' : isPrefilled ? 'Registrar Venta de Lead' : 'Registrar Venta'}
+              {isPrefilled ? 'Registrar Venta de Lead' : 'Registrar Venta'}
             </DialogTitle>
             <DialogDescription className="text-center text-xs">
               {getStepTitle()}
@@ -740,20 +1029,6 @@ export const RegisterSaleDialog = ({
                 <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-10 text-sm" />
               </div>
 
-              {isEditing && (
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">Estado</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="completed">Completada</SelectItem>
-                      <SelectItem value="pending">Pendiente</SelectItem>
-                      <SelectItem value="cancelled">Cancelada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
               <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
             </div>
           )}
@@ -812,7 +1087,7 @@ export const RegisterSaleDialog = ({
             </Button>
           ) : (
             <Button size="sm" onClick={handleSubmit} disabled={isSubmitting} className="text-xs">
-              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Registrar'}
+              {isSubmitting ? 'Guardando...' : 'Registrar'}
             </Button>
           )}
         </div>
