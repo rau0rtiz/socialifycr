@@ -1,44 +1,21 @@
-# Cambiar sección Speak Up a español completo
+
+
+# Actualizar PipelineSummaryWidget con labels en español
 
 ## Problema
-
-La sección de Speak Up está en inglés ("Sales", "Register Sale", "Student Database", etc.) pero el usuario quiere todo en español. Además, "Cash Collected" no refleja bien el modelo — lo que realmente mide es el **ingreso total** del mes (monto de ventas registradas), no necesariamente efectivo cobrado.
+El `PipelineSummaryWidget` (usado para The Mind Coach) todavía tiene "Cash Collected" en inglés (línea 209) y "pendiente" en el subtexto. Esto no fue actualizado cuando se cambió el `SpeakUpSalesSummary`.
 
 ## Cambios
 
-### 2. Página Ventas (header)
+**Archivo: `src/components/ventas/PipelineSummaryWidget.tsx`**
 
-`**src/pages/Ventas.tsx**`
+1. Cambiar `label: 'Cash Collected'` → `label: 'Ingresos'` (línea 209) para ser consistente con la terminología actualizada
+2. Cambiar `pendingSub` para usar "Por cobrar" en vez de "pendiente" (líneas 103-106):
+   - `$X pendiente` → `$X por cobrar`
+   - `Todo cobrado` se mantiene igual
+3. Cambiar `label: 'Show Rate'` → `label: 'Tasa Asistencia'` (línea 175)
+4. Cambiar `label: 'Close Rate'` → `label: 'Tasa Cierre'` (línea 200)
+5. Cambiar `label: 'No Show'` → `label: 'No asistió'` (línea 184)
 
-- Quitar condicionales `isSpkUp` del título y subtítulo — usar siempre "Ventas" / "Seguimiento y análisis de ventas"
+Esto pone todo el widget en español consistente con el resto de la plataforma.
 
-### 3. SpeakUpSalesSummary (KPIs)
-
-`**src/components/ventas/SpeakUpSalesSummary.tsx**`
-
-- "Total Sales" → **"Ventas del mes"**
-- "Cash Collected" → **"Ingresos"** (más preciso para el modelo: representa el monto total vendido)
-- "Pending" → **"Por cobrar"**
-- "New Students" → **"Nuevos estudiantes"**
-
-### 4. SalesTrackingSection
-
-`**src/components/dashboard/SalesTrackingSection.tsx**`
-
-- Quitar condicional `isSpkUp` para el botón — usar siempre "Registrar Venta"
-- Quitar condicional `isSpkUp` del título — usar siempre "Ventas"
-
-### 5. Client Database
-
-`**src/pages/ClientDatabase.tsx**`
-
-- "Student Database" → **"Base de Estudiantes"**
-- "Total Students" → **"Total estudiantes"**
-- "Sold" → **"Vendidos"** (ya existe)
-- "Active" → **"Activos"** (ya existe)
-- "No students found" → **"No se encontraron estudiantes"**
-- "students" → **"estudiantes"**
-
-## Nota sobre "Cash Collected" → "Ingresos"
-
-El KPI actual suma `amount` de ventas activas, que es el monto total de cada venta (no lo que se ha cobrado efectivamente). Renombrarlo a **"Ingresos"** es más preciso. El KPI de "Por cobrar" ya cubre las cuotas pendientes, así que queda claro: Ingresos = vendido total, Por cobrar = cuotas sin pagar.
