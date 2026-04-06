@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Bell, LogOut, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NotificationsPanel } from './NotificationsPanel';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { ClientSelector } from './ClientSelector';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
