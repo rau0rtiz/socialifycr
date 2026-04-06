@@ -172,7 +172,7 @@ export const PipelineSummaryWidget = ({
     },
     {
       icon: CheckCircle2,
-      label: 'Show Rate',
+      label: 'Tasa Asistencia',
       value: `${showRate.toFixed(0)}%`,
       sub: `${completed} asistieron`,
       color: 'text-emerald-500',
