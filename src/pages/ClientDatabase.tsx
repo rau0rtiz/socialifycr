@@ -147,7 +147,7 @@ const ClientDatabase = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalLeads}</p>
-                <p className="text-xs text-muted-foreground">{isSpkUp ? 'Total Students' : 'Total leads'}</p>
+                <p className="text-xs text-muted-foreground">{isSpkUp ? 'Total estudiantes' : 'Total leads'}</p>
               </div>
             </CardContent>
           </Card>
