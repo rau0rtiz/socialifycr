@@ -197,7 +197,7 @@ export const PipelineSummaryWidget = ({
     },
     {
       icon: TrendingUp,
-      label: 'Close Rate',
+      label: 'Tasa Cierre',
       value: `${closeRate.toFixed(0)}%`,
       sub: `${sold}/${closedCalls} cerrados`,
       color: 'text-amber-500',
