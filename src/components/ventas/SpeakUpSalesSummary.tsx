@@ -45,7 +45,7 @@ export const SpeakUpSalesSummary = ({ clientId }: SpeakUpSalesSummaryProps) => {
       bgColor: 'bg-emerald-500/10',
     },
     {
-      label: 'Cash en la calle',
+      label: 'Por cobrar',
       value: pendingCRC > 0 || pendingUSD > 0
         ? [pendingCRC > 0 && formatCurrency(pendingCRC, 'CRC'), pendingUSD > 0 && formatCurrency(pendingUSD, 'USD')].filter(Boolean).join(' · ')
         : '$0',
