@@ -107,9 +107,9 @@ export const PipelineSummaryWidget = ({
   const pendingUSD = totalContractUSD - totalSalesUSD;
   const pendingCRC = totalContractCRC - totalSalesCRC;
   const pendingSub = pendingUSD > 0
-    ? `$${pendingUSD.toLocaleString()} pendiente`
+    ? `$${pendingUSD.toLocaleString()} por cobrar`
     : pendingCRC > 0
-    ? `₡${pendingCRC.toLocaleString()} pendiente`
+    ? `₡${pendingCRC.toLocaleString()} por cobrar`
     : 'Todo cobrado';
 
   const toggleCampaign = (id: string) => {
