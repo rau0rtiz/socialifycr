@@ -283,7 +283,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
             </div>
             <Button size="sm" onClick={() => { setEditingSale(null); setCurrentPrefill(null); setDialogOpen(true); }}>
               <Plus className="h-4 w-4 mr-1" />
-              {isSpkUp ? 'Register Sale' : 'Registrar Venta'}
+              Registrar Venta
             </Button>
           </div>
         </CardHeader>
