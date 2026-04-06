@@ -107,9 +107,9 @@ export const PipelineSummaryWidget = ({
   const pendingUSD = totalContractUSD - totalSalesUSD;
   const pendingCRC = totalContractCRC - totalSalesCRC;
   const pendingSub = pendingUSD > 0
-    ? `$${pendingUSD.toLocaleString()} pendiente`
+    ? `$${pendingUSD.toLocaleString()} por cobrar`
     : pendingCRC > 0
-    ? `₡${pendingCRC.toLocaleString()} pendiente`
+    ? `₡${pendingCRC.toLocaleString()} por cobrar`
     : 'Todo cobrado';
 
   const toggleCampaign = (id: string) => {
@@ -172,7 +172,7 @@ export const PipelineSummaryWidget = ({
     },
     {
       icon: CheckCircle2,
-      label: 'Show Rate',
+      label: 'Tasa Asistencia',
       value: `${showRate.toFixed(0)}%`,
       sub: `${completed} asistieron`,
       color: 'text-emerald-500',
@@ -181,7 +181,7 @@ export const PipelineSummaryWidget = ({
     },
     {
       icon: XCircle,
-      label: 'No Show',
+      label: 'No asistió',
       value: `${noShows}`,
       sub: `de ${completed + noShows} citas`,
       color: 'text-red-500',
@@ -197,7 +197,7 @@ export const PipelineSummaryWidget = ({
     },
     {
       icon: TrendingUp,
-      label: 'Close Rate',
+      label: 'Tasa Cierre',
       value: `${closeRate.toFixed(0)}%`,
       sub: `${sold}/${closedCalls} cerrados`,
       color: 'text-amber-500',
@@ -206,7 +206,7 @@ export const PipelineSummaryWidget = ({
     },
     {
       icon: Wallet,
-      label: 'Cash Collected',
+      label: 'Ingresos',
       value: cashLabel,
       sub: pendingSub,
       color: 'text-teal-500',
