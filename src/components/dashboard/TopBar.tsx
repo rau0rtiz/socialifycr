@@ -66,10 +66,7 @@ export const TopBar = () => {
 
           <ThemeToggle />
 
-          <Button variant="ghost" size="icon" className="relative h-8 w-8 md:h-9 md:w-9">
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive" />
-          </Button>
+          <NotificationsPanel />
 
           {/* User menu */}
           <DropdownMenu>
