@@ -158,6 +158,28 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         console.error('Error parsing YouTube OAuth result:', e);
       }
     }
+
+    // Check for LinkedIn OAuth redirect result
+    const linkedinStored = sessionStorage.getItem('linkedin_oauth_result');
+    if (linkedinStored) {
+      sessionStorage.removeItem('linkedin_oauth_result');
+      try {
+        const data = JSON.parse(linkedinStored);
+        if (data.type === 'LINKEDIN_OAUTH_ACCOUNTS' && data.clientId === clientId) {
+          setLinkedInAccountsData({
+            accounts: data.accounts,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            expiresIn: data.expiresIn,
+            clientId: data.clientId,
+            userId: data.userId,
+          });
+          setShowLinkedInSelector(true);
+        }
+      } catch (e) {
+        console.error('Error parsing LinkedIn OAuth result:', e);
+      }
+    }
   }, [clientId]);
 
   // Handle META_OAUTH_CODE: parent makes the authenticated API call
@@ -257,6 +279,25 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         toast({
           title: 'Error de conexión',
           description: event.data.error || 'Error al conectar con TikTok',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      } else if (event.data?.type === 'LINKEDIN_OAUTH_ACCOUNTS') {
+        setLinkedInAccountsData({
+          accounts: event.data.accounts,
+          accessToken: event.data.accessToken,
+          refreshToken: event.data.refreshToken,
+          expiresIn: event.data.expiresIn,
+          clientId: event.data.clientId,
+          userId: event.data.userId,
+          message: event.data.message,
+        });
+        setShowLinkedInSelector(true);
+        setConnecting(null);
+      } else if (event.data?.type === 'LINKEDIN_OAUTH_ERROR') {
+        toast({
+          title: 'Error de conexión',
+          description: event.data.error || 'Error al conectar con LinkedIn',
           variant: 'destructive',
         });
         setConnecting(null);
