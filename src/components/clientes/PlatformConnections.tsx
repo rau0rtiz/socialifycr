@@ -7,6 +7,7 @@ import { useAuditLog } from '@/hooks/use-audit-log';
 import { Facebook, Instagram, Youtube, Linkedin, Twitter, Plus, CheckCircle2, XCircle, Clock, RefreshCw, Trash2 } from 'lucide-react';
 import { MetaAccountSelector } from './MetaAccountSelector';
 import { YouTubeChannelSelector } from './YouTubeChannelSelector';
+import { LinkedInOrgSelector } from './LinkedInOrgSelector';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,16 @@ interface YouTubeAccountsData {
   refreshToken: string;
   expiresIn: number;
   clientId: string;
+  message?: string;
+}
+
+interface LinkedInAccountsData {
+  accounts: { id: string; urn: string; name: string; logoUrl: string | null }[];
+  accessToken: string;
+  refreshToken: string | null;
+  expiresIn: number;
+  clientId: string;
+  userId: string;
   message?: string;
 }
 
