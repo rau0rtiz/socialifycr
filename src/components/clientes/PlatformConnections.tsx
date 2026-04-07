@@ -960,6 +960,21 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         message={youtubeAccountsData?.message}
       />
 
+      {/* LinkedIn Org Selector Dialog */}
+      <LinkedInOrgSelector
+        open={showLinkedInSelector}
+        onOpenChange={(open) => {
+          setShowLinkedInSelector(open);
+          if (!open) {
+            setLinkedInAccountsData(null);
+          }
+        }}
+        organizations={linkedInAccountsData?.accounts || []}
+        onSelect={handleSaveLinkedInConnection}
+        loading={savingLinkedIn}
+        message={linkedInAccountsData?.message}
+      />
+
       {/* Disconnect Confirmation Dialog */}
       <AlertDialog open={showDisconnectDialog} onOpenChange={setShowDisconnectDialog}>
         <AlertDialogContent>
