@@ -99,6 +99,8 @@ export const RegisterSaleDialog = ({
   const [collectionFrequency, setCollectionFrequency] = useState<string>('monthly');
   const [customCollectionDates, setCustomCollectionDates] = useState<string[]>([]);
   const [collectionStartDate, setCollectionStartDate] = useState('');
+  const [hasDeposit, setHasDeposit] = useState(false);
+  const [depositBalanceDueDate, setDepositBalanceDueDate] = useState('');
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
