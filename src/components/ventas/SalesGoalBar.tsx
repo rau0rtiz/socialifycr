@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Target, Pencil, Calendar } from 'lucide-react';
+import { Target, Pencil, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSalesGoal } from '@/hooks/use-sales-goals';
 import { toast } from 'sonner';
-import { format, differenceInDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useBrand } from '@/contexts/BrandContext';
 
@@ -25,42 +25,77 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
 };
 
+const getMonthKey = (date: Date) => format(date, 'yyyy-MM');
+
 export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, primaryColor, accentColor }: SalesGoalBarProps) => {
   const { selectedClient } = useBrand();
-  const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
-  const goalLabel = 'Meta de Ventas';
+  const goalLabel = 'Meta Mensual';
   const { goal, isLoading, upsertGoal } = useSalesGoal(clientId);
   const [editOpen, setEditOpen] = useState(false);
   const [targetAmount, setTargetAmount] = useState('');
   const [currency, setCurrency] = useState('USD');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
 
-  if (isLoading || !goal) return null;
+  // Determine the current display month from goal or current date
+  const goalMonth = goal ? new Date(goal.start_date) : new Date();
+  const isCurrentMonth = getMonthKey(goalMonth) === getMonthKey(new Date());
+
+  if (isLoading) return null;
+
+  // If no goal exists, show a create button
+  if (!goal) {
+    const barBg = primaryColor ? `hsl(${primaryColor})` : 'hsl(var(--primary))';
+    return (
+      <Card className="overflow-hidden border-border/50 shadow-sm">
+        <CardContent className="p-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: barBg + '15' }}>
+              <Target className="h-5 w-5" style={{ color: barBg }} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm text-foreground">{goalLabel}</h3>
+              <p className="text-xs text-muted-foreground">No hay meta configurada para este mes</p>
+            </div>
+          </div>
+          <Button size="sm" onClick={() => { setSelectedMonth(new Date()); setEditOpen(true); }}>
+            Crear meta
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const currentAmount = goal.currency === 'USD' ? currentSalesUSD : currentSalesCRC;
   const progress = Math.min((currentAmount / goal.target_amount) * 100, 100);
   const remaining = Math.max(goal.target_amount - currentAmount, 0);
-  const daysLeft = differenceInDays(new Date(goal.end_date), new Date());
-  const expired = daysLeft < 0;
+  const now = new Date();
+  const monthEnd = endOfMonth(goalMonth);
+  const daysLeft = Math.max(Math.ceil((monthEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)), 0);
+  const expired = !isCurrentMonth && goalMonth < now;
 
   const openEdit = () => {
     setTargetAmount(String(goal.target_amount));
     setCurrency(goal.currency);
-    setStartDate(goal.start_date);
-    setEndDate(goal.end_date);
+    setSelectedMonth(goalMonth);
     setEditOpen(true);
   };
 
   const handleSave = () => {
-    if (!targetAmount || !endDate) {
-      toast.error('Meta y fecha de fin son requeridos');
+    if (!targetAmount) {
+      toast.error('El monto de la meta es requerido');
       return;
     }
+    const monthStart = startOfMonth(selectedMonth);
+    const monthEndDate = endOfMonth(selectedMonth);
     upsertGoal.mutate(
-      { target_amount: parseFloat(targetAmount), currency, start_date: startDate || new Date().toISOString().split('T')[0], end_date: endDate },
       {
-        onSuccess: () => { toast.success('Meta actualizada'); setEditOpen(false); },
+        target_amount: parseFloat(targetAmount),
+        currency,
+        start_date: format(monthStart, 'yyyy-MM-dd'),
+        end_date: format(monthEndDate, 'yyyy-MM-dd'),
+      },
+      {
+        onSuccess: () => { toast.success('Meta mensual actualizada'); setEditOpen(false); },
         onError: () => toast.error('Error al actualizar meta'),
       }
     );
@@ -82,8 +117,8 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
                 <h3 className="font-semibold text-sm text-foreground">{goalLabel}</h3>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                   <Calendar className="h-3 w-3" />
-                  {format(new Date(goal.start_date), 'dd MMM', { locale: es })} — {format(new Date(goal.end_date), 'dd MMM yyyy', { locale: es })}
-                  {!expired && <span className="text-foreground/60">· {daysLeft}d restantes</span>}
+                  {format(goalMonth, 'MMMM yyyy', { locale: es })}
+                  {!expired && isCurrentMonth && <span className="text-foreground/60">· {daysLeft}d restantes</span>}
                   {expired && <span className="text-destructive font-medium">· Expirada</span>}
                 </p>
               </div>
@@ -124,9 +159,24 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Editar {goalLabel}</DialogTitle>
-            <DialogDescription>Configura la meta de ingresos para este cliente</DialogDescription>
+            <DialogDescription>Configura la meta de ingresos mensual</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Month selector */}
+            <div>
+              <Label>Mes</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setSelectedMonth(prev => subMonths(prev, 1))}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex-1 text-center font-medium text-sm capitalize">
+                  {format(selectedMonth, 'MMMM yyyy', { locale: es })}
+                </div>
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setSelectedMonth(prev => addMonths(prev, 1))}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
             <div className="flex gap-2">
               <div className="flex-1">
                 <Label>Meta *</Label>
@@ -142,14 +192,6 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div>
-              <Label>Fecha inicio</Label>
-              <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-            </div>
-            <div>
-              <Label>Fecha fin *</Label>
-              <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
