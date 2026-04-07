@@ -177,7 +177,7 @@ export const Sidebar = () => {
           </SidebarGroup>
         )}
 
-        {effectiveCanManage && (
+        {(canManage && !isPreviewMode) && (
           <SidebarGroup>
             <SidebarGroupLabel>Gestión</SidebarGroupLabel>
             <SidebarGroupContent>
