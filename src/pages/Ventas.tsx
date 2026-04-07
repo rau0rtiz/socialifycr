@@ -12,6 +12,7 @@ import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { CollectionsWidget } from '@/components/ventas/CollectionsWidget';
 import { SpeakUpSalesSummary } from '@/components/ventas/SpeakUpSalesSummary';
 import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
+import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
 
 
 import { useBrand } from '@/contexts/BrandContext';
@@ -94,6 +95,7 @@ const Ventas = () => {
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
   const isHildaLopez = selectedClient?.name?.toLowerCase().includes('hilda');
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
+  const isSilvia = selectedClient?.name?.toLowerCase().includes('silvia');
 
   // Global time range state
   const [globalPeriod, setGlobalPeriod] = useState<GlobalPeriod>('this_month');
@@ -303,6 +305,11 @@ const Ventas = () => {
           </>
         )}
 
+        {/* === DRA SILVIA: Clinic KPI Summary === */}
+        {isSilvia && (
+          <ClinicSalesSummary clientId={selectedClient.id} />
+        )}
+
         {/* Sales Goal Bar */}
         <SalesGoalBar
           clientId={selectedClient.id}
@@ -318,7 +325,7 @@ const Ventas = () => {
         )}
 
         {/* Ad ranking - at top for most clients, hidden for Mind Coach & Speak Up */}
-        {!isMindCoach && !isSpkUp && !isHildaLopez && (
+        {!isMindCoach && !isSpkUp && !isHildaLopez && !isSilvia && (
           <AdSalesRanking
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
@@ -327,7 +334,7 @@ const Ventas = () => {
         )}
 
         {/* Setter pipeline (lead → sale flow) — hidden for Speak Up */}
-        {flags.setter_tracker && !isSpkUp && (
+        {flags.setter_tracker && !isSpkUp && !isSilvia && (
           <SetterTracker
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
@@ -369,7 +376,7 @@ const Ventas = () => {
           <SalesByProductChart sales={allSales} products={clientProducts} />
 
           {/* Closure rate per seller — hidden for Speak Up */}
-          {!isSpkUp && <ClosureRateWidget appointments={appointments} />}
+          {!isSpkUp && !isSilvia && <ClosureRateWidget appointments={appointments} />}
         </div>
 
         {/* Ad ranking at bottom for Mind Coach */}
