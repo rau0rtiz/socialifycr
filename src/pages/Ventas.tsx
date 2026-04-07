@@ -92,6 +92,7 @@ const Ventas = () => {
   const { flags } = useClientFeatures(clientId);
 
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
+  const isHildaLopez = selectedClient?.name?.toLowerCase().includes('hilda');
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
 
   // Global time range state
@@ -283,7 +284,7 @@ const Ventas = () => {
         </div>
 
         {/* === MIND COACH: Pipeline Summary at top === */}
-        {isMindCoach && (
+        {(isMindCoach || isHildaLopez) && (
           <PipelineSummaryWidget
             appointments={appointments}
             sales={allSales}
@@ -312,12 +313,12 @@ const Ventas = () => {
         />
 
         {/* === MIND COACH: Setter Daily Calendar + Products side by side === */}
-        {isMindCoach && (
+        {(isMindCoach || isHildaLopez) && (
           <SetterDailyCalendar clientId={selectedClient.id} />
         )}
 
         {/* Ad ranking - at top for most clients, hidden for Mind Coach & Speak Up */}
-        {!isMindCoach && !isSpkUp && (
+        {!isMindCoach && !isSpkUp && !isHildaLopez && (
           <AdSalesRanking
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
@@ -353,7 +354,7 @@ const Ventas = () => {
         <CollectionsWidget clientId={selectedClient.id} />
 
 
-        {isMindCoach && hasAdAccount && (
+        {(isMindCoach || isHildaLopez) && hasAdAccount && (
           <CampaignsDrilldown
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
@@ -372,7 +373,7 @@ const Ventas = () => {
         </div>
 
         {/* Ad ranking at bottom for Mind Coach */}
-        {isMindCoach && (
+        {(isMindCoach || isHildaLopez) && (
           <AdSalesRanking
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
