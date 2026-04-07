@@ -14,7 +14,7 @@ import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { FREQUENCY_LABELS, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet, CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet, CalendarIcon, Banknote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -99,6 +99,8 @@ export const RegisterSaleDialog = ({
   const [collectionFrequency, setCollectionFrequency] = useState<string>('monthly');
   const [customCollectionDates, setCustomCollectionDates] = useState<string[]>([]);
   const [collectionStartDate, setCollectionStartDate] = useState('');
+  const [hasDeposit, setHasDeposit] = useState(false);
+  const [depositBalanceDueDate, setDepositBalanceDueDate] = useState('');
 
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
@@ -143,6 +145,8 @@ export const RegisterSaleDialog = ({
     setCustomerPhone('');
     setCustomerEmail('');
     setPaymentMethod('');
+    setHasDeposit(false);
+    setDepositBalanceDueDate('');
     setShowNewPaymentMethod(false);
     setNewPaymentMethodName('');
     if (editingSale) {
@@ -260,6 +264,22 @@ export const RegisterSaleDialog = ({
       return;
     }
 
+    // Validate deposit
+    if (hasDeposit && !selectedSchemeId) {
+      if (!totalSaleAmount || totalSaleAmount <= 0) {
+        toast.error('Ingresa el monto total del servicio');
+        return;
+      }
+      if (parseFloat(amount || '0') >= totalSaleAmount) {
+        toast.error('El adelanto debe ser menor al monto total');
+        return;
+      }
+      if (!depositBalanceDueDate) {
+        toast.error('Selecciona la fecha de cobro del saldo');
+        return;
+      }
+    }
+
     // Validate custom collection dates
     const hasRemainingCheck = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
     if (hasRemainingCheck && collectionFrequency === 'custom') {
@@ -269,6 +289,11 @@ export const RegisterSaleDialog = ({
         return;
       }
     }
+
+    // For deposit flow without scheme, set installments to 2 (deposit + balance)
+    const effectiveNumInstallments = hasDeposit && !selectedSchemeId && totalSaleAmount > parseFloat(amount || '0')
+      ? 2 : numInstallments;
+    const effectiveInstallmentsPaid = hasDeposit && !selectedSchemeId ? 1 : installmentsPaid;
 
     const sale: any = {
       sale_date: saleDate,
@@ -283,8 +308,8 @@ export const RegisterSaleDialog = ({
       closer_name: closerName || undefined,
       payment_scheme_id: selectedSchemeId || undefined,
       total_sale_amount: totalSaleAmount || parseFloat(amount) || undefined,
-      num_installments: numInstallments,
-      installments_paid: installmentsPaid,
+      num_installments: effectiveNumInstallments,
+      installments_paid: effectiveInstallmentsPaid,
       installment_amount: installmentAmount || undefined,
       payment_method: paymentMethod || undefined,
     };
@@ -307,7 +332,17 @@ export const RegisterSaleDialog = ({
           customDates: collectionFrequency === 'custom' ? customCollectionDates.filter(d => d !== '') : undefined,
           startDate: collectionFrequency !== 'custom' && collectionStartDate ? collectionStartDate : undefined,
         }
-      : undefined;
+      : hasDeposit && !selectedSchemeId && totalSaleAmount > parseFloat(amount || '0')
+        ? {
+            frequency: 'custom' as string,
+            startInstallment: 2,
+            totalInstallments: 2,
+            installmentAmount: totalSaleAmount - parseFloat(amount || '0'),
+            currency,
+            customDates: depositBalanceDueDate ? [depositBalanceDueDate] : undefined,
+            startDate: undefined,
+          }
+        : undefined;
 
     onSubmit(sale, prefill?.appointmentId, collectionMeta);
   };
@@ -900,7 +935,8 @@ export const RegisterSaleDialog = ({
                 </div>
               )}
 
-              {/* Amount summary (auto-filled or manual) */}
+              {/* Amount summary (auto-filled or manual) — hidden when deposit mode is active */}
+              {!hasDeposit && (
               <div className="flex gap-2">
                 <div className="flex-1 space-y-2">
                   <Label className="text-xs font-medium">Monto a cobrar *</Label>
@@ -917,11 +953,109 @@ export const RegisterSaleDialog = ({
                   </Select>
                 </div>
               </div>
+              )}
 
               {totalSaleAmount > 0 && totalSaleAmount !== parseFloat(amount || '0') && (
                 <p className="text-[10px] text-muted-foreground text-center">
                   Total de la venta: {currency === 'CRC' ? '₡' : '$'}{totalSaleAmount.toLocaleString()}
                 </p>
+              )}
+
+              {/* Deposit toggle — only when no payment scheme selected */}
+              {!selectedSchemeId && (
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={hasDeposit}
+                      onChange={(e) => {
+                        setHasDeposit(e.target.checked);
+                        if (e.target.checked) {
+                          // Move current amount to total, clear amount for deposit entry
+                          const currentAmount = parseFloat(amount || '0');
+                          if (currentAmount > 0) {
+                            setTotalSaleAmount(currentAmount);
+                            setAmount('');
+                          }
+                        } else {
+                          // Restore: move total back to amount
+                          if (totalSaleAmount > 0) {
+                            setAmount(String(totalSaleAmount));
+                            setTotalSaleAmount(0);
+                          }
+                          setDepositBalanceDueDate('');
+                        }
+                      }}
+                      className="rounded border-input"
+                    />
+                    <span className="text-xs font-medium flex items-center gap-1.5">
+                      <Banknote className="h-3.5 w-3.5" /> Cobrar adelanto
+                    </span>
+                  </label>
+
+                  {hasDeposit && (
+                    <div className="space-y-2 pl-6 border-l-2 border-primary/20">
+                      <div className="flex gap-2">
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-[10px]">Monto total del servicio</Label>
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            value={totalSaleAmount || ''}
+                            onChange={(e) => setTotalSaleAmount(parseFloat(e.target.value) || 0)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        <div className="w-20 space-y-1">
+                          <Label className="text-[10px]">Moneda</Label>
+                          <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="CRC">₡</SelectItem>
+                              <SelectItem value="USD">$</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Monto del adelanto</Label>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      {totalSaleAmount > 0 && parseFloat(amount || '0') > 0 && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Saldo pendiente: {currency === 'CRC' ? '₡' : '$'}
+                          {(totalSaleAmount - parseFloat(amount || '0')).toLocaleString()}
+                        </p>
+                      )}
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Fecha de cobro del saldo</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className={cn("w-full h-7 text-xs justify-start text-left font-normal", !depositBalanceDueDate && "text-muted-foreground")}>
+                              <CalendarIcon className="mr-1.5 h-3 w-3" />
+                              {depositBalanceDueDate ? format(new Date(depositBalanceDueDate + 'T12:00:00'), 'dd MMM yyyy', { locale: es }) : 'Seleccionar fecha'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={depositBalanceDueDate ? new Date(depositBalanceDueDate + 'T12:00:00') : undefined}
+                              onSelect={(d) => setDepositBalanceDueDate(d ? d.toISOString().split('T')[0] : '')}
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
 
               <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
