@@ -313,7 +313,7 @@ const Ventas = () => {
         />
 
         {/* === MIND COACH: Setter Daily Calendar + Products side by side === */}
-        {isMindCoach && (
+        {(isMindCoach || isHildaLopez) && (
           <SetterDailyCalendar clientId={selectedClient.id} />
         )}
 
