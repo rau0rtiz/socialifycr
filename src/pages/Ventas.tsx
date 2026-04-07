@@ -318,7 +318,7 @@ const Ventas = () => {
         )}
 
         {/* Ad ranking - at top for most clients, hidden for Mind Coach & Speak Up */}
-        {!isMindCoach && !isSpkUp && (
+        {!isMindCoach && !isSpkUp && !isHildaLopez && (
           <AdSalesRanking
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
