@@ -41,20 +41,41 @@ serve(async (req) => {
     }
 
     const accessToken = connection.access_token;
-    const orgId = connection.platform_page_id;
+    const pageId = connection.platform_page_id;
+    const platformUserId = connection.platform_user_id;
 
-    if (!accessToken || !orgId) {
-      return new Response(JSON.stringify({ connected: false, data: null, error: 'Missing token or org ID' }), {
+    if (!accessToken || !pageId) {
+      return new Response(JSON.stringify({ connected: false, data: null, error: 'Missing token or page ID' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // Determine if this is a personal profile or organization
+    // Personal profiles have platform_page_id === platform_user_id (the sub/person ID)
+    const isPersonalProfile = pageId === platformUserId;
     const headers = { Authorization: `Bearer ${accessToken}` };
 
     // Route endpoints
     if (endpoint === 'org-info') {
+      if (isPersonalProfile) {
+        // For personal profiles, use userinfo endpoint
+        const response = await fetch('https://api.linkedin.com/v2/userinfo', { headers });
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error('LinkedIn personal profile error:', data);
+          return new Response(JSON.stringify({ connected: true, data: null, error: data.message || 'API error' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        return new Response(JSON.stringify({ connected: true, data: { ...data, isPersonalProfile: true } }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const response = await fetch(
-        `https://api.linkedin.com/v2/organizations/${orgId}?projection=(id,localizedName,vanityName,logoV2(original~:playableStreams))`,
+        `https://api.linkedin.com/v2/organizations/${pageId}?projection=(id,localizedName,vanityName,logoV2(original~:playableStreams))`,
         { headers }
       );
       const data = await response.json();
@@ -72,9 +93,17 @@ serve(async (req) => {
     }
 
     if (endpoint === 'followers') {
-      // Get follower statistics
+      if (isPersonalProfile) {
+        // LinkedIn API doesn't expose follower/connection count for personal profiles
+        // Return null so the UI can handle it gracefully
+        return new Response(JSON.stringify({ connected: true, data: { totalFollowers: null, isPersonalProfile: true } }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Get follower statistics for organization
       const response = await fetch(
-        `https://api.linkedin.com/v2/organizationalEntityFollowerStatistics?q=organizationalEntity&organizationalEntity=urn:li:organization:${orgId}`,
+        `https://api.linkedin.com/v2/organizationalEntityFollowerStatistics?q=organizationalEntity&organizationalEntity=urn:li:organization:${pageId}`,
         { headers }
       );
       const data = await response.json();
@@ -86,7 +115,6 @@ serve(async (req) => {
         });
       }
 
-      // Extract total followers
       let totalFollowers = 0;
       if (data.elements?.[0]?.followerCounts) {
         const counts = data.elements[0].followerCounts;
@@ -100,9 +128,12 @@ serve(async (req) => {
 
     if (endpoint === 'posts') {
       const count = params?.count || 10;
-      // Fetch organization posts
+      const authorUrn = isPersonalProfile
+        ? `urn:li:person:${pageId}`
+        : `urn:li:organization:${pageId}`;
+
       const response = await fetch(
-        `https://api.linkedin.com/v2/ugcPosts?q=authors&authors=List(urn:li:organization:${orgId})&count=${count}&sortBy=LAST_MODIFIED`,
+        `https://api.linkedin.com/v2/ugcPosts?q=authors&authors=List(${authorUrn})&count=${count}&sortBy=LAST_MODIFIED`,
         { headers }
       );
       const data = await response.json();
@@ -114,15 +145,21 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ connected: true, data }), {
+      return new Response(JSON.stringify({ connected: true, data: { ...data, isPersonalProfile } }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     if (endpoint === 'page-statistics') {
-      // Fetch page statistics (views, unique visitors)
+      if (isPersonalProfile) {
+        // Page statistics are not available for personal profiles
+        return new Response(JSON.stringify({ connected: true, data: null, isPersonalProfile: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const response = await fetch(
-        `https://api.linkedin.com/v2/organizationPageStatistics?q=organization&organization=urn:li:organization:${orgId}`,
+        `https://api.linkedin.com/v2/organizationPageStatistics?q=organization&organization=urn:li:organization:${pageId}`,
         { headers }
       );
       const data = await response.json();
