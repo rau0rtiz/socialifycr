@@ -666,6 +666,116 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     }
   };
 
+  const handleConnectLinkedIn = async () => {
+    setConnecting('linkedin');
+
+    try {
+      const redirectUri = `${window.location.origin}/oauth/linkedin/callback`;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/linkedin-oauth?action=authorize`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ redirectUri, clientId }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.error) {
+        toast({ title: 'Error', description: data.error, variant: 'destructive' });
+        setConnecting(null);
+        return;
+      }
+
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+
+      const popup = window.open(
+        data.authUrl,
+        'linkedin-oauth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!popup || popup.closed) {
+        window.location.href = data.authUrl;
+        return;
+      }
+
+      const checkPopup = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkPopup);
+          setConnecting(null);
+        }
+      }, 1000);
+
+    } catch (err) {
+      console.error('Error initiating LinkedIn OAuth:', err);
+      toast({ title: 'Error', description: 'Error al iniciar la conexión con LinkedIn', variant: 'destructive' });
+      setConnecting(null);
+    }
+  };
+
+  const handleSaveLinkedInConnection = async (org: { id: string; urn: string; name: string; logoUrl: string | null }) => {
+    if (!linkedInAccountsData) return;
+
+    setSavingLinkedIn(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/linkedin-oauth?action=save-connection`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            clientId,
+            orgId: org.id,
+            orgName: org.name,
+            accessToken: linkedInAccountsData.accessToken,
+            refreshToken: linkedInAccountsData.refreshToken,
+            expiresIn: linkedInAccountsData.expiresIn,
+            userId: linkedInAccountsData.userId,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.error) throw new Error(result.error);
+
+      await logAction({
+        action: 'platform.connect',
+        entityType: 'platform_connection',
+        entityName: `LinkedIn - ${org.name}`,
+        details: { platform: 'linkedin', org_name: org.name },
+      });
+
+      toast({
+        title: 'Conexión exitosa',
+        description: `Conectado a LinkedIn: ${org.name}`,
+      });
+
+      setShowLinkedInSelector(false);
+      setLinkedInAccountsData(null);
+      fetchConnections();
+    } catch (err) {
+      console.error('Error saving LinkedIn connection:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Error al guardar la conexión',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingLinkedIn(false);
+    }
+  };
+
   const handleConnect = (platform: string) => {
     if (platform === 'Meta (Facebook/Instagram)') {
       handleConnectMeta();
@@ -673,6 +783,8 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       handleConnectYouTube();
     } else if (platform === 'TikTok') {
       handleConnectTikTok();
+    } else if (platform === 'LinkedIn') {
+      handleConnectLinkedIn();
     } else {
       toast({
         title: 'Próximamente',
