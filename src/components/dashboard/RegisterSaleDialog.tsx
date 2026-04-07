@@ -145,6 +145,8 @@ export const RegisterSaleDialog = ({
     setCustomerPhone('');
     setCustomerEmail('');
     setPaymentMethod('');
+    setHasDeposit(false);
+    setDepositBalanceDueDate('');
     setShowNewPaymentMethod(false);
     setNewPaymentMethodName('');
     if (editingSale) {
