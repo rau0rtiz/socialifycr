@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { usePlatformConnections } from './use-platform-connections';
 
 interface PlatformFollowers {
-  platform: 'instagram' | 'facebook' | 'tiktok' | 'youtube';
+  platform: 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'linkedin';
   followers: number;
   name?: string;
 }
@@ -20,9 +20,10 @@ export function useSocialFollowers(clientId: string | null): UseSocialFollowersR
 
   const metaConnection = connections?.find(c => c.platform === 'meta');
   const youtubeConnection = connections?.find(c => c.platform === 'youtube');
+  const linkedinConnection = connections?.find(c => c.platform === 'linkedin');
 
   const { data, isLoading: dataLoading, refetch } = useQuery({
-    queryKey: ['social-followers', clientId, !!metaConnection, !!youtubeConnection],
+    queryKey: ['social-followers', clientId, !!metaConnection, !!youtubeConnection, !!linkedinConnection],
     queryFn: async () => {
       const results: PlatformFollowers[] = [];
 
@@ -68,6 +69,22 @@ export function useSocialFollowers(clientId: string | null): UseSocialFollowersR
                 platform: 'youtube',
                 followers: ytData.subscriberCount,
                 name: ytData.name,
+              });
+            }
+          })
+        );
+      }
+
+      if (linkedinConnection) {
+        promises.push(
+          supabase.functions.invoke('linkedin-api', {
+            body: { clientId, endpoint: 'followers' },
+          }).then(({ data: liData, error: liError }) => {
+            if (!liError && !liData?.error && liData?.connected && liData?.data?.totalFollowers !== undefined) {
+              results.push({
+                platform: 'linkedin',
+                followers: liData.data.totalFollowers,
+                name: linkedinConnection.platform_page_name || undefined,
               });
             }
           })

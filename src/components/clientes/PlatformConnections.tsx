@@ -7,6 +7,7 @@ import { useAuditLog } from '@/hooks/use-audit-log';
 import { Facebook, Instagram, Youtube, Linkedin, Twitter, Plus, CheckCircle2, XCircle, Clock, RefreshCw, Trash2 } from 'lucide-react';
 import { MetaAccountSelector } from './MetaAccountSelector';
 import { YouTubeChannelSelector } from './YouTubeChannelSelector';
+import { LinkedInOrgSelector } from './LinkedInOrgSelector';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,16 @@ interface YouTubeAccountsData {
   refreshToken: string;
   expiresIn: number;
   clientId: string;
+  message?: string;
+}
+
+interface LinkedInAccountsData {
+  accounts: { id: string; urn: string; name: string; logoUrl: string | null }[];
+  accessToken: string;
+  refreshToken: string | null;
+  expiresIn: number;
+  clientId: string;
+  userId: string;
   message?: string;
 }
 
@@ -99,6 +110,9 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const [showYouTubeSelector, setShowYouTubeSelector] = useState(false);
   const [youtubeAccountsData, setYoutubeAccountsData] = useState<YouTubeAccountsData | null>(null);
   const [savingYouTube, setSavingYouTube] = useState(false);
+  const [showLinkedInSelector, setShowLinkedInSelector] = useState(false);
+  const [linkedInAccountsData, setLinkedInAccountsData] = useState<LinkedInAccountsData | null>(null);
+  const [savingLinkedIn, setSavingLinkedIn] = useState(false);
   const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [connectionToDisconnect, setConnectionToDisconnect] = useState<PlatformConnection | null>(null);
@@ -142,6 +156,28 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         }
       } catch (e) {
         console.error('Error parsing YouTube OAuth result:', e);
+      }
+    }
+
+    // Check for LinkedIn OAuth redirect result
+    const linkedinStored = sessionStorage.getItem('linkedin_oauth_result');
+    if (linkedinStored) {
+      sessionStorage.removeItem('linkedin_oauth_result');
+      try {
+        const data = JSON.parse(linkedinStored);
+        if (data.type === 'LINKEDIN_OAUTH_ACCOUNTS' && data.clientId === clientId) {
+          setLinkedInAccountsData({
+            accounts: data.accounts,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            expiresIn: data.expiresIn,
+            clientId: data.clientId,
+            userId: data.userId,
+          });
+          setShowLinkedInSelector(true);
+        }
+      } catch (e) {
+        console.error('Error parsing LinkedIn OAuth result:', e);
       }
     }
   }, [clientId]);
@@ -243,6 +279,25 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         toast({
           title: 'Error de conexión',
           description: event.data.error || 'Error al conectar con TikTok',
+          variant: 'destructive',
+        });
+        setConnecting(null);
+      } else if (event.data?.type === 'LINKEDIN_OAUTH_ACCOUNTS') {
+        setLinkedInAccountsData({
+          accounts: event.data.accounts,
+          accessToken: event.data.accessToken,
+          refreshToken: event.data.refreshToken,
+          expiresIn: event.data.expiresIn,
+          clientId: event.data.clientId,
+          userId: event.data.userId,
+          message: event.data.message,
+        });
+        setShowLinkedInSelector(true);
+        setConnecting(null);
+      } else if (event.data?.type === 'LINKEDIN_OAUTH_ERROR') {
+        toast({
+          title: 'Error de conexión',
+          description: event.data.error || 'Error al conectar con LinkedIn',
           variant: 'destructive',
         });
         setConnecting(null);
@@ -611,6 +666,116 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     }
   };
 
+  const handleConnectLinkedIn = async () => {
+    setConnecting('linkedin');
+
+    try {
+      const redirectUri = `${window.location.origin}/oauth/linkedin/callback`;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/linkedin-oauth?action=authorize`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ redirectUri, clientId }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.error) {
+        toast({ title: 'Error', description: data.error, variant: 'destructive' });
+        setConnecting(null);
+        return;
+      }
+
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+
+      const popup = window.open(
+        data.authUrl,
+        'linkedin-oauth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!popup || popup.closed) {
+        window.location.href = data.authUrl;
+        return;
+      }
+
+      const checkPopup = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkPopup);
+          setConnecting(null);
+        }
+      }, 1000);
+
+    } catch (err) {
+      console.error('Error initiating LinkedIn OAuth:', err);
+      toast({ title: 'Error', description: 'Error al iniciar la conexión con LinkedIn', variant: 'destructive' });
+      setConnecting(null);
+    }
+  };
+
+  const handleSaveLinkedInConnection = async (org: { id: string; urn: string; name: string; logoUrl: string | null }) => {
+    if (!linkedInAccountsData) return;
+
+    setSavingLinkedIn(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/linkedin-oauth?action=save-connection`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            clientId,
+            orgId: org.id,
+            orgName: org.name,
+            accessToken: linkedInAccountsData.accessToken,
+            refreshToken: linkedInAccountsData.refreshToken,
+            expiresIn: linkedInAccountsData.expiresIn,
+            userId: linkedInAccountsData.userId,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.error) throw new Error(result.error);
+
+      await logAction({
+        action: 'platform.connect',
+        entityType: 'platform_connection',
+        entityName: `LinkedIn - ${org.name}`,
+        details: { platform: 'linkedin', org_name: org.name },
+      });
+
+      toast({
+        title: 'Conexión exitosa',
+        description: `Conectado a LinkedIn: ${org.name}`,
+      });
+
+      setShowLinkedInSelector(false);
+      setLinkedInAccountsData(null);
+      fetchConnections();
+    } catch (err) {
+      console.error('Error saving LinkedIn connection:', err);
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Error al guardar la conexión',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingLinkedIn(false);
+    }
+  };
+
   const handleConnect = (platform: string) => {
     if (platform === 'Meta (Facebook/Instagram)') {
       handleConnectMeta();
@@ -618,6 +783,8 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
       handleConnectYouTube();
     } else if (platform === 'TikTok') {
       handleConnectTikTok();
+    } else if (platform === 'LinkedIn') {
+      handleConnectLinkedIn();
     } else {
       toast({
         title: 'Próximamente',
@@ -791,6 +958,21 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         onSelect={handleSaveYouTubeConnection}
         loading={savingYouTube}
         message={youtubeAccountsData?.message}
+      />
+
+      {/* LinkedIn Org Selector Dialog */}
+      <LinkedInOrgSelector
+        open={showLinkedInSelector}
+        onOpenChange={(open) => {
+          setShowLinkedInSelector(open);
+          if (!open) {
+            setLinkedInAccountsData(null);
+          }
+        }}
+        organizations={linkedInAccountsData?.accounts || []}
+        onSelect={handleSaveLinkedInConnection}
+        loading={savingLinkedIn}
+        message={linkedInAccountsData?.message}
       />
 
       {/* Disconnect Confirmation Dialog */}

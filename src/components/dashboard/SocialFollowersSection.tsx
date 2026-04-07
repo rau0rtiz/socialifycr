@@ -1,10 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Instagram, Facebook, Youtube } from 'lucide-react';
+import { Instagram, Facebook, Youtube, Linkedin } from 'lucide-react';
 
 interface PlatformFollowers {
-  platform: 'instagram' | 'facebook' | 'tiktok' | 'youtube';
+  platform: 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'linkedin';
   followers: number;
   name?: string;
 }
@@ -51,6 +51,14 @@ const platformConfig = {
     color: 'hsl(0, 100%, 50%)',
     bgClass: 'bg-red-500/10',
     textClass: 'text-red-600',
+  },
+  linkedin: {
+    label: 'LinkedIn',
+    icon: Linkedin,
+    metric: 'seguidores',
+    color: 'hsl(210, 80%, 40%)',
+    bgClass: 'bg-blue-700/10',
+    textClass: 'text-blue-700',
   },
 };
 

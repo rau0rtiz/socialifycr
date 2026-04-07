@@ -35,6 +35,7 @@ const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
 const YouTubeOAuthCallback = lazy(() => import("./pages/YouTubeOAuthCallback").then(m => ({ default: m.YouTubeOAuthCallback })));
 const TikTokOAuthCallback = lazy(() => import("./pages/TikTokOAuthCallback").then(m => ({ default: m.TikTokOAuthCallback })));
+const LinkedInOAuthCallback = lazy(() => import("./pages/LinkedInOAuthCallback").then(m => ({ default: m.LinkedInOAuthCallback })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -126,6 +127,7 @@ const App = () => (
                   <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                   <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
                   <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
+                  <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
