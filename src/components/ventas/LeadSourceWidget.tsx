@@ -10,6 +10,7 @@ const SOURCE_CONFIG: Record<string, { label: string; icon: React.ElementType; co
   ads: { label: 'Pauta', icon: Megaphone, color: 'hsl(210, 80%, 50%)' },
   organic: { label: 'Orgánico', icon: Leaf, color: 'hsl(142, 70%, 45%)' },
   referral: { label: 'Referencia', icon: Users, color: 'hsl(45, 80%, 50%)' },
+  landing_page: { label: 'Landing Page', icon: Megaphone, color: 'hsl(270, 70%, 55%)' },
   other: { label: 'Otro', icon: MoreHorizontal, color: 'hsl(0, 0%, 60%)' },
 };
 

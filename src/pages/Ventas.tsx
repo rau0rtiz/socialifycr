@@ -133,7 +133,7 @@ const Ventas = () => {
 
   const handleConvertToSale = (appointment: SetterAppointment) => {
     // Map lead source → sale source
-    const sourceMap: Record<string, string> = { ads: 'ad', organic: 'organic', referral: 'referral', followup: 'organic', other: 'other' };
+    const sourceMap: Record<string, string> = { ads: 'ad', organic: 'organic', referral: 'referral', landing_page: 'landing_page', followup: 'organic', other: 'other' };
     const prefill: SalePrefill = {
       customer_name: appointment.lead_name,
       customer_phone: appointment.lead_phone || undefined,
