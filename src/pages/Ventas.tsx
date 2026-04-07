@@ -373,7 +373,7 @@ const Ventas = () => {
         </div>
 
         {/* Ad ranking at bottom for Mind Coach */}
-        {isMindCoach && (
+        {(isMindCoach || isHildaLopez) && (
           <AdSalesRanking
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
