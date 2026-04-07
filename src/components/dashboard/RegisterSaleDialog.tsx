@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useBrand } from '@/contexts/BrandContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,6 +74,8 @@ export const RegisterSaleDialog = ({
   editingSale,
   prefill,
 }: RegisterSaleDialogProps) => {
+  const { selectedClient } = useBrand();
+  const isSilvia = selectedClient?.name?.toLowerCase().includes('silvia');
   const [step, setStep] = useState(0);
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
@@ -963,7 +966,7 @@ export const RegisterSaleDialog = ({
               )}
 
               {/* Deposit toggle — only when no payment scheme selected */}
-              {!selectedSchemeId && (
+              {!selectedSchemeId && isSilvia && (
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
