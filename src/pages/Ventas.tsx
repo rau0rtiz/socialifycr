@@ -92,6 +92,7 @@ const Ventas = () => {
   const { flags } = useClientFeatures(clientId);
 
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
+  const isHildaLopez = selectedClient?.name?.toLowerCase().includes('hilda');
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
 
   // Global time range state
