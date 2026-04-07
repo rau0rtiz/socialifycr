@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Instagram, Facebook, Youtube } from 'lucide-react';
 
 interface PlatformFollowers {
-  platform: 'instagram' | 'facebook' | 'tiktok' | 'youtube';
+  platform: 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'linkedin';
   followers: number;
   name?: string;
 }
