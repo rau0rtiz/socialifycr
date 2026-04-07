@@ -11,6 +11,7 @@ import { SetterDailyCalendar } from '@/components/ventas/SetterDailyCalendar';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { CollectionsWidget } from '@/components/ventas/CollectionsWidget';
 import { SpeakUpSalesSummary } from '@/components/ventas/SpeakUpSalesSummary';
+import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 
 
 import { useBrand } from '@/contexts/BrandContext';
@@ -294,7 +295,12 @@ const Ventas = () => {
         )}
 
         {/* === SPEAK UP: Simplified KPI Summary === */}
-        {isSpkUp && <SpeakUpSalesSummary clientId={selectedClient.id} />}
+        {isSpkUp && (
+          <>
+            <SpeakUpSalesSummary clientId={selectedClient.id} />
+            <SpeakUpAnalytics clientId={selectedClient.id} />
+          </>
+        )}
 
         {/* Sales Goal Bar */}
         <SalesGoalBar
