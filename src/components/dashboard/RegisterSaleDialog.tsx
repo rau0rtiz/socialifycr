@@ -966,7 +966,7 @@ export const RegisterSaleDialog = ({
               )}
 
               {/* Deposit toggle — only when no payment scheme selected */}
-              {!selectedSchemeId && (
+              {!selectedSchemeId && isSilvia && (
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
