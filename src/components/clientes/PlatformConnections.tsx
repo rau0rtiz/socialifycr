@@ -110,6 +110,9 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const [showYouTubeSelector, setShowYouTubeSelector] = useState(false);
   const [youtubeAccountsData, setYoutubeAccountsData] = useState<YouTubeAccountsData | null>(null);
   const [savingYouTube, setSavingYouTube] = useState(false);
+  const [showLinkedInSelector, setShowLinkedInSelector] = useState(false);
+  const [linkedInAccountsData, setLinkedInAccountsData] = useState<LinkedInAccountsData | null>(null);
+  const [savingLinkedIn, setSavingLinkedIn] = useState(false);
   const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [connectionToDisconnect, setConnectionToDisconnect] = useState<PlatformConnection | null>(null);
