@@ -935,7 +935,8 @@ export const RegisterSaleDialog = ({
                 </div>
               )}
 
-              {/* Amount summary (auto-filled or manual) */}
+              {/* Amount summary (auto-filled or manual) — hidden when deposit mode is active */}
+              {!hasDeposit && (
               <div className="flex gap-2">
                 <div className="flex-1 space-y-2">
                   <Label className="text-xs font-medium">Monto a cobrar *</Label>
@@ -952,6 +953,7 @@ export const RegisterSaleDialog = ({
                   </Select>
                 </div>
               </div>
+              )}
 
               {totalSaleAmount > 0 && totalSaleAmount !== parseFloat(amount || '0') && (
                 <p className="text-[10px] text-muted-foreground text-center">
