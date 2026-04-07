@@ -94,6 +94,7 @@ const Ventas = () => {
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
   const isHildaLopez = selectedClient?.name?.toLowerCase().includes('hilda');
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
+  const isSilvia = selectedClient?.name?.toLowerCase().includes('silvia');
 
   // Global time range state
   const [globalPeriod, setGlobalPeriod] = useState<GlobalPeriod>('this_month');
