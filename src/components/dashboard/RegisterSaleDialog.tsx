@@ -51,6 +51,7 @@ const SOURCE_OPTIONS = [
   { value: 'ad', label: 'Publicidad' },
   { value: 'story', label: 'Historia' },
   { value: 'referral', label: 'Referencia' },
+  { value: 'landing_page', label: 'Landing Page' },
   { value: 'organic', label: 'Orgánico' },
   { value: 'other', label: 'Otro' },
 ];

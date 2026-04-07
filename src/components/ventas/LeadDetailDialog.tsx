@@ -36,6 +36,7 @@ const SOURCE_LABELS: Record<string, string> = {
   ads: 'Publicidad',
   organic: 'Orgánico',
   referral: 'Referencia',
+  landing_page: 'Landing Page',
   followup: 'Seguimiento',
   other: 'Otro',
 };

@@ -38,6 +38,7 @@ const SOURCE_OPTIONS = [
   { value: 'ads', label: 'Publicidad' },
   { value: 'organic', label: 'Orgánico' },
   { value: 'referral', label: 'Referencia' },
+  { value: 'landing_page', label: 'Landing Page' },
   { value: 'followup', label: 'Seguimiento' },
   { value: 'other', label: 'Otro' },
 ];
