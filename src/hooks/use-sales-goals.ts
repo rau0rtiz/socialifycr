@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 
 export interface SalesGoal {
   id: string;
@@ -14,18 +15,21 @@ export interface SalesGoal {
   updated_at: string;
 }
 
-export const useSalesGoal = (clientId: string | null) => {
+export const useSalesGoal = (clientId: string | null, month?: Date) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const monthKey = month ? format(month, 'yyyy-MM') : format(new Date(), 'yyyy-MM');
+  const monthStart = month ? format(startOfMonth(month), 'yyyy-MM-dd') : format(startOfMonth(new Date()), 'yyyy-MM-dd');
 
   const query = useQuery({
-    queryKey: ['sales-goal', clientId],
+    queryKey: ['sales-goal', clientId, monthKey],
     queryFn: async () => {
       if (!clientId) return null;
       const { data, error } = await supabase
         .from('sales_goals' as any)
         .select('*')
         .eq('client_id', clientId)
+        .eq('start_date', monthStart)
         .maybeSingle();
       if (error) throw error;
       return data as unknown as SalesGoal | null;
@@ -36,12 +40,13 @@ export const useSalesGoal = (clientId: string | null) => {
   const upsertGoal = useMutation({
     mutationFn: async (input: { target_amount: number; currency: string; start_date: string; end_date: string }) => {
       if (!clientId || !user) throw new Error('Missing client or user');
-      
-      // Check if exists
+
+      // Check if a goal exists for this specific month
       const { data: existing } = await supabase
         .from('sales_goals' as any)
         .select('id')
         .eq('client_id', clientId)
+        .eq('start_date', input.start_date)
         .maybeSingle();
 
       if (existing) {
@@ -50,7 +55,6 @@ export const useSalesGoal = (clientId: string | null) => {
           .update({
             target_amount: input.target_amount,
             currency: input.currency,
-            start_date: input.start_date,
             end_date: input.end_date,
             updated_at: new Date().toISOString(),
           } as any)
