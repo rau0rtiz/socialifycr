@@ -12,6 +12,7 @@ import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { CollectionsWidget } from '@/components/ventas/CollectionsWidget';
 import { SpeakUpSalesSummary } from '@/components/ventas/SpeakUpSalesSummary';
 import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
+import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
 
 
 import { useBrand } from '@/contexts/BrandContext';
