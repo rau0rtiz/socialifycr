@@ -285,7 +285,18 @@ const Ventas = () => {
           </div>
         </div>
 
-        {/* === MIND COACH: Pipeline Summary at top === */}
+        {/* === Sales Goal Bar — at top for Mind Coach === */}
+        {(isMindCoach || isHildaLopez) && (
+          <SalesGoalBar
+            clientId={selectedClient.id}
+            currentSalesUSD={summary.totalUSD}
+            currentSalesCRC={summary.totalCRC}
+            primaryColor={selectedClient.primary_color || undefined}
+            accentColor={selectedClient.accent_color || undefined}
+          />
+        )}
+
+        {/* === MIND COACH: Pipeline Summary === */}
         {(isMindCoach || isHildaLopez) && (
           <PipelineSummaryWidget
             appointments={appointments}
@@ -310,14 +321,16 @@ const Ventas = () => {
           <ClinicSalesSummary clientId={selectedClient.id} />
         )}
 
-        {/* Sales Goal Bar */}
-        <SalesGoalBar
-          clientId={selectedClient.id}
-          currentSalesUSD={summary.totalUSD}
-          currentSalesCRC={summary.totalCRC}
-          primaryColor={selectedClient.primary_color || undefined}
-          accentColor={selectedClient.accent_color || undefined}
-        />
+        {/* Sales Goal Bar — for other clients */}
+        {!(isMindCoach || isHildaLopez) && (
+          <SalesGoalBar
+            clientId={selectedClient.id}
+            currentSalesUSD={summary.totalUSD}
+            currentSalesCRC={summary.totalCRC}
+            primaryColor={selectedClient.primary_color || undefined}
+            accentColor={selectedClient.accent_color || undefined}
+          />
+        )}
 
         {/* === MIND COACH: Setter Daily Calendar + Products side by side === */}
         {(isMindCoach || isHildaLopez) && (
