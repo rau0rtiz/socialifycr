@@ -354,7 +354,7 @@ const Ventas = () => {
         <CollectionsWidget clientId={selectedClient.id} />
 
 
-        {isMindCoach && hasAdAccount && (
+        {(isMindCoach || isHildaLopez) && hasAdAccount && (
           <CampaignsDrilldown
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
