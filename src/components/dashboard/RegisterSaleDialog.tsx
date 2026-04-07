@@ -938,6 +938,91 @@ export const RegisterSaleDialog = ({
                 </p>
               )}
 
+              {/* Deposit toggle — only when no payment scheme selected */}
+              {!selectedSchemeId && (
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={hasDeposit}
+                      onChange={(e) => {
+                        setHasDeposit(e.target.checked);
+                        if (e.target.checked) {
+                          // Move current amount to total, clear amount for deposit entry
+                          const currentAmount = parseFloat(amount || '0');
+                          if (currentAmount > 0) {
+                            setTotalSaleAmount(currentAmount);
+                            setAmount('');
+                          }
+                        } else {
+                          // Restore: move total back to amount
+                          if (totalSaleAmount > 0) {
+                            setAmount(String(totalSaleAmount));
+                            setTotalSaleAmount(0);
+                          }
+                          setDepositBalanceDueDate('');
+                        }
+                      }}
+                      className="rounded border-input"
+                    />
+                    <span className="text-xs font-medium flex items-center gap-1.5">
+                      <Banknote className="h-3.5 w-3.5" /> Cobrar adelanto
+                    </span>
+                  </label>
+
+                  {hasDeposit && (
+                    <div className="space-y-2 pl-6 border-l-2 border-primary/20">
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Monto total del servicio</Label>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={totalSaleAmount || ''}
+                          onChange={(e) => setTotalSaleAmount(parseFloat(e.target.value) || 0)}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Monto del adelanto</Label>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      {totalSaleAmount > 0 && parseFloat(amount || '0') > 0 && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Saldo pendiente: {currency === 'CRC' ? '₡' : '$'}
+                          {(totalSaleAmount - parseFloat(amount || '0')).toLocaleString()}
+                        </p>
+                      )}
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Fecha de cobro del saldo</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className={cn("w-full h-7 text-xs justify-start text-left font-normal", !depositBalanceDueDate && "text-muted-foreground")}>
+                              <CalendarIcon className="mr-1.5 h-3 w-3" />
+                              {depositBalanceDueDate ? format(new Date(depositBalanceDueDate + 'T12:00:00'), 'dd MMM yyyy', { locale: es }) : 'Seleccionar fecha'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={depositBalanceDueDate ? new Date(depositBalanceDueDate + 'T12:00:00') : undefined}
+                              onSelect={(d) => setDepositBalanceDueDate(d ? d.toISOString().split('T')[0] : '')}
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
             </div>
           )}
