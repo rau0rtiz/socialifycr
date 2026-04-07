@@ -264,6 +264,22 @@ export const RegisterSaleDialog = ({
       return;
     }
 
+    // Validate deposit
+    if (hasDeposit && !selectedSchemeId) {
+      if (!totalSaleAmount || totalSaleAmount <= 0) {
+        toast.error('Ingresa el monto total del servicio');
+        return;
+      }
+      if (parseFloat(amount || '0') >= totalSaleAmount) {
+        toast.error('El adelanto debe ser menor al monto total');
+        return;
+      }
+      if (!depositBalanceDueDate) {
+        toast.error('Selecciona la fecha de cobro del saldo');
+        return;
+      }
+    }
+
     // Validate custom collection dates
     const hasRemainingCheck = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
     if (hasRemainingCheck && collectionFrequency === 'custom') {
