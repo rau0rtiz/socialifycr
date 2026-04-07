@@ -334,7 +334,7 @@ const Ventas = () => {
         )}
 
         {/* Setter pipeline (lead → sale flow) — hidden for Speak Up */}
-        {flags.setter_tracker && !isSpkUp && (
+        {flags.setter_tracker && !isSpkUp && !isSilvia && (
           <SetterTracker
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
