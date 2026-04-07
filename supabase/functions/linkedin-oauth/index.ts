@@ -126,8 +126,21 @@ serve(async (req) => {
       const profileData = await profileResponse.json();
       const linkedInUserId = profileData.sub;
       const userName = profileData.name || profileData.email || 'Unknown';
+      const userPicture = profileData.picture || null;
 
       console.log(`LinkedIn user: ${userName} (${linkedInUserId})`);
+
+      // Build accounts list starting with personal profile
+      const accounts: any[] = [];
+
+      // Add personal profile option
+      accounts.push({
+        id: linkedInUserId,
+        urn: `urn:li:person:${linkedInUserId}`,
+        name: userName,
+        logoUrl: userPicture,
+        type: 'personal',
+      });
 
       // Fetch organizations the user is admin of
       const orgsResponse = await fetch(
@@ -136,13 +149,11 @@ serve(async (req) => {
       );
 
       const orgsData = await orgsResponse.json();
-      const organizations: any[] = [];
 
       if (orgsData.elements) {
         for (const el of orgsData.elements) {
           const org = el['organization~'];
           if (org) {
-            // Extract logo URL if available
             let logoUrl: string | null = null;
             try {
               const original = org?.['logoV2']?.['original~'];
@@ -151,28 +162,26 @@ serve(async (req) => {
               }
             } catch (_) {}
 
-            organizations.push({
+            accounts.push({
               id: org.id.toString(),
               urn: `urn:li:organization:${org.id}`,
               name: org.localizedName,
               logoUrl,
+              type: 'organization',
             });
           }
         }
       }
 
-      console.log(`Found ${organizations.length} LinkedIn organizations`);
+      console.log(`Found ${accounts.length} LinkedIn accounts (1 personal + ${accounts.length - 1} orgs)`);
 
       return new Response(JSON.stringify({
-        accounts: organizations,
+        accounts,
         accessToken,
         refreshToken,
         expiresIn,
         clientId,
         userId: linkedInUserId,
-        message: organizations.length === 0
-          ? 'No se encontraron páginas de empresa. Asegurate de ser administrador de al menos una página de LinkedIn.'
-          : undefined,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
