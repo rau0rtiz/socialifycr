@@ -995,15 +995,27 @@ export const RegisterSaleDialog = ({
 
                   {hasDeposit && (
                     <div className="space-y-2 pl-6 border-l-2 border-primary/20">
-                      <div className="space-y-1">
-                        <Label className="text-[10px]">Monto total del servicio</Label>
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          value={totalSaleAmount || ''}
-                          onChange={(e) => setTotalSaleAmount(parseFloat(e.target.value) || 0)}
-                          className="h-8 text-xs"
-                        />
+                      <div className="flex gap-2">
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-[10px]">Monto total del servicio</Label>
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            value={totalSaleAmount || ''}
+                            onChange={(e) => setTotalSaleAmount(parseFloat(e.target.value) || 0)}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        <div className="w-20 space-y-1">
+                          <Label className="text-[10px]">Moneda</Label>
+                          <Select value={currency} onValueChange={(v) => setCurrency(v as 'CRC' | 'USD')}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="CRC">₡</SelectItem>
+                              <SelectItem value="USD">$</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px]">Monto del adelanto</Label>
