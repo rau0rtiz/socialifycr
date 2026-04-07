@@ -335,7 +335,7 @@ const ProjectionCalculator = ({
             className="flex-1 h-9 text-xs"
           />
 
-          <Button size="sm" className="h-9" onClick={handleCalculate} disabled={!targetValue || !targetStage}>
+          <Button size="sm" className="h-9 bg-[#39FF14] hover:bg-[#32e612] text-black font-semibold" onClick={handleCalculate} disabled={!targetValue || !targetStage}>
             <Calculator className="h-3.5 w-3.5 mr-1" />
             Calcular
           </Button>
