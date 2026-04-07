@@ -284,7 +284,7 @@ const Ventas = () => {
         </div>
 
         {/* === MIND COACH: Pipeline Summary at top === */}
-        {isMindCoach && (
+        {(isMindCoach || isHildaLopez) && (
           <PipelineSummaryWidget
             appointments={appointments}
             sales={allSales}
