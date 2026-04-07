@@ -305,6 +305,11 @@ const Ventas = () => {
           </>
         )}
 
+        {/* === DRA SILVIA: Clinic KPI Summary === */}
+        {isSilvia && (
+          <ClinicSalesSummary clientId={selectedClient.id} />
+        )}
+
         {/* Sales Goal Bar */}
         <SalesGoalBar
           clientId={selectedClient.id}
