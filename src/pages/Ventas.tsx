@@ -295,7 +295,12 @@ const Ventas = () => {
         )}
 
         {/* === SPEAK UP: Simplified KPI Summary === */}
-        {isSpkUp && <SpeakUpSalesSummary clientId={selectedClient.id} />}
+        {isSpkUp && (
+          <>
+            <SpeakUpSalesSummary clientId={selectedClient.id} />
+            <SpeakUpAnalytics clientId={selectedClient.id} />
+          </>
+        )}
 
         {/* Sales Goal Bar */}
         <SalesGoalBar
