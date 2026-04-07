@@ -376,7 +376,7 @@ const Ventas = () => {
           <SalesByProductChart sales={allSales} products={clientProducts} />
 
           {/* Closure rate per seller — hidden for Speak Up */}
-          {!isSpkUp && <ClosureRateWidget appointments={appointments} />}
+          {!isSpkUp && !isSilvia && <ClosureRateWidget appointments={appointments} />}
         </div>
 
         {/* Ad ranking at bottom for Mind Coach */}
