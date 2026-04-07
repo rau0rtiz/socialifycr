@@ -311,7 +311,17 @@ export const RegisterSaleDialog = ({
           customDates: collectionFrequency === 'custom' ? customCollectionDates.filter(d => d !== '') : undefined,
           startDate: collectionFrequency !== 'custom' && collectionStartDate ? collectionStartDate : undefined,
         }
-      : undefined;
+      : hasDeposit && !selectedSchemeId && totalSaleAmount > parseFloat(amount || '0')
+        ? {
+            frequency: 'custom' as string,
+            startInstallment: 2,
+            totalInstallments: 2,
+            installmentAmount: totalSaleAmount - parseFloat(amount || '0'),
+            currency,
+            customDates: depositBalanceDueDate ? [depositBalanceDueDate] : undefined,
+            startDate: undefined,
+          }
+        : undefined;
 
     onSubmit(sale, prefill?.appointmentId, collectionMeta);
   };
