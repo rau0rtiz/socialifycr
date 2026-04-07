@@ -274,6 +274,11 @@ export const RegisterSaleDialog = ({
       }
     }
 
+    // For deposit flow without scheme, set installments to 2 (deposit + balance)
+    const effectiveNumInstallments = hasDeposit && !selectedSchemeId && totalSaleAmount > parseFloat(amount || '0')
+      ? 2 : numInstallments;
+    const effectiveInstallmentsPaid = hasDeposit && !selectedSchemeId ? 1 : installmentsPaid;
+
     const sale: any = {
       sale_date: saleDate,
       amount: parseFloat(amount),
@@ -287,8 +292,8 @@ export const RegisterSaleDialog = ({
       closer_name: closerName || undefined,
       payment_scheme_id: selectedSchemeId || undefined,
       total_sale_amount: totalSaleAmount || parseFloat(amount) || undefined,
-      num_installments: numInstallments,
-      installments_paid: installmentsPaid,
+      num_installments: effectiveNumInstallments,
+      installments_paid: effectiveInstallmentsPaid,
       installment_amount: installmentAmount || undefined,
       payment_method: paymentMethod || undefined,
     };
