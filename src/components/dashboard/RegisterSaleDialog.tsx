@@ -159,7 +159,8 @@ export const RegisterSaleDialog = ({
       setSaleDate(editingSale.sale_date);
       setSource(editingSale.source);
       setCustomerName(editingSale.customer_name || '');
-      setProduct(editingSale.product || '');
+      setCustomerPhone((editingSale as any).customer_phone || '');
+      setProduct(editingSale.product || (editingSale as any).brand || '');
       setMessagePlatform(editingSale.message_platform || '');
       setNotes(editingSale.notes || '');
       setStatus(editingSale.status);
