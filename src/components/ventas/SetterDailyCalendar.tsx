@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useSetterDailyReports, DailyReportInput, SetterDailyReport } from '@/hooks/use-setter-daily-reports';
-import { CalendarDays, MessageCircle, Phone, Users, FileText, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { CalendarDays, MessageCircle, Phone, Users, FileText, ChevronLeft, ChevronRight, TrendingUp, Link2 } from 'lucide-react';
 import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isFuture, getDay, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -50,6 +50,7 @@ const MetricDots = ({ report }: { report: SetterDailyReport }) => {
     { value: report.wa_conversations, color: 'bg-green-500' },
     { value: report.followups, color: 'bg-blue-500' },
     { value: report.appointments_made, color: 'bg-purple-500' },
+    { value: report.links_sent, color: 'bg-orange-500' },
   ];
   const active = metrics.filter(m => m.value > 0);
   if (active.length === 0) return null;
@@ -75,6 +76,7 @@ const DayTooltipContent = ({ report, date }: { report: SetterDailyReport; date: 
         { icon: Phone, label: 'WA', value: report.wa_conversations, color: 'text-green-500' },
         { icon: Users, label: 'Seguim.', value: report.followups, color: 'text-blue-500' },
         { icon: CalendarDays, label: 'Agendas', value: report.appointments_made, color: 'text-purple-500' },
+        { icon: Link2, label: 'Links', value: report.links_sent, color: 'text-orange-500' },
       ].map(({ icon: Icon, label, value, color }) => (
         <div key={label} className="flex items-center gap-1.5">
           <Icon className={cn('h-3 w-3', color)} />
@@ -104,6 +106,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
   const [waConversations, setWaConversations] = useState<string>('');
   const [followups, setFollowups] = useState<string>('');
   const [appointmentsMade, setAppointmentsMade] = useState<string>('');
+  const [linksSent, setLinksSent] = useState<string>('');
   const [dayNotes, setDayNotes] = useState('');
 
   const crToday = getCostaRicaToday();
@@ -117,6 +120,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
     setWaConversations(existing ? String(existing.wa_conversations) : '');
     setFollowups(existing ? String(existing.followups) : '');
     setAppointmentsMade(existing ? String(existing.appointments_made) : '');
+    setLinksSent(existing ? String(existing.links_sent) : '');
     setDayNotes(existing?.day_notes || '');
     setDialogOpen(true);
   };
@@ -133,6 +137,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
       wa_conversations: parseInt(waConversations) || 0,
       followups: parseInt(followups) || 0,
       appointments_made: parseInt(appointmentsMade) || 0,
+      links_sent: parseInt(linksSent) || 0,
       day_notes: dayNotes.trim(),
     };
     try {
@@ -178,6 +183,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
       wa: sorted.map(r => r.wa_conversations),
       followups: sorted.map(r => r.followups),
       appointments: sorted.map(r => r.appointments_made),
+      links: sorted.map(r => r.links_sent),
     };
   }, [reports]);
 
@@ -187,8 +193,9 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
       wa: acc.wa + r.wa_conversations,
       followups: acc.followups + r.followups,
       appointments: acc.appointments + r.appointments_made,
+      links: acc.links + r.links_sent,
     }),
-    { ig: 0, wa: 0, followups: 0, appointments: 0 }
+    { ig: 0, wa: 0, followups: 0, appointments: 0, links: 0 }
   );
 
   const weekDayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -319,6 +326,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
                   { icon: Phone, label: 'Conv. WhatsApp', value: totals.wa, color: 'text-green-500', sparkColor: '#22c55e', bgFrom: 'from-green-500/10', bgTo: 'to-green-500/0', borderColor: 'border-green-500/15', data: sparklineData.wa },
                   { icon: Users, label: 'Seguimientos', value: totals.followups, color: 'text-blue-500', sparkColor: '#3b82f6', bgFrom: 'from-blue-500/10', bgTo: 'to-blue-500/0', borderColor: 'border-blue-500/15', data: sparklineData.followups },
                   { icon: CalendarDays, label: 'Agendas', value: totals.appointments, color: 'text-purple-500', sparkColor: '#a855f7', bgFrom: 'from-purple-500/10', bgTo: 'to-purple-500/0', borderColor: 'border-purple-500/15', data: sparklineData.appointments },
+                  { icon: Link2, label: 'Links enviados', value: totals.links, color: 'text-orange-500', sparkColor: '#f97316', bgFrom: 'from-orange-500/10', bgTo: 'to-orange-500/0', borderColor: 'border-orange-500/15', data: sparklineData.links },
                 ].map(({ icon: Icon, label, value, color, sparkColor, bgFrom, bgTo, borderColor, data }) => (
                   <div key={label} className={cn('p-2.5 rounded-xl border bg-gradient-to-br', bgFrom, bgTo, borderColor)}>
                     <div className="flex items-center justify-between">
@@ -360,6 +368,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
                 { icon: Phone, color: 'border-l-green-500', label: 'Conv. WhatsApp', value: waConversations, set: setWaConversations },
                 { icon: Users, color: 'border-l-blue-500', label: 'Seguimientos', value: followups, set: setFollowups },
                 { icon: CalendarDays, color: 'border-l-purple-500', label: 'Agendas realizadas', value: appointmentsMade, set: setAppointmentsMade },
+                { icon: Link2, color: 'border-l-orange-500', label: 'Links enviados', value: linksSent, set: setLinksSent },
               ].map(({ icon: Icon, color, label, value, set }) => (
                 <div key={label} className={cn('border-l-[3px] pl-3 rounded-r-lg', color)}>
                   <Label className="text-[10px] flex items-center gap-1.5 mb-1.5 text-muted-foreground">
