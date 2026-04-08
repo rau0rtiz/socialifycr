@@ -177,13 +177,12 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
       );
     }
     return (
-      <ScrollArea className="w-full">
-        <div className="flex gap-3 pb-3">
+      <ScrollArea className="w-full max-h-[580px]">
+        <div className="grid grid-cols-[repeat(auto-fill,100px)] gap-3 pb-3">
           {stories.map((story) => (
             <StoryCard key={story.id} story={story} isSold={soldSet.has(story.storyId)} />
           ))}
         </div>
-        <ScrollBar orientation="horizontal" />
       </ScrollArea>
     );
   };
