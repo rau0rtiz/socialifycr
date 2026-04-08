@@ -68,6 +68,7 @@ const BusinessSetup = () => {
   const { selectedClient, clientsLoading } = useBrand();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<Section>(null);
+  const { flags: featureFlags, updateFlag } = useClientFeatures(selectedClient?.id || null);
 
   const [logoUrl, setLogoUrl] = useState('');
   const [primaryColor, setPrimaryColor] = useState('');
