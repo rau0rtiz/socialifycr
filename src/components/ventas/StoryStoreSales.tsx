@@ -228,7 +228,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
       {/* Sale registration dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" />
@@ -239,7 +239,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
           {selectedStory && (
             <div className="flex gap-6">
               {/* Story preview - left side */}
-              <div className="flex-shrink-0 w-[200px] h-[356px] rounded-xl overflow-hidden border bg-muted">
+              <div className="flex-shrink-0 w-[280px] h-[498px] rounded-xl overflow-hidden border bg-muted">
                 {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
                   <img
                     src={selectedStory.thumbnailUrl || selectedStory.mediaUrl}
