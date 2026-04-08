@@ -239,7 +239,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
           {selectedStory && (
             <div className="flex gap-6">
               {/* Story preview - left side */}
-              <div className="flex-shrink-0 w-[280px] h-[498px] rounded-xl overflow-hidden border bg-muted">
+              <div className="flex-shrink-0 w-[340px] h-[604px] rounded-xl overflow-hidden border bg-muted">
                 {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
                   <img
                     src={selectedStory.thumbnailUrl || selectedStory.mediaUrl}
