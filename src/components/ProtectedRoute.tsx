@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBrand } from '@/contexts/BrandContext';
@@ -37,6 +37,11 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
+  const handleSplashComplete = useCallback(() => {
+    sessionStorage.setItem(SPLASH_KEY, 'true');
+    setSplashDone(true);
+  }, []);
+
   // Show splash once per session
   if (!splashDone && selectedClient) {
     const clientBrand = clientBrands[selectedClient.id];
@@ -44,10 +49,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       <SplashScreen
         client={selectedClient}
         clientLogo={clientBrand?.logoUrl}
-        onComplete={() => {
-          sessionStorage.setItem(SPLASH_KEY, 'true');
-          setSplashDone(true);
-        }}
+        onComplete={handleSplashComplete}
       />
     );
   }
