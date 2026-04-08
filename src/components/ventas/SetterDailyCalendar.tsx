@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useSetterDailyReports, DailyReportInput, SetterDailyReport } from '@/hooks/use-setter-daily-reports';
-import { CalendarDays, MessageCircle, Phone, Users, FileText, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { CalendarDays, MessageCircle, Phone, Users, FileText, ChevronLeft, ChevronRight, TrendingUp, Link2 } from 'lucide-react';
 import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isFuture, getDay, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -50,6 +50,7 @@ const MetricDots = ({ report }: { report: SetterDailyReport }) => {
     { value: report.wa_conversations, color: 'bg-green-500' },
     { value: report.followups, color: 'bg-blue-500' },
     { value: report.appointments_made, color: 'bg-purple-500' },
+    { value: report.links_sent, color: 'bg-orange-500' },
   ];
   const active = metrics.filter(m => m.value > 0);
   if (active.length === 0) return null;
@@ -75,6 +76,7 @@ const DayTooltipContent = ({ report, date }: { report: SetterDailyReport; date: 
         { icon: Phone, label: 'WA', value: report.wa_conversations, color: 'text-green-500' },
         { icon: Users, label: 'Seguim.', value: report.followups, color: 'text-blue-500' },
         { icon: CalendarDays, label: 'Agendas', value: report.appointments_made, color: 'text-purple-500' },
+        { icon: Link2, label: 'Links', value: report.links_sent, color: 'text-orange-500' },
       ].map(({ icon: Icon, label, value, color }) => (
         <div key={label} className="flex items-center gap-1.5">
           <Icon className={cn('h-3 w-3', color)} />
@@ -104,6 +106,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
   const [waConversations, setWaConversations] = useState<string>('');
   const [followups, setFollowups] = useState<string>('');
   const [appointmentsMade, setAppointmentsMade] = useState<string>('');
+  const [linksSent, setLinksSent] = useState<string>('');
   const [dayNotes, setDayNotes] = useState('');
 
   const crToday = getCostaRicaToday();
@@ -117,6 +120,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
     setWaConversations(existing ? String(existing.wa_conversations) : '');
     setFollowups(existing ? String(existing.followups) : '');
     setAppointmentsMade(existing ? String(existing.appointments_made) : '');
+    setLinksSent(existing ? String(existing.links_sent) : '');
     setDayNotes(existing?.day_notes || '');
     setDialogOpen(true);
   };
@@ -133,6 +137,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
       wa_conversations: parseInt(waConversations) || 0,
       followups: parseInt(followups) || 0,
       appointments_made: parseInt(appointmentsMade) || 0,
+      links_sent: parseInt(linksSent) || 0,
       day_notes: dayNotes.trim(),
     };
     try {
