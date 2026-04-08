@@ -125,6 +125,9 @@ const Ventas = () => {
   const { sales: allSales, summary } = useSalesTracking(clientId);
   const { products: clientProducts } = useClientProducts(clientId);
 
+  // Story tracker data for Alma Bendita — drives the goal bar
+  const { totals: storyTotals } = useDailyStoryTracker(isAlmaBendita ? clientId : null);
+
   // Daily reports for Mind Coach
   const { reports: dailyReports } = useSetterDailyReports(clientId);
 
