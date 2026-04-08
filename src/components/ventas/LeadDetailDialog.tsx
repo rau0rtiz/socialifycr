@@ -20,6 +20,7 @@ interface LeadDetailDialogProps {
   onDelete?: (id: string) => Promise<void>;
   clientId?: string;
   hasAdAccount?: boolean;
+  showChecklist?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -48,7 +49,7 @@ const CHECKLIST_ITEMS = [
   { key: 'checklist_testimonials', label: 'Ya se enviaron los testimonios' },
 ];
 
-export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount }: LeadDetailDialogProps) => {
+export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount, showChecklist = true }: LeadDetailDialogProps) => {
   const [checklist, setChecklist] = useState({
     checklist_quiz: false,
     checklist_video: false,
@@ -169,7 +170,7 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
               <p className="text-sm text-foreground whitespace-pre-wrap">{notSoldReason}</p>
             </div>
           )}
-          <div className="rounded-lg border border-border p-3 space-y-3">
+          {showChecklist && <div className="rounded-lg border border-border p-3 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-medium">
                 <ClipboardCheck className="h-3.5 w-3.5 text-muted-foreground" />

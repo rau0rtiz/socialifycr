@@ -212,7 +212,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
         key={apt.id}
         className={cn(
           'relative flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 hover:shadow-sm transition-all bg-card text-left group',
-          readiness.border, readiness.bg
+          showChecklist ? [readiness.border, readiness.bg] : 'border-border bg-card'
         )}
       >
         {/* Edit button - top right on hover */}
@@ -234,7 +234,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
               <StatusIcon className="h-3 w-3" />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className={cn('h-2 w-2 rounded-full shrink-0', readiness.dot)} title={readiness.label} />
+              {showChecklist && <span className={cn('h-2 w-2 rounded-full shrink-0', readiness.dot)} title={readiness.label} />}
               <Badge variant="outline" className={cn('text-[9px] border shrink-0 px-1.5 py-0', cfg.color)}>
                 {cfg.label}
               </Badge>
@@ -255,14 +255,16 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
                 </>
               )}
             </span>
-            <span className={cn(
-              'text-[9px] font-medium px-1.5 py-0.5 rounded-full',
-              readiness.level === 'ready' && 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
-              readiness.level === 'partial' && 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
-              readiness.level === 'none' && 'bg-red-500/15 text-red-700 dark:text-red-400',
-            )}>
-              {readiness.label}
-            </span>
+            {showChecklist && (
+              <span className={cn(
+                'text-[9px] font-medium px-1.5 py-0.5 rounded-full',
+                readiness.level === 'ready' && 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+                readiness.level === 'partial' && 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
+                readiness.level === 'none' && 'bg-red-500/15 text-red-700 dark:text-red-400',
+              )}>
+                {readiness.label}
+              </span>
+            )}
           </div>
         </button>
       </div>
@@ -434,6 +436,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
         appointment={detailLead}
         clientId={clientId}
         hasAdAccount={hasAdAccount}
+        showChecklist={showChecklist}
         onUpdateChecklist={async (id, updates) => {
           try {
             await updateAppointment.mutateAsync({ id, ...updates } as any);
