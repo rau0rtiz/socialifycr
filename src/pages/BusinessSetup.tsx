@@ -287,7 +287,7 @@ const BusinessSetup = () => {
                 <p className="text-xs text-muted-foreground">{feature.description}</p>
               </div>
               <Switch
-                checked={(flags as any)[feature.key] ?? true}
+                checked={(featureFlags as any)[feature.key] ?? true}
                 onCheckedChange={(value) => {
                   updateFlag.mutate(
                     { flag: feature.key, value },
