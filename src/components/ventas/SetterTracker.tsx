@@ -448,6 +448,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
         clientId={clientId}
         hasAdAccount={hasAdAccount}
         showChecklist={showChecklist}
+        checklistItems={checklistItems}
         onUpdateChecklist={async (id, updates) => {
           try {
             await updateAppointment.mutateAsync({ id, ...updates } as any);
