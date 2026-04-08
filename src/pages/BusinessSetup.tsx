@@ -13,6 +13,7 @@ import { PlatformConnections } from '@/components/clientes/PlatformConnections';
 import { AIContextEditor } from '@/components/clientes/AIContextEditor';
 import { ClientBanner } from '@/components/dashboard/ClientBanner';
 import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain } from 'lucide-react';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -186,33 +187,17 @@ const BusinessSetup = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-xs">Color Primario</Label>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-8 w-8 rounded border shrink-0"
-                    style={{ backgroundColor: primaryColor ? `hsl(${primaryColor})` : 'transparent' }}
-                  />
-                  <Input
-                    value={primaryColor}
-                    onChange={(e) => setPrimaryColor(e.target.value)}
-                    placeholder="220 70% 50%"
-                    className="text-sm"
-                  />
-                </div>
+                <ColorPicker
+                  value={primaryColor || '0 0% 0%'}
+                  onChange={setPrimaryColor}
+                />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Color Acento</Label>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-8 w-8 rounded border shrink-0"
-                    style={{ backgroundColor: accentColor ? `hsl(${accentColor})` : 'transparent' }}
-                  />
-                  <Input
-                    value={accentColor}
-                    onChange={(e) => setAccentColor(e.target.value)}
-                    placeholder="262 83% 58%"
-                    className="text-sm"
-                  />
-                </div>
+                <ColorPicker
+                  value={accentColor || '0 0% 0%'}
+                  onChange={setAccentColor}
+                />
               </div>
             </div>
           </div>
