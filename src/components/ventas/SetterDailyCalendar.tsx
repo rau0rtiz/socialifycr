@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useSetterDailyReports, DailyReportInput, SetterDailyReport } from '@/hooks/use-setter-daily-reports';
 import { CalendarDays, MessageCircle, Phone, Users, FileText, ChevronLeft, ChevronRight, TrendingUp, Link2 } from 'lucide-react';
-import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isFuture, getDay, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
+import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isFuture, getDay, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth, addWeeks, subWeeks } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
