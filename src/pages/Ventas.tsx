@@ -8,6 +8,7 @@ import { AdSalesRanking } from '@/components/dashboard/AdSalesRanking';
 import { SetterTracker } from '@/components/ventas/SetterTracker';
 import { SalesGoalBar } from '@/components/ventas/SalesGoalBar';
 import { SalesByProductChart } from '@/components/ventas/SalesByProductChart';
+import { SalesByBrandChart } from '@/components/ventas/SalesByBrandChart';
 import { ClosureRateWidget } from '@/components/ventas/ClosureRateWidget';
 import { PipelineSummaryWidget } from '@/components/ventas/PipelineSummaryWidget';
 import { SetterDailyCalendar } from '@/components/ventas/SetterDailyCalendar';
@@ -454,12 +455,13 @@ const Ventas = () => {
 
         {/* Bottom section: charts side by side */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Sales by product pie chart */}
           <SalesByProductChart sales={allSales} products={clientProducts} />
-
-          {/* Closure rate per seller — hidden for Speak Up */}
-          {!isSpkUp && !isSilvia && !isAlmaBendita && <ClosureRateWidget appointments={appointments} />}
+          <SalesByBrandChart sales={allSales} />
         </div>
+
+        {!isSpkUp && !isSilvia && !isAlmaBendita && (
+          <ClosureRateWidget appointments={appointments} />
+        )}
 
         {/* Ad ranking at bottom for Mind Coach */}
         {(isMindCoach || isHildaLopez) && (
