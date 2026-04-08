@@ -113,10 +113,12 @@ const DayTooltipContent = ({ entry, date }: { entry: DailyStoryEntry; date: Date
 );
 
 export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentWeek, setCurrentWeek] = useState(new Date());
   const [editOpen, setEditOpen] = useState(false);
   const [editDate, setEditDate] = useState<Date>(new Date());
 
+  // Still fetch the full month so sidebar totals make sense
+  const currentMonth = currentWeek;
   const { entries, entriesByDate, totals, chartData, upsertEntry } = useDailyStoryTracker(clientId, currentMonth);
 
   // Form state
@@ -127,13 +129,9 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
 
   const crToday = getCostaRicaToday();
 
-  const calendarDays = useMemo(() => {
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(currentMonth);
-    const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-    const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-    return eachDayOfInterval({ start: gridStart, end: gridEnd });
-  }, [currentMonth]);
+  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
+  const calendarDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const openEditor = (date: Date) => {
     setEditDate(date);
@@ -182,18 +180,18 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
     revenue: e.daily_revenue,
   }));
 
-  const daysInMonth = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
+  // Week stats
   const { reportedCount, trackableDays } = useMemo(() => {
     let trackable = 0;
     let reported = 0;
-    daysInMonth.forEach(d => {
+    calendarDays.forEach(d => {
       if (!isFuture(d)) {
         trackable++;
         if (reportedDates.has(format(d, 'yyyy-MM-dd'))) reported++;
       }
     });
     return { reportedCount: reported, trackableDays: trackable };
-  }, [daysInMonth, reportedDates]);
+  }, [calendarDays, reportedDates]);
 
   return (
     <div className="space-y-4">
