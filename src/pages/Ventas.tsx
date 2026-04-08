@@ -24,6 +24,7 @@ import { useClientFeatures } from '@/hooks/use-client-features';
 import { useSetterAppointments, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useSetterDailyReports } from '@/hooks/use-setter-daily-reports';
+import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CalendarIcon } from 'lucide-react';
@@ -123,6 +124,9 @@ const Ventas = () => {
   // Get all-time sales for the goal bar (current year)
   const { sales: allSales, summary } = useSalesTracking(clientId);
   const { products: clientProducts } = useClientProducts(clientId);
+
+  // Story tracker data for Alma Bendita — drives the goal bar
+  const { totals: storyTotals } = useDailyStoryTracker(isAlmaBendita ? clientId : null);
 
   // Daily reports for Mind Coach
   const { reports: dailyReports } = useSetterDailyReports(clientId);
@@ -292,8 +296,8 @@ const Ventas = () => {
         {(isMindCoach || isHildaLopez || isAlmaBendita) && (
           <SalesGoalBar
             clientId={selectedClient.id}
-            currentSalesUSD={summary.totalUSD}
-            currentSalesCRC={summary.totalCRC}
+            currentSalesUSD={isAlmaBendita ? 0 : summary.totalUSD}
+            currentSalesCRC={isAlmaBendita ? storyTotals.daily_revenue : summary.totalCRC}
             primaryColor={selectedClient.primary_color || undefined}
             accentColor={selectedClient.accent_color || undefined}
           />
