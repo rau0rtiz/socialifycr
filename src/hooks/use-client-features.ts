@@ -102,6 +102,7 @@ export const FEATURE_LABELS: Record<string, string> = {
   ...DASHBOARD_WIDGET_LABELS,
   ...VENTAS_WIDGET_LABELS,
   ...CONTENIDO_WIDGET_LABELS,
+  ...REPORTES_WIDGET_LABELS,
 };
 
 export const useClientFeatures = (clientId: string | null) => {
