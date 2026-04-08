@@ -7,6 +7,7 @@ import {
   LayoutDashboard, ShoppingCart, FileText, BarChart3, Mail, Database, Lock, Settings2,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 interface ClientFeatureFlagsProps {
@@ -14,7 +15,7 @@ interface ClientFeatureFlagsProps {
 }
 
 type SectionDef = {
-  key: string | null;       // null = always on (e.g. Dashboard)
+  key: string | null;
   label: string;
   icon: React.ElementType;
   locked?: boolean;
@@ -109,23 +110,25 @@ export const ClientFeatureFlags = ({ clientId }: ClientFeatureFlagsProps) => {
                         <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent align="end" className="w-56 p-3">
+                    <PopoverContent align="end" className="w-60 p-3">
                       <p className="text-xs font-semibold mb-2">Widgets de {section.label}</p>
-                      <div className="space-y-2">
-                        {Object.entries(section.widgets).map(([key, label]) => (
-                          <div key={key} className="flex items-center justify-between">
-                            <Label htmlFor={`w-${key}`} className="text-xs cursor-pointer">
-                              {label}
-                            </Label>
-                            <Switch
-                              id={`w-${key}`}
-                              checked={(flags as any)[key] ?? false}
-                              onCheckedChange={(checked) => handleToggle(key, checked)}
-                              className="scale-90"
-                            />
-                          </div>
-                        ))}
-                      </div>
+                      <ScrollArea className="max-h-64">
+                        <div className="space-y-2 pr-2">
+                          {Object.entries(section.widgets).map(([key, label]) => (
+                            <div key={key} className="flex items-center justify-between">
+                              <Label htmlFor={`w-${key}`} className="text-xs cursor-pointer">
+                                {label}
+                              </Label>
+                              <Switch
+                                id={`w-${key}`}
+                                checked={(flags as any)[key] ?? false}
+                                onCheckedChange={(checked) => handleToggle(key, checked)}
+                                className="scale-90"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
                     </PopoverContent>
                   </Popover>
                 </div>

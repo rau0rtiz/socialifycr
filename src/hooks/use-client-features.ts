@@ -16,52 +16,71 @@ export const DEFAULT_CHECKLIST_ITEMS: ChecklistItem[] = [
 export interface ClientFeatureFlags {
   id: string;
   client_id: string;
+  // Sections
   dashboard: boolean;
-  social_followers: boolean;
-  instagram_posts: boolean;
-  youtube_videos: boolean;
-  content_grid: boolean;
-  ai_insights: boolean;
-  video_ideas: boolean;
-  competitors: boolean;
-  funnel: boolean;
-  campaigns: boolean;
-  sales_tracking: boolean;
-  setter_tracker: boolean;
-  setter_checklist: boolean;
-  monthly_sales_report: boolean;
   ventas_section: boolean;
   contenido_section: boolean;
   reportes_section: boolean;
   email_marketing_section: boolean;
+  // Dashboard widgets
+  social_followers: boolean;
+  instagram_posts: boolean;
+  youtube_videos: boolean;
+  funnel: boolean;
+  campaigns: boolean;
+  reach_chart: boolean;
+  social_performance: boolean;
+  stories_section: boolean;
+  publication_goals: boolean;
+  ai_insights: boolean;
+  competitors: boolean;
+  // Ventas widgets
+  sales_tracking: boolean;
+  setter_tracker: boolean;
+  setter_checklist: boolean;
+  setter_daily: boolean;
+  pipeline_summary: boolean;
+  sales_goal: boolean;
+  closure_rate: boolean;
+  ad_sales_ranking: boolean;
+  lead_source: boolean;
+  whatsapp_conversations: boolean;
+  story_store: boolean;
+  story_revenue_tracker: boolean;
+  sales_by_product: boolean;
+  sales_by_brand: boolean;
+  collections: boolean;
+  // Contenido widgets
+  content_grid: boolean;
+  video_ideas: boolean;
   generador_pauta: boolean;
+  content_calendar: boolean;
+  giveaway: boolean;
+  // Reportes widgets
+  monthly_sales_report: boolean;
+  ai_report_generator: boolean;
+  social_performance_report: boolean;
+  // Meta
   checklist_items: ChecklistItem[];
 }
 
-const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
-  dashboard: true,
-  social_followers: false,
-  instagram_posts: false,
-  youtube_videos: false,
-  content_grid: false,
-  ai_insights: false,
-  video_ideas: false,
-  competitors: false,
-  funnel: false,
-  campaigns: false,
-  sales_tracking: false,
-  monthly_sales_report: false,
-  setter_tracker: false,
-  setter_checklist: true,
-  ventas_section: false,
-  contenido_section: false,
-  reportes_section: false,
-  email_marketing_section: false,
-  generador_pauta: false,
-  checklist_items: DEFAULT_CHECKLIST_ITEMS,
-};
+const BOOLEAN_FLAG_KEYS: (keyof Omit<ClientFeatureFlags, 'id' | 'client_id' | 'checklist_items'>)[] = [
+  'dashboard', 'ventas_section', 'contenido_section', 'reportes_section', 'email_marketing_section',
+  'social_followers', 'instagram_posts', 'youtube_videos', 'funnel', 'campaigns',
+  'reach_chart', 'social_performance', 'stories_section', 'publication_goals', 'ai_insights', 'competitors',
+  'sales_tracking', 'setter_tracker', 'setter_checklist', 'setter_daily',
+  'pipeline_summary', 'sales_goal', 'closure_rate', 'ad_sales_ranking', 'lead_source',
+  'whatsapp_conversations', 'story_store', 'story_revenue_tracker', 'sales_by_product', 'sales_by_brand', 'collections',
+  'content_grid', 'video_ideas', 'generador_pauta', 'content_calendar', 'giveaway',
+  'monthly_sales_report', 'ai_report_generator', 'social_performance_report',
+];
 
-// Navigation section flags — these control sidebar visibility
+const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = Object.fromEntries([
+  ...BOOLEAN_FLAG_KEYS.map(k => [k, ['dashboard', 'setter_checklist'].includes(k)]),
+  ['checklist_items', DEFAULT_CHECKLIST_ITEMS],
+]) as any;
+
+// Navigation section flags
 export const SECTION_LABELS: Record<string, string> = {
   ventas_section: 'Ventas',
   contenido_section: 'Contenido',
@@ -69,19 +88,37 @@ export const SECTION_LABELS: Record<string, string> = {
   email_marketing_section: 'Email Marketing',
 };
 
-// Dashboard widget flags grouped by section
+// Dashboard widget flags
 export const DASHBOARD_WIDGET_LABELS: Record<string, string> = {
   social_followers: 'Seguidores de Redes',
   instagram_posts: 'Top Posts Instagram',
   youtube_videos: 'Top Videos YouTube',
   funnel: 'Embudo (Funnel)',
   campaigns: 'Campañas',
+  reach_chart: 'Gráfico de Alcance',
+  social_performance: 'Rendimiento Social',
+  stories_section: 'Historias de Instagram',
+  publication_goals: 'Metas de Publicación',
+  ai_insights: 'Insights de IA',
+  competitors: 'Competidores',
 };
 
 export const VENTAS_WIDGET_LABELS: Record<string, string> = {
   setter_tracker: 'Agendas',
   setter_checklist: 'Checklist Pre-llamada',
+  setter_daily: 'Reporte Diario del Setter',
   sales_tracking: 'Ventas por Mensajes',
+  pipeline_summary: 'Resumen Pipeline',
+  sales_goal: 'Barra de Meta Mensual',
+  closure_rate: 'Tasa de Cierre',
+  ad_sales_ranking: 'Ranking Anuncios por Ventas',
+  lead_source: 'Fuente de Leads',
+  whatsapp_conversations: 'Conversaciones WhatsApp',
+  story_store: 'Story Store',
+  story_revenue_tracker: 'Tracker Historias y Ventas',
+  sales_by_product: 'Ventas por Producto',
+  sales_by_brand: 'Ventas por Marca',
+  collections: 'Widget de Cobros',
 };
 
 export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
@@ -90,10 +127,14 @@ export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
   video_ideas: 'Ideas de Video',
   competitors: 'Competidores',
   generador_pauta: 'Generador de Pauta',
+  content_calendar: 'Calendario de Contenido',
+  giveaway: 'Widget de Sorteos',
 };
 
 export const REPORTES_WIDGET_LABELS: Record<string, string> = {
   monthly_sales_report: 'Reporte Mensual de Ventas',
+  ai_report_generator: 'Generador de Reportes IA',
+  social_performance_report: 'Reporte Rendimiento Social',
 };
 
 // Combined for backward compat
@@ -120,7 +161,6 @@ export const useClientFeatures = (clientId: string | null) => {
 
       if (error) throw error;
       if (!data) return null;
-      // Cast checklist_items from Json to ChecklistItem[]
       return {
         ...data,
         checklist_items: (Array.isArray(data.checklist_items) ? data.checklist_items : DEFAULT_CHECKLIST_ITEMS) as ChecklistItem[],
@@ -131,27 +171,9 @@ export const useClientFeatures = (clientId: string | null) => {
 
   const flags: Omit<ClientFeatureFlags, 'id' | 'client_id'> = data
     ? {
-        dashboard: data.dashboard,
-        social_followers: data.social_followers,
-        instagram_posts: data.instagram_posts,
-        youtube_videos: data.youtube_videos,
-        content_grid: data.content_grid,
-        ai_insights: data.ai_insights,
-        video_ideas: data.video_ideas,
-        competitors: data.competitors,
-        funnel: data.funnel,
-        campaigns: data.campaigns,
-        sales_tracking: data.sales_tracking,
-        setter_tracker: data.setter_tracker,
-        setter_checklist: data.setter_checklist,
-        monthly_sales_report: data.monthly_sales_report,
-        ventas_section: data.ventas_section,
-        contenido_section: data.contenido_section,
-        reportes_section: data.reportes_section,
-        email_marketing_section: data.email_marketing_section,
-        generador_pauta: data.generador_pauta,
+        ...Object.fromEntries(BOOLEAN_FLAG_KEYS.map(k => [k, (data as any)[k] ?? false])),
         checklist_items: data.checklist_items,
-      }
+      } as any
     : DEFAULT_FLAGS;
 
   const updateFlag = useMutation({
