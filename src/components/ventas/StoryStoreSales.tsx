@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { ShoppingBag, Check, Play, Image as ImageIcon, Zap, Archive, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -140,6 +140,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const StoryCard = ({ story, isSold }: { story: Story; isSold: boolean }) => {
     const isVideo = story.mediaType === 'VIDEO';
     const thumb = story.thumbnailUrl || story.mediaUrl;
+    const timeAgo = formatDistanceToNow(parseISO(story.timestamp), { locale: es, addSuffix: false });
 
     return (
       <div
@@ -158,6 +159,11 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
           </div>
         )}
+
+        {/* Time ago badge */}
+        <div className="absolute top-1 left-1 bg-black/60 rounded-md px-1.5 py-0.5">
+          <span className="text-white text-[8px] font-medium leading-none">{timeAgo}</span>
+        </div>
 
         {/* Sold overlay */}
         {isSold && (
@@ -216,6 +222,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             const isVideo = story.mediaType === 'VIDEO';
             const thumb = story.thumbnailUrl || story.mediaUrl;
             const currSymbol = sale?.currency === 'CRC' ? '₡' : '$';
+            const timeAgo = formatDistanceToNow(parseISO(story.timestamp), { locale: es, addSuffix: false });
             return (
               <div key={story.id} className="relative flex-shrink-0 w-[100px] h-[178px] rounded-xl overflow-hidden border-2 border-green-500/50">
                 {thumb ? (
@@ -225,6 +232,9 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                     {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
                   </div>
                 )}
+                <div className="absolute top-1 left-1 bg-black/60 rounded-md px-1.5 py-0.5">
+                  <span className="text-white text-[8px] font-medium leading-none">{timeAgo}</span>
+                </div>
                 <div className="absolute inset-0 bg-green-500/20" />
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
                   <p className="text-white text-[11px] font-bold">{currSymbol}{sale?.amount?.toLocaleString()}</p>
