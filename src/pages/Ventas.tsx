@@ -96,6 +96,7 @@ const Ventas = () => {
   const isHildaLopez = selectedClient?.name?.toLowerCase().includes('hilda');
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const isSilvia = selectedClient?.name?.toLowerCase().includes('silvia');
+  const isRobertoOlivas = selectedClient?.name?.toLowerCase().includes('roberto olivas');
 
   // Global time range state
   const [globalPeriod, setGlobalPeriod] = useState<GlobalPeriod>('this_month');
@@ -353,6 +354,7 @@ const Ventas = () => {
             hasAdAccount={hasAdAccount}
             onConvertToSale={handleConvertToSale}
             periodStartIso={periodStartIso}
+            showChecklist={!isRobertoOlivas}
           />
         )}
 

@@ -39,6 +39,7 @@ interface SetterTrackerProps {
   hasAdAccount?: boolean;
   onConvertToSale?: (appointment: SetterAppointment) => void;
   periodStartIso?: string;
+  showChecklist?: boolean;
 }
 
 const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; color: string; icon: React.ElementType }> = {
