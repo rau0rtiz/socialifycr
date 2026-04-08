@@ -330,7 +330,7 @@ const Ventas = () => {
         )}
 
         {/* Sales Goal Bar — for other clients */}
-        {!(isMindCoach || isHildaLopez) && (
+        {!(isMindCoach || isHildaLopez || isAlmaBendita) && (
           <SalesGoalBar
             clientId={selectedClient.id}
             currentSalesUSD={summary.totalUSD}
