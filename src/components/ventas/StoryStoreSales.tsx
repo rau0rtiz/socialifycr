@@ -379,7 +379,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             <div className="flex gap-6">
               {/* Story preview - left side */}
               <div className="flex-shrink-0 w-[340px] h-[604px] rounded-xl overflow-hidden border bg-muted">
-                {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
+              {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
                   <img
                     src={selectedStory.thumbnailUrl || selectedStory.mediaUrl}
                     alt=""
@@ -388,6 +388,12 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+                {scanning && (
+                  <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3 rounded-xl">
+                    <div className="animate-spin rounded-full h-10 w-10 border-4 border-white/30 border-t-white" />
+                    <span className="text-white text-sm font-medium">Escaneando con IA…</span>
                   </div>
                 )}
               </div>
