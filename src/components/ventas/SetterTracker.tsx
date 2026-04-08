@@ -52,7 +52,7 @@ const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; col
   cancelled: { label: 'Cancelada', color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle },
 };
 
-export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodStartIso }: SetterTrackerProps) => {
+export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodStartIso, showChecklist = true }: SetterTrackerProps) => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SetterAppointment | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
