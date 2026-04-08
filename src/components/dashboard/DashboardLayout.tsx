@@ -33,9 +33,9 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <TopBar />
-          <main className="flex-1 p-3 md:p-6 overflow-auto relative">
-            {children}
-          </main>
+           <main className="flex-1 p-3 md:p-6 overflow-auto relative" key="main-content">
+             {children}
+           </main>
         </div>
         <OnboardingTour />
       </div>

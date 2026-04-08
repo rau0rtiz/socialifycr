@@ -1,3 +1,4 @@
+import { useTransition } from 'react';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -15,8 +16,9 @@ import {
   X,
   Briefcase,
   Database,
+  Loader2,
 } from 'lucide-react';
-import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -55,11 +57,18 @@ export const Sidebar = () => {
   const { signOut } = useAuth();
   const { isAgency, canManage, systemRole, clientAccess, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
+  const [isPending, startTransition] = useTransition();
 
   const isPreviewMode = !!searchParams.get('preview');
   const isOwnerOrAdmin = !roleLoading && (systemRole === 'owner' || systemRole === 'admin');
 
   const isActive = (path: string) => location.pathname === path;
+
+  const transitionNavigate = (path: string) => {
+    startTransition(() => {
+      navigate(path);
+    });
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -68,12 +77,12 @@ export const Sidebar = () => {
 
   const handleClientView = () => {
     if (selectedClient) {
-      navigate(`/?preview=${selectedClient.id}`);
+      transitionNavigate(`/?preview=${selectedClient.id}`);
     }
   };
 
   const handleExitPreview = () => {
-    navigate('/');
+    transitionNavigate('/');
   };
 
   // In preview mode, behave like a client — respect feature flags
@@ -138,9 +147,13 @@ export const Sidebar = () => {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url.split('?')[0])}>
-                    <NavLink 
-                      to={item.url} 
+                    <a 
+                      href={item.url}
                       data-tour={item.dataTour}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        transitionNavigate(item.url);
+                      }}
                       className={cn(
                         "flex items-center gap-3 transition-colors",
                         isActive(item.url.split('?')[0]) && "bg-accent text-accent-foreground"
@@ -148,7 +161,7 @@ export const Sidebar = () => {
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
-                    </NavLink>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -183,8 +196,12 @@ export const Sidebar = () => {
                 {managementMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <NavLink 
-                        to={item.url}
+                      <a 
+                        href={item.url}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          transitionNavigate(item.url);
+                        }}
                         className={cn(
                           "flex items-center gap-3 transition-colors",
                           isActive(item.url) && "bg-accent text-accent-foreground"
@@ -192,7 +209,7 @@ export const Sidebar = () => {
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
-                      </NavLink>
+                      </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
