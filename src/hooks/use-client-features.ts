@@ -58,6 +58,7 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
   reportes_section: false,
   email_marketing_section: false,
   generador_pauta: false,
+  checklist_items: DEFAULT_CHECKLIST_ITEMS,
 };
 
 // Navigation section flags — these control sidebar visibility
@@ -114,7 +115,12 @@ export const useClientFeatures = (clientId: string | null) => {
         .maybeSingle();
 
       if (error) throw error;
-      return data as ClientFeatureFlags | null;
+      if (!data) return null;
+      // Cast checklist_items from Json to ChecklistItem[]
+      return {
+        ...data,
+        checklist_items: (Array.isArray(data.checklist_items) ? data.checklist_items : DEFAULT_CHECKLIST_ITEMS) as ChecklistItem[],
+      } as ClientFeatureFlags;
     },
     enabled: !!clientId,
   });
@@ -140,6 +146,7 @@ export const useClientFeatures = (clientId: string | null) => {
         reportes_section: data.reportes_section,
         email_marketing_section: data.email_marketing_section,
         generador_pauta: data.generador_pauta,
+        checklist_items: data.checklist_items,
       }
     : DEFAULT_FLAGS;
 
