@@ -231,9 +231,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                     {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
                   </div>
                 )}
-                <div className="absolute top-1 left-1 bg-black/60 rounded-md px-1.5 py-0.5">
-                  <span className="text-white text-[8px] font-medium leading-none">{timeAgo}</span>
-                </div>
+                <span className="absolute top-1 right-1 text-white/70 text-[8px] font-medium drop-shadow-sm z-10">{timeLabel}</span>
                 <div className="absolute inset-0 bg-green-500/20" />
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
                   <p className="text-white text-[11px] font-bold">{currSymbol}{sale?.amount?.toLocaleString()}</p>
