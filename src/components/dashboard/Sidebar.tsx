@@ -147,9 +147,13 @@ export const Sidebar = () => {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url.split('?')[0])}>
-                    <NavLink 
-                      to={item.url} 
+                    <a 
+                      href={item.url}
                       data-tour={item.dataTour}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        transitionNavigate(item.url);
+                      }}
                       className={cn(
                         "flex items-center gap-3 transition-colors",
                         isActive(item.url.split('?')[0]) && "bg-accent text-accent-foreground"
@@ -157,7 +161,7 @@ export const Sidebar = () => {
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
-                    </NavLink>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
