@@ -386,6 +386,10 @@ const Ventas = () => {
           <>
             <StoryRevenueTracker clientId={selectedClient.id} />
             <StoryStoreSales clientId={selectedClient.id} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SalesByProductChart sales={allSales} products={clientProducts} />
+              <SalesByBrandChart sales={allSales} />
+            </div>
           </>
         )}
 
