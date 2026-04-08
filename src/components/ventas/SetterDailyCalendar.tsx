@@ -239,23 +239,21 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
               <div className="grid grid-cols-7 gap-1">
                 {calendarDays.map(day => {
                   const dateStr = format(day, 'yyyy-MM-dd');
-                  const isCurrentMonth = isSameMonth(day, currentMonth);
                   const report = reportsByDate[dateStr];
                   const isReported = !!report;
                   const isTodayCR = isSameDay(day, crToday);
                   const isFutureDay = isFuture(day);
                   const isWeekend = getDay(day) === 0 || getDay(day) === 6;
-                  const isMissing = isCurrentMonth && !isReported && !isFutureDay && !isWeekend;
+                  const isMissing = !isReported && !isFutureDay && !isWeekend;
 
                   const dayContent = (
                     <button
-                      onClick={() => !isFutureDay && isCurrentMonth && handleDayClick(day)}
-                      disabled={isFutureDay || !isCurrentMonth}
+                      onClick={() => !isFutureDay && handleDayClick(day)}
+                      disabled={isFutureDay}
                       className={cn(
                         'relative flex flex-col items-center justify-center rounded-xl aspect-square w-full transition-all duration-200',
-                        !isCurrentMonth && 'opacity-20 cursor-default',
-                        isCurrentMonth && !isFutureDay && 'cursor-pointer hover:scale-105 hover:shadow-sm',
-                        isFutureDay && isCurrentMonth && 'opacity-40 cursor-default',
+                        !isFutureDay && 'cursor-pointer hover:scale-105 hover:shadow-sm',
+                        isFutureDay && 'opacity-40 cursor-default',
                         isReported && 'bg-emerald-500/10 dark:bg-emerald-500/15',
                         isMissing && 'bg-muted/40',
                         isTodayCR && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
