@@ -1,44 +1,61 @@
 
 
-## Diagnóstico: Congelamiento al cambiar pestañas rápidamente
+## Story Sales Widget for Alma Bendita
 
-### Causa raíz
+### Context
+Alma Bendita sells unique second-hand clothing via Instagram stories. Each piece is one-of-a-kind, so when it sells, it's gone. We need a widget that shows their stories (active + archived) and lets them tap a story to instantly register a sale linked to that story.
 
-Cada página (Dashboard, Ventas, Contenido) es un componente pesado con 8-15 hooks que disparan queries a la base de datos al montarse. Con `React.lazy` + `Suspense`, cada navegación:
+### Plan
 
-1. Desmonta el componente anterior (destruye suscripciones, limpia estados)
-2. Carga el chunk JS del nuevo componente
-3. Monta el nuevo componente, disparando todos los hooks simultáneamente
-4. React bloquea el hilo principal mientras renderiza el árbol completo
+#### 1. New component: `StoryStoreSales` widget
+**File**: `src/components/ventas/StoryStoreSales.tsx`
 
-Al cambiar rápido entre pestañas, se acumulan múltiples ciclos de desmontaje/montaje/queries en cola, bloqueando el hilo principal.
+- A card with two tabs: "Activas" (live stories from Meta API) and "Archivadas" (from DB)
+- Display stories in a horizontal scroll grid with 9:16 aspect-ratio thumbnails (reusing the same visual style as `StoriesSection`)
+- Each story card shows the image/video thumbnail with a subtle overlay
+- Clicking a story opens a dialog pre-filled to register a sale:
+  - Story thumbnail preview at the top
+  - Product name (free text, defaulting to "Pieza única")
+  - Sale amount + currency (CRC default)
+  - Customer name (optional)
+  - Sale date (defaults to today)
+  - Notes field
+- On submit, calls the existing `useSalesTracking` hook's `addSale` to create a `message_sales` record with `source: 'story'` and stores the `story_id` in notes or a metadata field
+- Also auto-increments the `daily_story_tracker` revenue for that date so the goal bar stays in sync
+- Stories that already have a linked sale show a green checkmark/sold badge overlay
 
-### Solución
+#### 2. Track story-sale links
+**Database migration**: Add a `story_id` column to `message_sales` table (nullable text) to link a sale directly to a story. This allows marking stories as "sold" by checking if any sale references that story ID.
 
-Usar **`React.startTransition`** en la navegación del Sidebar para que React no bloquee la UI durante la transición entre páginas.
+#### 3. Wire into Ventas page
+**File**: `src/pages/Ventas.tsx`
+- Add the `StoryStoreSales` widget for Alma Bendita, positioned right after the `StoryRevenueTracker` calendar
+- Uses the existing `useStories` hook to fetch active + archived stories
+- Passes a callback that creates the sale and updates the daily tracker in one flow
 
-### Cambios
+#### 4. Auto-sync with daily tracker
+When a sale is registered via a story, automatically upsert the `daily_story_tracker` entry for that date, incrementing `daily_revenue` by the sale amount. This keeps the calendar tracker and goal bar consistent without manual double-entry.
 
-**1. `src/components/dashboard/Sidebar.tsx`**
-- Envolver la navegación con `startTransition` para que los cambios de ruta sean de baja prioridad y no bloqueen la interacción del usuario
-- Usar `useTransition` para mostrar un indicador visual sutil mientras carga
+### Technical details
 
-**2. `src/App.tsx`**
-- Agregar un fallback más ligero al `Suspense` que no cause un flash completo de loading
-
-**3. `src/components/dashboard/DashboardLayout.tsx`**
-- Agregar `key` estable al contenedor principal para evitar re-renders innecesarios del layout compartido (Sidebar + TopBar)
-
-### Detalle técnico
-
-```text
-Antes:
-  Click Sidebar → navigate() → Suspense fallback (loader) → mount pesado → freeze
-
-Después:
-  Click Sidebar → startTransition(navigate) → UI sigue respondiendo → 
-  React renderiza en background → swap suave
+**New DB column** (migration):
+```sql
+ALTER TABLE public.message_sales ADD COLUMN story_id text;
 ```
 
-La clave es que `startTransition` le dice a React que la navegación es interruptible, así si el usuario hace otro click rápido, React cancela el render anterior en vez de acumularlo.
+**Component data flow**:
+```
+useStories(clientId) → active + archived stories
+  ↓ click story
+StoryStoreSales dialog → pre-filled sale form
+  ↓ submit
+addSale({ source: 'story', story_id, amount, ... })
+  + upsert daily_story_tracker for that date
+```
+
+**Files to create/modify**:
+- Create `src/components/ventas/StoryStoreSales.tsx` — new widget
+- Modify `src/pages/Ventas.tsx` — render widget for Alma Bendita
+- Modify `src/hooks/use-sales-tracking.ts` — accept `story_id` in SaleInput
+- DB migration — add `story_id` column to `message_sales`
 
