@@ -29,21 +29,31 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const { activeStories, archivedStories, isLoading } = useStories(clientId);
   const { addSale } = useSalesTracking(clientId);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  // Fetch all story_ids that already have sales linked
-  const { data: soldStoryIds = [] } = useQuery({
+  // Fetch all story sales with details
+  const { data: soldStoryData = [] } = useQuery({
     queryKey: ['sold-story-ids', clientId],
     queryFn: async () => {
       const { data } = await supabase
         .from('message_sales')
-        .select('story_id')
+        .select('story_id, amount, currency, customer_name, sale_date, product')
         .eq('client_id', clientId)
         .not('story_id', 'is', null);
-      return (data || []).map((r: any) => r.story_id as string);
+      return (data || []) as { story_id: string; amount: number; currency: string; customer_name: string | null; sale_date: string; product: string | null }[];
     },
     enabled: !!clientId,
   });
-  const soldSet = new Set(soldStoryIds);
+  const soldSet = new Set(soldStoryData.map(s => s.story_id));
+  const soldMap = new Map(soldStoryData.map(s => [s.story_id, s]));
+
+  // Filter unsold stories for active/archived tabs
+  const unsoldActive = useMemo(() => activeStories.filter(s => !soldSet.has(s.storyId)), [activeStories, soldSet]);
+  const unsoldArchived = useMemo(() => archivedStories.filter(s => !soldSet.has(s.storyId)), [archivedStories, soldSet]);
+
+  // Sold stories (from both active + archived)
+  const allStories = useMemo(() => [...activeStories, ...archivedStories], [activeStories, archivedStories]);
+  const soldStories = useMemo(() => allStories.filter(s => soldSet.has(s.storyId)), [allStories, soldSet]);
 
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
