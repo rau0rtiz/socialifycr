@@ -16,6 +16,7 @@ export interface ClientFeatureFlags {
   campaigns: boolean;
   sales_tracking: boolean;
   setter_tracker: boolean;
+  setter_checklist: boolean;
   monthly_sales_report: boolean;
   ventas_section: boolean;
   contenido_section: boolean;
@@ -38,6 +39,7 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
   sales_tracking: false,
   monthly_sales_report: false,
   setter_tracker: false,
+  setter_checklist: true,
   ventas_section: false,
   contenido_section: false,
   reportes_section: false,
@@ -117,6 +119,7 @@ export const useClientFeatures = (clientId: string | null) => {
         campaigns: data.campaigns,
         sales_tracking: data.sales_tracking,
         setter_tracker: data.setter_tracker,
+        setter_checklist: data.setter_checklist,
         monthly_sales_report: data.monthly_sales_report,
         ventas_section: data.ventas_section,
         contenido_section: data.contenido_section,
