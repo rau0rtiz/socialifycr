@@ -1,28 +1,19 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { useDailyStoryTracker, DailyStoryInput, DailyStoryEntry } from '@/hooks/use-daily-story-tracker';
-import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { useDailyStoryTracker, DailyStoryEntry } from '@/hooks/use-daily-story-tracker';
 import {
   CalendarDays, ChevronLeft, ChevronRight, Film, Wallet,
-  TrendingUp, Save,
+  TrendingUp, Zap,
 } from 'lucide-react';
 import {
-  format, startOfMonth, endOfMonth, eachDayOfInterval, isFuture, getDay,
-  addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth, isSameDay,
-  addWeeks, subWeeks, isSameWeek,
+  format, eachDayOfInterval, isFuture, isSameDay,
+  addWeeks, subWeeks, startOfWeek, endOfWeek,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 interface StoryRevenueTrackerProps {
   clientId: string;
@@ -33,11 +24,6 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
 };
 
-const chartConfig = {
-  stories: { label: 'Historias', color: 'hsl(var(--primary))' },
-  revenue: { label: 'Ventas', color: 'hsl(142 71% 45%)' },
-};
-
 const getCostaRicaToday = () => {
   const now = new Date();
   return new Date(now.toLocaleString('en-US', { timeZone: 'America/Costa_Rica' }));
@@ -45,7 +31,6 @@ const getCostaRicaToday = () => {
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-// Sparkline SVG
 const Sparkline = ({ data, color }: { data: number[]; color: string }) => {
   if (data.length < 2) return null;
   const max = Math.max(...data, 1);
@@ -64,7 +49,6 @@ const Sparkline = ({ data, color }: { data: number[]; color: string }) => {
   );
 };
 
-// Mini dots for calendar cells
 const CellIndicator = ({ entry }: { entry: DailyStoryEntry }) => {
   const hasStories = entry.stories_count > 0;
   const hasRevenue = entry.daily_revenue > 0;
@@ -84,7 +68,6 @@ const CellIndicator = ({ entry }: { entry: DailyStoryEntry }) => {
   );
 };
 
-// Day hover tooltip
 const DayTooltipContent = ({ entry, date }: { entry: DailyStoryEntry; date: Date }) => (
   <div className="space-y-2.5 p-1">
     <p className="text-xs font-semibold text-foreground capitalize">
@@ -103,29 +86,14 @@ const DayTooltipContent = ({ entry, date }: { entry: DailyStoryEntry; date: Date
         <span className="text-[11px] font-semibold text-foreground">{formatCurrency(entry.daily_revenue, entry.currency)}</span>
       </div>
     </div>
-    {entry.notes && (
-      <>
-        <Separator />
-        <p className="text-[10px] text-muted-foreground italic line-clamp-2">"{entry.notes}"</p>
-      </>
-    )}
   </div>
 );
 
 export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [editOpen, setEditOpen] = useState(false);
-  const [editDate, setEditDate] = useState<Date>(new Date());
 
-  // Still fetch the full month so sidebar totals make sense
   const currentMonth = currentWeek;
-  const { entries, entriesByDate, totals, chartData, upsertEntry } = useDailyStoryTracker(clientId, currentMonth);
-
-  // Form state
-  const [storiesCount, setStoriesCount] = useState('');
-  const [dailyRevenue, setDailyRevenue] = useState('');
-  const [currency, setCurrency] = useState('CRC');
-  const [notes, setNotes] = useState('');
+  const { entries, entriesByDate, totals, isLoading } = useDailyStoryTracker(clientId, currentMonth);
 
   const crToday = getCostaRicaToday();
 
@@ -133,35 +101,6 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
   const calendarDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  const openEditor = (date: Date) => {
-    setEditDate(date);
-    const ds = format(date, 'yyyy-MM-dd');
-    const entry = entriesByDate[ds];
-    setStoriesCount(entry?.stories_count?.toString() || '');
-    setDailyRevenue(entry?.daily_revenue?.toString() || '');
-    setCurrency(entry?.currency || 'CRC');
-    setNotes(entry?.notes || '');
-    setEditOpen(true);
-  };
-
-  const handleSave = async () => {
-    const input: DailyStoryInput = {
-      track_date: format(editDate, 'yyyy-MM-dd'),
-      stories_count: parseInt(storiesCount) || 0,
-      daily_revenue: parseFloat(dailyRevenue) || 0,
-      currency,
-      notes: notes || undefined,
-    };
-    try {
-      await upsertEntry.mutateAsync(input);
-      toast.success('Registro guardado');
-      setEditOpen(false);
-    } catch {
-      toast.error('Error al guardar');
-    }
-  };
-
-  // Sparkline data
   const sparklineData = useMemo(() => {
     const sorted = [...entries].sort((a, b) => a.track_date.localeCompare(b.track_date));
     return {
@@ -170,17 +109,8 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
     };
   }, [entries]);
 
-  // Reported days set
-  const reportedDates = useMemo(() => new Set(entries.map(e => e.track_date)), [entries]);
+  const reportedDates = useMemo(() => new Set(entries.filter(e => e.stories_count > 0 || e.daily_revenue > 0).map(e => e.track_date)), [entries]);
 
-  // Chart data
-  const chartEntries = chartData.map((e) => ({
-    date: format(new Date(e.track_date + 'T12:00:00'), 'dd/MM', { locale: es }),
-    stories: e.stories_count,
-    revenue: e.daily_revenue,
-  }));
-
-  // Week stats
   const { reportedCount, trackableDays } = useMemo(() => {
     let trackable = 0;
     let reported = 0;
@@ -195,7 +125,6 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Calendar Card - Setter style */}
       <Card className="overflow-hidden border-border/50 shadow-sm">
         <CardHeader className="pb-2 px-5 pt-5">
           <CardTitle className="text-sm flex items-center gap-2 text-foreground">
@@ -203,13 +132,16 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
               <Film className="h-4 w-4 text-primary" />
             </div>
             Tracker de Historias y Ventas
+            <span className="ml-auto flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              <Zap className="h-3 w-3" />
+              Automático
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent className="px-5 pb-5">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Calendar */}
             <div className="flex-1 min-w-0">
-              {/* Week navigation */}
               <div className="flex items-center justify-between mb-4">
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentWeek(m => subWeeks(m, 1))}>
                   <ChevronLeft className="h-4 w-4" />
@@ -222,7 +154,6 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                 </Button>
               </div>
 
-              {/* Day headers */}
               <div className="grid grid-cols-7 gap-1 mb-1">
                 {WEEKDAYS.map(d => (
                   <div key={d} className="text-center text-[10px] font-medium text-muted-foreground py-1">
@@ -231,7 +162,6 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                 ))}
               </div>
 
-              {/* Calendar grid */}
               <div className="grid grid-cols-7 gap-1">
                 {calendarDays.map(day => {
                   const ds = format(day, 'yyyy-MM-dd');
@@ -242,13 +172,10 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                   const isMissing = !hasData && !future;
 
                   const dayContent = (
-                    <button
-                      onClick={() => !future && openEditor(day)}
-                      disabled={future}
+                    <div
                       className={cn(
                         'relative flex flex-col items-center justify-center rounded-xl aspect-square w-full transition-all duration-200',
-                        !future && 'cursor-pointer hover:scale-105 hover:shadow-sm',
-                        future && 'opacity-40 cursor-default',
+                        future && 'opacity-40',
                         hasData && 'bg-emerald-500/10 dark:bg-emerald-500/15',
                         isMissing && 'bg-muted/40',
                         isTodayCR && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
@@ -263,7 +190,7 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                         {format(day, 'd')}
                       </span>
                       {entry && <CellIndicator entry={entry} />}
-                    </button>
+                    </div>
                   );
 
                   if (hasData && entry) {
@@ -282,15 +209,14 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                 })}
               </div>
 
-              {/* Legend */}
               <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/40">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                  <span className="text-[10px] text-muted-foreground">Historias</span>
+                  <span className="text-[10px] text-muted-foreground">Historias archivadas</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  <span className="text-[10px] text-muted-foreground">Ventas</span>
+                  <span className="text-[10px] text-muted-foreground">Ventas por historia</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full ring-2 ring-primary" />
@@ -299,7 +225,7 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
               </div>
             </div>
 
-            {/* Sidebar panel */}
+            {/* Sidebar */}
             <div className="lg:w-56 space-y-4">
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
@@ -308,7 +234,7 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                 </p>
                 {[
                   { icon: Film, label: 'Historias', value: totals.stories_count, color: 'text-primary', sparkColor: 'hsl(var(--primary))', bgFrom: 'from-primary/10', bgTo: 'to-primary/0', borderColor: 'border-primary/15', data: sparklineData.stories },
-                  { icon: Wallet, label: 'Ventas', value: formatCurrency(totals.daily_revenue, currency), color: 'text-emerald-500', sparkColor: '#22c55e', bgFrom: 'from-emerald-500/10', bgTo: 'to-emerald-500/0', borderColor: 'border-emerald-500/15', data: sparklineData.revenue },
+                  { icon: Wallet, label: 'Ventas', value: formatCurrency(totals.daily_revenue, 'CRC'), color: 'text-emerald-500', sparkColor: '#22c55e', bgFrom: 'from-emerald-500/10', bgTo: 'to-emerald-500/0', borderColor: 'border-emerald-500/15', data: sparklineData.revenue },
                 ].map(({ icon: Icon, label, value, color, sparkColor, bgFrom, bgTo, borderColor, data }) => (
                   <div key={label} className={cn('p-2.5 rounded-xl border bg-gradient-to-br', bgFrom, bgTo, borderColor)}>
                     <div className="flex items-center justify-between">
@@ -322,12 +248,11 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                   </div>
                 ))}
 
-                {/* Reported progress */}
                 <div className="p-2.5 rounded-xl border border-border/40 bg-muted/20">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
                       <CalendarDays className="h-3 w-3" />
-                      Días registrados
+                      Días con actividad
                     </span>
                     <span className="text-xs font-bold text-foreground">{reportedCount}/{trackableDays}</span>
                   </div>
@@ -343,56 +268,6 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
           </div>
         </CardContent>
       </Card>
-
-
-      {/* Edit Dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-primary/10">
-                <Film className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">Registro del día</p>
-                <p className="text-xs font-normal text-muted-foreground capitalize">
-                  {format(editDate, "EEEE d 'de' MMMM", { locale: es })}
-                </p>
-              </div>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div>
-              <Label className="text-xs">Historias subidas</Label>
-              <Input type="number" min={0} value={storiesCount} onChange={(e) => setStoriesCount(e.target.value)} placeholder="0" />
-            </div>
-            <div>
-              <Label className="text-xs">Ventas del día</Label>
-              <div className="flex gap-1.5">
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CRC">₡</SelectItem>
-                    <SelectItem value="USD">$</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input type="number" min={0} value={dailyRevenue} onChange={(e) => setDailyRevenue(e.target.value)} placeholder="0" className="flex-1" />
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs">Notas (opcional)</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej: Promo fin de semana..." rows={2} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" size="sm" onClick={() => setEditOpen(false)}>Cancelar</Button>
-            <Button size="sm" onClick={handleSave} disabled={upsertEntry.isPending} className="gap-1.5">
-              <Save className="h-3.5 w-3.5" />
-              Guardar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
