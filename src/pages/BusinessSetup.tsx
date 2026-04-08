@@ -268,7 +268,6 @@ const BusinessSetup = () => {
   );
 
   const renderFeatures = () => {
-    const { flags, updateFlag } = useClientFeatures(selectedClient.id);
 
     const OPTIONAL_FEATURES = [
       { key: 'setter_checklist', label: 'Checklist Pre-llamada', description: 'Muestra un checklist de preparación en cada agenda (quiz, video, WhatsApp, testimonios)' },
