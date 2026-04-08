@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { ShoppingBag, Check, Play, Image as ImageIcon, Zap, Archive, Tag } from 'lucide-react';
+import { ShoppingBag, Check, Play, Image as ImageIcon, Zap, Archive, Tag, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -79,14 +79,19 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
   const openSaleDialog = (story: Story) => {
     setSelectedStory(story);
-    setCustomerName('');
-    setCustomerPhone('');
-    setBrand('');
-    setAmount('');
+    // Auto-fill from scanned data if available
+    const sd = story.scannedData;
+    setCustomerName(sd?.customer_name || '');
+    setCustomerPhone(sd?.customer_phone || '');
+    setBrand(sd?.brand || '');
+    setAmount(sd?.amount ? String(sd.amount) : '');
     setSaleDate(format(new Date(), 'yyyy-MM-dd'));
     setSellerName(profileName || '');
-    setNotes('');
+    setNotes(sd?.notes || '');
     setDialogOpen(true);
+    if (sd && (sd.customer_name || sd.brand || sd.amount)) {
+      toast.info('Datos pre-llenados con IA ✨', { description: 'Revisa y ajusta antes de confirmar' });
+    }
   };
 
   const handleSubmit = async () => {
