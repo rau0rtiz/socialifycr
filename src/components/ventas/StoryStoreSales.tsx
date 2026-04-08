@@ -221,18 +221,25 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
               <TabsList className="mb-3">
                 <TabsTrigger value="activas" className="gap-1.5 text-xs">
                   <Zap className="h-3.5 w-3.5" />
-                  Activas ({activeStories.length})
+                  Activas ({unsoldActive.length})
                 </TabsTrigger>
                 <TabsTrigger value="archivadas" className="gap-1.5 text-xs">
                   <Archive className="h-3.5 w-3.5" />
-                  Archivadas ({archivedStories.length})
+                  Archivadas ({unsoldArchived.length})
+                </TabsTrigger>
+                <TabsTrigger value="vendidas" className="gap-1.5 text-xs">
+                  <Tag className="h-3.5 w-3.5" />
+                  Vendidas ({soldStories.length})
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="activas">
-                {renderStories(activeStories)}
+                {renderStories(unsoldActive)}
               </TabsContent>
               <TabsContent value="archivadas">
-                {renderStories(archivedStories)}
+                {renderStories(unsoldArchived)}
+              </TabsContent>
+              <TabsContent value="vendidas">
+                {renderSoldStories()}
               </TabsContent>
             </Tabs>
           )}
