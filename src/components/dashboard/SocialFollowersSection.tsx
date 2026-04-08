@@ -55,7 +55,7 @@ const platformConfig = {
   linkedin: {
     label: 'LinkedIn',
     icon: Linkedin,
-    metric: 'seguidores',
+    metric: 'conexiones',
     color: 'hsl(210, 80%, 40%)',
     bgClass: 'bg-blue-700/10',
     textClass: 'text-blue-700',
