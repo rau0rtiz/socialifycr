@@ -42,6 +42,7 @@ const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
   { title: 'Accesos', url: '/accesos', icon: KeyRound },
   { title: 'Facturación', url: '/facturacion', icon: CreditCard },
+  { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },
   { title: 'Historial', url: '/historial', icon: History },
   { title: 'Image DB', url: '/image-db', icon: Image },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
