@@ -812,6 +812,53 @@ export type Database = {
           },
         ]
       }
+      daily_story_tracker: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          created_by: string
+          currency: string
+          daily_revenue: number
+          id: string
+          notes: string | null
+          stories_count: number
+          track_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          created_by: string
+          currency?: string
+          daily_revenue?: number
+          id?: string
+          notes?: string | null
+          stories_count?: number
+          track_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          created_by?: string
+          currency?: string
+          daily_revenue?: number
+          id?: string
+          notes?: string | null
+          stories_count?: number
+          track_date?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_story_tracker_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_campaigns: {
         Row: {
           client_id: string
