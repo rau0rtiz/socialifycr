@@ -1,61 +1,50 @@
 
 
-## Story Sales Widget for Alma Bendita
+## Plan: Simplify Alma Bendita Story Sale Registration & Edit Dialog
 
-### Context
-Alma Bendita sells unique second-hand clothing via Instagram stories. Each piece is one-of-a-kind, so when it sells, it's gone. We need a widget that shows their stories (active + archived) and lets them tap a story to instantly register a sale linked to that story.
+### What changes
 
-### Plan
+**Goal**: Make the StoryStoreSales create form and the general RegisterSaleDialog edit view match for Alma Bendita, with only these 6 fields:
+1. **Cliente** (required) + **Teléfono**
+2. **Marca** (brand)
+3. **Monto** (₡)
+4. **Fecha** (default: today)
+5. **Vendedor** (default: current user's name from profile)
+6. **Notas adicionales**
 
-#### 1. New component: `StoryStoreSales` widget
-**File**: `src/components/ventas/StoryStoreSales.tsx`
+### Database migration
 
-- A card with two tabs: "Activas" (live stories from Meta API) and "Archivadas" (from DB)
-- Display stories in a horizontal scroll grid with 9:16 aspect-ratio thumbnails (reusing the same visual style as `StoriesSection`)
-- Each story card shows the image/video thumbnail with a subtle overlay
-- Clicking a story opens a dialog pre-filled to register a sale:
-  - Story thumbnail preview at the top
-  - Product name (free text, defaulting to "Pieza única")
-  - Sale amount + currency (CRC default)
-  - Customer name (optional)
-  - Sale date (defaults to today)
-  - Notes field
-- On submit, calls the existing `useSalesTracking` hook's `addSale` to create a `message_sales` record with `source: 'story'` and stores the `story_id` in notes or a metadata field
-- Also auto-increments the `daily_story_tracker` revenue for that date so the goal bar stays in sync
-- Stories that already have a linked sale show a green checkmark/sold badge overlay
+Add two new columns to `message_sales`:
+- `customer_phone TEXT` — phone number
+- `brand TEXT` — brand/marca
 
-#### 2. Track story-sale links
-**Database migration**: Add a `story_id` column to `message_sales` table (nullable text) to link a sale directly to a story. This allows marking stories as "sold" by checking if any sale references that story ID.
+These are nullable so they don't break existing sales.
 
-#### 3. Wire into Ventas page
-**File**: `src/pages/Ventas.tsx`
-- Add the `StoryStoreSales` widget for Alma Bendita, positioned right after the `StoryRevenueTracker` calendar
-- Uses the existing `useStories` hook to fetch active + archived stories
-- Passes a callback that creates the sale and updates the daily tracker in one flow
+### File changes
 
-#### 4. Auto-sync with daily tracker
-When a sale is registered via a story, automatically upsert the `daily_story_tracker` entry for that date, incrementing `daily_revenue` by the sale amount. This keeps the calendar tracker and goal bar consistent without manual double-entry.
+**1. `src/components/ventas/StoryStoreSales.tsx`**
+- Replace current form fields (Producto, Monto, Fecha, Cliente optional, Notas) with the 6 new fields
+- Make `customerName` required (validation before submit)
+- Add state for `customerPhone`, `brand`, `sellerName` (default from profile query)
+- Fetch current user's profile name on mount for seller default
+- Update `handleSubmit` to pass new fields (`customer_phone`, `brand`, `closer_name` for seller) to `addSale`
+- Update the "Vendidas" tab sold card overlay to show brand if available
 
-### Technical details
+**2. `src/hooks/use-sales-tracking.ts`**
+- Add `customer_phone` and `brand` to `SaleInput` and `MessageSale` interfaces
+- Include them in the insert/update mutations and select queries
 
-**New DB column** (migration):
-```sql
-ALTER TABLE public.message_sales ADD COLUMN story_id text;
-```
+**3. `src/components/dashboard/RegisterSaleDialog.tsx`**
+- Detect `isAlmaBendita` from `selectedClient`
+- When Alma Bendita + editing: skip the multi-step wizard, render a single-view form with the same 6 fields (Cliente + Teléfono, Marca, Monto, Fecha, Vendedor, Notas)
+- Pre-populate from `editingSale` data
+- On submit, pass the simplified fields
 
-**Component data flow**:
-```
-useStories(clientId) → active + archived stories
-  ↓ click story
-StoryStoreSales dialog → pre-filled sale form
-  ↓ submit
-addSale({ source: 'story', story_id, amount, ... })
-  + upsert daily_story_tracker for that date
-```
+**4. `src/components/dashboard/SalesTrackingSection.tsx`**
+- No structural changes needed; it already passes `editingSale` to `RegisterSaleDialog`
 
-**Files to create/modify**:
-- Create `src/components/ventas/StoryStoreSales.tsx` — new widget
-- Modify `src/pages/Ventas.tsx` — render widget for Alma Bendita
-- Modify `src/hooks/use-sales-tracking.ts` — accept `story_id` in SaleInput
-- DB migration — add `story_id` column to `message_sales`
+### Technical notes
+- `closer_name` column (already exists) will store the "Vendedor" value
+- `product` field renamed to "Marca" in the UI for Alma Bendita context
+- Current user name fetched via `supabase.from('profiles').select('full_name').eq('id', user.id)` for default seller
 
