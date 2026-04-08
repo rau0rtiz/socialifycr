@@ -76,21 +76,53 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const [sellerName, setSellerName] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
-  const openSaleDialog = (story: Story) => {
+  const applyScannedData = (sd: { customer_name?: string | null; customer_phone?: string | null; brand?: string | null; amount?: number | null; notes?: string | null } | null) => {
+    if (!sd) return;
+    if (sd.customer_name) setCustomerName(sd.customer_name);
+    if (sd.customer_phone) setCustomerPhone(sd.customer_phone);
+    if (sd.brand) setBrand(sd.brand);
+    if (sd.amount) setAmount(String(sd.amount));
+    if (sd.notes) setNotes(sd.notes);
+    if (sd.customer_name || sd.brand || sd.amount) {
+      toast.info('Datos pre-llenados con IA ✨', { description: 'Revisa y ajusta antes de confirmar' });
+    }
+  };
+
+  const openSaleDialog = async (story: Story) => {
     setSelectedStory(story);
-    // Auto-fill from scanned data if available
-    const sd = story.scannedData;
-    setCustomerName(sd?.customer_name || '');
-    setCustomerPhone(sd?.customer_phone || '');
-    setBrand(sd?.brand || '');
-    setAmount(sd?.amount ? String(sd.amount) : '');
+    setCustomerName('');
+    setCustomerPhone('');
+    setBrand('');
+    setAmount('');
     setSaleDate(format(new Date(), 'yyyy-MM-dd'));
     setSellerName(profileName || '');
-    setNotes(sd?.notes || '');
+    setNotes('');
     setDialogOpen(true);
-    if (sd && (sd.customer_name || sd.brand || sd.amount)) {
-      toast.info('Datos pre-llenados con IA ✨', { description: 'Revisa y ajusta antes de confirmar' });
+
+    // If archived story has scanned data, use it immediately
+    if (story.scannedData) {
+      applyScannedData(story.scannedData);
+      return;
+    }
+
+    // For active stories (or archived without scan), scan on-demand
+    const imageUrl = story.mediaUrl || story.thumbnailUrl;
+    if (!imageUrl) return;
+
+    setScanning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('scan-story-text', {
+        body: { imageUrl },
+      });
+      if (!error && data?.scannedData) {
+        applyScannedData(data.scannedData);
+      }
+    } catch {
+      // non-critical
+    } finally {
+      setScanning(false);
     }
   };
 
