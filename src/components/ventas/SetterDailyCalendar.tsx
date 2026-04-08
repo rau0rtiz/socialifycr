@@ -213,15 +213,15 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Calendar */}
             <div className="flex-1 min-w-0">
-              {/* Month navigation */}
+              {/* Week navigation */}
               <div className="flex items-center justify-between mb-4">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentMonth(m => subMonths(m, 1))}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentWeek(m => subWeeks(m, 1))}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <h3 className="text-sm font-semibold text-foreground capitalize">
-                  {format(currentMonth, 'MMMM yyyy', { locale: es })}
+                <h3 className="text-sm font-semibold text-foreground">
+                  {format(weekStart, "d MMM", { locale: es })} – {format(weekEnd, "d MMM yyyy", { locale: es })}
                 </h3>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentMonth(m => addMonths(m, 1))}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentWeek(m => addWeeks(m, 1))}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
