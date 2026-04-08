@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useStories, Story } from '@/hooks/use-stories';
 import { useSalesTracking, SaleInput } from '@/hooks/use-sales-tracking';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
