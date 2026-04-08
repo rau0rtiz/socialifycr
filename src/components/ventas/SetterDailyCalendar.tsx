@@ -183,6 +183,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
       wa: sorted.map(r => r.wa_conversations),
       followups: sorted.map(r => r.followups),
       appointments: sorted.map(r => r.appointments_made),
+      links: sorted.map(r => r.links_sent),
     };
   }, [reports]);
 
@@ -192,8 +193,9 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
       wa: acc.wa + r.wa_conversations,
       followups: acc.followups + r.followups,
       appointments: acc.appointments + r.appointments_made,
+      links: acc.links + r.links_sent,
     }),
-    { ig: 0, wa: 0, followups: 0, appointments: 0 }
+    { ig: 0, wa: 0, followups: 0, appointments: 0, links: 0 }
   );
 
   const weekDayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
