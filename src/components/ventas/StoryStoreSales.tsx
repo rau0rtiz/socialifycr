@@ -200,6 +200,47 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     );
   };
 
+  const renderSoldStories = () => {
+    if (soldStories.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-[178px] text-sm text-muted-foreground">
+          No hay historias vendidas
+        </div>
+      );
+    }
+    return (
+      <ScrollArea className="w-full max-h-[580px]">
+        <div className="grid grid-cols-[repeat(auto-fill,100px)] gap-3 pb-3">
+          {soldStories.map((story) => {
+            const sale = soldMap.get(story.storyId);
+            const isVideo = story.mediaType === 'VIDEO';
+            const thumb = story.thumbnailUrl || story.mediaUrl;
+            const currSymbol = sale?.currency === 'CRC' ? '₡' : '$';
+            return (
+              <div key={story.id} className="relative flex-shrink-0 w-[100px] h-[178px] rounded-xl overflow-hidden border-2 border-green-500/50">
+                {thumb ? (
+                  <img src={thumb} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                    {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-green-500/20" />
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
+                  <p className="text-white text-[11px] font-bold">{currSymbol}{sale?.amount?.toLocaleString()}</p>
+                  {sale?.customer_name && <p className="text-white/70 text-[9px] truncate">{sale.customer_name}</p>}
+                </div>
+                <div className="absolute top-1.5 right-1.5 bg-green-500 rounded-full p-1">
+                  <Check className="h-3 w-3 text-white" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+    );
+  };
+
   return (
     <>
       <Card>
