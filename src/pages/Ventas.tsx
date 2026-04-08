@@ -439,8 +439,8 @@ const Ventas = () => {
           />
         </div>
 
-        {/* Collections (pending installments) */}
-        <CollectionsWidget clientId={selectedClient.id} />
+        {/* Collections (pending installments) — hidden for Alma Bendita */}
+        {!isAlmaBendita && <CollectionsWidget clientId={selectedClient.id} />}
 
 
         {(isMindCoach || isHildaLopez) && hasAdAccount && (
@@ -458,7 +458,7 @@ const Ventas = () => {
           <SalesByProductChart sales={allSales} products={clientProducts} />
 
           {/* Closure rate per seller — hidden for Speak Up */}
-          {!isSpkUp && !isSilvia && <ClosureRateWidget appointments={appointments} />}
+          {!isSpkUp && !isSilvia && !isAlmaBendita && <ClosureRateWidget appointments={appointments} />}
         </div>
 
         {/* Ad ranking at bottom for Mind Coach */}
