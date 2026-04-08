@@ -1,12 +1,17 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { useDailyStoryTracker, DailyStoryEntry } from '@/hooks/use-daily-story-tracker';
+import { useDailyStoryTracker, DailyStoryEntry, DailyStoryInput } from '@/hooks/use-daily-story-tracker';
 import {
   CalendarDays, ChevronLeft, ChevronRight, Film, Wallet,
-  TrendingUp, Zap,
+  TrendingUp, Zap, Pencil, Save, Trash2,
 } from 'lucide-react';
 import {
   format, eachDayOfInterval, isFuture, isSameDay,
@@ -14,6 +19,7 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface StoryRevenueTrackerProps {
   clientId: string;
@@ -86,20 +92,84 @@ const DayTooltipContent = ({ entry, date }: { entry: DailyStoryEntry; date: Date
         <span className="text-[11px] font-semibold text-foreground">{formatCurrency(entry.daily_revenue, entry.currency)}</span>
       </div>
     </div>
+    {entry.has_override && (
+      <>
+        <Separator />
+        <p className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
+          <Pencil className="h-2.5 w-2.5" />
+          Incluye ajuste manual: +{entry.override_stories || 0} historias, +{formatCurrency(entry.override_revenue || 0, entry.currency)}
+        </p>
+      </>
+    )}
+    {entry.notes && (
+      <>
+        <Separator />
+        <p className="text-[10px] text-muted-foreground italic line-clamp-2">"{entry.notes}"</p>
+      </>
+    )}
   </div>
 );
 
 export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [editOpen, setEditOpen] = useState(false);
+  const [editDate, setEditDate] = useState<Date>(new Date());
 
   const currentMonth = currentWeek;
-  const { entries, entriesByDate, totals, isLoading } = useDailyStoryTracker(clientId, currentMonth);
+  const { entries, entriesByDate, totals, isLoading, upsertEntry, deleteOverride } = useDailyStoryTracker(clientId, currentMonth);
+
+  // Form state for override
+  const [overrideStories, setOverrideStories] = useState('');
+  const [overrideRevenue, setOverrideRevenue] = useState('');
+  const [currency, setCurrency] = useState('CRC');
+  const [notes, setNotes] = useState('');
 
   const crToday = getCostaRicaToday();
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
   const calendarDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  const openEditor = (date: Date) => {
+    setEditDate(date);
+    const ds = format(date, 'yyyy-MM-dd');
+    const entry = entriesByDate[ds];
+    setOverrideStories(entry?.override_stories?.toString() || '');
+    setOverrideRevenue(entry?.override_revenue?.toString() || '');
+    setCurrency(entry?.currency || 'CRC');
+    setNotes(entry?.notes || '');
+    setEditOpen(true);
+  };
+
+  const handleSave = async () => {
+    const input: DailyStoryInput = {
+      track_date: format(editDate, 'yyyy-MM-dd'),
+      stories_count: parseInt(overrideStories) || 0,
+      daily_revenue: parseFloat(overrideRevenue) || 0,
+      currency,
+      notes: notes || undefined,
+    };
+    try {
+      await upsertEntry.mutateAsync(input);
+      toast.success('Ajuste manual guardado');
+      setEditOpen(false);
+    } catch {
+      toast.error('Error al guardar');
+    }
+  };
+
+  const handleDeleteOverride = async () => {
+    const ds = format(editDate, 'yyyy-MM-dd');
+    try {
+      await deleteOverride.mutateAsync(ds);
+      toast.success('Ajuste manual eliminado');
+      setEditOpen(false);
+    } catch {
+      toast.error('Error al eliminar');
+    }
+  };
+
+  const currentEntry = entriesByDate[format(editDate, 'yyyy-MM-dd')];
 
   const sparklineData = useMemo(() => {
     const sorted = [...entries].sort((a, b) => a.track_date.localeCompare(b.track_date));
@@ -170,17 +240,26 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                   const future = isFuture(day) && !isTodayCR;
                   const hasData = !!entry && (entry.stories_count > 0 || entry.daily_revenue > 0);
                   const isMissing = !hasData && !future;
+                  const hasOverride = entry?.has_override;
 
                   const dayContent = (
-                    <div
+                    <button
+                      onClick={() => !future && openEditor(day)}
+                      disabled={future}
                       className={cn(
                         'relative flex flex-col items-center justify-center rounded-xl aspect-square w-full transition-all duration-200',
-                        future && 'opacity-40',
+                        !future && 'cursor-pointer hover:scale-105 hover:shadow-sm',
+                        future && 'opacity-40 cursor-default',
                         hasData && 'bg-emerald-500/10 dark:bg-emerald-500/15',
                         isMissing && 'bg-muted/40',
                         isTodayCR && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
                       )}
                     >
+                      {hasOverride && (
+                        <div className="absolute top-0.5 right-0.5">
+                          <Pencil className="h-2 w-2 text-amber-500" />
+                        </div>
+                      )}
                       <span className={cn(
                         'text-xs font-medium',
                         hasData && 'text-emerald-700 dark:text-emerald-400',
@@ -190,7 +269,7 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                         {format(day, 'd')}
                       </span>
                       {entry && <CellIndicator entry={entry} />}
-                    </div>
+                    </button>
                   );
 
                   if (hasData && entry) {
@@ -199,7 +278,7 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                         <HoverCardTrigger asChild>
                           {dayContent}
                         </HoverCardTrigger>
-                        <HoverCardContent className="w-56 p-3" side="top" sideOffset={8}>
+                        <HoverCardContent className="w-64 p-3" side="top" sideOffset={8}>
                           <DayTooltipContent entry={entry} date={day} />
                         </HoverCardContent>
                       </HoverCard>
@@ -209,18 +288,18 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                 })}
               </div>
 
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/40">
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/40 flex-wrap">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                  <span className="text-[10px] text-muted-foreground">Historias archivadas</span>
+                  <span className="text-[10px] text-muted-foreground">Historias</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  <span className="text-[10px] text-muted-foreground">Ventas por historia</span>
+                  <span className="text-[10px] text-muted-foreground">Ventas</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full ring-2 ring-primary" />
-                  <span className="text-[10px] text-muted-foreground">Hoy</span>
+                  <Pencil className="h-2.5 w-2.5 text-amber-500" />
+                  <span className="text-[10px] text-muted-foreground">Ajuste manual</span>
                 </div>
               </div>
             </div>
@@ -268,6 +347,86 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Override Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-amber-500/10">
+                <Pencil className="h-4 w-4 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Ajuste manual</p>
+                <p className="text-xs font-normal text-muted-foreground capitalize">
+                  {format(editDate, "EEEE d 'de' MMMM", { locale: es })}
+                </p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Auto data info */}
+          {currentEntry && (currentEntry.auto_stories || 0) + (currentEntry.auto_revenue || 0) > 0 && (
+            <div className="p-3 rounded-lg bg-muted/50 border border-border/40 space-y-1">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Datos automáticos</p>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <Film className="h-3 w-3 text-primary" />
+                  <span className="text-xs text-muted-foreground">Historias:</span>
+                  <span className="text-xs font-semibold">{currentEntry.auto_stories || 0}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Wallet className="h-3 w-3 text-emerald-500" />
+                  <span className="text-xs text-muted-foreground">Ventas:</span>
+                  <span className="text-xs font-semibold">{formatCurrency(currentEntry.auto_revenue || 0, currentEntry.currency)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-4 pt-1">
+            <p className="text-xs text-muted-foreground">
+              Estos valores se <strong>suman</strong> a los datos automáticos del día.
+            </p>
+            <div>
+              <Label className="text-xs">Historias adicionales</Label>
+              <Input type="number" min={0} value={overrideStories} onChange={(e) => setOverrideStories(e.target.value)} placeholder="0" />
+            </div>
+            <div>
+              <Label className="text-xs">Ventas adicionales</Label>
+              <div className="flex gap-1.5">
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CRC">₡</SelectItem>
+                    <SelectItem value="USD">$</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input type="number" min={0} value={overrideRevenue} onChange={(e) => setOverrideRevenue(e.target.value)} placeholder="0" className="flex-1" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Notas (opcional)</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej: Historias no capturadas por el sistema..." rows={2} />
+            </div>
+          </div>
+          <DialogFooter className="flex-row gap-2 sm:justify-between">
+            {currentEntry?.has_override && (
+              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive gap-1" onClick={handleDeleteOverride} disabled={deleteOverride.isPending}>
+                <Trash2 className="h-3.5 w-3.5" />
+                Quitar ajuste
+              </Button>
+            )}
+            <div className="flex gap-2 ml-auto">
+              <Button variant="ghost" size="sm" onClick={() => setEditOpen(false)}>Cancelar</Button>
+              <Button size="sm" onClick={handleSave} disabled={upsertEntry.isPending} className="gap-1.5">
+                <Save className="h-3.5 w-3.5" />
+                Guardar
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
