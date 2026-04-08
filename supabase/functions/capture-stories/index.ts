@@ -6,6 +6,78 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function scanStoryImage(imageUrl: string, apiKey: string): Promise<Record<string, unknown> | null> {
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: `You are an OCR assistant that extracts sales-related information from Instagram story images. 
+Extract any visible text that could be: customer name, phone number, brand/product name, price/amount, or any other sale-related info.
+Use the provided tool to return structured data. If a field is not found, set it to null.
+Focus on text overlays, captions, and any written content visible in the image.
+Amounts should be numbers only (no currency symbols). Phone numbers should include only digits and dashes.`
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Extract any sales-related text from this Instagram story image:" },
+              { type: "image_url", image_url: { url: imageUrl } }
+            ]
+          }
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "extract_story_data",
+              description: "Extract structured sales data from the story image text",
+              parameters: {
+                type: "object",
+                properties: {
+                  customer_name: { type: "string", description: "Customer name if visible", nullable: true },
+                  customer_phone: { type: "string", description: "Phone number if visible", nullable: true },
+                  brand: { type: "string", description: "Brand or product name if visible", nullable: true },
+                  amount: { type: "number", description: "Price or amount if visible (number only)", nullable: true },
+                  notes: { type: "string", description: "Any other relevant text from the image", nullable: true },
+                },
+                required: ["customer_name", "customer_phone", "brand", "amount", "notes"],
+              }
+            }
+          }
+        ],
+        tool_choice: { type: "function", function: { name: "extract_story_data" } },
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn(`AI scan failed (${response.status}):`, errText);
+      return null;
+    }
+
+    const data = await response.json();
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    if (toolCall?.function?.arguments) {
+      const parsed = JSON.parse(toolCall.function.arguments);
+      // Only return if at least one field has a value
+      const hasValue = Object.values(parsed).some(v => v !== null && v !== undefined && v !== "");
+      return hasValue ? parsed : null;
+    }
+    return null;
+  } catch (err) {
+    console.warn("AI scan error:", err);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -14,6 +86,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     console.log("Starting story capture process...");
@@ -32,13 +105,13 @@ serve(async (req) => {
 
     console.log(`Found ${connections?.length || 0} active Meta connections`);
 
-    const results: { clientId: string; captured: number; error?: string }[] = [];
+    const results: { clientId: string; captured: number; scanned: number; error?: string }[] = [];
 
     for (const conn of connections || []) {
       try {
         const accessToken = conn.refresh_token || conn.access_token;
         if (!accessToken || !conn.instagram_account_id) {
-          results.push({ clientId: conn.client_id, captured: 0, error: "Missing credentials" });
+          results.push({ clientId: conn.client_id, captured: 0, scanned: 0, error: "Missing credentials" });
           continue;
         }
 
@@ -49,7 +122,7 @@ serve(async (req) => {
 
         if (storiesData.error) {
           console.error(`Meta API error for client ${conn.client_id}:`, storiesData.error);
-          results.push({ clientId: conn.client_id, captured: 0, error: storiesData.error.message });
+          results.push({ clientId: conn.client_id, captured: 0, scanned: 0, error: storiesData.error.message });
           continue;
         }
 
@@ -57,6 +130,7 @@ serve(async (req) => {
         console.log(`Client ${conn.client_id}: Found ${stories.length} active stories`);
 
         let capturedCount = 0;
+        let scannedCount = 0;
 
         for (const story of stories) {
           // Fetch insights for this story
@@ -84,25 +158,52 @@ serve(async (req) => {
             console.warn(`Could not fetch insights for story ${story.id}:`, insightErr);
           }
 
+          // Check if this story already has scanned_data
+          const { data: existingStory } = await supabase
+            .from("archived_stories")
+            .select("id, scanned_data")
+            .eq("client_id", conn.client_id)
+            .eq("story_id", story.id)
+            .maybeSingle();
+
+          // Scan the image with AI if we have an API key and haven't scanned yet
+          let scannedData = existingStory?.scanned_data || null;
+          const imageUrl = story.media_url || story.thumbnail_url;
+          if (lovableApiKey && !scannedData && imageUrl) {
+            console.log(`Scanning story ${story.id} with AI...`);
+            scannedData = await scanStoryImage(imageUrl, lovableApiKey);
+            if (scannedData) {
+              scannedCount++;
+              console.log(`Story ${story.id} scanned:`, scannedData);
+            }
+          }
+
           // Upsert story (update if exists, insert if new)
+          const upsertPayload: Record<string, unknown> = {
+            client_id: conn.client_id,
+            story_id: story.id,
+            media_type: story.media_type,
+            media_url: story.media_url,
+            thumbnail_url: story.thumbnail_url,
+            permalink: story.permalink,
+            timestamp: story.timestamp,
+            impressions: insights.impressions,
+            reach: insights.reach,
+            replies: insights.replies,
+            exits: insights.exits,
+            taps_forward: insights.taps_forward,
+            taps_back: insights.taps_back,
+            captured_at: new Date().toISOString(),
+          };
+
+          // Only set scanned_data if we have new data
+          if (scannedData) {
+            upsertPayload.scanned_data = scannedData;
+          }
+
           const { error: upsertError } = await supabase
             .from("archived_stories")
-            .upsert({
-              client_id: conn.client_id,
-              story_id: story.id,
-              media_type: story.media_type,
-              media_url: story.media_url,
-              thumbnail_url: story.thumbnail_url,
-              permalink: story.permalink,
-              timestamp: story.timestamp,
-              impressions: insights.impressions,
-              reach: insights.reach,
-              replies: insights.replies,
-              exits: insights.exits,
-              taps_forward: insights.taps_forward,
-              taps_back: insights.taps_back,
-              captured_at: new Date().toISOString(),
-            }, {
+            .upsert(upsertPayload, {
               onConflict: "client_id,story_id",
             });
 
@@ -113,12 +214,13 @@ serve(async (req) => {
           }
         }
 
-        results.push({ clientId: conn.client_id, captured: capturedCount });
+        results.push({ clientId: conn.client_id, captured: capturedCount, scanned: scannedCount });
       } catch (clientErr) {
         console.error(`Error processing client ${conn.client_id}:`, clientErr);
         results.push({ 
           clientId: conn.client_id, 
           captured: 0, 
+          scanned: 0,
           error: clientErr instanceof Error ? clientErr.message : "Unknown error" 
         });
       }

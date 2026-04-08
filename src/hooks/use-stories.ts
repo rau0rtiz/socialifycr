@@ -1,6 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface StoryScannedData {
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  brand?: string | null;
+  amount?: number | null;
+  notes?: string | null;
+}
+
 export interface Story {
   id: string;
   storyId: string;
@@ -17,6 +25,7 @@ export interface Story {
   tapsBack?: number;
   isActive: boolean;
   capturedAt?: string;
+  scannedData?: StoryScannedData | null;
 }
 
 interface UseStoriesResult {
@@ -94,7 +103,7 @@ export const useStories = (clientId: string | null): UseStoriesResult => {
         return [];
       }
 
-      return (data || []).map((story): Story => ({
+      return (data || []).map((story: any): Story => ({
         id: story.id,
         storyId: story.story_id,
         mediaType: (story.media_type as 'IMAGE' | 'VIDEO') || 'IMAGE',
@@ -110,6 +119,7 @@ export const useStories = (clientId: string | null): UseStoriesResult => {
         tapsBack: story.taps_back || undefined,
         isActive: false,
         capturedAt: story.captured_at || undefined,
+        scannedData: story.scanned_data || null,
       }));
     },
     enabled: !!clientId,
