@@ -18,7 +18,7 @@ import {
   Database,
   Loader2,
 } from 'lucide-react';
-import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
