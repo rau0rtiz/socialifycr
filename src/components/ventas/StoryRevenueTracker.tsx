@@ -219,7 +219,7 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                   disabled={future}
                   onClick={() => !future && openEditor(day)}
                   className={cn(
-                    'relative flex flex-col items-center justify-center rounded-md p-1 min-h-[48px] transition-all text-xs',
+                    'relative flex flex-col items-center justify-center rounded-md p-1 aspect-square transition-all text-xs',
                     isCurrentMonth ? 'hover:bg-muted/60' : 'opacity-30',
                     isToday && 'ring-1 ring-primary/50 bg-primary/5',
                     future && 'cursor-default opacity-40',
