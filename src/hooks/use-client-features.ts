@@ -66,6 +66,7 @@ export const DASHBOARD_WIDGET_LABELS: Record<string, string> = {
 
 export const VENTAS_WIDGET_LABELS: Record<string, string> = {
   setter_tracker: 'Agendas',
+  setter_checklist: 'Checklist Pre-llamada',
   sales_tracking: 'Ventas por Mensajes',
   monthly_sales_report: 'Reporte Mensual de Ventas',
 };
