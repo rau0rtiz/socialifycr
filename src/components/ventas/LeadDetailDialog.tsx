@@ -182,17 +182,17 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
                   Checklist Pre-llamada
                 </div>
                 <Badge variant="outline" className="text-[10px]">
-                  {completedCount}/{CHECKLIST_ITEMS.length}
+                  {completedCount}/{checklistItems.length}
                 </Badge>
               </div>
               <div className="space-y-2.5">
-                {CHECKLIST_ITEMS.map(item => (
+                {checklistItems.map(item => (
                   <label key={item.key} className="flex items-center gap-2.5 cursor-pointer group">
                     <Checkbox
-                      checked={checklist[item.key as keyof typeof checklist]}
+                      checked={checklist[item.key] ?? false}
                       onCheckedChange={() => toggleCheck(item.key)}
                     />
-                    <span className={`text-sm transition-colors ${checklist[item.key as keyof typeof checklist] ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                    <span className={`text-sm transition-colors ${checklist[item.key] ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                       {item.label}
                     </span>
                   </label>
