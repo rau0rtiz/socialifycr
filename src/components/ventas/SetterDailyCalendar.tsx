@@ -150,21 +150,18 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
     }
   };
 
-  // Calendar grid computation
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  // Weekly grid
+  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
+  const calendarDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const reportedDates = new Set(reports.map(r => r.report_date));
 
-  // % reported calculation
+  // % reported calculation for the week
   const { reportedCount, workdayCount } = useMemo(() => {
     let workdays = 0;
     let reported = 0;
-    daysInMonth.forEach(d => {
+    calendarDays.forEach(d => {
       const dow = getDay(d);
       if (dow !== 0 && dow !== 6 && !isFuture(d)) {
         workdays++;
@@ -172,7 +169,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
       }
     });
     return { reportedCount: reported, workdayCount: workdays };
-  }, [daysInMonth, reportedDates]);
+  }, [calendarDays, reportedDates]);
 
   const reportPercentage = workdayCount > 0 ? Math.round((reportedCount / workdayCount) * 100) : 0;
 
