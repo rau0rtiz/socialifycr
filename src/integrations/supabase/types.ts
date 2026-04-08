@@ -1050,6 +1050,7 @@ export type Database = {
           sale_date: string
           source: string
           status: string
+          story_id: string | null
           total_sale_amount: number | null
           updated_at: string | null
         }
@@ -1077,6 +1078,7 @@ export type Database = {
           sale_date?: string
           source: string
           status?: string
+          story_id?: string | null
           total_sale_amount?: number | null
           updated_at?: string | null
         }
@@ -1104,6 +1106,7 @@ export type Database = {
           sale_date?: string
           source?: string
           status?: string
+          story_id?: string | null
           total_sale_amount?: number | null
           updated_at?: string | null
         }

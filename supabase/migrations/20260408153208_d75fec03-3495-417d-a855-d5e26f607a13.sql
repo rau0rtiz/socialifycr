@@ -1,0 +1,1 @@
+ALTER TABLE public.message_sales ADD COLUMN story_id text;
