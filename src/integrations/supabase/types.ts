@@ -208,81 +208,141 @@ export type Database = {
       }
       client_feature_flags: {
         Row: {
+          ad_sales_ranking: boolean
           ai_insights: boolean
+          ai_report_generator: boolean
           campaigns: boolean
           checklist_items: Json
           client_id: string
+          closure_rate: boolean
+          collections: boolean
           competitors: boolean
           contenido_section: boolean
+          content_calendar: boolean
           content_grid: boolean
           created_at: string | null
           dashboard: boolean
           email_marketing_section: boolean
           funnel: boolean
           generador_pauta: boolean
+          giveaway: boolean
           id: string
           instagram_posts: boolean
+          lead_source: boolean
           monthly_sales_report: boolean
+          pipeline_summary: boolean
+          publication_goals: boolean
+          reach_chart: boolean
           reportes_section: boolean
+          sales_by_brand: boolean
+          sales_by_product: boolean
+          sales_goal: boolean
           sales_tracking: boolean
           setter_checklist: boolean
+          setter_daily: boolean
           setter_tracker: boolean
           social_followers: boolean
+          social_performance: boolean
+          social_performance_report: boolean
+          stories_section: boolean
+          story_revenue_tracker: boolean
+          story_store: boolean
           updated_at: string | null
           ventas_section: boolean
           video_ideas: boolean
+          whatsapp_conversations: boolean
           youtube_videos: boolean
         }
         Insert: {
+          ad_sales_ranking?: boolean
           ai_insights?: boolean
+          ai_report_generator?: boolean
           campaigns?: boolean
           checklist_items?: Json
           client_id: string
+          closure_rate?: boolean
+          collections?: boolean
           competitors?: boolean
           contenido_section?: boolean
+          content_calendar?: boolean
           content_grid?: boolean
           created_at?: string | null
           dashboard?: boolean
           email_marketing_section?: boolean
           funnel?: boolean
           generador_pauta?: boolean
+          giveaway?: boolean
           id?: string
           instagram_posts?: boolean
+          lead_source?: boolean
           monthly_sales_report?: boolean
+          pipeline_summary?: boolean
+          publication_goals?: boolean
+          reach_chart?: boolean
           reportes_section?: boolean
+          sales_by_brand?: boolean
+          sales_by_product?: boolean
+          sales_goal?: boolean
           sales_tracking?: boolean
           setter_checklist?: boolean
+          setter_daily?: boolean
           setter_tracker?: boolean
           social_followers?: boolean
+          social_performance?: boolean
+          social_performance_report?: boolean
+          stories_section?: boolean
+          story_revenue_tracker?: boolean
+          story_store?: boolean
           updated_at?: string | null
           ventas_section?: boolean
           video_ideas?: boolean
+          whatsapp_conversations?: boolean
           youtube_videos?: boolean
         }
         Update: {
+          ad_sales_ranking?: boolean
           ai_insights?: boolean
+          ai_report_generator?: boolean
           campaigns?: boolean
           checklist_items?: Json
           client_id?: string
+          closure_rate?: boolean
+          collections?: boolean
           competitors?: boolean
           contenido_section?: boolean
+          content_calendar?: boolean
           content_grid?: boolean
           created_at?: string | null
           dashboard?: boolean
           email_marketing_section?: boolean
           funnel?: boolean
           generador_pauta?: boolean
+          giveaway?: boolean
           id?: string
           instagram_posts?: boolean
+          lead_source?: boolean
           monthly_sales_report?: boolean
+          pipeline_summary?: boolean
+          publication_goals?: boolean
+          reach_chart?: boolean
           reportes_section?: boolean
+          sales_by_brand?: boolean
+          sales_by_product?: boolean
+          sales_goal?: boolean
           sales_tracking?: boolean
           setter_checklist?: boolean
+          setter_daily?: boolean
           setter_tracker?: boolean
           social_followers?: boolean
+          social_performance?: boolean
+          social_performance_report?: boolean
+          stories_section?: boolean
+          story_revenue_tracker?: boolean
+          story_store?: boolean
           updated_at?: string | null
           ventas_section?: boolean
           video_ideas?: boolean
+          whatsapp_conversations?: boolean
           youtube_videos?: boolean
         }
         Relationships: [
