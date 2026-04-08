@@ -315,7 +315,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
-                  Resumen del mes
+                  Resumen de la semana
                 </p>
                 {[
                   { icon: MessageCircle, label: 'Conv. Instagram', value: totals.ig, color: 'text-pink-500', sparkColor: '#ec4899', bgFrom: 'from-pink-500/10', bgTo: 'to-pink-500/0', borderColor: 'border-pink-500/15', data: sparklineData.ig },
