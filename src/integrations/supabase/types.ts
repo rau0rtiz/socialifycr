@@ -1032,12 +1032,14 @@ export type Database = {
           ad_id: string | null
           ad_name: string | null
           amount: number
+          brand: string | null
           client_id: string
           closer_name: string | null
           created_at: string | null
           created_by: string
           currency: string
           customer_name: string | null
+          customer_phone: string | null
           id: string
           installment_amount: number | null
           installments_paid: number | null
@@ -1060,12 +1062,14 @@ export type Database = {
           ad_id?: string | null
           ad_name?: string | null
           amount: number
+          brand?: string | null
           client_id: string
           closer_name?: string | null
           created_at?: string | null
           created_by: string
           currency?: string
           customer_name?: string | null
+          customer_phone?: string | null
           id?: string
           installment_amount?: number | null
           installments_paid?: number | null
@@ -1088,12 +1092,14 @@ export type Database = {
           ad_id?: string | null
           ad_name?: string | null
           amount?: number
+          brand?: string | null
           client_id?: string
           closer_name?: string | null
           created_at?: string | null
           created_by?: string
           currency?: string
           customer_name?: string | null
+          customer_phone?: string | null
           id?: string
           installment_amount?: number | null
           installments_paid?: number | null
