@@ -10,6 +10,7 @@ export interface SetterDailyReport {
   wa_conversations: number;
   followups: number;
   appointments_made: number;
+  links_sent: number;
   day_notes: string | null;
   created_by: string;
   created_at: string;
@@ -22,6 +23,7 @@ export interface DailyReportInput {
   wa_conversations: number;
   followups: number;
   appointments_made: number;
+  links_sent: number;
   day_notes?: string;
 }
 
