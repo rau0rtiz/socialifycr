@@ -1,57 +1,44 @@
-# Ventas para Dra Silvia Alvarado + Unificar nombre de sección
 
-### 1. Sección de Ventas para Dra Silvia Alvarado
 
-Un layout simplificado orientado a servicios estéticos (valoraciones → procedimientos → cobro). Más ligero que Mind Coach (sin setter pipeline ni daily reports), pero con seguimiento de pacientes y procedimientos.
+## Diagnóstico: Congelamiento al cambiar pestañas rápidamente
 
-**Layout propuesto:**
+### Causa raíz
+
+Cada página (Dashboard, Ventas, Contenido) es un componente pesado con 8-15 hooks que disparan queries a la base de datos al montarse. Con `React.lazy` + `Suspense`, cada navegación:
+
+1. Desmonta el componente anterior (destruye suscripciones, limpia estados)
+2. Carga el chunk JS del nuevo componente
+3. Monta el nuevo componente, disparando todos los hooks simultáneamente
+4. React bloquea el hilo principal mientras renderiza el árbol completo
+
+Al cambiar rápido entre pestañas, se acumulan múltiples ciclos de desmontaje/montaje/queries en cola, bloqueando el hilo principal.
+
+### Solución
+
+Usar **`React.startTransition`** en la navegación del Sidebar para que React no bloquee la UI durante la transición entre páginas.
+
+### Cambios
+
+**1. `src/components/dashboard/Sidebar.tsx`**
+- Envolver la navegación con `startTransition` para que los cambios de ruta sean de baja prioridad y no bloqueen la interacción del usuario
+- Usar `useTransition` para mostrar un indicador visual sutil mientras carga
+
+**2. `src/App.tsx`**
+- Agregar un fallback más ligero al `Suspense` que no cause un flash completo de loading
+
+**3. `src/components/dashboard/DashboardLayout.tsx`**
+- Agregar `key` estable al contenedor principal para evitar re-renders innecesarios del layout compartido (Sidebar + TopBar)
+
+### Detalle técnico
 
 ```text
-┌─────────────────────────────────────────────┐
-│  KPIs: Valoraciones | Procedimientos |      │
-│        Ingresos     | Por cobrar            │
-├─────────────────────────────────────────────┤
-│  Barra de Meta de Ventas (ya existe)        │
-├─────────────────────────────────────────────┤
-│  Registro de Ventas (SalesTrackingSection)  │
-├─────────────────────────────────────────────┤
-│  Cobros (CollectionsWidget - ya existe)     │
-├─────────────────────────────────────────────┤
-│  Ventas por Producto (gráfico existente)    │
-└─────────────────────────────────────────────┘
+Antes:
+  Click Sidebar → navigate() → Suspense fallback (loader) → mount pesado → freeze
+
+Después:
+  Click Sidebar → startTransition(navigate) → UI sigue respondiendo → 
+  React renderiza en background → swap suave
 ```
 
-**Detalle de KPIs (nuevo componente `ClinicSalesSummary`):**
+La clave es que `startTransition` le dice a React que la navegación es interruptible, así si el usuario hace otro click rápido, React cancela el render anterior en vez de acumularlo.
 
-- **Valoraciones del mes**: Cuenta de `setter_appointments` con status `scheduled` o `completed` (las valoraciones son el equivalente de "citas")
-- **Procedimientos realizados**: Ventas completadas del mes (`message_sales` con status != cancelled)
-- **Ingresos**: Suma de ventas del mes (CRC + USD)
-- **Por cobrar**: Suma de `payment_collections` pendientes
-
-Este componente reutiliza hooks existentes (`useSalesTracking`, `usePaymentCollections`, `useSetterAppointments`) — no requiere cambios de base de datos.
-
-**Ocultar para Dra Silvia:** SetterTracker completo, SetterDailyCalendar, PipelineSummary, CampaignsDrilldown. Solo mostrar el flujo simplificado: KPIs → Meta → Ventas → Cobros → Gráfico.
-
-## Archivos a crear
-
-- `src/components/ventas/ClinicSalesSummary.tsx` — KPIs de valoraciones/procedimientos/ingresos/por cobrar
-
-## Archivos a modificar
-
-- `src/components/dashboard/Sidebar.tsx` — unificar label a "Ventas" para todos
-- `src/pages/Ventas.tsx` — agregar detección `isSilvia`, renderizado condicional del nuevo componente, ocultar widgets que no aplican
-
-## Detalle técnico
-
-```typescript
-// Sidebar.tsx - simplificar
-const ventasLabel = 'Ventas'; // siempre "Ventas"
-
-// Ventas.tsx - detección
-const isSilvia = selectedClient?.name?.toLowerCase().includes('silvia');
-
-// Render condicional
-{isSilvia && <ClinicSalesSummary clientId={selectedClient.id} />}
-```
-
-El componente `ClinicSalesSummary` usa la misma estructura visual de cards que `SpeakUpSalesSummary` pero con terminología médica (Valoraciones, Procedimientos, Pacientes).
