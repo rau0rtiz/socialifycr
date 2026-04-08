@@ -296,8 +296,8 @@ const Ventas = () => {
         {(isMindCoach || isHildaLopez || isAlmaBendita) && (
           <SalesGoalBar
             clientId={selectedClient.id}
-            currentSalesUSD={summary.totalUSD}
-            currentSalesCRC={summary.totalCRC}
+            currentSalesUSD={isAlmaBendita ? 0 : summary.totalUSD}
+            currentSalesCRC={isAlmaBendita ? storyTotals.daily_revenue : summary.totalCRC}
             primaryColor={selectedClient.primary_color || undefined}
             accentColor={selectedClient.accent_color || undefined}
           />
