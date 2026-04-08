@@ -5,6 +5,7 @@ export interface StoryScannedData {
   customer_name?: string | null;
   customer_phone?: string | null;
   brand?: string | null;
+  garment_type?: string | null;
   amount?: number | null;
   notes?: string | null;
 }

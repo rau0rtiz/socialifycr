@@ -71,6 +71,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [brand, setBrand] = useState('');
+  const [garmentType, setGarmentType] = useState('');
   const [amount, setAmount] = useState('');
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [sellerName, setSellerName] = useState('');
@@ -78,14 +79,15 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [scanning, setScanning] = useState(false);
 
-  const applyScannedData = (sd: { customer_name?: string | null; customer_phone?: string | null; brand?: string | null; amount?: number | null; notes?: string | null } | null) => {
+  const applyScannedData = (sd: { customer_name?: string | null; customer_phone?: string | null; brand?: string | null; garment_type?: string | null; amount?: number | null; notes?: string | null } | null) => {
     if (!sd) return;
     if (sd.customer_name) setCustomerName(sd.customer_name);
     if (sd.customer_phone) setCustomerPhone(sd.customer_phone);
     if (sd.brand) setBrand(sd.brand);
+    if (sd.garment_type) setGarmentType(sd.garment_type);
     if (sd.amount) setAmount(String(sd.amount));
     if (sd.notes) setNotes(sd.notes);
-    if (sd.customer_name || sd.brand || sd.amount) {
+    if (sd.customer_name || sd.brand || sd.amount || sd.garment_type) {
       toast.info('Datos pre-llenados con IA ✨', { description: 'Revisa y ajusta antes de confirmar' });
     }
   };
@@ -95,6 +97,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     setCustomerName('');
     setCustomerPhone('');
     setBrand('');
+    setGarmentType('');
     setAmount('');
     setSaleDate(format(new Date(), 'yyyy-MM-dd'));
     setSellerName(profileName || '');
@@ -145,6 +148,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim() || undefined,
         brand: brand.trim() || undefined,
+        product: garmentType.trim() || undefined,
         closer_name: sellerName.trim() || undefined,
         notes: notes || undefined,
         story_id: selectedStory.storyId,
@@ -293,6 +297,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                 <div className="absolute inset-0 bg-green-500/20" />
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
                   <p className="text-white text-[11px] font-bold">{currSymbol}{sale?.amount?.toLocaleString()}</p>
+                  {sale?.product && <p className="text-white/70 text-[9px] truncate">{sale.product}</p>}
                   {sale?.brand && <p className="text-white/70 text-[9px] truncate">{sale.brand}</p>}
                   {sale?.customer_name && <p className="text-white/70 text-[9px] truncate">{sale.customer_name}</p>}
                 </div>
@@ -422,14 +427,25 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                     </div>
                   </div>
 
-                  <div>
-                    <Label className="text-xs">Marca</Label>
-                    <Input
-                      value={brand}
-                      onChange={(e) => setBrand(e.target.value)}
-                      placeholder="Nombre de la marca"
-                      className="h-9 text-sm"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Marca</Label>
+                      <Input
+                        value={brand}
+                        onChange={(e) => setBrand(e.target.value)}
+                        placeholder="Nombre de la marca"
+                        className="h-9 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Tipo de prenda</Label>
+                      <Input
+                        value={garmentType}
+                        onChange={(e) => setGarmentType(e.target.value)}
+                        placeholder="Vestido, blusa, etc."
+                        className="h-9 text-sm"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
