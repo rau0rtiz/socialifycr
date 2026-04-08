@@ -18,6 +18,7 @@ import {
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval, isFuture, getDay,
   addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth, isSameDay,
+  addWeeks, subWeeks, isSameWeek,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -112,10 +113,12 @@ const DayTooltipContent = ({ entry, date }: { entry: DailyStoryEntry; date: Date
 );
 
 export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentWeek, setCurrentWeek] = useState(new Date());
   const [editOpen, setEditOpen] = useState(false);
   const [editDate, setEditDate] = useState<Date>(new Date());
 
+  // Still fetch the full month so sidebar totals make sense
+  const currentMonth = currentWeek;
   const { entries, entriesByDate, totals, chartData, upsertEntry } = useDailyStoryTracker(clientId, currentMonth);
 
   // Form state
@@ -126,13 +129,9 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
 
   const crToday = getCostaRicaToday();
 
-  const calendarDays = useMemo(() => {
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(currentMonth);
-    const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-    const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-    return eachDayOfInterval({ start: gridStart, end: gridEnd });
-  }, [currentMonth]);
+  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
+  const calendarDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const openEditor = (date: Date) => {
     setEditDate(date);
@@ -181,18 +180,18 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
     revenue: e.daily_revenue,
   }));
 
-  const daysInMonth = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
+  // Week stats
   const { reportedCount, trackableDays } = useMemo(() => {
     let trackable = 0;
     let reported = 0;
-    daysInMonth.forEach(d => {
+    calendarDays.forEach(d => {
       if (!isFuture(d)) {
         trackable++;
         if (reportedDates.has(format(d, 'yyyy-MM-dd'))) reported++;
       }
     });
     return { reportedCount: reported, trackableDays: trackable };
-  }, [daysInMonth, reportedDates]);
+  }, [calendarDays, reportedDates]);
 
   return (
     <div className="space-y-4">
@@ -210,15 +209,15 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Calendar */}
             <div className="flex-1 min-w-0">
-              {/* Month navigation */}
+              {/* Week navigation */}
               <div className="flex items-center justify-between mb-4">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentMonth(m => subMonths(m, 1))}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentWeek(m => subWeeks(m, 1))}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <h3 className="text-sm font-semibold text-foreground capitalize">
-                  {format(currentMonth, 'MMMM yyyy', { locale: es })}
+                <h3 className="text-sm font-semibold text-foreground">
+                  {format(weekStart, "d MMM", { locale: es })} – {format(weekEnd, "d MMM yyyy", { locale: es })}
                 </h3>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentMonth(m => addMonths(m, 1))}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentWeek(m => addWeeks(m, 1))}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -237,21 +236,19 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                 {calendarDays.map(day => {
                   const ds = format(day, 'yyyy-MM-dd');
                   const entry = entriesByDate[ds];
-                  const isCurrentMonth = isSameMonth(day, currentMonth);
                   const isTodayCR = isSameDay(day, crToday);
                   const future = isFuture(day) && !isTodayCR;
                   const hasData = !!entry && (entry.stories_count > 0 || entry.daily_revenue > 0);
-                  const isMissing = isCurrentMonth && !hasData && !future;
+                  const isMissing = !hasData && !future;
 
                   const dayContent = (
                     <button
-                      onClick={() => !future && isCurrentMonth && openEditor(day)}
-                      disabled={future || !isCurrentMonth}
+                      onClick={() => !future && openEditor(day)}
+                      disabled={future}
                       className={cn(
                         'relative flex flex-col items-center justify-center rounded-xl aspect-square w-full transition-all duration-200',
-                        !isCurrentMonth && 'opacity-20 cursor-default',
-                        isCurrentMonth && !future && 'cursor-pointer hover:scale-105 hover:shadow-sm',
-                        future && isCurrentMonth && 'opacity-40 cursor-default',
+                        !future && 'cursor-pointer hover:scale-105 hover:shadow-sm',
+                        future && 'opacity-40 cursor-default',
                         hasData && 'bg-emerald-500/10 dark:bg-emerald-500/15',
                         isMissing && 'bg-muted/40',
                         isTodayCR && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
@@ -307,7 +304,7 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
-                  Resumen del mes
+                  Resumen de la semana
                 </p>
                 {[
                   { icon: Film, label: 'Historias', value: totals.stories_count, color: 'text-primary', sparkColor: 'hsl(var(--primary))', bgFrom: 'from-primary/10', bgTo: 'to-primary/0', borderColor: 'border-primary/15', data: sparklineData.stories },

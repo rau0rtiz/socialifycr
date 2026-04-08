@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useSetterDailyReports, DailyReportInput, SetterDailyReport } from '@/hooks/use-setter-daily-reports';
 import { CalendarDays, MessageCircle, Phone, Users, FileText, ChevronLeft, ChevronRight, TrendingUp, Link2 } from 'lucide-react';
-import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isFuture, getDay, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
+import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isFuture, getDay, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth, addWeeks, subWeeks } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -95,10 +95,11 @@ const DayTooltipContent = ({ report, date }: { report: SetterDailyReport; date: 
 );
 
 export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const currentMonth = currentWeek;
   const { reports, reportsByDate, isLoading, upsertReport } = useSetterDailyReports(clientId, currentMonth);
 
   // Form state
@@ -149,21 +150,18 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
     }
   };
 
-  // Calendar grid computation
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  // Weekly grid
+  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
+  const calendarDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const reportedDates = new Set(reports.map(r => r.report_date));
 
-  // % reported calculation
+  // % reported calculation for the week
   const { reportedCount, workdayCount } = useMemo(() => {
     let workdays = 0;
     let reported = 0;
-    daysInMonth.forEach(d => {
+    calendarDays.forEach(d => {
       const dow = getDay(d);
       if (dow !== 0 && dow !== 6 && !isFuture(d)) {
         workdays++;
@@ -171,7 +169,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
       }
     });
     return { reportedCount: reported, workdayCount: workdays };
-  }, [daysInMonth, reportedDates]);
+  }, [calendarDays, reportedDates]);
 
   const reportPercentage = workdayCount > 0 ? Math.round((reportedCount / workdayCount) * 100) : 0;
 
@@ -215,15 +213,15 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Calendar */}
             <div className="flex-1 min-w-0">
-              {/* Month navigation */}
+              {/* Week navigation */}
               <div className="flex items-center justify-between mb-4">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentMonth(m => subMonths(m, 1))}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentWeek(m => subWeeks(m, 1))}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <h3 className="text-sm font-semibold text-foreground capitalize">
-                  {format(currentMonth, 'MMMM yyyy', { locale: es })}
+                <h3 className="text-sm font-semibold text-foreground">
+                  {format(weekStart, "d MMM", { locale: es })} – {format(weekEnd, "d MMM yyyy", { locale: es })}
                 </h3>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentMonth(m => addMonths(m, 1))}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setCurrentWeek(m => addWeeks(m, 1))}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -241,23 +239,21 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
               <div className="grid grid-cols-7 gap-1">
                 {calendarDays.map(day => {
                   const dateStr = format(day, 'yyyy-MM-dd');
-                  const isCurrentMonth = isSameMonth(day, currentMonth);
                   const report = reportsByDate[dateStr];
                   const isReported = !!report;
                   const isTodayCR = isSameDay(day, crToday);
                   const isFutureDay = isFuture(day);
                   const isWeekend = getDay(day) === 0 || getDay(day) === 6;
-                  const isMissing = isCurrentMonth && !isReported && !isFutureDay && !isWeekend;
+                  const isMissing = !isReported && !isFutureDay && !isWeekend;
 
                   const dayContent = (
                     <button
-                      onClick={() => !isFutureDay && isCurrentMonth && handleDayClick(day)}
-                      disabled={isFutureDay || !isCurrentMonth}
+                      onClick={() => !isFutureDay && handleDayClick(day)}
+                      disabled={isFutureDay}
                       className={cn(
                         'relative flex flex-col items-center justify-center rounded-xl aspect-square w-full transition-all duration-200',
-                        !isCurrentMonth && 'opacity-20 cursor-default',
-                        isCurrentMonth && !isFutureDay && 'cursor-pointer hover:scale-105 hover:shadow-sm',
-                        isFutureDay && isCurrentMonth && 'opacity-40 cursor-default',
+                        !isFutureDay && 'cursor-pointer hover:scale-105 hover:shadow-sm',
+                        isFutureDay && 'opacity-40 cursor-default',
                         isReported && 'bg-emerald-500/10 dark:bg-emerald-500/15',
                         isMissing && 'bg-muted/40',
                         isTodayCR && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
@@ -319,7 +315,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
-                  Resumen del mes
+                  Resumen de la semana
                 </p>
                 {[
                   { icon: MessageCircle, label: 'Conv. Instagram', value: totals.ig, color: 'text-pink-500', sparkColor: '#ec4899', bgFrom: 'from-pink-500/10', bgTo: 'to-pink-500/0', borderColor: 'border-pink-500/15', data: sparklineData.ig },
