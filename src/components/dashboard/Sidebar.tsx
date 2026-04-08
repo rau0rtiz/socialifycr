@@ -1,3 +1,4 @@
+import { useTransition } from 'react';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -15,6 +16,7 @@ import {
   X,
   Briefcase,
   Database,
+  Loader2,
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -55,11 +57,18 @@ export const Sidebar = () => {
   const { signOut } = useAuth();
   const { isAgency, canManage, systemRole, clientAccess, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
+  const [isPending, startTransition] = useTransition();
 
   const isPreviewMode = !!searchParams.get('preview');
   const isOwnerOrAdmin = !roleLoading && (systemRole === 'owner' || systemRole === 'admin');
 
   const isActive = (path: string) => location.pathname === path;
+
+  const transitionNavigate = (path: string) => {
+    startTransition(() => {
+      navigate(path);
+    });
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -68,12 +77,12 @@ export const Sidebar = () => {
 
   const handleClientView = () => {
     if (selectedClient) {
-      navigate(`/?preview=${selectedClient.id}`);
+      transitionNavigate(`/?preview=${selectedClient.id}`);
     }
   };
 
   const handleExitPreview = () => {
-    navigate('/');
+    transitionNavigate('/');
   };
 
   // In preview mode, behave like a client — respect feature flags
