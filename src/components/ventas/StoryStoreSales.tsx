@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { ShoppingBag, Check, Play, Image as ImageIcon, Zap, Archive } from 'lucide-react';
+import { ShoppingBag, Check, Play, Image as ImageIcon, Zap, Archive, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
