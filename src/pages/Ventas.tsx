@@ -330,7 +330,10 @@ const Ventas = () => {
 
         {/* === ALMA BENDITA: Story & Revenue Daily Tracker === */}
         {isAlmaBendita && (
-          <StoryRevenueTracker clientId={selectedClient.id} />
+          <>
+            <StoryRevenueTracker clientId={selectedClient.id} />
+            <StoryStoreSales clientId={selectedClient.id} />
+          </>
         )}
 
         {/* Sales Goal Bar — for other clients */}
