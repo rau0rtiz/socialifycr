@@ -22,6 +22,7 @@ interface LeadDetailDialogProps {
   clientId?: string;
   hasAdAccount?: boolean;
   showChecklist?: boolean;
+  checklistItems?: ChecklistItem[];
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
