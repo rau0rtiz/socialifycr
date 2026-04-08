@@ -31,6 +31,7 @@ const Accesos = lazy(() => import("./pages/Accesos"));
 const EmailMarketing = lazy(() => import("./pages/EmailMarketing"));
 const BusinessSetup = lazy(() => import("./pages/BusinessSetup"));
 const ClientDatabase = lazy(() => import("./pages/ClientDatabase"));
+const WidgetCatalogPage = lazy(() => import("./pages/WidgetCatalog"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -112,6 +113,13 @@ const App = () => (
                   <Route path="/email-marketing" element={<ProtectedRoute><EmailMarketing /></ProtectedRoute>} />
                   <Route path="/business-setup" element={<ProtectedRoute><BusinessSetup /></ProtectedRoute>} />
                   <Route path="/client-database" element={<ProtectedRoute><ClientDatabase /></ProtectedRoute>} />
+                  <Route path="/widget-catalog" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <WidgetCatalogPage />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/image-db" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
