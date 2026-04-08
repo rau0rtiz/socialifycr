@@ -266,11 +266,51 @@ const BusinessSetup = () => {
     </Card>
   );
 
+  const renderFeatures = () => {
+    const { flags, updateFlag } = useClientFeatures(selectedClient.id);
+
+    const OPTIONAL_FEATURES = [
+      { key: 'setter_checklist', label: 'Checklist Pre-llamada', description: 'Muestra un checklist de preparación en cada agenda (quiz, video, WhatsApp, testimonios)' },
+    ];
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Funcionalidades Opcionales</CardTitle>
+          <CardDescription>Activa o desactiva funciones específicas para este cliente</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {OPTIONAL_FEATURES.map(feature => (
+            <div key={feature.key} className="flex items-center justify-between rounded-lg border border-border p-4">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">{feature.label}</Label>
+                <p className="text-xs text-muted-foreground">{feature.description}</p>
+              </div>
+              <Switch
+                checked={(flags as any)[feature.key] ?? true}
+                onCheckedChange={(value) => {
+                  updateFlag.mutate(
+                    { flag: feature.key, value },
+                    {
+                      onSuccess: () => toast.success(`${feature.label} ${value ? 'activado' : 'desactivado'}`),
+                      onError: () => toast.error('Error al actualizar'),
+                    }
+                  );
+                }}
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  };
+
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     brand: renderBrand,
     products: renderProducts,
     team: renderTeam,
     connections: renderConnections,
+    features: renderFeatures,
   };
 
   return (
