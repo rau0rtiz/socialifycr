@@ -82,7 +82,6 @@ export const VENTAS_WIDGET_LABELS: Record<string, string> = {
   setter_tracker: 'Agendas',
   setter_checklist: 'Checklist Pre-llamada',
   sales_tracking: 'Ventas por Mensajes',
-  monthly_sales_report: 'Reporte Mensual de Ventas',
 };
 
 export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
@@ -93,12 +92,17 @@ export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
   generador_pauta: 'Generador de Pauta',
 };
 
+export const REPORTES_WIDGET_LABELS: Record<string, string> = {
+  monthly_sales_report: 'Reporte Mensual de Ventas',
+};
+
 // Combined for backward compat
 export const FEATURE_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
   ...DASHBOARD_WIDGET_LABELS,
   ...VENTAS_WIDGET_LABELS,
   ...CONTENIDO_WIDGET_LABELS,
+  ...REPORTES_WIDGET_LABELS,
 };
 
 export const useClientFeatures = (clientId: string | null) => {
