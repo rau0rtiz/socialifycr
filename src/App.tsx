@@ -41,9 +41,10 @@ const LinkedInOAuthCallback = lazy(() => import("./pages/LinkedInOAuthCallback")
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 2 * 60 * 1000, // 2 minutes — avoid refetching on every mount
-      gcTime: 10 * 60 * 1000,   // 10 minutes — keep cache longer
+      staleTime: 5 * 60 * 1000, // 5 minutes — reduce refetches on navigation
+      gcTime: 15 * 60 * 1000,   // 15 minutes — keep cache longer across page switches
       refetchOnWindowFocus: false,
+      refetchOnMount: false,     // Don't refetch if data is still fresh
       retry: 1,
     },
   },
