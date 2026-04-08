@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { format, eachDayOfInterval, startOfMonth, endOfMonth, subDays } from 'date-fns';
 
 export interface DailyStoryEntry {
   id: string;
@@ -24,98 +24,86 @@ export interface DailyStoryInput {
 }
 
 export const useDailyStoryTracker = (clientId: string | null, month?: Date) => {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-
   const targetMonth = month || new Date();
-  const startOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1).toISOString().split('T')[0];
-  const endOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0).toISOString().split('T')[0];
+  const startOfM = format(startOfMonth(targetMonth), 'yyyy-MM-dd');
+  const endOfM = format(endOfMonth(targetMonth), 'yyyy-MM-dd');
 
-  const query = useQuery({
-    queryKey: ['daily-story-tracker', clientId, startOfMonth, endOfMonth],
+  // Fetch archived stories grouped by day
+  const storiesQuery = useQuery({
+    queryKey: ['auto-story-count', clientId, startOfM, endOfM],
     queryFn: async () => {
-      if (!clientId) return [];
+      if (!clientId) return {};
       const { data, error } = await supabase
-        .from('daily_story_tracker' as any)
-        .select('*')
+        .from('archived_stories')
+        .select('timestamp')
         .eq('client_id', clientId)
-        .gte('track_date', startOfMonth)
-        .lte('track_date', endOfMonth)
-        .order('track_date', { ascending: true });
+        .gte('timestamp', `${startOfM}T00:00:00`)
+        .lte('timestamp', `${endOfM}T23:59:59`)
+        .order('timestamp', { ascending: true });
       if (error) throw error;
-      return (data || []) as unknown as DailyStoryEntry[];
+      const grouped: Record<string, number> = {};
+      (data || []).forEach((s: any) => {
+        const day = format(new Date(s.timestamp), 'yyyy-MM-dd');
+        grouped[day] = (grouped[day] || 0) + 1;
+      });
+      return grouped;
     },
     enabled: !!clientId,
   });
 
-  const upsertEntry = useMutation({
-    mutationFn: async (input: DailyStoryInput) => {
-      if (!clientId || !user?.id) throw new Error('Missing client or user');
-
-      const { data: existing } = await supabase
-        .from('daily_story_tracker' as any)
-        .select('id')
-        .eq('client_id', clientId)
-        .eq('track_date', input.track_date)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from('daily_story_tracker' as any)
-          .update({
-            stories_count: input.stories_count,
-            daily_revenue: input.daily_revenue,
-            currency: input.currency || 'CRC',
-            notes: input.notes || null,
-            updated_at: new Date().toISOString(),
-          } as any)
-          .eq('id', (existing as any).id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('daily_story_tracker' as any)
-          .insert({
-            client_id: clientId,
-            track_date: input.track_date,
-            stories_count: input.stories_count,
-            daily_revenue: input.daily_revenue,
-            currency: input.currency || 'CRC',
-            notes: input.notes || null,
-            created_by: user.id,
-          } as any);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['daily-story-tracker', clientId] });
-    },
-  });
-
-  // Last 30 days for chart (fetch separately)
-  const last30Query = useQuery({
-    queryKey: ['daily-story-tracker-30d', clientId],
+  // Fetch story-linked sales grouped by day
+  const salesQuery = useQuery({
+    queryKey: ['auto-story-sales', clientId, startOfM, endOfM],
     queryFn: async () => {
-      if (!clientId) return [];
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      if (!clientId) return {};
       const { data, error } = await supabase
-        .from('daily_story_tracker' as any)
-        .select('*')
+        .from('message_sales')
+        .select('sale_date, amount, currency')
         .eq('client_id', clientId)
-        .gte('track_date', thirtyDaysAgo.toISOString().split('T')[0])
-        .order('track_date', { ascending: true });
+        .not('story_id', 'is', null)
+        .neq('status', 'cancelled')
+        .gte('sale_date', startOfM)
+        .lte('sale_date', endOfM);
       if (error) throw error;
-      return (data || []) as unknown as DailyStoryEntry[];
+      const grouped: Record<string, { amount: number; currency: string }> = {};
+      (data || []).forEach((s: any) => {
+        const day = s.sale_date;
+        if (!grouped[day]) grouped[day] = { amount: 0, currency: s.currency || 'CRC' };
+        grouped[day].amount += Number(s.amount);
+      });
+      return grouped;
     },
     enabled: !!clientId,
   });
 
-  const entriesByDate = (query.data || []).reduce((acc, e) => {
+  // Build entries from the two queries
+  const storyCountsByDate = storiesQuery.data || {};
+  const salesByDate = salesQuery.data || {};
+
+  const allDates = new Set([...Object.keys(storyCountsByDate), ...Object.keys(salesByDate)]);
+
+  const entries: DailyStoryEntry[] = Array.from(allDates)
+    .filter(d => d >= startOfM && d <= endOfM)
+    .sort()
+    .map(d => ({
+      id: d,
+      client_id: clientId || '',
+      track_date: d,
+      stories_count: storyCountsByDate[d] || 0,
+      daily_revenue: salesByDate[d]?.amount || 0,
+      currency: salesByDate[d]?.currency || 'CRC',
+      notes: null,
+      created_by: '',
+      created_at: '',
+      updated_at: '',
+    }));
+
+  const entriesByDate = entries.reduce((acc, e) => {
     acc[e.track_date] = e;
     return acc;
   }, {} as Record<string, DailyStoryEntry>);
 
-  const totals = (query.data || []).reduce(
+  const totals = entries.reduce(
     (acc, e) => ({
       stories_count: acc.stories_count + e.stories_count,
       daily_revenue: acc.daily_revenue + e.daily_revenue,
@@ -123,12 +111,78 @@ export const useDailyStoryTracker = (clientId: string | null, month?: Date) => {
     { stories_count: 0, daily_revenue: 0 }
   );
 
+  // Last 30 days chart data
+  const thirtyDaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  const chartStoriesQuery = useQuery({
+    queryKey: ['auto-story-count-30d', clientId],
+    queryFn: async () => {
+      if (!clientId) return {};
+      const { data, error } = await supabase
+        .from('archived_stories')
+        .select('timestamp')
+        .eq('client_id', clientId)
+        .gte('timestamp', `${thirtyDaysAgo}T00:00:00`)
+        .order('timestamp', { ascending: true });
+      if (error) throw error;
+      const grouped: Record<string, number> = {};
+      (data || []).forEach((s: any) => {
+        const day = format(new Date(s.timestamp), 'yyyy-MM-dd');
+        grouped[day] = (grouped[day] || 0) + 1;
+      });
+      return grouped;
+    },
+    enabled: !!clientId,
+  });
+
+  const chartSalesQuery = useQuery({
+    queryKey: ['auto-story-sales-30d', clientId],
+    queryFn: async () => {
+      if (!clientId) return {};
+      const { data, error } = await supabase
+        .from('message_sales')
+        .select('sale_date, amount, currency')
+        .eq('client_id', clientId)
+        .not('story_id', 'is', null)
+        .neq('status', 'cancelled')
+        .gte('sale_date', thirtyDaysAgo);
+      if (error) throw error;
+      const grouped: Record<string, { amount: number; currency: string }> = {};
+      (data || []).forEach((s: any) => {
+        const day = s.sale_date;
+        if (!grouped[day]) grouped[day] = { amount: 0, currency: s.currency || 'CRC' };
+        grouped[day].amount += Number(s.amount);
+      });
+      return grouped;
+    },
+    enabled: !!clientId,
+  });
+
+  const chartStories = chartStoriesQuery.data || {};
+  const chartSales = chartSalesQuery.data || {};
+  const chartAllDates = new Set([...Object.keys(chartStories), ...Object.keys(chartSales)]);
+
+  const chartData: DailyStoryEntry[] = Array.from(chartAllDates)
+    .sort()
+    .map(d => ({
+      id: d,
+      client_id: clientId || '',
+      track_date: d,
+      stories_count: chartStories[d] || 0,
+      daily_revenue: chartSales[d]?.amount || 0,
+      currency: chartSales[d]?.currency || 'CRC',
+      notes: null,
+      created_by: '',
+      created_at: '',
+      updated_at: '',
+    }));
+
   return {
-    entries: query.data || [],
+    entries,
     entriesByDate,
     totals,
-    chartData: last30Query.data || [],
-    isLoading: query.isLoading,
-    upsertEntry,
+    chartData,
+    isLoading: storiesQuery.isLoading || salesQuery.isLoading,
   };
 };
