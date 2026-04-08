@@ -360,7 +360,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                 {/* Cash Collected */}
                 <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-1">
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                    <Wallet className="h-3.5 w-3.5" /> Cash Collected
+                    <Wallet className="h-3.5 w-3.5" /> Ingresos
                   </p>
                   <div className="flex items-baseline gap-3">
                     {cashCollectedCRC > 0 && <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(cashCollectedCRC, 'CRC')}</span>}
