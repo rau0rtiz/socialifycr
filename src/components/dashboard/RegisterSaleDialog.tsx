@@ -159,7 +159,8 @@ export const RegisterSaleDialog = ({
       setSaleDate(editingSale.sale_date);
       setSource(editingSale.source);
       setCustomerName(editingSale.customer_name || '');
-      setProduct(editingSale.product || '');
+      setCustomerPhone((editingSale as any).customer_phone || '');
+      setProduct(editingSale.product || (editingSale as any).brand || '');
       setMessagePlatform(editingSale.message_platform || '');
       setNotes(editingSale.notes || '');
       setStatus(editingSale.status);
@@ -421,7 +422,80 @@ export const RegisterSaleDialog = ({
   const adStepIndex = needsAdStep ? 2 : -1;
   const notesStepIndex = needsAdStep ? 3 : 2;
 
-  // Single-view edit mode
+  // Alma Bendita simplified edit view
+  const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
+
+  if (isEditing && isAlmaBendita) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden p-0">
+          <div className="px-6 pt-6 pb-2">
+            <DialogHeader className="space-y-0.5">
+              <DialogTitle className="text-base">Editar Venta</DialogTitle>
+              <DialogDescription className="text-xs">Modifica los campos de la venta</DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="px-6 pb-4 overflow-y-auto space-y-3" style={{ maxHeight: '65vh' }}>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Cliente *</Label>
+                <Input placeholder="Nombre del cliente" value={customerName} onChange={e => setCustomerName(e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Teléfono</Label>
+                <Input placeholder="8888-8888" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="h-9 text-sm" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Marca</Label>
+              <Input placeholder="Nombre de la marca" value={product} onChange={e => setProduct(e.target.value)} className="h-9 text-sm" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Monto (₡)</Label>
+                <Input type="number" placeholder="15000" value={amount} onChange={e => setAmount(e.target.value)} className="h-9 text-sm" min={0} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Fecha</Label>
+                <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="h-9 text-sm" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Vendedor</Label>
+              <Input placeholder="Nombre del vendedor" value={closerName} onChange={e => setCloserName(e.target.value)} className="h-9 text-sm" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Notas adicionales</Label>
+              <Input placeholder="Detalles adicionales" value={notes} onChange={e => setNotes(e.target.value)} className="h-9 text-sm" />
+            </div>
+          </div>
+          <div className="px-6 pb-4">
+            <Button className="w-full" onClick={() => {
+              if (!amount) { toast.error('El monto es requerido'); return; }
+              if (!customerName.trim()) { toast.error('El nombre del cliente es requerido'); return; }
+              const sale: any = {
+                sale_date: saleDate,
+                amount: parseFloat(amount),
+                currency: 'CRC',
+                source: source || 'story',
+                customer_name: customerName.trim() || undefined,
+                customer_phone: customerPhone.trim() || undefined,
+                brand: product.trim() || undefined,
+                closer_name: closerName.trim() || undefined,
+                notes: notes || undefined,
+                status: 'completed',
+              };
+              onSubmit(sale);
+            }} disabled={isSubmitting || !amount || !customerName.trim()}>
+              {isSubmitting ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Single-view edit mode (standard clients)
   if (isEditing) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>

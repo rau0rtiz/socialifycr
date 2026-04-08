@@ -15,6 +15,8 @@ export interface MessageSale {
   ad_id: string | null;
   ad_name: string | null;
   customer_name: string | null;
+  customer_phone: string | null;
+  brand: string | null;
   notes: string | null;
   product: string | null;
   message_platform: string | null;
@@ -38,6 +40,8 @@ export interface SaleInput {
   ad_id?: string;
   ad_name?: string;
   customer_name?: string;
+  customer_phone?: string;
+  brand?: string;
   notes?: string;
   product?: string;
   message_platform?: string;
