@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -56,24 +57,31 @@ export interface SaleInput {
   story_id?: string;
 }
 
-export const useSalesTracking = (clientId: string | null, month?: Date) => {
+type SalesTrackingPeriod = Date | { start?: Date; end?: Date };
+
+export const useSalesTracking = (clientId: string | null, period?: SalesTrackingPeriod) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const targetMonth = month || new Date();
-  const startOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1).toISOString().split('T')[0];
-  const endOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0).toISOString().split('T')[0];
+  const isMonthQuery = !period || period instanceof Date;
+  const targetMonth = isMonthQuery ? (period instanceof Date ? period : new Date()) : null;
+  const startDate = isMonthQuery
+    ? format(new Date(targetMonth!.getFullYear(), targetMonth!.getMonth(), 1), 'yyyy-MM-dd')
+    : format(period.start || new Date(), 'yyyy-MM-dd');
+  const endDate = isMonthQuery
+    ? format(new Date(targetMonth!.getFullYear(), targetMonth!.getMonth() + 1, 0), 'yyyy-MM-dd')
+    : format(period.end || new Date(), 'yyyy-MM-dd');
 
   const { data: sales = [], isLoading } = useQuery({
-    queryKey: ['message-sales', clientId, startOfMonth, endOfMonth],
+    queryKey: ['message-sales', clientId, startDate, endDate],
     queryFn: async () => {
       if (!clientId) return [];
       const { data, error } = await supabase
         .from('message_sales')
         .select('*')
         .eq('client_id', clientId)
-        .gte('sale_date', startOfMonth)
-        .lte('sale_date', endOfMonth)
+        .gte('sale_date', startDate)
+        .lte('sale_date', endDate)
         .order('sale_date', { ascending: false });
 
       if (error) throw error;

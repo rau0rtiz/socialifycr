@@ -125,8 +125,10 @@ const Ventas = () => {
   const adCurrency = campaignsResult?.currency || 'USD';
   const totalAdSpend = campaigns.reduce((sum, c) => sum + c.spend, 0);
 
-  // Get all-time sales for the goal bar (current year)
+  // Current-month sales for summary widgets
   const { sales: allSales, summary } = useSalesTracking(clientId);
+  // Range-filtered sales for distribution charts
+  const { sales: chartSales } = useSalesTracking(clientId, { start: globalRange.start, end: globalRange.end });
   const { products: clientProducts } = useClientProducts(clientId);
 
   // Story tracker data for Alma Bendita — drives the goal bar
@@ -230,6 +232,37 @@ const Ventas = () => {
     }
     return GLOBAL_PERIOD_LABELS[globalPeriod];
   };
+
+  const hasSalesChartData = chartSales.some((sale) => sale.status === 'completed');
+
+  const renderEmptySalesCard = (title: string) => (
+    <Card className="border-border/50 shadow-sm h-full">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm text-foreground">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex min-h-[240px] items-center justify-center">
+        <p className="max-w-xs text-center text-sm text-muted-foreground">
+          No hay ventas completadas en el período seleccionado.
+        </p>
+      </CardContent>
+    </Card>
+  );
+
+  const salesDistributionSection = (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {hasSalesChartData ? (
+        <>
+          <SalesByProductChart sales={chartSales} products={clientProducts} />
+          <SalesByBrandChart sales={chartSales} />
+        </>
+      ) : (
+        <>
+          {renderEmptySalesCard('Ventas por Producto')}
+          {renderEmptySalesCard('Ventas por Marca')}
+        </>
+      )}
+    </div>
+  );
 
   return (
     <DashboardLayout>
@@ -386,10 +419,7 @@ const Ventas = () => {
           <>
             <StoryRevenueTracker clientId={selectedClient.id} />
             <StoryStoreSales clientId={selectedClient.id} />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SalesByProductChart sales={allSales} products={clientProducts} />
-              <SalesByBrandChart sales={allSales} />
-            </div>
+            {salesDistributionSection}
           </>
         )}
 
@@ -458,10 +488,7 @@ const Ventas = () => {
         )}
 
         {/* Bottom section: charts side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SalesByProductChart sales={allSales} products={clientProducts} />
-          <SalesByBrandChart sales={allSales} />
-        </div>
+        {!isAlmaBendita && salesDistributionSection}
 
         {!isSpkUp && !isSilvia && !isAlmaBendita && (
           <ClosureRateWidget appointments={appointments} />
