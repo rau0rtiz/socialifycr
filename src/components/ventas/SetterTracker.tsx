@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { ChecklistItem, DEFAULT_CHECKLIST_ITEMS } from '@/hooks/use-client-features';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +41,7 @@ interface SetterTrackerProps {
   onConvertToSale?: (appointment: SetterAppointment) => void;
   periodStartIso?: string;
   showChecklist?: boolean;
+  checklistItems?: ChecklistItem[];
 }
 
 const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; color: string; icon: React.ElementType }> = {
@@ -52,7 +54,7 @@ const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; col
   cancelled: { label: 'Cancelada', color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle },
 };
 
-export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodStartIso, showChecklist = true }: SetterTrackerProps) => {
+export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodStartIso, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS }: SetterTrackerProps) => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SetterAppointment | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
