@@ -42,6 +42,7 @@ serve(async (req) => {
 Extract any visible text that could be: customer name, phone number, brand/product name, price/amount, or any other sale-related info.
 Use the provided tool to return structured data. If a field is not found, set it to null.
 Focus on text overlays, captions, and any written content visible in the image.
+IMPORTANT for amounts: In Costa Rica, dots are used as THOUSANDS separators (e.g. "11.900" means eleven thousand nine hundred = 11900, NOT 11.9). Always interpret dots in prices as thousands separators and return the full integer amount. For example: "11.900" → 11900, "1.500" → 1500, "25.000" → 25000.
 Amounts should be numbers only (no currency symbols). Phone numbers should include only digits and dashes.`,
           },
           {
