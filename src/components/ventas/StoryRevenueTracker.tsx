@@ -236,21 +236,19 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
                 {calendarDays.map(day => {
                   const ds = format(day, 'yyyy-MM-dd');
                   const entry = entriesByDate[ds];
-                  const isCurrentMonth = isSameMonth(day, currentMonth);
                   const isTodayCR = isSameDay(day, crToday);
                   const future = isFuture(day) && !isTodayCR;
                   const hasData = !!entry && (entry.stories_count > 0 || entry.daily_revenue > 0);
-                  const isMissing = isCurrentMonth && !hasData && !future;
+                  const isMissing = !hasData && !future;
 
                   const dayContent = (
                     <button
-                      onClick={() => !future && isCurrentMonth && openEditor(day)}
-                      disabled={future || !isCurrentMonth}
+                      onClick={() => !future && openEditor(day)}
+                      disabled={future}
                       className={cn(
                         'relative flex flex-col items-center justify-center rounded-xl aspect-square w-full transition-all duration-200',
-                        !isCurrentMonth && 'opacity-20 cursor-default',
-                        isCurrentMonth && !future && 'cursor-pointer hover:scale-105 hover:shadow-sm',
-                        future && isCurrentMonth && 'opacity-40 cursor-default',
+                        !future && 'cursor-pointer hover:scale-105 hover:shadow-sm',
+                        future && 'opacity-40 cursor-default',
                         hasData && 'bg-emerald-500/10 dark:bg-emerald-500/15',
                         isMissing && 'bg-muted/40',
                         isTodayCR && 'ring-2 ring-primary ring-offset-1 ring-offset-background',
