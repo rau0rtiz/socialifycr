@@ -128,6 +128,8 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
       toast.success('¡Venta registrada!');
       setDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['sold-story-ids', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['sales', clientId] });
     } catch (err: any) {
       toast.error(err?.message || 'Error al registrar venta');
     } finally {
