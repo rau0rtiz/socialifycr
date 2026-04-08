@@ -360,7 +360,13 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             <DialogTitle className="flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" />
               Registrar Venta
-              {selectedStory?.scannedData && (selectedStory.scannedData.customer_name || selectedStory.scannedData.brand || selectedStory.scannedData.amount) && (
+              {scanning && (
+                <Badge variant="secondary" className="ml-2 gap-1 text-[10px] animate-pulse">
+                  <Sparkles className="h-3 w-3" />
+                  Escaneando...
+                </Badge>
+              )}
+              {!scanning && customerName && (
                 <Badge variant="secondary" className="ml-2 gap-1 text-[10px]">
                   <Sparkles className="h-3 w-3" />
                   Auto-escaneado
