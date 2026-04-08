@@ -82,7 +82,6 @@ export const VENTAS_WIDGET_LABELS: Record<string, string> = {
   setter_tracker: 'Agendas',
   setter_checklist: 'Checklist Pre-llamada',
   sales_tracking: 'Ventas por Mensajes',
-  monthly_sales_report: 'Reporte Mensual de Ventas',
 };
 
 export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
@@ -91,6 +90,10 @@ export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
   video_ideas: 'Ideas de Video',
   competitors: 'Competidores',
   generador_pauta: 'Generador de Pauta',
+};
+
+export const REPORTES_WIDGET_LABELS: Record<string, string> = {
+  monthly_sales_report: 'Reporte Mensual de Ventas',
 };
 
 // Combined for backward compat
