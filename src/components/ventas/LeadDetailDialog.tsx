@@ -20,6 +20,7 @@ interface LeadDetailDialogProps {
   onDelete?: (id: string) => Promise<void>;
   clientId?: string;
   hasAdAccount?: boolean;
+  showChecklist?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -48,7 +49,7 @@ const CHECKLIST_ITEMS = [
   { key: 'checklist_testimonials', label: 'Ya se enviaron los testimonios' },
 ];
 
-export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount }: LeadDetailDialogProps) => {
+export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount, showChecklist = true }: LeadDetailDialogProps) => {
   const [checklist, setChecklist] = useState({
     checklist_quiz: false,
     checklist_video: false,
@@ -169,36 +170,38 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
               <p className="text-sm text-foreground whitespace-pre-wrap">{notSoldReason}</p>
             </div>
           )}
-          <div className="rounded-lg border border-border p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-medium">
-                <ClipboardCheck className="h-3.5 w-3.5 text-muted-foreground" />
-                Checklist Pre-llamada
+          {showChecklist && (
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-medium">
+                  <ClipboardCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                  Checklist Pre-llamada
+                </div>
+                <Badge variant="outline" className="text-[10px]">
+                  {completedCount}/{CHECKLIST_ITEMS.length}
+                </Badge>
               </div>
-              <Badge variant="outline" className="text-[10px]">
-                {completedCount}/{CHECKLIST_ITEMS.length}
-              </Badge>
+              <div className="space-y-2.5">
+                {CHECKLIST_ITEMS.map(item => (
+                  <label key={item.key} className="flex items-center gap-2.5 cursor-pointer group">
+                    <Checkbox
+                      checked={checklist[item.key as keyof typeof checklist]}
+                      onCheckedChange={() => toggleCheck(item.key)}
+                    />
+                    <span className={`text-sm transition-colors ${checklist[item.key as keyof typeof checklist] ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                      {item.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {dirty && onUpdateChecklist && (
+                <Button size="sm" className="w-full h-8 text-xs" onClick={saveChecklist}>
+                  <Save className="h-3 w-3 mr-1" />
+                  Guardar checklist
+                </Button>
+              )}
             </div>
-            <div className="space-y-2.5">
-              {CHECKLIST_ITEMS.map(item => (
-                <label key={item.key} className="flex items-center gap-2.5 cursor-pointer group">
-                  <Checkbox
-                    checked={checklist[item.key as keyof typeof checklist]}
-                    onCheckedChange={() => toggleCheck(item.key)}
-                  />
-                  <span className={`text-sm transition-colors ${checklist[item.key as keyof typeof checklist] ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                    {item.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-            {dirty && onUpdateChecklist && (
-              <Button size="sm" className="w-full h-8 text-xs" onClick={saveChecklist}>
-                <Save className="h-3 w-3 mr-1" />
-                Guardar checklist
-              </Button>
-            )}
-          </div>
+          )}
 
           <div className="divide-y divide-border">
             <div className="pb-3 space-y-0.5">
