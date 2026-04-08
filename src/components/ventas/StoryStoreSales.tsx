@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useStories, Story } from '@/hooks/use-stories';
 import { useSalesTracking, SaleInput } from '@/hooks/use-sales-tracking';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
@@ -31,16 +31,27 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Fetch current user's profile name for default seller
+  const { data: profileName } = useQuery({
+    queryKey: ['profile-name', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return '';
+      const { data } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+      return data?.full_name || '';
+    },
+    enabled: !!user?.id,
+  });
+
   // Fetch all story sales with details
   const { data: soldStoryData = [] } = useQuery({
     queryKey: ['sold-story-ids', clientId],
     queryFn: async () => {
       const { data } = await supabase
         .from('message_sales')
-        .select('story_id, amount, currency, customer_name, sale_date, product')
+        .select('story_id, amount, currency, customer_name, sale_date, product, brand')
         .eq('client_id', clientId)
         .not('story_id', 'is', null);
-      return (data || []) as { story_id: string; amount: number; currency: string; customer_name: string | null; sale_date: string; product: string | null }[];
+      return (data || []) as { story_id: string; amount: number; currency: string; customer_name: string | null; sale_date: string; product: string | null; brand: string | null }[];
     },
     enabled: !!clientId,
   });
@@ -57,19 +68,23 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [product, setProduct] = useState('Pieza única');
-  const [amount, setAmount] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [brand, setBrand] = useState('');
+  const [amount, setAmount] = useState('');
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [sellerName, setSellerName] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const openSaleDialog = (story: Story) => {
     setSelectedStory(story);
-    setProduct('Pieza única');
-    setAmount('');
     setCustomerName('');
+    setCustomerPhone('');
+    setBrand('');
+    setAmount('');
     setSaleDate(format(new Date(), 'yyyy-MM-dd'));
+    setSellerName(profileName || '');
     setNotes('');
     setDialogOpen(true);
   };
@@ -79,6 +94,10 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
       toast.error('Ingresa un monto válido');
       return;
     }
+    if (!customerName.trim()) {
+      toast.error('El nombre del cliente es requerido');
+      return;
+    }
     setSubmitting(true);
     try {
       const saleInput: SaleInput = {
@@ -86,8 +105,10 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
         amount: Number(amount),
         currency: 'CRC',
         source: 'story',
-        product,
-        customer_name: customerName || undefined,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim() || undefined,
+        brand: brand.trim() || undefined,
+        closer_name: sellerName.trim() || undefined,
         notes: notes || undefined,
         story_id: selectedStory.storyId,
       };
@@ -235,6 +256,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                 <div className="absolute inset-0 bg-green-500/20" />
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
                   <p className="text-white text-[11px] font-bold">{currSymbol}{sale?.amount?.toLocaleString()}</p>
+                  {sale?.brand && <p className="text-white/70 text-[9px] truncate">{sale.brand}</p>}
                   {sale?.customer_name && <p className="text-white/70 text-[9px] truncate">{sale.customer_name}</p>}
                 </div>
                 <div className="absolute top-1.5 right-1.5 bg-green-500 rounded-full p-1">
@@ -324,12 +346,33 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
               {/* Form - right side */}
               <div className="flex-1 flex flex-col gap-3 justify-between">
                 <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Cliente *</Label>
+                      <Input
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="Nombre del cliente"
+                        className="h-9 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Teléfono</Label>
+                      <Input
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="8888-8888"
+                        className="h-9 text-sm"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <Label className="text-xs">Producto</Label>
+                    <Label className="text-xs">Marca</Label>
                     <Input
-                      value={product}
-                      onChange={(e) => setProduct(e.target.value)}
-                      placeholder="Pieza única"
+                      value={brand}
+                      onChange={(e) => setBrand(e.target.value)}
+                      placeholder="Nombre de la marca"
                       className="h-9 text-sm"
                     />
                   </div>
@@ -358,17 +401,17 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                   </div>
 
                   <div>
-                    <Label className="text-xs">Cliente (opcional)</Label>
+                    <Label className="text-xs">Vendedor</Label>
                     <Input
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="Nombre del cliente"
+                      value={sellerName}
+                      onChange={(e) => setSellerName(e.target.value)}
+                      placeholder="Nombre del vendedor"
                       className="h-9 text-sm"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-xs">Notas (opcional)</Label>
+                    <Label className="text-xs">Notas adicionales</Label>
                     <Input
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
@@ -380,7 +423,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
                 <Button
                   onClick={handleSubmit}
-                  disabled={submitting || !amount}
+                  disabled={submitting || !amount || !customerName.trim()}
                   className="w-full"
                 >
                   {submitting ? 'Registrando...' : 'Registrar Venta'}
