@@ -1,0 +1,1 @@
+ALTER TABLE public.setter_daily_reports ADD COLUMN links_sent integer NOT NULL DEFAULT 0;

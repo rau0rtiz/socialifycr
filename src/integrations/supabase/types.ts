@@ -1639,6 +1639,7 @@ export type Database = {
           followups: number
           id: string
           ig_conversations: number
+          links_sent: number
           report_date: string
           updated_at: string | null
           wa_conversations: number
@@ -1652,6 +1653,7 @@ export type Database = {
           followups?: number
           id?: string
           ig_conversations?: number
+          links_sent?: number
           report_date: string
           updated_at?: string | null
           wa_conversations?: number
@@ -1665,6 +1667,7 @@ export type Database = {
           followups?: number
           id?: string
           ig_conversations?: number
+          links_sent?: number
           report_date?: string
           updated_at?: string | null
           wa_conversations?: number
