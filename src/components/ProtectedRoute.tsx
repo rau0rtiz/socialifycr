@@ -16,6 +16,11 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { clientsLoading, selectedClient, clientBrands } = useBrand();
   const [splashDone, setSplashDone] = useState(() => sessionStorage.getItem(SPLASH_KEY) === 'true');
 
+  const handleSplashComplete = useCallback(() => {
+    sessionStorage.setItem(SPLASH_KEY, 'true');
+    setSplashDone(true);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -36,11 +41,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       </div>
     );
   }
-
-  const handleSplashComplete = useCallback(() => {
-    sessionStorage.setItem(SPLASH_KEY, 'true');
-    setSplashDone(true);
-  }, []);
 
   // Show splash once per session
   if (!splashDone && selectedClient) {
