@@ -251,7 +251,6 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                     <ImageIcon className="h-8 w-8 text-muted-foreground" />
                   </div>
                 )}
-                </div>
               </div>
 
               {/* Form - right side */}
