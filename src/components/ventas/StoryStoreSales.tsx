@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useStories, Story } from '@/hooks/use-stories';
 import { useSalesTracking, SaleInput } from '@/hooks/use-sales-tracking';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { ShoppingBag, Check, Play, Image as ImageIcon, Zap, Archive } from 'lucide-react';
+import { ShoppingBag, Check, Play, Image as ImageIcon, Zap, Archive, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -28,21 +29,31 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const { activeStories, archivedStories, isLoading } = useStories(clientId);
   const { addSale } = useSalesTracking(clientId);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  // Fetch all story_ids that already have sales linked
-  const { data: soldStoryIds = [] } = useQuery({
+  // Fetch all story sales with details
+  const { data: soldStoryData = [] } = useQuery({
     queryKey: ['sold-story-ids', clientId],
     queryFn: async () => {
       const { data } = await supabase
         .from('message_sales')
-        .select('story_id')
+        .select('story_id, amount, currency, customer_name, sale_date, product')
         .eq('client_id', clientId)
         .not('story_id', 'is', null);
-      return (data || []).map((r: any) => r.story_id as string);
+      return (data || []) as { story_id: string; amount: number; currency: string; customer_name: string | null; sale_date: string; product: string | null }[];
     },
     enabled: !!clientId,
   });
-  const soldSet = new Set(soldStoryIds);
+  const soldSet = new Set(soldStoryData.map(s => s.story_id));
+  const soldMap = new Map(soldStoryData.map(s => [s.story_id, s]));
+
+  // Filter unsold stories for active/archived tabs
+  const unsoldActive = useMemo(() => activeStories.filter(s => !soldSet.has(s.storyId)), [activeStories, soldSet]);
+  const unsoldArchived = useMemo(() => archivedStories.filter(s => !soldSet.has(s.storyId)), [archivedStories, soldSet]);
+
+  // Sold stories (from both active + archived)
+  const allStories = useMemo(() => [...activeStories, ...archivedStories], [activeStories, archivedStories]);
+  const soldStories = useMemo(() => allStories.filter(s => soldSet.has(s.storyId)), [allStories, soldSet]);
 
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -117,6 +128,8 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
       toast.success('¡Venta registrada!');
       setDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['sold-story-ids', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['sales', clientId] });
     } catch (err: any) {
       toast.error(err?.message || 'Error al registrar venta');
     } finally {
@@ -187,6 +200,47 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     );
   };
 
+  const renderSoldStories = () => {
+    if (soldStories.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-[178px] text-sm text-muted-foreground">
+          No hay historias vendidas
+        </div>
+      );
+    }
+    return (
+      <ScrollArea className="w-full max-h-[580px]">
+        <div className="grid grid-cols-[repeat(auto-fill,100px)] gap-3 pb-3">
+          {soldStories.map((story) => {
+            const sale = soldMap.get(story.storyId);
+            const isVideo = story.mediaType === 'VIDEO';
+            const thumb = story.thumbnailUrl || story.mediaUrl;
+            const currSymbol = sale?.currency === 'CRC' ? '₡' : '$';
+            return (
+              <div key={story.id} className="relative flex-shrink-0 w-[100px] h-[178px] rounded-xl overflow-hidden border-2 border-green-500/50">
+                {thumb ? (
+                  <img src={thumb} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                    {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-green-500/20" />
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
+                  <p className="text-white text-[11px] font-bold">{currSymbol}{sale?.amount?.toLocaleString()}</p>
+                  {sale?.customer_name && <p className="text-white/70 text-[9px] truncate">{sale.customer_name}</p>}
+                </div>
+                <div className="absolute top-1.5 right-1.5 bg-green-500 rounded-full p-1">
+                  <Check className="h-3 w-3 text-white" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+    );
+  };
+
   return (
     <>
       <Card>
@@ -208,18 +262,25 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
               <TabsList className="mb-3">
                 <TabsTrigger value="activas" className="gap-1.5 text-xs">
                   <Zap className="h-3.5 w-3.5" />
-                  Activas ({activeStories.length})
+                  Activas ({unsoldActive.length})
                 </TabsTrigger>
                 <TabsTrigger value="archivadas" className="gap-1.5 text-xs">
                   <Archive className="h-3.5 w-3.5" />
-                  Archivadas ({archivedStories.length})
+                  Archivadas ({unsoldArchived.length})
+                </TabsTrigger>
+                <TabsTrigger value="vendidas" className="gap-1.5 text-xs">
+                  <Tag className="h-3.5 w-3.5" />
+                  Vendidas ({soldStories.length})
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="activas">
-                {renderStories(activeStories)}
+                {renderStories(unsoldActive)}
               </TabsContent>
               <TabsContent value="archivadas">
-                {renderStories(archivedStories)}
+                {renderStories(unsoldArchived)}
+              </TabsContent>
+              <TabsContent value="vendidas">
+                {renderSoldStories()}
               </TabsContent>
             </Tabs>
           )}
