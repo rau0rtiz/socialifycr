@@ -296,15 +296,64 @@ const Ventas = () => {
         </div>
 
         {/* === Sales Goal Bar — at top for priority clients === */}
-        {(isMindCoach || isHildaLopez || isAlmaBendita) && (
+        {(isMindCoach || isHildaLopez) && (
           <SalesGoalBar
             clientId={selectedClient.id}
-            currentSalesUSD={isAlmaBendita ? 0 : summary.totalUSD}
-            currentSalesCRC={isAlmaBendita ? storyTotals.daily_revenue : summary.totalCRC}
+            currentSalesUSD={summary.totalUSD}
+            currentSalesCRC={summary.totalCRC}
             primaryColor={selectedClient.primary_color || undefined}
             accentColor={selectedClient.accent_color || undefined}
           />
         )}
+
+        {/* Alma Bendita: Goal bar + trend chart side by side */}
+        {isAlmaBendita && (() => {
+          const chartConfig = {
+            stories: { label: 'Historias', color: 'hsl(var(--primary))' },
+            revenue: { label: 'Ventas', color: 'hsl(142 71% 45%)' },
+          };
+          const chartEntries = (storyChartData || []).map((e: any) => ({
+            date: format(new Date(e.track_date + 'T12:00:00'), 'dd/MM', { locale: es }),
+            stories: e.stories_count,
+            revenue: e.daily_revenue,
+          }));
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SalesGoalBar
+                clientId={selectedClient.id}
+                currentSalesUSD={0}
+                currentSalesCRC={storyTotals.daily_revenue}
+                primaryColor={selectedClient.primary_color || undefined}
+                accentColor={selectedClient.accent_color || undefined}
+              />
+              {chartEntries.length > 1 && (
+                <Card>
+                  <CardHeader className="pb-2 px-5 pt-5">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-muted">
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      Tendencia (últimos 30 días)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-5 pb-5">
+                    <ChartContainer config={chartConfig} className="h-[200px] w-full">
+                      <ComposedChart data={chartEntries}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar yAxisId="left" dataKey="stories" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={16} name="Historias" />
+                        <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="hsl(142 71% 45%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(142 71% 45%)' }} name="Ventas" />
+                      </ComposedChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          );
+        })()}
 
         {/* === MIND COACH: Pipeline Summary === */}
         {(isMindCoach || isHildaLopez) && (
