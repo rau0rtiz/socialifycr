@@ -13,6 +13,7 @@ import { CollectionsWidget } from '@/components/ventas/CollectionsWidget';
 import { SpeakUpSalesSummary } from '@/components/ventas/SpeakUpSalesSummary';
 import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
+import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
 
 
 import { useBrand } from '@/contexts/BrandContext';
@@ -97,6 +98,7 @@ const Ventas = () => {
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const isSilvia = selectedClient?.name?.toLowerCase().includes('silvia');
   const isRobertoOlivas = selectedClient?.name?.toLowerCase().includes('roberto olivas');
+  const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
 
   // Global time range state
   const [globalPeriod, setGlobalPeriod] = useState<GlobalPeriod>('this_month');
@@ -320,6 +322,11 @@ const Ventas = () => {
         {/* === DRA SILVIA: Clinic KPI Summary === */}
         {isSilvia && (
           <ClinicSalesSummary clientId={selectedClient.id} />
+        )}
+
+        {/* === ALMA BENDITA: Story & Revenue Daily Tracker === */}
+        {isAlmaBendita && (
+          <StoryRevenueTracker clientId={selectedClient.id} />
         )}
 
         {/* Sales Goal Bar — for other clients */}
