@@ -14,7 +14,7 @@ import { SpeakUpSalesSummary } from '@/components/ventas/SpeakUpSalesSummary';
 import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
 import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
-
+import { StoryStoreSales } from '@/components/ventas/StoryStoreSales';
 
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
@@ -330,7 +330,10 @@ const Ventas = () => {
 
         {/* === ALMA BENDITA: Story & Revenue Daily Tracker === */}
         {isAlmaBendita && (
-          <StoryRevenueTracker clientId={selectedClient.id} />
+          <>
+            <StoryRevenueTracker clientId={selectedClient.id} />
+            <StoryStoreSales clientId={selectedClient.id} />
+          </>
         )}
 
         {/* Sales Goal Bar — for other clients */}
