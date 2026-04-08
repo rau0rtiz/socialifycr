@@ -304,7 +304,7 @@ export const StoryRevenueTracker = ({ clientId }: StoryRevenueTrackerProps) => {
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
-                  Resumen del mes
+                  Resumen de la semana
                 </p>
                 {[
                   { icon: Film, label: 'Historias', value: totals.stories_count, color: 'text-primary', sparkColor: 'hsl(var(--primary))', bgFrom: 'from-primary/10', bgTo: 'to-primary/0', borderColor: 'border-primary/15', data: sparklineData.stories },

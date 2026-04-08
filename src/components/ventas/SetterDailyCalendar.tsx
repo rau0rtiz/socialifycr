@@ -95,10 +95,11 @@ const DayTooltipContent = ({ report, date }: { report: SetterDailyReport; date: 
 );
 
 export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const currentMonth = currentWeek;
   const { reports, reportsByDate, isLoading, upsertReport } = useSetterDailyReports(clientId, currentMonth);
 
   // Form state
