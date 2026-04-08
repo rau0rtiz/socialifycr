@@ -8,16 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ProductsManager } from '@/components/ventas/ProductsManager';
+import { useClientFeatures } from '@/hooks/use-client-features';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
 import { AIContextEditor } from '@/components/clientes/AIContextEditor';
 import { ClientBanner } from '@/components/dashboard/ClientBanner';
-import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain } from 'lucide-react';
+import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain, ToggleRight } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Section = null | 'brand' | 'products' | 'team' | 'connections';
+type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features';
 
 const SECTIONS = [
   {
@@ -52,12 +54,21 @@ const SECTIONS = [
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10',
   },
+  {
+    key: 'features' as const,
+    title: 'Funcionalidades',
+    description: 'Activa o desactiva funciones opcionales',
+    icon: ToggleRight,
+    color: 'text-pink-500',
+    bgColor: 'bg-pink-500/10',
+  },
 ];
 
 const BusinessSetup = () => {
   const { selectedClient, clientsLoading } = useBrand();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<Section>(null);
+  const { flags: featureFlags, updateFlag } = useClientFeatures(selectedClient?.id || null);
 
   const [logoUrl, setLogoUrl] = useState('');
   const [primaryColor, setPrimaryColor] = useState('');
@@ -256,11 +267,50 @@ const BusinessSetup = () => {
     </Card>
   );
 
+  const renderFeatures = () => {
+
+    const OPTIONAL_FEATURES = [
+      { key: 'setter_checklist', label: 'Checklist Pre-llamada', description: 'Muestra un checklist de preparación en cada agenda (quiz, video, WhatsApp, testimonios)' },
+    ];
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Funcionalidades Opcionales</CardTitle>
+          <CardDescription>Activa o desactiva funciones específicas para este cliente</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {OPTIONAL_FEATURES.map(feature => (
+            <div key={feature.key} className="flex items-center justify-between rounded-lg border border-border p-4">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">{feature.label}</Label>
+                <p className="text-xs text-muted-foreground">{feature.description}</p>
+              </div>
+              <Switch
+                checked={(featureFlags as any)[feature.key] ?? true}
+                onCheckedChange={(value) => {
+                  updateFlag.mutate(
+                    { flag: feature.key, value },
+                    {
+                      onSuccess: () => toast.success(`${feature.label} ${value ? 'activado' : 'desactivado'}`),
+                      onError: () => toast.error('Error al actualizar'),
+                    }
+                  );
+                }}
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  };
+
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     brand: renderBrand,
     products: renderProducts,
     team: renderTeam,
     connections: renderConnections,
+    features: renderFeatures,
   };
 
   return (

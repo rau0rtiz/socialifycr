@@ -1,0 +1,1 @@
+ALTER TABLE public.client_feature_flags ADD COLUMN setter_checklist boolean NOT NULL DEFAULT true;

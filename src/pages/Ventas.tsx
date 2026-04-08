@@ -354,7 +354,7 @@ const Ventas = () => {
             hasAdAccount={hasAdAccount}
             onConvertToSale={handleConvertToSale}
             periodStartIso={periodStartIso}
-            showChecklist={!isRobertoOlivas}
+            showChecklist={flags.setter_checklist}
           />
         )}
 
