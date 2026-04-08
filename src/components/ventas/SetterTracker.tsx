@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { ChecklistItem, DEFAULT_CHECKLIST_ITEMS } from '@/hooks/use-client-features';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +41,7 @@ interface SetterTrackerProps {
   onConvertToSale?: (appointment: SetterAppointment) => void;
   periodStartIso?: string;
   showChecklist?: boolean;
+  checklistItems?: ChecklistItem[];
 }
 
 const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; color: string; icon: React.ElementType }> = {
@@ -52,7 +54,7 @@ const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; col
   cancelled: { label: 'Cancelada', color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle },
 };
 
-export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodStartIso, showChecklist = true }: SetterTrackerProps) => {
+export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodStartIso, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS }: SetterTrackerProps) => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SetterAppointment | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -190,13 +192,22 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
     }
   };
 
-  // Checklist readiness: count completed items out of 4
+  // Checklist readiness: count completed items dynamically
   const getChecklistReadiness = (apt: SetterAppointment) => {
-    const items = [apt.checklist_quiz, apt.checklist_video, apt.checklist_whatsapp, apt.checklist_testimonials];
-    const done = items.filter(Boolean).length;
-    if (done === 4) return { level: 'ready' as const, label: 'Preparado', done, border: 'border-emerald-500/50', bg: 'bg-emerald-500/8', dot: 'bg-emerald-500' };
+    const total = checklistItems.length;
+    if (total === 0) return { level: 'ready' as const, label: '', done: 0, border: 'border-border', bg: 'bg-card', dot: 'bg-muted' };
+    
+    // Merge legacy fields with checklist_responses for backward compat
+    const responses = apt.checklist_responses || {};
+    const done = checklistItems.filter(item => {
+      if (item.key in responses) return responses[item.key];
+      // Fallback to legacy columns
+      return (apt as any)[item.key] ?? false;
+    }).length;
+
+    if (done === total) return { level: 'ready' as const, label: 'Preparado', done, border: 'border-emerald-500/50', bg: 'bg-emerald-500/8', dot: 'bg-emerald-500' };
     if (done === 0) return { level: 'none' as const, label: 'Sin preparar', done, border: 'border-red-500/50', bg: 'bg-red-500/8', dot: 'bg-red-500' };
-    return { level: 'partial' as const, label: `${done}/4 listo`, done, border: 'border-amber-500/50', bg: 'bg-amber-500/8', dot: 'bg-amber-500' };
+    return { level: 'partial' as const, label: `${done}/${total} listo`, done, border: 'border-amber-500/50', bg: 'bg-amber-500/8', dot: 'bg-amber-500' };
   };
 
   // Grid card - shows only name and date with checklist color coding
@@ -437,6 +448,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
         clientId={clientId}
         hasAdAccount={hasAdAccount}
         showChecklist={showChecklist}
+        checklistItems={checklistItems}
         onUpdateChecklist={async (id, updates) => {
           try {
             await updateAppointment.mutateAsync({ id, ...updates } as any);

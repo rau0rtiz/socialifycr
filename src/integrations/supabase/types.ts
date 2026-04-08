@@ -207,6 +207,7 @@ export type Database = {
         Row: {
           ai_insights: boolean
           campaigns: boolean
+          checklist_items: Json
           client_id: string
           competitors: boolean
           contenido_section: boolean
@@ -232,6 +233,7 @@ export type Database = {
         Insert: {
           ai_insights?: boolean
           campaigns?: boolean
+          checklist_items?: Json
           client_id: string
           competitors?: boolean
           contenido_section?: boolean
@@ -257,6 +259,7 @@ export type Database = {
         Update: {
           ai_insights?: boolean
           campaigns?: boolean
+          checklist_items?: Json
           client_id?: string
           competitors?: boolean
           contenido_section?: boolean
@@ -1536,6 +1539,7 @@ export type Database = {
           ad_name: string | null
           appointment_date: string
           checklist_quiz: boolean
+          checklist_responses: Json
           checklist_testimonials: boolean
           checklist_video: boolean
           checklist_whatsapp: boolean
@@ -1567,6 +1571,7 @@ export type Database = {
           ad_name?: string | null
           appointment_date: string
           checklist_quiz?: boolean
+          checklist_responses?: Json
           checklist_testimonials?: boolean
           checklist_video?: boolean
           checklist_whatsapp?: boolean
@@ -1598,6 +1603,7 @@ export type Database = {
           ad_name?: string | null
           appointment_date?: string
           checklist_quiz?: boolean
+          checklist_responses?: Json
           checklist_testimonials?: boolean
           checklist_video?: boolean
           checklist_whatsapp?: boolean

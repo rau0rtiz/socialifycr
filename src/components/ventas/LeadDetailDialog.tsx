@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ChecklistItem, DEFAULT_CHECKLIST_ITEMS } from '@/hooks/use-client-features';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,6 +22,7 @@ interface LeadDetailDialogProps {
   clientId?: string;
   hasAdAccount?: boolean;
   showChecklist?: boolean;
+  checklistItems?: ChecklistItem[];
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -42,20 +44,8 @@ const SOURCE_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
-const CHECKLIST_ITEMS = [
-  { key: 'checklist_quiz', label: 'Ya realizó el quiz' },
-  { key: 'checklist_video', label: 'Ya vio el video antes de la llamada' },
-  { key: 'checklist_whatsapp', label: 'Ya se creó el grupo de WhatsApp' },
-  { key: 'checklist_testimonials', label: 'Ya se enviaron los testimonios' },
-];
-
-export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount, showChecklist = true }: LeadDetailDialogProps) => {
-  const [checklist, setChecklist] = useState({
-    checklist_quiz: false,
-    checklist_video: false,
-    checklist_whatsapp: false,
-    checklist_testimonials: false,
-  });
+export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS }: LeadDetailDialogProps) => {
+  const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [dirty, setDirty] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -67,16 +57,22 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
 
   useEffect(() => {
     if (appointment) {
-      setChecklist({
-        checklist_quiz: appointment.checklist_quiz || false,
-        checklist_video: appointment.checklist_video || false,
-        checklist_whatsapp: appointment.checklist_whatsapp || false,
-        checklist_testimonials: appointment.checklist_testimonials || false,
-      });
+      // Build checklist state from checklist_responses + legacy columns
+      const responses = appointment.checklist_responses || {};
+      const state: Record<string, boolean> = {};
+      for (const item of checklistItems) {
+        if (item.key in responses) {
+          state[item.key] = !!responses[item.key];
+        } else {
+          // Fallback to legacy columns
+          state[item.key] = !!(appointment as any)[item.key];
+        }
+      }
+      setChecklist(state);
       setDirty(false);
       setShowAdSelector(false);
     }
-  }, [appointment?.id]);
+  }, [appointment?.id, checklistItems]);
 
   if (!appointment) return null;
 
@@ -87,13 +83,21 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
   const notSoldReason = apt.not_sold_reason || '';
 
   const toggleCheck = (key: string) => {
-    setChecklist(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }));
+    setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
     setDirty(true);
   };
 
   const saveChecklist = () => {
     if (onUpdateChecklist) {
-      onUpdateChecklist(apt.id, checklist);
+      // Save both legacy columns (for backward compat) and checklist_responses
+      const updates: Record<string, any> = { checklist_responses: checklist };
+      // Also update legacy columns if they exist
+      for (const key of ['checklist_quiz', 'checklist_video', 'checklist_whatsapp', 'checklist_testimonials']) {
+        if (key in checklist) {
+          updates[key] = checklist[key];
+        }
+      }
+      onUpdateChecklist(apt.id, updates);
       setDirty(false);
     }
   };
@@ -178,17 +182,17 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
                   Checklist Pre-llamada
                 </div>
                 <Badge variant="outline" className="text-[10px]">
-                  {completedCount}/{CHECKLIST_ITEMS.length}
+                  {completedCount}/{checklistItems.length}
                 </Badge>
               </div>
               <div className="space-y-2.5">
-                {CHECKLIST_ITEMS.map(item => (
+                {checklistItems.map(item => (
                   <label key={item.key} className="flex items-center gap-2.5 cursor-pointer group">
                     <Checkbox
-                      checked={checklist[item.key as keyof typeof checklist]}
+                      checked={checklist[item.key] ?? false}
                       onCheckedChange={() => toggleCheck(item.key)}
                     />
-                    <span className={`text-sm transition-colors ${checklist[item.key as keyof typeof checklist] ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                    <span className={`text-sm transition-colors ${checklist[item.key] ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                       {item.label}
                     </span>
                   </label>

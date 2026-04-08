@@ -355,6 +355,7 @@ const Ventas = () => {
             onConvertToSale={handleConvertToSale}
             periodStartIso={periodStartIso}
             showChecklist={flags.setter_checklist}
+            checklistItems={flags.checklist_items}
           />
         )}
 
