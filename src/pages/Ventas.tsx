@@ -13,6 +13,7 @@ import { CollectionsWidget } from '@/components/ventas/CollectionsWidget';
 import { SpeakUpSalesSummary } from '@/components/ventas/SpeakUpSalesSummary';
 import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
+import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
 
 
 import { useBrand } from '@/contexts/BrandContext';
