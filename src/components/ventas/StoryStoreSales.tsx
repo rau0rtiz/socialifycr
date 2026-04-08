@@ -161,10 +161,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
           </div>
         )}
 
-        {/* Time ago badge */}
-        <div className="absolute top-1 left-1 bg-black/60 rounded-md px-1.5 py-0.5">
-          <span className="text-white text-[8px] font-medium leading-none">{timeAgo}</span>
-        </div>
+        <span className="absolute top-1 right-1 text-white/70 text-[8px] font-medium drop-shadow-sm">{timeLabel}</span>
 
         {/* Sold overlay */}
         {isSold && (
