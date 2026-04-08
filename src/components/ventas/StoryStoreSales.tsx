@@ -140,6 +140,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const StoryCard = ({ story, isSold }: { story: Story; isSold: boolean }) => {
     const isVideo = story.mediaType === 'VIDEO';
     const thumb = story.thumbnailUrl || story.mediaUrl;
+    const timeAgo = formatDistanceToNow(parseISO(story.timestamp), { locale: es, addSuffix: false });
 
     return (
       <div
@@ -158,6 +159,11 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
           </div>
         )}
+
+        {/* Time ago badge */}
+        <div className="absolute top-1 left-1 bg-black/60 rounded-md px-1.5 py-0.5">
+          <span className="text-white text-[8px] font-medium leading-none">{timeAgo}</span>
+        </div>
 
         {/* Sold overlay */}
         {isSold && (
