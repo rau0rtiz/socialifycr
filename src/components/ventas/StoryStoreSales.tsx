@@ -140,7 +140,8 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const StoryCard = ({ story, isSold }: { story: Story; isSold: boolean }) => {
     const isVideo = story.mediaType === 'VIDEO';
     const thumb = story.thumbnailUrl || story.mediaUrl;
-    const timeAgo = formatDistanceToNow(parseISO(story.timestamp), { locale: es, addSuffix: false });
+    const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
+    const timeLabel = hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
 
     return (
       <div
