@@ -220,7 +220,8 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             const isVideo = story.mediaType === 'VIDEO';
             const thumb = story.thumbnailUrl || story.mediaUrl;
             const currSymbol = sale?.currency === 'CRC' ? '₡' : '$';
-            const timeAgo = formatDistanceToNow(parseISO(story.timestamp), { locale: es, addSuffix: false });
+            const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
+            const timeLabel = hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
             return (
               <div key={story.id} className="relative flex-shrink-0 w-[100px] h-[178px] rounded-xl overflow-hidden border-2 border-green-500/50">
                 {thumb ? (
