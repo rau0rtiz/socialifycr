@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBrand } from '@/contexts/BrandContext';
@@ -15,6 +15,11 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const { clientsLoading, selectedClient, clientBrands } = useBrand();
   const [splashDone, setSplashDone] = useState(() => sessionStorage.getItem(SPLASH_KEY) === 'true');
+
+  const handleSplashComplete = useCallback(() => {
+    sessionStorage.setItem(SPLASH_KEY, 'true');
+    setSplashDone(true);
+  }, []);
 
   if (loading) {
     return (
@@ -44,10 +49,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       <SplashScreen
         client={selectedClient}
         clientLogo={clientBrand?.logoUrl}
-        onComplete={() => {
-          sessionStorage.setItem(SPLASH_KEY, 'true');
-          setSplashDone(true);
-        }}
+        onComplete={handleSplashComplete}
       />
     );
   }
