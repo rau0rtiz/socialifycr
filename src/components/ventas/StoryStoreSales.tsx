@@ -205,7 +205,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
       <div
         onClick={() => !isSold && openSaleDialog(story)}
         className={cn(
-          'relative flex-shrink-0 w-[100px] h-[178px] rounded-xl overflow-hidden border-2 transition-all',
+          'relative flex-shrink-0 w-full sm:w-[100px] aspect-[9/16] sm:h-[178px] rounded-xl overflow-hidden border-2 transition-all',
           isSold
             ? 'border-green-500/50 opacity-70 cursor-default'
             : 'border-border hover:border-primary/50 cursor-pointer hover:scale-[1.03]'
@@ -253,7 +253,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     }
     return (
       <ScrollArea className="w-full max-h-[580px]">
-        <div className="grid grid-cols-[repeat(auto-fill,100px)] gap-3 pb-3">
+        <div className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,100px)] gap-2 sm:gap-3 pb-3">
           {stories.map((story) => (
             <StoryCard key={story.id} story={story} isSold={soldSet.has(story.storyId)} />
           ))}
@@ -272,7 +272,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     }
     return (
       <ScrollArea className="w-full max-h-[580px]">
-        <div className="grid grid-cols-[repeat(auto-fill,100px)] gap-3 pb-3">
+        <div className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,100px)] gap-2 sm:gap-3 pb-3">
           {soldStories.map((story) => {
             const sale = soldMap.get(story.storyId);
             const isVideo = story.mediaType === 'VIDEO';
@@ -281,7 +281,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
             const timeLabel = hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
             return (
-              <div key={story.id} className="relative flex-shrink-0 w-[100px] h-[178px] rounded-xl overflow-hidden border-2 border-green-500/50">
+              <div key={story.id} className="relative flex-shrink-0 w-full sm:w-[100px] aspect-[9/16] sm:h-[178px] rounded-xl overflow-hidden border-2 border-green-500/50">
                 {thumb ? (
                   <img src={thumb} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -355,9 +355,9 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
       {/* Sale registration dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 flex-wrap">
               <ShoppingBag className="h-4 w-4" />
               Registrar Venta
               {scanning && (
@@ -376,10 +376,10 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
           </DialogHeader>
 
           {selectedStory && (
-            <div className="flex gap-6">
-              {/* Story preview - left side */}
-              <div className="flex-shrink-0 w-[340px] h-[604px] rounded-xl overflow-hidden border bg-muted">
-              {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+              {/* Story preview */}
+              <div className="relative flex-shrink-0 w-full h-[280px] md:w-[340px] md:h-[604px] rounded-xl overflow-hidden border bg-muted">
+                {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
                   <img
                     src={selectedStory.thumbnailUrl || selectedStory.mediaUrl}
                     alt=""
@@ -398,7 +398,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                 )}
               </div>
 
-              {/* Form - right side */}
+              {/* Form */}
               <div className="flex-1 flex flex-col gap-3 justify-between">
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
