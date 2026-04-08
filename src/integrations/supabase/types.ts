@@ -27,6 +27,7 @@ export type Database = {
           permalink: string | null
           reach: number | null
           replies: number | null
+          scanned_data: Json | null
           story_id: string
           taps_back: number | null
           taps_forward: number | null
@@ -45,6 +46,7 @@ export type Database = {
           permalink?: string | null
           reach?: number | null
           replies?: number | null
+          scanned_data?: Json | null
           story_id: string
           taps_back?: number | null
           taps_forward?: number | null
@@ -63,6 +65,7 @@ export type Database = {
           permalink?: string | null
           reach?: number | null
           replies?: number | null
+          scanned_data?: Json | null
           story_id?: string
           taps_back?: number | null
           taps_forward?: number | null

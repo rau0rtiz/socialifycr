@@ -1,0 +1,1 @@
+ALTER TABLE public.archived_stories ADD COLUMN scanned_data jsonb DEFAULT NULL;
