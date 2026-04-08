@@ -29,7 +29,7 @@ import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useSetterDailyReports } from '@/hooks/use-setter-daily-reports';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { useClientProducts } from '@/hooks/use-client-products';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CalendarIcon } from 'lucide-react';
 import { SalePrefill } from '@/components/dashboard/RegisterSaleDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
