@@ -1,6 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface ChecklistItem {
+  key: string;
+  label: string;
+}
+
+export const DEFAULT_CHECKLIST_ITEMS: ChecklistItem[] = [
+  { key: 'checklist_quiz', label: 'Ya realizó el quiz' },
+  { key: 'checklist_video', label: 'Ya vio el video antes de la llamada' },
+  { key: 'checklist_whatsapp', label: 'Ya se creó el grupo de WhatsApp' },
+  { key: 'checklist_testimonials', label: 'Ya se enviaron los testimonios' },
+];
+
 export interface ClientFeatureFlags {
   id: string;
   client_id: string;
@@ -23,6 +35,7 @@ export interface ClientFeatureFlags {
   reportes_section: boolean;
   email_marketing_section: boolean;
   generador_pauta: boolean;
+  checklist_items: ChecklistItem[];
 }
 
 const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = {
