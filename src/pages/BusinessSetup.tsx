@@ -8,16 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ProductsManager } from '@/components/ventas/ProductsManager';
+import { useClientFeatures } from '@/hooks/use-client-features';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
 import { AIContextEditor } from '@/components/clientes/AIContextEditor';
 import { ClientBanner } from '@/components/dashboard/ClientBanner';
-import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain } from 'lucide-react';
+import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain, ToggleRight } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Section = null | 'brand' | 'products' | 'team' | 'connections';
+type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features';
 
 const SECTIONS = [
   {
@@ -51,6 +53,14 @@ const SECTIONS = [
     icon: Plug,
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10',
+  },
+  {
+    key: 'features' as const,
+    title: 'Funcionalidades',
+    description: 'Activa o desactiva funciones opcionales',
+    icon: ToggleRight,
+    color: 'text-pink-500',
+    bgColor: 'bg-pink-500/10',
   },
 ];
 
