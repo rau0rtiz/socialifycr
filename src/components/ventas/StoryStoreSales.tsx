@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { ShoppingBag, Check, Play, Image as ImageIcon, Zap, Archive, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
