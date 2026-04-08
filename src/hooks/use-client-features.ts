@@ -172,5 +172,27 @@ export const useClientFeatures = (clientId: string | null) => {
     },
   });
 
-  return { flags, isLoading, updateFlag, hasRecord: !!data };
+  const updateChecklistItems = useMutation({
+    mutationFn: async (items: ChecklistItem[]) => {
+      if (!clientId) throw new Error('No client selected');
+
+      if (data) {
+        const { error } = await supabase
+          .from('client_feature_flags')
+          .update({ checklist_items: items as any, updated_at: new Date().toISOString() })
+          .eq('client_id', clientId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('client_feature_flags')
+          .insert({ client_id: clientId, checklist_items: items as any });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-features', clientId] });
+    },
+  });
+
+  return { flags, isLoading, updateFlag, updateChecklistItems, hasRecord: !!data };
 };
