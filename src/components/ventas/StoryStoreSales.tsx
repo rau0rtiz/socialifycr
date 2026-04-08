@@ -299,7 +299,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
       {/* Sale registration dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" />
