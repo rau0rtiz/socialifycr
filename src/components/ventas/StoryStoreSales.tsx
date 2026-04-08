@@ -297,6 +297,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                 <div className="absolute inset-0 bg-green-500/20" />
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
                   <p className="text-white text-[11px] font-bold">{currSymbol}{sale?.amount?.toLocaleString()}</p>
+                  {sale?.product && <p className="text-white/70 text-[9px] truncate">{sale.product}</p>}
                   {sale?.brand && <p className="text-white/70 text-[9px] truncate">{sale.brand}</p>}
                   {sale?.customer_name && <p className="text-white/70 text-[9px] truncate">{sale.customer_name}</p>}
                 </div>
