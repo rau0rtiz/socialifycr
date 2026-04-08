@@ -326,6 +326,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
                   { icon: Phone, label: 'Conv. WhatsApp', value: totals.wa, color: 'text-green-500', sparkColor: '#22c55e', bgFrom: 'from-green-500/10', bgTo: 'to-green-500/0', borderColor: 'border-green-500/15', data: sparklineData.wa },
                   { icon: Users, label: 'Seguimientos', value: totals.followups, color: 'text-blue-500', sparkColor: '#3b82f6', bgFrom: 'from-blue-500/10', bgTo: 'to-blue-500/0', borderColor: 'border-blue-500/15', data: sparklineData.followups },
                   { icon: CalendarDays, label: 'Agendas', value: totals.appointments, color: 'text-purple-500', sparkColor: '#a855f7', bgFrom: 'from-purple-500/10', bgTo: 'to-purple-500/0', borderColor: 'border-purple-500/15', data: sparklineData.appointments },
+                  { icon: Link2, label: 'Links enviados', value: totals.links, color: 'text-orange-500', sparkColor: '#f97316', bgFrom: 'from-orange-500/10', bgTo: 'to-orange-500/0', borderColor: 'border-orange-500/15', data: sparklineData.links },
                 ].map(({ icon: Icon, label, value, color, sparkColor, bgFrom, bgTo, borderColor, data }) => (
                   <div key={label} className={cn('p-2.5 rounded-xl border bg-gradient-to-br', bgFrom, bgTo, borderColor)}>
                     <div className="flex items-center justify-between">
@@ -367,6 +368,7 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
                 { icon: Phone, color: 'border-l-green-500', label: 'Conv. WhatsApp', value: waConversations, set: setWaConversations },
                 { icon: Users, color: 'border-l-blue-500', label: 'Seguimientos', value: followups, set: setFollowups },
                 { icon: CalendarDays, color: 'border-l-purple-500', label: 'Agendas realizadas', value: appointmentsMade, set: setAppointmentsMade },
+                { icon: Link2, color: 'border-l-orange-500', label: 'Links enviados', value: linksSent, set: setLinksSent },
               ].map(({ icon: Icon, color, label, value, set }) => (
                 <div key={label} className={cn('border-l-[3px] pl-3 rounded-r-lg', color)}>
                   <Label className="text-[10px] flex items-center gap-1.5 mb-1.5 text-muted-foreground">
