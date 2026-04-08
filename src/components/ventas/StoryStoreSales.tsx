@@ -228,7 +228,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
       {/* Sale registration dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" />
@@ -237,86 +237,87 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
           </DialogHeader>
 
           {selectedStory && (
-            <div className="space-y-4">
-              {/* Story preview */}
-              <div className="flex justify-center">
-                <div className="w-[80px] h-[142px] rounded-lg overflow-hidden border">
-                  {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
-                    <img
-                      src={selectedStory.thumbnailUrl || selectedStory.mediaUrl}
-                      alt=""
-                      className="w-full h-full object-cover"
+            <div className="flex gap-6">
+              {/* Story preview - left side */}
+              <div className="flex-shrink-0 w-[200px] h-[356px] rounded-xl overflow-hidden border bg-muted">
+                {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
+                  <img
+                    src={selectedStory.thumbnailUrl || selectedStory.mediaUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+
+              {/* Form - right side */}
+              <div className="flex-1 flex flex-col gap-3 justify-between">
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs">Producto</Label>
+                    <Input
+                      value={product}
+                      onChange={(e) => setProduct(e.target.value)}
+                      placeholder="Pieza única"
+                      className="h-9 text-sm"
                     />
-                  ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Monto (₡)</Label>
+                      <Input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="15000"
+                        className="h-9 text-sm"
+                        min={0}
+                      />
                     </div>
-                  )}
-                </div>
-              </div>
+                    <div>
+                      <Label className="text-xs">Fecha</Label>
+                      <Input
+                        type="date"
+                        value={saleDate}
+                        onChange={(e) => setSaleDate(e.target.value)}
+                        className="h-9 text-sm"
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs">Producto</Label>
-                  <Input
-                    value={product}
-                    onChange={(e) => setProduct(e.target.value)}
-                    placeholder="Pieza única"
-                    className="h-9 text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs">Monto (₡)</Label>
+                    <Label className="text-xs">Cliente (opcional)</Label>
                     <Input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="15000"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Nombre del cliente"
                       className="h-9 text-sm"
-                      min={0}
                     />
                   </div>
+
                   <div>
-                    <Label className="text-xs">Fecha</Label>
+                    <Label className="text-xs">Notas (opcional)</Label>
                     <Input
-                      type="date"
-                      value={saleDate}
-                      onChange={(e) => setSaleDate(e.target.value)}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Detalles adicionales"
                       className="h-9 text-sm"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <Label className="text-xs">Cliente (opcional)</Label>
-                  <Input
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Nombre del cliente"
-                    className="h-9 text-sm"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs">Notas (opcional)</Label>
-                  <Input
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Detalles adicionales"
-                    className="h-9 text-sm"
-                  />
-                </div>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={submitting || !amount}
+                  className="w-full"
+                >
+                  {submitting ? 'Registrando...' : 'Registrar Venta'}
+                </Button>
               </div>
-
-              <Button
-                onClick={handleSubmit}
-                disabled={submitting || !amount}
-                className="w-full"
-              >
-                {submitting ? 'Registrando...' : 'Registrar Venta'}
-              </Button>
             </div>
           )}
         </DialogContent>
