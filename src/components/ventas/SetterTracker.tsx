@@ -192,13 +192,22 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
     }
   };
 
-  // Checklist readiness: count completed items out of 4
+  // Checklist readiness: count completed items dynamically
   const getChecklistReadiness = (apt: SetterAppointment) => {
-    const items = [apt.checklist_quiz, apt.checklist_video, apt.checklist_whatsapp, apt.checklist_testimonials];
-    const done = items.filter(Boolean).length;
-    if (done === 4) return { level: 'ready' as const, label: 'Preparado', done, border: 'border-emerald-500/50', bg: 'bg-emerald-500/8', dot: 'bg-emerald-500' };
+    const total = checklistItems.length;
+    if (total === 0) return { level: 'ready' as const, label: '', done: 0, border: 'border-border', bg: 'bg-card', dot: 'bg-muted' };
+    
+    // Merge legacy fields with checklist_responses for backward compat
+    const responses = apt.checklist_responses || {};
+    const done = checklistItems.filter(item => {
+      if (item.key in responses) return responses[item.key];
+      // Fallback to legacy columns
+      return (apt as any)[item.key] ?? false;
+    }).length;
+
+    if (done === total) return { level: 'ready' as const, label: 'Preparado', done, border: 'border-emerald-500/50', bg: 'bg-emerald-500/8', dot: 'bg-emerald-500' };
     if (done === 0) return { level: 'none' as const, label: 'Sin preparar', done, border: 'border-red-500/50', bg: 'bg-red-500/8', dot: 'bg-red-500' };
-    return { level: 'partial' as const, label: `${done}/4 listo`, done, border: 'border-amber-500/50', bg: 'bg-amber-500/8', dot: 'bg-amber-500' };
+    return { level: 'partial' as const, label: `${done}/${total} listo`, done, border: 'border-amber-500/50', bg: 'bg-amber-500/8', dot: 'bg-amber-500' };
   };
 
   // Grid card - shows only name and date with checklist color coding
