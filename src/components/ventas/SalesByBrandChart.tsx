@@ -103,7 +103,7 @@ export const SalesByBrandChart = ({ sales }: SalesByBrandChartProps) => {
                   />
                 }
               />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} nameKey="name">
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                 {data.map((entry, i) => (
                   <Cell key={i} fill={entry.fill} />
                 ))}
