@@ -68,7 +68,7 @@ const BusinessSetup = () => {
   const { selectedClient, clientsLoading } = useBrand();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<Section>(null);
-  const { flags: featureFlags, updateFlag } = useClientFeatures(selectedClient?.id || null);
+  const { flags: featureFlags, updateFlag, updateChecklistItems } = useClientFeatures(selectedClient?.id || null);
 
   const [logoUrl, setLogoUrl] = useState('');
   const [primaryColor, setPrimaryColor] = useState('');
@@ -268,40 +268,104 @@ const BusinessSetup = () => {
   );
 
   const renderFeatures = () => {
-
     const OPTIONAL_FEATURES = [
-      { key: 'setter_checklist', label: 'Checklist Pre-llamada', description: 'Muestra un checklist de preparación en cada agenda (quiz, video, WhatsApp, testimonios)' },
+      { key: 'setter_checklist', label: 'Checklist Pre-llamada', description: 'Muestra un checklist de preparación en cada agenda' },
     ];
 
+    const checklistItems = featureFlags.checklist_items || [];
+
+    const addChecklistItem = () => {
+      const newKey = `custom_${Date.now()}`;
+      const updated = [...checklistItems, { key: newKey, label: '' }];
+      updateChecklistItems.mutate(updated, {
+        onSuccess: () => toast.success('Item agregado'),
+        onError: () => toast.error('Error al agregar'),
+      });
+    };
+
+    const removeChecklistItem = (key: string) => {
+      const updated = checklistItems.filter(i => i.key !== key);
+      updateChecklistItems.mutate(updated, {
+        onSuccess: () => toast.success('Item eliminado'),
+        onError: () => toast.error('Error al eliminar'),
+      });
+    };
+
+    const updateItemLabel = (key: string, label: string) => {
+      const updated = checklistItems.map(i => i.key === key ? { ...i, label } : i);
+      updateChecklistItems.mutate(updated);
+    };
+
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Funcionalidades Opcionales</CardTitle>
-          <CardDescription>Activa o desactiva funciones específicas para este cliente</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {OPTIONAL_FEATURES.map(feature => (
-            <div key={feature.key} className="flex items-center justify-between rounded-lg border border-border p-4">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium">{feature.label}</Label>
-                <p className="text-xs text-muted-foreground">{feature.description}</p>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Funcionalidades Opcionales</CardTitle>
+            <CardDescription>Activa o desactiva funciones específicas para este cliente</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {OPTIONAL_FEATURES.map(feature => (
+              <div key={feature.key} className="flex items-center justify-between rounded-lg border border-border p-4">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">{feature.label}</Label>
+                  <p className="text-xs text-muted-foreground">{feature.description}</p>
+                </div>
+                <Switch
+                  checked={(featureFlags as any)[feature.key] ?? true}
+                  onCheckedChange={(value) => {
+                    updateFlag.mutate(
+                      { flag: feature.key, value },
+                      {
+                        onSuccess: () => toast.success(`${feature.label} ${value ? 'activado' : 'desactivado'}`),
+                        onError: () => toast.error('Error al actualizar'),
+                      }
+                    );
+                  }}
+                />
               </div>
-              <Switch
-                checked={(featureFlags as any)[feature.key] ?? true}
-                onCheckedChange={(value) => {
-                  updateFlag.mutate(
-                    { flag: feature.key, value },
-                    {
-                      onSuccess: () => toast.success(`${feature.label} ${value ? 'activado' : 'desactivado'}`),
-                      onError: () => toast.error('Error al actualizar'),
-                    }
-                  );
-                }}
-              />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </CardContent>
+        </Card>
+
+        {featureFlags.setter_checklist && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Items del Checklist</CardTitle>
+              <CardDescription>Personaliza los pasos de preparación que debe completar cada lead antes de la llamada</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {checklistItems.map((item, idx) => (
+                <div key={item.key} className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-5 shrink-0">{idx + 1}.</span>
+                  <Input
+                    value={item.label}
+                    onChange={(e) => updateItemLabel(item.key, e.target.value)}
+                    onBlur={() => {
+                      if (item.label.trim()) {
+                        updateChecklistItems.mutate(checklistItems);
+                      }
+                    }}
+                    placeholder="Ej: Ya vio el video introductorio"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeChecklistItem(item.key)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                  </Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={addChecklistItem}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Agregar item
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     );
   };
 
