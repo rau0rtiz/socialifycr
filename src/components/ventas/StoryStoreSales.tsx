@@ -228,7 +228,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
       {/* Sale registration dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" />
@@ -237,21 +237,20 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
           </DialogHeader>
 
           {selectedStory && (
-            <div className="space-y-4">
-              {/* Story preview */}
-              <div className="flex justify-center">
-                <div className="w-[80px] h-[142px] rounded-lg overflow-hidden border">
-                  {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
-                    <img
-                      src={selectedStory.thumbnailUrl || selectedStory.mediaUrl}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  )}
+            <div className="flex gap-6">
+              {/* Story preview - left side */}
+              <div className="flex-shrink-0 w-[200px] h-[356px] rounded-xl overflow-hidden border bg-muted">
+                {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
+                  <img
+                    src={selectedStory.thumbnailUrl || selectedStory.mediaUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
                 </div>
               </div>
 
