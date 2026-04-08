@@ -324,6 +324,11 @@ const Ventas = () => {
           <ClinicSalesSummary clientId={selectedClient.id} />
         )}
 
+        {/* === ALMA BENDITA: Story & Revenue Daily Tracker === */}
+        {isAlmaBendita && (
+          <StoryRevenueTracker clientId={selectedClient.id} />
+        )}
+
         {/* Sales Goal Bar — for other clients */}
         {!(isMindCoach || isHildaLopez) && (
           <SalesGoalBar
