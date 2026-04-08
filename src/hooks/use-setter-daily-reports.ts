@@ -72,6 +72,7 @@ export const useSetterDailyReports = (clientId: string | null, month?: Date) => 
             wa_conversations: input.wa_conversations,
             followups: input.followups,
             appointments_made: input.appointments_made,
+            links_sent: input.links_sent,
             day_notes: input.day_notes || null,
             updated_at: new Date().toISOString(),
           } as any)
@@ -87,6 +88,7 @@ export const useSetterDailyReports = (clientId: string | null, month?: Date) => 
             wa_conversations: input.wa_conversations,
             followups: input.followups,
             appointments_made: input.appointments_made,
+            links_sent: input.links_sent,
             day_notes: input.day_notes || null,
             created_by: user.id,
           } as any);
@@ -111,9 +113,10 @@ export const useSetterDailyReports = (clientId: string | null, month?: Date) => 
       wa_conversations: acc.wa_conversations + r.wa_conversations,
       followups: acc.followups + r.followups,
       appointments_made: acc.appointments_made + r.appointments_made,
+      links_sent: acc.links_sent + r.links_sent,
       totalConversations: acc.totalConversations + r.ig_conversations + r.wa_conversations,
     }),
-    { ig_conversations: 0, wa_conversations: 0, followups: 0, appointments_made: 0, totalConversations: 0 }
+    { ig_conversations: 0, wa_conversations: 0, followups: 0, appointments_made: 0, links_sent: 0, totalConversations: 0 }
   );
 
   return {
