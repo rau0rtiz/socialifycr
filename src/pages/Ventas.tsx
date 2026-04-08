@@ -288,8 +288,8 @@ const Ventas = () => {
           </div>
         </div>
 
-        {/* === Sales Goal Bar — at top for Mind Coach === */}
-        {(isMindCoach || isHildaLopez) && (
+        {/* === Sales Goal Bar — at top for priority clients === */}
+        {(isMindCoach || isHildaLopez || isAlmaBendita) && (
           <SalesGoalBar
             clientId={selectedClient.id}
             currentSalesUSD={summary.totalUSD}
