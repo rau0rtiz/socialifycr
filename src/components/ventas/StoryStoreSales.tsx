@@ -270,12 +270,13 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
       );
     }
     return (
-      <ScrollArea className="w-full max-h-[580px]">
+      <ScrollArea className="w-full h-[500px] sm:h-[580px]">
         <div className={storyGridClassName}>
           {stories.map((story) => (
             <StoryCard key={story.id} story={story} isSold={soldSet.has(story.storyId)} />
           ))}
         </div>
+        <ScrollBar orientation="vertical" />
       </ScrollArea>
     );
   };
@@ -289,7 +290,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
       );
     }
     return (
-      <ScrollArea className="w-full max-h-[580px]">
+      <ScrollArea className="w-full h-[500px] sm:h-[580px]">
         <div className={storyGridClassName}>
           {soldStories.map((story) => {
             const sale = soldMap.get(story.storyId);
@@ -329,6 +330,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             );
           })}
         </div>
+        <ScrollBar orientation="vertical" />
       </ScrollArea>
     );
   };
