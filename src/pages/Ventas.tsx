@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { TrendingUp } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
+import { TrendingUp, BookOpen, DollarSign, Zap, Star } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SalesTrackingSection } from '@/components/dashboard/SalesTrackingSection';
 import { AdSalesRanking } from '@/components/dashboard/AdSalesRanking';
@@ -348,9 +348,49 @@ const Ventas = () => {
           };
           const chartEntries = (storyChartData || []).map((e: any) => ({
             date: format(new Date(e.track_date + 'T12:00:00'), 'dd/MM', { locale: es }),
+            fullDate: format(new Date(e.track_date + 'T12:00:00'), 'dd MMM', { locale: es }),
             stories: e.stories_count,
             revenue: e.daily_revenue,
           }));
+
+          const totalStories = chartEntries.reduce((s: number, e: any) => s + e.stories, 0);
+          const totalRevenue = chartEntries.reduce((s: number, e: any) => s + e.revenue, 0);
+          const revenuePerStory = totalStories > 0 ? Math.round(totalRevenue / totalStories) : 0;
+          const bestDay = chartEntries.length > 0
+            ? chartEntries.reduce((best: any, e: any) => e.revenue > best.revenue ? e : best, chartEntries[0])
+            : null;
+
+          const formatCRC = (v: number) => v >= 1_000_000 ? `₡${(v / 1_000_000).toFixed(1)}M` : v >= 1_000 ? `₡${(v / 1_000).toFixed(0)}K` : `₡${v}`;
+
+          const CustomTooltip = ({ active, payload, label }: any) => {
+            if (!active || !payload?.length) return null;
+            const stories = payload.find((p: any) => p.dataKey === 'stories')?.value || 0;
+            const revenue = payload.find((p: any) => p.dataKey === 'revenue')?.value || 0;
+            const ratio = stories > 0 ? Math.round(revenue / stories) : 0;
+            return (
+              <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                <p className="font-medium mb-1.5">{label}</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="h-2.5 w-2.5 rounded-sm bg-primary" />
+                  <span className="text-muted-foreground">Historias:</span>
+                  <span className="font-medium ml-auto">{stories}</span>
+                </div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="h-2.5 w-2.5 rounded-sm" style={{ background: 'hsl(142 71% 45%)' }} />
+                  <span className="text-muted-foreground">Ventas:</span>
+                  <span className="font-medium ml-auto">{formatCRC(revenue)}</span>
+                </div>
+                {stories > 0 && (
+                  <div className="flex items-center gap-2 pt-1 border-t border-border/50 mt-1">
+                    <Zap className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-muted-foreground">₡/Historia:</span>
+                    <span className="font-medium ml-auto">{formatCRC(ratio)}</span>
+                  </div>
+                )}
+              </div>
+            );
+          };
+
           return (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <SalesGoalBar
@@ -370,25 +410,74 @@ const Ventas = () => {
                       Tendencia (últimos 30 días)
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="px-5 pb-5">
-                    <ChartContainer config={chartConfig} className="h-[200px] w-full">
-                      <ComposedChart data={chartEntries}>
+                  <CardContent className="px-5 pb-5 space-y-4">
+                    {/* Mini KPI cards */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="rounded-lg border bg-muted/30 p-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
+                          <BookOpen className="h-3 w-3" />
+                          <span className="text-[10px] uppercase tracking-wide">Historias</span>
+                        </div>
+                        <p className="text-lg font-bold">{totalStories}</p>
+                      </div>
+                      <div className="rounded-lg border bg-muted/30 p-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
+                          <DollarSign className="h-3 w-3" />
+                          <span className="text-[10px] uppercase tracking-wide">Ventas</span>
+                        </div>
+                        <p className="text-lg font-bold">{formatCRC(totalRevenue)}</p>
+                      </div>
+                      <div className="rounded-lg border bg-muted/30 p-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
+                          <Zap className="h-3 w-3" />
+                          <span className="text-[10px] uppercase tracking-wide">₡/Historia</span>
+                        </div>
+                        <p className="text-lg font-bold">{formatCRC(revenuePerStory)}</p>
+                      </div>
+                      <div className="rounded-lg border bg-muted/30 p-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
+                          <Star className="h-3 w-3" />
+                          <span className="text-[10px] uppercase tracking-wide">Mejor día</span>
+                        </div>
+                        <p className="text-sm font-bold">{bestDay ? bestDay.fullDate : '—'}</p>
+                        <p className="text-[10px] text-muted-foreground">{bestDay ? formatCRC(bestDay.revenue) : ''}</p>
+                      </div>
+                    </div>
+
+                    {/* Area Chart */}
+                    <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                      <AreaChart data={chartEntries}>
+                        <defs>
+                          <linearGradient id="gradStories" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(142 71% 45%)" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="hsl(142 71% 45%)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
                         <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                         <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                        <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Legend
-                          verticalAlign="bottom"
-                          height={30}
-                          iconType="circle"
-                          iconSize={8}
-                          formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>}
-                        />
-                        <Bar yAxisId="left" dataKey="stories" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={16} name="Historias" />
-                        <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="hsl(142 71% 45%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(142 71% 45%)' }} name="Ventas ₡" />
-                      </ComposedChart>
+                        <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}K` : `${v}`} />
+                        <RechartsTooltip content={<CustomTooltip />} />
+                        <Area yAxisId="left" type="monotone" dataKey="stories" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#gradStories)" dot={false} name="Historias" />
+                        <Area yAxisId="right" type="monotone" dataKey="revenue" stroke="hsl(142 71% 45%)" strokeWidth={2} fill="url(#gradRevenue)" dot={false} name="Ventas ₡" />
+                      </AreaChart>
                     </ChartContainer>
+
+                    {/* Legend */}
+                    <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-primary" />
+                        <span>Historias: {totalStories}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full" style={{ background: 'hsl(142 71% 45%)' }} />
+                        <span>Ventas: {formatCRC(totalRevenue)}</span>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               )}
