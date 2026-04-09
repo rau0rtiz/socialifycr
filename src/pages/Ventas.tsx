@@ -129,7 +129,7 @@ const Ventas = () => {
   const { products: clientProducts } = useClientProducts(clientId);
 
   // Story tracker data for Alma Bendita — drives the goal bar
-  const storyTotals = { daily_revenue: 0 }; // Will come from StoryRevenueTracker internally
+  
 
   // Daily reports for Mind Coach
   const { reports: dailyReports } = useSetterDailyReports(clientId);
@@ -376,7 +376,7 @@ const Ventas = () => {
         {/* === ALMA BENDITA: Story & Revenue Daily Tracker === */}
         {isAlmaBendita && (
           <>
-            <StoryRevenueTracker clientId={selectedClient.id} />
+            <StoryRevenueTracker clientId={selectedClient.id} dateRange={globalRange} />
             <StoryStoreSales clientId={selectedClient.id} />
             {salesDistributionSection}
           </>
