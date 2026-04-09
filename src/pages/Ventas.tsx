@@ -26,7 +26,6 @@ import { useClientFeatures } from '@/hooks/use-client-features';
 import { useSetterAppointments, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useSetterDailyReports } from '@/hooks/use-setter-daily-reports';
-import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CalendarIcon } from 'lucide-react';
@@ -130,7 +129,7 @@ const Ventas = () => {
   const { products: clientProducts } = useClientProducts(clientId);
 
   // Story tracker data for Alma Bendita — drives the goal bar
-  const { totals: storyTotals, chartData: storyChartData } = useDailyStoryTracker(isAlmaBendita ? clientId : null);
+  const storyTotals = { daily_revenue: 0 }; // Will come from StoryRevenueTracker internally
 
   // Daily reports for Mind Coach
   const { reports: dailyReports } = useSetterDailyReports(clientId);
