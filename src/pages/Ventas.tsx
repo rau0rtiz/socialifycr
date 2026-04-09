@@ -1,7 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
-import { TrendingUp, BookOpen, DollarSign, Zap, Star } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SalesTrackingSection } from '@/components/dashboard/SalesTrackingSection';
 import { AdSalesRanking } from '@/components/dashboard/AdSalesRanking';
@@ -28,7 +26,7 @@ import { useClientFeatures } from '@/hooks/use-client-features';
 import { useSetterAppointments, SetterAppointment } from '@/hooks/use-setter-appointments';
 import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useSetterDailyReports } from '@/hooks/use-setter-daily-reports';
-import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
+import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CalendarIcon } from 'lucide-react';
