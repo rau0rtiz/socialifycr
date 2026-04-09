@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SalesTrackingSection } from '@/components/dashboard/SalesTrackingSection';
