@@ -4,7 +4,7 @@ project_id = "chqhyqylnbtwyzhjkxlu"
 verify_jwt = false
 
 [functions.meta-api]
-verify_jwt = true
+verify_jwt = false
 
 [functions.meta-token-refresh]
 verify_jwt = false
