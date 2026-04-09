@@ -199,24 +199,40 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     }
   };
 
-  const StoryCard = ({ story, isSold }: { story: Story; isSold: boolean }) => {
+  const getStoryPreviewProps = (story: Story) => {
     const isVideo = story.mediaType === 'VIDEO';
-    const thumb = story.thumbnailUrl || story.mediaUrl;
+
+    return {
+      previewSrc: isVideo ? story.thumbnailUrl || story.mediaUrl : story.mediaUrl || story.thumbnailUrl,
+      previewClassName: cn(
+        'w-full h-full',
+        isVideo ? 'object-cover bg-muted' : 'object-contain bg-background'
+      ),
+      containerClassName: !isVideo ? 'bg-background' : undefined,
+    };
+  };
+
+  const storyGridClassName = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 pb-3';
+
+  const StoryCard = ({ story, isSold }: { story: Story; isSold: boolean }) => {
     const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
     const timeLabel = hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
+    const isVideo = story.mediaType === 'VIDEO';
+    const { previewSrc, previewClassName, containerClassName } = getStoryPreviewProps(story);
 
     return (
       <div
         onClick={() => !isSold && openSaleDialog(story)}
         className={cn(
           'relative flex-shrink-0 w-full aspect-[9/16] rounded-xl overflow-hidden border-2 transition-all',
+          containerClassName,
           isSold
             ? 'border-green-500/50 opacity-70 cursor-default'
             : 'border-border hover:border-primary/50 cursor-pointer hover:scale-[1.03]'
         )}
       >
-        {thumb ? (
-          <img src={thumb} alt="" className="w-full h-full object-cover" />
+        {previewSrc ? (
+          <img src={previewSrc} alt="" className={previewClassName} />
         ) : (
           <div className="w-full h-full bg-muted flex items-center justify-center">
             {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
@@ -225,7 +241,6 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
         <span className="absolute top-1 right-1 text-white/70 text-[8px] font-medium drop-shadow-sm">{timeLabel}</span>
 
-        {/* Sold overlay */}
         {isSold && (
           <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
             <div className="bg-green-500 rounded-full p-1.5">
@@ -234,7 +249,6 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
           </div>
         )}
 
-        {/* Tap to sell overlay */}
         {!isSold && (
           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2 pt-6">
             <div className="flex items-center gap-1 text-white text-[10px] font-medium">
@@ -257,7 +271,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     }
     return (
       <ScrollArea className="w-full max-h-[580px]">
-        <div className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,100px)] gap-2 sm:gap-3 pb-3">
+        <div className={storyGridClassName}>
           {stories.map((story) => (
             <StoryCard key={story.id} story={story} isSold={soldSet.has(story.storyId)} />
           ))}
@@ -276,18 +290,25 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     }
     return (
       <ScrollArea className="w-full max-h-[580px]">
-        <div className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,100px)] gap-2 sm:gap-3 pb-3">
+        <div className={storyGridClassName}>
           {soldStories.map((story) => {
             const sale = soldMap.get(story.storyId);
-            const isVideo = story.mediaType === 'VIDEO';
-            const thumb = story.thumbnailUrl || story.mediaUrl;
             const currSymbol = sale?.currency === 'CRC' ? '₡' : '$';
             const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
             const timeLabel = hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
+            const isVideo = story.mediaType === 'VIDEO';
+            const { previewSrc, previewClassName, containerClassName } = getStoryPreviewProps(story);
+
             return (
-              <div key={story.id} className="relative flex-shrink-0 w-full aspect-[9/16] rounded-xl overflow-hidden border-2 border-green-500/50">
-                {thumb ? (
-                  <img src={thumb} alt="" className="w-full h-full object-cover" />
+              <div
+                key={story.id}
+                className={cn(
+                  'relative flex-shrink-0 w-full aspect-[9/16] rounded-xl overflow-hidden border-2 border-green-500/50',
+                  containerClassName
+                )}
+              >
+                {previewSrc ? (
+                  <img src={previewSrc} alt="" className={previewClassName} />
                 ) : (
                   <div className="w-full h-full bg-muted flex items-center justify-center">
                     {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
