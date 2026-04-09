@@ -285,7 +285,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
             const timeLabel = hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
             return (
-              <div key={story.id} className="relative flex-shrink-0 w-full sm:w-[100px] aspect-[9/16] sm:h-[178px] rounded-xl overflow-hidden border-2 border-green-500/50">
+              <div key={story.id} className="relative flex-shrink-0 w-full aspect-[9/16] rounded-xl overflow-hidden border-2 border-green-500/50">
                 {thumb ? (
                   <img src={thumb} alt="" className="w-full h-full object-cover" />
                 ) : (
