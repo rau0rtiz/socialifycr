@@ -1,38 +1,54 @@
 
 
-## Rediseño: Tendencia últimos 30 días (Historias vs Ventas)
+## Merge: Widget de Tendencia + Tracker de Historias y Ventas
 
-### Problema actual
-El gráfico actual usa barras + línea con dos ejes Y independientes, lo que dificulta comparar visualmente la relación entre cantidad de historias y ventas generadas. Las escalas son muy diferentes (ej. 5 historias vs ₡300,000) y no comunican bien la correlación.
+### Problema
+Hay dos widgets mostrando esencialmente la misma información (historias y ventas por día):
+- **Tendencia**: Area chart + 4 KPI cards, hardcoded a 30 días
+- **Tracker de Historias y Ventas**: Calendario semanal + sidebar con sparklines + sistema de overrides manuales
 
-### Propuesta recomendada: Area Chart + KPI Summary Cards
+Ambos muestran totales de historias, totales de ventas, y tendencias — es redundante.
 
-La mejor manera de visualizar esta relación es combinar **3 elementos**:
+### Propuesta: Un solo widget unificado
 
-1. **Mini KPI cards** en la parte superior del widget con:
-   - **Total Historias** (últimos 30d)
-   - **Total Ventas** (últimos 30d)  
-   - **₡ por Historia** (ratio promedio = ventas / historias)
-   - **Mejor día** (día con más ventas)
+Fusionar todo en `StoryRevenueTracker`, que ya tiene la funcionalidad más compleja (calendario + overrides). Se le agrega el area chart y KPIs, y se conecta al periodo global.
 
-2. **Area chart con doble eje** reemplazando barras + línea:
-   - Área semitransparente primaria para historias (eje izquierdo)
-   - Área semitransparente verde para ventas (eje derecho)
-   - Ambas áreas con gradiente hacia abajo para mejor lectura visual
-   - Tooltip unificado mostrando ambos valores + el ratio de ese día
+**Estructura del widget unificado:**
 
-3. **Leyenda mejorada** con valores totales integrados (ej. "Historias: 142 total" / "Ventas: ₡4.8M total")
+```text
+┌─────────────────────────────────────────────────────┐
+│ Tracker de Historias y Ventas          [Automático]  │
+├─────────────────────────────────────────────────────┤
+│  [KPI: Historias] [KPI: Ventas] [₡/Historia] [Mejor]│
+├─────────────────────────────────────────────────────┤
+│  ┌── Calendario semanal ──┐  ┌── Sidebar ─────────┐ │
+│  │  Lun Mar Mié ...       │  │ Resumen semana     │ │
+│  │  con indicators        │  │ + sparklines       │ │
+│  │  + hover tooltips      │  │ + días actividad   │ │
+│  └────────────────────────┘  └─────────────────────┘ │
+├─────────────────────────────────────────────────────┤
+│  Area chart (historias vs ventas) con tooltip        │
+│  Leyenda con totales                                 │
+└─────────────────────────────────────────────────────┘
+```
 
 ### Cambios técnicos
 
-**Archivo**: `src/pages/Ventas.tsx` (sección Alma Bendita, líneas ~344-394)
+**1. `src/hooks/use-daily-story-tracker.ts`**
+- Modificar para aceptar un rango de fechas `{ start: Date, end: Date }` opcional en lugar de hardcodear 30 días para los datos del chart
+- Si se pasa rango, usarlo para las queries de chart; si no, usar últimos 30 días como fallback
 
-- Reemplazar el `ComposedChart` con `Bar + Line` por un `AreaChart` con dos `<Area>` (gradientes)
-- Agregar `<defs>` con `<linearGradient>` para el fill de cada área
-- Calcular KPIs derivados: total historias, total ventas, ratio ₡/historia, mejor día
-- Agregar 4 mini cards (grid 2x2 en móvil, 4 cols en desktop) arriba del chart
-- Tooltip personalizado mostrando fecha, historias, ventas y ratio
-- Hacer el chart un poco más alto (h-[250px]) para mejor legibilidad
+**2. `src/components/ventas/StoryRevenueTracker.tsx`**
+- Agregar prop `dateRange?: { start: Date; end: Date }` para recibir el periodo global
+- Integrar el area chart (con gradientes, doble eje Y) debajo del calendario
+- Integrar las 4 mini KPI cards (Total Historias, Total Ventas, ₡/Historia, Mejor día) arriba del calendario
+- Importar Recharts (AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip)
+- El chart usa los datos del periodo global, el calendario semanal sigue navegable independientemente
 
-No se requieren cambios en base de datos ni en hooks, todo es presentación.
+**3. `src/pages/Ventas.tsx`**
+- Eliminar todo el bloque del widget de Tendencia (líneas ~344-486) que renderiza el area chart inline
+- Eliminar la llamada a `useDailyStoryTracker` para chart data (línea 135 — `storyChartData`)
+- Pasar `dateRange={globalRange}` al `<StoryRevenueTracker>`
+- El `SalesGoalBar` de Alma Bendita se queda solo (sin grid compartido con Tendencia)
+- Limpiar imports no usados (AreaChart, BookOpen, etc.)
 
