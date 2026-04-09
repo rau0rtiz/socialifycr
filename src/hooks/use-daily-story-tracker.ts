@@ -29,7 +29,7 @@ export interface DailyStoryInput {
   notes?: string;
 }
 
-export const useDailyStoryTracker = (clientId: string | null, month?: Date) => {
+export const useDailyStoryTracker = (clientId: string | null, month?: Date, chartRange?: { start: Date; end: Date }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -218,18 +218,20 @@ export const useDailyStoryTracker = (clientId: string | null, month?: Date) => {
     },
   });
 
-  // 30-day chart data
-  const thirtyDaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+  // Chart data — uses provided range or falls back to last 30 days
+  const chartStart = chartRange ? format(chartRange.start, 'yyyy-MM-dd') : format(subDays(new Date(), 30), 'yyyy-MM-dd');
+  const chartEnd = chartRange ? format(chartRange.end, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
 
   const chartStoriesQuery = useQuery({
-    queryKey: ['auto-story-count-30d', clientId],
+    queryKey: ['auto-story-count-range', clientId, chartStart, chartEnd],
     queryFn: async () => {
       if (!clientId) return {};
       const { data, error } = await supabase
         .from('archived_stories')
         .select('timestamp')
         .eq('client_id', clientId)
-        .gte('timestamp', `${thirtyDaysAgo}T00:00:00`)
+        .gte('timestamp', `${chartStart}T00:00:00`)
+        .lte('timestamp', `${chartEnd}T23:59:59`)
         .order('timestamp', { ascending: true });
       if (error) throw error;
       const grouped: Record<string, number> = {};
@@ -243,7 +245,7 @@ export const useDailyStoryTracker = (clientId: string | null, month?: Date) => {
   });
 
   const chartSalesQuery = useQuery({
-    queryKey: ['auto-story-sales-30d', clientId],
+    queryKey: ['auto-story-sales-range', clientId, chartStart, chartEnd],
     queryFn: async () => {
       if (!clientId) return {};
       const { data, error } = await supabase
@@ -252,7 +254,8 @@ export const useDailyStoryTracker = (clientId: string | null, month?: Date) => {
         .eq('client_id', clientId)
         .not('story_id', 'is', null)
         .neq('status', 'cancelled')
-        .gte('sale_date', thirtyDaysAgo);
+        .gte('sale_date', chartStart)
+        .lte('sale_date', chartEnd);
       if (error) throw error;
       const grouped: Record<string, { amount: number; currency: string }> = {};
       (data || []).forEach((s: any) => {
@@ -265,15 +268,16 @@ export const useDailyStoryTracker = (clientId: string | null, month?: Date) => {
     enabled: !!clientId,
   });
 
-  const chart30Overrides = useQuery({
-    queryKey: ['daily-story-tracker-30d', clientId],
+  const chartOverridesQuery = useQuery({
+    queryKey: ['daily-story-tracker-range', clientId, chartStart, chartEnd],
     queryFn: async () => {
       if (!clientId) return [];
       const { data, error } = await supabase
         .from('daily_story_tracker' as any)
         .select('*')
         .eq('client_id', clientId)
-        .gte('track_date', thirtyDaysAgo)
+        .gte('track_date', chartStart)
+        .lte('track_date', chartEnd)
         .order('track_date', { ascending: true });
       if (error) throw error;
       return (data || []) as any[];
@@ -283,13 +287,13 @@ export const useDailyStoryTracker = (clientId: string | null, month?: Date) => {
 
   const chartStories = chartStoriesQuery.data || {};
   const chartSales = chartSalesQuery.data || {};
-  const chart30OverridesByDate: Record<string, any> = {};
-  (chart30Overrides.data || []).forEach((o: any) => { chart30OverridesByDate[o.track_date] = o; });
+  const chartOverridesByDate: Record<string, any> = {};
+  (chartOverridesQuery.data || []).forEach((o: any) => { chartOverridesByDate[o.track_date] = o; });
 
   const chartAllDates = new Set([
     ...Object.keys(chartStories),
     ...Object.keys(chartSales),
-    ...Object.keys(chart30OverridesByDate),
+    ...Object.keys(chartOverridesByDate),
   ]);
 
   const chartData: DailyStoryEntry[] = Array.from(chartAllDates)
@@ -298,8 +302,8 @@ export const useDailyStoryTracker = (clientId: string | null, month?: Date) => {
       id: d,
       client_id: clientId || '',
       track_date: d,
-      stories_count: (chartStories[d] || 0) + (chart30OverridesByDate[d]?.stories_count || 0),
-      daily_revenue: (chartSales[d]?.amount || 0) + (chart30OverridesByDate[d]?.daily_revenue || 0),
+      stories_count: (chartStories[d] || 0) + (chartOverridesByDate[d]?.stories_count || 0),
+      daily_revenue: (chartSales[d]?.amount || 0) + (chartOverridesByDate[d]?.daily_revenue || 0),
       currency: chartSales[d]?.currency || 'CRC',
       notes: null,
       created_by: '',
