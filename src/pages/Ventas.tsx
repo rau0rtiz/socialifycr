@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { TrendingUp } from 'lucide-react';
+
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SalesTrackingSection } from '@/components/dashboard/SalesTrackingSection';
 import { AdSalesRanking } from '@/components/dashboard/AdSalesRanking';
