@@ -378,8 +378,15 @@ const Ventas = () => {
                         <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                         <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                         <ChartTooltip content={<ChartTooltipContent />} />
+                        <Legend
+                          verticalAlign="bottom"
+                          height={30}
+                          iconType="circle"
+                          iconSize={8}
+                          formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>}
+                        />
                         <Bar yAxisId="left" dataKey="stories" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={16} name="Historias" />
-                        <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="hsl(142 71% 45%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(142 71% 45%)' }} name="Ventas" />
+                        <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="hsl(142 71% 45%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(142 71% 45%)' }} name="Ventas ₡" />
                       </ComposedChart>
                     </ChartContainer>
                   </CardContent>
