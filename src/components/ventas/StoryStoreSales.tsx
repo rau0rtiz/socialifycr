@@ -330,6 +330,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             );
           })}
         </div>
+        <ScrollBar orientation="vertical" />
       </ScrollArea>
     );
   };
