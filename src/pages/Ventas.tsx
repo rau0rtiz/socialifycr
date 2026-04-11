@@ -169,8 +169,8 @@ const Ventas = () => {
       // Sum only sales from new students within the range
       const activeSales = allSales.filter(s => 
         s.status !== 'cancelled' && 
-        s.student_contact_id && 
-        newStudentIds.has(s.student_contact_id)
+        (s as any).student_contact_id && 
+        newStudentIds.has((s as any).student_contact_id)
       );
       
       return {
