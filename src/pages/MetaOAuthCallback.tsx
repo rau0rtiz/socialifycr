@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 export const MetaOAuthCallback = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const code = searchParams.get('code');
@@ -12,17 +13,26 @@ export const MetaOAuthCallback = () => {
 
     if (error) {
       console.error('OAuth error:', error, errorDescription);
+      const errorPayload = { type: 'META_OAUTH_ERROR', error: errorDescription || error };
       if (window.opener) {
-        window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: errorDescription || error }, window.location.origin);
+        window.opener.postMessage(errorPayload, window.location.origin);
         window.close();
+      } else {
+        // iPad/iOS fallback: store in sessionStorage and navigate back
+        sessionStorage.setItem('meta_oauth_result', JSON.stringify(errorPayload));
+        navigate('/clientes');
       }
       return;
     }
 
     if (!code || !state) {
+      const errorPayload = { type: 'META_OAUTH_ERROR', error: 'Parámetros de autorización faltantes' };
       if (window.opener) {
-        window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: 'Parámetros de autorización faltantes' }, window.location.origin);
+        window.opener.postMessage(errorPayload, window.location.origin);
         window.close();
+      } else {
+        sessionStorage.setItem('meta_oauth_result', JSON.stringify(errorPayload));
+        navigate('/clientes');
       }
       return;
     }
@@ -33,25 +43,34 @@ export const MetaOAuthCallback = () => {
       const stateData = JSON.parse(atob(state));
       clientId = stateData.clientId;
     } catch {
+      const errorPayload = { type: 'META_OAUTH_ERROR', error: 'Estado inválido' };
       if (window.opener) {
-        window.opener.postMessage({ type: 'META_OAUTH_ERROR', error: 'Estado inválido' }, window.location.origin);
+        window.opener.postMessage(errorPayload, window.location.origin);
         window.close();
+      } else {
+        sessionStorage.setItem('meta_oauth_result', JSON.stringify(errorPayload));
+        navigate('/clientes');
       }
       return;
     }
 
-    // Send the code back to the parent window - the parent has the active session
-    // and will make the authenticated API call
+    const payload = {
+      type: 'META_OAUTH_CODE',
+      code,
+      clientId,
+      redirectUri: `${window.location.origin}/oauth/meta/callback`,
+    };
+
     if (window.opener) {
-      window.opener.postMessage({
-        type: 'META_OAUTH_CODE',
-        code,
-        clientId,
-        redirectUri: `${window.location.origin}/oauth/meta/callback`,
-      }, window.location.origin);
+      // Desktop: send message to parent and close popup
+      window.opener.postMessage(payload, window.location.origin);
       window.close();
+    } else {
+      // iPad/iOS fallback: store result and navigate back
+      sessionStorage.setItem('meta_oauth_result', JSON.stringify(payload));
+      navigate('/clientes');
     }
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

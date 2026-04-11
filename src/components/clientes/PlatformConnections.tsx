@@ -137,51 +137,6 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     fetchConnections();
   }, [fetchConnections]);
 
-  // Check for YouTube OAuth redirect result stored in sessionStorage
-  useEffect(() => {
-    const stored = sessionStorage.getItem('youtube_oauth_result');
-    if (stored) {
-      sessionStorage.removeItem('youtube_oauth_result');
-      try {
-        const data = JSON.parse(stored);
-        if (data.type === 'YOUTUBE_OAUTH_ACCOUNTS' && data.clientId === clientId) {
-          setYoutubeAccountsData({
-            accounts: data.accounts,
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
-            expiresIn: data.expiresIn,
-            clientId: data.clientId,
-          });
-          setShowYouTubeSelector(true);
-        }
-      } catch (e) {
-        console.error('Error parsing YouTube OAuth result:', e);
-      }
-    }
-
-    // Check for LinkedIn OAuth redirect result
-    const linkedinStored = sessionStorage.getItem('linkedin_oauth_result');
-    if (linkedinStored) {
-      sessionStorage.removeItem('linkedin_oauth_result');
-      try {
-        const data = JSON.parse(linkedinStored);
-        if (data.type === 'LINKEDIN_OAUTH_ACCOUNTS' && data.clientId === clientId) {
-          setLinkedInAccountsData({
-            accounts: data.accounts,
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
-            expiresIn: data.expiresIn,
-            clientId: data.clientId,
-            userId: data.userId,
-          });
-          setShowLinkedInSelector(true);
-        }
-      } catch (e) {
-        console.error('Error parsing LinkedIn OAuth result:', e);
-      }
-    }
-  }, [clientId]);
-
   // Handle META_OAUTH_CODE: parent makes the authenticated API call
   const handleMetaOAuthCode = useCallback(async (code: string, oauthClientId: string, redirectUri: string) => {
     try {
@@ -224,6 +179,71 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     }
   }, [toast]);
 
+  // Check for Meta OAuth redirect result stored in sessionStorage (iPad/iOS fallback)
+  useEffect(() => {
+    const metaStored = sessionStorage.getItem('meta_oauth_result');
+    if (metaStored) {
+      sessionStorage.removeItem('meta_oauth_result');
+      try {
+        const data = JSON.parse(metaStored);
+        if (data.type === 'META_OAUTH_CODE' && data.clientId === clientId) {
+          handleMetaOAuthCode(data.code, data.clientId, data.redirectUri);
+        } else if (data.type === 'META_OAUTH_ERROR') {
+          toast({
+            title: 'Error de conexión',
+            description: data.error || 'Error al conectar con Meta',
+            variant: 'destructive',
+          });
+          setConnecting(null);
+        }
+      } catch (e) {
+        console.error('Error parsing Meta OAuth result:', e);
+      }
+    }
+
+    // Check for YouTube OAuth redirect result stored in sessionStorage
+    const stored = sessionStorage.getItem('youtube_oauth_result');
+    if (stored) {
+      sessionStorage.removeItem('youtube_oauth_result');
+      try {
+        const data = JSON.parse(stored);
+        if (data.type === 'YOUTUBE_OAUTH_ACCOUNTS' && data.clientId === clientId) {
+          setYoutubeAccountsData({
+            accounts: data.accounts,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            expiresIn: data.expiresIn,
+            clientId: data.clientId,
+          });
+          setShowYouTubeSelector(true);
+        }
+      } catch (e) {
+        console.error('Error parsing YouTube OAuth result:', e);
+      }
+    }
+
+    // Check for LinkedIn OAuth redirect result
+    const linkedinStored = sessionStorage.getItem('linkedin_oauth_result');
+    if (linkedinStored) {
+      sessionStorage.removeItem('linkedin_oauth_result');
+      try {
+        const data = JSON.parse(linkedinStored);
+        if (data.type === 'LINKEDIN_OAUTH_ACCOUNTS' && data.clientId === clientId) {
+          setLinkedInAccountsData({
+            accounts: data.accounts,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            expiresIn: data.expiresIn,
+            clientId: data.clientId,
+            userId: data.userId,
+          });
+          setShowLinkedInSelector(true);
+        }
+      } catch (e) {
+        console.error('Error parsing LinkedIn OAuth result:', e);
+      }
+    }
+  }, [clientId, handleMetaOAuthCode, toast]);
   // Listen for OAuth callback messages
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -407,13 +427,10 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         `width=${width},height=${height},left=${left},top=${top}`
       );
 
-      if (!popup) {
-        toast({
-          title: 'Error',
-          description: 'No se pudo abrir la ventana de autorización. Por favor, permite las ventanas emergentes.',
-          variant: 'destructive',
-        });
-        setConnecting(null);
+      if (!popup || popup.closed) {
+        // Popup blocked (common on iPad/iOS) — redirect in current tab
+        window.location.href = data.authUrl;
+        return;
       }
 
       // Check if popup was closed without completing
