@@ -8,20 +8,21 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ProductsManager } from '@/components/ventas/ProductsManager';
+import { TeachersManager } from '@/components/ventas/TeachersManager';
 import { useClientFeatures } from '@/hooks/use-client-features';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
 import { AIContextEditor } from '@/components/clientes/AIContextEditor';
 import { ClientBanner } from '@/components/dashboard/ClientBanner';
-import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain, ToggleRight } from 'lucide-react';
+import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain, ToggleRight, GraduationCap } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features';
+type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features' | 'teachers';
 
-const SECTIONS = [
+const STATIC_SECTIONS = [
   {
     key: 'brand' as const,
     title: 'Marca',
@@ -37,6 +38,15 @@ const SECTIONS = [
     icon: Package,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
+  },
+  {
+    key: 'teachers' as const,
+    title: 'Profesores',
+    description: 'Profesores, horarios y asignaciones',
+    icon: GraduationCap,
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10',
+    speakUpOnly: true,
   },
   {
     key: 'team' as const,
@@ -66,6 +76,7 @@ const SECTIONS = [
 
 const BusinessSetup = () => {
   const { selectedClient, clientsLoading } = useBrand();
+  const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<Section>(null);
   const { flags: featureFlags, updateFlag, updateChecklistItems } = useClientFeatures(selectedClient?.id || null);
@@ -369,13 +380,20 @@ const BusinessSetup = () => {
     );
   };
 
+  const renderTeachers = () => (
+    <TeachersManager clientId={selectedClient.id} />
+  );
+
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     brand: renderBrand,
     products: renderProducts,
+    teachers: renderTeachers,
     team: renderTeam,
     connections: renderConnections,
     features: renderFeatures,
   };
+
+  const SECTIONS = STATIC_SECTIONS.filter(s => !(s as any).speakUpOnly || isSpkUp);
 
   return (
     <DashboardLayout>

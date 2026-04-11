@@ -17,6 +17,7 @@ import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
 import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
 import { StoryStoreSales } from '@/components/ventas/StoryStoreSales';
+import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
@@ -364,6 +365,7 @@ const Ventas = () => {
         {isSpkUp && (
           <>
             <SpeakUpSalesSummary clientId={selectedClient.id} />
+            <RecentSalesTicker clientId={selectedClient.id} />
             <SpeakUpAnalytics clientId={selectedClient.id} />
           </>
         )}
