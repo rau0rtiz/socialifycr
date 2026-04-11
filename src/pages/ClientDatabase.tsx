@@ -170,12 +170,25 @@ const ClientDatabase = () => {
   const handleDeleteLead = async () => {
     if (!deleteTarget) return;
     if (isSpkUp) {
-      try { await deleteStudent.mutateAsync(deleteTarget.id); toast.success('Estudiante eliminado'); } catch { toast.error('Error al eliminar'); }
+      // Require password verification
+      if (!deletePassword.trim()) { toast.error('Ingresa tu contraseña para confirmar'); return; }
+      setDeleteLoading(true);
+      try {
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email: user?.email || '',
+          password: deletePassword,
+        });
+        if (authError) { toast.error('Contraseña incorrecta'); setDeleteLoading(false); return; }
+        await deleteStudent.mutateAsync(deleteTarget.id);
+        toast.success('Estudiante eliminado');
+      } catch { toast.error('Error al eliminar'); }
+      setDeleteLoading(false);
     } else {
       const { error } = await supabase.from('setter_appointments').delete().eq('id', deleteTarget.id);
       if (error) { toast.error('No se pudo eliminar'); } else { toast.success('Lead eliminado'); queryClient.invalidateQueries({ queryKey: ['client-database-leads', clientId] }); }
     }
     setDeleteTarget(null);
+    setDeletePassword('');
   };
 
   if (!selectedClient) {
