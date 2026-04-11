@@ -464,7 +464,7 @@ export const RegisterSaleDialog = ({
 
   const getStepDescription = () => {
     if (step === 0) return 'Selecciona el producto y variante';
-    if (step === 1) return 'Nombre, contacto, closer y fuente de la venta';
+    if (step === 1) return `Nombre, contacto, ${isSpkUp ? 'vendedor' : 'closer'} y fuente de la venta`;
     const adStepIdx = needsAdStep ? 2 : -1;
     if (step === adStepIdx) return 'Selecciona el anuncio que originó esta venta';
     return 'Plataforma, notas y fecha';
@@ -722,7 +722,7 @@ export const RegisterSaleDialog = ({
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs font-medium">Closer</Label>
+                      <Label className="text-xs font-medium">{isSpkUp ? 'Vendedor' : 'Closer'}</Label>
                       <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
                         <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Sin asignar" /></SelectTrigger>
                         <SelectContent>
