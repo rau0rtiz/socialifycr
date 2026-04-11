@@ -17,6 +17,7 @@ interface SalesGoalBarProps {
   currentSalesCRC: number;
   primaryColor?: string;
   accentColor?: string;
+  subtitle?: string;
 }
 
 const formatCurrency = (amount: number, currency: string) => {
@@ -26,7 +27,7 @@ const formatCurrency = (amount: number, currency: string) => {
 
 const getMonthKey = (date: Date) => format(date, 'yyyy-MM');
 
-export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, primaryColor, accentColor }: SalesGoalBarProps) => {
+export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, primaryColor, accentColor, subtitle }: SalesGoalBarProps) => {
   const [viewMonth, setViewMonth] = useState(new Date());
   const { goal, isLoading, upsertGoal } = useSalesGoal(clientId, viewMonth);
   const [editOpen, setEditOpen] = useState(false);
