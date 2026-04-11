@@ -1,166 +1,135 @@
 
 
-## Plan: Sistema Integral Speak Up — Productos, Estudiantes, Profesores y Ventas
+## Plan: Grupos de Clases, Asistencia y Mejoras al Flujo de Ventas Grupales
 
 ### Resumen
 
-Rediseñar el flujo de Speak Up para manejar: categorías de producto con frecuencia de clases y horarios, una base de datos de estudiantes (con encargados para menores), profesores con disponibilidad, y un flujo de ventas que conecte todo con cobros recurrentes, IVA, descuentos y asignación de profesor.
+Agregar el concepto de **Grupos** para clases grupales (con capacidad, rango de edad, nivel de inglés, profesor, aula y horarios), una herramienta de **Asistencia** para marcar entrada/salida de estudiantes, y adaptar el flujo de ventas para que al vender un producto grupal se seleccione el grupo correspondiente.
 
 ---
 
-### Fase 1: Base de datos — Nuevas tablas y cambios
+### Fase 1: Base de datos — Nuevas tablas
 
-**1.1 Tabla `student_contacts` (nueva)** — Reemplaza la dependencia en `setter_appointments` para Speak Up.
+**1.1 Tabla `class_groups` (nueva)** — Grupos de clases grupales.
 
 | Columna | Tipo | Nota |
 |---|---|---|
 | id | uuid PK | |
 | client_id | uuid FK | |
-| full_name | text NOT NULL | |
-| phone | text | |
-| email | text | |
-| id_number | text | Cédula |
-| age | integer | |
-| gender | text | |
-| notes | text | |
-| guardian_name | text | Para menores <18 |
-| guardian_phone | text | |
-| guardian_id_number | text | |
-| guardian_email | text | |
+| product_id | uuid | FK a `client_products` (producto grupal) |
+| name | text NOT NULL | Ej: "Grupo A - Niños Principiantes" |
+| capacity | integer DEFAULT 10 | Cupo máximo |
+| age_range_min | integer | Edad mínima |
+| age_range_max | integer | Edad máxima |
+| english_level | text | Dropdown CEFR: Pre-A1, A1, A2, B1, B2, C1, C2 |
+| teacher_id | uuid | FK a `client_teachers` |
+| classroom | text | Nombre del aula |
+| schedules | jsonb | `[{day:'lunes', start:'09:00', end:'10:00'}]` — heredados/compatibles con producto |
 | status | text DEFAULT 'active' | active/inactive |
 | created_at, updated_at | timestamps | |
 
-RLS: team members CRUD, admins ALL.
+RLS: mismos patrones existentes (team members CRUD, admins ALL).
 
-**1.2 Tabla `client_teachers` (nueva)** — Profesores del cliente.
+**1.2 Tabla `class_group_members` (nueva)** — Alumnos asignados a grupos.
+
+| Columna | Tipo | Nota |
+|---|---|---|
+| id | uuid PK | |
+| group_id | uuid FK | FK a `class_groups` |
+| student_contact_id | uuid FK | FK a `student_contacts` |
+| sale_id | uuid | FK a `message_sales` (la venta que originó la inscripción) |
+| enrolled_at | timestamp DEFAULT now() | |
+| status | text DEFAULT 'active' | active/withdrawn |
+
+RLS: basado en client_id del grupo (join).
+
+**1.3 Tabla `attendance_records` (nueva)** — Registro de asistencia.
 
 | Columna | Tipo | Nota |
 |---|---|---|
 | id | uuid PK | |
 | client_id | uuid FK | |
-| name | text NOT NULL | |
-| email | text | |
-| phone | text | |
-| available_schedules | jsonb | Array de bloques: `[{day: 'lunes', start: '08:00', end: '12:00'}]` |
-| product_ids | uuid[] | Productos que puede impartir |
-| audience_types | text[] | `['adults','children','corporate']` |
-| status | text DEFAULT 'active' | |
-| created_at, updated_at | timestamps | |
+| student_contact_id | uuid FK | |
+| group_id | uuid | NULL para clases personalizadas |
+| class_date | date NOT NULL | |
+| check_in | timestamptz | Hora de entrada |
+| check_out | timestamptz | Hora de salida |
+| status | text DEFAULT 'present' | present/absent/late |
+| notes | text | |
+| marked_by | uuid | Usuario que marcó |
+| created_at | timestamp | |
 
-RLS: team members CRUD, admins ALL.
+RLS: team members CRUD por client_id.
 
-**1.3 Cambios en `client_products`** — Agregar campos de categorización y frecuencia.
-
-| Columna nueva | Tipo | Nota |
-|---|---|---|
-| category | text | `certification`, `private`, `group`, `corporate` |
-| audience | text | `adults`, `children`, `all` |
-| is_recurring | boolean DEFAULT false | Mensual recurrente vs one-off |
-| class_frequency | jsonb | `{sessions_per_week: 3, hours_per_session: 1}` |
-| available_schedules | jsonb | Horarios en que se imparte: `[{day:'lunes', start:'09:00', end:'10:00'}]` |
-| tax_applicable | boolean DEFAULT false | Si aplica IVA |
-| tax_rate | numeric DEFAULT 13 | Porcentaje de IVA |
-
-**1.4 Cambios en `message_sales`** — Vincular con estudiante, profesor, IVA y descuento.
-
-| Columna nueva | Tipo | Nota |
-|---|---|---|
-| student_contact_id | uuid | FK a `student_contacts` |
-| teacher_id | uuid | FK a `client_teachers` |
-| assigned_schedule | jsonb | Horarios asignados al estudiante |
-| discount_amount | numeric DEFAULT 0 | |
-| discount_reason | text | Obligatorio si hay descuento |
-| tax_amount | numeric DEFAULT 0 | IVA calculado |
-| subtotal | numeric | Monto antes de IVA/descuento |
-| payment_day | integer | Día del mes para cobro recurrente (1-31) |
+**1.4 Cambio en `message_sales`** — Agregar `group_id uuid` para vincular venta a un grupo.
 
 ---
 
-### Fase 2: Backend — Business Setup (Profesores)
+### Fase 2: Gestión de Grupos (UI)
 
-- Agregar sección **"Profesores"** en `/business-setup` (solo visible para Speak Up)
-- CRUD de profesores con: nombre, email, teléfono
-- Definir horarios disponibles por día de la semana (bloques de tiempo)
-- Seleccionar qué productos pueden impartir (multi-select del catálogo)
-- Definir audiencia que manejan (niños, adultos, corporativo)
+- Nueva sección **"Grupos"** en Business Setup (solo Speak Up, junto a Profesores)
+- CRUD de grupos con:
+  - Nombre del grupo
+  - Producto asociado (solo productos con category='group')
+  - Capacidad máxima
+  - Rango de edad (min-max)
+  - Nivel de inglés (dropdown CEFR: Pre-A1 → C2)
+  - Profesor asignado (filtrado por producto/audiencia)
+  - Aula
+  - Horarios (heredados del producto, editables)
+- Vista de alumnos inscritos en cada grupo con indicador de ocupación (ej: 8/12)
 
----
-
-### Fase 3: Productos — Nuevo formato con categorías
-
-- Modificar `ProductsManager` para incluir:
-  - Selector de **categoría** (Certificaciones, Clases Personalizadas, Clases Grupales, Corporativo)
-  - Selector de **audiencia** (Adultos, Niños, Todos)
-  - Toggle **¿Es recurrente mensual?**
-  - Configuración de **frecuencia de clases** (sesiones/semana × horas/sesión)
-  - Horarios disponibles del servicio
-  - Toggle de IVA aplicable + tasa
+**Archivo nuevo**: `src/components/ventas/GroupsManager.tsx`
+**Hook nuevo**: `src/hooks/use-class-groups.ts`
 
 ---
 
-### Fase 4: Base de Estudiantes (Client Database para Speak Up)
+### Fase 3: Flujo de Ventas — Selección de Grupo
 
-- Rediseñar `ClientDatabase.tsx` para Speak Up:
-  - Mostrar tabla de `student_contacts` en lugar de `setter_appointments`
-  - Campos: nombre, teléfono, cédula, correo, edad, género, notas
-  - Si edad < 18: mostrar/requerir datos de encargado
-  - Historial de compras del estudiante (ventas vinculadas)
-  - Filtros por status (activo/inactivo), búsqueda
-  - Importación futura de Excel (preparar pero no implementar aún)
-
----
-
-### Fase 5: Flujo de Ventas adaptado
-
-- Modificar `RegisterSaleDialog` para Speak Up:
-  1. **Paso 1 — Estudiante**: Buscar en `student_contacts` o crear nuevo (con validación de encargado si menor)
-  2. **Paso 2 — Producto**: Seleccionar producto → mostrar categoría, frecuencia, variantes
-  3. **Paso 3 — Horario + Profesor**: Según frecuencia del producto, seleccionar horarios. Filtrar profesores por: disponibilidad en esos horarios + pueden impartir ese producto + audiencia compatible. Opción "Por definir".
-  4. **Paso 4 — Pago**: Monto, IVA (auto si producto lo requiere), descuento (con nota obligatoria). Si recurrente: definir día de pago → generar cobros automáticos. Si one-off con esquema de pago: generar cuotas.
-  5. La venta queda vinculada al `student_contact_id`
+- Modificar `RegisterSaleDialog.tsx` (flujo Speak Up):
+  - Cuando el producto seleccionado es `category='group'`: mostrar paso intermedio para seleccionar grupo
+  - Dropdown de grupos activos del producto, mostrando: nombre, nivel, horario, ocupación (X/Y)
+  - Al seleccionar grupo, autocompletar horarios y profesor
+  - Guardar `group_id` en la venta
+  - Al confirmar venta, insertar registro en `class_group_members`
 
 ---
 
-### Fase 6: Widget de últimas ventas
+### Fase 4: Herramienta de Asistencia
 
-- Nuevo widget tipo "ticker" al lado de `SalesGoalBar` que muestre las últimas 3-5 ventas en texto:
-  > "María acaba de vender Clases Grupales Niños a Juan Pérez por ₡85,000"
-- Datos de `message_sales` con join a `profiles` (vendedor) y `student_contacts` (cliente)
+- Nueva vista/widget de asistencia accesible desde Ventas (Speak Up)
+- Selector de fecha y grupo (o estudiante para personalizadas)
+- Lista de alumnos del grupo con checkboxes para:
+  - Marcar entrada (check-in timestamp)
+  - Marcar salida (check-out timestamp)
+  - Estado: presente / ausente / tardanza
+- Para clases personalizadas: buscar estudiante, marcar asistencia individual
+- Resumen: total presentes, ausentes, tasa de asistencia
 
----
-
-### Fase 7: Cobros y tracking de alumnos activos
-
-- Cuando una venta es recurrente: generar `payment_collections` mensuales usando el `payment_day` definido
-- En la vista de cobros (`CollectionsWidget`), mostrar próximo cobro por estudiante
-- Vista de "Alumnos Activos": estudiantes con al menos 1 cobro pendiente o reciente (último mes)
+**Archivo nuevo**: `src/components/ventas/AttendanceTracker.tsx`
+**Hook nuevo**: `src/hooks/use-attendance.ts`
 
 ---
 
 ### Detalle técnico
 
-**Migraciones SQL** (7 statements):
-1. CREATE TABLE `student_contacts`
-2. CREATE TABLE `client_teachers`
-3. ALTER TABLE `client_products` ADD columns (category, audience, is_recurring, class_frequency, available_schedules, tax_applicable, tax_rate)
-4. ALTER TABLE `message_sales` ADD columns (student_contact_id, teacher_id, assigned_schedule, discount_amount, discount_reason, tax_amount, subtotal, payment_day)
-5. RLS policies para `student_contacts` y `client_teachers`
-6. Trigger `update_updated_at` en las nuevas tablas
+**Migración SQL** (1 migración con):
+1. CREATE TABLE `class_groups`
+2. CREATE TABLE `class_group_members`
+3. CREATE TABLE `attendance_records`
+4. ALTER TABLE `message_sales` ADD `group_id uuid`
+5. RLS policies (6 policies)
+6. Triggers `update_updated_at` en tablas nuevas
 
-**Archivos nuevos** (~5):
-- `src/hooks/use-student-contacts.ts`
-- `src/hooks/use-client-teachers.ts`
-- `src/components/ventas/TeachersManager.tsx`
-- `src/components/ventas/RecentSalesTicker.tsx`
-- `src/components/ventas/StudentForm.tsx`
+**Archivos nuevos** (~4):
+- `src/hooks/use-class-groups.ts` — CRUD grupos + miembros
+- `src/hooks/use-attendance.ts` — CRUD asistencia
+- `src/components/ventas/GroupsManager.tsx` — UI gestión de grupos
+- `src/components/ventas/AttendanceTracker.tsx` — UI asistencia
 
-**Archivos modificados** (~8):
-- `src/hooks/use-client-products.ts` — nuevos campos
-- `src/components/ventas/ProductsManager.tsx` — categorías, frecuencia, horarios
-- `src/components/dashboard/RegisterSaleDialog.tsx` — flujo Speak Up con estudiante, profesor, IVA, descuento
-- `src/pages/ClientDatabase.tsx` — vista de estudiantes para Speak Up
-- `src/pages/BusinessSetup.tsx` — sección Profesores
-- `src/pages/Ventas.tsx` — widget ticker de ventas recientes
-- `src/hooks/use-sales-tracking.ts` — nuevos campos
-- `src/components/ventas/SpeakUpSalesSummary.tsx` — ajustes
+**Archivos modificados** (~4):
+- `src/pages/BusinessSetup.tsx` — agregar sección Grupos
+- `src/components/dashboard/RegisterSaleDialog.tsx` — paso de selección de grupo
+- `src/hooks/use-sales-tracking.ts` — campo group_id
+- `src/pages/Ventas.tsx` — widget/tab de asistencia
 
