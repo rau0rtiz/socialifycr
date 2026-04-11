@@ -150,7 +150,10 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
                 <Target className="h-5 w-5" style={{ color: barBg }} />
               </div>
               <div>
-                <h3 className="font-semibold text-sm text-foreground">Meta Mensual</h3>
+                <h3 className="font-semibold text-sm text-foreground">
+                  Meta Mensual
+                  {subtitle && <span className="text-[10px] font-normal text-muted-foreground ml-1.5">({subtitle})</span>}
+                </h3>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                   <Calendar className="h-3 w-3" />
                   <span className="capitalize">{format(viewMonth, 'MMMM yyyy', { locale: es })}</span>
