@@ -505,6 +505,7 @@ const ClientDatabase = () => {
           }}
           student={selectedStudent}
           purchaseCount={selectedStudent ? purchaseCounts[selectedStudent.id] || 0 : 0}
+          clientId={clientId || undefined}
         />
       )}
     </DashboardLayout>
