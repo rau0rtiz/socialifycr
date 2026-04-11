@@ -1142,8 +1142,60 @@ export const RegisterSaleDialog = ({
               </div>
             )}
 
-            {/* Step 2: Schedule + Teacher */}
-            {step === 2 && (
+            {/* Group step (only for group products) */}
+            {step === groupStepIdx && isGroupProduct && (
+              <div className="space-y-4 py-3">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" /> Seleccionar Grupo
+                </Label>
+                {productGroups.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-4 text-center">No hay grupos activos para este producto. Crea uno en Business Setup → Grupos.</p>
+                ) : (
+                  <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
+                    {productGroups.map(g => {
+                      const occ = getGroupOccupancy(g.id);
+                      const isFull = occ >= g.capacity;
+                      const isSelected = spkSelectedGroupId === g.id;
+                      return (
+                        <button
+                          key={g.id}
+                          disabled={isFull}
+                          className={cn(
+                            'w-full text-left p-3 rounded-lg border text-xs transition-colors',
+                            isSelected ? 'bg-primary/10 border-primary/30' : isFull ? 'opacity-50 cursor-not-allowed border-border/30' : 'hover:bg-muted/50 border-border/50'
+                          )}
+                          onClick={() => {
+                            setSpkSelectedGroupId(g.id);
+                            if (g.teacher_id) setSpkSelectedTeacherId(g.teacher_id);
+                            if (g.schedules?.length) setSpkAssignedSchedule(g.schedules);
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{g.name}</span>
+                            <Badge variant={isFull ? 'destructive' : 'secondary'} className="text-[9px]">{occ}/{g.capacity}</Badge>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-muted-foreground flex-wrap">
+                            {g.english_level && <span>{g.english_level}</span>}
+                            {g.age_range_min != null && g.age_range_max != null && <span>{g.age_range_min}-{g.age_range_max} años</span>}
+                            {g.classroom && <span>Aula: {g.classroom}</span>}
+                          </div>
+                          {g.schedules?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {g.schedules.map((s: any, i: number) => (
+                                <span key={i} className="text-[9px] text-muted-foreground capitalize">{s.day} {s.start}-{s.end}</span>
+                              ))}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Schedule + Teacher step */}
+            {step === scheduleStepIdx && (
               <div className="space-y-4 py-3">
                 {/* Schedule selection based on product available_schedules */}
                 {selectedProductObj?.available_schedules && (selectedProductObj.available_schedules as any[]).length > 0 && (
