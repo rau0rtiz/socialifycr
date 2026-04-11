@@ -110,9 +110,33 @@ export const RegisterSaleDialog = ({
   const [hasDeposit, setHasDeposit] = useState(false);
   const [depositBalanceDueDate, setDepositBalanceDueDate] = useState('');
 
+  // Speak Up state
+  const [spkStudentSearch, setSpkStudentSearch] = useState('');
+  const [spkSelectedStudentId, setSpkSelectedStudentId] = useState<string | null>(null);
+  const [spkCreatingStudent, setSpkCreatingStudent] = useState(false);
+  const [spkStudentName, setSpkStudentName] = useState('');
+  const [spkStudentPhone, setSpkStudentPhone] = useState('');
+  const [spkStudentEmail, setSpkStudentEmail] = useState('');
+  const [spkStudentIdNumber, setSpkStudentIdNumber] = useState('');
+  const [spkStudentAge, setSpkStudentAge] = useState('');
+  const [spkStudentGender, setSpkStudentGender] = useState('');
+  const [spkStudentNotes, setSpkStudentNotes] = useState('');
+  const [spkGuardianName, setSpkGuardianName] = useState('');
+  const [spkGuardianPhone, setSpkGuardianPhone] = useState('');
+  const [spkGuardianIdNumber, setSpkGuardianIdNumber] = useState('');
+  const [spkGuardianEmail, setSpkGuardianEmail] = useState('');
+  const [spkSelectedTeacherId, setSpkSelectedTeacherId] = useState<string | null>(null);
+  const [spkAssignedSchedule, setSpkAssignedSchedule] = useState<any[]>([]);
+  const [spkApplyTax, setSpkApplyTax] = useState(false);
+  const [spkDiscountAmount, setSpkDiscountAmount] = useState('');
+  const [spkDiscountReason, setSpkDiscountReason] = useState('');
+  const [spkPaymentDay, setSpkPaymentDay] = useState('');
+
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
   const { data: allSchemes = [] } = useClientPaymentSchemes(clientId || null);
+  const { students, addStudent } = useStudentContacts(clientId || null);
+  const { teachers } = useClientTeachers(clientId || null);
   const productNames = products.map(p => p.name);
 
   const isEditing = !!editingSale;
