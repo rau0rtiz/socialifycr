@@ -17,6 +17,7 @@ import { es } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-contacts';
+import { StudentDetailDialog } from '@/components/clientes/StudentDetailDialog';
 import { toast } from 'sonner';
 
 // ── Legacy lead type for non-SpkUp clients ──
@@ -41,6 +42,7 @@ const ClientDatabase = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
@@ -249,7 +251,7 @@ const ClientDatabase = () => {
                   {filteredStudents.length === 0 ? (
                     <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">No se encontraron estudiantes</TableCell></TableRow>
                   ) : filteredStudents.map(s => (
-                    <TableRow key={s.id} className="text-xs">
+                    <TableRow key={s.id} className="text-xs cursor-pointer hover:bg-muted/50" onClick={() => setSelectedStudent(s)}>
                       <TableCell className="font-medium">{s.full_name}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
@@ -265,13 +267,13 @@ const ClientDatabase = () => {
                       </TableCell>
                       <TableCell className="text-muted-foreground">{s.guardian_name || '—'}</TableCell>
                       <TableCell>
-                        <div className="flex gap-0.5">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditStudent(s)}><Pencil className="h-3 w-3" /></Button>
+                        <div className="flex gap-0.5" onClick={e => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(s)}><Trash2 className="h-3.5 w-3.5" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
+
                 </TableBody>
               </Table>
             ) : (
@@ -334,13 +336,13 @@ const ClientDatabase = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Student create/edit dialog */}
+      {/* Student create dialog */}
       {isSpkUp && (
         <Dialog open={studentDialog} onOpenChange={(o) => { if (!o) resetStudentForm(); setStudentDialog(o); }}>
           <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden p-0">
             <div className="px-6 pt-6 pb-3">
               <DialogHeader>
-                <DialogTitle>{editingStudent ? 'Editar Estudiante' : 'Nuevo Estudiante'}</DialogTitle>
+                <DialogTitle>Nuevo Estudiante</DialogTitle>
               </DialogHeader>
             </div>
             <div className="px-6 pb-4 overflow-y-auto space-y-4" style={{ maxHeight: '60vh' }}>
@@ -369,7 +371,6 @@ const ClientDatabase = () => {
               </div>
               <div><Label className="text-xs">Notas</Label><Textarea value={sNotes} onChange={e => setSNotes(e.target.value)} placeholder="Notas adicionales..." className="mt-1.5 min-h-[60px] text-sm" /></div>
 
-              {/* Guardian section */}
               {isMinor && (
                 <div className="space-y-3 p-3 rounded-lg border border-amber-200 bg-amber-500/5">
                   <p className="text-xs font-semibold text-amber-700">Encargado (obligatorio para menores)</p>
@@ -392,6 +393,17 @@ const ClientDatabase = () => {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Student detail dialog */}
+      {isSpkUp && clientId && (
+        <StudentDetailDialog
+          student={selectedStudent}
+          open={!!selectedStudent}
+          onOpenChange={(o) => { if (!o) setSelectedStudent(null); }}
+          onSave={async (id, input) => { await updateStudent.mutateAsync({ id, ...input }); setSelectedStudent(null); }}
+          clientId={clientId}
+        />
       )}
     </DashboardLayout>
   );
