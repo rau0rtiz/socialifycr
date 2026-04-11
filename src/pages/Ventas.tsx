@@ -1,4 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SalesTrackingSection } from '@/components/dashboard/SalesTrackingSection';
@@ -128,8 +130,58 @@ const Ventas = () => {
   const { sales: allSales, summary } = useSalesTracking(clientId, { start: globalRange.start, end: globalRange.end });
   const { products: clientProducts } = useClientProducts(clientId);
 
+  // Speak Up: compute new-student-only sales for goal bar
+  // A "new student" = student_contact_id whose first-ever sale falls within the selected range
+  const { data: newStudentTotals } = useQuery({
+    queryKey: ['new-student-sales', clientId, globalRange.start.toISOString(), globalRange.end.toISOString()],
+    queryFn: async () => {
+      if (!clientId) return { CRC: 0, USD: 0 };
+      // Get first sale date per student
+      const { data: firstSales } = await supabase
+        .from('message_sales')
+        .select('student_contact_id, sale_date')
+        .eq('client_id', clientId)
+        .neq('status', 'cancelled')
+        .not('student_contact_id', 'is', null)
+        .order('sale_date', { ascending: true });
+      
+      if (!firstSales) return { CRC: 0, USD: 0 };
+      
+      // Find each student's first sale date
+      const firstByStudent = new Map<string, string>();
+      for (const s of firstSales) {
+        if (s.student_contact_id && !firstByStudent.has(s.student_contact_id)) {
+          firstByStudent.set(s.student_contact_id, s.sale_date);
+        }
+      }
+      
+      const startStr = format(globalRange.start, 'yyyy-MM-dd');
+      const endStr = format(globalRange.end, 'yyyy-MM-dd');
+      
+      // Students whose first sale is in the range = new students
+      const newStudentIds = new Set<string>();
+      for (const [sid, firstDate] of firstByStudent) {
+        if (firstDate >= startStr && firstDate <= endStr) {
+          newStudentIds.add(sid);
+        }
+      }
+      
+      // Sum only sales from new students within the range
+      const activeSales = allSales.filter(s => 
+        s.status !== 'cancelled' && 
+        (s as any).student_contact_id && 
+        newStudentIds.has((s as any).student_contact_id)
+      );
+      
+      return {
+        CRC: activeSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0),
+        USD: activeSales.filter(s => s.currency === 'USD').reduce((sum, s) => sum + Number(s.amount), 0),
+      };
+    },
+    enabled: !!clientId && isSpkUp,
+  });
+
   // Story tracker data for Alma Bendita — drives the goal bar
-  
 
   // Daily reports for Mind Coach
   const { reports: dailyReports } = useSetterDailyReports(clientId);
@@ -365,10 +417,11 @@ const Ventas = () => {
           <>
             <SalesGoalBar
               clientId={selectedClient.id}
-              currentSalesUSD={summary.totalUSD}
-              currentSalesCRC={summary.totalCRC}
+              currentSalesUSD={newStudentTotals?.USD ?? 0}
+              currentSalesCRC={newStudentTotals?.CRC ?? 0}
               primaryColor={selectedClient.primary_color || undefined}
               accentColor={selectedClient.accent_color || undefined}
+              subtitle="Solo estudiantes nuevos"
             />
             <SpeakUpSalesSummary clientId={selectedClient.id} dateRange={globalRange} />
             <RecentSalesTicker clientId={selectedClient.id} />
