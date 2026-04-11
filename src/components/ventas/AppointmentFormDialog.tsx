@@ -402,7 +402,7 @@ export const AppointmentFormDialog = ({
                 {/* Closers with avatars */}
                 {closers.length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Closers</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Vendedores</p>
                     <div className="grid grid-cols-2 gap-2">
                       {closers.map(c => (
                         <button

@@ -156,7 +156,9 @@ const SaleCard = ({ sale, onEdit, onDelete }: { sale: MessageSale; onEdit: (s: M
 export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false, salePrefill, showSaleDialog, onSaleFromSetter, dateRange }: SalesTrackingSectionProps) => {
   const { selectedClient } = useBrand();
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
+  const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const salesLabel = 'Ventas';
+  const closerLabel = isSpkUp ? 'Vendedor' : 'Closer';
   const [month, setMonth] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [allSalesDialogOpen, setAllSalesDialogOpen] = useState(false);
@@ -380,10 +382,10 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
             {uniqueClosers.length > 0 && (
               <Select value={filterCloser} onValueChange={setFilterCloser}>
                 <SelectTrigger className="h-8 w-[150px] text-xs">
-                  <SelectValue placeholder="Closer" />
+                  <SelectValue placeholder={closerLabel} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" className="text-xs">Todos los closers</SelectItem>
+                  <SelectItem value="all" className="text-xs">Todos los {closerLabel.toLowerCase()}es</SelectItem>
                   {uniqueClosers.map(name => (
                     <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
                   ))}
