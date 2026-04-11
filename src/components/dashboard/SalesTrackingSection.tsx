@@ -73,6 +73,86 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 };
 
+const SaleCard = ({ sale, onEdit, onDelete }: { sale: MessageSale; onEdit: (s: MessageSale) => void; onDelete: (id: string) => void }) => {
+  const isInstallment = sale.num_installments && sale.num_installments > 1;
+  const allPaid = isInstallment && sale.installments_paid === sale.num_installments;
+  const borderColor = isInstallment
+    ? allPaid
+      ? 'border-emerald-500/40 bg-emerald-500/5'
+      : 'border-amber-500/40 bg-amber-500/5'
+    : 'border-emerald-500/40 bg-emerald-500/5';
+
+  return (
+    <div
+      className={cn(
+        'relative flex flex-col items-start gap-1.5 p-3 rounded-xl border hover:shadow-sm transition-all group cursor-pointer',
+        borderColor,
+      )}
+      onClick={() => onEdit(sale)}
+    >
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <button
+            className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 z-10"
+            onClick={(e) => e.stopPropagation()}
+            title="Eliminar venta"
+          >
+            <Trash2 className="h-3 w-3 text-destructive" />
+          </button>
+        </AlertDialogTrigger>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar venta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará la venta de {sale.customer_name || 'Sin nombre'} por {formatCurrency(Number(sale.amount), sale.currency)}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => onDelete(sale.id)}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <div className="flex items-center justify-between w-full pr-5">
+        <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+          {SOURCE_LABELS[sale.source] || sale.source}
+        </Badge>
+        <span className="text-[10px] text-muted-foreground">
+          {format(new Date(sale.sale_date), 'dd/MM')}
+        </span>
+      </div>
+      <span className="text-sm font-semibold truncate w-full">
+        {sale.customer_name || 'Sin nombre'}
+      </span>
+      <span className="text-base font-bold text-primary">
+        {formatCurrency(Number(sale.amount), sale.currency)}
+      </span>
+      {isInstallment ? (
+        <Badge variant="outline" className={cn('text-[8px] px-1 py-0 gap-0.5', allPaid ? 'border-emerald-500/50 text-emerald-600 dark:text-emerald-400' : 'border-amber-500/50 text-amber-600 dark:text-amber-400')}>
+          <CreditCard className="h-2.5 w-2.5" />
+          {sale.installments_paid || 1}/{sale.num_installments}
+        </Badge>
+      ) : (
+        <Badge variant="outline" className="text-[8px] px-1 py-0 gap-0.5 border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="h-2.5 w-2.5" />
+          Pago único
+        </Badge>
+      )}
+      {sale.ad_name && (
+        <span className="text-[9px] text-muted-foreground truncate w-full flex items-center gap-1">
+          <Megaphone className="h-2.5 w-2.5 shrink-0" />
+          {sale.ad_name}
+        </span>
+      )}
+    </div>
+  );
+};
+
 export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false, salePrefill, showSaleDialog, onSaleFromSetter, dateRange }: SalesTrackingSectionProps) => {
   const { selectedClient } = useBrand();
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
