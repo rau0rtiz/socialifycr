@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useStories, Story } from '@/hooks/use-stories';
 import { useSalesTracking, SaleInput } from '@/hooks/use-sales-tracking';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
