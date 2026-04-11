@@ -385,7 +385,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                   <SelectValue placeholder={closerLabel} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" className="text-xs">Todos los {closerLabel.toLowerCase()}es</SelectItem>
+                  <SelectItem value="all" className="text-xs">{isSpkUp ? 'Todos los vendedores' : 'Todos los closers'}</SelectItem>
                   {uniqueClosers.map(name => (
                     <SelectItem key={name} value={name} className="text-xs">{name}</SelectItem>
                   ))}
