@@ -251,7 +251,7 @@ const ClientDatabase = () => {
                   {filteredStudents.length === 0 ? (
                     <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">No se encontraron estudiantes</TableCell></TableRow>
                   ) : filteredStudents.map(s => (
-                    <TableRow key={s.id} className="text-xs">
+                    <TableRow key={s.id} className="text-xs cursor-pointer hover:bg-muted/50" onClick={() => setSelectedStudent(s)}>
                       <TableCell className="font-medium">{s.full_name}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
@@ -267,13 +267,13 @@ const ClientDatabase = () => {
                       </TableCell>
                       <TableCell className="text-muted-foreground">{s.guardian_name || '—'}</TableCell>
                       <TableCell>
-                        <div className="flex gap-0.5">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditStudent(s)}><Pencil className="h-3 w-3" /></Button>
+                        <div className="flex gap-0.5" onClick={e => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(s)}><Trash2 className="h-3.5 w-3.5" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
+
                 </TableBody>
               </Table>
             ) : (
