@@ -6,6 +6,7 @@ import {
   Palette, 
   LogOut,
   ShoppingCart,
+  ClipboardCheck,
   History,
   BarChart3,
   CreditCard,
@@ -103,6 +104,12 @@ export const Sidebar = () => {
   if (showVentas) {
     const ventasLabel = 'Ventas';
     menuItems.push({ title: ventasLabel, url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
+  }
+
+  // Asistencia — only for Speak Up
+  const isSpeakUp = selectedClient?.name?.toLowerCase().includes('speak up');
+  if (isSpeakUp) {
+    menuItems.push({ title: 'Asistencia', url: '/asistencia', icon: ClipboardCheck });
   }
   if (showContenido) {
     menuItems.push({ title: 'Contenido', url: '/content', icon: FileText, dataTour: 'contenido-link' });
