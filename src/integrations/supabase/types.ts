@@ -82,6 +82,70 @@ export type Database = {
           },
         ]
       }
+      attendance_records: {
+        Row: {
+          check_in: string | null
+          check_out: string | null
+          class_date: string
+          client_id: string
+          created_at: string
+          group_id: string | null
+          id: string
+          marked_by: string | null
+          notes: string | null
+          status: string
+          student_contact_id: string
+        }
+        Insert: {
+          check_in?: string | null
+          check_out?: string | null
+          class_date: string
+          client_id: string
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          marked_by?: string | null
+          notes?: string | null
+          status?: string
+          student_contact_id: string
+        }
+        Update: {
+          check_in?: string | null
+          check_out?: string | null
+          class_date?: string
+          client_id?: string
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          marked_by?: string | null
+          notes?: string | null
+          status?: string
+          student_contact_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "class_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_contact_id_fkey"
+            columns: ["student_contact_id"]
+            isOneToOne: false
+            referencedRelation: "student_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -155,6 +219,128 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_group_members: {
+        Row: {
+          enrolled_at: string
+          group_id: string
+          id: string
+          sale_id: string | null
+          status: string
+          student_contact_id: string
+        }
+        Insert: {
+          enrolled_at?: string
+          group_id: string
+          id?: string
+          sale_id?: string | null
+          status?: string
+          student_contact_id: string
+        }
+        Update: {
+          enrolled_at?: string
+          group_id?: string
+          id?: string
+          sale_id?: string | null
+          status?: string
+          student_contact_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "class_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_group_members_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "message_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_group_members_student_contact_id_fkey"
+            columns: ["student_contact_id"]
+            isOneToOne: false
+            referencedRelation: "student_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_groups: {
+        Row: {
+          age_range_max: number | null
+          age_range_min: number | null
+          capacity: number
+          classroom: string | null
+          client_id: string
+          created_at: string
+          english_level: string | null
+          id: string
+          name: string
+          product_id: string
+          schedules: Json
+          status: string
+          teacher_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          age_range_max?: number | null
+          age_range_min?: number | null
+          capacity?: number
+          classroom?: string | null
+          client_id: string
+          created_at?: string
+          english_level?: string | null
+          id?: string
+          name: string
+          product_id: string
+          schedules?: Json
+          status?: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          age_range_max?: number | null
+          age_range_min?: number | null
+          capacity?: number
+          classroom?: string | null
+          client_id?: string
+          created_at?: string
+          english_level?: string | null
+          id?: string
+          name?: string
+          product_id?: string
+          schedules?: Json
+          status?: string
+          teacher_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_groups_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_groups_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "client_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_groups_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "client_teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -1177,6 +1363,7 @@ export type Database = {
           customer_phone: string | null
           discount_amount: number | null
           discount_reason: string | null
+          group_id: string | null
           id: string
           installment_amount: number | null
           installments_paid: number | null
@@ -1215,6 +1402,7 @@ export type Database = {
           customer_phone?: string | null
           discount_amount?: number | null
           discount_reason?: string | null
+          group_id?: string | null
           id?: string
           installment_amount?: number | null
           installments_paid?: number | null
@@ -1253,6 +1441,7 @@ export type Database = {
           customer_phone?: string | null
           discount_amount?: number | null
           discount_reason?: string | null
+          group_id?: string | null
           id?: string
           installment_amount?: number | null
           installments_paid?: number | null
@@ -1280,6 +1469,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_sales_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "class_groups"
             referencedColumns: ["id"]
           },
           {

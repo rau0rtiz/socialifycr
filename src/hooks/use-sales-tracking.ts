@@ -64,6 +64,7 @@ export interface SaleInput {
   tax_amount?: number;
   subtotal?: number;
   payment_day?: number;
+  group_id?: string;
 }
 
 type SalesTrackingPeriod = Date | { start?: Date; end?: Date };

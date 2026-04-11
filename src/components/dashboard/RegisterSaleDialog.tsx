@@ -14,10 +14,11 @@ import { useClientClosers } from '@/hooks/use-client-closers';
 import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-contacts';
 import { useClientTeachers } from '@/hooks/use-client-teachers';
+import { useClassGroups } from '@/hooks/use-class-groups';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { FREQUENCY_LABELS, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet, CalendarIcon, Banknote, Search, GraduationCap, Clock, UserCheck, Receipt, Percent } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet, CalendarIcon, Banknote, Search, GraduationCap, Clock, UserCheck, Receipt, Percent, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -131,12 +132,13 @@ export const RegisterSaleDialog = ({
   const [spkDiscountAmount, setSpkDiscountAmount] = useState('');
   const [spkDiscountReason, setSpkDiscountReason] = useState('');
   const [spkPaymentDay, setSpkPaymentDay] = useState('');
-
+  const [spkSelectedGroupId, setSpkSelectedGroupId] = useState<string | null>(null);
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
   const { data: allSchemes = [] } = useClientPaymentSchemes(clientId || null);
   const { students, addStudent } = useStudentContacts(clientId || null);
   const { teachers } = useClientTeachers(clientId || null);
+  const { groups, getGroupOccupancy, getGroupMembers, addMember: addGroupMember } = useClassGroups(clientId || null);
   const productNames = products.map(p => p.name);
 
   const isEditing = !!editingSale;
@@ -202,6 +204,7 @@ export const RegisterSaleDialog = ({
     setSpkDiscountAmount('');
     setSpkDiscountReason('');
     setSpkPaymentDay('');
+    setSpkSelectedGroupId(null);
     if (editingSale) {
       setAmount(String(editingSale.amount));
       setCurrency(editingSale.currency);
@@ -834,14 +837,23 @@ export const RegisterSaleDialog = ({
 
   // ═══════ SPEAK UP: 4-step sales flow ═══════
   if (isSpkUp && !isEditing) {
-    const spkStepNames = ['Estudiante', 'Producto', 'Horario', 'Pago'];
+    const selectedProductObj = products.find(p => p.name === product);
+    const isGroupProduct = selectedProductObj?.category === 'group';
+    const spkStepNames = isGroupProduct
+      ? ['Estudiante', 'Producto', 'Grupo', 'Horario', 'Pago']
+      : ['Estudiante', 'Producto', 'Horario', 'Pago'];
     const spkTotalSteps = spkStepNames.length;
     const spkLastStep = spkTotalSteps - 1;
 
     const selectedStudent = students.find(s => s.id === spkSelectedStudentId);
-    const selectedProductObj = products.find(p => p.name === product);
     const productAudience = selectedProductObj?.audience || 'all';
     const isMinor = spkStudentAge ? parseInt(spkStudentAge) < 18 : false;
+
+    // Groups for this product
+    const productGroups = isGroupProduct && selectedProductObj
+      ? groups.filter(g => g.product_id === selectedProductObj.id && g.status === 'active')
+      : [];
+    const selectedGroup = productGroups.find(g => g.id === spkSelectedGroupId);
 
     // Filter students by search
     const filteredStudents = spkStudentSearch.trim()
@@ -868,10 +880,16 @@ export const RegisterSaleDialog = ({
     const taxCalc = spkApplyTax ? Math.round(subtotalCalc * (taxRate / 100)) : 0;
     const totalCalc = subtotalCalc + taxCalc;
 
+    // Step index mapping
+    const groupStepIdx = isGroupProduct ? 2 : -1;
+    const scheduleStepIdx = isGroupProduct ? 3 : 2;
+    const paymentStepIdx = isGroupProduct ? 4 : 3;
+
     const spkCanAdvance = (s: number) => {
       if (s === 0) return !!spkSelectedStudentId || spkCreatingStudent;
       if (s === 1) return !!product;
-      if (s === 2) return true; // Schedule & teacher optional (can be "por definir")
+      if (s === groupStepIdx) return !!spkSelectedGroupId; // Must select a group
+      if (s === scheduleStepIdx) return true; // Schedule & teacher optional
       return true;
     };
 
@@ -926,13 +944,14 @@ export const RegisterSaleDialog = ({
         installments_paid: installmentsPaid,
         installment_amount: installmentAmount || undefined,
         student_contact_id: spkSelectedStudentId || undefined,
-        teacher_id: spkSelectedTeacherId === '_pending' ? undefined : spkSelectedTeacherId || undefined,
-        assigned_schedule: spkAssignedSchedule.length > 0 ? spkAssignedSchedule : undefined,
+        teacher_id: selectedGroup?.teacher_id || (spkSelectedTeacherId === '_pending' ? undefined : spkSelectedTeacherId) || undefined,
+        assigned_schedule: selectedGroup?.schedules?.length ? selectedGroup.schedules : (spkAssignedSchedule.length > 0 ? spkAssignedSchedule : undefined),
         discount_amount: discountAmt || undefined,
         discount_reason: discountAmt > 0 ? spkDiscountReason.trim() : undefined,
         tax_amount: taxCalc || undefined,
         subtotal: subtotalCalc || undefined,
         payment_day: spkPaymentDay ? parseInt(spkPaymentDay) : undefined,
+        group_id: spkSelectedGroupId || undefined,
       };
 
       const hasRemainingInstallments = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
@@ -1123,8 +1142,60 @@ export const RegisterSaleDialog = ({
               </div>
             )}
 
-            {/* Step 2: Schedule + Teacher */}
-            {step === 2 && (
+            {/* Group step (only for group products) */}
+            {step === groupStepIdx && isGroupProduct && (
+              <div className="space-y-4 py-3">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" /> Seleccionar Grupo
+                </Label>
+                {productGroups.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-4 text-center">No hay grupos activos para este producto. Crea uno en Business Setup → Grupos.</p>
+                ) : (
+                  <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
+                    {productGroups.map(g => {
+                      const occ = getGroupOccupancy(g.id);
+                      const isFull = occ >= g.capacity;
+                      const isSelected = spkSelectedGroupId === g.id;
+                      return (
+                        <button
+                          key={g.id}
+                          disabled={isFull}
+                          className={cn(
+                            'w-full text-left p-3 rounded-lg border text-xs transition-colors',
+                            isSelected ? 'bg-primary/10 border-primary/30' : isFull ? 'opacity-50 cursor-not-allowed border-border/30' : 'hover:bg-muted/50 border-border/50'
+                          )}
+                          onClick={() => {
+                            setSpkSelectedGroupId(g.id);
+                            if (g.teacher_id) setSpkSelectedTeacherId(g.teacher_id);
+                            if (g.schedules?.length) setSpkAssignedSchedule(g.schedules);
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{g.name}</span>
+                            <Badge variant={isFull ? 'destructive' : 'secondary'} className="text-[9px]">{occ}/{g.capacity}</Badge>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-muted-foreground flex-wrap">
+                            {g.english_level && <span>{g.english_level}</span>}
+                            {g.age_range_min != null && g.age_range_max != null && <span>{g.age_range_min}-{g.age_range_max} años</span>}
+                            {g.classroom && <span>Aula: {g.classroom}</span>}
+                          </div>
+                          {g.schedules?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {g.schedules.map((s: any, i: number) => (
+                                <span key={i} className="text-[9px] text-muted-foreground capitalize">{s.day} {s.start}-{s.end}</span>
+                              ))}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Schedule + Teacher step */}
+            {step === scheduleStepIdx && (
               <div className="space-y-4 py-3">
                 {/* Schedule selection based on product available_schedules */}
                 {selectedProductObj?.available_schedules && (selectedProductObj.available_schedules as any[]).length > 0 && (
@@ -1186,8 +1257,8 @@ export const RegisterSaleDialog = ({
               </div>
             )}
 
-            {/* Step 3: Payment */}
-            {step === 3 && (
+            {/* Payment step */}
+            {step === paymentStepIdx && (
               <div className="space-y-3 py-3">
                 {/* Amount */}
                 <div className="flex gap-2">
@@ -1326,15 +1397,17 @@ export const RegisterSaleDialog = ({
                 if (!spkCanAdvance(step)) {
                   if (step === 0) toast.error('Selecciona o crea un estudiante');
                   if (step === 1) toast.error('Selecciona un producto');
+                  if (step === groupStepIdx) toast.error('Selecciona un grupo');
                   return;
                 }
                 // Auto-set source and amount defaults when going to payment step
-                if (step === 2 && !source) setSource('organic');
-                if (step === 2 && !amount && selectedProductObj?.price) {
+                const nextIsPayment = step + 1 === paymentStepIdx;
+                if (nextIsPayment && !source) setSource('organic');
+                if (nextIsPayment && !amount && selectedProductObj?.price) {
                   setAmount(String(selectedProductObj.price));
                   setCurrency(selectedProductObj.currency as 'CRC' | 'USD');
                 }
-                if (step === 2 && selectedProductObj?.tax_applicable) setSpkApplyTax(true);
+                if (nextIsPayment && selectedProductObj?.tax_applicable) setSpkApplyTax(true);
                 setStep(s => s + 1);
               }} className="text-xs">
                 Continuar <ChevronRight className="h-4 w-4 ml-1" />

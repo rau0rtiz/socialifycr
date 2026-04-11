@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useBrand } from '@/contexts/BrandContext';
+import { GroupsManager } from '@/components/ventas/GroupsManager';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,13 +15,13 @@ import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
 import { AIContextEditor } from '@/components/clientes/AIContextEditor';
 import { ClientBanner } from '@/components/dashboard/ClientBanner';
-import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain, ToggleRight, GraduationCap } from 'lucide-react';
+import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain, ToggleRight, GraduationCap, UsersRound } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features' | 'teachers';
+type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features' | 'teachers' | 'groups';
 
 const STATIC_SECTIONS = [
   {
@@ -46,6 +47,15 @@ const STATIC_SECTIONS = [
     icon: GraduationCap,
     color: 'text-purple-500',
     bgColor: 'bg-purple-500/10',
+    speakUpOnly: true,
+  },
+  {
+    key: 'groups' as const,
+    title: 'Grupos',
+    description: 'Grupos de clases, niveles y horarios',
+    icon: UsersRound,
+    color: 'text-teal-500',
+    bgColor: 'bg-teal-500/10',
     speakUpOnly: true,
   },
   {
@@ -384,10 +394,15 @@ const BusinessSetup = () => {
     <TeachersManager clientId={selectedClient.id} />
   );
 
+  const renderGroups = () => (
+    <GroupsManager clientId={selectedClient.id} />
+  );
+
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     brand: renderBrand,
     products: renderProducts,
     teachers: renderTeachers,
+    groups: renderGroups,
     team: renderTeam,
     connections: renderConnections,
     features: renderFeatures,
