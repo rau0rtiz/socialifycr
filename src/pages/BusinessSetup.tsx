@@ -394,10 +394,15 @@ const BusinessSetup = () => {
     <TeachersManager clientId={selectedClient.id} />
   );
 
+  const renderGroups = () => (
+    <GroupsManager clientId={selectedClient.id} />
+  );
+
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     brand: renderBrand,
     products: renderProducts,
     teachers: renderTeachers,
+    groups: renderGroups,
     team: renderTeam,
     connections: renderConnections,
     features: renderFeatures,
