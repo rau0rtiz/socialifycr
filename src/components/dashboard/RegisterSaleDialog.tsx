@@ -79,6 +79,7 @@ export const RegisterSaleDialog = ({
 }: RegisterSaleDialogProps) => {
   const { selectedClient } = useBrand();
   const isSilvia = selectedClient?.name?.toLowerCase().includes('silvia');
+  const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const [step, setStep] = useState(0);
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
