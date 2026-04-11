@@ -57,7 +57,7 @@ export const useClientClosers = (clientId: string | null) => {
 
       // 2. Get named closers from client_closers table
       const { data: namedClosers } = await supabase
-        .from('client_closers' as any)
+        .from('client_closers')
         .select('id, name')
         .eq('client_id', clientId)
         .order('name');
