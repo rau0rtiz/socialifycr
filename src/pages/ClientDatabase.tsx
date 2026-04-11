@@ -319,7 +319,11 @@ const ClientDatabase = () => {
                       <TableCell>
                         <div className="flex gap-0.5">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditStudent(s)}><Pencil className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(s)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                          {canDeleteStudents && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(s)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                          )}
+                        </div>
+                      </TableCell>
                         </div>
                       </TableCell>
                     </TableRow>
