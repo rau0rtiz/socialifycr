@@ -297,6 +297,7 @@ const ProductList = ({ products, allSchemes, onSelect, clientId }: { products: C
 };
 
 
+export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const { products, isLoading, addProduct, updateProduct, deleteProduct } = useClientProducts(clientId);
   const { data: allSchemes } = useClientPaymentSchemes(clientId);
   const [dialogOpen, setDialogOpen] = useState(false);
