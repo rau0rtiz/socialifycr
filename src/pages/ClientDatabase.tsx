@@ -38,11 +38,20 @@ const ClientDatabase = () => {
   const clientId = selectedClient?.id ?? null;
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { systemRole, clientAccess } = useUserRole();
+
+  // Check if user can delete students (account_manager for this client, or admin/owner)
+  const isAdminOrOwner = systemRole === 'owner' || systemRole === 'admin';
+  const isAccountManager = clientId ? clientAccess.some(a => a.clientId === clientId && a.role === 'account_manager') : false;
+  const canDeleteStudents = isAdminOrOwner || isAccountManager;
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
