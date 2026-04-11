@@ -18,7 +18,7 @@ import { useClassGroups } from '@/hooks/use-class-groups';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { FREQUENCY_LABELS, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet, CalendarIcon, Banknote, Search, GraduationCap, Clock, UserCheck, Receipt, Percent } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet, CalendarIcon, Banknote, Search, GraduationCap, Clock, UserCheck, Receipt, Percent, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
