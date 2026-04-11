@@ -181,6 +181,27 @@ export const RegisterSaleDialog = ({
     setDepositBalanceDueDate('');
     setShowNewPaymentMethod(false);
     setNewPaymentMethodName('');
+    // Reset Speak Up state
+    setSpkStudentSearch('');
+    setSpkSelectedStudentId(null);
+    setSpkCreatingStudent(false);
+    setSpkStudentName('');
+    setSpkStudentPhone('');
+    setSpkStudentEmail('');
+    setSpkStudentIdNumber('');
+    setSpkStudentAge('');
+    setSpkStudentGender('');
+    setSpkStudentNotes('');
+    setSpkGuardianName('');
+    setSpkGuardianPhone('');
+    setSpkGuardianIdNumber('');
+    setSpkGuardianEmail('');
+    setSpkSelectedTeacherId(null);
+    setSpkAssignedSchedule([]);
+    setSpkApplyTax(false);
+    setSpkDiscountAmount('');
+    setSpkDiscountReason('');
+    setSpkPaymentDay('');
     if (editingSale) {
       setAmount(String(editingSale.amount));
       setCurrency(editingSale.currency);
