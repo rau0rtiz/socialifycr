@@ -137,8 +137,29 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
     fetchConnections();
   }, [fetchConnections]);
 
-  // Check for YouTube OAuth redirect result stored in sessionStorage
+  // Check for Meta OAuth redirect result stored in sessionStorage (iPad/iOS fallback)
   useEffect(() => {
+    const metaStored = sessionStorage.getItem('meta_oauth_result');
+    if (metaStored) {
+      sessionStorage.removeItem('meta_oauth_result');
+      try {
+        const data = JSON.parse(metaStored);
+        if (data.type === 'META_OAUTH_CODE' && data.clientId === clientId) {
+          handleMetaOAuthCode(data.code, data.clientId, data.redirectUri);
+        } else if (data.type === 'META_OAUTH_ERROR') {
+          toast({
+            title: 'Error de conexión',
+            description: data.error || 'Error al conectar con Meta',
+            variant: 'destructive',
+          });
+          setConnecting(null);
+        }
+      } catch (e) {
+        console.error('Error parsing Meta OAuth result:', e);
+      }
+    }
+
+    // Check for YouTube OAuth redirect result stored in sessionStorage
     const stored = sessionStorage.getItem('youtube_oauth_result');
     if (stored) {
       sessionStorage.removeItem('youtube_oauth_result');
@@ -180,7 +201,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         console.error('Error parsing LinkedIn OAuth result:', e);
       }
     }
-  }, [clientId]);
+  }, [clientId, handleMetaOAuthCode, toast]);
 
   // Handle META_OAUTH_CODE: parent makes the authenticated API call
   const handleMetaOAuthCode = useCallback(async (code: string, oauthClientId: string, redirectUri: string) => {
