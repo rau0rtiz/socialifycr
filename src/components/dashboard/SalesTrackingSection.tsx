@@ -39,6 +39,7 @@ interface SalesTrackingSectionProps {
   salePrefill?: SalePrefill | null;
   showSaleDialog?: boolean;
   onSaleFromSetter?: (appointmentId?: string, saleId?: string) => void;
+  dateRange?: { start: Date; end: Date };
 }
 
 const SOURCE_LABELS: Record<string, string> = {
