@@ -458,7 +458,18 @@ const Ventas = () => {
         )}
 
         {/* Bottom section: charts side by side */}
-        {!isAlmaBendita && salesDistributionSection}
+        {!isAlmaBendita && !isSpkUp && salesDistributionSection}
+
+        {/* Speak Up: only product chart, no brand chart */}
+        {isSpkUp && (
+          <div className="grid grid-cols-1 gap-6">
+            {hasSalesChartData ? (
+              <SalesByProductChart sales={chartSales} products={clientProducts} />
+            ) : (
+              renderEmptySalesCard('Ventas por Producto')
+            )}
+          </div>
+        )}
 
         {!isSpkUp && !isSilvia && !isAlmaBendita && (
           <ClosureRateWidget appointments={appointments} />
