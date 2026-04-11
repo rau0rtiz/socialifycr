@@ -68,7 +68,6 @@ const SECTIONS = [
 const BusinessSetup = () => {
   const { selectedClient, clientsLoading } = useBrand();
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
-  const { selectedClient, clientsLoading } = useBrand();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<Section>(null);
   const { flags: featureFlags, updateFlag, updateChecklistItems } = useClientFeatures(selectedClient?.id || null);
