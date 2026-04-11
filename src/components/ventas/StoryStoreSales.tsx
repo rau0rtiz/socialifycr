@@ -321,7 +321,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                 )}
               >
                 {previewSrc ? (
-                  <img src={previewSrc} alt="" className={previewClassName} />
+                  <StoryImage src={previewSrc} className={previewClassName} isVideo={isVideo} />
                 ) : (
                   <div className="w-full h-full bg-muted flex items-center justify-center">
                     {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
@@ -420,10 +420,10 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
               {/* Story preview */}
               <div className="relative flex-shrink-0 w-full max-h-[50vh] md:max-h-none md:w-[340px] md:h-[604px] rounded-xl overflow-hidden border bg-black">
                 {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
-                  <img
-                    src={selectedStory.thumbnailUrl || selectedStory.mediaUrl}
-                    alt=""
+                  <StoryImage
+                    src={(selectedStory.thumbnailUrl || selectedStory.mediaUrl)!}
                     className="w-full h-full object-contain"
+                    isVideo={selectedStory.mediaType === 'VIDEO'}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
