@@ -419,102 +419,28 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
             </div>
           )}
 
-          {/* Sales Grid */}
+          {/* Sales Grid — show max 6 recent */}
           {sales.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-              {sales.map((sale) => {
-                const isInstallment = sale.num_installments && sale.num_installments > 1;
-                const allPaid = isInstallment && sale.installments_paid === sale.num_installments;
-                const borderColor = isInstallment
-                  ? allPaid
-                    ? 'border-emerald-500/40 bg-emerald-500/5'
-                    : 'border-amber-500/40 bg-amber-500/5'
-                  : 'border-emerald-500/40 bg-emerald-500/5';
-
-                return (
-                <div
-                  key={sale.id}
-                  className={cn(
-                    'relative flex flex-col items-start gap-1.5 p-3 rounded-xl border hover:shadow-sm transition-all group cursor-pointer',
-                    borderColor,
-                  )}
-                  onClick={() => handleEdit(sale)}
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {sales.slice(0, 6).map((sale) => (
+                  <SaleCard key={sale.id} sale={sale} onEdit={handleEdit} onDelete={handleDelete} />
+                ))}
+              </div>
+              {sales.length > 6 && (
+                <Button
+                  variant="outline"
+                  className="w-full mt-2 h-11 text-sm font-semibold gap-2 border-primary/30 text-primary hover:bg-primary/5"
+                  onClick={() => setAllSalesDialogOpen(true)}
                 >
-                  {/* Delete button */}
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <button
-                        className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 z-10"
-                        onClick={(e) => e.stopPropagation()}
-                        title="Eliminar venta"
-                      >
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar venta?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Esta acción no se puede deshacer. Se eliminará la venta de {sale.customer_name || 'Sin nombre'} por {formatCurrency(Number(sale.amount), sale.currency)}.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          onClick={() => handleDelete(sale.id)}
-                        >
-                          Eliminar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-
-                  <div className="flex items-center justify-between w-full pr-5">
-                    <Badge variant="outline" className="text-[9px] px-1.5 py-0">
-                      {SOURCE_LABELS[sale.source] || sale.source}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground">
-                      {format(new Date(sale.sale_date), 'dd/MM')}
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold truncate w-full">
-                    {sale.customer_name || 'Sin nombre'}
-                  </span>
-                  <span className="text-base font-bold text-primary">
-                    {formatCurrency(Number(sale.amount), sale.currency)}
-                  </span>
-                  {isInstallment && (
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'text-[8px] px-1 py-0 gap-0.5',
-                        allPaid ? 'border-emerald-500/50 text-emerald-600 dark:text-emerald-400' : 'border-amber-500/50 text-amber-600 dark:text-amber-400',
-                      )}
-                    >
-                      <CreditCard className="h-2.5 w-2.5" />
-                      {sale.installments_paid || 1}/{sale.num_installments}
-                    </Badge>
-                  )}
-                  {!isInstallment && (
-                    <Badge variant="outline" className="text-[8px] px-1 py-0 gap-0.5 border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
-                      <CheckCircle2 className="h-2.5 w-2.5" />
-                      Pago único
-                    </Badge>
-                  )}
-                  {sale.ad_name && (
-                    <span className="text-[9px] text-muted-foreground truncate w-full flex items-center gap-1">
-                      <Megaphone className="h-2.5 w-2.5 shrink-0" />
-                      {sale.ad_name}
-                    </span>
-                  )}
-                </div>
-                );
-              })}
-            </div>
+                  <ShoppingCart className="h-4 w-4" />
+                  VER TODAS LAS VENTAS ({sales.length})
+                </Button>
+              )}
+            </>
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              No hay {isMindCoach ? 'registros' : 'ventas registradas'} este mes
+              No hay {isMindCoach ? 'registros' : 'ventas registradas'} en este periodo
             </div>
           )}
         </CardContent>
