@@ -22,7 +22,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features' | 'teachers';
 
-const SECTIONS = [
+const STATIC_SECTIONS = [
   {
     key: 'brand' as const,
     title: 'Marca',
@@ -38,6 +38,15 @@ const SECTIONS = [
     icon: Package,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
+  },
+  {
+    key: 'teachers' as const,
+    title: 'Profesores',
+    description: 'Profesores, horarios y asignaciones',
+    icon: GraduationCap,
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10',
+    speakUpOnly: true,
   },
   {
     key: 'team' as const,
