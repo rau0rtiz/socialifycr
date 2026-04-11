@@ -14,6 +14,7 @@ import { useClientClosers } from '@/hooks/use-client-closers';
 import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-contacts';
 import { useClientTeachers } from '@/hooks/use-client-teachers';
+import { useClassGroups } from '@/hooks/use-class-groups';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { FREQUENCY_LABELS, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
@@ -131,12 +132,13 @@ export const RegisterSaleDialog = ({
   const [spkDiscountAmount, setSpkDiscountAmount] = useState('');
   const [spkDiscountReason, setSpkDiscountReason] = useState('');
   const [spkPaymentDay, setSpkPaymentDay] = useState('');
-
+  const [spkSelectedGroupId, setSpkSelectedGroupId] = useState<string | null>(null);
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closers = [] } = useClientClosers(clientId || null);
   const { data: allSchemes = [] } = useClientPaymentSchemes(clientId || null);
   const { students, addStudent } = useStudentContacts(clientId || null);
   const { teachers } = useClientTeachers(clientId || null);
+  const { groups, getGroupOccupancy, getGroupMembers, addMember: addGroupMember } = useClassGroups(clientId || null);
   const productNames = products.map(p => p.name);
 
   const isEditing = !!editingSale;
