@@ -16,6 +16,7 @@ interface ClinicSalesSummaryProps {
 
 export const ClinicSalesSummary = ({ clientId, dateRange }: ClinicSalesSummaryProps) => {
   const { sales, summary } = useSalesTracking(clientId, dateRange ? { start: dateRange.start, end: dateRange.end } : undefined);
+  const { collections } = usePaymentCollections(clientId);
   const { appointments } = useSetterAppointments(clientId);
 
   // Valoraciones = appointments scheduled or completed this month
