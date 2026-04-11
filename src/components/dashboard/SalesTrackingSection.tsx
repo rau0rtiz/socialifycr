@@ -94,7 +94,8 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     }
   }, [showSaleDialog, salePrefill]);
 
-  const { sales: allSales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, month);
+  const salesPeriod = dateRange ? { start: dateRange.start, end: dateRange.end } : month;
+  const { sales: allSales, isLoading, addSale, deleteSale, updateSale, summary } = useSalesTracking(clientId, salesPeriod);
   const { generateCollections } = usePaymentCollections(clientId);
 
   // Extract unique setters and products for filters
