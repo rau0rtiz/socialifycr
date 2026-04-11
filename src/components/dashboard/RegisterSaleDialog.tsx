@@ -845,8 +845,8 @@ export const RegisterSaleDialog = ({
     const spkLastStep = spkTotalSteps - 1;
 
     const selectedStudent = students.find(s => s.id === spkSelectedStudentId);
-    const selectedProductObj2 = products.find(p => p.name === product);
-    const productAudience = selectedProductObj2?.audience || 'all';
+    const selectedProductObj = products.find(p => p.name === product);
+    const productAudience = selectedProductObj?.audience || 'all';
     const isMinor = spkStudentAge ? parseInt(spkStudentAge) < 18 : false;
 
     // Groups for this product
