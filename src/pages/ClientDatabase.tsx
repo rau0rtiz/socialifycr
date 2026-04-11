@@ -282,6 +282,11 @@ const ClientDatabase = () => {
                       </TableCell>
                       <TableCell>{s.age ?? '—'}</TableCell>
                       <TableCell>
+                        <Badge variant="outline" className="text-[10px]">
+                          {purchaseCounts[s.id] || 0}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
                         <Badge variant="outline" className={`text-[10px] ${s.status === 'active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-gray-500/10 text-gray-600 border-gray-200'}`}>
                           {s.status === 'active' ? 'Activo' : 'Inactivo'}
                         </Badge>
