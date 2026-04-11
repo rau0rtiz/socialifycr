@@ -336,13 +336,13 @@ const ClientDatabase = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Student create/edit dialog */}
+      {/* Student create dialog */}
       {isSpkUp && (
         <Dialog open={studentDialog} onOpenChange={(o) => { if (!o) resetStudentForm(); setStudentDialog(o); }}>
           <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden p-0">
             <div className="px-6 pt-6 pb-3">
               <DialogHeader>
-                <DialogTitle>{editingStudent ? 'Editar Estudiante' : 'Nuevo Estudiante'}</DialogTitle>
+                <DialogTitle>Nuevo Estudiante</DialogTitle>
               </DialogHeader>
             </div>
             <div className="px-6 pb-4 overflow-y-auto space-y-4" style={{ maxHeight: '60vh' }}>
@@ -371,7 +371,6 @@ const ClientDatabase = () => {
               </div>
               <div><Label className="text-xs">Notas</Label><Textarea value={sNotes} onChange={e => setSNotes(e.target.value)} placeholder="Notas adicionales..." className="mt-1.5 min-h-[60px] text-sm" /></div>
 
-              {/* Guardian section */}
               {isMinor && (
                 <div className="space-y-3 p-3 rounded-lg border border-amber-200 bg-amber-500/5">
                   <p className="text-xs font-semibold text-amber-700">Encargado (obligatorio para menores)</p>
@@ -394,6 +393,17 @@ const ClientDatabase = () => {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Student detail dialog */}
+      {isSpkUp && clientId && (
+        <StudentDetailDialog
+          student={selectedStudent}
+          open={!!selectedStudent}
+          onOpenChange={(o) => { if (!o) setSelectedStudent(null); }}
+          onSave={async (id, input) => { await updateStudent.mutateAsync({ id, ...input }); setSelectedStudent(null); }}
+          clientId={clientId}
+        />
       )}
     </DashboardLayout>
   );
