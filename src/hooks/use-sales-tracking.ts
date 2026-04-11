@@ -35,7 +35,7 @@ export interface SaleInput {
   sale_date: string;
   amount: number;
   currency: 'CRC' | 'USD';
-  source: 'story' | 'ad' | 'referral' | 'organic' | 'other';
+  source: 'story' | 'ad' | 'referral' | 'organic' | 'other' | 'landing_page';
   ad_campaign_id?: string;
   ad_campaign_name?: string;
   ad_id?: string;
@@ -55,6 +55,15 @@ export interface SaleInput {
   installment_amount?: number;
   payment_method?: string;
   story_id?: string;
+  // Speak Up fields
+  student_contact_id?: string;
+  teacher_id?: string;
+  assigned_schedule?: any;
+  discount_amount?: number;
+  discount_reason?: string;
+  tax_amount?: number;
+  subtotal?: number;
+  payment_day?: number;
 }
 
 type SalesTrackingPeriod = Date | { start?: Date; end?: Date };
