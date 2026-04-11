@@ -17,6 +17,7 @@ import { es } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-contacts';
+import { StudentDetailDialog } from '@/components/clientes/StudentDetailDialog';
 import { toast } from 'sonner';
 
 // ── Legacy lead type for non-SpkUp clients ──
@@ -41,6 +42,7 @@ const ClientDatabase = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
