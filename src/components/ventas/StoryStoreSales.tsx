@@ -212,6 +212,18 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     };
   };
 
+  const StoryImage = ({ src, className, isVideo }: { src: string; className: string; isVideo: boolean }) => {
+    const [failed, setFailed] = useState(false);
+    if (failed) {
+      return (
+        <div className="w-full h-full bg-muted flex items-center justify-center">
+          {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
+        </div>
+      );
+    }
+    return <img src={src} alt="" className={className} onError={() => setFailed(true)} />;
+  };
+
   const storyGridClassName = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 pb-3';
 
   const StoryCard = ({ story, isSold }: { story: Story; isSold: boolean }) => {
