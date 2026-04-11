@@ -837,6 +837,7 @@ export const RegisterSaleDialog = ({
 
   // ═══════ SPEAK UP: 4-step sales flow ═══════
   if (isSpkUp && !isEditing) {
+    const selectedProductObj = products.find(p => p.name === product);
     const isGroupProduct = selectedProductObj?.category === 'group';
     const spkStepNames = isGroupProduct
       ? ['Estudiante', 'Producto', 'Grupo', 'Horario', 'Pago']
@@ -845,13 +846,12 @@ export const RegisterSaleDialog = ({
     const spkLastStep = spkTotalSteps - 1;
 
     const selectedStudent = students.find(s => s.id === spkSelectedStudentId);
-    const selectedProductObj = products.find(p => p.name === product);
     const productAudience = selectedProductObj?.audience || 'all';
     const isMinor = spkStudentAge ? parseInt(spkStudentAge) < 18 : false;
 
     // Groups for this product
-    const productGroups = isGroupProduct && selectedProductObj2
-      ? groups.filter(g => g.product_id === selectedProductObj2.id && g.status === 'active')
+    const productGroups = isGroupProduct && selectedProductObj
+      ? groups.filter(g => g.product_id === selectedProductObj.id && g.status === 'active')
       : [];
     const selectedGroup = productGroups.find(g => g.id === spkSelectedGroupId);
 
@@ -861,10 +861,10 @@ export const RegisterSaleDialog = ({
       : students.slice(0, 10);
 
     // Filter teachers by product and audience compatibility
-    const compatibleTeachers = selectedProductObj2
+    const compatibleTeachers = selectedProductObj
       ? teachers.filter(t => {
           if (t.status !== 'active') return false;
-          const canTeachProduct = t.product_ids.length === 0 || t.product_ids.includes(selectedProductObj2.id);
+          const canTeachProduct = t.product_ids.length === 0 || t.product_ids.includes(selectedProductObj.id);
           const audienceMatch = t.audience_types.length === 0 ||
             t.audience_types.includes(productAudience) ||
             productAudience === 'all';
@@ -875,7 +875,7 @@ export const RegisterSaleDialog = ({
     // Calculate amounts
     const baseAmount = parseFloat(amount || '0');
     const discountAmt = parseFloat(spkDiscountAmount || '0');
-    const taxRate = selectedProductObj2?.tax_rate || 13;
+    const taxRate = selectedProductObj?.tax_rate || 13;
     const subtotalCalc = baseAmount - discountAmt;
     const taxCalc = spkApplyTax ? Math.round(subtotalCalc * (taxRate / 100)) : 0;
     const totalCalc = subtotalCalc + taxCalc;
