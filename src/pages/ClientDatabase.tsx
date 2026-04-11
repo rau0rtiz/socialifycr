@@ -44,6 +44,28 @@ const ClientDatabase = () => {
 
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
+
+  // ── Purchase counts per student ──
+  const { data: purchaseCounts = {} } = useQuery<Record<string, number>>({
+    queryKey: ['student-purchase-counts', clientId],
+    queryFn: async () => {
+      if (!clientId) return {};
+      const { data, error } = await supabase
+        .from('message_sales')
+        .select('student_contact_id')
+        .eq('client_id', clientId)
+        .not('student_contact_id', 'is', null);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of data ?? []) {
+        if (row.student_contact_id) {
+          counts[row.student_contact_id] = (counts[row.student_contact_id] || 0) + 1;
+        }
+      }
+      return counts;
+    },
+    enabled: !!clientId && !!isSpkUp,
+  });
   const [studentDialog, setStudentDialog] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [sName, setSName] = useState('');
