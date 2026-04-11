@@ -204,6 +204,7 @@ export const RegisterSaleDialog = ({
     setSpkDiscountAmount('');
     setSpkDiscountReason('');
     setSpkPaymentDay('');
+    setSpkSelectedGroupId(null);
     if (editingSale) {
       setAmount(String(editingSale.amount));
       setCurrency(editingSale.currency);
