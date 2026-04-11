@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
 import { usePaymentSchemes, PaymentSchemeInput, useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard, GraduationCap, Users, BookOpen, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useBrand } from '@/contexts/BrandContext';
 
 interface ProductsManagerProps {
   clientId: string;
