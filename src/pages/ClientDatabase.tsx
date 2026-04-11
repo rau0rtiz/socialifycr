@@ -4,11 +4,11 @@ import { useBrand } from '@/contexts/BrandContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Search, Users, Phone, Mail, Calendar, DollarSign, Filter, Trash2, Plus, Pencil } from 'lucide-react';
+import { Building2, Search, Users, Phone, Mail, Calendar, DollarSign, Filter, Trash2, Plus, Pencil, ShieldAlert } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -18,6 +18,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-contacts';
 import { toast } from 'sonner';
+import { useUserRole } from '@/hooks/use-user-role';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ── Legacy lead type for non-SpkUp clients ──
 type LeadRecord = {
