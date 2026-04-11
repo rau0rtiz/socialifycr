@@ -15,6 +15,7 @@ interface SpeakUpSalesSummaryProps {
 
 export const SpeakUpSalesSummary = ({ clientId, dateRange }: SpeakUpSalesSummaryProps) => {
   const { sales, summary } = useSalesTracking(clientId, dateRange ? { start: dateRange.start, end: dateRange.end } : undefined);
+  const { collections } = usePaymentCollections(clientId);
 
   const activeSales = sales.filter(s => s.status !== 'cancelled');
   const cashCRC = activeSales.filter(s => s.currency === 'CRC').reduce((sum, s) => sum + Number(s.amount), 0);
