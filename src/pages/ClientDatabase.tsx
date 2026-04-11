@@ -373,20 +373,60 @@ const ClientDatabase = () => {
       </div>
 
       {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar {isSpkUp ? 'estudiante' : 'lead'}</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Estás seguro de eliminar a <strong>{deleteTarget?.full_name || deleteTarget?.lead_name}</strong>? Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteLead} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {isSpkUp ? (
+        <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeletePassword(''); } }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <ShieldAlert className="h-5 w-5" />
+                Eliminar estudiante
+              </DialogTitle>
+              <DialogDescription>
+                Estás a punto de eliminar permanentemente a <strong>{deleteTarget?.full_name}</strong>. Ingresa tu contraseña para confirmar.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <div>
+                <Label className="text-xs">Contraseña</Label>
+                <Input
+                  type="password"
+                  value={deletePassword}
+                  onChange={e => setDeletePassword(e.target.value)}
+                  placeholder="Ingresa tu contraseña"
+                  className="mt-1.5"
+                  onKeyDown={e => { if (e.key === 'Enter') handleDeleteLead(); }}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" size="sm" onClick={() => { setDeleteTarget(null); setDeletePassword(''); }}>Cancelar</Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteLead}
+                disabled={deleteLoading || !deletePassword.trim()}
+              >
+                {deleteLoading ? 'Verificando...' : 'Eliminar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Eliminar lead</AlertDialogTitle>
+              <AlertDialogDescription>
+                ¿Estás seguro de eliminar a <strong>{deleteTarget?.lead_name}</strong>? Esta acción no se puede deshacer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteLead} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       {/* Student create/edit dialog */}
       {isSpkUp && (
