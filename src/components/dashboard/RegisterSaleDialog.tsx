@@ -944,13 +944,14 @@ export const RegisterSaleDialog = ({
         installments_paid: installmentsPaid,
         installment_amount: installmentAmount || undefined,
         student_contact_id: spkSelectedStudentId || undefined,
-        teacher_id: spkSelectedTeacherId === '_pending' ? undefined : spkSelectedTeacherId || undefined,
-        assigned_schedule: spkAssignedSchedule.length > 0 ? spkAssignedSchedule : undefined,
+        teacher_id: selectedGroup?.teacher_id || (spkSelectedTeacherId === '_pending' ? undefined : spkSelectedTeacherId) || undefined,
+        assigned_schedule: selectedGroup?.schedules?.length ? selectedGroup.schedules : (spkAssignedSchedule.length > 0 ? spkAssignedSchedule : undefined),
         discount_amount: discountAmt || undefined,
         discount_reason: discountAmt > 0 ? spkDiscountReason.trim() : undefined,
         tax_amount: taxCalc || undefined,
         subtotal: subtotalCalc || undefined,
         payment_day: spkPaymentDay ? parseInt(spkPaymentDay) : undefined,
+        group_id: spkSelectedGroupId || undefined,
       };
 
       const hasRemainingInstallments = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
