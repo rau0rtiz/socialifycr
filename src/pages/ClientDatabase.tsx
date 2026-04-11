@@ -262,6 +262,7 @@ const ClientDatabase = () => {
                     <TableHead className="text-xs">Nombre</TableHead>
                     <TableHead className="text-xs">Contacto</TableHead>
                     <TableHead className="text-xs">Edad</TableHead>
+                    <TableHead className="text-xs">Compras</TableHead>
                     <TableHead className="text-xs">Estado</TableHead>
                     <TableHead className="text-xs">Encargado</TableHead>
                     <TableHead className="text-xs w-[80px]"></TableHead>
@@ -269,7 +270,7 @@ const ClientDatabase = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredStudents.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">No se encontraron estudiantes</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">No se encontraron estudiantes</TableCell></TableRow>
                   ) : filteredStudents.map(s => (
                     <TableRow key={s.id} className="text-xs">
                       <TableCell className="font-medium">{s.full_name}</TableCell>
