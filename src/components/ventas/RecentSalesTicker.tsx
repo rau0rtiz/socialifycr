@@ -5,19 +5,28 @@ import { Megaphone } from 'lucide-react';
 
 interface RecentSalesTickerProps {
   clientId: string;
+  dateRange?: { start: Date; end: Date };
 }
 
-export const RecentSalesTicker = ({ clientId }: RecentSalesTickerProps) => {
+export const RecentSalesTicker = ({ clientId, dateRange }: RecentSalesTickerProps) => {
+  const startDate = dateRange ? dateRange.start.toISOString().split('T')[0] : undefined;
+  const endDate = dateRange ? dateRange.end.toISOString().split('T')[0] : undefined;
+
   const { data: recentSales = [] } = useQuery({
-    queryKey: ['recent-sales-ticker', clientId],
+    queryKey: ['recent-sales-ticker', clientId, startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('message_sales')
         .select('id, amount, currency, customer_name, product, created_by, created_at, sale_date')
         .eq('client_id', clientId)
-        .neq('status', 'cancelled')
+        .neq('status', 'cancelled');
+
+      if (startDate) query = query.gte('sale_date', startDate);
+      if (endDate) query = query.lte('sale_date', endDate);
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(6);
       if (error) throw error;
 
       // Get creator names

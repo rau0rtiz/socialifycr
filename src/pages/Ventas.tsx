@@ -373,7 +373,7 @@ const Ventas = () => {
               accentColor={selectedClient.accent_color || undefined}
             />
             <SpeakUpSalesSummary clientId={selectedClient.id} />
-            <RecentSalesTicker clientId={selectedClient.id} />
+            <RecentSalesTicker clientId={selectedClient.id} dateRange={globalRange} />
             <SpeakUpAnalytics clientId={selectedClient.id} />
             
           </>
