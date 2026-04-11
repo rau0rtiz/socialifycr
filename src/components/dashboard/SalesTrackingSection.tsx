@@ -544,6 +544,30 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
         hasAdAccount={hasAdAccount}
         onSelectAd={handleLinkAd}
       />
+
+      {/* All Sales Dialog */}
+      <Dialog open={allSalesDialogOpen} onOpenChange={setAllSalesDialogOpen}>
+        <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-hidden p-0">
+          <DialogHeader className="px-6 pt-6 pb-3">
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              Todas las Ventas ({sales.length})
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="px-6 pb-6" style={{ maxHeight: '70vh' }}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {sales.map((sale) => (
+                <SaleCard
+                  key={sale.id}
+                  sale={sale}
+                  onEdit={(s) => { setAllSalesDialogOpen(false); handleEdit(s); }}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
