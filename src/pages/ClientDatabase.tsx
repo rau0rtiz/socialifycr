@@ -326,8 +326,6 @@ const ClientDatabase = () => {
                       </TableCell>
                     </TableRow>
                   ))}
-
-                  ))}
                 </TableBody>
               </Table>
             ) : (
