@@ -325,57 +325,12 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
               </Button>
             </div>
           ) : (
-            <div className="space-y-2">
-              {products.map(p => {
-                const productSchemes = (allSchemes || []).filter(s => s.product_id === p.id);
-                const variantCount = productSchemes.length;
-                const minPrice = variantCount > 0
-                  ? Math.min(...productSchemes.map(s => s.total_price))
-                  : p.price;
-                const minCurrency = variantCount > 0 ? productSchemes.reduce((prev, curr) => curr.total_price < prev.total_price ? curr : prev).currency : p.currency;
-
-                return (
-                  <div
-                    key={p.id}
-                    className="group rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer p-3.5"
-                    onClick={() => setDetailProduct(p)}
-                  >
-                    <div className="flex items-start gap-3">
-                      {p.photo_url ? (
-                        <img src={p.photo_url} alt={p.name} className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center shrink-0">
-                          <Package className="h-5 w-5 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-foreground truncate">{p.name}</h4>
-                          {variantCount > 0 && (
-                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
-                              {variantCount} variante{variantCount > 1 ? 's' : ''}
-                            </Badge>
-                          )}
-                        </div>
-                        {p.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</p>
-                        )}
-                        <div className="flex items-center gap-3 mt-1.5">
-                          {minPrice != null && (
-                            <span className="text-xs font-medium text-foreground">
-                              {variantCount > 0 ? 'Desde ' : ''}{formatCurrency(minPrice, minCurrency)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-muted-foreground/30 group-hover:text-primary/50 transition-colors">
-                        <Pencil className="h-3.5 w-3.5" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <ProductList
+              products={products}
+              allSchemes={allSchemes || []}
+              onSelect={setDetailProduct}
+              clientId={clientId}
+            />
           )}
         </CardContent>
       </Card>
