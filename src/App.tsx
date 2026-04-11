@@ -32,6 +32,7 @@ const EmailMarketing = lazy(() => import("./pages/EmailMarketing"));
 const BusinessSetup = lazy(() => import("./pages/BusinessSetup"));
 const ClientDatabase = lazy(() => import("./pages/ClientDatabase"));
 const WidgetCatalogPage = lazy(() => import("./pages/WidgetCatalog"));
+const Asistencia = lazy(() => import("./pages/Asistencia"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -135,6 +136,7 @@ const App = () => (
                   <Route path="/reportes" element={<ProtectedRoute><Reportes /></ProtectedRoute>} />
                   <Route path="/reports" element={<ProtectedRoute><Reportes /></ProtectedRoute>} />
                   <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
+                  <Route path="/asistencia" element={<ProtectedRoute><Asistencia /></ProtectedRoute>} />
                   <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                   <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
                   <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
