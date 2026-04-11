@@ -106,9 +106,8 @@ export const Sidebar = () => {
     menuItems.push({ title: ventasLabel, url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
   }
 
-  // Asistencia — only for Speak Up
-  const isSpeakUp = selectedClient?.name?.toLowerCase().includes('speak up');
-  if (isSpeakUp) {
+  const showAsistencia = effectiveAgency || (flags as any).asistencia_section;
+  if (showAsistencia) {
     menuItems.push({ title: 'Asistencia', url: '/asistencia', icon: ClipboardCheck });
   }
   if (showContenido) {
@@ -121,7 +120,10 @@ export const Sidebar = () => {
     menuItems.push({ title: 'Email Marketing', url: '/email-marketing', icon: Mail });
   }
   menuItems.push({ title: 'Client Database', url: '/client-database', icon: Database });
-  menuItems.push({ title: 'Business Setup', url: '/business-setup', icon: Briefcase });
+  const showBusinessSetup = effectiveAgency || (flags as any).business_setup_section;
+  if (showBusinessSetup) {
+    menuItems.push({ title: 'Business Setup', url: '/business-setup', icon: Briefcase });
+  }
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">

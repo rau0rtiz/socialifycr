@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
-  LayoutDashboard, ShoppingCart, FileText, BarChart3, Mail, Database, Lock, Settings2,
+  LayoutDashboard, ShoppingCart, FileText, BarChart3, Mail, Database, Lock, Settings2, ClipboardCheck,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,6 +28,8 @@ const SECTIONS: SectionDef[] = [
   { key: 'contenido_section', label: 'Contenido', icon: FileText, widgets: CONTENIDO_WIDGET_LABELS },
   { key: 'reportes_section', label: 'Reportes', icon: BarChart3, widgets: REPORTES_WIDGET_LABELS },
   { key: 'email_marketing_section', label: 'Email Marketing', icon: Mail, widgets: {} },
+  { key: 'business_setup_section', label: 'Business Setup', icon: Settings2, widgets: {} },
+  { key: 'asistencia_section', label: 'Asistencia', icon: ClipboardCheck, widgets: {} },
   { key: null, label: 'Client Database', icon: Database, locked: true, widgets: {} },
 ];
 

@@ -397,6 +397,8 @@ export type Database = {
           ad_sales_ranking: boolean
           ai_insights: boolean
           ai_report_generator: boolean
+          asistencia_section: boolean
+          business_setup_section: boolean
           campaigns: boolean
           checklist_items: Json
           client_id: string
@@ -443,6 +445,8 @@ export type Database = {
           ad_sales_ranking?: boolean
           ai_insights?: boolean
           ai_report_generator?: boolean
+          asistencia_section?: boolean
+          business_setup_section?: boolean
           campaigns?: boolean
           checklist_items?: Json
           client_id: string
@@ -489,6 +493,8 @@ export type Database = {
           ad_sales_ranking?: boolean
           ai_insights?: boolean
           ai_report_generator?: boolean
+          asistencia_section?: boolean
+          business_setup_section?: boolean
           campaigns?: boolean
           checklist_items?: Json
           client_id?: string
