@@ -1257,8 +1257,8 @@ export const RegisterSaleDialog = ({
               </div>
             )}
 
-            {/* Step 3: Payment */}
-            {step === 3 && (
+            {/* Payment step */}
+            {step === paymentStepIdx && (
               <div className="space-y-3 py-3">
                 {/* Amount */}
                 <div className="flex gap-2">
