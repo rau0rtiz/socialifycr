@@ -16,10 +16,11 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-contacts';
+import { useStudentContacts, StudentContact, StudentContactInput } from '@/hooks/use-student-contacts';
 import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
+import { StudentDetailDialog } from '@/components/ventas/StudentDetailDialog';
 
 // ── Legacy lead type for non-SpkUp clients ──
 type LeadRecord = {
@@ -79,6 +80,7 @@ const ClientDatabase = () => {
   });
   const [studentDialog, setStudentDialog] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<StudentContact | null>(null);
   const [sName, setSName] = useState('');
   const [sPhone, setSPhone] = useState('');
   const [sEmail, setSEmail] = useState('');
@@ -296,7 +298,11 @@ const ClientDatabase = () => {
                   {filteredStudents.length === 0 ? (
                     <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">No se encontraron estudiantes</TableCell></TableRow>
                   ) : filteredStudents.map(s => (
-                    <TableRow key={s.id} className="text-xs">
+                    <TableRow
+                      key={s.id}
+                      className="cursor-pointer text-xs hover:bg-muted/40"
+                      onClick={() => setSelectedStudent(s)}
+                    >
                       <TableCell className="font-medium">{s.full_name}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
@@ -318,9 +324,9 @@ const ClientDatabase = () => {
                       <TableCell className="text-muted-foreground">{s.guardian_name || '—'}</TableCell>
                       <TableCell>
                         <div className="flex gap-0.5">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditStudent(s)}><Pencil className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditStudent(s); }}><Pencil className="h-3 w-3" /></Button>
                           {canDeleteStudents && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(s)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}><Trash2 className="h-3.5 w-3.5" /></Button>
                           )}
                         </div>
                       </TableCell>
@@ -435,6 +441,9 @@ const ClientDatabase = () => {
             <div className="px-6 pt-6 pb-3">
               <DialogHeader>
                 <DialogTitle>{editingStudent ? 'Editar Estudiante' : 'Nuevo Estudiante'}</DialogTitle>
+                <DialogDescription>
+                  {editingStudent ? 'Actualiza la información del estudiante.' : 'Completa la información para crear un nuevo estudiante.'}
+                </DialogDescription>
               </DialogHeader>
             </div>
             <div className="px-6 pb-4 overflow-y-auto space-y-4" style={{ maxHeight: '60vh' }}>
@@ -486,6 +495,17 @@ const ClientDatabase = () => {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {isSpkUp && (
+        <StudentDetailDialog
+          open={!!selectedStudent}
+          onOpenChange={(open) => {
+            if (!open) setSelectedStudent(null);
+          }}
+          student={selectedStudent}
+          purchaseCount={selectedStudent ? purchaseCounts[selectedStudent.id] || 0 : 0}
+        />
       )}
     </DashboardLayout>
   );
