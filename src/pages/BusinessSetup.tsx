@@ -380,13 +380,20 @@ const BusinessSetup = () => {
     );
   };
 
+  const renderTeachers = () => (
+    <TeachersManager clientId={selectedClient.id} />
+  );
+
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     brand: renderBrand,
     products: renderProducts,
+    teachers: renderTeachers,
     team: renderTeam,
     connections: renderConnections,
     features: renderFeatures,
   };
+
+  const SECTIONS = STATIC_SECTIONS.filter(s => !(s as any).speakUpOnly || isSpkUp);
 
   return (
     <DashboardLayout>
