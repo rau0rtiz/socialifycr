@@ -244,7 +244,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
         )}
       >
         {previewSrc ? (
-          <img src={previewSrc} alt="" className={previewClassName} />
+          <StoryImage src={previewSrc} className={previewClassName} isVideo={isVideo} />
         ) : (
           <div className="w-full h-full bg-muted flex items-center justify-center">
             {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
