@@ -124,10 +124,8 @@ const Ventas = () => {
   const adCurrency = campaignsResult?.currency || 'USD';
   const totalAdSpend = campaigns.reduce((sum, c) => sum + c.spend, 0);
 
-  // Current-month sales for summary widgets
-  const { sales: allSales, summary } = useSalesTracking(clientId);
-  // Range-filtered sales for distribution charts
-  const { sales: chartSales } = useSalesTracking(clientId, { start: globalRange.start, end: globalRange.end });
+  // All sales filtered by global date range
+  const { sales: allSales, summary } = useSalesTracking(clientId, { start: globalRange.start, end: globalRange.end });
   const { products: clientProducts } = useClientProducts(clientId);
 
   // Story tracker data for Alma Bendita — drives the goal bar
@@ -232,7 +230,7 @@ const Ventas = () => {
     return GLOBAL_PERIOD_LABELS[globalPeriod];
   };
 
-  const hasSalesChartData = chartSales.some((sale) => sale.status === 'completed');
+  const hasSalesChartData = allSales.some((sale) => sale.status === 'completed');
 
   const renderEmptySalesCard = (title: string) => (
     <Card className="border-border/50 shadow-sm h-full">
@@ -251,8 +249,8 @@ const Ventas = () => {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {hasSalesChartData ? (
         <>
-          <SalesByProductChart sales={chartSales} products={clientProducts} />
-          <SalesByBrandChart sales={chartSales} />
+          <SalesByProductChart sales={allSales} products={clientProducts} />
+          <SalesByBrandChart sales={allSales} />
         </>
       ) : (
         <>
@@ -372,7 +370,7 @@ const Ventas = () => {
               primaryColor={selectedClient.primary_color || undefined}
               accentColor={selectedClient.accent_color || undefined}
             />
-            <SpeakUpSalesSummary clientId={selectedClient.id} />
+            <SpeakUpSalesSummary clientId={selectedClient.id} dateRange={globalRange} />
             <RecentSalesTicker clientId={selectedClient.id} />
             <SpeakUpAnalytics clientId={selectedClient.id} />
             
@@ -381,7 +379,7 @@ const Ventas = () => {
 
         {/* === DRA SILVIA: Clinic KPI Summary === */}
         {isSilvia && (
-          <ClinicSalesSummary clientId={selectedClient.id} />
+          <ClinicSalesSummary clientId={selectedClient.id} dateRange={globalRange} />
         )}
 
         {/* === ALMA BENDITA: Story & Revenue Daily Tracker === */}
@@ -441,6 +439,7 @@ const Ventas = () => {
             salePrefill={salePrefill}
             showSaleDialog={showSaleFromSetter}
             onSaleFromSetter={handleSaleRegistered}
+            dateRange={globalRange}
           />
         </div>
 
