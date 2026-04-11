@@ -99,7 +99,6 @@ export const Sidebar = () => {
   const showVentas = effectiveAgency || flags.ventas_section;
   const showContenido = effectiveAgency || flags.contenido_section;
   const showReportes = effectiveAgency || flags.reportes_section;
-  const showEmailMarketing = effectiveAgency || flags.email_marketing_section;
 
   if (showVentas) {
     const ventasLabel = 'Ventas';
@@ -115,9 +114,6 @@ export const Sidebar = () => {
   }
   if (showReportes) {
     menuItems.push({ title: 'Reportes', url: '/reportes', icon: BarChart3 });
-  }
-  if (showEmailMarketing) {
-    menuItems.push({ title: 'Email Marketing', url: '/email-marketing', icon: Mail });
   }
   menuItems.push({ title: 'Client Database', url: '/client-database', icon: Database });
   const showBusinessSetup = effectiveAgency || (flags as any).business_setup_section;
