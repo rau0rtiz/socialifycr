@@ -20,7 +20,7 @@ interface StudentDetailDialogProps {
 }
 
 const statusClasses: Record<string, string> = {
-  active: 'bg-emerald-500/10 text-emerald-700 border-emerald-200',
+  active: 'bg-primary/10 text-primary border-primary/20',
   inactive: 'bg-muted text-muted-foreground border-border',
 };
 
