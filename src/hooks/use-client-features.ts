@@ -22,6 +22,8 @@ export interface ClientFeatureFlags {
   contenido_section: boolean;
   reportes_section: boolean;
   email_marketing_section: boolean;
+  business_setup_section: boolean;
+  asistencia_section: boolean;
   // Dashboard widgets
   social_followers: boolean;
   instagram_posts: boolean;
@@ -66,6 +68,7 @@ export interface ClientFeatureFlags {
 
 const BOOLEAN_FLAG_KEYS: (keyof Omit<ClientFeatureFlags, 'id' | 'client_id' | 'checklist_items'>)[] = [
   'dashboard', 'ventas_section', 'contenido_section', 'reportes_section', 'email_marketing_section',
+  'business_setup_section', 'asistencia_section',
   'social_followers', 'instagram_posts', 'youtube_videos', 'funnel', 'campaigns',
   'reach_chart', 'social_performance', 'stories_section', 'publication_goals', 'ai_insights', 'competitors',
   'sales_tracking', 'setter_tracker', 'setter_checklist', 'setter_daily',
@@ -76,7 +79,7 @@ const BOOLEAN_FLAG_KEYS: (keyof Omit<ClientFeatureFlags, 'id' | 'client_id' | 'c
 ];
 
 const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = Object.fromEntries([
-  ...BOOLEAN_FLAG_KEYS.map(k => [k, ['dashboard', 'setter_checklist'].includes(k)]),
+  ...BOOLEAN_FLAG_KEYS.map(k => [k, true]),
   ['checklist_items', DEFAULT_CHECKLIST_ITEMS],
 ]) as any;
 
@@ -86,6 +89,8 @@ export const SECTION_LABELS: Record<string, string> = {
   contenido_section: 'Contenido',
   reportes_section: 'Reportes',
   email_marketing_section: 'Email Marketing',
+  business_setup_section: 'Business Setup',
+  asistencia_section: 'Asistencia',
 };
 
 // Dashboard widget flags
