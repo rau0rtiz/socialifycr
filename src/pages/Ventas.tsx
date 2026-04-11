@@ -457,7 +457,12 @@ const Ventas = () => {
         )}
 
         {/* Bottom section: charts side by side */}
-        {!isAlmaBendita && salesDistributionSection}
+        {!isAlmaBendita && !isSpkUp && salesDistributionSection}
+
+        {/* Speak Up: only product chart, no brand */}
+        {isSpkUp && hasSalesChartData && (
+          <SalesByProductChart sales={allSales} products={clientProducts} />
+        )}
 
         {!isSpkUp && !isSilvia && !isAlmaBendita && (
           <ClosureRateWidget appointments={appointments} />
