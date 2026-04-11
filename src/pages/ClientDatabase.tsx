@@ -44,6 +44,28 @@ const ClientDatabase = () => {
 
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
+
+  // ── Purchase counts per student ──
+  const { data: purchaseCounts = {} } = useQuery<Record<string, number>>({
+    queryKey: ['student-purchase-counts', clientId],
+    queryFn: async () => {
+      if (!clientId) return {};
+      const { data, error } = await supabase
+        .from('message_sales')
+        .select('student_contact_id')
+        .eq('client_id', clientId)
+        .not('student_contact_id', 'is', null);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of data ?? []) {
+        if (row.student_contact_id) {
+          counts[row.student_contact_id] = (counts[row.student_contact_id] || 0) + 1;
+        }
+      }
+      return counts;
+    },
+    enabled: !!clientId && !!isSpkUp,
+  });
   const [studentDialog, setStudentDialog] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [sName, setSName] = useState('');
@@ -240,6 +262,7 @@ const ClientDatabase = () => {
                     <TableHead className="text-xs">Nombre</TableHead>
                     <TableHead className="text-xs">Contacto</TableHead>
                     <TableHead className="text-xs">Edad</TableHead>
+                    <TableHead className="text-xs">Compras</TableHead>
                     <TableHead className="text-xs">Estado</TableHead>
                     <TableHead className="text-xs">Encargado</TableHead>
                     <TableHead className="text-xs w-[80px]"></TableHead>
@@ -247,7 +270,7 @@ const ClientDatabase = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredStudents.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">No se encontraron estudiantes</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">No se encontraron estudiantes</TableCell></TableRow>
                   ) : filteredStudents.map(s => (
                     <TableRow key={s.id} className="text-xs">
                       <TableCell className="font-medium">{s.full_name}</TableCell>
@@ -258,6 +281,11 @@ const ClientDatabase = () => {
                         </div>
                       </TableCell>
                       <TableCell>{s.age ?? '—'}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px]">
+                          {purchaseCounts[s.id] || 0}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={`text-[10px] ${s.status === 'active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-gray-500/10 text-gray-600 border-gray-200'}`}>
                           {s.status === 'active' ? 'Activo' : 'Inactivo'}
