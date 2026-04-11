@@ -64,15 +64,15 @@ export const useClientTeachers = (clientId: string | null) => {
           name: input.name.trim(),
           email: input.email?.trim() || null,
           phone: input.phone?.trim() || null,
-          available_schedules: input.available_schedules || [],
+          available_schedules: (input.available_schedules || []) as any,
           product_ids: input.product_ids || [],
           audience_types: input.audience_types || [],
           status: input.status || 'active',
-        })
+        } as any)
         .select()
         .single();
       if (error) throw error;
-      return data as ClientTeacher;
+      return data as unknown as ClientTeacher;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client-teachers', clientId] });
