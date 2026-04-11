@@ -8,18 +8,19 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ProductsManager } from '@/components/ventas/ProductsManager';
+import { TeachersManager } from '@/components/ventas/TeachersManager';
 import { useClientFeatures } from '@/hooks/use-client-features';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
 import { AIContextEditor } from '@/components/clientes/AIContextEditor';
 import { ClientBanner } from '@/components/dashboard/ClientBanner';
-import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain, ToggleRight } from 'lucide-react';
+import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain, ToggleRight, GraduationCap } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features';
+type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features' | 'teachers';
 
 const SECTIONS = [
   {
@@ -65,6 +66,8 @@ const SECTIONS = [
 ];
 
 const BusinessSetup = () => {
+  const { selectedClient, clientsLoading } = useBrand();
+  const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const { selectedClient, clientsLoading } = useBrand();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<Section>(null);
