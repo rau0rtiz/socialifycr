@@ -404,39 +404,60 @@ export type Database = {
       }
       client_products: {
         Row: {
+          audience: string | null
+          available_schedules: Json | null
+          category: string | null
+          class_frequency: Json | null
           client_id: string
           cost: number | null
           created_at: string
           currency: string
           description: string | null
           id: string
+          is_recurring: boolean | null
           name: string
           photo_url: string | null
           price: number | null
+          tax_applicable: boolean | null
+          tax_rate: number | null
           updated_at: string
         }
         Insert: {
+          audience?: string | null
+          available_schedules?: Json | null
+          category?: string | null
+          class_frequency?: Json | null
           client_id: string
           cost?: number | null
           created_at?: string
           currency?: string
           description?: string | null
           id?: string
+          is_recurring?: boolean | null
           name: string
           photo_url?: string | null
           price?: number | null
+          tax_applicable?: boolean | null
+          tax_rate?: number | null
           updated_at?: string
         }
         Update: {
+          audience?: string | null
+          available_schedules?: Json | null
+          category?: string | null
+          class_frequency?: Json | null
           client_id?: string
           cost?: number | null
           created_at?: string
           currency?: string
           description?: string | null
           id?: string
+          is_recurring?: boolean | null
           name?: string
           photo_url?: string | null
           price?: number | null
+          tax_applicable?: boolean | null
+          tax_rate?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -540,6 +561,56 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_teachers: {
+        Row: {
+          audience_types: string[] | null
+          available_schedules: Json | null
+          client_id: string
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          product_ids: string[] | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          audience_types?: string[] | null
+          available_schedules?: Json | null
+          client_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          product_ids?: string[] | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          audience_types?: string[] | null
+          available_schedules?: Json | null
+          client_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          product_ids?: string[] | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_teachers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -1095,6 +1166,7 @@ export type Database = {
           ad_id: string | null
           ad_name: string | null
           amount: number
+          assigned_schedule: Json | null
           brand: string | null
           client_id: string
           closer_name: string | null
@@ -1103,12 +1175,15 @@ export type Database = {
           currency: string
           customer_name: string | null
           customer_phone: string | null
+          discount_amount: number | null
+          discount_reason: string | null
           id: string
           installment_amount: number | null
           installments_paid: number | null
           message_platform: string | null
           notes: string | null
           num_installments: number | null
+          payment_day: number | null
           payment_method: string | null
           payment_scheme_id: string | null
           product: string | null
@@ -1116,6 +1191,10 @@ export type Database = {
           source: string
           status: string
           story_id: string | null
+          student_contact_id: string | null
+          subtotal: number | null
+          tax_amount: number | null
+          teacher_id: string | null
           total_sale_amount: number | null
           updated_at: string | null
         }
@@ -1125,6 +1204,7 @@ export type Database = {
           ad_id?: string | null
           ad_name?: string | null
           amount: number
+          assigned_schedule?: Json | null
           brand?: string | null
           client_id: string
           closer_name?: string | null
@@ -1133,12 +1213,15 @@ export type Database = {
           currency?: string
           customer_name?: string | null
           customer_phone?: string | null
+          discount_amount?: number | null
+          discount_reason?: string | null
           id?: string
           installment_amount?: number | null
           installments_paid?: number | null
           message_platform?: string | null
           notes?: string | null
           num_installments?: number | null
+          payment_day?: number | null
           payment_method?: string | null
           payment_scheme_id?: string | null
           product?: string | null
@@ -1146,6 +1229,10 @@ export type Database = {
           source: string
           status?: string
           story_id?: string | null
+          student_contact_id?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          teacher_id?: string | null
           total_sale_amount?: number | null
           updated_at?: string | null
         }
@@ -1155,6 +1242,7 @@ export type Database = {
           ad_id?: string | null
           ad_name?: string | null
           amount?: number
+          assigned_schedule?: Json | null
           brand?: string | null
           client_id?: string
           closer_name?: string | null
@@ -1163,12 +1251,15 @@ export type Database = {
           currency?: string
           customer_name?: string | null
           customer_phone?: string | null
+          discount_amount?: number | null
+          discount_reason?: string | null
           id?: string
           installment_amount?: number | null
           installments_paid?: number | null
           message_platform?: string | null
           notes?: string | null
           num_installments?: number | null
+          payment_day?: number | null
           payment_method?: string | null
           payment_scheme_id?: string | null
           product?: string | null
@@ -1176,6 +1267,10 @@ export type Database = {
           source?: string
           status?: string
           story_id?: string | null
+          student_contact_id?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          teacher_id?: string | null
           total_sale_amount?: number | null
           updated_at?: string | null
         }
@@ -1192,6 +1287,20 @@ export type Database = {
             columns: ["payment_scheme_id"]
             isOneToOne: false
             referencedRelation: "product_payment_schemes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_sales_student_contact_id_fkey"
+            columns: ["student_contact_id"]
+            isOneToOne: false
+            referencedRelation: "student_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_sales_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "client_teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -1803,6 +1912,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "setter_daily_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_contacts: {
+        Row: {
+          age: number | null
+          client_id: string
+          created_at: string
+          email: string | null
+          full_name: string
+          gender: string | null
+          guardian_email: string | null
+          guardian_id_number: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          id: string
+          id_number: string | null
+          notes: string | null
+          phone: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          age?: number | null
+          client_id: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          gender?: string | null
+          guardian_email?: string | null
+          guardian_id_number?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          id_number?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          age?: number | null
+          client_id?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          gender?: string | null
+          guardian_email?: string | null
+          guardian_id_number?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          id_number?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_contacts_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
