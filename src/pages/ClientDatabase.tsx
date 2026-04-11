@@ -4,11 +4,11 @@ import { useBrand } from '@/contexts/BrandContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Search, Users, Phone, Mail, Calendar, DollarSign, Filter, Trash2, Plus, Pencil } from 'lucide-react';
+import { Building2, Search, Users, Phone, Mail, Calendar, DollarSign, Filter, Trash2, Plus, Pencil, ShieldAlert } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -18,6 +18,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-contacts';
 import { toast } from 'sonner';
+import { useUserRole } from '@/hooks/use-user-role';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ── Legacy lead type for non-SpkUp clients ──
 type LeadRecord = {
@@ -36,11 +38,20 @@ const ClientDatabase = () => {
   const clientId = selectedClient?.id ?? null;
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { systemRole, clientAccess } = useUserRole();
+
+  // Check if user can delete students (account_manager for this client, or admin/owner)
+  const isAdminOrOwner = systemRole === 'owner' || systemRole === 'admin';
+  const isAccountManager = clientId ? clientAccess.some(a => a.clientId === clientId && a.role === 'account_manager') : false;
+  const canDeleteStudents = isAdminOrOwner || isAccountManager;
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
@@ -159,12 +170,25 @@ const ClientDatabase = () => {
   const handleDeleteLead = async () => {
     if (!deleteTarget) return;
     if (isSpkUp) {
-      try { await deleteStudent.mutateAsync(deleteTarget.id); toast.success('Estudiante eliminado'); } catch { toast.error('Error al eliminar'); }
+      // Require password verification
+      if (!deletePassword.trim()) { toast.error('Ingresa tu contraseña para confirmar'); return; }
+      setDeleteLoading(true);
+      try {
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email: user?.email || '',
+          password: deletePassword,
+        });
+        if (authError) { toast.error('Contraseña incorrecta'); setDeleteLoading(false); return; }
+        await deleteStudent.mutateAsync(deleteTarget.id);
+        toast.success('Estudiante eliminado');
+      } catch { toast.error('Error al eliminar'); }
+      setDeleteLoading(false);
     } else {
       const { error } = await supabase.from('setter_appointments').delete().eq('id', deleteTarget.id);
       if (error) { toast.error('No se pudo eliminar'); } else { toast.success('Lead eliminado'); queryClient.invalidateQueries({ queryKey: ['client-database-leads', clientId] }); }
     }
     setDeleteTarget(null);
+    setDeletePassword('');
   };
 
   if (!selectedClient) {
@@ -295,7 +319,9 @@ const ClientDatabase = () => {
                       <TableCell>
                         <div className="flex gap-0.5">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditStudent(s)}><Pencil className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(s)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                          {canDeleteStudents && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(s)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -347,20 +373,60 @@ const ClientDatabase = () => {
       </div>
 
       {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar {isSpkUp ? 'estudiante' : 'lead'}</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Estás seguro de eliminar a <strong>{deleteTarget?.full_name || deleteTarget?.lead_name}</strong>? Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteLead} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {isSpkUp ? (
+        <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeletePassword(''); } }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <ShieldAlert className="h-5 w-5" />
+                Eliminar estudiante
+              </DialogTitle>
+              <DialogDescription>
+                Estás a punto de eliminar permanentemente a <strong>{deleteTarget?.full_name}</strong>. Ingresa tu contraseña para confirmar.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <div>
+                <Label className="text-xs">Contraseña</Label>
+                <Input
+                  type="password"
+                  value={deletePassword}
+                  onChange={e => setDeletePassword(e.target.value)}
+                  placeholder="Ingresa tu contraseña"
+                  className="mt-1.5"
+                  onKeyDown={e => { if (e.key === 'Enter') handleDeleteLead(); }}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" size="sm" onClick={() => { setDeleteTarget(null); setDeletePassword(''); }}>Cancelar</Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteLead}
+                disabled={deleteLoading || !deletePassword.trim()}
+              >
+                {deleteLoading ? 'Verificando...' : 'Eliminar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Eliminar lead</AlertDialogTitle>
+              <AlertDialogDescription>
+                ¿Estás seguro de eliminar a <strong>{deleteTarget?.lead_name}</strong>? Esta acción no se puede deshacer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteLead} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       {/* Student create/edit dialog */}
       {isSpkUp && (
