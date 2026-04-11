@@ -417,10 +417,11 @@ const Ventas = () => {
           <>
             <SalesGoalBar
               clientId={selectedClient.id}
-              currentSalesUSD={summary.totalUSD}
-              currentSalesCRC={summary.totalCRC}
+              currentSalesUSD={newStudentTotals?.USD ?? 0}
+              currentSalesCRC={newStudentTotals?.CRC ?? 0}
               primaryColor={selectedClient.primary_color || undefined}
               accentColor={selectedClient.accent_color || undefined}
+              subtitle="Solo estudiantes nuevos"
             />
             <SpeakUpSalesSummary clientId={selectedClient.id} dateRange={globalRange} />
             <RecentSalesTicker clientId={selectedClient.id} />
