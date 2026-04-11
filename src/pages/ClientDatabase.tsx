@@ -241,7 +241,7 @@ const ClientDatabase = () => {
                   <TableRow>
                     <TableHead className="text-xs">Nombre</TableHead>
                     <TableHead className="text-xs">Contacto</TableHead>
-                    <TableHead className="text-xs">Edad</TableHead>
+                    
                     <TableHead className="text-xs">Estado</TableHead>
                     <TableHead className="text-xs">Encargado</TableHead>
                     <TableHead className="text-xs w-[80px]"></TableHead>
@@ -249,7 +249,7 @@ const ClientDatabase = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredStudents.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">No se encontraron estudiantes</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">No se encontraron estudiantes</TableCell></TableRow>
                   ) : filteredStudents.map(s => (
                     <TableRow key={s.id} className="text-xs cursor-pointer hover:bg-muted/50" onClick={() => setSelectedStudent(s)}>
                       <TableCell className="font-medium">{s.full_name}</TableCell>
@@ -259,7 +259,7 @@ const ClientDatabase = () => {
                           {s.email && <span className="flex items-center gap-1 text-muted-foreground"><Mail className="h-3 w-3" />{s.email}</span>}
                         </div>
                       </TableCell>
-                      <TableCell>{s.age ?? '—'}</TableCell>
+                      
                       <TableCell>
                         <Badge variant="outline" className={`text-[10px] ${s.status === 'active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-gray-500/10 text-gray-600 border-gray-200'}`}>
                           {s.status === 'active' ? 'Activo' : 'Inactivo'}
