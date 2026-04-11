@@ -10,11 +10,10 @@ const formatCurrency = (amount: number, currency: string) => {
 
 interface SpeakUpSalesSummaryProps {
   clientId: string;
-  dateRange?: { start: Date; end: Date };
 }
 
-export const SpeakUpSalesSummary = ({ clientId, dateRange }: SpeakUpSalesSummaryProps) => {
-  const { sales, summary } = useSalesTracking(clientId, dateRange ? { start: dateRange.start, end: dateRange.end } : undefined);
+export const SpeakUpSalesSummary = ({ clientId }: SpeakUpSalesSummaryProps) => {
+  const { sales, summary } = useSalesTracking(clientId);
   const { collections } = usePaymentCollections(clientId);
 
   const activeSales = sales.filter(s => s.status !== 'cancelled');

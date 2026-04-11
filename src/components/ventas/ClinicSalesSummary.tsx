@@ -11,11 +11,10 @@ const formatCurrency = (amount: number, currency: string) => {
 
 interface ClinicSalesSummaryProps {
   clientId: string;
-  dateRange?: { start: Date; end: Date };
 }
 
-export const ClinicSalesSummary = ({ clientId, dateRange }: ClinicSalesSummaryProps) => {
-  const { sales, summary } = useSalesTracking(clientId, dateRange ? { start: dateRange.start, end: dateRange.end } : undefined);
+export const ClinicSalesSummary = ({ clientId }: ClinicSalesSummaryProps) => {
+  const { sales, summary } = useSalesTracking(clientId);
   const { collections } = usePaymentCollections(clientId);
   const { appointments } = useSetterAppointments(clientId);
 
