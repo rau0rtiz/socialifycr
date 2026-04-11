@@ -13,7 +13,6 @@ import {
   Image,
   Eye,
   KeyRound,
-  Mail,
   X,
   Briefcase,
   Database,
