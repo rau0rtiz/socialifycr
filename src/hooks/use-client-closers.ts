@@ -13,51 +13,62 @@ export const useClientClosers = (clientId: string | null) => {
     queryFn: async (): Promise<ClientCloser[]> => {
       if (!clientId) return [];
 
-      // Get team members for this client
-      const { data: members, error: mErr } = await supabase
+      // 1. Get user-based closers from team members
+      const { data: members } = await supabase
         .from('client_team_members')
         .select('user_id, role')
         .eq('client_id', clientId);
 
-      if (mErr || !members?.length) return [];
+      let userClosers: ClientCloser[] = [];
 
-      // Collect user IDs that are closers by client role
-      const clientCloserIds = members
-        .filter(m => m.role === 'closer')
-        .map(m => m.user_id);
+      if (members?.length) {
+        const clientCloserIds = members
+          .filter(m => m.role === 'closer')
+          .map(m => m.user_id);
 
-      // Also check system roles for remaining members
-      const nonClientCloserIds = members
-        .filter(m => m.role !== 'closer')
-        .map(m => m.user_id);
+        const nonClientCloserIds = members
+          .filter(m => m.role !== 'closer')
+          .map(m => m.user_id);
 
-      let systemCloserIds: string[] = [];
-      if (nonClientCloserIds.length > 0) {
-        const { data: closerRoles } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'closer' as any)
-          .in('user_id', nonClientCloserIds);
+        let systemCloserIds: string[] = [];
+        if (nonClientCloserIds.length > 0) {
+          const { data: closerRoles } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .eq('role', 'closer' as any)
+            .in('user_id', nonClientCloserIds);
+          systemCloserIds = (closerRoles || []).map(r => r.user_id);
+        }
 
-        systemCloserIds = (closerRoles || []).map(r => r.user_id);
+        const allCloserIds = [...new Set([...clientCloserIds, ...systemCloserIds])];
+        if (allCloserIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .in('id', allCloserIds);
+
+          userClosers = (profiles || []).map(p => ({
+            userId: p.id,
+            fullName: p.full_name || 'Sin nombre',
+            avatarUrl: p.avatar_url,
+          }));
+        }
       }
 
-      const allCloserIds = [...new Set([...clientCloserIds, ...systemCloserIds])];
-      if (allCloserIds.length === 0) return [];
+      // 2. Get named closers from client_closers table
+      const { data: namedClosers } = await supabase
+        .from('client_closers' as any)
+        .select('id, name')
+        .eq('client_id', clientId)
+        .order('name');
 
-      // Fetch profiles
-      const { data: profiles, error: pErr } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .in('id', allCloserIds);
-
-      if (pErr || !profiles?.length) return [];
-
-      return profiles.map(p => ({
-        userId: p.id,
-        fullName: p.full_name || 'Sin nombre',
-        avatarUrl: p.avatar_url,
+      const manualClosers: ClientCloser[] = (namedClosers || []).map((c: any) => ({
+        userId: c.id,
+        fullName: c.name,
+        avatarUrl: null,
       }));
+
+      return [...userClosers, ...manualClosers];
     },
     enabled: !!clientId,
     staleTime: 1000 * 60 * 5,
