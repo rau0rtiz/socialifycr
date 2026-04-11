@@ -362,9 +362,16 @@ const Ventas = () => {
           />
         )}
 
-        {/* === SPEAK UP: Simplified KPI Summary === */}
+        {/* === SPEAK UP: Sales Goal + KPI Summary === */}
         {isSpkUp && (
           <>
+            <SalesGoalBar
+              clientId={selectedClient.id}
+              currentSalesUSD={summary.totalUSD}
+              currentSalesCRC={summary.totalCRC}
+              primaryColor={selectedClient.primary_color || undefined}
+              accentColor={selectedClient.accent_color || undefined}
+            />
             <SpeakUpSalesSummary clientId={selectedClient.id} />
             <RecentSalesTicker clientId={selectedClient.id} />
             <SpeakUpAnalytics clientId={selectedClient.id} />
@@ -387,7 +394,7 @@ const Ventas = () => {
         )}
 
         {/* Sales Goal Bar — for other clients */}
-        {!(isMindCoach || isHildaLopez || isAlmaBendita) && (
+        {!(isMindCoach || isHildaLopez || isAlmaBendita || isSpkUp) && (
           <SalesGoalBar
             clientId={selectedClient.id}
             currentSalesUSD={summary.totalUSD}
