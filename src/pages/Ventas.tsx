@@ -368,6 +368,7 @@ const Ventas = () => {
             <SpeakUpSalesSummary clientId={selectedClient.id} />
             <RecentSalesTicker clientId={selectedClient.id} />
             <SpeakUpAnalytics clientId={selectedClient.id} />
+            <AttendanceTracker clientId={selectedClient.id} />
           </>
         )}
 
