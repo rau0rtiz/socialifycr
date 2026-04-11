@@ -1397,15 +1397,17 @@ export const RegisterSaleDialog = ({
                 if (!spkCanAdvance(step)) {
                   if (step === 0) toast.error('Selecciona o crea un estudiante');
                   if (step === 1) toast.error('Selecciona un producto');
+                  if (step === groupStepIdx) toast.error('Selecciona un grupo');
                   return;
                 }
                 // Auto-set source and amount defaults when going to payment step
-                if (step === 2 && !source) setSource('organic');
-                if (step === 2 && !amount && selectedProductObj?.price) {
+                const nextIsPayment = step + 1 === paymentStepIdx;
+                if (nextIsPayment && !source) setSource('organic');
+                if (nextIsPayment && !amount && selectedProductObj?.price) {
                   setAmount(String(selectedProductObj.price));
                   setCurrency(selectedProductObj.currency as 'CRC' | 'USD');
                 }
-                if (step === 2 && selectedProductObj?.tax_applicable) setSpkApplyTax(true);
+                if (nextIsPayment && selectedProductObj?.tax_applicable) setSpkApplyTax(true);
                 setStep(s => s + 1);
               }} className="text-xs">
                 Continuar <ChevronRight className="h-4 w-4 ml-1" />
