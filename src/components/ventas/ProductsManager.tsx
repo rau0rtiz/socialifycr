@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
 import { usePaymentSchemes, PaymentSchemeInput, useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard, GraduationCap, Users, BookOpen, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useBrand } from '@/contexts/BrandContext';
 
 interface ProductsManagerProps {
   clientId: string;
@@ -189,6 +190,112 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
     </div>
   );
 };
+const SPEAK_UP_CATEGORIES: { key: string; label: string; icon: React.ElementType }[] = [
+  { key: 'individual', label: 'Clases Personalizadas', icon: GraduationCap },
+  { key: 'group', label: 'Clases Grupales', icon: Users },
+  { key: 'toeic', label: 'TOEIC', icon: BookOpen },
+  { key: 'exam', label: 'Exámenes', icon: BookOpen },
+  { key: 'trial', label: 'Otros', icon: MoreHorizontal },
+];
+
+const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes: any[]; onClick: () => void }) => {
+  const productSchemes = allSchemes.filter((s: any) => s.product_id === p.id);
+  const variantCount = productSchemes.length;
+  const minPrice = variantCount > 0
+    ? Math.min(...productSchemes.map((s: any) => s.total_price))
+    : p.price;
+  const minCurrency = variantCount > 0 ? productSchemes.reduce((prev: any, curr: any) => curr.total_price < prev.total_price ? curr : prev).currency : p.currency;
+
+  return (
+    <div
+      className="group rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer p-3.5"
+      onClick={onClick}
+    >
+      <div className="flex items-start gap-3">
+        {p.photo_url ? (
+          <img src={p.photo_url} alt={p.name} className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0" />
+        ) : (
+          <div className="w-12 h-12 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center shrink-0">
+            <Package className="h-5 w-5 text-muted-foreground/40" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-foreground truncate">{p.name}</h4>
+            {variantCount > 0 && (
+              <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+                {variantCount} variante{variantCount > 1 ? 's' : ''}
+              </Badge>
+            )}
+          </div>
+          {p.description && (
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</p>
+          )}
+          <div className="flex items-center gap-3 mt-1.5">
+            {minPrice != null && (
+              <span className="text-xs font-medium text-foreground">
+                {variantCount > 0 ? 'Desde ' : ''}{formatCurrency(minPrice, minCurrency)}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="text-muted-foreground/30 group-hover:text-primary/50 transition-colors">
+          <Pencil className="h-3.5 w-3.5" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProductList = ({ products, allSchemes, onSelect, clientId }: { products: ClientProduct[]; allSchemes: any[]; onSelect: (p: ClientProduct) => void; clientId: string }) => {
+  const { selectedClient } = useBrand();
+  const isSpeakUp = selectedClient?.name?.toLowerCase().includes('speak up');
+
+  if (!isSpeakUp) {
+    return (
+      <div className="space-y-2">
+        {products.map(p => (
+          <ProductCard key={p.id} p={p} allSchemes={allSchemes} onClick={() => onSelect(p)} />
+        ))}
+      </div>
+    );
+  }
+
+  // Group by category for Speak Up
+  const grouped = SPEAK_UP_CATEGORIES.map(cat => {
+    const catProducts = products.filter(p => {
+      if (cat.key === 'trial') {
+        // "Otros" catches trial + anything uncategorized
+        return !['individual', 'group', 'toeic', 'exam'].includes(p.category || '');
+      }
+      return p.category === cat.key;
+    });
+    return { ...cat, products: catProducts };
+  }).filter(g => g.products.length > 0);
+
+  return (
+    <div className="space-y-4">
+      {grouped.map(group => {
+        const Icon = group.icon;
+        return (
+          <div key={group.key}>
+            <div className="flex items-center gap-2 mb-2">
+              <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.label}</span>
+              <Badge variant="outline" className="text-[10px] py-0 px-1.5 ml-auto">{group.products.length}</Badge>
+            </div>
+            <div className="space-y-2">
+              {group.products.map(p => (
+                <ProductCard key={p.id} p={p} allSchemes={allSchemes} onClick={() => onSelect(p)} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 
 export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const { products, isLoading, addProduct, updateProduct, deleteProduct } = useClientProducts(clientId);
@@ -324,57 +431,12 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
               </Button>
             </div>
           ) : (
-            <div className="space-y-2">
-              {products.map(p => {
-                const productSchemes = (allSchemes || []).filter(s => s.product_id === p.id);
-                const variantCount = productSchemes.length;
-                const minPrice = variantCount > 0
-                  ? Math.min(...productSchemes.map(s => s.total_price))
-                  : p.price;
-                const minCurrency = variantCount > 0 ? productSchemes.reduce((prev, curr) => curr.total_price < prev.total_price ? curr : prev).currency : p.currency;
-
-                return (
-                  <div
-                    key={p.id}
-                    className="group rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer p-3.5"
-                    onClick={() => setDetailProduct(p)}
-                  >
-                    <div className="flex items-start gap-3">
-                      {p.photo_url ? (
-                        <img src={p.photo_url} alt={p.name} className="w-12 h-12 rounded-lg object-cover border border-border/50 shrink-0" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center shrink-0">
-                          <Package className="h-5 w-5 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-foreground truncate">{p.name}</h4>
-                          {variantCount > 0 && (
-                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
-                              {variantCount} variante{variantCount > 1 ? 's' : ''}
-                            </Badge>
-                          )}
-                        </div>
-                        {p.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</p>
-                        )}
-                        <div className="flex items-center gap-3 mt-1.5">
-                          {minPrice != null && (
-                            <span className="text-xs font-medium text-foreground">
-                              {variantCount > 0 ? 'Desde ' : ''}{formatCurrency(minPrice, minCurrency)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-muted-foreground/30 group-hover:text-primary/50 transition-colors">
-                        <Pencil className="h-3.5 w-3.5" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <ProductList
+              products={products}
+              allSchemes={allSchemes || []}
+              onSelect={setDetailProduct}
+              clientId={clientId}
+            />
           )}
         </CardContent>
       </Card>
