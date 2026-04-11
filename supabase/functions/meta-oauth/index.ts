@@ -11,13 +11,23 @@ const META_APP_SECRET = Deno.env.get('META_APP_SECRET');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-// Helper: verify JWT and return user
+// Helper: verify JWT and return user (uses getClaims for Lovable Cloud compatibility)
 async function verifyAuth(req: Request, supabase: any) {
   const authHeader = req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return { user: null, error: 'Missing authorization header' };
   }
   const token = authHeader.replace('Bearer ', '');
+  
+  // Try getClaims first (works with Lovable Cloud signing keys)
+  try {
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (!claimsError && claimsData?.claims?.sub) {
+      return { user: { id: claimsData.claims.sub as string }, error: null };
+    }
+  } catch {}
+  
+  // Fallback to getUser
   const { data: { user }, error } = await supabase.auth.getUser(token);
   if (error || !user) {
     return { user: null, error: 'Unauthorized' };
