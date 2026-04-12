@@ -351,7 +351,7 @@ const Ventas = () => {
           <SalesGoalBar
             clientId={selectedClient.id}
             currentSalesUSD={0}
-            currentSalesCRC={summary.totalCRC}
+            currentSalesCRC={summary.totalCRC + storyOverrideCRC}
             primaryColor={selectedClient.primary_color || undefined}
             accentColor={selectedClient.accent_color || undefined}
           />
