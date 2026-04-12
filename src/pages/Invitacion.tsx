@@ -171,7 +171,7 @@ const Invitacion = () => {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center space-y-3">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+            <CheckCircle className="h-16 w-16 text-primary mx-auto" />
             <CardTitle className="text-2xl">¡Cuenta creada con éxito!</CardTitle>
             <CardDescription className="text-base">
               Gracias {fullName || 'por registrarte'}. Ya tienes acceso a <strong>{invitation?.client_name}</strong> como <strong>{roleLabels[invitation?.role || 'viewer']}</strong>.
