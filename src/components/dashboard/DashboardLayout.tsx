@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { useBrand } from '@/contexts/BrandContext';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+import { AvatarPrompt } from './AvatarPrompt';
 
 export interface DashboardLayoutProps {
   children: ReactNode;
