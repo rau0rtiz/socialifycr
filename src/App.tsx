@@ -113,6 +113,13 @@ const App = () => (
                     </ProtectedRoute>
                   } />
                   <Route path="/email-marketing" element={<ProtectedRoute><EmailMarketing /></ProtectedRoute>} />
+                  <Route path="/emails-log" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <EmailsLog />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/business-setup" element={<ProtectedRoute><BusinessSetup /></ProtectedRoute>} />
                   <Route path="/client-database" element={<ProtectedRoute><ClientDatabase /></ProtectedRoute>} />
                   <Route path="/widget-catalog" element={
