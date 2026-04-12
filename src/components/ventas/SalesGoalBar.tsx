@@ -35,8 +35,8 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
   const [editMonth, setEditMonth] = useState(new Date());
 
   const isCurrentMonth = getMonthKey(viewMonth) === getMonthKey(new Date());
-  const barBg = primaryColor ? `hsl(${primaryColor})` : 'hsl(var(--primary))';
-  const barAccent = accentColor ? `hsl(${accentColor})` : 'hsl(var(--accent))';
+  const barBg = 'hsl(142, 71%, 45%)';   // green-500
+  const barAccent = 'hsl(142, 76%, 36%)'; // green-600
 
   if (isLoading) return null;
 
