@@ -132,9 +132,12 @@ const Ventas = () => {
   const { products: clientProducts } = useClientProducts(clientId);
 
   // Story tracker data for Alma Bendita — manual overrides add to goal
-  const { totals: storyTrackerTotals } = useDailyStoryTracker(isAlmaBendita ? clientId : null);
-  // Override revenue from daily_story_tracker (manual adjustments only, auto sales already in summary)
-  const storyOverrideCRC = storyTrackerTotals.daily_revenue - (storyTrackerTotals as any).daily_revenue + 0;
+  const { entries: storyEntries } = useDailyStoryTracker(isAlmaBendita ? clientId : null);
+  // Only sum override_revenue (manual adjustments); auto story sales are already in summary.totalCRC
+  const storyOverrideCRC = useMemo(() => 
+    storyEntries.reduce((sum, e) => sum + (e.override_revenue || 0), 0),
+    [storyEntries]
+  );
 
 
   // Daily reports for Mind Coach
