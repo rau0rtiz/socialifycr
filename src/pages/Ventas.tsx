@@ -131,8 +131,11 @@ const Ventas = () => {
   const { sales: chartSales } = useSalesTracking(clientId, { start: globalRange.start, end: globalRange.end });
   const { products: clientProducts } = useClientProducts(clientId);
 
-  // Story tracker data for Alma Bendita — drives the goal bar
-  
+  // Story tracker data for Alma Bendita — manual overrides add to goal
+  const { totals: storyTrackerTotals } = useDailyStoryTracker(isAlmaBendita ? clientId : null);
+  // Override revenue from daily_story_tracker (manual adjustments only, auto sales already in summary)
+  const storyOverrideCRC = storyTrackerTotals.daily_revenue - (storyTrackerTotals as any).daily_revenue + 0;
+
 
   // Daily reports for Mind Coach
   const { reports: dailyReports } = useSetterDailyReports(clientId);
