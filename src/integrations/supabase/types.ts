@@ -1990,6 +1990,59 @@ export type Database = {
           },
         ]
       }
+      sent_emails: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          error_message: string | null
+          html_content: string | null
+          id: string
+          recipient_email: string
+          recipient_name: string | null
+          resend_id: string | null
+          sent_by: string | null
+          source: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          html_content?: string | null
+          id?: string
+          recipient_email: string
+          recipient_name?: string | null
+          resend_id?: string | null
+          sent_by?: string | null
+          source?: string
+          status?: string
+          subject: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          html_content?: string | null
+          id?: string
+          recipient_email?: string
+          recipient_name?: string | null
+          resend_id?: string | null
+          sent_by?: string | null
+          source?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sent_emails_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       setter_appointments: {
         Row: {
           ad_campaign_id: string | null

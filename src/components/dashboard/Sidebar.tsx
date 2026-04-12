@@ -12,6 +12,7 @@ import {
   CreditCard,
   Image,
   Eye,
+  Mail,
   KeyRound,
   X,
   Briefcase,
@@ -40,6 +41,7 @@ import { useClientFeatures } from '@/hooks/use-client-features';
 
 const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
+  { title: 'Emails', url: '/emails-log', icon: Mail },
   { title: 'Accesos', url: '/accesos', icon: KeyRound },
   { title: 'Facturación', url: '/facturacion', icon: CreditCard },
   { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },

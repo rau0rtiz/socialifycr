@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,8 +19,13 @@ serve(async (req) => {
     });
   }
 
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+
   try {
-    const { to, toName, subject, html } = await req.json();
+    const { to, toName, subject, html, sentBy, clientId } = await req.json();
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -36,6 +42,21 @@ serve(async (req) => {
     });
 
     const data = await res.json();
+
+    // Log the email
+    await supabaseAdmin.from("sent_emails").insert({
+      recipient_email: to,
+      recipient_name: toName || null,
+      subject,
+      html_content: html,
+      status: res.ok ? "sent" : "failed",
+      resend_id: data?.id || null,
+      error_message: res.ok ? null : JSON.stringify(data),
+      source: "notification",
+      sent_by: sentBy || null,
+      client_id: clientId || null,
+    });
+
     if (!res.ok) {
       throw new Error(`Resend API error [${res.status}]: ${JSON.stringify(data)}`);
     }
