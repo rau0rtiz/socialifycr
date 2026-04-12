@@ -17,6 +17,7 @@ import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
 import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
 import { StoryStoreSales } from '@/components/ventas/StoryStoreSales';
+import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 
 
@@ -130,8 +131,14 @@ const Ventas = () => {
   const { sales: chartSales } = useSalesTracking(clientId, { start: globalRange.start, end: globalRange.end });
   const { products: clientProducts } = useClientProducts(clientId);
 
-  // Story tracker data for Alma Bendita — drives the goal bar
-  
+  // Story tracker data for Alma Bendita — manual overrides add to goal
+  const { entries: storyEntries } = useDailyStoryTracker(isAlmaBendita ? clientId : null);
+  // Only sum override_revenue (manual adjustments); auto story sales are already in summary.totalCRC
+  const storyOverrideCRC = useMemo(() => 
+    storyEntries.reduce((sum, e) => sum + (e.override_revenue || 0), 0),
+    [storyEntries]
+  );
+
 
   // Daily reports for Mind Coach
   const { reports: dailyReports } = useSetterDailyReports(clientId);
@@ -344,7 +351,7 @@ const Ventas = () => {
           <SalesGoalBar
             clientId={selectedClient.id}
             currentSalesUSD={0}
-            currentSalesCRC={summary.totalCRC}
+            currentSalesCRC={summary.totalCRC + storyOverrideCRC}
             primaryColor={selectedClient.primary_color || undefined}
             accentColor={selectedClient.accent_color || undefined}
           />
