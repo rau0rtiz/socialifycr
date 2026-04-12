@@ -185,9 +185,22 @@ serve(async (req) => {
 
     console.log("Resend response:", { emailData, emailError });
 
+    // Log to sent_emails
+    await supabaseAdmin.from("sent_emails").insert({
+      recipient_email: email,
+      recipient_name: inviteeName || null,
+      subject: `Invitación a ${client.name} - Socialify`,
+      html_content: emailHtml,
+      status: emailError ? "failed" : "sent",
+      resend_id: emailData?.id || null,
+      error_message: emailError?.message || null,
+      source: "invitation",
+      sent_by: user.id,
+      client_id: clientId,
+    });
+
     if (emailError) {
       console.error("Email send error:", emailError);
-      // Don't fail the whole request if email fails - invitation was created
       return new Response(
         JSON.stringify({
           success: true,
