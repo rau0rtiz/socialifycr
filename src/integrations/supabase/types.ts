@@ -2462,6 +2462,25 @@ export type Database = {
           role: Database["public"]["Enums"]["client_role"]
         }[]
       }
+      get_safe_platform_connections: {
+        Args: { _client_id: string }
+        Returns: {
+          ad_account_id: string
+          client_id: string
+          connected_by: string
+          created_at: string
+          id: string
+          instagram_account_id: string
+          permissions: Json
+          platform: string
+          platform_page_id: string
+          platform_page_name: string
+          platform_user_id: string
+          status: string
+          token_expires_at: string
+          updated_at: string
+        }[]
+      }
       get_users_last_sign_in: {
         Args: { user_ids: string[] }
         Returns: {

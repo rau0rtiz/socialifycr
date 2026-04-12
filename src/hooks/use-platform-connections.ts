@@ -6,7 +6,6 @@ export interface PlatformConnection {
   client_id: string;
   platform: string;
   status: string;
-  access_token: string | null;
   ad_account_id: string | null;
   instagram_account_id: string | null;
   platform_page_id: string | null;
@@ -14,7 +13,6 @@ export interface PlatformConnection {
   platform_user_id: string | null;
   permissions: any;
   token_expires_at: string | null;
-  refresh_token: string | null;
   connected_by: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -33,7 +31,7 @@ export const usePlatformConnections = (clientId: string | null) => {
 
       const { data, error } = await supabase
         .from('platform_connections')
-        .select('*')
+        .select('id, client_id, platform, status, ad_account_id, instagram_account_id, platform_page_id, platform_page_name, platform_user_id, permissions, token_expires_at, connected_by, created_at, updated_at')
         .eq('client_id', clientId)
         .eq('status', 'active');
 
