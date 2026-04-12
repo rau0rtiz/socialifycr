@@ -2442,7 +2442,65 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      platform_connections_safe: {
+        Row: {
+          ad_account_id: string | null
+          client_id: string | null
+          connected_by: string | null
+          created_at: string | null
+          id: string | null
+          instagram_account_id: string | null
+          permissions: Json | null
+          platform: Database["public"]["Enums"]["platform_type"] | null
+          platform_page_id: string | null
+          platform_page_name: string | null
+          platform_user_id: string | null
+          status: Database["public"]["Enums"]["connection_status"] | null
+          token_expires_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ad_account_id?: string | null
+          client_id?: string | null
+          connected_by?: string | null
+          created_at?: string | null
+          id?: string | null
+          instagram_account_id?: string | null
+          permissions?: Json | null
+          platform?: Database["public"]["Enums"]["platform_type"] | null
+          platform_page_id?: string | null
+          platform_page_name?: string | null
+          platform_user_id?: string | null
+          status?: Database["public"]["Enums"]["connection_status"] | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ad_account_id?: string | null
+          client_id?: string | null
+          connected_by?: string | null
+          created_at?: string | null
+          id?: string | null
+          instagram_account_id?: string | null
+          permissions?: Json | null
+          platform?: Database["public"]["Enums"]["platform_type"] | null
+          platform_page_id?: string | null
+          platform_page_name?: string | null
+          platform_user_id?: string | null
+          status?: Database["public"]["Enums"]["connection_status"] | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_client_invitation: {
@@ -2460,6 +2518,25 @@ export type Database = {
           email: string
           invitee_name: string
           role: Database["public"]["Enums"]["client_role"]
+        }[]
+      }
+      get_safe_platform_connections: {
+        Args: { _client_id: string }
+        Returns: {
+          ad_account_id: string
+          client_id: string
+          connected_by: string
+          created_at: string
+          id: string
+          instagram_account_id: string
+          permissions: Json
+          platform: string
+          platform_page_id: string
+          platform_page_name: string
+          platform_user_id: string
+          status: string
+          token_expires_at: string
+          updated_at: string
         }[]
       }
       get_users_last_sign_in: {
