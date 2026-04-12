@@ -39,6 +39,7 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
            </main>
         </div>
         <OnboardingTour />
+        <AvatarPrompt />
       </div>
     </SidebarProvider>
   );
