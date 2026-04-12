@@ -17,6 +17,7 @@ import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
 import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
 import { StoryStoreSales } from '@/components/ventas/StoryStoreSales';
+import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 
 
