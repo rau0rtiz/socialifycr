@@ -31,7 +31,7 @@ export const usePlatformConnections = (clientId: string | null) => {
 
       const { data, error } = await supabase
         .from('platform_connections')
-        .select('*')
+        .select('id, client_id, platform, status, ad_account_id, instagram_account_id, platform_page_id, platform_page_name, platform_user_id, permissions, token_expires_at, connected_by, created_at, updated_at')
         .eq('client_id', clientId)
         .eq('status', 'active');
 
