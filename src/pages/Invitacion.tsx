@@ -5,12 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertCircle, CheckCircle, Mail, Lock, User } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Lock, User, Mail } from 'lucide-react';
 import { z } from 'zod';
 
-const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'La contraseña debe tener al menos 6 caracteres');
 
 interface InvitationData {
@@ -20,6 +18,15 @@ interface InvitationData {
   client_name: string;
   invitee_name: string | null;
 }
+
+const roleLabels: Record<string, string> = {
+  account_manager: 'Account Manager',
+  editor: 'Editor',
+  viewer: 'Viewer',
+  media_buyer: 'Media Buyer',
+  closer: 'Closer',
+  setter: 'Setter',
+};
 
 const Invitacion = () => {
   const { token } = useParams<{ token: string }>();
@@ -34,7 +41,7 @@ const Invitacion = () => {
   const [fullName, setFullName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [formErrors, setFormErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
+  const [formErrors, setFormErrors] = useState<{ password?: string; fullName?: string }>({});
 
   useEffect(() => {
     if (!token) {
@@ -42,24 +49,16 @@ const Invitacion = () => {
       setLoading(false);
       return;
     }
-
     validateToken();
   }, [token]);
 
   const validateToken = async () => {
     try {
-      // Use the public function that works without authentication
       const { data, error } = await supabase.rpc('get_client_invitation_public', {
         _token: token,
       });
 
-      if (error) {
-        console.error('Error fetching invitation:', error);
-        setError('Error al validar la invitación.');
-        return;
-      }
-
-      if (!data || data.length === 0) {
+      if (error || !data || data.length === 0) {
         setError('Esta invitación no es válida o ha expirado.');
         return;
       }
@@ -72,10 +71,7 @@ const Invitacion = () => {
         client_name: inviteData.client_name,
         invitee_name: inviteData.invitee_name,
       });
-      
-      // Pre-fill email (locked to invitation email)
       setEmail(inviteData.email);
-      // Pre-fill name if provided
       if (inviteData.invitee_name) {
         setFullName(inviteData.invitee_name);
       }
@@ -87,83 +83,25 @@ const Invitacion = () => {
     }
   };
 
-  const validateForm = (isSignUp: boolean) => {
-    const newErrors: { email?: string; password?: string; fullName?: string } = {};
-    
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0].message;
-    }
-    
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
-    }
-    
-    if (isSignUp && !fullName.trim()) {
-      newErrors.fullName = 'El nombre es requerido';
-    }
-    
-    setFormErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const acceptInvitation = async () => {
-    if (!token) return false;
-    
-    try {
-      const { data, error } = await supabase.rpc('accept_client_invitation', {
-        _token: token,
-      });
-      
-      if (error) {
-        console.error('Error accepting invitation:', error);
-        
-        // Handle specific errors
-        if (error.message.includes('Email mismatch')) {
-          toast({
-            title: 'Error de email',
-            description: 'Esta invitación fue enviada a un email diferente. Debes usar el email correcto.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Error',
-            description: 'No se pudo aceptar la invitación. Puede que ya haya sido usada.',
-            variant: 'destructive',
-          });
-        }
-        return false;
-      }
-      
-      return true;
-    } catch (err) {
-      console.error('Error in acceptInvitation:', err);
-      return false;
-    }
-  };
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm(true)) return;
-    
-    // Verify email matches invitation
-    if (email.toLowerCase() !== invitation?.email.toLowerCase()) {
-      setFormErrors({ email: 'Debes usar el email al que fue enviada la invitación' });
-      return;
-    }
-    
+
+    const newErrors: { password?: string; fullName?: string } = {};
+    if (!fullName.trim()) newErrors.fullName = 'El nombre es requerido';
+    const pwResult = passwordSchema.safeParse(password);
+    if (!pwResult.success) newErrors.password = pwResult.error.errors[0].message;
+    setFormErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
     setSubmitting(true);
     try {
+      // Sign up
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName,
-          },
+          data: { full_name: fullName },
         },
       });
 
@@ -171,7 +109,7 @@ const Invitacion = () => {
         if (signUpError.message.includes('already registered')) {
           toast({
             title: 'Usuario existente',
-            description: 'Este email ya está registrado. Usa la pestaña "Iniciar Sesión".',
+            description: 'Este email ya está registrado. Intenta iniciar sesión desde la página principal.',
             variant: 'destructive',
           });
           return;
@@ -179,21 +117,16 @@ const Invitacion = () => {
         throw signUpError;
       }
 
-      if (!authData.user) {
-        throw new Error('No se pudo crear el usuario');
+      if (!authData.user) throw new Error('No se pudo crear el usuario');
+
+      // Accept invitation
+      try {
+        await supabase.rpc('accept_client_invitation', { _token: token });
+      } catch (acceptErr) {
+        console.error('Error accepting invitation (non-blocking):', acceptErr);
       }
 
-      // Accept the invitation using the secure backend function
-      const accepted = await acceptInvitation();
-      
-      if (accepted) {
-        setSuccess(true);
-        toast({
-          title: '¡Cuenta creada!',
-          description: 'Tu cuenta ha sido creada y ya tienes acceso al cliente.',
-        });
-        setTimeout(() => navigate('/'), 2000);
-      }
+      setSuccess(true);
     } catch (err: any) {
       console.error('Error in signup:', err);
       toast({
@@ -204,66 +137,6 @@ const Invitacion = () => {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm(false)) return;
-    
-    // Verify email matches invitation
-    if (email.toLowerCase() !== invitation?.email.toLowerCase()) {
-      setFormErrors({ email: 'Debes usar el email al que fue enviada la invitación' });
-      return;
-    }
-    
-    setSubmitting(true);
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        let message = 'Error al iniciar sesión';
-        if (signInError.message.includes('Invalid login credentials')) {
-          message = 'Credenciales inválidas. Verifica tu email y contraseña.';
-        }
-        toast({
-          title: 'Error',
-          description: message,
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Accept the invitation using the secure backend function
-      const accepted = await acceptInvitation();
-      
-      if (accepted) {
-        setSuccess(true);
-        toast({
-          title: '¡Bienvenido!',
-          description: 'Has sido agregado al cliente exitosamente.',
-        });
-        setTimeout(() => navigate('/'), 2000);
-      }
-    } catch (err: any) {
-      console.error('Error in signin:', err);
-      toast({
-        title: 'Error',
-        description: err.message || 'No se pudo iniciar sesión.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const roleLabels: Record<string, string> = {
-    account_manager: 'Account Manager',
-    editor: 'Editor',
-    viewer: 'Viewer',
   };
 
   if (loading) {
@@ -297,13 +170,18 @@ const Invitacion = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <CardTitle>¡Bienvenido!</CardTitle>
-            <CardDescription>
-              Ya tienes acceso a {invitation?.client_name}. Redirigiendo al dashboard...
+          <CardHeader className="text-center space-y-3">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+            <CardTitle className="text-2xl">¡Cuenta creada con éxito!</CardTitle>
+            <CardDescription className="text-base">
+              Gracias {fullName || 'por registrarte'}. Ya tienes acceso a <strong>{invitation?.client_name}</strong> como <strong>{roleLabels[invitation?.role || 'viewer']}</strong>.
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <Button className="w-full" size="lg" onClick={() => navigate('/')}>
+              Ir al Dashboard
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
@@ -317,126 +195,71 @@ const Invitacion = () => {
             <Mail className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">
-            Invitación a {invitation?.client_name || 'Cliente'}
+            Crear tu cuenta
           </CardTitle>
           <CardDescription>
             {invitation?.invitee_name && (
               <span className="block">Hola {invitation.invitee_name},</span>
             )}
-            Has sido invitado como <strong>{roleLabels[invitation?.role || 'viewer']}</strong>
+            Has sido invitado a <strong>{invitation?.client_name}</strong> como <strong>{roleLabels[invitation?.role || 'viewer']}</strong>
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="register" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="register">Crear Cuenta</TabsTrigger>
-              <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="register">
-              <form onSubmit={handleSignUp} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-name">Nombre Completo</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="register-name"
-                      type="text"
-                      placeholder="Tu nombre"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  {formErrors.fullName && <p className="text-sm text-destructive">{formErrors.fullName}</p>}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="register-email"
-                      type="email"
-                      placeholder="tu@email.com"
-                      value={email}
-                      readOnly
-                      className="pl-10 bg-muted"
-                    />
-                  </div>
-                  {formErrors.email && <p className="text-sm text-destructive">{formErrors.email}</p>}
-                  <p className="text-xs text-muted-foreground">
-                    El email está vinculado a esta invitación
-                  </p>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Contraseña</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="register-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  {formErrors.password && <p className="text-sm text-destructive">{formErrors.password}</p>}
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Crear Cuenta
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="login">
-              <form onSubmit={handleSignIn} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="tu@email.com"
-                      value={email}
-                      readOnly
-                      className="pl-10 bg-muted"
-                    />
-                  </div>
-                  {formErrors.email && <p className="text-sm text-destructive">{formErrors.email}</p>}
-                  <p className="text-xs text-muted-foreground">
-                    El email está vinculado a esta invitación
-                  </p>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Contraseña</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  {formErrors.password && <p className="text-sm text-destructive">{formErrors.password}</p>}
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Iniciar Sesión
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          <form onSubmit={handleSignUp} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="register-name">Nombre Completo</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="register-name"
+                  type="text"
+                  placeholder="Tu nombre"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              {formErrors.fullName && <p className="text-sm text-destructive">{formErrors.fullName}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="register-email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="register-email"
+                  type="email"
+                  value={email}
+                  readOnly
+                  className="pl-10 bg-muted"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                El email está vinculado a esta invitación
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="register-password">Contraseña</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="register-password"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              {formErrors.password && <p className="text-sm text-destructive">{formErrors.password}</p>}
+            </div>
+
+            <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Crear Cuenta
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
