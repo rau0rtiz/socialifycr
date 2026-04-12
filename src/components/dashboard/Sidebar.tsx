@@ -12,6 +12,7 @@ import {
   CreditCard,
   Image,
   Eye,
+  Mail,
   KeyRound,
   X,
   Briefcase,
