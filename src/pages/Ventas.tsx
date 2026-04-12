@@ -465,7 +465,18 @@ const Ventas = () => {
         )}
 
         {/* Bottom section: charts side by side */}
-        {!isAlmaBendita && !isSpkUp && salesDistributionSection}
+        {!isAlmaBendita && !isSpkUp && !isMindCoach && !isHildaLopez && salesDistributionSection}
+
+        {/* Mind Coach / Hilda: only product chart, no brand chart */}
+        {(isMindCoach || isHildaLopez) && (
+          <div className="grid grid-cols-1 gap-6">
+            {hasSalesChartData ? (
+              <SalesByProductChart sales={chartSales} products={clientProducts} />
+            ) : (
+              renderEmptySalesCard('Ventas por Producto')
+            )}
+          </div>
+        )}
 
         {/* Speak Up: only product chart, no brand chart */}
         {isSpkUp && (
