@@ -494,7 +494,7 @@ const Ventas = () => {
         )}
 
         {!isSpkUp && !isSilvia && !isAlmaBendita && (
-          <ClosureRateWidget appointments={appointments} />
+          <ClosureRateWidget appointments={appointments} sales={allSales} />
         )}
 
         {/* Ad ranking at bottom for Mind Coach */}
