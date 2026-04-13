@@ -1,19 +1,25 @@
 
 
-## Fix Story Preview Scale in Ventas por Historias
+## Carga progresiva de historias archivadas
 
-### Problem
-The aspect ratio was changed to `3/4` but should be `9/16` (native story ratio). The real issue is the image scaling: `object-contain` leaves whitespace inside the container, making previews look cropped/washed out. The working `StoriesSection` uses `object-cover` consistently.
+### Idea
+Limitar la carga inicial de historias archivadas a las 100 mas recientes y agregar un boton "Ver todas" que abre un dialog con la lista completa (cargada bajo demanda).
 
-### Solution — File: `src/components/ventas/StoryStoreSales.tsx`
+### Cambios
 
-1. **Revert aspect ratio** back to `aspect-[9/16]` on both StoryCard containers (lines ~311 and ~392)
-2. **Use `object-cover` consistently** on all thumbnail images — the `StoryImage` component currently uses whatever className is passed, but the grid card rendering at line 319 passes `previewClassName` from `getStoryPreviewProps` which is already `object-cover` — that's correct
-3. **Ensure `referrerPolicy="no-referrer"` and `crossOrigin="anonymous"`** are on the `<img>` tag inside `StoryImage` (matching the working `StoriesSection` pattern)
-4. **Dialog preview** (lines ~278-296): keep `object-contain` there since it's a larger detail view where fitting the whole image matters
+**File: `src/hooks/use-stories.ts`**
+1. Cambiar la query de `archived-stories` para que solo traiga las primeras 100 historias (sin el loop de paginacion)
+2. Agregar una nueva query separada `all-archived-stories` con `enabled: false` que usa el loop de paginacion actual para traer todas -- se activa manualmente con `refetch`
+3. Exportar ambos conjuntos y una funcion `fetchAllArchived` desde el hook
 
-### Changes Summary
-- Lines 311, 392: `aspect-[3/4]` → `aspect-[9/16]`
-- `StoryImage` `<img>` tag: add `referrerPolicy="no-referrer"` and `crossOrigin="anonymous"` if missing
-- Verify `previewClassName` passed to StoryCard thumbnails is `object-cover`
+**File: `src/components/ventas/StoryStoreSales.tsx`**
+1. En el tab de "Archivadas", mostrar solo las 100 mas recientes
+2. Si hay exactamente 100 (indicando que probablemente hay mas), mostrar un boton "Ver todas las archivadas"
+3. Al hacer click, abrir un `Dialog` que llama `fetchAllArchived()`, muestra un loading spinner mientras carga, y luego renderiza el grid completo de historias archivadas con scroll
+4. Dentro del dialog, reutilizar el mismo componente de grid/cards que ya existe
+
+### Resultado
+- Carga inicial mucho mas rapida (1 query de 100 rows vs loop de miles)
+- El usuario solo carga todas las archivadas si realmente las necesita
+- Sin cambios en funcionalidad -- las historias vendidas siguen funcionando igual
 
