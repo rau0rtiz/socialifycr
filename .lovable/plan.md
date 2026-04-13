@@ -1,25 +1,32 @@
 
 
-## Carga progresiva de historias archivadas
+## Agregar funcion de Apartado en Ventas por Historia
 
-### Idea
-Limitar la carga inicial de historias archivadas a las 100 mas recientes y agregar un boton "Ver todas" que abre un dialog con la lista completa (cargada bajo demanda).
+### Concepto
+Usar el campo `status` existente en `message_sales` (actualmente siempre `'completed'`) con un nuevo valor `'reserved'` para apartados. No se necesitan cambios en la base de datos.
 
-### Cambios
+### Cambios en `src/components/ventas/StoryStoreSales.tsx`
 
-**File: `src/hooks/use-stories.ts`**
-1. Cambiar la query de `archived-stories` para que solo traiga las primeras 100 historias (sin el loop de paginacion)
-2. Agregar una nueva query separada `all-archived-stories` con `enabled: false` que usa el loop de paginacion actual para traer todas -- se activa manualmente con `refetch`
-3. Exportar ambos conjuntos y una funcion `fetchAllArchived` desde el hook
+1. **Boton "Apartar" en el dialog de registro** — Agregar un segundo boton debajo de "Registrar Venta" con un color diferente (amber/yellow). Al hacer click, ejecuta el mismo flujo de registro pero con `status: 'reserved'` en lugar de `'completed'`.
 
-**File: `src/components/ventas/StoryStoreSales.tsx`**
-1. En el tab de "Archivadas", mostrar solo las 100 mas recientes
-2. Si hay exactamente 100 (indicando que probablemente hay mas), mostrar un boton "Ver todas las archivadas"
-3. Al hacer click, abrir un `Dialog` que llama `fetchAllArchived()`, muestra un loading spinner mientras carga, y luego renderiza el grid completo de historias archivadas con scroll
-4. Dentro del dialog, reutilizar el mismo componente de grid/cards que ya existe
+2. **Nuevo Tab "Apartados"** — Agregar un tab entre "Vendidas" y las demas que muestre las historias con `status = 'reserved'`. Usar un icono y color diferenciado (amber).
 
-### Resultado
-- Carga inicial mucho mas rapida (1 query de 100 rows vs loop de miles)
-- El usuario solo carga todas las archivadas si realmente las necesita
-- Sin cambios en funcionalidad -- las historias vendidas siguen funcionando igual
+3. **Query de apartados** — Modificar la query de `sold-story-ids` para traer tambien el `status`, y crear sets separados: `soldSet` (completed) y `reservedSet` (reserved). Las historias apartadas no deben aparecer como disponibles para vender.
+
+4. **StoryCard para apartados** — En el grid de apartados, mostrar overlay amber (en vez de verde). Incluir un boton o click para "Confirmar venta" que actualice el status de `'reserved'` a `'completed'`.
+
+5. **Visual en cards generales** — Si una historia esta apartada, mostrar un badge amber con icono de reloj/bookmark en vez del check verde de vendida.
+
+### Detalle tecnico
+
+- `handleSubmit` recibe un parametro `asReserved: boolean` — si true, pasa `status: 'reserved'` al `SaleInput`
+- El hook `use-sales-tracking` ya soporta el campo `status` en el insert ya que la tabla lo acepta
+- Para confirmar un apartado: `supabase.from('message_sales').update({ status: 'completed' }).eq('id', saleId)`
+- Query actualizada: `select('story_id, amount, currency, customer_name, sale_date, product, brand, status, id')`
+
+### Flujo del usuario
+1. Click en historia → se abre dialog
+2. Llena datos → puede elegir "Registrar Venta" (verde) o "Apartar" (amber)
+3. Si aparta → la historia aparece en tab "Apartados" con overlay amber
+4. Desde tab "Apartados" puede hacer click → confirmar la venta (cambia a completed)
 
