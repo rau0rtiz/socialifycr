@@ -203,7 +203,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     return {
       previewSrc: story.thumbnailUrl || story.mediaUrl,
       fallbackSrc: story.mediaUrl || story.thumbnailUrl,
-      previewClassName: 'w-full h-full object-cover',
+      previewClassName: 'absolute inset-0 block h-full w-full object-cover object-center',
       containerClassName: 'bg-muted',
     };
   };
@@ -296,7 +296,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     );
   };
 
-  const storyGridClassName = 'grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-1.5 sm:gap-2 pb-3';
+  const storyGridClassName = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2.5 sm:gap-3 pb-3';
 
   const StoryCard = ({ story, isSold }: { story: Story; isSold: boolean }) => {
     const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
@@ -308,11 +308,11 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
       <div
         onClick={() => !isSold && openSaleDialog(story)}
         className={cn(
-          'relative flex-shrink-0 w-full aspect-[9/16] rounded-lg overflow-hidden border transition-all',
+          'group relative w-full aspect-[9/16] rounded-xl overflow-hidden border-2 transition-all',
           containerClassName,
           isSold
             ? 'border-green-500/50 opacity-70 cursor-default'
-            : 'border-border hover:border-primary/50 cursor-pointer hover:scale-[1.02]'
+            : 'border-border hover:border-muted-foreground/30 cursor-pointer hover:scale-[1.02]'
         )}
       >
         {previewSrc ? (
@@ -389,7 +389,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
               <div
                 key={story.id}
                 className={cn(
-                  'relative flex-shrink-0 w-full aspect-[9/16] rounded-lg overflow-hidden border border-green-500/50',
+                  'relative w-full aspect-[9/16] rounded-xl overflow-hidden border-2 border-green-500/50',
                   containerClassName
                 )}
               >
