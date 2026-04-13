@@ -144,11 +144,6 @@ const Dashboard = () => {
   const hasAdAccount = !!metaConnection?.ad_account_id;
   const hasMetaConnection = !!metaConnection;
 
-  // Widget visibility — agency sees all unless in preview mode
-  const showSocialFollowers = !shouldRespectFlags || flags.social_followers;
-  const showInstagramPosts = !shouldRespectFlags || flags.instagram_posts;
-  const showYouTubeVideos = !shouldRespectFlags || flags.youtube_videos;
-  const showContentGrid = !shouldRespectFlags || flags.content_grid;
   const showFunnel = !shouldRespectFlags || flags.funnel;
   const showCampaigns = !shouldRespectFlags || flags.campaigns;
 
