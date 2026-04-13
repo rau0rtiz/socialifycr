@@ -3,18 +3,17 @@
 ## Fix Story Preview Scale in Ventas por Historias
 
 ### Problem
-The story cards use `aspect-[9/16]` which makes them very tall and narrow at smaller viewports. Combined with `object-cover`, images get cropped badly or appear mostly blank/washed out (as seen in the screenshot).
+The aspect ratio was changed to `3/4` but should be `9/16` (native story ratio). The real issue is the image scaling: `object-contain` leaves whitespace inside the container, making previews look cropped/washed out. The working `StoriesSection` uses `object-cover` consistently.
 
-### Solution
-Reduce the aspect ratio to something less extreme and ensure images fill the cards properly:
+### Solution — File: `src/components/ventas/StoryStoreSales.tsx`
 
-**File: `src/components/ventas/StoryStoreSales.tsx`**
+1. **Revert aspect ratio** back to `aspect-[9/16]` on both StoryCard containers (lines ~311 and ~392)
+2. **Use `object-cover` consistently** on all thumbnail images — the `StoryImage` component currently uses whatever className is passed, but the grid card rendering at line 319 passes `previewClassName` from `getStoryPreviewProps` which is already `object-cover` — that's correct
+3. **Ensure `referrerPolicy="no-referrer"` and `crossOrigin="anonymous"`** are on the `<img>` tag inside `StoryImage` (matching the working `StoriesSection` pattern)
+4. **Dialog preview** (lines ~278-296): keep `object-contain` there since it's a larger detail view where fitting the whole image matters
 
-1. **Change aspect ratio** from `aspect-[9/16]` to `aspect-[3/4]` on the StoryCard — this keeps a portrait orientation but is less extreme, showing more of each story and fitting better in the grid
-2. **Keep `object-cover`** on images so they fill the card without letterboxing
-3. **Adjust ScrollArea height** slightly to accommodate the shorter cards while still showing multiple rows
-
-### Technical Details
-- Line 311: Change `aspect-[9/16]` → `aspect-[3/4]`
-- This single change will make the cards shorter, fitting more content visually and preventing the "washed out" look from overly tall crops
+### Changes Summary
+- Lines 311, 392: `aspect-[3/4]` → `aspect-[9/16]`
+- `StoryImage` `<img>` tag: add `referrerPolicy="no-referrer"` and `crossOrigin="anonymous"` if missing
+- Verify `previewClassName` passed to StoryCard thumbnails is `object-cover`
 
