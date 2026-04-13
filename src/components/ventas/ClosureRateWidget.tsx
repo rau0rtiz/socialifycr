@@ -7,6 +7,7 @@ import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from
 interface Sale {
   id: string;
   closer_name?: string | null;
+  status?: string;
 }
 
 interface ClosureRateWidgetProps {
@@ -22,17 +23,25 @@ export const ClosureRateWidget = ({ appointments, sales = [] }: ClosureRateWidge
       if (s.closer_name) saleCloserMap.set(s.id, s.closer_name);
     });
 
+    // Track which sale_ids are already counted via appointments
+    const countedSaleIds = new Set<string>();
+
     const closerMap = new Map<string, { sold: number; notSold: number }>();
 
+    // 1. Process appointments (leads with sold/not_sold status)
     appointments.forEach(a => {
       if (a.status !== 'sold' && (a.status as string) !== 'not_sold') return;
 
-      // Determine the closer: from linked sale if sold, or from notes/setter as fallback
       let closer = 'Sin asignar';
-      if (a.status === 'sold' && a.sale_id) {
-        closer = saleCloserMap.get(a.sale_id) || closer;
+
+      // Try to get closer from linked sale
+      if (a.sale_id) {
+        const saleCloser = saleCloserMap.get(a.sale_id);
+        if (saleCloser) closer = saleCloser;
+        if (a.status === 'sold') countedSaleIds.add(a.sale_id);
       }
-      // For not_sold, try to extract closer from notes (format: "Closer: Name")
+
+      // Fallback: try to extract closer from notes
       if (closer === 'Sin asignar' && a.notes) {
         const match = a.notes.match(/[Cc]loser[:\s]+([^\n,]+)/);
         if (match) closer = match[1].trim();
@@ -44,12 +53,24 @@ export const ClosureRateWidget = ({ appointments, sales = [] }: ClosureRateWidge
       closerMap.set(closer, entry);
     });
 
-    return Array.from(closerMap.entries()).map(([name, data]) => ({
-      name,
-      rate: data.sold + data.notSold > 0 ? Math.round((data.sold / (data.sold + data.notSold)) * 100) : 0,
-      sold: data.sold,
-      total: data.sold + data.notSold,
-    }));
+    // 2. Also count sales that are NOT linked to any appointment (standalone sales)
+    sales.forEach(s => {
+      if (countedSaleIds.has(s.id)) return;
+      if (s.status !== 'completed') return;
+      const closer = s.closer_name || 'Sin asignar';
+      const entry = closerMap.get(closer) || { sold: 0, notSold: 0 };
+      entry.sold++;
+      closerMap.set(closer, entry);
+    });
+
+    return Array.from(closerMap.entries())
+      .map(([name, data]) => ({
+        name,
+        rate: data.sold + data.notSold > 0 ? Math.round((data.sold / (data.sold + data.notSold)) * 100) : 0,
+        sold: data.sold,
+        total: data.sold + data.notSold,
+      }))
+      .sort((a, b) => b.sold - a.sold);
   }, [appointments, sales]);
 
   return (
