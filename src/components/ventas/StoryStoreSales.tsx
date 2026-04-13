@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { ShoppingBag, Check, Play, Image as ImageIcon, Zap, Archive, Tag, Sparkles } from 'lucide-react';
+import { ShoppingBag, Check, Play, Image as ImageIcon, Zap, Archive, Tag, Sparkles, Clock, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -43,29 +43,37 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     enabled: !!user?.id,
   });
 
-  // Fetch all story sales with details
+  // Fetch all story sales with details (including status and id)
   const { data: soldStoryData = [] } = useQuery({
     queryKey: ['sold-story-ids', clientId],
     queryFn: async () => {
       const { data } = await supabase
         .from('message_sales')
-        .select('story_id, amount, currency, customer_name, sale_date, product, brand')
+        .select('story_id, amount, currency, customer_name, sale_date, product, brand, status, id')
         .eq('client_id', clientId)
         .not('story_id', 'is', null);
-      return (data || []) as { story_id: string; amount: number; currency: string; customer_name: string | null; sale_date: string; product: string | null; brand: string | null }[];
+      return (data || []) as { story_id: string; amount: number; currency: string; customer_name: string | null; sale_date: string; product: string | null; brand: string | null; status: string; id: string }[];
     },
     enabled: !!clientId,
   });
-  const soldSet = new Set(soldStoryData.map(s => s.story_id));
-  const soldMap = new Map(soldStoryData.map(s => [s.story_id, s]));
 
-  // Filter unsold stories for active/archived tabs
-  const unsoldActive = useMemo(() => activeStories.filter(s => !soldSet.has(s.storyId)), [activeStories, soldSet]);
-  const unsoldArchived = useMemo(() => archivedStories.filter(s => !soldSet.has(s.storyId)), [archivedStories, soldSet]);
+  // Separate sold (completed) and reserved sets
+  const soldSet = new Set(soldStoryData.filter(s => s.status === 'completed').map(s => s.story_id));
+  const reservedSet = new Set(soldStoryData.filter(s => s.status === 'reserved').map(s => s.story_id));
+  const allTakenSet = new Set(soldStoryData.map(s => s.story_id));
+  const soldMap = new Map(soldStoryData.filter(s => s.status === 'completed').map(s => [s.story_id, s]));
+  const reservedMap = new Map(soldStoryData.filter(s => s.status === 'reserved').map(s => [s.story_id, s]));
 
-  // Sold stories (from both active + archived)
+  // Filter unsold stories for active/archived tabs (exclude both sold and reserved)
+  const unsoldActive = useMemo(() => activeStories.filter(s => !allTakenSet.has(s.storyId)), [activeStories, allTakenSet]);
+  const unsoldArchived = useMemo(() => archivedStories.filter(s => !allTakenSet.has(s.storyId)), [archivedStories, allTakenSet]);
+
+  // Sold stories (completed)
   const allStories = useMemo(() => [...activeStories, ...archivedStories], [activeStories, archivedStories]);
   const soldStories = useMemo(() => allStories.filter(s => soldSet.has(s.storyId)), [allStories, soldSet]);
+
+  // Reserved stories
+  const reservedStories = useMemo(() => allStories.filter(s => reservedSet.has(s.storyId)), [allStories, reservedSet]);
 
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -79,6 +87,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [confirmingReservation, setConfirmingReservation] = useState<string | null>(null);
 
   const applyScannedData = (sd: { customer_name?: string | null; customer_phone?: string | null; brand?: string | null; garment_type?: string | null; amount?: number | null; notes?: string | null } | null) => {
     if (!sd) return;
@@ -130,7 +139,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (asReserved: boolean = false) => {
     if (!selectedStory || !amount || Number(amount) <= 0) {
       toast.error('Ingresa un monto válido');
       return;
@@ -153,50 +162,71 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
         closer_name: sellerName.trim() || undefined,
         notes: notes || undefined,
         story_id: selectedStory.storyId,
+        status: asReserved ? 'reserved' as any : 'completed',
       };
       await addSale.mutateAsync(saleInput);
 
-      // Auto-sync: upsert daily_story_tracker for this date
-      try {
-        const { data: existing } = await supabase
-          .from('daily_story_tracker' as any)
-          .select('id, daily_revenue')
-          .eq('client_id', clientId)
-          .eq('track_date', saleDate)
-          .maybeSingle();
+      // Auto-sync: upsert daily_story_tracker for this date (only for completed sales)
+      if (!asReserved) {
+        try {
+          const { data: existing } = await supabase
+            .from('daily_story_tracker' as any)
+            .select('id, daily_revenue')
+            .eq('client_id', clientId)
+            .eq('track_date', saleDate)
+            .maybeSingle();
 
-        if (existing) {
-          await supabase
-            .from('daily_story_tracker' as any)
-            .update({
-              daily_revenue: Number((existing as any).daily_revenue) + Number(amount),
-              updated_at: new Date().toISOString(),
-            } as any)
-            .eq('id', (existing as any).id);
-        } else if (user) {
-          await supabase
-            .from('daily_story_tracker' as any)
-            .insert({
-              client_id: clientId,
-              track_date: saleDate,
-              stories_count: 0,
-              daily_revenue: Number(amount),
-              currency: 'CRC',
-              created_by: user.id,
-            } as any);
+          if (existing) {
+            await supabase
+              .from('daily_story_tracker' as any)
+              .update({
+                daily_revenue: Number((existing as any).daily_revenue) + Number(amount),
+                updated_at: new Date().toISOString(),
+              } as any)
+              .eq('id', (existing as any).id);
+          } else if (user) {
+            await supabase
+              .from('daily_story_tracker' as any)
+              .insert({
+                client_id: clientId,
+                track_date: saleDate,
+                stories_count: 0,
+                daily_revenue: Number(amount),
+                currency: 'CRC',
+                created_by: user.id,
+              } as any);
+          }
+        } catch {
+          // non-critical
         }
-      } catch {
-        // non-critical
       }
 
-      toast.success('¡Venta registrada!');
+      toast.success(asReserved ? '¡Apartado registrado!' : '¡Venta registrada!');
       setDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['sold-story-ids', clientId] });
       queryClient.invalidateQueries({ queryKey: ['sales', clientId] });
     } catch (err: any) {
-      toast.error(err?.message || 'Error al registrar venta');
+      toast.error(err?.message || 'Error al registrar');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const confirmReservation = async (saleId: string) => {
+    setConfirmingReservation(saleId);
+    try {
+      const { error } = await supabase
+        .from('message_sales')
+        .update({ status: 'completed' } as any)
+        .eq('id', saleId);
+      if (error) throw error;
+      toast.success('¡Apartado confirmado como venta!');
+      queryClient.invalidateQueries({ queryKey: ['sold-story-ids', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['message-sales', clientId] });
+    } catch (err: any) {
+      toast.error(err?.message || 'Error al confirmar');
+    } finally {
+      setConfirmingReservation(null);
     }
   };
 
@@ -299,20 +329,23 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
 
   const storyGridClassName = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2.5 sm:gap-3 pb-3';
 
-  const StoryCard = ({ story, isSold }: { story: Story; isSold: boolean }) => {
+  const StoryCard = ({ story, isSold, isReserved }: { story: Story; isSold: boolean; isReserved: boolean }) => {
     const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
     const timeLabel = hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
     const isVideo = story.mediaType === 'VIDEO';
     const { previewSrc, fallbackSrc, previewClassName, containerClassName } = getStoryPreviewProps(story);
+    const isTaken = isSold || isReserved;
 
     return (
       <div
-        onClick={() => !isSold && openSaleDialog(story)}
+        onClick={() => !isTaken && openSaleDialog(story)}
         className={cn(
           'group relative w-full aspect-[9/16] rounded-xl overflow-hidden border-2 transition-all',
           containerClassName,
           isSold
             ? 'border-green-500/50 opacity-70 cursor-default'
+            : isReserved
+            ? 'border-amber-500/50 opacity-80 cursor-default'
             : 'border-border hover:border-muted-foreground/30 cursor-pointer hover:scale-[1.02]'
         )}
       >
@@ -335,7 +368,15 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
           </div>
         )}
 
-        {!isSold && (
+        {isReserved && (
+          <div className="absolute inset-0 bg-amber-500/25 flex items-center justify-center">
+            <div className="bg-amber-500 rounded-full p-1.5">
+              <Clock className="h-3.5 w-3.5 text-white" />
+            </div>
+          </div>
+        )}
+
+        {!isTaken && (
           <div className="absolute bottom-0 inset-x-0 p-1.5 pt-6">
             <div className="inline-flex items-center gap-1 text-white text-[9px] font-medium bg-black/40 backdrop-blur-sm rounded-full px-2 py-1">
               <ShoppingBag className="h-3 w-3" />
@@ -359,7 +400,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
       <ScrollArea className="w-full h-[500px] sm:h-[580px]">
         <div className={storyGridClassName}>
           {stories.map((story) => (
-            <StoryCard key={story.id} story={story} isSold={soldSet.has(story.storyId)} />
+            <StoryCard key={story.id} story={story} isSold={soldSet.has(story.storyId)} isReserved={reservedSet.has(story.storyId)} />
           ))}
         </div>
         <ScrollBar orientation="vertical" />
@@ -421,6 +462,71 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     );
   };
 
+  const renderReservedStories = () => {
+    if (reservedStories.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-[178px] text-sm text-muted-foreground">
+          No hay apartados
+        </div>
+      );
+    }
+    return (
+      <ScrollArea className="w-full h-[500px] sm:h-[580px]">
+        <div className={storyGridClassName}>
+          {reservedStories.map((story) => {
+            const sale = reservedMap.get(story.storyId);
+            const currSymbol = sale?.currency === 'CRC' ? '₡' : '$';
+            const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
+            const timeLabel = hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
+            const isVideo = story.mediaType === 'VIDEO';
+            const { previewSrc, fallbackSrc, previewClassName, containerClassName } = getStoryPreviewProps(story);
+            const isConfirming = confirmingReservation === sale?.id;
+
+            return (
+              <div
+                key={story.id}
+                className={cn(
+                  'relative w-full aspect-[9/16] rounded-xl overflow-hidden border-2 border-amber-500/50 group',
+                  containerClassName
+                )}
+              >
+                {previewSrc ? (
+                  <StoryImage src={previewSrc} fallbackSrc={fallbackSrc} className={previewClassName} isVideo={isVideo} />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                    {isVideo ? <Play className="h-5 w-5 text-muted-foreground" /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+                <span className="absolute top-1 right-1 text-white/80 text-[7px] sm:text-[8px] font-medium drop-shadow-sm z-10">{timeLabel}</span>
+                <div className="absolute bottom-0 inset-x-0 p-1.5 pt-7">
+                  <p className="text-white text-[10px] sm:text-[11px] font-bold">{currSymbol}{sale?.amount?.toLocaleString()}</p>
+                  {sale?.product && <p className="text-white/75 text-[8px] sm:text-[9px] truncate">{sale.product}</p>}
+                  {sale?.brand && <p className="text-white/75 text-[8px] sm:text-[9px] truncate">{sale.brand}</p>}
+                  {sale?.customer_name && <p className="text-white/75 text-[8px] sm:text-[9px] truncate">{sale.customer_name}</p>}
+                  {sale && (
+                    <button
+                      onClick={() => confirmReservation(sale.id)}
+                      disabled={isConfirming}
+                      className="mt-1 w-full flex items-center justify-center gap-1 text-[9px] font-semibold text-white bg-green-600 hover:bg-green-700 rounded-full py-1 px-2 transition-colors disabled:opacity-50"
+                    >
+                      <CheckCircle className="h-3 w-3" />
+                      {isConfirming ? 'Confirmando...' : 'Confirmar venta'}
+                    </button>
+                  )}
+                </div>
+                <div className="absolute top-1.5 left-1.5 bg-amber-500 rounded-full p-1">
+                  <Clock className="h-3 w-3 text-white" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <ScrollBar orientation="vertical" />
+      </ScrollArea>
+    );
+  };
+
   return (
     <>
       <Card>
@@ -448,6 +554,10 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                   <Archive className="h-3.5 w-3.5" />
                   Archivadas ({unsoldArchived.length})
                 </TabsTrigger>
+                <TabsTrigger value="apartados" className="gap-1.5 text-xs">
+                  <Clock className="h-3.5 w-3.5" />
+                  Apartados ({reservedStories.length})
+                </TabsTrigger>
                 <TabsTrigger value="vendidas" className="gap-1.5 text-xs">
                   <Tag className="h-3.5 w-3.5" />
                   Vendidas ({soldStories.length})
@@ -474,6 +584,9 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                     </Button>
                   </div>
                 )}
+              </TabsContent>
+              <TabsContent value="apartados">
+                {renderReservedStories()}
               </TabsContent>
               <TabsContent value="vendidas">
                 {renderSoldStories()}
@@ -607,13 +720,24 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleSubmit}
-                  disabled={submitting || !amount || !customerName.trim()}
-                  className="w-full"
-                >
-                  {submitting ? 'Registrando...' : 'Registrar Venta'}
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={() => handleSubmit(false)}
+                    disabled={submitting || !amount || !customerName.trim()}
+                    className="w-full"
+                  >
+                    {submitting ? 'Registrando...' : 'Registrar Venta'}
+                  </Button>
+                  <Button
+                    onClick={() => handleSubmit(true)}
+                    disabled={submitting || !amount || !customerName.trim()}
+                    variant="outline"
+                    className="w-full border-amber-500/50 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30 dark:hover:text-amber-300"
+                  >
+                    <Clock className="h-4 w-4 mr-1.5" />
+                    {submitting ? 'Registrando...' : 'Apartar'}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -636,7 +760,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             </div>
           ) : (
             (() => {
-              const unsoldAll = allArchivedStories.filter(s => !soldSet.has(s.storyId));
+              const unsoldAll = allArchivedStories.filter(s => !allTakenSet.has(s.storyId));
               return unsoldAll.length === 0 ? (
                 <div className="flex items-center justify-center h-[178px] text-sm text-muted-foreground">
                   No hay historias archivadas
@@ -645,7 +769,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                 <ScrollArea className="w-full h-[70vh]">
                   <div className={storyGridClassName}>
                     {unsoldAll.map((story) => (
-                      <StoryCard key={story.id} story={story} isSold={false} />
+                      <StoryCard key={story.id} story={story} isSold={false} isReserved={false} />
                     ))}
                   </div>
                   <ScrollBar orientation="vertical" />
