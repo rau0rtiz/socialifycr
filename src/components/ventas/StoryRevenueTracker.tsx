@@ -297,7 +297,7 @@ export const StoryRevenueTracker = ({ clientId, dateRange }: StoryRevenueTracker
           </div>
 
           {/* Calendar + Sidebar */}
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
             {/* Calendar */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-4">
