@@ -7,7 +7,6 @@ declare global {
     __lovableAppBooted?: boolean;
     __lovableRecoveryInProgress?: boolean;
   }
-  const __BUILD_TIMESTAMP__: string;
 }
 
 const MODULE_LOAD_RETRY_KEY = "__lovable_module_retry_count__";
