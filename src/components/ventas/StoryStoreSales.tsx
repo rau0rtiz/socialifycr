@@ -26,7 +26,8 @@ interface StoryStoreSalesProps {
 }
 
 export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
-  const { activeStories, archivedStories, isLoading } = useStories(clientId);
+  const { activeStories, archivedStories, allArchivedStories, isLoading, isLoadingAllArchived, hasMoreArchived, fetchAllArchived } = useStories(clientId);
+  const [allArchivedDialogOpen, setAllArchivedDialogOpen] = useState(false);
   const { addSale } = useSalesTracking(clientId);
   const { user } = useAuth();
   const queryClient = useQueryClient();
