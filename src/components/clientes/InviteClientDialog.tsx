@@ -95,6 +95,7 @@ export const InviteClientDialog = ({
         entityType: 'team_member',
         entityName: inviteeName.trim() || email.trim(),
         details: { client_id: clientId, client_name: clientName, email: email.trim(), role },
+        clientId,
       });
 
       if (data.emailSent) {

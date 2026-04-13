@@ -1,0 +1,1 @@
+ALTER TABLE public.audit_logs ADD COLUMN client_id uuid REFERENCES public.clients(id) ON DELETE SET NULL;

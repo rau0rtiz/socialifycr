@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
-  Users, Link, Unlink, UserPlus, UserMinus, Pencil, Trash2, Plus, History, Filter,
+  Users, Link, Unlink, UserPlus, UserMinus, Pencil, Trash2, Plus, History, Filter, Building2,
 } from 'lucide-react';
 
 const ACTION_META: Record<string, { icon: typeof Users; label: string; color: string }> = {
@@ -26,10 +26,24 @@ const PAGE_SIZE = 50;
 
 const Historial = () => {
   const [actionFilter, setActionFilter] = useState<string>('all');
+  const [clientFilter, setClientFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
 
+  // Fetch clients for the filter
+  const { data: clients } = useQuery({
+    queryKey: ['audit-clients'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['audit-logs', actionFilter, page],
+    queryKey: ['audit-logs', actionFilter, clientFilter, page],
     queryFn: async () => {
       let query = supabase
         .from('audit_logs')
@@ -41,6 +55,10 @@ const Historial = () => {
         query = query.eq('action', actionFilter);
       }
 
+      if (clientFilter !== 'all') {
+        query = query.eq('client_id', clientFilter);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
@@ -48,6 +66,10 @@ const Historial = () => {
   });
 
   const logs = data || [];
+
+  // Build a map of client names for display
+  const clientMap = new Map<string, string>();
+  clients?.forEach(c => clientMap.set(c.id, c.name));
 
   return (
     <DashboardLayout>
@@ -60,7 +82,7 @@ const Historial = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(0); }}>
             <SelectTrigger className="w-[220px]">
@@ -70,6 +92,21 @@ const Historial = () => {
               <SelectItem value="all">Todas las acciones</SelectItem>
               {Object.entries(ACTION_META).map(([key, meta]) => (
                 <SelectItem key={key} value={key}>{meta.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={clientFilter} onValueChange={(v) => { setClientFilter(v); setPage(0); }}>
+            <SelectTrigger className="w-[220px]">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="Filtrar por cliente" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los clientes</SelectItem>
+              {clients?.map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -84,10 +121,10 @@ const Historial = () => {
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex items-start gap-4 pl-12 py-3">
-                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
                   <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
+                    <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-1/2 bg-muted animate-pulse rounded" />
                   </div>
                 </div>
               ))
@@ -102,6 +139,7 @@ const Historial = () => {
                 const profile = log.profiles;
                 const userName = profile?.full_name || profile?.email || 'Usuario';
                 const initials = userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+                const clientName = log.client_id ? clientMap.get(log.client_id) : null;
 
                 return (
                   <div key={log.id} className="relative flex items-start gap-4 py-3 pl-12 group">
@@ -127,9 +165,16 @@ const Historial = () => {
                           </>
                         )}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: es })}
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: es })}
+                        </p>
+                        {clientName && (
+                          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                            {clientName}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

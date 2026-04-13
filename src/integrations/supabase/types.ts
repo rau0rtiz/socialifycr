@@ -149,6 +149,7 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
+          client_id: string | null
           created_at: string
           details: Json | null
           entity_id: string | null
@@ -161,6 +162,7 @@ export type Database = {
         }
         Insert: {
           action: string
+          client_id?: string | null
           created_at?: string
           details?: Json | null
           entity_id?: string | null
@@ -173,6 +175,7 @@ export type Database = {
         }
         Update: {
           action?: string
+          client_id?: string | null
           created_at?: string
           details?: Json | null
           entity_id?: string | null
@@ -184,6 +187,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "audit_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "audit_logs_user_id_fkey"
             columns: ["user_id"]

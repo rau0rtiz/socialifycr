@@ -373,6 +373,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         entityType: 'platform_connection',
         entityName: `Meta - ${selectedAccounts.pageName}`,
         details: { platform: 'meta', page_name: selectedAccounts.pageName },
+        clientId,
       });
 
       toast({
@@ -551,6 +552,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         entityType: 'platform_connection',
         entityName: `YouTube - ${channel.name}`,
         details: { platform: 'youtube', channel_name: channel.name },
+        clientId,
       });
 
       toast({
@@ -608,6 +610,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         entityType: 'platform_connection',
         entityName: `TikTok - ${account.displayName}`,
         details: { platform: 'tiktok', display_name: account.displayName },
+        clientId,
       });
 
       toast({
@@ -771,6 +774,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         entityType: 'platform_connection',
         entityName: `LinkedIn - ${org.name}`,
         details: { platform: 'linkedin', org_name: org.name },
+        clientId,
       });
 
       toast({
@@ -829,6 +833,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
         entityId: connectionToDisconnect.id,
         entityName: `${platformConfig[connectionToDisconnect.platform].name} - ${connectionToDisconnect.platform_page_name || ''}`,
         details: { platform: connectionToDisconnect.platform },
+        clientId,
       });
 
       toast({

@@ -100,6 +100,7 @@ const Clientes = () => {
           industry: clientToDelete.industry,
           deleted_at: new Date().toISOString(),
         },
+        clientId: clientToDelete.id,
       });
 
       toast({
