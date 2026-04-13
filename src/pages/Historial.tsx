@@ -128,6 +128,21 @@ const Historial = () => {
               ))}
             </SelectContent>
           </Select>
+
+          <Select value={userFilter} onValueChange={(v) => { setUserFilter(v); setPage(0); }}>
+            <SelectTrigger className="w-[220px]">
+              <div className="flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="Filtrar por usuario" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los usuarios</SelectItem>
+              {users?.map(u => (
+                <SelectItem key={u.id} value={u.id}>{u.full_name || u.email || 'Sin nombre'}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Timeline */}
