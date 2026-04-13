@@ -27,6 +27,7 @@ const PAGE_SIZE = 50;
 const Historial = () => {
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [clientFilter, setClientFilter] = useState<string>('all');
+  const [userFilter, setUserFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
 
   // Fetch clients for the filter
