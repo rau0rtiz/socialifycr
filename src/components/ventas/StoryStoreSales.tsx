@@ -458,6 +458,22 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
               </TabsContent>
               <TabsContent value="archivadas">
                 {renderStories(unsoldArchived)}
+                {hasMoreArchived && (
+                  <div className="flex justify-center pt-2 pb-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={() => {
+                        setAllArchivedDialogOpen(true);
+                        fetchAllArchived();
+                      }}
+                    >
+                      <Archive className="h-3.5 w-3.5" />
+                      Ver todas las archivadas
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
               <TabsContent value="vendidas">
                 {renderSoldStories()}
