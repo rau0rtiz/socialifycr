@@ -96,6 +96,7 @@ export const ClientFormDialog = ({
           entityId: client.id,
           entityName: name.trim(),
           details: { industry: industry.trim() || null },
+          clientId: client.id,
         });
         toast({
           title: 'Cliente actualizado',
@@ -124,6 +125,7 @@ export const ClientFormDialog = ({
           entityId: newClient?.id,
           entityName: name.trim(),
           details: { industry: industry.trim() || null },
+          clientId: newClient?.id,
         });
         toast({
           title: 'Cliente creado',

@@ -189,6 +189,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
         entityId: memberId,
         entityName: member?.profile?.full_name || member?.profile?.email || 'Unknown',
         details: { client_id: clientId, client_name: clientName },
+        clientId,
       });
       fetchMembers();
       toast({
