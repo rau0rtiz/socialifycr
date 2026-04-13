@@ -92,12 +92,28 @@ export const useStories = (clientId: string | null): UseStoriesResult => {
     queryFn: async () => {
       if (!clientId) return [];
 
-      const { data, error } = await supabase
-        .from('archived_stories')
-        .select('*')
-        .eq('client_id', clientId)
-        .order('timestamp', { ascending: false })
-        .limit(100);
+      // Fetch ALL archived stories (no limit) using pagination to bypass the 1000-row default
+      let allData: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data: page, error: pageError } = await supabase
+          .from('archived_stories')
+          .select('*')
+          .eq('client_id', clientId)
+          .order('timestamp', { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (pageError) {
+          console.error('Error fetching archived stories:', pageError);
+          break;
+        }
+        if (!page || page.length === 0) break;
+        allData = allData.concat(page);
+        if (page.length < pageSize) break;
+        from += pageSize;
+      }
+      const data = allData;
+      const error = null;
 
       if (error) {
         console.error('Error fetching archived stories:', error);
