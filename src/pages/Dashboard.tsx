@@ -71,19 +71,30 @@ const Dashboard = () => {
   // All hooks must be called before any conditional returns
   const clientId = selectedClient?.id || null;
 
+  // Widget visibility — agency sees all unless in preview mode
+  const showSocialFollowers = !shouldRespectFlags || flags.social_followers;
+  const showInstagramPosts = !shouldRespectFlags || flags.instagram_posts;
+  const showYouTubeVideos = !shouldRespectFlags || flags.youtube_videos;
+  const showContentGrid = !shouldRespectFlags || flags.content_grid;
+
+  // Only fetch data when the corresponding widget is visible
+  const needsContent = showContentGrid || showInstagramPosts;
+  const needsYouTube = showYouTubeVideos;
+  const needsCrosspost = showContentGrid;
+
   const {
     platforms: socialPlatforms,
     isLoading: socialLoading,
     isLiveData: socialIsLive,
     refetch: refetchSocial,
-  } = useSocialFollowers(clientId);
+  } = useSocialFollowers(showSocialFollowers ? clientId : null);
 
   const {
     content,
     isLoading: contentLoading,
     isLiveData: contentIsLive,
     refetch: refetchContent,
-  } = useContentData(clientId);
+  } = useContentData(clientId, 100, needsContent);
 
   const {
     tags,
@@ -95,7 +106,7 @@ const Dashboard = () => {
     updateMetadataMultiple,
     capture48hMetrics,
     refetch: refetchMetadata,
-  } = useContentMetadata(clientId);
+  } = useContentMetadata(needsContent ? clientId : null);
 
   const { data: metaConnection, refetch: refetchConnection } = useMetaConnection(clientId);
 
@@ -104,7 +115,7 @@ const Dashboard = () => {
     isLoading: youtubeLoading,
     isConnected: youtubeConnected,
     refetch: refetchYouTube,
-  } = useYouTubeVideos(clientId);
+  } = useYouTubeVideos(clientId, 10, needsYouTube);
 
   const {
     links: crosspostLinks,
@@ -112,7 +123,7 @@ const Dashboard = () => {
     removeLink: removeCrosspostLink,
     getLinkedPosts,
     refetch: refetchCrosspostLinks,
-  } = useCrosspostLinks(clientId);
+  } = useCrosspostLinks(clientId, needsCrosspost);
 
   
   // Refresh all dashboard data
