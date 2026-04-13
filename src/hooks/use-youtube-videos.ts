@@ -22,7 +22,7 @@ interface UseYouTubeVideosResult {
   refetch: () => void;
 }
 
-export const useYouTubeVideos = (clientId: string | null, limit: number = 10): UseYouTubeVideosResult => {
+export const useYouTubeVideos = (clientId: string | null, limit: number = 10, enabled: boolean = true): UseYouTubeVideosResult => {
   const { data: connections, isLoading: connectionsLoading } = usePlatformConnections(clientId);
   const youtubeConnection = connections?.find(c => c.platform === 'youtube');
 
@@ -41,7 +41,7 @@ export const useYouTubeVideos = (clientId: string | null, limit: number = 10): U
 
       return (data?.videos || []) as YouTubeVideo[];
     },
-    enabled: !!clientId && !connectionsLoading && !!youtubeConnection,
+    enabled: !!clientId && !connectionsLoading && !!youtubeConnection && enabled,
     staleTime: 5 * 60 * 1000,
   });
 
