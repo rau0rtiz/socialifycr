@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
-  Users, Link, Unlink, UserPlus, UserMinus, Pencil, Trash2, Plus, History, Filter, Building2,
+  Users, Link, Unlink, UserPlus, UserMinus, Pencil, Trash2, Plus, History, Filter, Building2, User,
 } from 'lucide-react';
 
 const ACTION_META: Record<string, { icon: typeof Users; label: string; color: string }> = {
@@ -27,6 +27,7 @@ const PAGE_SIZE = 50;
 const Historial = () => {
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [clientFilter, setClientFilter] = useState<string>('all');
+  const [userFilter, setUserFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
 
   // Fetch clients for the filter
@@ -42,8 +43,21 @@ const Historial = () => {
     },
   });
 
+  // Fetch users (profiles) for the filter
+  const { data: users } = useQuery({
+    queryKey: ['audit-users'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .order('full_name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['audit-logs', actionFilter, clientFilter, page],
+    queryKey: ['audit-logs', actionFilter, clientFilter, userFilter, page],
     queryFn: async () => {
       let query = supabase
         .from('audit_logs')
@@ -57,6 +71,10 @@ const Historial = () => {
 
       if (clientFilter !== 'all') {
         query = query.eq('client_id', clientFilter);
+      }
+
+      if (userFilter !== 'all') {
+        query = query.eq('user_id', userFilter);
       }
 
       const { data, error } = await query;
@@ -107,6 +125,21 @@ const Historial = () => {
               <SelectItem value="all">Todos los clientes</SelectItem>
               {clients?.map(c => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={userFilter} onValueChange={(v) => { setUserFilter(v); setPage(0); }}>
+            <SelectTrigger className="w-[220px]">
+              <div className="flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="Filtrar por usuario" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los usuarios</SelectItem>
+              {users?.map(u => (
+                <SelectItem key={u.id} value={u.id}>{u.full_name || u.email || 'Sin nombre'}</SelectItem>
               ))}
             </SelectContent>
           </Select>
