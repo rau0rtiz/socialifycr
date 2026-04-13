@@ -1063,7 +1063,7 @@ serve(async (req) => {
 
         // Enrich each story with insights
         const enrichedStories = await Promise.all(
-          (storiesData.data || []).map(async (story: any) => {
+          (allStoriesData).map(async (story: any) => {
             let insights = { impressions: 0, reach: 0, replies: 0 };
 
             try {
