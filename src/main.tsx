@@ -7,9 +7,11 @@ declare global {
     __lovableAppBooted?: boolean;
     __lovableRecoveryInProgress?: boolean;
   }
+  const __BUILD_TIMESTAMP__: string;
 }
 
 const MODULE_LOAD_RETRY_KEY = "__lovable_module_retry_count__";
+const BUILD_VERSION_KEY = "__socialify_build_version__";
 
 const settleTasks = (tasks: Array<Promise<unknown>>) =>
   Promise.all(
@@ -18,7 +20,7 @@ const settleTasks = (tasks: Array<Promise<unknown>>) =>
     ),
   );
 
-const cleanupLegacyRuntimeCaches = async () => {
+const cleanupAllCaches = async () => {
   const tasks: Promise<unknown>[] = [];
 
   if ("serviceWorker" in navigator && navigator.serviceWorker.getRegistrations) {
@@ -42,7 +44,58 @@ const cleanupLegacyRuntimeCaches = async () => {
   await settleTasks(tasks);
 };
 
-void cleanupLegacyRuntimeCaches();
+// --- Forced update check on every app open ---
+const checkForUpdates = async () => {
+  const currentBuild = __BUILD_TIMESTAMP__;
+  const storedBuild = localStorage.getItem(BUILD_VERSION_KEY);
+
+  // First visit — just store
+  if (!storedBuild) {
+    localStorage.setItem(BUILD_VERSION_KEY, currentBuild);
+    return;
+  }
+
+  // Same build — no update needed
+  if (storedBuild === currentBuild) {
+    // Still check server for a newer version (in background)
+    try {
+      const res = await fetch("/index.html", { cache: "no-store" });
+      const html = await res.text();
+      // If the served index.html references a different main JS chunk, force reload
+      const currentScript = document.querySelector('script[type="module"][src*="main"]');
+      if (currentScript) {
+        const currentSrc = currentScript.getAttribute("src") || "";
+        // Check if served HTML has a different entry script hash
+        const match = html.match(/src="(\/assets\/index-[^"]+\.js)"/);
+        if (match && match[1]) {
+          const servedAsset = match[1];
+          // Compare with what's currently loaded
+          const loadedScripts = Array.from(document.querySelectorAll('script[src*="/assets/index-"]'));
+          const isCurrentAsset = loadedScripts.some(s => s.getAttribute("src") === servedAsset);
+          if (!isCurrentAsset) {
+            console.log("[Socialify] New version detected from server, reloading...");
+            await cleanupAllCaches();
+            localStorage.setItem(BUILD_VERSION_KEY, Date.now().toString());
+            window.location.reload();
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      // Network error, skip background check
+    }
+    return;
+  }
+
+  // Different build version — new deploy detected
+  console.log("[Socialify] Build version changed, updating app...");
+  localStorage.setItem(BUILD_VERSION_KEY, currentBuild);
+  await cleanupAllCaches();
+  // No need to reload here — we're already running the new version
+};
+
+void cleanupAllCaches();
+void checkForUpdates();
 
 try {
   sessionStorage.removeItem(MODULE_LOAD_RETRY_KEY);
