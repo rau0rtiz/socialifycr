@@ -308,7 +308,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
       <div
         onClick={() => !isSold && openSaleDialog(story)}
         className={cn(
-          'relative flex-shrink-0 w-full aspect-[9/16] rounded-lg overflow-hidden border transition-all',
+          'relative flex-shrink-0 w-full aspect-[3/4] rounded-lg overflow-hidden border transition-all',
           containerClassName,
           isSold
             ? 'border-green-500/50 opacity-70 cursor-default'
@@ -389,7 +389,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
               <div
                 key={story.id}
                 className={cn(
-                  'relative flex-shrink-0 w-full aspect-[9/16] rounded-lg overflow-hidden border border-green-500/50',
+                  'relative flex-shrink-0 w-full aspect-[3/4] rounded-lg overflow-hidden border border-green-500/50',
                   containerClassName
                 )}
               >
