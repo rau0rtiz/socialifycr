@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Mail, Send, Search, Filter, Eye, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Mail, Send, Search, Filter, Eye, CheckCircle, XCircle, Loader2, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -36,6 +36,21 @@ const EmailsLog = () => {
   const [composeSubject, setComposeSubject] = useState('');
   const [composeBody, setComposeBody] = useState('');
   const [sending, setSending] = useState(false);
+  const [sendingAvatarReminder, setSendingAvatarReminder] = useState(false);
+
+  const handleSendAvatarReminder = async () => {
+    setSendingAvatarReminder(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-avatar-reminder');
+      if (error) throw error;
+      toast.success(`Recordatorio enviado a ${data.sent} de ${data.total} usuarios sin foto`);
+      queryClient.invalidateQueries({ queryKey: ['sent-emails'] });
+    } catch (err: any) {
+      toast.error('Error: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setSendingAvatarReminder(false);
+    }
+  };
 
   const { data: emails = [], isLoading } = useQuery({
     queryKey: ['sent-emails', sourceFilter, statusFilter],
@@ -119,6 +134,14 @@ const EmailsLog = () => {
               Historial de correos enviados y envío de notificaciones
             </p>
           </div>
+          <Button
+            variant="outline"
+            onClick={handleSendAvatarReminder}
+            disabled={sendingAvatarReminder}
+          >
+            {sendingAvatarReminder ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Camera className="h-4 w-4 mr-2" />}
+            Recordatorio de foto
+          </Button>
         </div>
 
         {/* Stats */}
