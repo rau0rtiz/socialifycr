@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -41,6 +42,7 @@ interface ClientMember {
   profile?: {
     full_name: string | null;
     email: string | null;
+    avatar_url: string | null;
   };
 }
 
@@ -108,7 +110,7 @@ const Accesos = () => {
       const clientIds = [...new Set(members.map(m => m.client_id))];
 
       const [profilesRes, clientsRes] = await Promise.all([
-        supabase.from('profiles').select('id, full_name, email').in('id', userIds),
+        supabase.from('profiles').select('id, full_name, email, avatar_url').in('id', userIds),
         supabase.from('clients').select('id, name').in('id', clientIds),
       ]);
 
@@ -117,7 +119,7 @@ const Accesos = () => {
 
       return members.map(m => ({
         ...m,
-        profile: profileMap.get(m.user_id) || { full_name: null, email: null },
+        profile: profileMap.get(m.user_id) || { full_name: null, email: null, avatar_url: null },
         client_name: clientMap.get(m.client_id) || 'Desconocido',
       })) as ClientMember[];
     },
@@ -371,7 +373,15 @@ const Accesos = () => {
                       {filteredClientMembers.map((m) => (
                         <TableRow key={m.id}>
                           <TableCell className="font-medium">
-                            {m.profile?.full_name || '—'}
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={m.profile?.avatar_url || undefined} />
+                                <AvatarFallback className="text-xs">
+                                  {m.profile?.full_name?.charAt(0) || m.profile?.email?.charAt(0) || '?'}
+                                </AvatarFallback>
+                              </Avatar>
+                              {m.profile?.full_name || '—'}
+                            </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             <div className="flex items-center gap-1.5">
