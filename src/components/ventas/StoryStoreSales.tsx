@@ -221,7 +221,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
         </div>
       );
     }
-    return <img src={src} alt="" className={className} onError={() => setFailed(true)} />;
+    return <img src={src} alt="" className={className} referrerPolicy="no-referrer" crossOrigin="anonymous" onError={() => setFailed(true)} />;
   };
 
   const storyGridClassName = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 pb-3';
