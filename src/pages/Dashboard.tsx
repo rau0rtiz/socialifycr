@@ -260,7 +260,7 @@ const Dashboard = () => {
       />
 
       {/* Client Header */}
-      <div className="flex flex-col gap-3 mb-4 md:mb-6">
+      <div className="flex flex-col gap-2 sm:gap-3 mb-3 md:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {clientBrand?.logoUrl || selectedClient.logo_url ? (
@@ -302,7 +302,7 @@ const Dashboard = () => {
 
       {/* Social Followers - Full Width */}
       {showSocialFollowers && (socialLoading || socialPlatforms.length > 0) && (
-        <div className="mb-4 md:mb-6" data-tour="kpi-section">
+        <div className="mb-3 md:mb-6" data-tour="kpi-section">
           <SocialFollowersSection
             platforms={socialPlatforms}
             isLoading={socialLoading}
@@ -313,7 +313,7 @@ const Dashboard = () => {
 
       {/* Top Posts - Instagram */}
       {showInstagramPosts && (contentLoading || content.length > 0 || hasMetaConnection) && (
-        <div className="mb-4 md:mb-6">
+        <div className="mb-3 md:mb-6">
           <InstagramTopPosts
             content={content}
             isLoading={contentLoading}
@@ -326,7 +326,7 @@ const Dashboard = () => {
 
       {/* Top Videos - YouTube */}
       {showYouTubeVideos && (youtubeLoading || youtubeConnected) && (
-        <div className="mb-4 md:mb-6">
+        <div className="mb-3 md:mb-6">
           <YouTubeTopVideos
             videos={youtubeVideos}
             isLoading={youtubeLoading}
@@ -337,7 +337,7 @@ const Dashboard = () => {
 
       {/* Content Grid - 2x3 Grid below Social */}
       {showContentGrid && (
-        <div className="mb-4 md:mb-6">
+        <div className="mb-3 md:mb-6">
         <ContentGrid
           data={content}
           isLoading={contentLoading}
@@ -360,14 +360,14 @@ const Dashboard = () => {
 
       {/* Advanced Funnel Analytics */}
       {showFunnel && (
-        <div className="mb-4 md:mb-6">
+        <div className="mb-3 md:mb-6">
           <AdvancedFunnelModule clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
         </div>
       )}
 
       {/* Campaigns Drilldown */}
       {showCampaigns && (
-        <div className="mb-4 md:mb-6">
+        <div className="mb-3 md:mb-6">
           <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
         </div>
       )}
