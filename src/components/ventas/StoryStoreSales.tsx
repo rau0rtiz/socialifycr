@@ -619,6 +619,42 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* All archived stories dialog */}
+      <Dialog open={allArchivedDialogOpen} onOpenChange={setAllArchivedDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Archive className="h-4 w-4" />
+              Todas las historias archivadas
+            </DialogTitle>
+          </DialogHeader>
+          {isLoadingAllArchived ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-4 border-muted border-t-primary" />
+              <p className="text-sm text-muted-foreground">Cargando historias...</p>
+            </div>
+          ) : (
+            (() => {
+              const unsoldAll = allArchivedStories.filter(s => !soldSet.has(s.storyId));
+              return unsoldAll.length === 0 ? (
+                <div className="flex items-center justify-center h-[178px] text-sm text-muted-foreground">
+                  No hay historias archivadas
+                </div>
+              ) : (
+                <ScrollArea className="w-full h-[70vh]">
+                  <div className={storyGridClassName}>
+                    {unsoldAll.map((story) => (
+                      <StoryCard key={story.id} story={story} isSold={false} />
+                    ))}
+                  </div>
+                  <ScrollBar orientation="vertical" />
+                </ScrollArea>
+              );
+            })()
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
