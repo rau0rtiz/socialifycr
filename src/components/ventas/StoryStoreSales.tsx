@@ -200,70 +200,143 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   };
 
   const getStoryPreviewProps = (story: Story) => {
-    const isVideo = story.mediaType === 'VIDEO';
-
     return {
-      previewSrc: isVideo ? story.thumbnailUrl || story.mediaUrl : story.mediaUrl || story.thumbnailUrl,
-      previewClassName: cn(
-        'w-full h-full',
-        isVideo ? 'object-cover bg-muted' : 'object-contain bg-background'
-      ),
-      containerClassName: !isVideo ? 'bg-background' : undefined,
+      previewSrc: story.thumbnailUrl || story.mediaUrl,
+      fallbackSrc: story.mediaUrl || story.thumbnailUrl,
+      previewClassName: 'w-full h-full object-cover',
+      containerClassName: 'bg-muted',
     };
   };
 
-  const StoryImage = ({ src, className, isVideo }: { src: string; className: string; isVideo: boolean }) => {
+  const StoryImage = ({
+    src,
+    fallbackSrc,
+    className,
+    isVideo,
+    iconClassName = 'h-6 w-6',
+  }: {
+    src?: string;
+    fallbackSrc?: string;
+    className: string;
+    isVideo: boolean;
+    iconClassName?: string;
+  }) => {
+    const [currentSrc, setCurrentSrc] = useState(src || fallbackSrc || '');
     const [failed, setFailed] = useState(false);
-    if (failed) {
+
+    useEffect(() => {
+      setCurrentSrc(src || fallbackSrc || '');
+      setFailed(false);
+    }, [src, fallbackSrc]);
+
+    const handleError = () => {
+      if (fallbackSrc && currentSrc !== fallbackSrc) {
+        setCurrentSrc(fallbackSrc);
+        return;
+      }
+
+      setFailed(true);
+    };
+
+    if (!currentSrc || failed) {
       return (
         <div className="w-full h-full bg-muted flex items-center justify-center">
-          {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
+          {isVideo ? (
+            <Play className={cn(iconClassName, 'text-muted-foreground')} />
+          ) : (
+            <ImageIcon className={cn(iconClassName, 'text-muted-foreground')} />
+          )}
         </div>
       );
     }
-    return <img src={src} alt="" className={className} referrerPolicy="no-referrer" crossOrigin="anonymous" onError={() => setFailed(true)} />;
+
+    return (
+      <img
+        src={currentSrc}
+        alt=""
+        className={className}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        crossOrigin="anonymous"
+        onError={handleError}
+      />
+    );
   };
 
-  const storyGridClassName = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 pb-3';
+  const StoryDialogPreview = ({ story }: { story: Story }) => {
+    const [videoFailed, setVideoFailed] = useState(false);
+
+    useEffect(() => {
+      setVideoFailed(false);
+    }, [story.id, story.mediaUrl, story.thumbnailUrl]);
+
+    if (story.mediaType === 'VIDEO' && story.mediaUrl && !videoFailed) {
+      return (
+        <video
+          src={story.mediaUrl}
+          poster={story.thumbnailUrl || undefined}
+          controls
+          playsInline
+          preload="metadata"
+          className="w-full h-full object-contain"
+          onError={() => setVideoFailed(true)}
+        />
+      );
+    }
+
+    return (
+      <StoryImage
+        src={story.mediaUrl || story.thumbnailUrl}
+        fallbackSrc={story.thumbnailUrl || story.mediaUrl}
+        className="w-full h-full object-contain"
+        isVideo={story.mediaType === 'VIDEO'}
+        iconClassName="h-8 w-8"
+      />
+    );
+  };
+
+  const storyGridClassName = 'grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-1.5 sm:gap-2 pb-3';
 
   const StoryCard = ({ story, isSold }: { story: Story; isSold: boolean }) => {
     const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
     const timeLabel = hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
     const isVideo = story.mediaType === 'VIDEO';
-    const { previewSrc, previewClassName, containerClassName } = getStoryPreviewProps(story);
+    const { previewSrc, fallbackSrc, previewClassName, containerClassName } = getStoryPreviewProps(story);
 
     return (
       <div
         onClick={() => !isSold && openSaleDialog(story)}
         className={cn(
-          'relative flex-shrink-0 w-full aspect-[9/16] rounded-xl overflow-hidden border-2 transition-all',
+          'relative flex-shrink-0 w-full aspect-[9/16] rounded-lg overflow-hidden border transition-all',
           containerClassName,
           isSold
             ? 'border-green-500/50 opacity-70 cursor-default'
-            : 'border-border hover:border-primary/50 cursor-pointer hover:scale-[1.03]'
+            : 'border-border hover:border-primary/50 cursor-pointer hover:scale-[1.02]'
         )}
       >
         {previewSrc ? (
-          <StoryImage src={previewSrc} className={previewClassName} isVideo={isVideo} />
+          <StoryImage src={previewSrc} fallbackSrc={fallbackSrc} className={previewClassName} isVideo={isVideo} />
         ) : (
           <div className="w-full h-full bg-muted flex items-center justify-center">
-            {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
+            {isVideo ? <Play className="h-5 w-5 text-muted-foreground" /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
           </div>
         )}
 
-        <span className="absolute top-1 right-1 text-white/70 text-[8px] font-medium drop-shadow-sm">{timeLabel}</span>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+        <span className="absolute top-1 right-1 text-white/80 text-[7px] sm:text-[8px] font-medium drop-shadow-sm">{timeLabel}</span>
 
         {isSold && (
-          <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+          <div className="absolute inset-0 bg-green-500/25 flex items-center justify-center">
             <div className="bg-green-500 rounded-full p-1.5">
-              <Check className="h-4 w-4 text-white" />
+              <Check className="h-3.5 w-3.5 text-white" />
             </div>
           </div>
         )}
 
         {!isSold && (
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2 pt-6">
-            <div className="flex items-center gap-1 text-white text-[10px] font-medium">
+          <div className="absolute bottom-0 inset-x-0 p-1.5 pt-6">
+            <div className="inline-flex items-center gap-1 text-white text-[9px] font-medium bg-black/40 backdrop-blur-sm rounded-full px-2 py-1">
               <ShoppingBag className="h-3 w-3" />
               Vender
             </div>
@@ -310,32 +383,32 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             const hours = Math.floor((Date.now() - parseISO(story.timestamp).getTime()) / 3600000);
             const timeLabel = hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
             const isVideo = story.mediaType === 'VIDEO';
-            const { previewSrc, previewClassName, containerClassName } = getStoryPreviewProps(story);
+            const { previewSrc, fallbackSrc, previewClassName, containerClassName } = getStoryPreviewProps(story);
 
             return (
               <div
                 key={story.id}
                 className={cn(
-                  'relative flex-shrink-0 w-full aspect-[9/16] rounded-xl overflow-hidden border-2 border-green-500/50',
+                  'relative flex-shrink-0 w-full aspect-[9/16] rounded-lg overflow-hidden border border-green-500/50',
                   containerClassName
                 )}
               >
                 {previewSrc ? (
-                  <StoryImage src={previewSrc} className={previewClassName} isVideo={isVideo} />
+                  <StoryImage src={previewSrc} fallbackSrc={fallbackSrc} className={previewClassName} isVideo={isVideo} />
                 ) : (
                   <div className="w-full h-full bg-muted flex items-center justify-center">
-                    {isVideo ? <Play className="h-6 w-6 text-muted-foreground" /> : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
+                    {isVideo ? <Play className="h-5 w-5 text-muted-foreground" /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
                   </div>
                 )}
-                <span className="absolute top-1 right-1 text-white/70 text-[8px] font-medium drop-shadow-sm z-10">{timeLabel}</span>
-                <div className="absolute inset-0 bg-green-500/20" />
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
-                  <p className="text-white text-[11px] font-bold">{currSymbol}{sale?.amount?.toLocaleString()}</p>
-                  {sale?.product && <p className="text-white/70 text-[9px] truncate">{sale.product}</p>}
-                  {sale?.brand && <p className="text-white/70 text-[9px] truncate">{sale.brand}</p>}
-                  {sale?.customer_name && <p className="text-white/70 text-[9px] truncate">{sale.customer_name}</p>}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+                <span className="absolute top-1 right-1 text-white/80 text-[7px] sm:text-[8px] font-medium drop-shadow-sm z-10">{timeLabel}</span>
+                <div className="absolute bottom-0 inset-x-0 p-1.5 pt-7">
+                  <p className="text-white text-[10px] sm:text-[11px] font-bold">{currSymbol}{sale?.amount?.toLocaleString()}</p>
+                  {sale?.product && <p className="text-white/75 text-[8px] sm:text-[9px] truncate">{sale.product}</p>}
+                  {sale?.brand && <p className="text-white/75 text-[8px] sm:text-[9px] truncate">{sale.brand}</p>}
+                  {sale?.customer_name && <p className="text-white/75 text-[8px] sm:text-[9px] truncate">{sale.customer_name}</p>}
                 </div>
-                <div className="absolute top-1.5 right-1.5 bg-green-500 rounded-full p-1">
+                <div className="absolute top-1.5 left-1.5 bg-green-500 rounded-full p-1">
                   <Check className="h-3 w-3 text-white" />
                 </div>
               </div>
@@ -419,17 +492,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
             <div className="flex flex-col md:flex-row gap-4 md:gap-6">
               {/* Story preview */}
               <div className="relative flex-shrink-0 w-full max-h-[50vh] md:max-h-none md:w-[340px] md:h-[604px] rounded-xl overflow-hidden border bg-black">
-                {(selectedStory.thumbnailUrl || selectedStory.mediaUrl) ? (
-                  <StoryImage
-                    src={(selectedStory.thumbnailUrl || selectedStory.mediaUrl)!}
-                    className="w-full h-full object-contain"
-                    isVideo={selectedStory.mediaType === 'VIDEO'}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                )}
+                <StoryDialogPreview story={selectedStory} key={selectedStory.id} />
                 {scanning && (
                   <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3 rounded-xl">
                     <div className="animate-spin rounded-full h-10 w-10 border-4 border-white/30 border-t-white" />
