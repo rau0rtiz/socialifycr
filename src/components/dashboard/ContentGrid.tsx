@@ -360,7 +360,7 @@ export const ContentGrid = ({
         </CardHeader>
         <CardContent className="px-3 md:px-6">
           {/* 3x3 Grid with vertical 4:5 thumbnail cards */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {isLoading ? (
               Array.from({ length: 9 }).map((_, i) => <ContentSkeleton key={i} />)
             ) : filteredData.length === 0 ? (

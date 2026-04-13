@@ -144,7 +144,7 @@ export const SocialFollowersSection = ({
                   <p className="text-sm text-muted-foreground">
                     {config.label}
                   </p>
-                  <p className="text-2xl font-bold text-foreground leading-tight">
+                  <p className="text-xl md:text-2xl font-bold text-foreground leading-tight">
                     {formatNumber(platform.followers)}
                   </p>
                   <p className="text-xs text-muted-foreground">{config.metric}</p>
