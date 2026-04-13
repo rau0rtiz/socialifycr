@@ -1,36 +1,20 @@
 
 
-## Problem
+## Fix Story Preview Scale in Ventas por Historias
 
-The Meta API's `/stories` endpoint returns a default page size of 25 stories. The current edge function (`meta-api`, case `'stories'`) makes a single request and stops — it never follows `paging.next` cursors. That's why only 25 stories show as "active" even when there are 40+.
+### Problem
+The story cards use `aspect-[9/16]` which makes them very tall and narrow at smaller viewports. Combined with `object-cover`, images get cropped badly or appear mostly blank/washed out (as seen in the screenshot).
 
-**How active vs archived works:**
-- **Active** = fetched live from Meta's API (`/{instagramId}/stories`) — only stories still within their 24h window
-- **Archived** = saved in the `archived_stories` database table by the `capture-stories` edge function
+### Solution
+Reduce the aspect ratio to something less extreme and ensure images fill the cards properly:
 
-## Fix
+**File: `src/components/ventas/StoryStoreSales.tsx`**
 
-**File: `supabase/functions/meta-api/index.ts`** (case `'stories'`, lines 1033-1086)
+1. **Change aspect ratio** from `aspect-[9/16]` to `aspect-[3/4]` on the StoryCard — this keeps a portrait orientation but is less extreme, showing more of each story and fitting better in the grid
+2. **Keep `object-cover`** on images so they fill the card without letterboxing
+3. **Adjust ScrollArea height** slightly to accommodate the shorter cards while still showing multiple rows
 
-Add a pagination loop to follow `paging.next` URLs until all active stories are retrieved:
-
-```typescript
-// Instead of a single fetch, loop through all pages
-let allStories: any[] = [];
-let nextUrl: string | null = storiesUrl;
-
-while (nextUrl) {
-  const res = await fetch(nextUrl);
-  const page = await res.json();
-  if (page.error) { /* handle error */ break; }
-  allStories = allStories.concat(page.data || []);
-  nextUrl = page.paging?.next || null;
-}
-```
-
-Then enrich **all** collected stories with insights (same as current logic), using `allStories` instead of `storiesData.data`.
-
-Also add `&limit=100` to the initial URL to reduce the number of pagination round-trips.
-
-No changes needed on the frontend — `use-stories.ts` already handles however many stories the API returns.
+### Technical Details
+- Line 311: Change `aspect-[9/16]` → `aspect-[3/4]`
+- This single change will make the cards shorter, fitting more content visually and preventing the "washed out" look from overly tall crops
 
