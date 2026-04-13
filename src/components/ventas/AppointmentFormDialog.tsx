@@ -39,6 +39,7 @@ const SOURCE_OPTIONS = [
   { value: 'organic', label: 'Orgánico' },
   { value: 'referral', label: 'Referencia' },
   { value: 'landing_page', label: 'Landing Page' },
+  { value: 'dm', label: 'Mensaje directo' },
   { value: 'followup', label: 'Seguimiento' },
   { value: 'other', label: 'Otro' },
 ];

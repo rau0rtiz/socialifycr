@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { SetterAppointment } from '@/hooks/use-setter-appointments';
-import { Megaphone, Leaf, Users, MoreHorizontal } from 'lucide-react';
+import { Megaphone, Leaf, Users, MoreHorizontal, MessageCircle } from 'lucide-react';
 
 interface LeadSourceWidgetProps {
   appointments: SetterAppointment[];
@@ -11,6 +11,7 @@ const SOURCE_CONFIG: Record<string, { label: string; icon: React.ElementType; co
   organic: { label: 'Orgánico', icon: Leaf, color: 'hsl(142, 70%, 45%)' },
   referral: { label: 'Referencia', icon: Users, color: 'hsl(45, 80%, 50%)' },
   landing_page: { label: 'Landing Page', icon: Megaphone, color: 'hsl(270, 70%, 55%)' },
+  dm: { label: 'Mensaje directo', icon: MessageCircle, color: 'hsl(330, 70%, 50%)' },
   other: { label: 'Otro', icon: MoreHorizontal, color: 'hsl(0, 0%, 60%)' },
 };
 
