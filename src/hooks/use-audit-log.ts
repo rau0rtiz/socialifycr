@@ -18,6 +18,7 @@ interface AuditLogParams {
   entityId?: string;
   entityName?: string;
   details?: Json;
+  clientId?: string;
 }
 
 export const useAuditLog = () => {
@@ -27,6 +28,7 @@ export const useAuditLog = () => {
     entityId,
     entityName,
     details,
+    clientId,
   }: AuditLogParams) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -44,6 +46,7 @@ export const useAuditLog = () => {
         entity_name: entityName,
         details,
         user_agent: navigator.userAgent,
+        client_id: clientId || null,
       }]);
 
       if (error) {
