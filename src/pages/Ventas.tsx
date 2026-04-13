@@ -276,7 +276,7 @@ const Ventas = () => {
 
   return (
     <DashboardLayout>
-      <div className="mb-4 md:mb-8 space-y-6">
+      <div className="mb-4 md:mb-6 space-y-4 md:space-y-6">
         {/* Page header with global time range */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
