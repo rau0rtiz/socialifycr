@@ -43,8 +43,21 @@ const Historial = () => {
     },
   });
 
+  // Fetch users (profiles) for the filter
+  const { data: users } = useQuery({
+    queryKey: ['audit-users'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .order('full_name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['audit-logs', actionFilter, clientFilter, page],
+    queryKey: ['audit-logs', actionFilter, clientFilter, userFilter, page],
     queryFn: async () => {
       let query = supabase
         .from('audit_logs')
@@ -58,6 +71,10 @@ const Historial = () => {
 
       if (clientFilter !== 'all') {
         query = query.eq('client_id', clientFilter);
+      }
+
+      if (userFilter !== 'all') {
+        query = query.eq('user_id', userFilter);
       }
 
       const { data, error } = await query;
