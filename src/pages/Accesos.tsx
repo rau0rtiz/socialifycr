@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { AdminAvatarDialog } from '@/components/accesos/AdminAvatarDialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -13,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Shield, Users, UserPlus, Trash2, Search, Mail, Circle } from 'lucide-react';
+import { Shield, Users, UserPlus, Trash2, Search, Mail, Circle, Camera } from 'lucide-react';
 import { useUserRole, type SystemRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -68,6 +69,7 @@ const Accesos = () => {
   const [addDialog, setAddDialog] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<SystemRole>('viewer');
+  const [avatarDialog, setAvatarDialog] = useState<{ open: boolean; userId: string; userName: string | null; avatarUrl: string | null }>({ open: false, userId: '', userName: null, avatarUrl: null });
 
   const isOwner = systemRole === 'owner';
 
@@ -374,12 +376,27 @@ const Accesos = () => {
                         <TableRow key={m.id}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
-                              <Avatar className="h-7 w-7">
-                                <AvatarImage src={m.profile?.avatar_url || undefined} />
-                                <AvatarFallback className="text-xs">
-                                  {m.profile?.full_name?.charAt(0) || m.profile?.email?.charAt(0) || '?'}
-                                </AvatarFallback>
-                              </Avatar>
+                              <button
+                                type="button"
+                                className="relative group rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+                                title="Cambiar foto de perfil"
+                                onClick={() => setAvatarDialog({
+                                  open: true,
+                                  userId: m.user_id,
+                                  userName: m.profile?.full_name || m.profile?.email || null,
+                                  avatarUrl: m.profile?.avatar_url || null,
+                                })}
+                              >
+                                <Avatar className="h-7 w-7">
+                                  <AvatarImage src={m.profile?.avatar_url || undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {m.profile?.full_name?.charAt(0) || m.profile?.email?.charAt(0) || '?'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Camera className="h-3 w-3 text-white" />
+                                </div>
+                              </button>
                               {m.profile?.full_name || '—'}
                             </div>
                           </TableCell>
@@ -496,6 +513,15 @@ const Accesos = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AdminAvatarDialog
+        open={avatarDialog.open}
+        onOpenChange={(open) => setAvatarDialog(prev => ({ ...prev, open }))}
+        userId={avatarDialog.userId}
+        userName={avatarDialog.userName}
+        currentAvatarUrl={avatarDialog.avatarUrl}
+        onUpdated={() => queryClient.invalidateQueries({ queryKey: ['admin-client-members'] })}
+      />
     </DashboardLayout>
   );
 };
