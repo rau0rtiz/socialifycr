@@ -119,7 +119,7 @@ const Accesos = () => {
 
       return members.map(m => ({
         ...m,
-        profile: profileMap.get(m.user_id) || { full_name: null, email: null },
+        profile: profileMap.get(m.user_id) || { full_name: null, email: null, avatar_url: null },
         client_name: clientMap.get(m.client_id) || 'Desconocido',
       })) as ClientMember[];
     },
