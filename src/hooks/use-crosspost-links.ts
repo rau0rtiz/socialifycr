@@ -21,7 +21,7 @@ interface UseCrosspostLinksResult {
   refetch: () => void;
 }
 
-export const useCrosspostLinks = (clientId: string | null): UseCrosspostLinksResult => {
+export const useCrosspostLinks = (clientId: string | null, enabled: boolean = true): UseCrosspostLinksResult => {
   const queryClient = useQueryClient();
 
   const { data: links = [], isLoading, error: queryError, refetch } = useQuery({
@@ -36,7 +36,7 @@ export const useCrosspostLinks = (clientId: string | null): UseCrosspostLinksRes
       if (error) throw error;
       return (data || []) as CrosspostLink[];
     },
-    enabled: !!clientId,
+    enabled: !!clientId && enabled,
     staleTime: 5 * 60 * 1000,
   });
 

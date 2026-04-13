@@ -23,7 +23,7 @@ function parseDuration(duration: string): number {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-export const useContentData = (clientId: string | null, limit: number = 100): UseContentDataResult => {
+export const useContentData = (clientId: string | null, limit: number = 100, enabled: boolean = true): UseContentDataResult => {
   const { data: connections, isLoading: connectionsLoading } = usePlatformConnections(clientId);
 
   const metaConnection = connections?.find(c => c.platform === 'meta');
@@ -132,7 +132,7 @@ export const useContentData = (clientId: string | null, limit: number = 100): Us
         availablePlatforms: activePlatforms,
       };
     },
-    enabled: !!clientId && !connectionsLoading,
+    enabled: !!clientId && !connectionsLoading && enabled,
     staleTime: 3 * 60 * 1000,
   });
 

@@ -117,8 +117,10 @@ const Ventas = () => {
   // Setter appointments — pass start date ISO string
   const periodStartIso = globalRange.start.toISOString().split('T')[0];
 
+  // Campaigns — skip for Speak Up and Silvia (they don't show campaign widgets)
+  const needsCampaigns = hasAdAccount && !isSpkUp && !isSilvia;
   const { data: campaignsResult } = useCampaigns(
-    clientId, hasAdAccount,
+    clientId, needsCampaigns,
     metaMapping.datePreset, metaMapping.customRange
   );
   const campaigns = campaignsResult?.campaigns || [];
@@ -140,15 +142,17 @@ const Ventas = () => {
   );
 
 
-  // Daily reports for Mind Coach
-  const { reports: dailyReports } = useSetterDailyReports(clientId);
+  // Daily reports — only for Mind Coach / Hilda
+  const { reports: dailyReports } = useSetterDailyReports((isMindCoach || isHildaLopez) ? clientId : null);
 
   // Prefill state for converting setter lead → sale
   const [salePrefill, setSalePrefill] = useState<SalePrefill | null>(null);
   const [showSaleFromSetter, setShowSaleFromSetter] = useState(false);
   const salesRef = useRef<HTMLDivElement>(null);
 
-  const { appointments, updateAppointment } = useSetterAppointments(clientId, undefined, periodStartIso);
+  // Setter appointments — only when needed
+  const needsSetterTracker = flags.setter_tracker && !isSpkUp && !isSilvia;
+  const { appointments, updateAppointment } = useSetterAppointments(needsSetterTracker ? clientId : null, undefined, periodStartIso);
 
   const handleConvertToSale = (appointment: SetterAppointment) => {
     // Map lead source → sale source
