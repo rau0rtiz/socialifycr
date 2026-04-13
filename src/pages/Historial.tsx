@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
-  Users, Link, Unlink, UserPlus, UserMinus, Pencil, Trash2, Plus, History, Filter, Building2,
+  Users, Link, Unlink, UserPlus, UserMinus, Pencil, Trash2, Plus, History, Filter, Building2, User,
 } from 'lucide-react';
 
 const ACTION_META: Record<string, { icon: typeof Users; label: string; color: string }> = {
