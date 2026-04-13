@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Shield, Users, UserPlus, Trash2, Search, Mail, Circle } from 'lucide-react';
+import { Shield, Users, UserPlus, Trash2, Search, Mail, Circle, Camera } from 'lucide-react';
 import { useUserRole, type SystemRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
