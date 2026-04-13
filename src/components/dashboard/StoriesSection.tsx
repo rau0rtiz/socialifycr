@@ -61,6 +61,8 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
             src={story.thumbnailUrl || story.mediaUrl}
             alt="Story"
             className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
@@ -230,6 +232,8 @@ export const StoriesSection = ({ clientId }: StoriesSectionProps) => {
                     src={selectedStory.mediaUrl || selectedStory.thumbnailUrl}
                     alt="Story"
                     className="w-full h-full object-contain"
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
