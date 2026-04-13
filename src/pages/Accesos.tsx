@@ -69,6 +69,7 @@ const Accesos = () => {
   const [addDialog, setAddDialog] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<SystemRole>('viewer');
+  const [avatarDialog, setAvatarDialog] = useState<{ open: boolean; userId: string; userName: string | null; avatarUrl: string | null }>({ open: false, userId: '', userName: null, avatarUrl: null });
 
   const isOwner = systemRole === 'owner';
 
