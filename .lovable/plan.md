@@ -1,35 +1,55 @@
 
 
-## Plan: Actualizar Secciones y Widgets en Gestión de Clientes
+## Diagnosis: Why Speak Up loads slowly or appears blank
 
-### Problema
+After analyzing the codebase, database, and feature flag configuration, I identified several issues that could cause the page to appear blank or take too long to load for Marco (Wanda's account):
 
-1. **Defaults en `false`**: Cuando un cliente no tiene registro en `client_feature_flags`, casi todos los flags se inicializan en `false`. Esto causa que las secciones y widgets no aparezcan hasta activarlos manualmente uno por uno.
-2. **Secciones faltantes**: La UI de feature flags no incluye Business Setup ni Asistencia.
+### Root Causes Found
 
-### Solución
+1. **Excessive hook initialization on Ventas page**: The `Ventas.tsx` component eagerly initializes ~12 hooks (campaigns, sales tracking, setter appointments, daily reports, story tracker, products, etc.) even for Speak Up, which only uses a subset (`SalesGoalBar`, `SpeakUpSalesSummary`, `RecentSalesTicker`, `SpeakUpAnalytics`, `SalesByProductChart`). The unused hooks still fire network requests.
 
-**Cambiar defaults a `true`** para que todos los clientes tengan todas las secciones y widgets habilitados por defecto, y solo se desactiven manualmente los que no aplican.
+2. **`useSalesTracking` called twice**: Lines 129 and 131 call `useSalesTracking` with different parameters -- one for summary KPIs and one for chart data. Both fire separate DB queries.
 
-**Agregar secciones faltantes** (Business Setup, Asistencia) al panel de feature flags.
+3. **`useSpeakUpAnalytics` fetches ALL sales from 6 months + ALL collections**: This is a large query that runs even before the page renders visible content.
 
-### Archivos modificados
+4. **`useStories` pagination loop for archived stories**: Even though `stories_section: false` for Speak Up, if `useStories` is called from `StoryStoreSales` or `StoryRevenueTracker` on other client views, the archived stories pagination loop (`while(true)`) can be slow on large datasets. This isn't directly Speak Up's issue, but the Ventas page conditionally renders these for Alma Bendita while still initializing hooks for all clients.
 
-1. **`src/hooks/use-client-features.ts`**
-   - Cambiar `DEFAULT_FLAGS` para que todos los flags booleanos sean `true` por defecto (en vez de solo `dashboard` y `setter_checklist`)
-   - Agregar flags: `business_setup_section`, `asistencia_section`
-   - Agregar labels para las nuevas secciones
+5. **Meta campaigns query fires regardless**: `useCampaigns` runs for all clients with an ad account. Speak Up has an ad account (`act_1987139365503968`), so this query fires even though campaigns drilldown isn't shown for Speak Up.
 
-2. **`src/components/clientes/ClientFeatureFlags.tsx`**
-   - Agregar cards para Business Setup y Asistencia en el array `SECTIONS`
+6. **Dashboard page also eager**: Similarly loads `useContentData`, `useContentMetadata`, `useSocialFollowers`, `useCrosspostLinks`, `useYouTubeVideos` all at once, even with content/youtube disabled.
 
-3. **`src/components/dashboard/Sidebar.tsx`**
-   - Respetar los nuevos flags `business_setup_section` y `asistencia_section` en la lógica de visibilidad del menú
+### Plan
 
-4. **Migración de base de datos**
-   - Agregar columnas `business_setup_section` y `asistencia_section` (boolean, default `true`) a la tabla `client_feature_flags`
+**Step 1 - Lazy-load hooks on Ventas page**
+- Wrap client-specific hooks with conditional `enabled` flags:
+  - `useCampaigns`: only when `hasAdAccount && !isSpkUp`
+  - `useDailyStoryTracker`: only when `isAlmaBendita`  
+  - `useSetterDailyReports`: only when `isMindCoach || isHildaLopez`
+  - `useSetterAppointments`: only when `flags.setter_tracker && !isSpkUp`
+  - Second `useSalesTracking` (chart): pass `enabled: false` when period hasn't changed or data isn't needed
 
-### Resultado
+**Step 2 - Lazy-load hooks on Dashboard page**
+- Pass `enabled: false` to hooks when their widget is hidden by feature flags:
+  - `useContentData` / `useContentMetadata`: only when `showContentGrid || showInstagramPosts`
+  - `useYouTubeVideos`: only when `showYouTubeVideos`
+  - `useCrosspostLinks`: only when `showContentGrid`
 
-Todos los clientes verán todas las secciones y widgets por defecto. El administrador puede desactivar selectivamente lo que no aplica para cada cliente.
+**Step 3 - Optimize SpeakUpAnalytics query**
+- Add date range filter to the sales query in `useSpeakUpAnalytics` (currently fetches 6 months of data on mount)
+- Consider caching the collections query more aggressively
+
+**Step 4 - Conditional campaign loading for Speak Up**
+- Skip `useCampaigns` for Speak Up since they don't display campaign data on their ventas page
+
+### Technical Details
+
+Files to edit:
+- `src/pages/Ventas.tsx` -- add conditional `enabled` to hooks
+- `src/pages/Dashboard.tsx` -- add conditional `enabled` to hooks  
+- `src/hooks/use-sales-tracking.ts` -- accept optional `enabled` param
+- `src/hooks/use-content-data.ts` -- accept optional `enabled` param
+- `src/hooks/use-youtube-videos.ts` -- accept optional `enabled` param
+- `src/hooks/use-crosspost-links.ts` -- accept optional `enabled` param
+
+This should significantly reduce the number of simultaneous API calls from ~15+ down to ~5-6 for Speak Up, making the page load much faster.
 
