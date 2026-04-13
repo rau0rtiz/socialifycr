@@ -1030,22 +1030,36 @@ serve(async (req) => {
           });
         }
 
-        // Fetch active stories (only returns non-expired stories within 24h)
-        const storiesUrl = `https://graph.facebook.com/v21.0/${instagramId}/stories?` +
+        // Fetch ALL active stories with pagination (default page size is 25)
+        const initialStoriesUrl = `https://graph.facebook.com/v21.0/${instagramId}/stories?` +
           `fields=id,media_type,media_url,thumbnail_url,timestamp,permalink` +
+          `&limit=100` +
           `&access_token=${accessToken}`;
         
         console.log(`Fetching stories for client ${clientId}`);
-        const storiesResponse = await fetch(storiesUrl);
-        const storiesData = await storiesResponse.json();
+        let allStoriesData: any[] = [];
+        let nextStoriesUrl: string | null = initialStoriesUrl;
 
-        if (storiesData.error) {
-          console.error('Error fetching stories:', storiesData.error);
-          return new Response(JSON.stringify({ error: storiesData.error.message }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+        while (nextStoriesUrl) {
+          const storiesResponse = await fetch(nextStoriesUrl);
+          const storiesPage = await storiesResponse.json();
+
+          if (storiesPage.error) {
+            if (allStoriesData.length === 0) {
+              console.error('Error fetching stories:', storiesPage.error);
+              return new Response(JSON.stringify({ error: storiesPage.error.message }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              });
+            }
+            break;
+          }
+
+          allStoriesData = allStoriesData.concat(storiesPage.data || []);
+          nextStoriesUrl = storiesPage.paging?.next || null;
         }
+
+        console.log(`Successfully fetched stories: ${allStoriesData.length} total`);
 
         // Enrich each story with insights
         const enrichedStories = await Promise.all(
