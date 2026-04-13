@@ -2,6 +2,7 @@ import { ReactNode, CSSProperties } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { AvatarPrompt } from './AvatarPrompt';
 import { useBrand } from '@/contexts/BrandContext';
 
 
