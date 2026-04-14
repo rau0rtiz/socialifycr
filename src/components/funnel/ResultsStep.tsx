@@ -46,7 +46,7 @@ export const ResultsStep = ({ level, name, onCalendlyClick }: ResultsStepProps) 
                 }`}
                 style={{
                   backgroundColor: i + 1 <= level ? levelData[i].color : undefined,
-                  ringColor: isActive ? `${levelData[i].color}40` : undefined,
+                  boxShadow: isActive ? `0 0 0 4px ${levelData[i].color}40` : undefined,
                 }}
               >
                 {i + 1}
