@@ -1398,6 +1398,51 @@ export type Database = {
           },
         ]
       }
+      funnel_leads: {
+        Row: {
+          answers: Json | null
+          business_level: number
+          calendly_clicked: boolean
+          challenge: string | null
+          created_at: string
+          email: string
+          id: string
+          industry: string | null
+          name: string
+          phone: string | null
+          revenue_range: string | null
+          team_size: string | null
+        }
+        Insert: {
+          answers?: Json | null
+          business_level: number
+          calendly_clicked?: boolean
+          challenge?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          industry?: string | null
+          name: string
+          phone?: string | null
+          revenue_range?: string | null
+          team_size?: string | null
+        }
+        Update: {
+          answers?: Json | null
+          business_level?: number
+          calendly_clicked?: boolean
+          challenge?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          industry?: string | null
+          name?: string
+          phone?: string | null
+          revenue_range?: string | null
+          team_size?: string | null
+        }
+        Relationships: []
+      }
       message_sales: {
         Row: {
           ad_campaign_id: string | null
