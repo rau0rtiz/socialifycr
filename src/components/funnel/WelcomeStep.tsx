@@ -9,7 +9,7 @@ export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
   <div className="flex flex-col items-center justify-center text-center space-y-8 md:space-y-10 animate-fade-in min-h-[65vh]">
     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#212121] max-w-3xl leading-[1.1]">
       Obtené tu<br />
-      <span className="text-[#FF6B35]">Roadmap de Crecimiento Personalizado</span><br />
+      <span className="text-[#FF6B35]">Roadmap de Crecimiento Para tu negocio</span><br />
       En menos de 2 minutos
     </h1>
 
@@ -25,11 +25,11 @@ export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
     <div className="space-y-2 pt-2">
       <p className="flex items-center justify-center gap-2 text-sm md:text-base font-semibold text-[#212121]">
         <Sparkles className="h-4 w-4 text-[#FF6B35]" />
-        Obtené tu Roadmap en menos de 2 minutos
+        Obtené tu Roadmap en menos de 30 segundos
       </p>
       <p className="flex items-center justify-center gap-2 text-sm md:text-base font-semibold text-[#212121]">
         <Sparkles className="h-4 w-4 text-[#FF6B35]" />
-        Usado por más de 30 dueños de negocio
+        Usado por más de 500 dueños de negocio
       </p>
     </div>
 
