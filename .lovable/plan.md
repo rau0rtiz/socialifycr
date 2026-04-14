@@ -1,47 +1,62 @@
 
 
-## Importar leads históricos de Roberto Olivas (con montos)
+## Lead Generation Quiz Funnel — Plan
 
-### Pricing por ecosistema
-- **Pasivas** → `$1,995 USD` por venta
-- **Airbnb** → `$8,000 USD` por venta
+### Concept
 
-### Paso 1 — Agregar staff faltante
-- `client_closers`: Ale, Beto, Andre, Evelyn (para client_id `ebb165c9-64fa-4fee-9d3b-da24f679175e`)
-- `client_setters`: Luz
+A public-facing multi-step quiz inspired by Hormozi's business levels framework. Visitors answer questions about their business, get classified into a level (1-6), receive a downloadable PDF strategy template, and — if they qualify — get offered a free planning session via Calendly/Cal.com.
 
-### Paso 2 — Insertar leads nuevos en `setter_appointments`
-Cada registro con: lead_name, appointment_date, setter_name, status mapeado (Vendido→sold, No Vendido→not_sold, Seguimiento→scheduled), source (Airbnb→ad, Pasivas→organic), closer via notes o closer_name field.
+### Business Levels Framework (6 levels)
 
-### Paso 3 — Crear ventas para los "Vendido"
-Para cada lead con status "sold":
-- Insertar en `message_sales` con amount según ecosistema (1995 o 8000), currency USD
-- Vincular sale_id en el appointment correspondiente
+| Level | Name | Revenue Range | Description |
+|-------|------|---------------|-------------|
+| 1 | Idea Stage | $0 | Has an idea but hasn't launched |
+| 2 | Startup | $0 - $3K/mo | Launched, getting first clients |
+| 3 | Growing | $3K - $15K/mo | Consistent revenue, building systems |
+| 4 | Scaling | $15K - $50K/mo | Team in place, needs optimization |
+| 5 | Established | $50K - $200K/mo | Solid systems, ready to multiply |
+| 6 | Empire | $200K+/mo | Multi-channel, expansion mode |
 
-### Leads a insertar (no existentes aún)
+Levels 3-5 qualify for the free session offer. Levels 1-2 get the PDF only. Level 6 gets a "premium consultation" CTA instead.
 
-| Nombre | Fecha | Closer | Setter | Resultado | Ecosistema | Monto venta |
-|--------|-------|--------|--------|-----------|------------|-------------|
-| Felipe Madrigal | 2026-02-27 | Willie | Luz | No Vendido | — | — |
-| Luzbeth Corrales A | 2026-03-02 | Ale | Luz | No Vendido | — | — |
-| Adriana Mora Mata | 2026-02-28 | Ale | Luz | No Vendido | — | — |
-| Warner López Vargas | 2026-03-03 | Andre | Luz | Vendido | ? | ? |
-| Diego Flores | 2026-03-04 | Adriana | Luz | Vendido | ? | ? |
-| Jose Pablo Hernandez | 2026-03-04 | Andre | Luz | Vendido | ? | ? |
-| Jessica Boza | 2026-03-05 | Adriana | Luz | No Vendido | — | — |
-| Kristel Maria Ramos | 2026-03-06 | Andre | Luz | Pendiente | — | — |
-| Gabriel | 2026-03-06 | Willie | Luz | Vendido | ? | ? |
-| Milena Blanco | 2026-03-16 | Willie | Luz | No Vendido | — | — |
-| Anthony Vargas Esquivel | 2026-03-11 | Adriana | Luz | Vendido | ? | ? |
-| Eduardo Vergara | 2026-03-30 | Evelyn | Luz | Vendido | ? | ? |
-| Daniel Rodríguez Miranda | 2026-04-08 | Andre | Luz | No Vendido | — | — |
-| Javier D Román Rodríguez | 2026-04-07 | Willie | Luz | No Vendido | — | — |
-| Angel Valenzuela | 2026-04-06 | Andre | Luz | No Vendido | — | — |
-| Keylin | 2026-04-09 | Willie | Luz | Pendiente | — | — |
+### Quiz Flow (5-6 steps)
 
-### Pregunta pendiente
-No puedo distinguir claramente en la imagen cuáles leads son de **Airbnb** vs **Pasivas**. ¿Podrías indicarme cuáles de los "Vendido" (Warner, Diego, Jose Pablo, Gabriel, Anthony, Eduardo) son de cada ecosistema? Así les asigno el monto correcto ($8,000 vs $1,995).
+1. **Welcome** — Headline + CTA to start
+2. **About your business** — Industry, time in business, team size
+3. **Revenue & clients** — Monthly revenue range, client acquisition method
+4. **Biggest challenge** — Select from common pain points
+5. **Email capture** — Name + email + phone (optional) to unlock results
+6. **Results page** — Shows their level, delivers PDF download, and conditionally shows Calendly booking CTA
 
-### Ejecución
-Se hará vía inserts directos en la base de datos usando las herramientas de DB, sin cambios en el código de la app.
+### Database
+
+New table: `funnel_leads` (public insert, no auth required)
+- `id`, `email`, `name`, `phone`, `business_level` (1-6), `industry`, `revenue_range`, `team_size`, `challenge`, `answers` (jsonb for all raw answers), `calendly_clicked` (boolean), `created_at`
+- RLS: public INSERT (anon), admin-only SELECT
+
+### Files to Create/Edit
+
+1. **`src/pages/Funnel.tsx`** — Public page with the multi-step quiz UI
+2. **`src/components/funnel/`** — Step components (WelcomeStep, BusinessInfoStep, RevenueStep, ChallengeStep, EmailCaptureStep, ResultsStep)
+3. **`src/App.tsx`** — Add `/funnel` route (public, no ProtectedRoute)
+4. **`src/components/dashboard/Sidebar.tsx`** — Add "Lead Funnel" link in the management section (agency-only)
+5. **Database migration** — Create `funnel_leads` table
+
+### UI/UX Notes
+
+- Modern, clean design with progress bar
+- Mobile-first (this is where ad traffic lands)
+- Animations between steps (slide transitions)
+- Socialify branding on the funnel page
+- Results page shows a visual "level meter" with their position highlighted
+- PDF download button (placeholder link for now, you'll upload real PDFs later)
+- Calendly embed or redirect for qualified leads (you'll provide the link)
+
+### Technical Details
+
+- No authentication required for the funnel — it's fully public
+- Email is saved to `funnel_leads` table with anon insert policy
+- The quiz logic maps answers to a business level score on the client side
+- The Sidebar gets a link to `/funnel` so you can preview it from the dashboard
+- Placeholder PDF URLs per level — you'll replace them with real files later
 
