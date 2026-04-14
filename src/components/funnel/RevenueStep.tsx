@@ -42,7 +42,7 @@ const OptionCard = ({ selected, label, onClick }: { selected: boolean; label: st
     }`}>
       {selected && <Check className="h-3 w-3 text-white" />}
     </div>
-    <span className={`text-sm md:text-base ${selected ? 'text-[#1a1a2e] font-semibold' : 'text-[#1a1a2e]/70'}`}>{label}</span>
+    <span className={`text-sm md:text-base ${selected ? 'text-[#212121] font-semibold' : 'text-[#212121]/70'}`}>{label}</span>
   </button>
 );
 
@@ -52,15 +52,15 @@ export const RevenueStep = ({ data, onChange, onNext, onBack }: RevenueStepProps
   return (
     <div className="space-y-6 md:space-y-8 animate-fade-in max-w-lg mx-auto">
       <div>
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1a1a2e]">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#212121]">
           Ingresos y adquisición
         </h2>
-        <p className="text-[#1a1a2e]/50 mt-1 text-sm md:text-base">Esto define el nivel de tu negocio.</p>
+        <p className="text-[#212121]/50 mt-1 text-sm md:text-base">Esto define el nivel de tu negocio.</p>
       </div>
 
       <div className="space-y-5 md:space-y-6">
         <div className="space-y-2">
-          <Label className="text-sm md:text-base font-semibold text-[#1a1a2e]">¿Cuáles son tus ingresos mensuales aproximados?</Label>
+          <Label className="text-sm md:text-base font-semibold text-[#212121]">¿Cuáles son tus ingresos mensuales aproximados?</Label>
           <div className="space-y-1.5 md:space-y-2">
             {revenueOptions.map((opt) => (
               <OptionCard key={opt.value} selected={data.revenueRange === opt.value} label={opt.label} onClick={() => onChange('revenueRange', opt.value)} />
@@ -69,7 +69,7 @@ export const RevenueStep = ({ data, onChange, onNext, onBack }: RevenueStepProps
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm md:text-base font-semibold text-[#1a1a2e]">¿Cómo conseguís clientes actualmente?</Label>
+          <Label className="text-sm md:text-base font-semibold text-[#212121]">¿Cómo conseguís clientes actualmente?</Label>
           <div className="space-y-1.5 md:space-y-2">
             {acquisitionOptions.map((opt) => (
               <OptionCard key={opt.value} selected={data.acquisitionMethod === opt.value} label={opt.label} onClick={() => onChange('acquisitionMethod', opt.value)} />
@@ -79,7 +79,7 @@ export const RevenueStep = ({ data, onChange, onNext, onBack }: RevenueStepProps
       </div>
 
       <div className="flex justify-between pt-2 md:pt-4">
-        <Button variant="ghost" onClick={onBack} className="text-[#1a1a2e]/60 hover:text-[#1a1a2e] text-sm">
+        <Button variant="ghost" onClick={onBack} className="text-[#212121]/60 hover:text-[#212121] text-sm">
           <ArrowLeft className="h-4 w-4 mr-1" />Atrás
         </Button>
         <Button onClick={onNext} disabled={!canContinue} className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold px-6 md:px-8 rounded-xl text-sm md:text-base">
