@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const CALENDLY_URL = 'https://calendly.com/socialifycr';
+const FONT = "'DM Sans', sans-serif";
 
 const calculateLevel = (revenueRange: string, teamSize: string, timeInBusiness: string): number => {
   const revenueMap: Record<string, number> = {
@@ -74,18 +75,17 @@ const Funnel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Dark header bar — Socialify brand */}
+    <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: FONT }}>
+      {/* Header */}
       <header className="bg-[#1a1a2e] sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="font-black text-xl tracking-wider text-white uppercase" style={{ fontFamily: "'Poppins', sans-serif" }}>
+        <div className="max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-4 flex items-center justify-between">
+          <span className="font-bold text-lg md:text-xl tracking-wider text-white uppercase">
             SOCIALIFY
           </span>
           {step > 0 && step < 5 && (
-            <span className="text-sm text-white/60 font-medium">Paso {step} de {totalSteps - 1}</span>
+            <span className="text-xs md:text-sm text-white/60 font-medium">{step} / {totalSteps - 1}</span>
           )}
         </div>
-        {/* Progress bar */}
         {step > 0 && step < 5 && (
           <div className="h-1 bg-white/10">
             <div
@@ -96,8 +96,8 @@ const Funnel = () => {
         )}
       </header>
 
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-6 py-12 md:py-20">
+      {/* Content — flex-1 to push footer down */}
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 md:px-6 md:py-16">
         {step === 0 && <WelcomeStep onNext={() => setStep(1)} />}
         {step === 1 && (
           <BusinessInfoStep
@@ -141,8 +141,7 @@ const Funnel = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#1a1a2e] py-6 text-center text-xs text-white/40">
+      <footer className="bg-[#1a1a2e] py-4 md:py-6 text-center text-[10px] md:text-xs text-white/40">
         © {new Date().getFullYear()} Socialify · Todos los derechos reservados
       </footer>
     </div>

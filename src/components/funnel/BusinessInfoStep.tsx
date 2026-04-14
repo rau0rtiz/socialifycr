@@ -37,7 +37,7 @@ const OptionCard = ({ selected, label, onClick }: { selected: boolean; label: st
   <button
     type="button"
     onClick={onClick}
-    className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-3 ${
+    className={`w-full text-left px-3.5 py-3 md:p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-3 ${
       selected
         ? 'border-[#FF6B35] bg-[#FF6B35]/5 shadow-sm'
         : 'border-gray-200 hover:border-[#FF6B35]/40 hover:bg-gray-50'
@@ -48,7 +48,7 @@ const OptionCard = ({ selected, label, onClick }: { selected: boolean; label: st
     }`}>
       {selected && <Check className="h-3 w-3 text-white" />}
     </div>
-    <span className={`text-base ${selected ? 'text-[#1a1a2e] font-semibold' : 'text-[#1a1a2e]/70'}`}>{label}</span>
+    <span className={`text-sm md:text-base ${selected ? 'text-[#1a1a2e] font-semibold' : 'text-[#1a1a2e]/70'}`}>{label}</span>
   </button>
 );
 
@@ -56,36 +56,36 @@ export const BusinessInfoStep = ({ data, onChange, onNext, onBack }: BusinessInf
   const canContinue = data.industry && data.timeInBusiness && data.teamSize;
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-lg mx-auto">
+    <div className="space-y-6 md:space-y-8 animate-fade-in max-w-lg mx-auto">
       <div>
-        <h2 className="text-2xl md:text-3xl font-black text-[#1a1a2e]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1a1a2e]">
           Contanos sobre tu negocio
         </h2>
-        <p className="text-[#1a1a2e]/50 mt-2">Esto nos ayuda a personalizar tu estrategia.</p>
+        <p className="text-[#1a1a2e]/50 mt-1 text-sm md:text-base">Esto nos ayuda a personalizar tu estrategia.</p>
       </div>
 
-      <div className="space-y-6">
-        <div className="space-y-3">
-          <Label className="text-base font-bold text-[#1a1a2e]">¿En qué industria estás?</Label>
-          <div className="space-y-2">
+      <div className="space-y-5 md:space-y-6">
+        <div className="space-y-2">
+          <Label className="text-sm md:text-base font-semibold text-[#1a1a2e]">¿En qué industria estás?</Label>
+          <div className="space-y-1.5 md:space-y-2">
             {industries.map((ind) => (
               <OptionCard key={ind} selected={data.industry === ind} label={ind} onClick={() => onChange('industry', ind)} />
             ))}
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Label className="text-base font-bold text-[#1a1a2e]">¿Cuánto tiempo tiene tu negocio?</Label>
-          <div className="space-y-2">
+        <div className="space-y-2">
+          <Label className="text-sm md:text-base font-semibold text-[#1a1a2e]">¿Cuánto tiempo tiene tu negocio?</Label>
+          <div className="space-y-1.5 md:space-y-2">
             {timeOptions.map((opt) => (
               <OptionCard key={opt.value} selected={data.timeInBusiness === opt.value} label={opt.label} onClick={() => onChange('timeInBusiness', opt.value)} />
             ))}
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Label className="text-base font-bold text-[#1a1a2e]">¿Cuántas personas hay en tu equipo?</Label>
-          <div className="space-y-2">
+        <div className="space-y-2">
+          <Label className="text-sm md:text-base font-semibold text-[#1a1a2e]">¿Cuántas personas hay en tu equipo?</Label>
+          <div className="space-y-1.5 md:space-y-2">
             {teamOptions.map((opt) => (
               <OptionCard key={opt.value} selected={data.teamSize === opt.value} label={opt.label} onClick={() => onChange('teamSize', opt.value)} />
             ))}
@@ -93,12 +93,12 @@ export const BusinessInfoStep = ({ data, onChange, onNext, onBack }: BusinessInf
         </div>
       </div>
 
-      <div className="flex justify-between pt-4">
-        <Button variant="ghost" onClick={onBack} className="text-[#1a1a2e]/60 hover:text-[#1a1a2e]">
-          <ArrowLeft className="h-4 w-4 mr-2" />Atrás
+      <div className="flex justify-between pt-2 md:pt-4">
+        <Button variant="ghost" onClick={onBack} className="text-[#1a1a2e]/60 hover:text-[#1a1a2e] text-sm">
+          <ArrowLeft className="h-4 w-4 mr-1" />Atrás
         </Button>
-        <Button onClick={onNext} disabled={!canContinue} className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-bold px-8 rounded-xl">
-          Siguiente <ArrowRight className="h-4 w-4 ml-2" />
+        <Button onClick={onNext} disabled={!canContinue} className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold px-6 md:px-8 rounded-xl text-sm md:text-base">
+          Siguiente <ArrowRight className="h-4 w-4 ml-1" />
         </Button>
       </div>
     </div>
