@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Progress } from '@/components/ui/progress';
 import { WelcomeStep } from '@/components/funnel/WelcomeStep';
 import { BusinessInfoStep } from '@/components/funnel/BusinessInfoStep';
 import { RevenueStep } from '@/components/funnel/RevenueStep';
@@ -9,25 +8,15 @@ import { ResultsStep } from '@/components/funnel/ResultsStep';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-// Placeholder Calendly link — replace with your real one
 const CALENDLY_URL = 'https://calendly.com/socialifycr';
 
 const calculateLevel = (revenueRange: string, teamSize: string, timeInBusiness: string): number => {
-  // Primary driver is revenue
   const revenueMap: Record<string, number> = {
-    '0': 1,
-    '0_3k': 2,
-    '3k_15k': 3,
-    '15k_50k': 4,
-    '50k_200k': 5,
-    '200k_plus': 6,
+    '0': 1, '0_3k': 2, '3k_15k': 3, '15k_50k': 4, '50k_200k': 5, '200k_plus': 6,
   };
   let base = revenueMap[revenueRange] ?? 1;
-
-  // Minor adjustments based on team & time
   if (base === 1 && timeInBusiness !== 'not_started') base = 2;
   if (base === 2 && (teamSize === '6_15' || teamSize === '15_plus')) base = 3;
-
   return Math.min(6, Math.max(1, base));
 };
 
@@ -43,7 +32,7 @@ const Funnel = () => {
   const [challengeInfo, setChallengeInfo] = useState({ challenge: '' });
   const [contactInfo, setContactInfo] = useState({ name: '', email: '', phone: '' });
 
-  const totalSteps = 5; // Welcome doesn't count
+  const totalSteps = 5;
   const progressPercent = step === 0 ? 0 : Math.round((step / totalSteps) * 100);
 
   const handleSubmit = async () => {
@@ -85,22 +74,30 @@ const Funnel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <span className="font-bold text-lg text-foreground">Socialify</span>
+    <div className="min-h-screen bg-white">
+      {/* Dark header bar — Socialify brand */}
+      <header className="bg-[#1a1a2e] sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+          <span className="font-black text-xl tracking-wider text-white uppercase" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            SOCIALIFY
+          </span>
           {step > 0 && step < 5 && (
-            <span className="text-xs text-muted-foreground">Paso {step} de {totalSteps - 1}</span>
+            <span className="text-sm text-white/60 font-medium">Paso {step} de {totalSteps - 1}</span>
           )}
         </div>
+        {/* Progress bar */}
         {step > 0 && step < 5 && (
-          <Progress value={progressPercent} className="h-1 rounded-none" />
+          <div className="h-1 bg-white/10">
+            <div
+              className="h-full bg-[#FF6B35] transition-all duration-500 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
         )}
       </header>
 
       {/* Content */}
-      <main className="max-w-3xl mx-auto px-4 py-8 md:py-16">
+      <main className="max-w-4xl mx-auto px-6 py-12 md:py-20">
         {step === 0 && <WelcomeStep onNext={() => setStep(1)} />}
         {step === 1 && (
           <BusinessInfoStep
@@ -145,7 +142,7 @@ const Funnel = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
+      <footer className="bg-[#1a1a2e] py-6 text-center text-xs text-white/40">
         © {new Date().getFullYear()} Socialify · Todos los derechos reservados
       </footer>
     </div>

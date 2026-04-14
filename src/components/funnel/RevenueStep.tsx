@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
 
 interface RevenueStepProps {
   data: { revenueRange: string; acquisitionMethod: string };
@@ -28,45 +27,64 @@ const acquisitionOptions = [
   { value: 'mixed', label: 'Combinación de varias' },
 ];
 
+const OptionCard = ({ selected, label, onClick }: { selected: boolean; label: string; onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-3 ${
+      selected
+        ? 'border-[#FF6B35] bg-[#FF6B35]/5 shadow-sm'
+        : 'border-gray-200 hover:border-[#FF6B35]/40 hover:bg-gray-50'
+    }`}
+  >
+    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+      selected ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-gray-300'
+    }`}>
+      {selected && <Check className="h-3 w-3 text-white" />}
+    </div>
+    <span className={`text-base ${selected ? 'text-[#1a1a2e] font-semibold' : 'text-[#1a1a2e]/70'}`}>{label}</span>
+  </button>
+);
+
 export const RevenueStep = ({ data, onChange, onNext, onBack }: RevenueStepProps) => {
   const canContinue = data.revenueRange && data.acquisitionMethod;
 
   return (
     <div className="space-y-8 animate-fade-in max-w-lg mx-auto">
       <div>
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">Ingresos y adquisición</h2>
-        <p className="text-muted-foreground mt-1">Esto define el nivel de tu negocio.</p>
+        <h2 className="text-2xl md:text-3xl font-black text-[#1a1a2e]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+          Ingresos y adquisición
+        </h2>
+        <p className="text-[#1a1a2e]/50 mt-2">Esto define el nivel de tu negocio.</p>
       </div>
 
       <div className="space-y-6">
         <div className="space-y-3">
-          <Label className="text-base font-semibold">¿Cuáles son tus ingresos mensuales aproximados?</Label>
-          <RadioGroup value={data.revenueRange} onValueChange={(v) => onChange('revenueRange', v)}>
+          <Label className="text-base font-bold text-[#1a1a2e]">¿Cuáles son tus ingresos mensuales aproximados?</Label>
+          <div className="space-y-2">
             {revenueOptions.map((opt) => (
-              <div key={opt.value} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                <RadioGroupItem value={opt.value} id={`rev-${opt.value}`} />
-                <Label htmlFor={`rev-${opt.value}`} className="cursor-pointer flex-1">{opt.label}</Label>
-              </div>
+              <OptionCard key={opt.value} selected={data.revenueRange === opt.value} label={opt.label} onClick={() => onChange('revenueRange', opt.value)} />
             ))}
-          </RadioGroup>
+          </div>
         </div>
 
         <div className="space-y-3">
-          <Label className="text-base font-semibold">¿Cómo conseguís clientes actualmente?</Label>
-          <RadioGroup value={data.acquisitionMethod} onValueChange={(v) => onChange('acquisitionMethod', v)}>
+          <Label className="text-base font-bold text-[#1a1a2e]">¿Cómo conseguís clientes actualmente?</Label>
+          <div className="space-y-2">
             {acquisitionOptions.map((opt) => (
-              <div key={opt.value} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer">
-                <RadioGroupItem value={opt.value} id={`acq-${opt.value}`} />
-                <Label htmlFor={`acq-${opt.value}`} className="cursor-pointer flex-1">{opt.label}</Label>
-              </div>
+              <OptionCard key={opt.value} selected={data.acquisitionMethod === opt.value} label={opt.label} onClick={() => onChange('acquisitionMethod', opt.value)} />
             ))}
-          </RadioGroup>
+          </div>
         </div>
       </div>
 
       <div className="flex justify-between pt-4">
-        <Button variant="ghost" onClick={onBack}><ArrowLeft className="h-4 w-4 mr-2" />Atrás</Button>
-        <Button onClick={onNext} disabled={!canContinue}>Siguiente <ArrowRight className="h-4 w-4 ml-2" /></Button>
+        <Button variant="ghost" onClick={onBack} className="text-[#1a1a2e]/60 hover:text-[#1a1a2e]">
+          <ArrowLeft className="h-4 w-4 mr-2" />Atrás
+        </Button>
+        <Button onClick={onNext} disabled={!canContinue} className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-bold px-8 rounded-xl">
+          Siguiente <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
       </div>
     </div>
   );
