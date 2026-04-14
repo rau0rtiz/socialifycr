@@ -17,17 +17,17 @@ export const EmailCaptureStep = ({ data, onChange, onSubmit, onBack, isSubmittin
   return (
     <div className="space-y-6 md:space-y-8 animate-fade-in max-w-md mx-auto">
       <div className="text-center">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1a1a2e]">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#212121]">
           ¡Casi listo!
         </h2>
-        <p className="text-[#1a1a2e]/50 mt-1 text-sm md:text-base">
+        <p className="text-[#212121]/50 mt-1 text-sm md:text-base">
           Ingresá tus datos para ver tu resultado y recibir tu estrategia personalizada.
         </p>
       </div>
 
       <div className="space-y-3 md:space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="name" className="font-semibold text-[#1a1a2e] text-sm">Nombre *</Label>
+          <Label htmlFor="name" className="font-semibold text-[#212121] text-sm">Nombre *</Label>
           <Input
             id="name"
             placeholder="Tu nombre"
@@ -38,7 +38,7 @@ export const EmailCaptureStep = ({ data, onChange, onSubmit, onBack, isSubmittin
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="font-semibold text-[#1a1a2e] text-sm">Correo electrónico *</Label>
+          <Label htmlFor="email" className="font-semibold text-[#212121] text-sm">Correo electrónico *</Label>
           <Input
             id="email"
             type="email"
@@ -50,7 +50,7 @@ export const EmailCaptureStep = ({ data, onChange, onSubmit, onBack, isSubmittin
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="phone" className="font-semibold text-[#1a1a2e] text-sm">Teléfono (opcional)</Label>
+          <Label htmlFor="phone" className="font-semibold text-[#212121] text-sm">Teléfono (opcional)</Label>
           <Input
             id="phone"
             type="tel"
@@ -63,13 +63,13 @@ export const EmailCaptureStep = ({ data, onChange, onSubmit, onBack, isSubmittin
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-[10px] md:text-xs text-[#1a1a2e]/40 justify-center">
+      <div className="flex items-center gap-2 text-[10px] md:text-xs text-[#212121]/40 justify-center">
         <Lock className="h-3 w-3" />
         Tu información está segura y no será compartida.
       </div>
 
       <div className="flex justify-between pt-1 md:pt-2">
-        <Button variant="ghost" onClick={onBack} disabled={isSubmitting} className="text-[#1a1a2e]/60 hover:text-[#1a1a2e] text-sm">
+        <Button variant="ghost" onClick={onBack} disabled={isSubmitting} className="text-[#212121]/60 hover:text-[#212121] text-sm">
           <ArrowLeft className="h-4 w-4 mr-1" />Atrás
         </Button>
         <Button

@@ -7,13 +7,13 @@ interface WelcomeStepProps {
 
 export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
   <div className="flex flex-col items-center justify-center text-center space-y-6 md:space-y-10 animate-fade-in min-h-[60vh]">
-    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#1a1a2e] max-w-2xl leading-[1.15]">
+    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#212121] max-w-2xl leading-[1.15]">
       Obtené tu{' '}
       <span className="text-[#FF6B35]">Roadmap de Crecimiento</span>{' '}
       personalizado… en menos de 2 minutos.
     </h1>
 
-    <p className="text-base md:text-lg text-[#1a1a2e]/55 max-w-md leading-relaxed">
+    <p className="text-base md:text-lg text-[#212121]/55 max-w-md leading-relaxed">
       Respondé unas preguntas rápidas sobre tu negocio y recibí una estrategia diseñada para tu nivel actual.
     </p>
 
@@ -26,7 +26,7 @@ export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
       <ArrowRight className="h-5 w-5" />
     </Button>
 
-    <p className="text-xs md:text-sm text-[#1a1a2e]/40 font-medium">
+    <p className="text-xs md:text-sm text-[#212121]/40 font-medium">
       Sin costo · Sin compromisos · Resultados inmediatos
     </p>
   </div>

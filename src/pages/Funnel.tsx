@@ -7,6 +7,7 @@ import { EmailCaptureStep } from '@/components/funnel/EmailCaptureStep';
 import { ResultsStep } from '@/components/funnel/ResultsStep';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import socialifyLogo from '@/assets/socialify-logo.png';
 
 const CALENDLY_URL = 'https://calendly.com/socialifycr';
 const FONT = "'DM Sans', sans-serif";
@@ -76,18 +77,16 @@ const Funnel = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: FONT }}>
-      {/* Header */}
-      <header className="bg-[#1a1a2e] sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-4 flex items-center justify-between">
-          <span className="font-bold text-lg md:text-xl tracking-wider text-white uppercase">
-            SOCIALIFY
-          </span>
+      {/* Header — centered logo */}
+      <header className="bg-white sticky top-0 z-10 border-b border-gray-100">
+        <div className="max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-4 flex items-center justify-center relative">
+          <img src={socialifyLogo} alt="Socialify" className="h-6 md:h-7" />
           {step > 0 && step < 5 && (
-            <span className="text-xs md:text-sm text-white/60 font-medium">{step} / {totalSteps - 1}</span>
+            <span className="absolute right-4 text-xs md:text-sm text-[#212121]/40 font-medium">{step} / {totalSteps - 1}</span>
           )}
         </div>
         {step > 0 && step < 5 && (
-          <div className="h-1 bg-white/10">
+          <div className="h-1 bg-gray-100">
             <div
               className="h-full bg-[#FF6B35] transition-all duration-500 ease-out"
               style={{ width: `${progressPercent}%` }}
@@ -96,7 +95,7 @@ const Funnel = () => {
         )}
       </header>
 
-      {/* Content — flex-1 to push footer down */}
+      {/* Content */}
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 md:px-6 md:py-16">
         {step === 0 && <WelcomeStep onNext={() => setStep(1)} />}
         {step === 1 && (
@@ -141,7 +140,7 @@ const Funnel = () => {
         )}
       </main>
 
-      <footer className="bg-[#1a1a2e] py-4 md:py-6 text-center text-[10px] md:text-xs text-white/40">
+      <footer className="bg-[#212121] py-4 md:py-6 text-center text-[10px] md:text-xs text-white/40">
         © {new Date().getFullYear()} Socialify · Todos los derechos reservados
       </footer>
     </div>

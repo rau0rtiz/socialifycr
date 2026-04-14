@@ -24,13 +24,13 @@ export const ResultsStep = ({ level, name, onCalendlyClick }: ResultsStepProps) 
   return (
     <div className="space-y-6 md:space-y-8 animate-fade-in max-w-2xl mx-auto text-center">
       <div>
-        <p className="text-[#1a1a2e]/50 mb-1 text-sm">Resultado para</p>
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#1a1a2e]">
+        <p className="text-[#212121]/50 mb-1 text-sm">Resultado para</p>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#212121]">
           {name}
         </h2>
       </div>
 
-      {/* Level meter — scrollable on mobile */}
+      {/* Level meter */}
       <div className="flex items-center justify-center gap-1 py-4 md:py-6 overflow-x-auto scrollbar-hide">
         {levelData.map((l, i) => {
           const isActive = i + 1 === level;
@@ -51,7 +51,7 @@ export const ResultsStep = ({ level, name, onCalendlyClick }: ResultsStepProps) 
               >
                 {i + 1}
               </div>
-              <span className={`text-[9px] md:text-xs max-w-[52px] leading-tight ${isActive ? 'font-bold text-[#1a1a2e]' : 'text-[#1a1a2e]/40'}`}>
+              <span className={`text-[9px] md:text-xs max-w-[52px] leading-tight ${isActive ? 'font-bold text-[#212121]' : 'text-[#212121]/40'}`}>
                 {l.name}
               </span>
             </div>
@@ -69,17 +69,17 @@ export const ResultsStep = ({ level, name, onCalendlyClick }: ResultsStepProps) 
             {level}
           </div>
           <div>
-            <h3 className="text-lg md:text-xl font-bold text-[#1a1a2e]">Nivel {level}: {current.name}</h3>
-            <p className="text-xs md:text-sm text-[#1a1a2e]/50">{current.revenue}</p>
+            <h3 className="text-lg md:text-xl font-bold text-[#212121]">Nivel {level}: {current.name}</h3>
+            <p className="text-xs md:text-sm text-[#212121]/50">{current.revenue}</p>
           </div>
         </div>
-        <p className="text-sm md:text-base text-[#1a1a2e]/70 leading-relaxed">{current.desc}</p>
+        <p className="text-sm md:text-base text-[#212121]/70 leading-relaxed">{current.desc}</p>
       </div>
 
       {/* PDF Download */}
       <Button
         size="lg"
-        className="w-full py-5 md:py-7 text-sm md:text-base gap-2 rounded-2xl font-semibold uppercase tracking-wide bg-[#1a1a2e] hover:bg-[#2a2a3e] text-white"
+        className="w-full py-5 md:py-7 text-sm md:text-base gap-2 rounded-2xl font-semibold uppercase tracking-wide bg-[#212121] hover:bg-[#333] text-white"
         onClick={() => {
           alert('Los PDFs serán subidos próximamente. Por ahora este es un placeholder.');
         }}
@@ -88,14 +88,13 @@ export const ResultsStep = ({ level, name, onCalendlyClick }: ResultsStepProps) 
         Descargar mi estrategia (PDF)
       </Button>
 
-      {/* CTA based on level */}
       {qualifiesForSession && (
         <div className="p-5 md:p-6 rounded-2xl bg-[#FF6B35]/5 border-2 border-[#FF6B35]/20 space-y-3 md:space-y-4">
           <div className="flex items-center gap-2 justify-center">
             <Calendar className="h-5 w-5 text-[#FF6B35]" />
-            <h3 className="text-base md:text-lg font-bold text-[#1a1a2e]">¡Calificás para una sesión gratuita!</h3>
+            <h3 className="text-base md:text-lg font-bold text-[#212121]">¡Calificás para una sesión gratuita!</h3>
           </div>
-          <p className="text-[#1a1a2e]/50 text-xs md:text-sm">
+          <p className="text-[#212121]/50 text-xs md:text-sm">
             Basado en tu nivel de negocio, te ofrecemos una sesión de planificación estratégica sin costo.
           </p>
           <Button
@@ -113,9 +112,9 @@ export const ResultsStep = ({ level, name, onCalendlyClick }: ResultsStepProps) 
         <div className="p-5 md:p-6 rounded-2xl bg-[#FF6B35]/5 border-2 border-[#FF6B35]/20 space-y-3 md:space-y-4">
           <div className="flex items-center gap-2 justify-center">
             <Crown className="h-5 w-5 text-[#FF6B35]" />
-            <h3 className="text-base md:text-lg font-bold text-[#1a1a2e]">Consultoría Premium</h3>
+            <h3 className="text-base md:text-lg font-bold text-[#212121]">Consultoría Premium</h3>
           </div>
-          <p className="text-[#1a1a2e]/50 text-xs md:text-sm">
+          <p className="text-[#212121]/50 text-xs md:text-sm">
             Tu negocio está en un nivel avanzado. Te ofrecemos una consultoría premium personalizada.
           </p>
           <Button
@@ -130,7 +129,7 @@ export const ResultsStep = ({ level, name, onCalendlyClick }: ResultsStepProps) 
       )}
 
       {level <= 2 && (
-        <p className="text-xs md:text-sm text-[#1a1a2e]/40">
+        <p className="text-xs md:text-sm text-[#212121]/40">
           Descargá tu estrategia y empezá a implementar. Cuando tu negocio crezca, estaremos acá para ayudarte a escalar. 🚀
         </p>
       )}
