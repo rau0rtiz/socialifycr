@@ -59,7 +59,7 @@ serve(async (req) => {
       throw new Error("Invalid email format");
     }
 
-    const validRoles = ["account_manager", "editor", "viewer"];
+    const validRoles = ["account_manager", "media_buyer", "closer", "setter", "editor", "viewer"];
     if (!validRoles.includes(role)) {
       throw new Error("Invalid role");
     }
