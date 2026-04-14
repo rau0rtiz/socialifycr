@@ -23,11 +23,11 @@ export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
     <div className="space-y-2 pt-2">
       <p className="flex items-center justify-center gap-2 text-sm md:text-base font-semibold text-[#212121]">
         <Sparkles className="h-4 w-4 text-[#FF6B35]" />
-        Obtené tu Roadmap en menos de 30 segundos
+        Obtené tu Roadmap en menos de 2 minutos
       </p>
       <p className="flex items-center justify-center gap-2 text-sm md:text-base font-semibold text-[#212121]">
         <Sparkles className="h-4 w-4 text-[#FF6B35]" />
-        Usado por más de 500 dueños de negocio
+        Usado por más de 30 dueños de negocio
       </p>
     </div>
 
