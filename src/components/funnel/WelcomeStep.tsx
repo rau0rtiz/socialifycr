@@ -8,7 +8,9 @@ interface WelcomeStepProps {
 export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
   <div className="flex flex-col items-center justify-center text-center space-y-8 md:space-y-10 animate-fade-in min-h-[65vh]">
     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#212121] max-w-3xl leading-[1.1]">
-      Obtené tu <span className="text-[#FF6B35]">Roadmap de Crecimiento personalizado</span>…en menos de 2 minutos.
+      Obtené tu<br />
+      <span className="text-[#FF6B35]">Roadmap de Crecimiento Personalizado</span><br />
+      En menos de 2 minutos
     </h1>
 
     <Button
