@@ -46,8 +46,8 @@ const Comunicaciones = () => {
               Gestión de correos y leads del funnel
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleRefresh} className="gap-2">
-            <RefreshCw className="h-4 w-4" /> Actualizar
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="gap-2">
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> Actualizar
           </Button>
         </div>
 
