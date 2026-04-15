@@ -1,38 +1,76 @@
 
 
-## Plan: Email Open Tracking
+## Plan: Rebalancear pesos del scoring del funnel
 
-Yes, it can be implemented. The approach uses a **tracking pixel** — a tiny invisible image embedded in each email. When the recipient opens the email, the image loads from a new Edge Function that records the open event.
+### Problema actual
+- Un negocio con buenos ingresos ($15k+) pero sin inversión en pauta queda clasificado nivel 2-3
+- Pauta pesa 40% del score total, igual que ingresos
+- La lógica penaliza a quienes no invierten en pauta, cuando esos son los clientes ideales para Socialify
 
-### How it works
+### Propuesta de nuevos pesos
 
-1. Each email gets a unique tracking pixel URL: `<img src="https://.../functions/v1/track-email-open?id=EMAIL_ID" width="1" height="1" />`
-2. When the recipient opens the email, the image request hits the Edge Function
-3. The function records the timestamp in the database and returns a 1x1 transparent GIF
-
-### Changes
-
-**1. Database migration** — Add `opened_at` column to `sent_emails`:
-```sql
-ALTER TABLE sent_emails ADD COLUMN opened_at timestamptz DEFAULT NULL;
+**Ingresos** — Aumentar peso (de max 8 a max 10):
+```
+Menos de $1,000    → 0
+$1,000 – $5,000    → 3
+$5,000 – $15,000   → 5
+$15,000 – $50,000  → 8
+Más de $50,000     → 10
 ```
 
-**2. New Edge Function `track-email-open`** — Receives the email ID via query param, updates `opened_at` if not already set, returns a 1x1 transparent GIF. No auth required (called by email clients).
+**Presencia social** — Mantener igual (max 4):
+```
+Sin presencia      → 0
+Perfil inactivo    → 1
+1-2 veces/semana   → 2
+3-5 veces/semana   → 3
+Todos los días     → 4
+```
 
-**3. Update all email-sending Edge Functions** — Inject the tracking pixel into the HTML before sending. Affects:
-- `send-notification-email`
-- `send-funnel-result`
-- `send-campaign`
-- `send-password-reset`
-- `send-avatar-reminder`
-- `send-client-invitation`
+**Inversión en pauta** — Reducir peso (de max 8 a max 5):
+```
+No invierto nada       → 1  (ya no penaliza tanto)
+Lo intenté pero lo dejé → 2
+Menos de $200/mes      → 3
+$200 – $500/mes        → 4
+$500 – $1,000/mes      → 4
+$1,000 – $2,000/mes    → 5
+Más de $2,000/mes      → 5
+```
 
-Each function appends an `<img>` tag with the `sent_emails` record ID to the HTML body.
+### Distribución resultante
 
-**4. Update `EmailsLogContent.tsx`** — Show an open indicator (eye icon or badge) next to each email in the history list, displaying the open timestamp when available.
+| Pregunta | Peso máximo | % del total |
+|---|---|---|
+| Ingresos | 10 pts | **53%** |
+| Presencia social | 4 pts | 21% |
+| Inversión en pauta | 5 pts | **26%** |
 
-### Limitations (important to know)
-- Open tracking is not 100% accurate: some email clients block images by default (e.g., Outlook), so not every open will be recorded
-- Privacy-focused clients like Apple Mail may pre-fetch images, registering a false "open"
-- It gives a good general indication but should not be taken as exact
+Total máximo: 19 pts
+
+### Nuevos umbrales de nivel
+
+```
+≤ 3  → Nivel 1 (Starter)
+≤ 6  → Nivel 2 (Builder)
+≤ 10 → Nivel 3 (Growing)
+≤ 14 → Nivel 4 (Scaling)
+≤ 17 → Nivel 5 (Advanced)
+> 17 → Nivel 6 (Leader)
+```
+
+Los umbrales se mantienen casi iguales, pero ahora alguien con $15k+ de ingresos, presencia básica y sin pauta llega a nivel 3-4 en vez de quedarse en 2-3.
+
+### Ejemplo comparativo
+
+**Caso: Negocio con $15k-$50k, publica 1-2 veces/semana, $0 pauta**
+- Antes: 6 + 2 + 0 = **8 → Nivel 3**
+- Después: 8 + 2 + 1 = **11 → Nivel 4**
+
+**Caso: Negocio con $5k-$15k, perfil inactivo, $0 pauta**
+- Antes: 4 + 1 + 0 = **5 → Nivel 2**
+- Después: 5 + 1 + 1 = **7 → Nivel 3**
+
+### Cambio técnico
+Solo se modifica `src/pages/Funnel.tsx`: los arrays de `puntos` en `revenueOptions` y `adSpendOptions`, sin tocar UI ni estructura.
 
