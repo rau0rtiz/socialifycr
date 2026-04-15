@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Download, Eye, Calendar, CheckCircle2, XCircle, ArrowLeft, Users, ExternalLink, Megaphone } from 'lucide-react';
+import { Search, Download, Eye, Calendar, CheckCircle2, XCircle, ArrowLeft, Users, ExternalLink, Megaphone, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 import { es } from 'date-fns/locale';
 
 const levelNames = ['', 'Idea', 'Startup', 'Growing', 'Scaling', 'Established', 'Empire'];
@@ -22,6 +25,11 @@ const AgencyLeadsContent = () => {
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Fetch funnels
   const { data: funnels = [] } = useQuery({
@@ -97,9 +105,43 @@ const AgencyLeadsContent = () => {
     URL.revokeObjectURL(url);
   };
 
-  const selectedFunnel = funnels.find((f: any) => f.id === selectedFunnelId);
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
-  // ─── Grid View ───
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(l => l.id)));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('funnel_leads')
+        .delete()
+        .in('id', Array.from(selectedIds));
+      if (error) throw error;
+      toast({ title: `${selectedIds.size} lead(s) eliminado(s)` });
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['funnel-leads'] });
+      queryClient.invalidateQueries({ queryKey: ['funnel-lead-counts'] });
+    } catch (e: any) {
+      toast({ title: 'Error al eliminar', description: e.message, variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const selectedFunnel = funnels.find((f: any) => f.id === selectedFunnelId);
   if (!selectedFunnelId) {
     return (
       <div className="space-y-6">
@@ -163,7 +205,7 @@ const AgencyLeadsContent = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => { setSelectedFunnelId(null); setSearch(''); setLevelFilter('all'); }}>
+          <Button variant="ghost" size="icon" onClick={() => { setSelectedFunnelId(null); setSearch(''); setLevelFilter('all'); setSelectedIds(new Set()); }}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -171,9 +213,16 @@ const AgencyLeadsContent = () => {
             <p className="text-sm text-muted-foreground">{filtered.length} leads</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
-          <Download className="h-4 w-4" /> Exportar CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)} className="gap-2">
+              <Trash2 className="h-4 w-4" /> Eliminar ({selectedIds.size})
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
+            <Download className="h-4 w-4" /> Exportar CSV
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -196,6 +245,12 @@ const AgencyLeadsContent = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                  onCheckedChange={toggleSelectAll}
+                />
+              </TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Nivel</TableHead>
@@ -207,12 +262,18 @@ const AgencyLeadsContent = () => {
           </TableHeader>
           <TableBody>
             {leadsLoading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No hay leads</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No hay leads</TableCell></TableRow>
             ) : (
               filtered.map((lead) => (
                 <TableRow key={lead.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(lead.id)}
+                      onCheckedChange={() => toggleSelect(lead.id)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{lead.name}</TableCell>
                   <TableCell className="text-muted-foreground">{lead.email}</TableCell>
                   <TableCell>
@@ -277,6 +338,23 @@ const AgencyLeadsContent = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar {selectedIds.size} lead(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Los leads seleccionados serán eliminados permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSelected} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
