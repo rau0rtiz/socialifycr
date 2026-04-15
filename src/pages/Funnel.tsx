@@ -243,7 +243,7 @@ const Funnel = () => {
     <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: FONT }}>
       <header className="bg-white sticky top-0 z-10 border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-4 flex items-center justify-center relative">
-          <span className="text-xl md:text-2xl font-bold text-[#212121] tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>socialify</span>
+          <span className="text-xl md:text-2xl font-bold text-[#212121] tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>SOCIALIFY</span>
           {step > 0 && step < 8 && (
             <span className="absolute right-4 text-xs md:text-sm text-[#212121]/40 font-medium uppercase tracking-wider">
               {step} / {TOTAL_QUESTION_STEPS}
