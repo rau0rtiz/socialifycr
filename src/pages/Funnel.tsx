@@ -265,7 +265,7 @@ const Funnel = () => {
         )}
       </header>
 
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 md:px-6 md:py-12">
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 md:px-6 md:py-12 relative z-[1]">
         <div
           key={step}
           className="animate-fade-in"
