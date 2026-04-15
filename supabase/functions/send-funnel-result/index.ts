@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { encode as base64Encode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,6 +8,16 @@ const corsHeaders = {
 };
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
+
+// Map business_level (1-6) to the exact storage path
+const levelPdfMap: Record<number, string> = {
+  1: "documents/Nivel-1.pdf",
+  2: "documents/NIVEL-2.pdf",
+  3: "documents/Nivel-3.pdf",
+  4: "documents/Nivel-4.pdf",
+  5: "documents/NIVEL-5.pdf",
+  6: "documents/NIVEL-6.pdf",
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -43,6 +54,28 @@ serve(async (req) => {
 
     if (tplErr || !template) {
       throw new Error("Email template 'funnel-result' not found");
+    }
+
+    // Download the PDF for this level from storage
+    const pdfPath = levelPdfMap[business_level];
+    let attachments: any[] = [];
+    
+    if (pdfPath) {
+      const { data: pdfBlob, error: pdfErr } = await supabaseAdmin
+        .storage
+        .from("content-images")
+        .download(pdfPath);
+
+      if (pdfErr) {
+        console.error("PDF download error:", pdfErr);
+      } else if (pdfBlob) {
+        const arrayBuffer = await pdfBlob.arrayBuffer();
+        const pdfBase64 = base64Encode(new Uint8Array(arrayBuffer));
+        attachments.push({
+          filename: `Roadmap-Nivel-${business_level}.pdf`,
+          content: pdfBase64,
+        });
+      }
     }
 
     const levelData = [
@@ -94,6 +127,18 @@ serve(async (req) => {
       .replace(/\{\{name\}\}/g, name)
       .replace(/\{\{level_name\}\}/g, level.name);
 
+    // Build email payload
+    const emailPayload: any = {
+      from: "Socialify <hola@socialifycr.com>",
+      to: [email],
+      subject,
+      html,
+    };
+
+    if (attachments.length > 0) {
+      emailPayload.attachments = attachments;
+    }
+
     // Send via Resend gateway
     const emailRes = await fetch(`${GATEWAY_URL}/emails`, {
       method: "POST",
@@ -102,12 +147,7 @@ serve(async (req) => {
         "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "X-Connection-Api-Key": RESEND_API_KEY,
       },
-      body: JSON.stringify({
-        from: "Socialify <hola@socialifycr.com>",
-        to: [email],
-        subject,
-        html,
-      }),
+      body: JSON.stringify(emailPayload),
     });
 
     const emailResult = await emailRes.json();
@@ -118,7 +158,7 @@ serve(async (req) => {
       template_name: "funnel-result",
       status: emailRes.ok ? "sent" : "failed",
       error_message: emailRes.ok ? null : JSON.stringify(emailResult),
-      metadata: { name, business_level, level_name: level.name },
+      metadata: { name, business_level, level_name: level.name, has_pdf: attachments.length > 0 },
     });
 
     if (!emailRes.ok) {
@@ -126,7 +166,7 @@ serve(async (req) => {
       throw new Error("Failed to send email");
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, has_pdf: attachments.length > 0 }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
