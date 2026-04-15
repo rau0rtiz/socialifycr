@@ -68,10 +68,6 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Fetch the PDF as blob when dialog opens
-  useState(() => {
-    // cleanup on unmount handled below
-  });
 
   const fetchBlob = useCallback(async (url: string) => {
     setLoading(true);
@@ -167,9 +163,6 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
     </Dialog>
   );
 };
-      });
-    },
-  });
 
   const filtered = (documents || []).filter(d =>
     !searchTerm || d.name.toLowerCase().includes(searchTerm.toLowerCase())
