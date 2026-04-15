@@ -1,9 +1,10 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Mail, Megaphone, FileText, Loader2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 const EmailsLogContent = lazy(() => import('@/components/comunicaciones/EmailsLogContent'));
 const AgencyLeadsContent = lazy(() => import('@/components/comunicaciones/AgencyLeadsContent'));
@@ -17,13 +18,19 @@ const Loader = () => (
 
 const Comunicaciones = () => {
   const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['sent-emails'] });
-    queryClient.invalidateQueries({ queryKey: ['funnel-leads'] });
-    queryClient.invalidateQueries({ queryKey: ['funnel-lead-counts'] });
-    queryClient.invalidateQueries({ queryKey: ['funnels'] });
-    queryClient.invalidateQueries({ queryKey: ['email-templates'] });
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['sent-emails'] }),
+      queryClient.invalidateQueries({ queryKey: ['funnel-leads'] }),
+      queryClient.invalidateQueries({ queryKey: ['funnel-lead-counts'] }),
+      queryClient.invalidateQueries({ queryKey: ['funnels'] }),
+      queryClient.invalidateQueries({ queryKey: ['email-templates'] }),
+    ]);
+    setRefreshing(false);
+    toast.success('Datos actualizados');
   };
 
   return (
@@ -39,8 +46,8 @@ const Comunicaciones = () => {
               Gestión de correos y leads del funnel
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleRefresh} className="gap-2">
-            <RefreshCw className="h-4 w-4" /> Actualizar
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="gap-2">
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> Actualizar
           </Button>
         </div>
 
