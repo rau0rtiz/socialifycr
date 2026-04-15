@@ -33,6 +33,10 @@ const Comunicaciones = () => {
               <Mail className="h-4 w-4" />
               Emails
             </TabsTrigger>
+            <TabsTrigger value="plantillas" className="gap-1.5">
+              <FileText className="h-4 w-4" />
+              Plantillas
+            </TabsTrigger>
             <TabsTrigger value="leads" className="gap-1.5">
               <Megaphone className="h-4 w-4" />
               Funnels
@@ -42,6 +46,12 @@ const Comunicaciones = () => {
           <TabsContent value="emails">
             <Suspense fallback={<Loader />}>
               <EmailsLogContent />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="plantillas">
+            <Suspense fallback={<Loader />}>
+              <EmailTemplatesContent />
             </Suspense>
           </TabsContent>
 
