@@ -336,18 +336,40 @@ const DocumentsManager = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {filtered.map((doc) => (
                 <div key={doc.fullPath} className="space-y-2 group">
-                  {doc.isPdf ? (
-                    <PDFThumbnail url={doc.url} name={doc.name} onClick={() => setPreviewDoc(doc)} />
-                  ) : (
-                    <FileIcon name={doc.name} onClick={() => setPreviewDoc(doc)} />
-                  )}
+                  <div className="relative">
+                    {doc.isPdf ? (
+                      <PDFThumbnail url={doc.url} name={doc.name} onClick={() => setPreviewDoc(doc)} />
+                    ) : (
+                      <FileIcon name={doc.name} onClick={() => setPreviewDoc(doc)} />
+                    )}
+                    {doc.emailConnection && (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="absolute top-1.5 right-1.5 bg-orange-500 text-white rounded-full p-1 shadow-md">
+                              <Mail className="h-3 w-3" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs max-w-[200px]">
+                            <p className="font-semibold">Conectado a email</p>
+                            <p className="text-muted-foreground">{doc.emailConnection}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
                   <div className="px-0.5">
                     <p className="text-xs font-medium truncate" title={displayName(doc.name)}>
                       {displayName(doc.name)}
                     </p>
-                    {doc.size > 0 && (
-                      <p className="text-[10px] text-muted-foreground">{formatSize(doc.size)}</p>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {doc.size > 0 && (
+                        <p className="text-[10px] text-muted-foreground">{formatSize(doc.size)}</p>
+                      )}
+                      {doc.emailConnection && (
+                        <span className="text-[9px] text-orange-500 font-medium truncate">📧 Email</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
