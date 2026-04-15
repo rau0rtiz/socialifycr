@@ -156,6 +156,7 @@ const SaleCard = ({ sale, onEdit, onDelete }: { sale: MessageSale; onEdit: (s: M
 
 export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false, salePrefill, showSaleDialog, onSaleFromSetter, dateRange }: SalesTrackingSectionProps) => {
   const { selectedClient } = useBrand();
+  const qc = useQueryClient();
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const salesLabel = 'Ventas';
