@@ -38,8 +38,15 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
     if (ok) {
       setRevealed(true);
       // Meta Pixel: Lead event
-      if (typeof window !== 'undefined' && (window as any).fbq) {
-        (window as any).fbq('track', 'Lead', { content_name: 'Roadmap Funnel', business_level: level });
+      try {
+        const fb = (window as any).fbq;
+        console.log('[Pixel] fbq available:', typeof fb === 'function');
+        if (typeof fb === 'function') {
+          fb('track', 'Lead', { content_name: 'Roadmap Funnel', business_level: level });
+          console.log('[Pixel] Lead event fired');
+        }
+      } catch (e) {
+        console.error('[Pixel] Error firing Lead:', e);
       }
       // Fire-and-forget: send the funnel result email
       supabase.functions.invoke('send-funnel-result', {
