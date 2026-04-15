@@ -1,7 +1,9 @@
 import { lazy, Suspense } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, Megaphone, FileText, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Mail, Megaphone, FileText, Loader2, RefreshCw } from 'lucide-react';
 
 const EmailsLogContent = lazy(() => import('@/components/comunicaciones/EmailsLogContent'));
 const AgencyLeadsContent = lazy(() => import('@/components/comunicaciones/AgencyLeadsContent'));
@@ -14,17 +16,32 @@ const Loader = () => (
 );
 
 const Comunicaciones = () => {
+  const queryClient = useQueryClient();
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['sent-emails'] });
+    queryClient.invalidateQueries({ queryKey: ['funnel-leads'] });
+    queryClient.invalidateQueries({ queryKey: ['funnel-lead-counts'] });
+    queryClient.invalidateQueries({ queryKey: ['funnels'] });
+    queryClient.invalidateQueries({ queryKey: ['email-templates'] });
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Mail className="h-6 w-6 text-primary" />
-            Comunicaciones
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Gestión de correos y leads del funnel
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Mail className="h-6 w-6 text-primary" />
+              Comunicaciones
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Gestión de correos y leads del funnel
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleRefresh} className="gap-2">
+            <RefreshCw className="h-4 w-4" /> Actualizar
+          </Button>
         </div>
 
         <Tabs defaultValue="emails">
