@@ -161,6 +161,18 @@ serve(async (req) => {
       metadata: { name, business_level, level_name: level.name, has_pdf: attachments.length > 0 },
     });
 
+    // Log to sent_emails for unified history
+    await supabaseAdmin.from("sent_emails").insert({
+      recipient_email: email,
+      recipient_name: name,
+      subject,
+      html_content: html,
+      source: "funnel",
+      status: emailRes.ok ? "sent" : "failed",
+      error_message: emailRes.ok ? null : JSON.stringify(emailResult),
+      resend_id: emailRes.ok ? emailResult?.id || null : null,
+    });
+
     if (!emailRes.ok) {
       console.error("Resend error:", emailResult);
       throw new Error("Failed to send email");
