@@ -37,6 +37,13 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
     setIsSubmitting(false);
     if (ok) {
       setRevealed(true);
+      // Meta Pixel: Lead event
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'Lead', {
+          content_name: `Funnel Level ${level}`,
+          content_category: levelData[level - 1]?.name,
+        });
+      }
       // Fire-and-forget: send the funnel result email
       supabase.functions.invoke('send-funnel-result', {
         body: { name, email, business_level: level },
@@ -186,6 +193,11 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
                 size="lg"
                 className="w-full gap-2 bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold rounded-xl text-sm py-4"
                 onClick={() => {
+                  if (typeof window !== 'undefined' && (window as any).fbq) {
+                    (window as any).fbq('track', 'Schedule', {
+                      content_name: isExploratory ? 'Sesión Exploratoria' : 'Sesión Gratuita',
+                    });
+                  }
                   onCalendlyClick();
                 }}
               >
