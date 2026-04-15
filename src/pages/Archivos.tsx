@@ -10,8 +10,10 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, Eye,
+  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, Eye, Mail,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { ImageDBContent } from './ImageDB';
 import { lazy, Suspense } from 'react';
 
