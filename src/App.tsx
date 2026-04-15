@@ -151,7 +151,7 @@ const App = () => (
                   <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
                   <Route path="/asistencia" element={<ProtectedRoute><Asistencia /></ProtectedRoute>} />
                   <Route path="/actualizar-foto" element={<ProtectedRoute><ActualizarFoto /></ProtectedRoute>} />
-                  <Route path="/funnel" element={<Funnel />} />
+                  <Route path="/roadmap" element={<Funnel />} />
                   <Route path="/comunicaciones" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
