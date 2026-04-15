@@ -21,10 +21,10 @@ const industries = [
 
 const revenueOptions = [
   { value: 'menos1k', label: 'Menos de $1,000', puntos: 0 },
-  { value: '1k5k', label: '$1,000 – $5,000', puntos: 2 },
-  { value: '5k15k', label: '$5,000 – $15,000', puntos: 4 },
-  { value: '15k50k', label: '$15,000 – $50,000', puntos: 6 },
-  { value: 'mas50k', label: 'Más de $50,000', puntos: 8 },
+  { value: '1k5k', label: '$1,000 – $5,000', puntos: 3 },
+  { value: '5k15k', label: '$5,000 – $15,000', puntos: 5 },
+  { value: '15k50k', label: '$15,000 – $50,000', puntos: 8 },
+  { value: 'mas50k', label: 'Más de $50,000', puntos: 10 },
 ];
 
 const presenceOptions = [
@@ -36,13 +36,13 @@ const presenceOptions = [
 ];
 
 const adSpendOptions = [
-  { value: 'nada', label: 'No invierto nada', puntos: 0 },
-  { value: 'intente', label: 'Lo intenté pero lo dejé', puntos: 1 },
-  { value: 'menos200', label: 'Menos de $200 al mes', puntos: 2 },
+  { value: 'nada', label: 'No invierto nada', puntos: 1 },
+  { value: 'intente', label: 'Lo intenté pero lo dejé', puntos: 2 },
+  { value: 'menos200', label: 'Menos de $200 al mes', puntos: 3 },
   { value: '200_500', label: '$200 – $500 al mes', puntos: 4 },
-  { value: '500_1000', label: '$500 – $1,000 al mes', puntos: 6 },
-  { value: '1000_2000', label: '$1,000 – $2,000 al mes', puntos: 7 },
-  { value: 'mas2000', label: 'Más de $2,000 al mes', puntos: 8 },
+  { value: '500_1000', label: '$500 – $1,000 al mes', puntos: 4 },
+  { value: '1000_2000', label: '$1,000 – $2,000 al mes', puntos: 5 },
+  { value: 'mas2000', label: 'Más de $2,000 al mes', puntos: 5 },
 ];
 
 const salesChannelOptions = [
