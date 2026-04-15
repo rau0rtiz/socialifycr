@@ -205,7 +205,7 @@ const AgencyLeadsContent = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => { setSelectedFunnelId(null); setSearch(''); setLevelFilter('all'); }}>
+          <Button variant="ghost" size="icon" onClick={() => { setSelectedFunnelId(null); setSearch(''); setLevelFilter('all'); setSelectedIds(new Set()); }}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -213,9 +213,16 @@ const AgencyLeadsContent = () => {
             <p className="text-sm text-muted-foreground">{filtered.length} leads</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
-          <Download className="h-4 w-4" /> Exportar CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)} className="gap-2">
+              <Trash2 className="h-4 w-4" /> Eliminar ({selectedIds.size})
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
+            <Download className="h-4 w-4" /> Exportar CSV
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
