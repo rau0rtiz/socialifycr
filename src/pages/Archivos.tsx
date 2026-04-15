@@ -11,25 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Upload, Trash2, FileText, Search, Download, Image, FolderOpen,
 } from 'lucide-react';
-
-// We need a lazy approach – import the content component
-const ImageDBContentLazy = () => {
-  // Dynamically import and render
-  const [Comp, setComp] = useState<React.ComponentType | null>(null);
-  
-  if (!Comp) {
-    import('./ImageDB').then(m => {
-      setComp(() => (m as any).ImageDBContent);
-    });
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  return <Comp />;
-};
+import { ImageDBContent } from './ImageDB';
 
 const DocumentsManager = () => {
   const queryClient = useQueryClient();
@@ -218,7 +200,7 @@ const Archivos = () => {
           </TabsList>
         </div>
         <TabsContent value="imagenes">
-          <ImageDBContentLazy />
+          <ImageDBContent />
         </TabsContent>
         <TabsContent value="documentos">
           <DocumentsManager />
