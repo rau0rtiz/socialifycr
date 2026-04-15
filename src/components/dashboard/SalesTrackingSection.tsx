@@ -265,6 +265,7 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
                 student_contact_id: sale.student_contact_id,
                 sale_id: saleId,
               });
+              qc.invalidateQueries({ queryKey: ['class-group-members', clientId] });
             } catch {
               toast.error('Error al inscribir estudiante en grupo');
             }
