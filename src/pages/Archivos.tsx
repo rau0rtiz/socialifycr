@@ -69,13 +69,13 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
   const [loading, setLoading] = useState(false);
 
 
-  const fetchBlob = useCallback(async (url: string) => {
+  const fetchBlob = useCallback(async (path: string) => {
     setLoading(true);
     setBlobUrl(null);
     try {
-      const res = await fetch(url);
-      const blob = await res.blob();
-      const objUrl = URL.createObjectURL(blob);
+      const { data, error } = await supabase.storage.from('content-images').download(path);
+      if (error || !data) throw error || new Error('No data');
+      const objUrl = URL.createObjectURL(data);
       setBlobUrl(objUrl);
     } catch {
       setBlobUrl(null);
@@ -86,7 +86,7 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
 
   // Fetch blob when doc changes
   if (open && doc && !blobUrl && !loading) {
-    fetchBlob(doc.url);
+    fetchBlob(doc.fullPath);
   }
 
   // Cleanup blob URL when dialog closes
@@ -98,9 +98,9 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
   const handleDownload = useCallback(async () => {
     if (!doc) return;
     try {
-      const res = await fetch(doc.url);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const { data, error } = await supabase.storage.from('content-images').download(doc.fullPath);
+      if (error || !data) throw error || new Error('No data');
+      const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
       a.download = doc.name.replace(/^\d+-/, '').replace(/_/g, ' ');
@@ -109,7 +109,6 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      // Fallback: open in new tab
       window.open(doc.url, '_blank');
     }
   }, [doc]);
