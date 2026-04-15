@@ -116,7 +116,7 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 maxLength={100}
-                className="h-12 md:h-14 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm md:text-base px-4"
+                className="h-12 md:h-14 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm md:text-base px-4 bg-white text-black placeholder:text-gray-400"
               />
             </div>
             <div className="space-y-1.5">
@@ -128,7 +128,7 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 maxLength={255}
-                className="h-12 md:h-14 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm md:text-base px-4"
+                className="h-12 md:h-14 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm md:text-base px-4 bg-white text-black placeholder:text-gray-400"
               />
             </div>
           </div>
