@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, Eye, Mail,
+  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, Eye, Mail, Paintbrush, Loader2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
@@ -18,6 +18,7 @@ import { ImageDBContent } from './ImageDB';
 import { lazy, Suspense } from 'react';
 
 const PdfViewer = lazy(() => import('@/components/files/PdfViewer'));
+const HtmlDesigner = lazy(() => import('@/components/files/HtmlDesigner'));
 
 interface DocFile {
   name: string;
@@ -393,6 +394,12 @@ const DocumentsManager = () => {
   );
 };
 
+const ArchivosLoader = () => (
+  <div className="flex justify-center py-12">
+    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+  </div>
+);
+
 const Archivos = () => {
   return (
     <DashboardLayout>
@@ -409,6 +416,10 @@ const Archivos = () => {
               <FileText className="h-3.5 w-3.5" />
               Documentos
             </TabsTrigger>
+            <TabsTrigger value="disenos" className="text-xs gap-1.5">
+              <Paintbrush className="h-3.5 w-3.5" />
+              Diseños HTML
+            </TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="imagenes">
@@ -416,6 +427,11 @@ const Archivos = () => {
         </TabsContent>
         <TabsContent value="documentos">
           <DocumentsManager />
+        </TabsContent>
+        <TabsContent value="disenos">
+          <Suspense fallback={<ArchivosLoader />}>
+            <HtmlDesigner />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </DashboardLayout>
