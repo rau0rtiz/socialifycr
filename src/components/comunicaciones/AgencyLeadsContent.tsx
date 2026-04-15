@@ -20,6 +20,70 @@ const levelColors: Record<number, string> = {
   1: '#94a3b8', 2: '#3b82f6', 3: '#22c55e', 4: '#FF6B35', 5: '#8b5cf6', 6: '#ef4444',
 };
 
+// Maps for translating stored answer keys to human-readable labels
+const answerLabels: Record<string, Record<string, string>> = {
+  industria: {
+    retail: 'Retail / Tienda física o en línea',
+    restaurante: 'Restaurante / Comida',
+    salud: 'Salud y bienestar',
+    servicios: 'Servicios profesionales',
+    educacion: 'Educación / Cursos',
+    otro: 'Otro',
+  },
+  ingresos: {
+    menos1k: 'Menos de $1,000',
+    '1k5k': '$1,000 – $5,000',
+    '5k15k': '$5,000 – $15,000',
+    '15k50k': '$15,000 – $50,000',
+    mas50k: 'Más de $50,000',
+  },
+  presencia: {
+    nada: 'No tengo presencia todavía',
+    perfil_inactivo: 'Tengo perfil pero no publico',
+    poco: 'Publico 1 a 2 veces por semana',
+    consistente: 'Publico 3 a 5 veces por semana',
+    diario: 'Publico todos los días',
+  },
+  pauta: {
+    nada: 'No invierto nada',
+    intente: 'Lo intenté pero lo dejé',
+    menos200: 'Menos de $200 al mes',
+    '200_500': '$200 – $500 al mes',
+    '500_1000': '$500 – $1,000 al mes',
+    '1000_2000': '$1,000 – $2,000 al mes',
+    mas2000: 'Más de $2,000 al mes',
+  },
+  canalVentas: {
+    local: 'En persona / local físico',
+    mensajes: 'WhatsApp / Instagram / Facebook',
+    web: 'Página web / tienda en línea',
+    outbound: 'Contacto frío / outbound',
+    marketplace: 'Marketplace (Uber Eats, Amazon, etc.)',
+    puntos_venta: 'Puntos de venta externos',
+    otro: 'Otro',
+  },
+  objetivo: {
+    awareness: 'Que más gente conozca mi producto',
+    nuevos_clientes: 'Conseguir más clientes nuevos',
+    retencion: 'Venderle más a quienes ya compraron',
+    lanzamiento: 'Lanzar un nuevo producto',
+    marca: 'Construir una marca reconocida',
+  },
+};
+
+const answerQuestions: Record<string, string> = {
+  industria: '¿En qué industria está tu negocio?',
+  ingresos: '¿Cuánto factura tu negocio al mes?',
+  presencia: '¿Cómo es tu presencia en redes?',
+  pauta: '¿Cuánto invertís en publicidad pagada?',
+  canalVentas: '¿Cuál es tu principal canal de ventas?',
+  objetivo: '¿Cuál es tu objetivo principal?',
+};
+
+const getAnswerLabel = (key: string, value: string): string => {
+  return answerLabels[key]?.[value] || value;
+};
+
 const AgencyLeadsContent = () => {
   const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
