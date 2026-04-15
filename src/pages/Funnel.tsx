@@ -246,7 +246,7 @@ const Funnel = () => {
         <svg className="absolute text-[#3b82f6]/[0.04] w-16 h-16 md:w-24 md:h-24 top-[30%] right-[15%] rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         <svg className="absolute text-[#f59e0b]/[0.04] w-14 h-14 md:w-20 md:h-20 top-[48%] left-[12%] -rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       </div>
-      <header className="bg-white sticky top-0 z-10 border-b border-gray-100">
+      <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-4 flex items-center justify-center relative">
           <span className="text-xl md:text-2xl font-bold text-[#212121] tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>SOCIALIFY</span>
           {step > 0 && step < 7 && (
