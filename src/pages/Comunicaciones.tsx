@@ -1,10 +1,11 @@
 import { lazy, Suspense } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, Megaphone, Loader2 } from 'lucide-react';
+import { Mail, Megaphone, FileText, Loader2 } from 'lucide-react';
 
 const EmailsLogContent = lazy(() => import('@/components/comunicaciones/EmailsLogContent'));
 const AgencyLeadsContent = lazy(() => import('@/components/comunicaciones/AgencyLeadsContent'));
+const EmailTemplatesContent = lazy(() => import('@/components/comunicaciones/EmailTemplatesContent'));
 
 const Loader = () => (
   <div className="flex justify-center py-12">
