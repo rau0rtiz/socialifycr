@@ -121,7 +121,7 @@ serve(async (req) => {
       .replace(/\{\{level_number\}\}/g, String(business_level))
       .replace(/\{\{level_desc\}\}/g, level.desc)
       .replace(/\{\{session_cta\}\}/g, sessionCta)
-      .replace(/\{\{calendly_url\}\}/g, "https://calendly.com/socialifycr/estrategia");
+      .replace(/\{\{calendly_url\}\}/g, "https://calendly.com/raul-socialifycr/sesion-gratuita-de-planificacion");
 
     let subject = template.subject
       .replace(/\{\{name\}\}/g, name)
