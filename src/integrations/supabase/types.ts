@@ -2233,6 +2233,7 @@ export type Database = {
           error_message: string | null
           html_content: string | null
           id: string
+          opened_at: string | null
           recipient_email: string
           recipient_name: string | null
           resend_id: string | null
@@ -2247,6 +2248,7 @@ export type Database = {
           error_message?: string | null
           html_content?: string | null
           id?: string
+          opened_at?: string | null
           recipient_email: string
           recipient_name?: string | null
           resend_id?: string | null
@@ -2261,6 +2263,7 @@ export type Database = {
           error_message?: string | null
           html_content?: string | null
           id?: string
+          opened_at?: string | null
           recipient_email?: string
           recipient_name?: string | null
           resend_id?: string | null
