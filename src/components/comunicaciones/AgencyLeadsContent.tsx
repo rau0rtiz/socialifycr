@@ -105,9 +105,43 @@ const AgencyLeadsContent = () => {
     URL.revokeObjectURL(url);
   };
 
-  const selectedFunnel = funnels.find((f: any) => f.id === selectedFunnelId);
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
-  // ─── Grid View ───
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(l => l.id)));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('funnel_leads')
+        .delete()
+        .in('id', Array.from(selectedIds));
+      if (error) throw error;
+      toast({ title: `${selectedIds.size} lead(s) eliminado(s)` });
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['funnel-leads'] });
+      queryClient.invalidateQueries({ queryKey: ['funnel-lead-counts'] });
+    } catch (e: any) {
+      toast({ title: 'Error al eliminar', description: e.message, variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const selectedFunnel = funnels.find((f: any) => f.id === selectedFunnelId);
   if (!selectedFunnelId) {
     return (
       <div className="space-y-6">
