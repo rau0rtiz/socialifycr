@@ -164,8 +164,36 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
   );
 };
 
+const DocumentsManager = () => {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<DocFile | null>(null);
+
+  const { data: documents, isLoading } = useQuery({
+    queryKey: ['archivos-documents'],
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from('content-images')
+        .list('documents', { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
+      if (error) throw error;
+      return (data || []).filter(f => f.id).map(f => {
+        const { data: urlData } = supabase.storage.from('content-images').getPublicUrl(`documents/${f.name}`);
+        const isPdf = f.name.toLowerCase().endsWith('.pdf');
+        return {
+          name: f.name,
+          fullPath: `documents/${f.name}`,
+          url: urlData.publicUrl,
+          created_at: f.created_at || '',
+          size: (f.metadata as any)?.size || 0,
+          isPdf,
+        };
+      });
+    },
+  });
+
   const filtered = (documents || []).filter(d =>
-    !searchTerm || d.name.toLowerCase().includes(searchTerm.toLowerCase())
+    !searchTerm || d.name.toLowerCase().includes(searchTerm.toLowerCase()));
   );
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
