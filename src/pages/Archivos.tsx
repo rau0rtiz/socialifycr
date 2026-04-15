@@ -122,11 +122,24 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
         </DialogHeader>
         <div className="flex-1 min-h-0">
           {doc.isPdf ? (
-            <iframe
-              src={`${doc.url}#toolbar=1&navpanes=0`}
-              className="w-full h-full border-0"
-              title={doc.name}
-            />
+            <object
+              data={`${doc.url}#toolbar=1&navpanes=0`}
+              type="application/pdf"
+              className="w-full h-full"
+            >
+              <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+                <FileText className="h-16 w-16 opacity-30" />
+                <p className="text-sm">No se puede previsualizar el PDF en este navegador</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(doc.url, '_blank')}
+                >
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Abrir en nueva pestaña
+                </Button>
+              </div>
+            </object>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
               <FileText className="h-16 w-16 opacity-30" />
