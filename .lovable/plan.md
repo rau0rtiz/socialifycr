@@ -1,19 +1,21 @@
 
 
-## Plan: Refocus level descriptions on digital marketing strategy
+## Plan: Side-by-side code editor and preview in template dialog
 
-Update the 6 `levelData` descriptions in `src/components/funnel/ResultsStep.tsx` to frame each level as a marketing strategy recommendation rather than a generic business stage assessment.
+### What changes
 
-### Changes (single file: `ResultsStep.tsx`, lines 13-19)
+Restructure the HTML editor section in `EmailTemplateEditorDialog.tsx` so the code editor and live preview display **side by side** instead of toggling between tabs. This uses more vertical space and lets the user see changes in real time.
 
-Replace each `desc` to follow the pattern "Tu estrategia de marketing digital se debería enfocar en...":
+### Changes (single file: `EmailTemplateEditorDialog.tsx`)
 
-1. **Idea** → "Tu estrategia de marketing digital debería enfocarse en validar tu idea con contenido orgánico y construir una audiencia inicial antes de invertir en pauta."
-2. **Startup** → "Tu estrategia de marketing digital debería enfocarse en generar tracción con contenido consistente y campañas de bajo presupuesto para atraer tus primeros clientes."
-3. **Growing** → "Tu estrategia de marketing digital debería enfocarse en sistematizar tu contenido, escalar pauta pagada y construir embudos de conversión automatizados."
-4. **Scaling** → "Tu estrategia de marketing digital debería enfocarse en diversificar canales, optimizar el costo por adquisición y delegar la operación creativa."
-5. **Established** → "Tu estrategia de marketing digital debería enfocarse en expandir a nuevos mercados, fortalecer tu marca personal y maximizar el retorno de cada canal."
-6. **Empire** → "Tu estrategia de marketing digital debería enfocarse en liderazgo de marca, alianzas estratégicas y crecimiento exponencial a través de múltiples plataformas."
+1. **Remove the code/preview toggle buttons** — both panels are always visible
+2. **Replace the toggle section (lines ~175-210)** with a two-column grid layout:
+   - Left column: HTML code textarea (with "Código" label)
+   - Right column: sandboxed iframe preview (with "Vista previa" label)
+   - Layout: `grid grid-cols-2 gap-4` with both panels having `min-h-[400px]`
+3. **Widen the dialog** — change `max-w-4xl` to `max-w-6xl` to accommodate two panels comfortably
+4. **Remove `viewMode` state** since it's no longer needed
 
-No structural or logic changes — only the 6 description strings.
+### Result
+Code and preview always visible side by side, giving a real-time editing experience with better vertical space usage.
 
