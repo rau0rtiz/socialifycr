@@ -81,6 +81,7 @@ const EmailsLogContent = () => {
   const stats = {
     total: emails.length,
     sent: emails.filter((e: any) => e.status === 'sent').length,
+    opened: emails.filter((e: any) => e.opened_at).length,
     failed: emails.filter((e: any) => e.status === 'failed').length,
   };
 
@@ -126,9 +127,10 @@ const EmailsLogContent = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{stats.total}</p><p className="text-xs text-muted-foreground">Total Enviados</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-600">{stats.sent}</p><p className="text-xs text-muted-foreground">Exitosos</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{stats.opened}</p><p className="text-xs text-muted-foreground">Abiertos</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-red-500">{stats.failed}</p><p className="text-xs text-muted-foreground">Fallidos</p></CardContent></Card>
       </div>
 
