@@ -18,7 +18,6 @@ import {
   Briefcase,
   Database,
   Loader2,
-  Megaphone,
 } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -42,14 +41,13 @@ import { useClientFeatures } from '@/hooks/use-client-features';
 
 const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
-  { title: 'Emails', url: '/emails-log', icon: Mail },
+  { title: 'Comunicaciones', url: '/comunicaciones', icon: Mail },
   { title: 'Accesos', url: '/accesos', icon: KeyRound },
   { title: 'Facturación', url: '/facturacion', icon: CreditCard },
   { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },
   { title: 'Historial', url: '/historial', icon: History },
   { title: 'Image DB', url: '/image-db', icon: Image },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
-  { title: 'Leads Funnel', url: '/agency-leads', icon: Megaphone },
 ];
 
 export const Sidebar = () => {
