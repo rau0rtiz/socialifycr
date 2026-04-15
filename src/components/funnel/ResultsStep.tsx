@@ -174,7 +174,7 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
               ¿Querés ayuda para implementarlo?
             </h3>
             <p className="text-sm text-[#212121]/60 leading-relaxed">
-              Agendá una Agendá una sesión gratuita de 1 hora donde definimos un plan concreto para tu negocio. Lo ejecutés con nosotros o no, el plan es tuyo. donde definimos un plan concreto para tu negocio. Lo ejecutés con nosotros o no, el plan es tuyo.
+              Agendá una sesión gratuita de 1 hora donde definimos un plan concreto para tu negocio. Lo ejecutés con nosotros o no, el plan es tuyo.
             </p>
             <Button
               size="lg"
