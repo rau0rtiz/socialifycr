@@ -194,7 +194,6 @@ const DocumentsManager = () => {
 
   const filtered = (documents || []).filter(d =>
     !searchTerm || d.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  );
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
