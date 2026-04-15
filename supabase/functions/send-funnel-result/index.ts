@@ -104,7 +104,7 @@ serve(async (req) => {
       const sessionButton = isExploratory
         ? 'Agendar sesión exploratoria'
         : 'Agendar sesión gratuita';
-      const calendlyUrl = 'https://calendly.com/socialifycr/estrategia';
+      const calendlyUrl = 'https://calendly.com/raul-socialifycr/sesion-gratuita-de-planificacion';
 
       sessionCta = `
         <div style="margin-top:24px;padding:24px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;">
