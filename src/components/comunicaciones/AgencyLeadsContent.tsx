@@ -383,14 +383,16 @@ const AgencyLeadsContent = () => {
               </div>
               {selectedLead.answers && Object.keys(selectedLead.answers).length > 0 && (
                 <div>
-                  <span className="text-muted-foreground">Respuestas:</span>
-                  <div className="mt-1 rounded-lg bg-muted p-3 space-y-1">
-                    {Object.entries(selectedLead.answers as Record<string, string>).map(([k, v]) => (
-                      <div key={k} className="flex justify-between">
-                        <span className="text-muted-foreground capitalize">{k}:</span>
-                        <span className="font-medium">{v}</span>
-                      </div>
-                    ))}
+                  <span className="text-muted-foreground font-medium">Respuestas del quiz:</span>
+                  <div className="mt-2 space-y-3">
+                    {(['industria', 'ingresos', 'presencia', 'pauta', 'canalVentas', 'objetivo'] as const)
+                      .filter(key => (selectedLead.answers as Record<string, string>)[key])
+                      .map((key) => (
+                        <div key={key} className="rounded-lg bg-muted p-3">
+                          <p className="text-xs text-muted-foreground mb-1">{answerQuestions[key] || key}</p>
+                          <p className="font-medium text-sm">{getAnswerLabel(key, (selectedLead.answers as Record<string, string>)[key])}</p>
+                        </div>
+                      ))}
                   </div>
                 </div>
               )}
