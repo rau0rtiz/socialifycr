@@ -24,17 +24,32 @@ interface DocFile {
 }
 
 const PDFThumbnail = ({ url, name, onClick }: { url: string; name: string; onClick: () => void }) => {
+  const [hasError, setHasError] = useState(false);
+
   return (
     <button
       onClick={onClick}
       className="relative w-full aspect-[3/4] rounded-lg border border-border overflow-hidden bg-muted/30 hover:ring-2 hover:ring-primary/40 transition-all group cursor-pointer"
     >
-      <iframe
-        src={`${url}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
-        className="w-full h-full pointer-events-none scale-100"
-        title={name}
-        loading="lazy"
-      />
+      {!hasError ? (
+        <object
+          data={`${url}#page=1&view=FitH`}
+          type="application/pdf"
+          className="w-full h-full pointer-events-none"
+          onError={() => setHasError(true)}
+        >
+          {/* Fallback if object can't render PDF */}
+          <div className="flex flex-col items-center justify-center h-full gap-2">
+            <FileText className="h-8 w-8 text-red-400" />
+            <span className="text-[10px] text-muted-foreground">PDF</span>
+          </div>
+        </object>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full gap-2">
+          <FileText className="h-8 w-8 text-red-400" />
+          <span className="text-[10px] text-muted-foreground">PDF</span>
+        </div>
+      )}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
         <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
       </div>
