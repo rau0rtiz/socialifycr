@@ -26,7 +26,18 @@ interface DocFile {
   created_at: string;
   size: number;
   isPdf: boolean;
+  emailConnection?: string | null;
 }
+
+// Map storage paths to their email/template connections
+const EMAIL_CONNECTIONS: Record<string, string> = {
+  'documents/Nivel-1.pdf': 'Funnel → Nivel 1: Idea',
+  'documents/NIVEL-2.pdf': 'Funnel → Nivel 2: Startup',
+  'documents/Nivel-3.pdf': 'Funnel → Nivel 3: Growing',
+  'documents/Nivel-4.pdf': 'Funnel → Nivel 4: Scaling',
+  'documents/NIVEL-5.pdf': 'Funnel → Nivel 5: Established',
+  'documents/NIVEL-6.pdf': 'Funnel → Nivel 6: Empire',
+};
 
 const PDFThumbnail = ({ onClick }: { url: string; name: string; onClick: () => void }) => (
   <button
