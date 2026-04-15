@@ -10,8 +10,10 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, Eye,
+  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, Eye, Mail,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { ImageDBContent } from './ImageDB';
 import { lazy, Suspense } from 'react';
 
@@ -24,7 +26,18 @@ interface DocFile {
   created_at: string;
   size: number;
   isPdf: boolean;
+  emailConnection?: string | null;
 }
+
+// Map storage paths to their email/template connections
+const EMAIL_CONNECTIONS: Record<string, string> = {
+  'documents/Nivel-1.pdf': 'Funnel → Nivel 1: Idea',
+  'documents/NIVEL-2.pdf': 'Funnel → Nivel 2: Startup',
+  'documents/Nivel-3.pdf': 'Funnel → Nivel 3: Growing',
+  'documents/Nivel-4.pdf': 'Funnel → Nivel 4: Scaling',
+  'documents/NIVEL-5.pdf': 'Funnel → Nivel 5: Established',
+  'documents/NIVEL-6.pdf': 'Funnel → Nivel 6: Empire',
+};
 
 const PDFThumbnail = ({ onClick }: { url: string; name: string; onClick: () => void }) => (
   <button
@@ -200,13 +213,15 @@ const DocumentsManager = () => {
       return (data || []).filter(f => f.id).map(f => {
         const { data: urlData } = supabase.storage.from('content-images').getPublicUrl(`documents/${f.name}`);
         const isPdf = f.name.toLowerCase().endsWith('.pdf');
+        const fullPath = `documents/${f.name}`;
         return {
           name: f.name,
-          fullPath: `documents/${f.name}`,
+          fullPath,
           url: urlData.publicUrl,
           created_at: f.created_at || '',
           size: (f.metadata as any)?.size || 0,
           isPdf,
+          emailConnection: EMAIL_CONNECTIONS[fullPath] || null,
         };
       });
     },
@@ -321,18 +336,40 @@ const DocumentsManager = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {filtered.map((doc) => (
                 <div key={doc.fullPath} className="space-y-2 group">
-                  {doc.isPdf ? (
-                    <PDFThumbnail url={doc.url} name={doc.name} onClick={() => setPreviewDoc(doc)} />
-                  ) : (
-                    <FileIcon name={doc.name} onClick={() => setPreviewDoc(doc)} />
-                  )}
+                  <div className="relative">
+                    {doc.isPdf ? (
+                      <PDFThumbnail url={doc.url} name={doc.name} onClick={() => setPreviewDoc(doc)} />
+                    ) : (
+                      <FileIcon name={doc.name} onClick={() => setPreviewDoc(doc)} />
+                    )}
+                    {doc.emailConnection && (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="absolute top-1.5 right-1.5 bg-orange-500 text-white rounded-full p-1 shadow-md">
+                              <Mail className="h-3 w-3" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs max-w-[200px]">
+                            <p className="font-semibold">Conectado a email</p>
+                            <p className="text-muted-foreground">{doc.emailConnection}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
                   <div className="px-0.5">
                     <p className="text-xs font-medium truncate" title={displayName(doc.name)}>
                       {displayName(doc.name)}
                     </p>
-                    {doc.size > 0 && (
-                      <p className="text-[10px] text-muted-foreground">{formatSize(doc.size)}</p>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {doc.size > 0 && (
+                        <p className="text-[10px] text-muted-foreground">{formatSize(doc.size)}</p>
+                      )}
+                      {doc.emailConnection && (
+                        <span className="text-[9px] text-orange-500 font-medium truncate">📧 Email</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
