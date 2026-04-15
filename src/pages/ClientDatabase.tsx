@@ -139,7 +139,7 @@ const ClientDatabase = () => {
   const isMinor = sAge ? parseInt(sAge) < 18 : false;
 
   // ── Legacy: setter_appointments for non-SpkUp ──
-  const { data: allLeads = [] } = useQuery<LeadRecord[]>({
+  const { data: appointmentLeads = [] } = useQuery<LeadRecord[]>({
     queryKey: ['client-database-leads', clientId],
     queryFn: async () => {
       if (!clientId) return [];
@@ -151,6 +151,53 @@ const ClientDatabase = () => {
     },
     enabled: !!clientId && !isSpkUp,
   });
+
+  // ── Sales-only contacts (no appointment) for non-SpkUp ──
+  const { data: salesContacts = [] } = useQuery<LeadRecord[]>({
+    queryKey: ['client-database-sales-contacts', clientId],
+    queryFn: async () => {
+      if (!clientId) return [];
+      const { data, error } = await supabase.from('message_sales')
+        .select('id, customer_name, customer_phone, source, status, closer_name, product, sale_date, created_at, notes, amount, currency, ad_campaign_name')
+        .eq('client_id', clientId)
+        .not('customer_name', 'is', null)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((s: any) => ({
+        id: s.id,
+        lead_name: s.customer_name || 'Sin nombre',
+        lead_phone: s.customer_phone,
+        lead_email: null,
+        source: s.source,
+        status: s.status === 'completed' ? 'sold' : s.status === 'pending' ? 'scheduled' : s.status === 'cancelled' ? 'not_sold' : s.status,
+        setter_name: s.closer_name,
+        product: s.product,
+        appointment_date: s.sale_date,
+        created_at: s.created_at,
+        notes: s.notes,
+        not_sold_reason: null,
+        estimated_value: s.amount,
+        currency: s.currency || 'CRC',
+        ad_campaign_name: s.ad_campaign_name,
+        _fromSale: true,
+      })) as (LeadRecord & { _fromSale?: boolean })[];
+    },
+    enabled: !!clientId && !isSpkUp,
+  });
+
+  // ── Merge appointments + sales-only contacts (dedupe by name) ──
+  const allLeads = useMemo(() => {
+    const merged: LeadRecord[] = [...appointmentLeads];
+    const existingNames = new Set(appointmentLeads.map(l => l.lead_name.toLowerCase().trim()));
+    for (const sc of salesContacts) {
+      const key = sc.lead_name.toLowerCase().trim();
+      if (!existingNames.has(key)) {
+        merged.push(sc);
+        existingNames.add(key);
+      }
+    }
+    return merged;
+  }, [appointmentLeads, salesContacts]);
 
   const sources = useMemo(() => Array.from(new Set(allLeads.map(l => l.source).filter(Boolean))) as string[], [allLeads]);
 
