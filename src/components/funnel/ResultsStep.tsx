@@ -80,10 +80,9 @@ export const ResultsStep = ({ level, name, onCalendlyClick }: ResultsStepProps) 
       <Button
         size="lg"
         className="w-full py-5 md:py-7 text-sm md:text-base gap-2 rounded-2xl font-semibold uppercase tracking-wide bg-[#212121] hover:bg-[#333] text-white"
-        onClick={() => {
-          alert('Los PDFs serán subidos próximamente. Por ahora este es un placeholder.');
-        }}
+        asChild
       >
+        <a href={`/roadmaps/Nivel-${level}.pdf`} download={`Roadmap-Nivel-${level}.pdf`}>
         <Download className="h-5 w-5" />
         Descargar mi estrategia (PDF)
       </Button>
