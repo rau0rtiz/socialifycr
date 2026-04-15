@@ -80,12 +80,18 @@ export const ResultsStep = ({ level, name, onCalendlyClick }: ResultsStepProps) 
       <Button
         size="lg"
         className="w-full py-5 md:py-7 text-sm md:text-base gap-2 rounded-2xl font-semibold uppercase tracking-wide bg-[#212121] hover:bg-[#333] text-white"
-        asChild
+        onClick={() => {
+          const link = document.createElement('a');
+          link.href = `/roadmaps/Nivel-${level}.pdf`;
+          link.download = `Roadmap-Nivel-${level}.pdf`;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }}
       >
-        <a href={`/roadmaps/Nivel-${level}.pdf`} download={`Roadmap-Nivel-${level}.pdf`}>
-          <Download className="h-5 w-5" />
-          Descargar mi estrategia (PDF)
-        </a>
+        <Download className="h-5 w-5" />
+        Descargar mi estrategia (PDF)
       </Button>
 
       {qualifiesForSession && (
