@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { WelcomeStep } from '@/components/funnel/WelcomeStep';
 import { FunnelQuestion } from '@/components/funnel/FunnelQuestion';
 import { ResultsStep } from '@/components/funnel/ResultsStep';
@@ -86,7 +86,13 @@ const Funnel = () => {
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [businessLevel, setBusinessLevel] = useState(1);
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [funnelId, setFunnelId] = useState<string | null>(null);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    supabase.from('funnels').select('id').eq('status', 'active').limit(1).single()
+      .then(({ data }) => { if (data) setFunnelId(data.id); });
+  }, []);
 
   const [answers, setAnswers] = useState({
     industry: '',
@@ -133,6 +139,7 @@ const Funnel = () => {
         business_level: businessLevel,
         industry: answers.industry,
         revenue_range: answers.ingresos,
+        funnel_id: funnelId,
         answers: {
           presencia: answers.presencia,
           pauta: answers.pauta,
