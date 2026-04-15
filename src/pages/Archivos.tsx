@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, X, Eye,
+  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, Eye,
 } from 'lucide-react';
 import { ImageDBContent } from './ImageDB';
 
@@ -23,33 +23,14 @@ interface DocFile {
   isPdf: boolean;
 }
 
-const PDFThumbnail = ({ url, name, onClick }: { url: string; name: string; onClick: () => void }) => {
-  const [hasError, setHasError] = useState(false);
-
+const PDFThumbnail = ({ onClick }: { url: string; name: string; onClick: () => void }) => {
   return (
     <button
       onClick={onClick}
-      className="relative w-full aspect-[3/4] rounded-lg border border-border overflow-hidden bg-muted/30 hover:ring-2 hover:ring-primary/40 transition-all group cursor-pointer"
+      className="relative w-full aspect-[3/4] rounded-lg border border-border overflow-hidden bg-muted/30 hover:ring-2 hover:ring-primary/40 transition-all group cursor-pointer flex flex-col items-center justify-center gap-2"
     >
-      {!hasError ? (
-        <object
-          data={`${url}#page=1&view=FitH`}
-          type="application/pdf"
-          className="w-full h-full pointer-events-none"
-          onError={() => setHasError(true)}
-        >
-          {/* Fallback if object can't render PDF */}
-          <div className="flex flex-col items-center justify-center h-full gap-2">
-            <FileText className="h-8 w-8 text-red-400" />
-            <span className="text-[10px] text-muted-foreground">PDF</span>
-          </div>
-        </object>
-      ) : (
-        <div className="flex flex-col items-center justify-center h-full gap-2">
-          <FileText className="h-8 w-8 text-red-400" />
-          <span className="text-[10px] text-muted-foreground">PDF</span>
-        </div>
-      )}
+      <FileText className="h-8 w-8 text-red-400" />
+      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">PDF</span>
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
         <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
       </div>
@@ -84,29 +65,64 @@ const FileIcon = ({ name, onClick }: { name: string; onClick: () => void }) => {
 };
 
 const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; open: boolean; onClose: () => void; onDelete: (path: string) => void }) => {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+
+  const fetchBlob = useCallback(async (url: string) => {
+    setLoading(true);
+    setBlobUrl(null);
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
+      setBlobUrl(objUrl);
+    } catch {
+      setBlobUrl(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch blob when doc changes
+  if (open && doc && !blobUrl && !loading) {
+    fetchBlob(doc.url);
+  }
+
+  // Cleanup blob URL when dialog closes
+  if (!open && blobUrl) {
+    URL.revokeObjectURL(blobUrl);
+    setBlobUrl(null);
+  }
+
+  const handleDownload = useCallback(async () => {
+    if (!doc) return;
+    try {
+      const res = await fetch(doc.url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.name.replace(/^\d+-/, '').replace(/_/g, ' ');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // Fallback: open in new tab
+      window.open(doc.url, '_blank');
+    }
+  }, [doc]);
+
   if (!doc) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+    <Dialog open={open} onOpenChange={(o) => { if (!o) { if (blobUrl) URL.revokeObjectURL(blobUrl); setBlobUrl(null); onClose(); } }}>
+      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0" aria-describedby={undefined}>
         <DialogHeader className="px-4 py-3 border-b border-border flex-row items-center justify-between space-y-0">
-          <DialogTitle className="text-sm font-medium truncate pr-4">{doc.name}</DialogTitle>
+          <DialogTitle className="text-sm font-medium truncate pr-4">{doc.name.replace(/^\d+-/, '').replace(/_/g, ' ')}</DialogTitle>
           <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1"
-              onClick={() => {
-                const a = document.createElement('a');
-                a.href = doc.url;
-                a.download = doc.name;
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-              }}
-            >
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={handleDownload}>
               <Download className="h-3.5 w-3.5" />
               Descargar
             </Button>
@@ -121,34 +137,22 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
           </div>
         </DialogHeader>
         <div className="flex-1 min-h-0">
-          {doc.isPdf ? (
-            <object
-              data={`${doc.url}#toolbar=1&navpanes=0`}
-              type="application/pdf"
-              className="w-full h-full"
-            >
-              <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
-                <FileText className="h-16 w-16 opacity-30" />
-                <p className="text-sm">No se puede previsualizar el PDF en este navegador</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(doc.url, '_blank')}
-                >
-                  <Download className="h-3.5 w-3.5 mr-1.5" />
-                  Abrir en nueva pestaña
-                </Button>
-              </div>
-            </object>
+          {doc.isPdf && blobUrl ? (
+            <iframe
+              src={blobUrl}
+              className="w-full h-full border-0"
+              title={doc.name}
+            />
+          ) : loading ? (
+            <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+              <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+              <p className="text-sm">Cargando documento...</p>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
               <FileText className="h-16 w-16 opacity-30" />
-              <p className="text-sm">Vista previa no disponible para este tipo de archivo</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(doc.url, '_blank')}
-              >
+              <p className="text-sm">{doc.isPdf ? 'No se pudo cargar el PDF' : 'Vista previa no disponible'}</p>
+              <Button variant="outline" size="sm" onClick={handleDownload}>
                 <Download className="h-3.5 w-3.5 mr-1.5" />
                 Descargar archivo
               </Button>
@@ -189,8 +193,7 @@ const DocumentsManager = () => {
   });
 
   const filtered = (documents || []).filter(d =>
-    !searchTerm || d.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    !searchTerm || d.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
