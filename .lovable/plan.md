@@ -1,15 +1,31 @@
 
 
-## Problem
+## Cambio de texto en el Funnel (WelcomeStep)
 
-The edge function `send-client-invitation` only accepts 3 roles: `account_manager`, `editor`, `viewer`. But the `InviteClientDialog` UI offers 6 roles including `media_buyer`, `closer`, and `setter`. Selecting any of the newer commercial roles causes the "Invalid role" error.
+### Cambios solicitados
 
-## Fix
+Actualizar el encabezado del funnel (`src/components/funnel/WelcomeStep.tsx`) con el nuevo texto:
 
-**Update the edge function** to accept all valid client team member roles:
+**Antes:**
+```
+OBTENÉ TU
+ROADMAP DE CRECIMIENTO PARA TU NEGOCIO
+EN MENOS DE 2 MINUTOS
+```
 
-**File: `supabase/functions/send-client-invitation/index.ts`** (line 62)
-- Change `validRoles` from `["account_manager", "editor", "viewer"]` to `["account_manager", "media_buyer", "closer", "setter", "editor", "viewer"]`
+**Después:**
+```
+OBTENÉ TU
+ROADMAP DE CRECIMIENTO DIGITAL
+PARA TU NEGOCIO
+En menos de 2 minutos (texto más pequeño)
+```
 
-That's it — one line change, then redeploy.
+### Implementación
+
+**Archivo:** `src/components/funnel/WelcomeStep.tsx`
+
+Reemplazar líneas 10-14 para:
+1. Separar "ROADMAP DE CRECIMIENTO DIGITAL" (naranja) de "PARA TU NEGOCIO"
+2. Agregar `<p>` debajo del `<h1>` con "En menos de 2 minutos" en texto más pequeño (`text-lg md:text-xl` con opacidad reducida)
 
