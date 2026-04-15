@@ -96,7 +96,16 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
               variant="ghost"
               size="sm"
               className="h-7 text-xs gap-1"
-              onClick={() => window.open(doc.url, '_blank')}
+              onClick={() => {
+                const a = document.createElement('a');
+                a.href = doc.url;
+                a.download = doc.name;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }}
             >
               <Download className="h-3.5 w-3.5" />
               Descargar
