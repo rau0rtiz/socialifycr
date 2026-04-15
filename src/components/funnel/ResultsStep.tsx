@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowRight, Lock, Loader2, Mail, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { trackMetaEvent } from '@/lib/meta-pixel';
 
 interface ResultsStepProps {
   level: number;
@@ -20,62 +21,6 @@ const levelData = [
   { name: 'Empire', revenue: '$200K+/mes', desc: 'Tu estrategia de marketing digital debería enfocarse en liderazgo de marca, alianzas estratégicas y crecimiento exponencial a través de múltiples plataformas.', color: '#ef4444' },
 ];
 
-const META_PIXEL_ID = '1499668131837471';
-const META_PIXEL_SCRIPT = 'https://connect.facebook.net/en_US/fbevents.js';
-
-type MetaPixelFn = ((...args: any[]) => void) & {
-  callMethod?: (...args: any[]) => void;
-  queue?: any[];
-  push?: MetaPixelFn;
-  loaded?: boolean;
-  version?: string;
-};
-
-type MetaPixelWindow = Window & typeof globalThis & {
-  fbq?: MetaPixelFn;
-  _fbq?: MetaPixelFn;
-};
-
-const ensureMetaPixel = () => {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return null;
-
-  const metaWindow = window as MetaPixelWindow;
-
-  if (typeof metaWindow.fbq === 'function') {
-    return metaWindow.fbq;
-  }
-
-  const fbq = ((...args: any[]) => {
-    if (fbq.callMethod) {
-      fbq.callMethod.apply(fbq, args);
-      return;
-    }
-
-    fbq.queue?.push(args);
-  }) as MetaPixelFn;
-
-  fbq.push = fbq;
-  fbq.loaded = true;
-  fbq.version = '2.0';
-  fbq.queue = [];
-
-  metaWindow.fbq = fbq;
-  if (!metaWindow._fbq) {
-    metaWindow._fbq = fbq;
-  }
-
-  if (!document.querySelector(`script[data-meta-pixel="${META_PIXEL_ID}"]`)) {
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = META_PIXEL_SCRIPT;
-    script.dataset.metaPixel = META_PIXEL_ID;
-    document.head.appendChild(script);
-  }
-
-  metaWindow.fbq('init', META_PIXEL_ID);
-  return metaWindow.fbq;
-};
-
 export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: ResultsStepProps) => {
   const [revealed, setRevealed] = useState(false);
   const [name, setName] = useState('');
@@ -87,31 +32,13 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
   const isExploratory = level === 6;
   const canSubmit = name.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  useEffect(() => {
-    ensureMetaPixel();
-  }, []);
-
-  const trackMetaEvent = (eventName: 'Lead' | 'Schedule') => {
-    try {
-      const fbq = ensureMetaPixel();
-      if (typeof fbq === 'function') {
-        fbq('track', eventName, {
-          content_name: 'Roadmap Funnel',
-          business_level: level,
-        });
-      }
-    } catch (error) {
-      console.error(`[Pixel] Error firing ${eventName}:`, error);
-    }
-  };
-
   const handleSubmit = async () => {
     setIsSubmitting(true);
     const ok = await onSubmitContact(name, email);
     setIsSubmitting(false);
     if (ok) {
       setRevealed(true);
-      trackMetaEvent('Lead');
+      trackMetaEvent('Lead', { content_name: 'Roadmap Funnel', business_level: level });
       // Fire-and-forget: send the funnel result email
       supabase.functions.invoke('send-funnel-result', {
         body: { name, email, business_level: level },
@@ -261,7 +188,7 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
                 size="lg"
                 className="w-full gap-2 bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold rounded-xl text-sm py-4"
                 onClick={() => {
-                  trackMetaEvent('Schedule');
+                  trackMetaEvent('Schedule', { content_name: 'Roadmap Funnel', business_level: level });
                   onCalendlyClick();
                 }}
               >
