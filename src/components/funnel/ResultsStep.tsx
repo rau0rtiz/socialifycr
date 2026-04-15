@@ -11,12 +11,12 @@ interface ResultsStepProps {
 }
 
 const levelData = [
-  { name: 'Idea', revenue: '$0', desc: 'Tenés una idea pero aún no la has lanzado. Tu plan te guiará con los primeros pasos para validar y monetizar.', color: '#94a3b8' },
-  { name: 'Startup', revenue: '$0 – $3K/mes', desc: 'Ya lanzaste y estás consiguiendo tus primeros clientes. Tu estrategia se enfoca en tracción y consistencia.', color: '#3b82f6' },
-  { name: 'Growing', revenue: '$3K – $15K/mes', desc: 'Tenés ingresos consistentes. Es hora de construir sistemas y escalar tu adquisición.', color: '#22c55e' },
-  { name: 'Scaling', revenue: '$15K – $50K/mes', desc: 'Tu equipo está en su lugar. Necesitás optimizar operaciones y multiplicar canales.', color: '#FF6B35' },
-  { name: 'Established', revenue: '$50K – $200K/mes', desc: 'Sistemas sólidos. Estás listo para multiplicar y expandir a nuevos mercados.', color: '#8b5cf6' },
-  { name: 'Empire', revenue: '$200K+/mes', desc: 'Operación multi-canal. Tu enfoque es liderazgo, legado y crecimiento exponencial.', color: '#ef4444' },
+  { name: 'Idea', revenue: '$0', desc: 'Tu estrategia de marketing digital debería enfocarse en validar tu idea con contenido orgánico y construir una audiencia inicial antes de invertir en pauta.', color: '#94a3b8' },
+  { name: 'Startup', revenue: '$0 – $3K/mes', desc: 'Tu estrategia de marketing digital debería enfocarse en generar tracción con contenido consistente y campañas de bajo presupuesto para atraer tus primeros clientes.', color: '#3b82f6' },
+  { name: 'Growing', revenue: '$3K – $15K/mes', desc: 'Tu estrategia de marketing digital debería enfocarse en sistematizar tu contenido, escalar pauta pagada y construir embudos de conversión automatizados.', color: '#22c55e' },
+  { name: 'Scaling', revenue: '$15K – $50K/mes', desc: 'Tu estrategia de marketing digital debería enfocarse en diversificar canales, optimizar el costo por adquisición y delegar la operación creativa.', color: '#FF6B35' },
+  { name: 'Established', revenue: '$50K – $200K/mes', desc: 'Tu estrategia de marketing digital debería enfocarse en expandir a nuevos mercados, fortalecer tu marca personal y maximizar el retorno de cada canal.', color: '#8b5cf6' },
+  { name: 'Empire', revenue: '$200K+/mes', desc: 'Tu estrategia de marketing digital debería enfocarse en liderazgo de marca, alianzas estratégicas y crecimiento exponencial a través de múltiples plataformas.', color: '#ef4444' },
 ];
 
 export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: ResultsStepProps) => {
