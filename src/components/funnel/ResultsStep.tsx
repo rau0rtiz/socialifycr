@@ -119,11 +119,12 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
               <Label htmlFor="name" className="font-semibold text-[#212121] text-sm">Nombre *</Label>
               <Input
                 id="name"
+                autoComplete="given-name"
                 placeholder="Tu nombre"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 maxLength={100}
-                className="h-12 md:h-14 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm md:text-base px-4 bg-white text-black placeholder:text-gray-400"
+                className="h-12 md:h-14 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm md:text-base px-4 bg-white text-black placeholder:text-gray-400 autofill:bg-white autofill:text-black [&:-webkit-autofill]:!bg-white [&:-webkit-autofill]:!text-black [&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_white]"
               />
             </div>
             <div className="space-y-1.5">
@@ -131,11 +132,12 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 maxLength={255}
-                className="h-12 md:h-14 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm md:text-base px-4 bg-white text-black placeholder:text-gray-400"
+                className="h-12 md:h-14 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm md:text-base px-4 bg-white text-black placeholder:text-gray-400 autofill:bg-white autofill:text-black [&:-webkit-autofill]:!bg-white [&:-webkit-autofill]:!text-black [&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_white]"
               />
             </div>
           </div>
