@@ -404,4 +404,4 @@ const ImageDB = () => {
 };
 
 export default ImageDB;
-export { ImageDBPinGate };
+export { ImageDBPinGate, ImageDBContent };
