@@ -20,7 +20,8 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Generate a recovery link using admin API
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
       email,
@@ -29,11 +30,11 @@ serve(async (req) => {
 
     if (error) throw error;
 
-    // Send the email via Resend
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not configured");
 
     const actionLink = data.properties?.action_link;
+    const subject = "🔑 Tu acceso a Socialify está listo";
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
@@ -58,6 +59,24 @@ serve(async (req) => {
       </div>
     `;
 
+    // Insert record first to get ID for tracking pixel
+    const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
+      recipient_email: email,
+      subject,
+      html_content: html,
+      source: "password_reset",
+      status: "pending",
+    }).select("id").single();
+
+    let finalHtml = html;
+    if (emailRecord?.id) {
+      const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
+      finalHtml = html.replace(/<\/div>\s*$/, `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" /></div>`);
+      if (!finalHtml.includes(pixelUrl)) {
+        finalHtml += `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+      }
+    }
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -67,23 +86,22 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "Socialify <notificaciones@socialifycr.com>",
         to: [email],
-        subject: "🔑 Tu acceso a Socialify está listo",
-        html,
+        subject,
+        html: finalHtml,
       }),
     });
 
     const resData = await res.json();
     if (!res.ok) throw new Error(JSON.stringify(resData));
 
-    // Log to sent_emails for unified history
-    await supabaseAdmin.from("sent_emails").insert({
-      recipient_email: email,
-      subject: "🔑 Tu acceso a Socialify está listo",
-      html_content: html,
-      source: "password_reset",
-      status: "sent",
-      resend_id: resData?.id || null,
-    });
+    // Update record with final status
+    if (emailRecord?.id) {
+      await supabaseAdmin.from("sent_emails").update({
+        html_content: finalHtml,
+        status: "sent",
+        resend_id: resData?.id || null,
+      }).eq("id", emailRecord.id);
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
