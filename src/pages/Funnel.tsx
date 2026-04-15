@@ -139,6 +139,7 @@ const Funnel = () => {
         business_level: businessLevel,
         industry: answers.industry,
         revenue_range: answers.ingresos,
+        funnel_id: funnelId,
         answers: {
           presencia: answers.presencia,
           pauta: answers.pauta,
