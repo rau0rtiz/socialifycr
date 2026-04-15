@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Send, Search, Filter, Eye, CheckCircle, XCircle, Loader2, Camera } from 'lucide-react';
+import { Send, Search, Filter, Eye, CheckCircle, XCircle, Loader2, Camera, MailOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -180,6 +180,12 @@ const EmailsLogContent = () => {
                         <div className="flex items-center gap-2 mb-1">
                           {email.status === 'sent' ? <CheckCircle className="h-4 w-4 text-green-500 shrink-0" /> : <XCircle className="h-4 w-4 text-red-500 shrink-0" />}
                           <span className="font-medium truncate">{email.subject}</span>
+                          {email.opened_at && (
+                            <Badge variant="secondary" className="text-xs shrink-0 gap-1">
+                              <MailOpen className="h-3 w-3" />
+                              Abierto
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="truncate">{email.recipient_name ? `${email.recipient_name} <${email.recipient_email}>` : email.recipient_email}</span>
@@ -187,7 +193,12 @@ const EmailsLogContent = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs text-muted-foreground">{format(new Date(email.created_at), "d MMM yyyy HH:mm", { locale: es })}</span>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-xs text-muted-foreground">{format(new Date(email.created_at), "d MMM yyyy HH:mm", { locale: es })}</span>
+                          {email.opened_at && (
+                            <span className="text-[10px] text-green-600">Abierto: {format(new Date(email.opened_at), "d MMM HH:mm", { locale: es })}</span>
+                          )}
+                        </div>
                         {email.html_content && (
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewEmail(email)}><Eye className="h-4 w-4" /></Button>
                         )}
