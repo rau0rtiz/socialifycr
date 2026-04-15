@@ -152,63 +152,31 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
 
       {/* Actions — shown after reveal */}
       {revealed && (
-        <div className="space-y-4 text-center animate-fade-in">
-          {/* PDF Download */}
-          <Button
-            size="lg"
-            className="w-full py-5 md:py-7 text-sm md:text-base gap-2 rounded-2xl font-semibold uppercase tracking-wide bg-[#212121] hover:bg-[#333] text-white"
-            onClick={() => {
-              const link = document.createElement('a');
-              link.href = `/roadmaps/Nivel-${level}.pdf`;
-              link.download = `Roadmap-Nivel-${level}.pdf`;
-              link.target = '_blank';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }}
-          >
-            <Download className="h-5 w-5" />
-            Descargar mi estrategia (PDF)
-          </Button>
+        <div className="space-y-5 text-center animate-fade-in">
+          {/* Email confirmation */}
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 border border-green-200">
+            <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+            <p className="text-sm text-left text-green-800">
+              Te enviamos tu estrategia personalizada a <span className="font-semibold">{email}</span>
+            </p>
+          </div>
 
-          {/* Free planning session CTA — all levels */}
-          <div className="p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[#FF6B35]/10 to-[#FF6B35]/5 border-2 border-[#FF6B35]/30 space-y-4 text-left relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF6B35]/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="relative">
-              <div className="inline-flex items-center gap-1.5 bg-[#FF6B35] text-white text-[10px] md:text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
-                <Calendar className="h-3 w-3" />
-                100% Gratis — Sin compromiso
-              </div>
-              <h3 className="text-lg md:text-xl font-bold text-[#212121] leading-snug">
-                Sesión de Planificación Estratégica Personalizada
-              </h3>
-              <p className="text-[#212121]/60 text-sm md:text-base mt-2 leading-relaxed">
-                En 30 minutos definimos juntos un plan de acción concreto para tu negocio. 
-                <span className="font-semibold text-[#212121]/80"> Lo ejecutés con nosotros o no, el plan es tuyo.</span>
-              </p>
-              <ul className="mt-3 space-y-1.5 text-xs md:text-sm text-[#212121]/60">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#FF6B35] font-bold mt-0.5">✓</span>
-                  Diagnóstico de tu presencia digital actual
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#FF6B35] font-bold mt-0.5">✓</span>
-                  Estrategia personalizada según tu nivel
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#FF6B35] font-bold mt-0.5">✓</span>
-                  Próximos pasos claros para crecer
-                </li>
-              </ul>
-              <Button
-                size="lg"
-                className="w-full mt-5 gap-2 bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold rounded-xl text-sm md:text-base py-6 shadow-lg shadow-[#FF6B35]/20"
-                onClick={onCalendlyClick}
-              >
-                Agendar mi sesión gratuita
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
+          {/* Session CTA — clean, human */}
+          <div className="p-5 md:p-6 rounded-xl border border-gray-200 bg-white text-left space-y-3">
+            <h3 className="text-base md:text-lg font-bold text-[#212121]">
+              ¿Querés que te ayudemos a armarlo?
+            </h3>
+            <p className="text-sm text-[#212121]/60 leading-relaxed">
+              Agendá una sesión gratuita de 30 min donde definimos un plan concreto para tu negocio. Lo ejecutés con nosotros o no, el plan es tuyo.
+            </p>
+            <Button
+              size="lg"
+              className="w-full gap-2 bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold rounded-xl text-sm md:text-base py-5"
+              onClick={onCalendlyClick}
+            >
+              Agendar sesión gratuita
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       )}
