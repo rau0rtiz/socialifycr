@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, X, Eye,
+  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, Eye,
 } from 'lucide-react';
 import { ImageDBContent } from './ImageDB';
 
