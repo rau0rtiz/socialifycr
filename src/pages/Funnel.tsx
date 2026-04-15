@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import '@fontsource/nunito/700.css';
 
-const CALENDLY_URL = 'https://calendly.com/socialifycr';
+const CALENDLY_URL = 'https://calendly.com/raul-socialifycr/sesion-gratuita-de-planificacion';
 const FONT = "'DM Sans', sans-serif";
 const AUTO_ADVANCE_DELAY = 450;
 

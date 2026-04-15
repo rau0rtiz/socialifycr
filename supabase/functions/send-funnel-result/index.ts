@@ -104,7 +104,7 @@ serve(async (req) => {
       const sessionButton = isExploratory
         ? 'Agendar sesión exploratoria'
         : 'Agendar sesión gratuita';
-      const calendlyUrl = 'https://calendly.com/socialifycr/estrategia';
+      const calendlyUrl = 'https://calendly.com/raul-socialifycr/sesion-gratuita-de-planificacion';
 
       sessionCta = `
         <div style="margin-top:24px;padding:24px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;">
@@ -121,7 +121,7 @@ serve(async (req) => {
       .replace(/\{\{level_number\}\}/g, String(business_level))
       .replace(/\{\{level_desc\}\}/g, level.desc)
       .replace(/\{\{session_cta\}\}/g, sessionCta)
-      .replace(/\{\{calendly_url\}\}/g, "https://calendly.com/socialifycr/estrategia");
+      .replace(/\{\{calendly_url\}\}/g, "https://calendly.com/raul-socialifycr/sesion-gratuita-de-planificacion");
 
     let subject = template.subject
       .replace(/\{\{name\}\}/g, name)
