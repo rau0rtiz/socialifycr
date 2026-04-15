@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -155,6 +156,7 @@ const SaleCard = ({ sale, onEdit, onDelete }: { sale: MessageSale; onEdit: (s: M
 
 export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, adCurrency = 'USD', hasAdAccount = false, salePrefill, showSaleDialog, onSaleFromSetter, dateRange }: SalesTrackingSectionProps) => {
   const { selectedClient } = useBrand();
+  const qc = useQueryClient();
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const salesLabel = 'Ventas';
@@ -253,6 +255,21 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
           setDialogOpen(false);
           setCurrentPrefill(null);
           if (onSaleFromSetter) onSaleFromSetter(appointmentId, saleId);
+
+          // Auto-enroll student in class group if both group_id and student_contact_id are present
+          if (sale.group_id && sale.student_contact_id && saleId) {
+            try {
+              const { supabase } = await import('@/integrations/supabase/client');
+              await supabase.from('class_group_members').insert({
+                group_id: sale.group_id,
+                student_contact_id: sale.student_contact_id,
+                sale_id: saleId,
+              });
+              qc.invalidateQueries({ queryKey: ['class-group-members', clientId] });
+            } catch {
+              toast.error('Error al inscribir estudiante en grupo');
+            }
+          }
 
           // Generate collection records for remaining installments
           if (collectionMeta && saleId) {
