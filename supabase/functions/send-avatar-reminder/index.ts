@@ -128,7 +128,7 @@ serve(async (req) => {
 
         const data = await res.json();
 
-        await supabaseAdmin.from("sent_emails").insert({
+        const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
           recipient_email: profile.email,
           recipient_name: profile.full_name || null,
           subject,
@@ -138,7 +138,14 @@ serve(async (req) => {
           error_message: res.ok ? null : JSON.stringify(data),
           source: "notification",
           sent_by: callerUserId,
-        });
+        }).select("id").single();
+
+        if (emailRecord?.id) {
+          const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+          const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
+          const trackedHtml = emailHtml + `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+          await supabaseAdmin.from("sent_emails").update({ html_content: trackedHtml }).eq("id", emailRecord.id);
+        }
 
         if (res.ok) sentCount++;
       } catch (emailErr) {
