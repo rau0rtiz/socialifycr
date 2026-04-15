@@ -4,7 +4,6 @@ import { FunnelQuestion } from '@/components/funnel/FunnelQuestion';
 import { ResultsStep } from '@/components/funnel/ResultsStep';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ensureMetaPixel } from '@/lib/meta-pixel';
 import '@fontsource/nunito/700.css';
 
 const CALENDLY_URL = 'https://calendly.com/raul-socialifycr/sesion-gratuita-de-planificacion';
@@ -124,10 +123,6 @@ const Funnel = () => {
   useEffect(() => {
     resolveFunnelId().catch(() => null);
   }, [resolveFunnelId]);
-
-  useEffect(() => {
-    ensureMetaPixel();
-  }, []);
 
   const progressPercent = step === 0 || step >= 7 ? 0 : Math.round((step / TOTAL_QUESTION_STEPS) * 100);
 
