@@ -37,6 +37,10 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
     setIsSubmitting(false);
     if (ok) {
       setRevealed(true);
+      // Meta Pixel: Lead event
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'Lead', { content_name: 'Roadmap Funnel', business_level: level });
+      }
       // Fire-and-forget: send the funnel result email
       supabase.functions.invoke('send-funnel-result', {
         body: { name, email, business_level: level },
