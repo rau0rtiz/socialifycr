@@ -27,8 +27,8 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const current = levelData[level - 1];
-  const qualifiesForSession = level >= 3 && level <= 5;
-  const isPremium = level === 6;
+  const qualifiesForSession = level >= 4;
+  const isExploratory = level === 6;
   const canSubmit = name.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async () => {
@@ -170,23 +170,28 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
             </p>
           </div>
 
-          {/* Session CTA — clean, human */}
-          <div className="p-5 md:p-6 rounded-xl border border-gray-200 bg-white text-left space-y-3">
-            <h3 className="text-base md:text-lg font-bold text-[#212121]">
-              ¿Querés ayuda para implementarlo?
-            </h3>
-            <p className="text-sm text-[#212121]/60 leading-relaxed">
-              Agendá una sesión gratuita de 1 hora donde definimos un plan concreto para tu negocio. <strong>Lo ejecutés con nosotros o no, el plan es tuyo.</strong>
-            </p>
-            <Button
-              size="lg"
-              className="w-full gap-2 bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold rounded-xl text-sm md:text-base py-5"
-              onClick={onCalendlyClick}
-            >
-              Agendar sesión gratuita
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
+          {/* Session CTA — only for levels 4+ */}
+          {qualifiesForSession && (
+            <div className="p-5 md:p-6 rounded-xl border border-gray-200 bg-white text-left space-y-3">
+              <h3 className="text-base md:text-lg font-bold text-[#212121]">
+                {isExploratory ? '¿Querés llevar tu marca al siguiente nivel?' : '¿Querés ayuda para implementarlo?'}
+              </h3>
+              <p className="text-sm text-[#212121]/60 leading-relaxed">
+                {isExploratory
+                  ? <>Agendá una sesión exploratoria donde analizamos tu contexto y definimos un plan preliminar de trabajo. <strong>Lo ejecutés con nosotros o no, el plan es tuyo.</strong></>
+                  : <>Agendá una sesión gratuita de 1 hora donde definimos un plan concreto para tu negocio. <strong>Lo ejecutés con nosotros o no, el plan es tuyo.</strong></>
+                }
+              </p>
+              <Button
+                size="lg"
+                className="w-full gap-2 bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold rounded-xl text-sm md:text-base py-5"
+                onClick={onCalendlyClick}
+              >
+                {isExploratory ? 'Agendar sesión exploratoria' : 'Agendar sesión gratuita'}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
