@@ -10,8 +10,8 @@ import {
   History,
   BarChart3,
   CreditCard,
-  Image,
   Eye,
+  FolderOpen,
   Mail,
   KeyRound,
   X,
@@ -46,7 +46,7 @@ const managementMenuItems = [
   { title: 'Facturación', url: '/facturacion', icon: CreditCard },
   { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },
   { title: 'Historial', url: '/historial', icon: History },
-  { title: 'Image DB', url: '/image-db', icon: Image },
+  { title: 'Archivos', url: '/archivos', icon: FolderOpen },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
 ];
 
