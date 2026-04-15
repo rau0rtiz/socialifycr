@@ -245,6 +245,12 @@ const AgencyLeadsContent = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                  onCheckedChange={toggleSelectAll}
+                />
+              </TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Nivel</TableHead>
@@ -256,12 +262,18 @@ const AgencyLeadsContent = () => {
           </TableHeader>
           <TableBody>
             {leadsLoading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No hay leads</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No hay leads</TableCell></TableRow>
             ) : (
               filtered.map((lead) => (
                 <TableRow key={lead.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(lead.id)}
+                      onCheckedChange={() => toggleSelect(lead.id)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{lead.name}</TableCell>
                   <TableCell className="text-muted-foreground">{lead.email}</TableCell>
                   <TableCell>
