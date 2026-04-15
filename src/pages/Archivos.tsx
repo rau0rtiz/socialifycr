@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,9 @@ import {
   Upload, Trash2, FileText, Search, Download, Image, FolderOpen, Eye,
 } from 'lucide-react';
 import { ImageDBContent } from './ImageDB';
+import { lazy, Suspense } from 'react';
+
+const PdfViewer = lazy(() => import('@/components/files/PdfViewer'));
 
 interface DocFile {
   name: string;
@@ -23,20 +26,18 @@ interface DocFile {
   isPdf: boolean;
 }
 
-const PDFThumbnail = ({ onClick }: { url: string; name: string; onClick: () => void }) => {
-  return (
-    <button
-      onClick={onClick}
-      className="relative w-full aspect-[3/4] rounded-lg border border-border overflow-hidden bg-muted/30 hover:ring-2 hover:ring-primary/40 transition-all group cursor-pointer flex flex-col items-center justify-center gap-2"
-    >
-      <FileText className="h-8 w-8 text-red-400" />
-      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">PDF</span>
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-        <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-      </div>
-    </button>
-  );
-};
+const PDFThumbnail = ({ onClick }: { url: string; name: string; onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="relative w-full aspect-[3/4] rounded-lg border border-border overflow-hidden bg-muted/30 hover:ring-2 hover:ring-primary/40 transition-all group cursor-pointer flex flex-col items-center justify-center gap-2"
+  >
+    <FileText className="h-8 w-8 text-red-400" />
+    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">PDF</span>
+    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+      <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+    </div>
+  </button>
+);
 
 const FileIcon = ({ name, onClick }: { name: string; onClick: () => void }) => {
   const ext = name.split('.').pop()?.toLowerCase() || '';
@@ -64,36 +65,41 @@ const FileIcon = ({ name, onClick }: { name: string; onClick: () => void }) => {
   );
 };
 
-const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; open: boolean; onClose: () => void; onDelete: (path: string) => void }) => {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+const PreviewDialog = ({ doc, open, onClose, onDelete }: {
+  doc: DocFile | null; open: boolean; onClose: () => void; onDelete: (path: string) => void;
+}) => {
+  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
-
-  const fetchBlob = useCallback(async (path: string) => {
-    setLoading(true);
-    setBlobUrl(null);
-    try {
-      const { data, error } = await supabase.storage.from('content-images').download(path);
-      if (error || !data) throw error || new Error('No data');
-      const objUrl = URL.createObjectURL(data);
-      setBlobUrl(objUrl);
-    } catch {
-      setBlobUrl(null);
-    } finally {
-      setLoading(false);
+  // Fetch blob via useEffect — no side effects in render
+  useEffect(() => {
+    if (!open || !doc) {
+      setPdfData(null);
+      setError(false);
+      return;
     }
-  }, []);
+    if (!doc.isPdf) return;
 
-  // Fetch blob when doc changes
-  if (open && doc && !blobUrl && !loading) {
-    fetchBlob(doc.fullPath);
-  }
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
 
-  // Cleanup blob URL when dialog closes
-  if (!open && blobUrl) {
-    URL.revokeObjectURL(blobUrl);
-    setBlobUrl(null);
-  }
+    (async () => {
+      try {
+        const { data, error: err } = await supabase.storage.from('content-images').download(doc.fullPath);
+        if (err || !data) throw err || new Error('No data');
+        const buf = await data.arrayBuffer();
+        if (!cancelled) setPdfData(buf);
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [open, doc?.fullPath]);
 
   const handleDownload = useCallback(async () => {
     if (!doc) return;
@@ -107,19 +113,21 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
-      window.open(doc.url, '_blank');
+      toast.error('Error descargando archivo');
     }
   }, [doc]);
 
   if (!doc) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) { if (blobUrl) URL.revokeObjectURL(blobUrl); setBlobUrl(null); onClose(); } }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-4xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0" aria-describedby={undefined}>
         <DialogHeader className="px-4 py-3 border-b border-border flex-row items-center justify-between space-y-0">
-          <DialogTitle className="text-sm font-medium truncate pr-4">{doc.name.replace(/^\d+-/, '').replace(/_/g, ' ')}</DialogTitle>
+          <DialogTitle className="text-sm font-medium truncate pr-4">
+            {doc.name.replace(/^\d+-/, '').replace(/_/g, ' ')}
+          </DialogTitle>
           <div className="flex items-center gap-1 shrink-0">
             <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={handleDownload}>
               <Download className="h-3.5 w-3.5" />
@@ -136,21 +144,34 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
           </div>
         </DialogHeader>
         <div className="flex-1 min-h-0">
-          {doc.isPdf && blobUrl ? (
-            <iframe
-              src={blobUrl}
-              className="w-full h-full border-0"
-              title={doc.name}
-            />
-          ) : loading ? (
-            <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
-              <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-              <p className="text-sm">Cargando documento...</p>
-            </div>
+          {doc.isPdf ? (
+            loading ? (
+              <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+                <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+                <p className="text-sm">Cargando documento...</p>
+              </div>
+            ) : error || !pdfData ? (
+              <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+                <FileText className="h-16 w-16 opacity-30" />
+                <p className="text-sm">No se pudo cargar el PDF</p>
+                <Button variant="outline" size="sm" onClick={handleDownload}>
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Descargar archivo
+                </Button>
+              </div>
+            ) : (
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+                </div>
+              }>
+                <PdfViewer data={pdfData} />
+              </Suspense>
+            )
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
               <FileText className="h-16 w-16 opacity-30" />
-              <p className="text-sm">{doc.isPdf ? 'No se pudo cargar el PDF' : 'Vista previa no disponible'}</p>
+              <p className="text-sm">Vista previa no disponible</p>
               <Button variant="outline" size="sm" onClick={handleDownload}>
                 <Download className="h-3.5 w-3.5 mr-1.5" />
                 Descargar archivo
@@ -234,17 +255,16 @@ const DocumentsManager = () => {
     onError: () => toast.error('Error eliminando archivo'),
   });
 
+  const displayName = (name: string) => {
+    const match = name.match(/^\d+-(.+)$/);
+    return match ? match[1].replace(/_/g, ' ') : name;
+  };
+
   const formatSize = (bytes: number) => {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  // Strip the timestamp prefix for display
-  const displayName = (name: string) => {
-    const match = name.match(/^\d+-(.+)$/);
-    return match ? match[1].replace(/_/g, ' ') : name;
   };
 
   return (
