@@ -27,6 +27,7 @@ const Invitacion = lazy(() => import("./pages/Invitacion"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ImageDB = lazy(() => import("./pages/ImageDB"));
+const Archivos = lazy(() => import("./pages/Archivos"));
 const Accesos = lazy(() => import("./pages/Accesos"));
 const EmailMarketing = lazy(() => import("./pages/EmailMarketing"));
 const BusinessSetup = lazy(() => import("./pages/BusinessSetup"));
@@ -130,6 +131,13 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <ImageDB />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/archivos" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <Archivos />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />

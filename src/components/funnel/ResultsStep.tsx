@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowRight, Lock, Loader2, Mail, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ResultsStepProps {
   level: number;
@@ -34,7 +35,13 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
     setIsSubmitting(true);
     const ok = await onSubmitContact(name, email);
     setIsSubmitting(false);
-    if (ok) setRevealed(true);
+    if (ok) {
+      setRevealed(true);
+      // Fire-and-forget: send the funnel result email
+      supabase.functions.invoke('send-funnel-result', {
+        body: { name, email, business_level: level },
+      }).catch((err) => console.error('Email send error:', err));
+    }
   };
 
   return (
