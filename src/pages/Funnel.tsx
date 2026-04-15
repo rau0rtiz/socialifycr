@@ -80,6 +80,8 @@ const calculateLevel = (ingresos: string, presencia: string, pauta: string): num
 // Steps: 0=welcome, 1-6=questions, 7=results (blurred → revealed)
 const TOTAL_QUESTION_STEPS = 6;
 
+const ROADMAP_FUNNEL_SLUG = 'roadmap-personalizado';
+
 const Funnel = () => {
   const { toast } = useToast();
   const [step, setStep] = useState(0);
@@ -89,11 +91,6 @@ const Funnel = () => {
   const [funnelId, setFunnelId] = useState<string | null>(null);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    supabase.from('funnels').select('id').eq('status', 'active').limit(1).single()
-      .then(({ data }) => { if (data) setFunnelId(data.id); });
-  }, []);
-
   const [answers, setAnswers] = useState({
     industry: '',
     ingresos: '',
@@ -102,6 +99,30 @@ const Funnel = () => {
     canalVentas: '',
     objetivo: '',
   });
+
+  const resolveFunnelId = useCallback(async () => {
+    if (funnelId) return funnelId;
+
+    const { data, error } = await supabase
+      .from('funnels')
+      .select('id')
+      .eq('slug', ROADMAP_FUNNEL_SLUG)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data?.id) {
+      setFunnelId(data.id);
+      return data.id;
+    }
+
+    return null;
+  }, [funnelId]);
+
+  useEffect(() => {
+    resolveFunnelId().catch(() => null);
+  }, [resolveFunnelId]);
 
   const progressPercent = step === 0 || step >= 7 ? 0 : Math.round((step / TOTAL_QUESTION_STEPS) * 100);
 
@@ -132,6 +153,13 @@ const Funnel = () => {
   const handleSubmitContact = async (name: string, email: string) => {
     const id = crypto.randomUUID();
     try {
+      const resolvedFunnelId = await resolveFunnelId();
+
+      if (!resolvedFunnelId) {
+        toast({ title: 'Error', description: 'No pudimos identificar este roadmap. Intentá de nuevo en unos segundos.', variant: 'destructive' });
+        return false;
+      }
+
       const { error } = await supabase.from('funnel_leads').insert({
         id,
         name: name.trim().slice(0, 100),
@@ -139,7 +167,7 @@ const Funnel = () => {
         business_level: businessLevel,
         industry: answers.industry,
         revenue_range: answers.ingresos,
-        funnel_id: funnelId,
+        funnel_id: resolvedFunnelId,
         answers: {
           presencia: answers.presencia,
           pauta: answers.pauta,
