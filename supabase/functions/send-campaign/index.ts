@@ -128,6 +128,18 @@ serve(async (req) => {
               sent_at: new Date().toISOString(),
             });
 
+            // Log to sent_emails for unified history
+            await supabaseAdmin.from("sent_emails").insert({
+              recipient_email: contact.email,
+              recipient_name: contact.full_name || null,
+              subject: campaign.subject,
+              html_content: personalizedHtml,
+              source: "campaign",
+              status: "sent",
+              resend_id: resData.id,
+              client_id: campaign.client_id,
+            });
+
             sentCount++;
           } catch (err) {
             // Log failure
@@ -136,6 +148,17 @@ serve(async (req) => {
               contact_id: contact.id,
               status: "failed",
               error_message: err.message,
+            });
+
+            // Log failure to sent_emails
+            await supabaseAdmin.from("sent_emails").insert({
+              recipient_email: contact.email,
+              recipient_name: contact.full_name || null,
+              subject: campaign.subject,
+              source: "campaign",
+              status: "failed",
+              error_message: err.message,
+              client_id: campaign.client_id,
             });
 
             failedCount++;

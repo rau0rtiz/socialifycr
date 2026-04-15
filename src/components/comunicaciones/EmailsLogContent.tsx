@@ -20,6 +20,8 @@ const sourceLabels: Record<string, string> = {
   invitation: 'Invitación',
   password_reset: 'Reset Contraseña',
   campaign: 'Campaña',
+  funnel: 'Funnel',
+  avatar_reminder: 'Recordatorio Foto',
 };
 
 const EmailsLogContent = () => {
@@ -150,6 +152,8 @@ const EmailsLogContent = () => {
                 <SelectItem value="invitation">Invitación</SelectItem>
                 <SelectItem value="password_reset">Reset Contraseña</SelectItem>
                 <SelectItem value="campaign">Campaña</SelectItem>
+                <SelectItem value="funnel">Funnel</SelectItem>
+                <SelectItem value="avatar_reminder">Recordatorio Foto</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>

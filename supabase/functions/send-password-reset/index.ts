@@ -75,6 +75,16 @@ serve(async (req) => {
     const resData = await res.json();
     if (!res.ok) throw new Error(JSON.stringify(resData));
 
+    // Log to sent_emails for unified history
+    await supabaseAdmin.from("sent_emails").insert({
+      recipient_email: email,
+      subject: "🔑 Tu acceso a Socialify está listo",
+      html_content: html,
+      source: "password_reset",
+      status: "sent",
+      resend_id: resData?.id || null,
+    });
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
