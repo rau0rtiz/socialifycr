@@ -5,18 +5,129 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Upload, Trash2, FileText, Search, Download, Image, FolderOpen,
+  Upload, Trash2, FileText, Search, Download, Image, FolderOpen, X, Eye,
 } from 'lucide-react';
 import { ImageDBContent } from './ImageDB';
+
+interface DocFile {
+  name: string;
+  fullPath: string;
+  url: string;
+  created_at: string;
+  size: number;
+  isPdf: boolean;
+}
+
+const PDFThumbnail = ({ url, name, onClick }: { url: string; name: string; onClick: () => void }) => {
+  return (
+    <button
+      onClick={onClick}
+      className="relative w-full aspect-[3/4] rounded-lg border border-border overflow-hidden bg-muted/30 hover:ring-2 hover:ring-primary/40 transition-all group cursor-pointer"
+    >
+      <iframe
+        src={`${url}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
+        className="w-full h-full pointer-events-none scale-100"
+        title={name}
+        loading="lazy"
+      />
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+        <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+      </div>
+    </button>
+  );
+};
+
+const FileIcon = ({ name, onClick }: { name: string; onClick: () => void }) => {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  const colors: Record<string, string> = {
+    doc: 'bg-blue-500', docx: 'bg-blue-500',
+    xls: 'bg-green-600', xlsx: 'bg-green-600', csv: 'bg-green-600',
+    ppt: 'bg-orange-500', pptx: 'bg-orange-500',
+    txt: 'bg-gray-400',
+  };
+  const bg = colors[ext] || 'bg-muted-foreground';
+
+  return (
+    <button
+      onClick={onClick}
+      className="relative w-full aspect-[3/4] rounded-lg border border-border overflow-hidden bg-muted/30 hover:ring-2 hover:ring-primary/40 transition-all group cursor-pointer flex flex-col items-center justify-center gap-2"
+    >
+      <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center`}>
+        <FileText className="h-6 w-6 text-white" />
+      </div>
+      <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
+        .{ext}
+      </span>
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+    </button>
+  );
+};
+
+const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; open: boolean; onClose: () => void; onDelete: (path: string) => void }) => {
+  if (!doc) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-4xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-4 py-3 border-b border-border flex-row items-center justify-between space-y-0">
+          <DialogTitle className="text-sm font-medium truncate pr-4">{doc.name}</DialogTitle>
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={() => window.open(doc.url, '_blank')}
+            >
+              <Download className="h-3.5 w-3.5" />
+              Descargar
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
+              onClick={() => { onDelete(doc.fullPath); onClose(); }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </DialogHeader>
+        <div className="flex-1 min-h-0">
+          {doc.isPdf ? (
+            <iframe
+              src={`${doc.url}#toolbar=1&navpanes=0`}
+              className="w-full h-full border-0"
+              title={doc.name}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+              <FileText className="h-16 w-16 opacity-30" />
+              <p className="text-sm">Vista previa no disponible para este tipo de archivo</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(doc.url, '_blank')}
+              >
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                Descargar archivo
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const DocumentsManager = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<DocFile | null>(null);
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ['archivos-documents'],
@@ -27,12 +138,14 @@ const DocumentsManager = () => {
       if (error) throw error;
       return (data || []).filter(f => f.id).map(f => {
         const { data: urlData } = supabase.storage.from('content-images').getPublicUrl(`documents/${f.name}`);
+        const isPdf = f.name.toLowerCase().endsWith('.pdf');
         return {
           name: f.name,
           fullPath: `documents/${f.name}`,
           url: urlData.publicUrl,
           created_at: f.created_at || '',
           size: (f.metadata as any)?.size || 0,
+          isPdf,
         };
       });
     },
@@ -89,95 +202,98 @@ const DocumentsManager = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  // Strip the timestamp prefix for display
+  const displayName = (name: string) => {
+    const match = name.match(/^\d+-(.+)$/);
+    return match ? match[1].replace(/_/g, ' ') : name;
+  };
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <FileText className="h-5 w-5" />
-            Documentos
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Buscar documentos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 h-8 text-xs"
-              />
-            </div>
-            <Button size="sm" className="h-8 text-xs relative" disabled={uploading}>
-              <Upload className="h-3.5 w-3.5 mr-1" />
-              {uploading ? 'Subiendo...' : 'Subir'}
-              <input
-                type="file"
-                multiple
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
-                onChange={handleUpload}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                disabled={uploading}
-              />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm font-medium">No hay documentos</p>
-            <p className="text-xs mt-1">Sube archivos PDF, Word, Excel y más.</p>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            {filtered.map((doc) => (
-              <div
-                key={doc.fullPath}
-                className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors group"
-              >
-                <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{doc.name}</p>
-                  {doc.size > 0 && (
-                    <p className="text-[10px] text-muted-foreground">{formatSize(doc.size)}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={() => window.open(doc.url, '_blank')}
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                    onClick={() => deleteDoc.mutate(doc.fullPath)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+    <>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText className="h-5 w-5" />
+              Documentos
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar documentos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 h-8 text-xs"
+                />
               </div>
-            ))}
+              <Button size="sm" className="h-8 text-xs relative" disabled={uploading}>
+                <Upload className="h-3.5 w-3.5 mr-1" />
+                {uploading ? 'Subiendo...' : 'Subir'}
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                  onChange={handleUpload}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  disabled={uploading}
+                />
+              </Button>
+            </div>
           </div>
-        )}
-        <div className="mt-4 pt-3 border-t border-border">
-          <p className="text-[10px] text-muted-foreground">
-            {filtered.length} archivo{filtered.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="w-full aspect-[3/4] rounded-lg" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium">No hay documentos</p>
+              <p className="text-xs mt-1">Sube archivos PDF, Word, Excel y más.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {filtered.map((doc) => (
+                <div key={doc.fullPath} className="space-y-2 group">
+                  {doc.isPdf ? (
+                    <PDFThumbnail url={doc.url} name={doc.name} onClick={() => setPreviewDoc(doc)} />
+                  ) : (
+                    <FileIcon name={doc.name} onClick={() => setPreviewDoc(doc)} />
+                  )}
+                  <div className="px-0.5">
+                    <p className="text-xs font-medium truncate" title={displayName(doc.name)}>
+                      {displayName(doc.name)}
+                    </p>
+                    {doc.size > 0 && (
+                      <p className="text-[10px] text-muted-foreground">{formatSize(doc.size)}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="mt-4 pt-3 border-t border-border">
+            <p className="text-[10px] text-muted-foreground">
+              {filtered.length} archivo{filtered.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <PreviewDialog
+        doc={previewDoc}
+        open={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        onDelete={(path) => deleteDoc.mutate(path)}
+      />
+    </>
   );
 };
 
