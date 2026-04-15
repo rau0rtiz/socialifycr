@@ -37,6 +37,10 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
     setIsSubmitting(false);
     if (ok) {
       setRevealed(true);
+      // Meta Pixel: Lead event
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'Lead', { content_name: 'Roadmap Funnel', business_level: level });
+      }
       // Fire-and-forget: send the funnel result email
       supabase.functions.invoke('send-funnel-result', {
         body: { name, email, business_level: level },
@@ -185,7 +189,13 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
               <Button
                 size="lg"
                 className="w-full gap-2 bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold rounded-xl text-sm py-4"
-                onClick={onCalendlyClick}
+                onClick={() => {
+                  // Meta Pixel: Schedule event
+                  if (typeof window !== 'undefined' && (window as any).fbq) {
+                    (window as any).fbq('track', 'Schedule', { content_name: 'Roadmap Funnel', business_level: level });
+                  }
+                  onCalendlyClick();
+                }}
               >
                 {isExploratory ? 'Agendar sesión exploratoria' : 'Agendar sesión gratuita'}
                 <ArrowRight className="h-4 w-4" />
