@@ -164,10 +164,10 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
           {/* Session CTA — clean, human */}
           <div className="p-5 md:p-6 rounded-xl border border-gray-200 bg-white text-left space-y-3">
             <h3 className="text-base md:text-lg font-bold text-[#212121]">
-              ¿Querés que te ayudemos a armarlo?
+              ¿Querés ayuda para implementarlo?
             </h3>
             <p className="text-sm text-[#212121]/60 leading-relaxed">
-              Agendá una sesión gratuita de 30 min donde definimos un plan concreto para tu negocio. Lo ejecutés con nosotros o no, el plan es tuyo.
+              Agendá una Agendá una sesión gratuita de 1 hora donde definimos un plan concreto para tu negocio. Lo ejecutés con nosotros o no, el plan es tuyo. donde definimos un plan concreto para tu negocio. Lo ejecutés con nosotros o no, el plan es tuyo.
             </p>
             <Button
               size="lg"
