@@ -69,13 +69,13 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
   const [loading, setLoading] = useState(false);
 
 
-  const fetchBlob = useCallback(async (url: string) => {
+  const fetchBlob = useCallback(async (path: string) => {
     setLoading(true);
     setBlobUrl(null);
     try {
-      const res = await fetch(url);
-      const blob = await res.blob();
-      const objUrl = URL.createObjectURL(blob);
+      const { data, error } = await supabase.storage.from('content-images').download(path);
+      if (error || !data) throw error || new Error('No data');
+      const objUrl = URL.createObjectURL(data);
       setBlobUrl(objUrl);
     } catch {
       setBlobUrl(null);
