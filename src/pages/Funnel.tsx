@@ -86,7 +86,13 @@ const Funnel = () => {
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [businessLevel, setBusinessLevel] = useState(1);
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [funnelId, setFunnelId] = useState<string | null>(null);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    supabase.from('funnels').select('id').eq('status', 'active').limit(1).single()
+      .then(({ data }) => { if (data) setFunnelId(data.id); });
+  }, []);
 
   const [answers, setAnswers] = useState({
     industry: '',
