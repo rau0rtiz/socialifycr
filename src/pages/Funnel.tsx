@@ -5,7 +5,7 @@ import { EmailCaptureStep } from '@/components/funnel/EmailCaptureStep';
 import { ResultsStep } from '@/components/funnel/ResultsStep';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import socialifyLogo from '@/assets/socialify-logo.png';
+import '@fontsource/nunito/700.css';
 
 const CALENDLY_URL = 'https://calendly.com/socialifycr';
 const FONT = "'DM Sans', sans-serif";
@@ -244,7 +244,7 @@ const Funnel = () => {
       {/* Header */}
       <header className="bg-white sticky top-0 z-10 border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-4 flex items-center justify-center relative">
-          <img src={socialifyLogo} alt="Socialify" className="h-6 md:h-7" />
+          <span className="text-xl md:text-2xl font-bold text-[#212121] tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>socialify</span>
           {step > 0 && step < 8 && (
             <span className="absolute right-4 text-xs md:text-sm text-[#212121]/40 font-medium uppercase tracking-wider">
               {step} / {TOTAL_QUESTION_STEPS}
