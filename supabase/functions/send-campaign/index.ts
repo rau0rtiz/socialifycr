@@ -128,8 +128,8 @@ serve(async (req) => {
               sent_at: new Date().toISOString(),
             });
 
-            // Log to sent_emails for unified history
-            await supabaseAdmin.from("sent_emails").insert({
+            // Log to sent_emails for unified history with tracking pixel
+            const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
               recipient_email: contact.email,
               recipient_name: contact.full_name || null,
               subject: campaign.subject,
@@ -138,7 +138,14 @@ serve(async (req) => {
               status: "sent",
               resend_id: resData.id,
               client_id: campaign.client_id,
-            });
+            }).select("id").single();
+
+            if (emailRecord?.id) {
+              const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+              const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
+              const trackedHtml = personalizedHtml + `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+              await supabaseAdmin.from("sent_emails").update({ html_content: trackedHtml }).eq("id", emailRecord.id);
+            }
 
             sentCount++;
           } catch (err) {

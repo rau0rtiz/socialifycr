@@ -161,8 +161,8 @@ serve(async (req) => {
       metadata: { name, business_level, level_name: level.name, has_pdf: attachments.length > 0 },
     });
 
-    // Log to sent_emails for unified history
-    await supabaseAdmin.from("sent_emails").insert({
+    // Log to sent_emails for unified history (insert first to get ID for tracking pixel)
+    const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
       recipient_email: email,
       recipient_name: name,
       subject,
@@ -171,7 +171,16 @@ serve(async (req) => {
       status: emailRes.ok ? "sent" : "failed",
       error_message: emailRes.ok ? null : JSON.stringify(emailResult),
       resend_id: emailRes.ok ? emailResult?.id || null : null,
-    });
+    }).select("id").single();
+
+    // Note: tracking pixel will be injected in future emails since we insert after sending here.
+    // For funnel emails, we update the html with the pixel for the stored version.
+    if (emailRecord?.id) {
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+      const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
+      let trackedHtml = html + `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+      await supabaseAdmin.from("sent_emails").update({ html_content: trackedHtml }).eq("id", emailRecord.id);
+    }
 
     if (!emailRes.ok) {
       console.error("Resend error:", emailResult);

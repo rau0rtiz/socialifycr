@@ -148,7 +148,7 @@ serve(async (req) => {
       html: emailHtml,
     });
 
-    await supabaseAdmin.from("sent_emails").insert({
+    const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
       recipient_email: email,
       recipient_name: inviteeName || null,
       subject: emailSubject,
@@ -159,7 +159,14 @@ serve(async (req) => {
       source: "invitation",
       sent_by: user.id,
       client_id: clientId,
-    });
+    }).select("id").single();
+
+    if (emailRecord?.id) {
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+      const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
+      const trackedHtml = emailHtml + `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+      await supabaseAdmin.from("sent_emails").update({ html_content: trackedHtml }).eq("id", emailRecord.id);
+    }
 
     if (emailError) {
       return new Response(

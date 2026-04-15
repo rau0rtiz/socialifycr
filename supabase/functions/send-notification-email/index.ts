@@ -24,8 +24,32 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+
   try {
     const { to, toName, subject, html, sentBy, clientId } = await req.json();
+
+    // Insert sent_emails record first to get the ID for tracking pixel
+    const { data: emailRecord, error: insertErr } = await supabaseAdmin.from("sent_emails").insert({
+      recipient_email: to,
+      recipient_name: toName || null,
+      subject,
+      html_content: html,
+      status: "pending",
+      source: "notification",
+      sent_by: sentBy || null,
+      client_id: clientId || null,
+    }).select("id").single();
+
+    // Inject tracking pixel
+    let finalHtml = html;
+    if (emailRecord?.id) {
+      const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
+      finalHtml = html.replace(/<\/body>/i, `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" /></body>`);
+      if (!finalHtml.includes(pixelUrl)) {
+        finalHtml += `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+      }
+    }
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -37,25 +61,21 @@ serve(async (req) => {
         from: "Socialify <notificaciones@socialifycr.com>",
         to: [to],
         subject,
-        html,
+        html: finalHtml,
       }),
     });
 
     const data = await res.json();
 
-    // Log the email
-    await supabaseAdmin.from("sent_emails").insert({
-      recipient_email: to,
-      recipient_name: toName || null,
-      subject,
-      html_content: html,
-      status: res.ok ? "sent" : "failed",
-      resend_id: data?.id || null,
-      error_message: res.ok ? null : JSON.stringify(data),
-      source: "notification",
-      sent_by: sentBy || null,
-      client_id: clientId || null,
-    });
+    // Update the record with status
+    if (emailRecord?.id) {
+      await supabaseAdmin.from("sent_emails").update({
+        html_content: finalHtml,
+        status: res.ok ? "sent" : "failed",
+        resend_id: data?.id || null,
+        error_message: res.ok ? null : JSON.stringify(data),
+      }).eq("id", emailRecord.id);
+    }
 
     if (!res.ok) {
       throw new Error(`Resend API error [${res.status}]: ${JSON.stringify(data)}`);

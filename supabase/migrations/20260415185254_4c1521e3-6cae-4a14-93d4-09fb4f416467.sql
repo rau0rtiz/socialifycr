@@ -1,0 +1,1 @@
+ALTER TABLE public.sent_emails ADD COLUMN opened_at timestamptz DEFAULT NULL;
