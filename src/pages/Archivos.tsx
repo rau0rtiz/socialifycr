@@ -86,7 +86,7 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
 
   // Fetch blob when doc changes
   if (open && doc && !blobUrl && !loading) {
-    fetchBlob(doc.url);
+    fetchBlob(doc.fullPath);
   }
 
   // Cleanup blob URL when dialog closes
