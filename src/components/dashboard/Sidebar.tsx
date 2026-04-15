@@ -18,7 +18,6 @@ import {
   Briefcase,
   Database,
   Loader2,
-  Megaphone,
 } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
