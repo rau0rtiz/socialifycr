@@ -8,8 +8,7 @@ const corsHeaders = {
 
 const AVATAR_UPDATE_URL = "https://socialifycr.lovable.app/actualizar-foto";
 
-const emailHtml = `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
+const FALLBACK_HTML = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
   <div style="text-align: center; margin-bottom: 32px;">
     <h2 style="color: #6366f1; margin: 0; font-size: 28px;">Socialify</h2>
   </div>
@@ -18,26 +17,15 @@ const emailHtml = `
       <span style="font-size: 36px;">📸</span>
     </div>
   </div>
-  <h1 style="color: #1a1a2e; font-size: 22px; text-align: center; margin-bottom: 16px;">
-    ¡Agrega tu foto de perfil!
-  </h1>
-  <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 8px;">
-    Tu equipo te reconocerá más fácil con una foto de perfil.
-  </p>
-  <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 32px;">
-    Solo toma unos segundos — haz click en el botón para actualizar tu foto ahora.
-  </p>
+  <h1 style="color: #1a1a2e; font-size: 22px; text-align: center; margin-bottom: 16px;">¡Agrega tu foto de perfil!</h1>
+  <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 8px;">Tu equipo te reconocerá más fácil con una foto de perfil.</p>
+  <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 32px;">Solo toma unos segundos — haz click en el botón para actualizar tu foto ahora.</p>
   <div style="text-align: center; margin-bottom: 40px;">
-    <a href="${AVATAR_UPDATE_URL}" style="display: inline-block; background: #6366f1; color: #ffffff; font-size: 16px; font-weight: 600; padding: 14px 32px; border-radius: 8px; text-decoration: none;">
-      Actualizar mi foto
-    </a>
+    <a href="{{link}}" style="display: inline-block; background: #6366f1; color: #ffffff; font-size: 16px; font-weight: 600; padding: 14px 32px; border-radius: 8px; text-decoration: none;">Actualizar mi foto</a>
   </div>
   <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
-  <p style="color: #999; font-size: 12px; text-align: center;">
-    Socialify · socialifycr.com
-  </p>
-</div>
-`;
+  <p style="color: #999; font-size: 12px; text-align: center;">Socialify · socialifycr.com</p>
+</div>`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -47,80 +35,75 @@ serve(async (req) => {
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   if (!RESEND_API_KEY) {
     return new Response(JSON.stringify({ error: "RESEND_API_KEY not configured" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const supabaseAdmin = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
+  const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  // Validate JWT
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const supabaseUser = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: authHeader } } },
-  );
+  const supabaseUser = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    global: { headers: { Authorization: authHeader } },
+  });
 
   const token = authHeader.replace("Bearer ", "");
   const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
   if (claimsError || !claimsData?.claims) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   const callerUserId = claimsData.claims.sub;
 
-  // Check caller is admin/owner
-  const { data: callerRoles } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", callerUserId);
-
+  const { data: callerRoles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", callerUserId);
   const isAdmin = callerRoles?.some((r: any) => r.role === "owner" || r.role === "admin");
   if (!isAdmin) {
     return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
-      status: 403,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   try {
-    // 1. Get all user_ids from user_roles
-    const { data: roleUsers } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id");
+    // Fetch template from DB
+    let emailHtmlTemplate = FALLBACK_HTML;
+    let subject = "Actualiza tu foto de perfil en Socialify";
 
-    // 2. Get all user_ids from client_team_members
-    const { data: teamUsers } = await supabaseAdmin
-      .from("client_team_members")
-      .select("user_id");
+    try {
+      const { data: tpl } = await supabaseAdmin
+        .from("email_templates")
+        .select("html_content, subject")
+        .eq("slug", "avatar-reminder")
+        .eq("status", "active")
+        .single();
 
-    // 3. Merge and deduplicate
+      if (tpl) {
+        emailHtmlTemplate = tpl.html_content;
+        subject = tpl.subject;
+      }
+    } catch { /* use fallback */ }
+
+    const emailHtml = emailHtmlTemplate.replace(/\{\{link\}\}/g, AVATAR_UPDATE_URL);
+
+    const { data: roleUsers } = await supabaseAdmin.from("user_roles").select("user_id");
+    const { data: teamUsers } = await supabaseAdmin.from("client_team_members").select("user_id");
+
     const allUserIds = new Set<string>();
     roleUsers?.forEach((r: any) => allUserIds.add(r.user_id));
     teamUsers?.forEach((r: any) => allUserIds.add(r.user_id));
 
     if (allUserIds.size === 0) {
       return new Response(JSON.stringify({ sent: 0, message: "No users found" }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 4. Get profiles without avatar
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
       .select("id, email, full_name, avatar_url")
@@ -128,18 +111,13 @@ serve(async (req) => {
       .is("avatar_url", null);
 
     const usersToNotify = (profiles || []).filter((p: any) => p.email);
-
     let sentCount = 0;
-    const subject = "Actualiza tu foto de perfil en Socialify";
 
     for (const profile of usersToNotify) {
       try {
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-            "Content-Type": "application/json",
-          },
+          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             from: "Socialify <notificaciones@socialifycr.com>",
             to: [profile.email],
@@ -176,8 +154,7 @@ serve(async (req) => {
     console.error("Error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
