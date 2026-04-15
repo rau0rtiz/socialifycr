@@ -56,12 +56,38 @@ serve(async (req) => {
 
     const level = levelData[business_level - 1] || levelData[0];
 
+    // Build conditional session CTA block
+    const qualifiesForSession = business_level >= 4;
+    const isExploratory = business_level === 6;
+
+    let sessionCta = '';
+    if (qualifiesForSession) {
+      const sessionTitle = isExploratory
+        ? '¿Querés llevar tu marca al siguiente nivel?'
+        : '¿Querés ayuda para implementarlo?';
+      const sessionDesc = isExploratory
+        ? 'Agendá una sesión exploratoria donde analizamos tu contexto y definimos un plan preliminar de trabajo. Lo ejecutés con nosotros o no, el plan es tuyo.'
+        : 'Agendá una sesión gratuita de 1 hora donde definimos un plan concreto para tu negocio. Lo ejecutés con nosotros o no, el plan es tuyo.';
+      const sessionButton = isExploratory
+        ? 'Agendar sesión exploratoria'
+        : 'Agendar sesión gratuita';
+      const calendlyUrl = 'https://calendly.com/socialifycr/estrategia';
+
+      sessionCta = `
+        <div style="margin-top:24px;padding:24px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;">
+          <h3 style="margin:0 0 8px;font-size:16px;font-weight:700;color:#212121;">${sessionTitle}</h3>
+          <p style="margin:0 0 16px;font-size:14px;color:#212121cc;line-height:1.5;">${sessionDesc}</p>
+          <a href="${calendlyUrl}" target="_blank" style="display:inline-block;padding:12px 24px;background:#FF6B35;color:#ffffff;font-weight:600;text-decoration:none;border-radius:8px;font-size:14px;">${sessionButton}</a>
+        </div>`;
+    }
+
     // Replace template variables
     let html = template.html_content
       .replace(/\{\{name\}\}/g, name)
       .replace(/\{\{level_name\}\}/g, level.name)
       .replace(/\{\{level_number\}\}/g, String(business_level))
       .replace(/\{\{level_desc\}\}/g, level.desc)
+      .replace(/\{\{session_cta\}\}/g, sessionCta)
       .replace(/\{\{calendly_url\}\}/g, "https://calendly.com/socialifycr/estrategia");
 
     let subject = template.subject
