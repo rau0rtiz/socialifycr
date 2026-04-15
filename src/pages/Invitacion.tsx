@@ -122,6 +122,8 @@ const Invitacion = () => {
       // Invitation is auto-accepted by database trigger on user creation
 
       setSuccess(true);
+      // Auto-confirmed, redirect after short delay
+      setTimeout(() => navigate('/'), 2000);
     } catch (err: any) {
       console.error('Error in signup:', err);
       toast({
