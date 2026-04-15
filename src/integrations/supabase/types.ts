@@ -1493,6 +1493,7 @@ export type Database = {
           challenge: string | null
           created_at: string
           email: string
+          funnel_id: string | null
           id: string
           industry: string | null
           name: string
@@ -1507,6 +1508,7 @@ export type Database = {
           challenge?: string | null
           created_at?: string
           email: string
+          funnel_id?: string | null
           id?: string
           industry?: string | null
           name: string
@@ -1521,12 +1523,54 @@ export type Database = {
           challenge?: string | null
           created_at?: string
           email?: string
+          funnel_id?: string | null
           id?: string
           industry?: string | null
           name?: string
           phone?: string | null
           revenue_range?: string | null
           team_size?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_leads_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnels: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          public_path: string | null
+          slug: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          public_path?: string | null
+          slug: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          public_path?: string | null
+          slug?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
