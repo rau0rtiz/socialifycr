@@ -49,7 +49,7 @@ const managementMenuItems = [
   { title: 'Historial', url: '/historial', icon: History },
   { title: 'Image DB', url: '/image-db', icon: Image },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
-  { title: 'Lead Funnel', url: '/funnel', icon: Megaphone },
+  { title: 'Leads Funnel', url: '/agency-leads', icon: Megaphone },
 ];
 
 export const Sidebar = () => {

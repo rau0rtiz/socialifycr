@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { WelcomeStep } from '@/components/funnel/WelcomeStep';
 import { FunnelQuestion } from '@/components/funnel/FunnelQuestion';
-import { EmailCaptureStep } from '@/components/funnel/EmailCaptureStep';
 import { ResultsStep } from '@/components/funnel/ResultsStep';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -78,14 +77,13 @@ const calculateLevel = (ingresos: string, presencia: string, pauta: string): num
   return 6;
 };
 
-// Steps: 0=welcome, 1=industria, 2=ingresos, 3=presencia, 4=pauta, 5=canal, 6=objetivo, 7=email, 8=results
+// Steps: 0=welcome, 1-6=questions, 7=results (blurred → revealed)
 const TOTAL_QUESTION_STEPS = 6;
 
 const Funnel = () => {
   const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [businessLevel, setBusinessLevel] = useState(1);
   const [leadId, setLeadId] = useState<string | null>(null);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -98,9 +96,8 @@ const Funnel = () => {
     canalVentas: '',
     objetivo: '',
   });
-  const [contactInfo, setContactInfo] = useState({ name: '', email: '', phone: '' });
 
-  const progressPercent = step === 0 || step >= 8 ? 0 : Math.round((step / TOTAL_QUESTION_STEPS) * 100);
+  const progressPercent = step === 0 || step >= 7 ? 0 : Math.round((step / TOTAL_QUESTION_STEPS) * 100);
 
   const goTo = useCallback((target: number) => {
     if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
@@ -114,17 +111,26 @@ const Funnel = () => {
     advanceTimerRef.current = setTimeout(() => goTo(nextStep), AUTO_ADVANCE_DELAY);
   }, [goTo]);
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    const level = calculateLevel(answers.ingresos, answers.presencia, answers.pauta);
-    setBusinessLevel(level);
+  // Called when the last question is answered — go straight to results
+  const handleLastQuestion = useCallback((value: string) => {
+    setAnswers((prev) => {
+      const updated = { ...prev, objetivo: value };
+      const level = calculateLevel(updated.ingresos, updated.presencia, updated.pauta);
+      setBusinessLevel(level);
+      return updated;
+    });
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    advanceTimerRef.current = setTimeout(() => goTo(7), AUTO_ADVANCE_DELAY);
+  }, [goTo]);
 
+  const handleSubmitContact = async (name: string, email: string) => {
+    const id = crypto.randomUUID();
     try {
-      const { data, error } = await supabase.from('funnel_leads').insert({
-        name: contactInfo.name.trim().slice(0, 100),
-        email: contactInfo.email.trim().toLowerCase().slice(0, 255),
-        phone: contactInfo.phone.trim().slice(0, 20) || null,
-        business_level: level,
+      const { error } = await supabase.from('funnel_leads').insert({
+        id,
+        name: name.trim().slice(0, 100),
+        email: email.trim().toLowerCase().slice(0, 255),
+        business_level: businessLevel,
         industry: answers.industry,
         revenue_range: answers.ingresos,
         answers: {
@@ -133,15 +139,13 @@ const Funnel = () => {
           canalVentas: answers.canalVentas,
           objetivo: answers.objetivo,
         },
-      }).select('id').single();
-
+      });
       if (error) throw error;
-      setLeadId(data.id);
-      goTo(8);
+      setLeadId(id);
+      return true;
     } catch {
       toast({ title: 'Error', description: 'No pudimos guardar tus datos. Intentá de nuevo.', variant: 'destructive' });
-    } finally {
-      setIsSubmitting(false);
+      return false;
     }
   };
 
@@ -212,25 +216,15 @@ const Funnel = () => {
             question="¿QUÉ QUERÉS LOGRAR CON MARKETING DIGITAL?"
             options={goalOptions}
             selected={answers.objetivo}
-            onSelect={(v) => handleOptionSelect('objetivo', v, 7)}
+            onSelect={(v) => handleLastQuestion(v)}
             onBack={() => goTo(5)}
           />
         );
       case 7:
         return (
-          <EmailCaptureStep
-            data={contactInfo}
-            onChange={(f, v) => setContactInfo((p) => ({ ...p, [f]: v }))}
-            onSubmit={handleSubmit}
-            onBack={() => goTo(6)}
-            isSubmitting={isSubmitting}
-          />
-        );
-      case 8:
-        return (
           <ResultsStep
             level={businessLevel}
-            name={contactInfo.name}
+            onSubmitContact={handleSubmitContact}
             onCalendlyClick={handleCalendlyClick}
           />
         );
@@ -244,13 +238,13 @@ const Funnel = () => {
       <header className="bg-white sticky top-0 z-10 border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-4 flex items-center justify-center relative">
           <span className="text-xl md:text-2xl font-bold text-[#212121] tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>SOCIALIFY</span>
-          {step > 0 && step < 8 && (
+          {step > 0 && step < 7 && (
             <span className="absolute right-4 text-xs md:text-sm text-[#212121]/40 font-medium uppercase tracking-wider">
               {step} / {TOTAL_QUESTION_STEPS}
             </span>
           )}
         </div>
-        {step > 0 && step < 8 && (
+        {step > 0 && step < 7 && (
           <div className="h-1 bg-gray-100">
             <div
               className="h-full bg-[#FF6B35] transition-all duration-700 ease-out"
