@@ -34,7 +34,7 @@ const Comunicaciones = () => {
             </TabsTrigger>
             <TabsTrigger value="leads" className="gap-1.5">
               <Megaphone className="h-4 w-4" />
-              Leads Funnel
+              Funnels
             </TabsTrigger>
           </TabsList>
 

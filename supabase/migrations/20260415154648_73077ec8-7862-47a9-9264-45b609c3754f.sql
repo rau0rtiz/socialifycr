@@ -1,0 +1,1 @@
+UPDATE public.funnel_leads SET funnel_id = '7d99a43c-173e-4d26-80de-bc68a5f208ea' WHERE funnel_id IS NULL;
