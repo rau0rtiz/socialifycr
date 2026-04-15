@@ -24,17 +24,32 @@ interface DocFile {
 }
 
 const PDFThumbnail = ({ url, name, onClick }: { url: string; name: string; onClick: () => void }) => {
+  const [hasError, setHasError] = useState(false);
+
   return (
     <button
       onClick={onClick}
       className="relative w-full aspect-[3/4] rounded-lg border border-border overflow-hidden bg-muted/30 hover:ring-2 hover:ring-primary/40 transition-all group cursor-pointer"
     >
-      <iframe
-        src={`${url}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
-        className="w-full h-full pointer-events-none scale-100"
-        title={name}
-        loading="lazy"
-      />
+      {!hasError ? (
+        <object
+          data={`${url}#page=1&view=FitH`}
+          type="application/pdf"
+          className="w-full h-full pointer-events-none"
+          onError={() => setHasError(true)}
+        >
+          {/* Fallback if object can't render PDF */}
+          <div className="flex flex-col items-center justify-center h-full gap-2">
+            <FileText className="h-8 w-8 text-red-400" />
+            <span className="text-[10px] text-muted-foreground">PDF</span>
+          </div>
+        </object>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full gap-2">
+          <FileText className="h-8 w-8 text-red-400" />
+          <span className="text-[10px] text-muted-foreground">PDF</span>
+        </div>
+      )}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
         <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
       </div>
@@ -81,7 +96,16 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
               variant="ghost"
               size="sm"
               className="h-7 text-xs gap-1"
-              onClick={() => window.open(doc.url, '_blank')}
+              onClick={() => {
+                const a = document.createElement('a');
+                a.href = doc.url;
+                a.download = doc.name;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }}
             >
               <Download className="h-3.5 w-3.5" />
               Descargar
@@ -98,11 +122,24 @@ const PreviewDialog = ({ doc, open, onClose, onDelete }: { doc: DocFile | null; 
         </DialogHeader>
         <div className="flex-1 min-h-0">
           {doc.isPdf ? (
-            <iframe
-              src={`${doc.url}#toolbar=1&navpanes=0`}
-              className="w-full h-full border-0"
-              title={doc.name}
-            />
+            <object
+              data={`${doc.url}#toolbar=1&navpanes=0`}
+              type="application/pdf"
+              className="w-full h-full"
+            >
+              <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+                <FileText className="h-16 w-16 opacity-30" />
+                <p className="text-sm">No se puede previsualizar el PDF en este navegador</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(doc.url, '_blank')}
+                >
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Abrir en nueva pestaña
+                </Button>
+              </div>
+            </object>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
               <FileText className="h-16 w-16 opacity-30" />
