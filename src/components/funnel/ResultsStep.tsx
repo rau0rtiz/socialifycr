@@ -83,8 +83,9 @@ export const ResultsStep = ({ level, name, onCalendlyClick }: ResultsStepProps) 
         asChild
       >
         <a href={`/roadmaps/Nivel-${level}.pdf`} download={`Roadmap-Nivel-${level}.pdf`}>
-        <Download className="h-5 w-5" />
-        Descargar mi estrategia (PDF)
+          <Download className="h-5 w-5" />
+          Descargar mi estrategia (PDF)
+        </a>
       </Button>
 
       {qualifiesForSession && (
