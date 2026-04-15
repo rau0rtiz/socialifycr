@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Plus, X, Eye, Code, Save } from 'lucide-react';
+import { AlertTriangle, Plus, X, Save } from 'lucide-react';
 import type { EmailTemplate } from '@/hooks/use-email-templates';
 
 interface Props {
@@ -26,7 +26,7 @@ export const EmailTemplateEditorDialog = ({ open, onOpenChange, template, onSave
   const [variables, setVariables] = useState<{ key: string; label: string }[]>([]);
   const [newVarKey, setNewVarKey] = useState('');
   const [newVarLabel, setNewVarLabel] = useState('');
-  const [viewMode, setViewMode] = useState<'code' | 'preview'>('code');
+  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isSystem = template?.category === 'system';
@@ -40,7 +40,7 @@ export const EmailTemplateEditorDialog = ({ open, onOpenChange, template, onSave
       setDescription(template?.description || '');
       setHtmlContent(template?.html_content || '');
       setVariables(template?.variables || []);
-      setViewMode('code');
+      
       setNewVarKey('');
       setNewVarLabel('');
     }
@@ -90,7 +90,7 @@ export const EmailTemplateEditorDialog = ({ open, onOpenChange, template, onSave
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isNew ? 'Crear Plantilla' : 'Editar Plantilla'}
@@ -171,48 +171,29 @@ export const EmailTemplateEditorDialog = ({ open, onOpenChange, template, onSave
           )}
         </div>
 
-        {/* Editor / Preview toggle */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label>Contenido HTML</Label>
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant={viewMode === 'code' ? 'default' : 'outline'}
-                onClick={() => setViewMode('code')}
-                className="h-7 text-xs gap-1"
-              >
-                <Code className="h-3 w-3" /> Código
-              </Button>
-              <Button
-                size="sm"
-                variant={viewMode === 'preview' ? 'default' : 'outline'}
-                onClick={() => setViewMode('preview')}
-                className="h-7 text-xs gap-1"
-              >
-                <Eye className="h-3 w-3" /> Vista previa
-              </Button>
-            </div>
-          </div>
-
-          {viewMode === 'code' ? (
+        {/* Side-by-side editor and preview */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Código HTML</Label>
             <Textarea
               ref={textareaRef}
               value={htmlContent}
               onChange={e => setHtmlContent(e.target.value)}
-              className="min-h-[300px] font-mono text-xs leading-relaxed"
+              className="min-h-[400px] font-mono text-xs leading-relaxed"
               placeholder="<html>...</html>"
             />
-          ) : (
-            <div className="border rounded-md overflow-hidden bg-white">
+          </div>
+          <div className="space-y-2">
+            <Label>Vista previa</Label>
+            <div className="border rounded-md overflow-hidden bg-white min-h-[400px]">
               <iframe
                 srcDoc={htmlContent}
-                className="w-full min-h-[300px] border-0"
+                className="w-full min-h-[400px] border-0"
                 sandbox="allow-same-origin"
                 title="Preview"
               />
             </div>
-          )}
+          </div>
         </div>
 
         <DialogFooter>
