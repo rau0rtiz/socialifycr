@@ -254,6 +254,20 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
           setCurrentPrefill(null);
           if (onSaleFromSetter) onSaleFromSetter(appointmentId, saleId);
 
+          // Auto-enroll student in class group if both group_id and student_contact_id are present
+          if (sale.group_id && sale.student_contact_id && saleId) {
+            try {
+              const { supabase } = await import('@/integrations/supabase/client');
+              await supabase.from('class_group_members').insert({
+                group_id: sale.group_id,
+                student_contact_id: sale.student_contact_id,
+                sale_id: saleId,
+              });
+            } catch {
+              toast.error('Error al inscribir estudiante en grupo');
+            }
+          }
+
           // Generate collection records for remaining installments
           if (collectionMeta && saleId) {
             try {
