@@ -1,27 +1,32 @@
 
 
-## Plan: Sync Sales to Client Database for Non-Speak Up Clients
+## Plan: Merge "Emails" and "Leads Funnel" into a single "Comunicaciones" section
 
-### Problem
-The Client Database page for non-Speak Up clients (like The Mind Coach) only reads from `setter_appointments`. When a sale is registered directly through the sales wizard — without an associated setter appointment — the customer never appears in the Client Database.
+### What changes
 
-### Solution
-Update the Client Database page (`src/pages/ClientDatabase.tsx`) to also pull contacts from `message_sales` and merge them with `setter_appointments` data into a unified view.
+Combine the two separate management pages — **Emails** (`/emails-log`) and **Leads Funnel** (`/agency-leads`) — into a single tabbed page to reduce sidebar clutter.
 
 ### Changes
 
-**1. Update `src/pages/ClientDatabase.tsx`**
+**1. Sidebar (`src/components/dashboard/Sidebar.tsx`)**
+- Remove the two separate entries (`Emails` and `Leads Funnel`)
+- Add one entry: `Comunicaciones` at `/comunicaciones` with the `Mail` icon
 
-- Add a second query that fetches distinct customers from `message_sales` for the active client (fields: `customer_name`, `customer_phone`, `ad_campaign_name`, `source`, `sale_date`, `amount`, `currency`, `closer_name`, `status`, `product`)
-- Merge both data sources into a single list:
-  - Group by `customer_name` (case-insensitive) to avoid duplicates when a sale is linked to an appointment
-  - For contacts that exist in both sources, prefer the appointment record but enrich it with sale amount data
-  - For contacts that only exist in `message_sales`, create a lead-like record with status mapped from sale status (`completed` → `sold`, `pending` → `scheduled`)
-- Add a "Ventas" column showing total purchase count/amount for each contact
-- Ensure the search filter also covers these merged records
+**2. New page `src/pages/Comunicaciones.tsx`**
+- Tabbed layout with two tabs:
+  - **Emails** — renders the existing EmailsLog content
+  - **Leads Funnel** — renders the existing AgencyLeads content
+- Uses `DashboardLayout` wrapper and `Tabs` component consistent with the rest of the app
 
-### Technical details
-- The merge happens client-side using a `useMemo` that deduplicates by name
-- Sales without `customer_name` are excluded (they have no useful contact info)
-- No database changes needed — this is purely a frontend query + merge change
+**3. Refactor existing pages into embeddable components**
+- Extract the inner content of `EmailsLog.tsx` (everything inside `<DashboardLayout>`) into a reusable component `EmailsLogContent`
+- Extract the inner content of `AgencyLeads.tsx` into `AgencyLeadsContent`
+- The original pages can remain as thin wrappers (or redirect to `/comunicaciones`) for backward compatibility
+
+**4. Router (`src/App.tsx`)**
+- Add route `/comunicaciones` pointing to the new page
+- Optionally redirect `/emails-log` and `/agency-leads` to `/comunicaciones` (or keep them as aliases)
+
+### Result
+One sidebar item ("Comunicaciones") replaces two, with tabs to switch between Emails and Leads Funnel views.
 
