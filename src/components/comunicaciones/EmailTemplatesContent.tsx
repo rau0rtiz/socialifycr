@@ -50,7 +50,7 @@ const EmailTemplatesContent = () => {
     );
   }
 
-  const systemTemplates = templates?.filter(t => t.category === 'system') || [];
+  const systemTemplates = templates?.filter(t => t.category === 'system' || t.category === 'transactional') || [];
   const customTemplates = templates?.filter(t => t.category === 'custom') || [];
 
   return (
