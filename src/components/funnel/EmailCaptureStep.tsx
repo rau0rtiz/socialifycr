@@ -18,10 +18,10 @@ export const EmailCaptureStep = ({ data, onChange, onSubmit, onBack, isSubmittin
     <div className="space-y-6 md:space-y-8 animate-fade-in max-w-md mx-auto">
       <div className="text-center">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#212121]">
-          ¡Casi listo!
+          ¿A dónde te enviamos tu Roadmap de Crecimiento Digital?
         </h2>
         <p className="text-[#212121]/50 mt-1 text-sm md:text-base">
-          Ingresá tus datos para ver tu resultado y recibir tu estrategia personalizada.
+          Ingresá tus datos para recibir tu estrategia personalizada.
         </p>
       </div>
 
