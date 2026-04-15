@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { WelcomeStep } from '@/components/funnel/WelcomeStep';
 import { FunnelQuestion } from '@/components/funnel/FunnelQuestion';
 import { ResultsStep } from '@/components/funnel/ResultsStep';
