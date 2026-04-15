@@ -4,10 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Download, Eye, Calendar, CheckCircle2, XCircle } from 'lucide-react';
+import { Search, Download, Eye, Calendar, CheckCircle2, XCircle, ArrowLeft, Users, ExternalLink, Megaphone } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -17,20 +18,57 @@ const levelColors: Record<number, string> = {
 };
 
 const AgencyLeadsContent = () => {
+  const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [selectedLead, setSelectedLead] = useState<any>(null);
 
-  const { data: leads = [], isLoading } = useQuery({
-    queryKey: ['funnel-leads'],
+  // Fetch funnels
+  const { data: funnels = [] } = useQuery({
+    queryKey: ['funnels'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('funnel_leads')
+        .from('funnels')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch lead counts per funnel
+  const { data: leadCounts = {} } = useQuery({
+    queryKey: ['funnel-lead-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('funnel_leads')
+        .select('funnel_id');
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      data.forEach((l: any) => {
+        const key = l.funnel_id || 'unassigned';
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      return counts;
+    },
+  });
+
+  // Fetch leads for selected funnel
+  const { data: leads = [], isLoading: leadsLoading } = useQuery({
+    queryKey: ['funnel-leads', selectedFunnelId],
+    queryFn: async () => {
+      let query = supabase
+        .from('funnel_leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (selectedFunnelId) {
+        query = query.eq('funnel_id', selectedFunnelId);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedFunnelId,
   });
 
   const filtered = leads.filter((l) => {
@@ -59,10 +97,80 @@ const AgencyLeadsContent = () => {
     URL.revokeObjectURL(url);
   };
 
+  const selectedFunnel = funnels.find((f: any) => f.id === selectedFunnelId);
+
+  // ─── Grid View ───
+  if (!selectedFunnelId) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {funnels.map((funnel: any) => (
+            <Card
+              key={funnel.id}
+              className="cursor-pointer hover:border-primary/50 hover:shadow-md transition-all group"
+              onClick={() => setSelectedFunnelId(funnel.id)}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Megaphone className="h-5 w-5 text-primary" />
+                  </div>
+                  <Badge variant={funnel.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                    {funnel.status === 'active' ? 'Activo' : 'Inactivo'}
+                  </Badge>
+                </div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                  {funnel.name}
+                </h3>
+                {funnel.description && (
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{funnel.description}</p>
+                )}
+                <div className="flex items-center justify-between mt-4 pt-3 border-t">
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>{(leadCounts as any)[funnel.id] || 0} leads</span>
+                  </div>
+                  {funnel.public_path && (
+                    <a
+                      href={funnel.public_path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                    >
+                      <ExternalLink className="h-3 w-3" /> Ver
+                    </a>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {funnels.length === 0 && (
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              No hay funnels creados
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Leads Drill-down View ───
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">{filtered.length} leads registrados</p>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => { setSelectedFunnelId(null); setSearch(''); setLevelFilter('all'); }}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h2 className="font-semibold text-foreground">{selectedFunnel?.name}</h2>
+            <p className="text-sm text-muted-foreground">{filtered.length} leads</p>
+          </div>
+        </div>
         <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
           <Download className="h-4 w-4" /> Exportar CSV
         </Button>
@@ -98,7 +206,7 @@ const AgencyLeadsContent = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
+            {leadsLoading ? (
               <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No hay leads</TableCell></TableRow>
