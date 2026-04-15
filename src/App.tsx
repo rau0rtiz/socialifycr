@@ -36,6 +36,7 @@ const Asistencia = lazy(() => import("./pages/Asistencia"));
 const EmailsLog = lazy(() => import("./pages/EmailsLog"));
 const ActualizarFoto = lazy(() => import("./pages/ActualizarFoto"));
 const Funnel = lazy(() => import("./pages/Funnel"));
+const AgencyLeads = lazy(() => import("./pages/AgencyLeads"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -149,6 +150,13 @@ const App = () => (
                   <Route path="/asistencia" element={<ProtectedRoute><Asistencia /></ProtectedRoute>} />
                   <Route path="/actualizar-foto" element={<ProtectedRoute><ActualizarFoto /></ProtectedRoute>} />
                   <Route path="/funnel" element={<Funnel />} />
+                  <Route path="/agency-leads" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyLeads />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                   <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
                   <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
