@@ -9,72 +9,77 @@ import '@fontsource/nunito/700.css';
 
 const CALENDLY_URL = 'https://calendly.com/socialifycr';
 const FONT = "'DM Sans', sans-serif";
-const AUTO_ADVANCE_DELAY = 450; // ms
+const AUTO_ADVANCE_DELAY = 450;
 
 const industries = [
-  { value: 'ecommerce', label: 'E-commerce / Tienda online' },
+  { value: 'retail', label: 'Retail / Tienda física o en línea' },
+  { value: 'restaurante', label: 'Restaurante / Comida' },
+  { value: 'salud', label: 'Salud y bienestar' },
   { value: 'servicios', label: 'Servicios profesionales' },
   { value: 'educacion', label: 'Educación / Cursos' },
-  { value: 'salud', label: 'Salud / Bienestar' },
-  { value: 'gastronomia', label: 'Gastronomía / Restaurantes' },
-  { value: 'tecnologia', label: 'Tecnología / Software' },
   { value: 'otro', label: 'Otro' },
 ];
 
-const timeOptions = [
-  { value: 'not_started', label: 'Aún no he empezado' },
-  { value: 'less_1', label: 'Menos de 1 año' },
-  { value: '1_3', label: '1 – 3 años' },
-  { value: '3_plus', label: 'Más de 3 años' },
-];
-
-const teamOptions = [
-  { value: 'solo', label: 'Solo yo' },
-  { value: '2_5', label: '2 – 5 personas' },
-  { value: '6_15', label: '6 – 15 personas' },
-  { value: '15_plus', label: 'Más de 15 personas' },
-];
-
 const revenueOptions = [
-  { value: '0', label: '$0 — Aún no genero ingresos' },
-  { value: '0_3k', label: '$1 – $3,000 / mes' },
-  { value: '3k_15k', label: '$3,000 – $15,000 / mes' },
-  { value: '15k_50k', label: '$15,000 – $50,000 / mes' },
-  { value: '50k_200k', label: '$50,000 – $200,000 / mes' },
-  { value: '200k_plus', label: 'Más de $200,000 / mes' },
+  { value: 'menos1k', label: 'Menos de $1,000', puntos: 0 },
+  { value: '1k5k', label: '$1,000 – $5,000', puntos: 2 },
+  { value: '5k15k', label: '$5,000 – $15,000', puntos: 4 },
+  { value: '15k50k', label: '$15,000 – $50,000', puntos: 6 },
+  { value: 'mas50k', label: 'Más de $50,000', puntos: 8 },
 ];
 
-const acquisitionOptions = [
-  { value: 'organic', label: 'Redes sociales orgánicas' },
-  { value: 'paid_ads', label: 'Publicidad pagada (Meta, Google, etc.)' },
-  { value: 'referrals', label: 'Referidos / boca a boca' },
-  { value: 'content', label: 'Marketing de contenido (blog, YouTube, etc.)' },
-  { value: 'cold_outreach', label: 'Prospección en frío' },
-  { value: 'mixed', label: 'Combinación de varias' },
+const presenceOptions = [
+  { value: 'nada', label: 'No tengo presencia todavía', puntos: 0 },
+  { value: 'perfil_inactivo', label: 'Tengo perfil pero no publico', puntos: 1 },
+  { value: 'poco', label: 'Publico 1 a 2 veces por semana', puntos: 2 },
+  { value: 'consistente', label: 'Publico 3 a 5 veces por semana', puntos: 3 },
+  { value: 'diario', label: 'Publico todos los días', puntos: 4 },
 ];
 
-const challenges = [
-  { value: 'no_clients', label: 'No consigo suficientes clientes' },
-  { value: 'no_systems', label: 'No tengo sistemas ni procesos claros' },
-  { value: 'no_team', label: 'No sé cómo delegar o construir equipo' },
-  { value: 'no_scale', label: 'Estoy estancado y no puedo escalar' },
-  { value: 'no_brand', label: 'Mi marca no se diferencia de la competencia' },
-  { value: 'no_time', label: 'No tengo tiempo — hago todo yo' },
-  { value: 'no_digital', label: 'No sé cómo usar el marketing digital' },
+const adSpendOptions = [
+  { value: 'nada', label: 'No invierto nada', puntos: 0 },
+  { value: 'intente', label: 'Lo intenté pero lo dejé', puntos: 1 },
+  { value: 'menos200', label: 'Menos de $200 al mes', puntos: 2 },
+  { value: '200_500', label: '$200 – $500 al mes', puntos: 4 },
+  { value: '500_1000', label: '$500 – $1,000 al mes', puntos: 6 },
+  { value: '1000_2000', label: '$1,000 – $2,000 al mes', puntos: 7 },
+  { value: 'mas2000', label: 'Más de $2,000 al mes', puntos: 8 },
 ];
 
-const calculateLevel = (revenueRange: string, teamSize: string, timeInBusiness: string): number => {
-  const revenueMap: Record<string, number> = {
-    '0': 1, '0_3k': 2, '3k_15k': 3, '15k_50k': 4, '50k_200k': 5, '200k_plus': 6,
-  };
-  let base = revenueMap[revenueRange] ?? 1;
-  if (base === 1 && timeInBusiness !== 'not_started') base = 2;
-  if (base === 2 && (teamSize === '6_15' || teamSize === '15_plus')) base = 3;
-  return Math.min(6, Math.max(1, base));
+const salesChannelOptions = [
+  { value: 'local', label: 'En persona / local físico' },
+  { value: 'mensajes', label: 'Mensajes de WhatsApp / Instagram / Facebook' },
+  { value: 'web', label: 'Página web / tienda en línea' },
+  { value: 'outbound', label: 'Contacto frío / outbound' },
+  { value: 'marketplace', label: 'Marketplace (Uber Eats, Amazon, MercadoLibre)' },
+  { value: 'puntos_venta', label: 'Puntos de venta externos (supermercados, farmacias, tiendas)' },
+  { value: 'otro', label: 'Otro' },
+];
+
+const goalOptions = [
+  { value: 'awareness', label: 'Que más gente conozca mi producto y sepa dónde comprarlo' },
+  { value: 'nuevos_clientes', label: 'Conseguir más clientes nuevos' },
+  { value: 'retencion', label: 'Venderle más a quienes ya me compraron' },
+  { value: 'lanzamiento', label: 'Lanzar un nuevo producto al mercado' },
+  { value: 'marca', label: 'Construir una marca reconocida a largo plazo' },
+];
+
+const revenuePoints: Record<string, number> = Object.fromEntries(revenueOptions.map(o => [o.value, o.puntos]));
+const presencePoints: Record<string, number> = Object.fromEntries(presenceOptions.map(o => [o.value, o.puntos]));
+const adSpendPoints: Record<string, number> = Object.fromEntries(adSpendOptions.map(o => [o.value, o.puntos]));
+
+const calculateLevel = (ingresos: string, presencia: string, pauta: string): number => {
+  const total = (revenuePoints[ingresos] ?? 0) + (presencePoints[presencia] ?? 0) + (adSpendPoints[pauta] ?? 0);
+  if (total <= 3) return 1;
+  if (total <= 6) return 2;
+  if (total <= 10) return 3;
+  if (total <= 14) return 4;
+  if (total <= 17) return 5;
+  return 6;
 };
 
-// Steps: 0=welcome, 1=industry, 2=time, 3=team, 4=revenue, 5=acquisition, 6=challenge, 7=email, 8=results
-const TOTAL_QUESTION_STEPS = 7; // steps 1-7
+// Steps: 0=welcome, 1=industria, 2=ingresos, 3=presencia, 4=pauta, 5=canal, 6=objetivo, 7=email, 8=results
+const TOTAL_QUESTION_STEPS = 6;
 
 const Funnel = () => {
   const { toast } = useToast();
@@ -87,11 +92,11 @@ const Funnel = () => {
 
   const [answers, setAnswers] = useState({
     industry: '',
-    timeInBusiness: '',
-    teamSize: '',
-    revenueRange: '',
-    acquisitionMethod: '',
-    challenge: '',
+    ingresos: '',
+    presencia: '',
+    pauta: '',
+    canalVentas: '',
+    objetivo: '',
   });
   const [contactInfo, setContactInfo] = useState({ name: '', email: '', phone: '' });
 
@@ -100,7 +105,6 @@ const Funnel = () => {
   const goTo = useCallback((target: number) => {
     if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
     setDirection(target > step ? 'forward' : 'back');
-    // Small delay for transition
     setTimeout(() => setStep(target), 50);
   }, [step]);
 
@@ -112,7 +116,7 @@ const Funnel = () => {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    const level = calculateLevel(answers.revenueRange, answers.teamSize, answers.timeInBusiness);
+    const level = calculateLevel(answers.ingresos, answers.presencia, answers.pauta);
     setBusinessLevel(level);
 
     try {
@@ -122,12 +126,12 @@ const Funnel = () => {
         phone: contactInfo.phone.trim().slice(0, 20) || null,
         business_level: level,
         industry: answers.industry,
-        revenue_range: answers.revenueRange,
-        team_size: answers.teamSize,
-        challenge: answers.challenge,
+        revenue_range: answers.ingresos,
         answers: {
-          timeInBusiness: answers.timeInBusiness,
-          acquisitionMethod: answers.acquisitionMethod,
+          presencia: answers.presencia,
+          pauta: answers.pauta,
+          canalVentas: answers.canalVentas,
+          objetivo: answers.objetivo,
         },
       }).select('id').single();
 
@@ -155,8 +159,7 @@ const Funnel = () => {
       case 1:
         return (
           <FunnelQuestion
-            question="¿EN QUÉ INDUSTRIA ESTÁS?"
-            subtitle="Seleccioná la que mejor describa tu negocio"
+            question="¿A QUÉ SE DEDICA TU NEGOCIO?"
             options={industries}
             selected={answers.industry}
             onSelect={(v) => handleOptionSelect('industry', v, 2)}
@@ -166,53 +169,50 @@ const Funnel = () => {
       case 2:
         return (
           <FunnelQuestion
-            question="¿CUÁNTO TIEMPO TIENE TU NEGOCIO?"
-            options={timeOptions}
-            selected={answers.timeInBusiness}
-            onSelect={(v) => handleOptionSelect('timeInBusiness', v, 3)}
+            question="¿CUÁNTO FACTURA TU NEGOCIO AL MES APROXIMADAMENTE?"
+            options={revenueOptions}
+            selected={answers.ingresos}
+            onSelect={(v) => handleOptionSelect('ingresos', v, 3)}
             onBack={() => goTo(1)}
           />
         );
       case 3:
         return (
           <FunnelQuestion
-            question="¿CUÁNTAS PERSONAS HAY EN TU EQUIPO?"
-            options={teamOptions}
-            selected={answers.teamSize}
-            onSelect={(v) => handleOptionSelect('teamSize', v, 4)}
+            question="¿QUÉ TAN ACTIVO ESTÁS EN REDES SOCIALES?"
+            options={presenceOptions}
+            selected={answers.presencia}
+            onSelect={(v) => handleOptionSelect('presencia', v, 4)}
             onBack={() => goTo(2)}
           />
         );
       case 4:
         return (
           <FunnelQuestion
-            question="¿CUÁLES SON TUS INGRESOS MENSUALES?"
-            subtitle="Aproximados — esto define el nivel de tu negocio"
-            options={revenueOptions}
-            selected={answers.revenueRange}
-            onSelect={(v) => handleOptionSelect('revenueRange', v, 5)}
+            question="¿CUÁNTO INVERTÍS MENSUALMENTE EN PUBLICIDAD PAGADA?"
+            options={adSpendOptions}
+            selected={answers.pauta}
+            onSelect={(v) => handleOptionSelect('pauta', v, 5)}
             onBack={() => goTo(3)}
           />
         );
       case 5:
         return (
           <FunnelQuestion
-            question="¿CÓMO CONSEGUÍS CLIENTES?"
-            subtitle="Tu principal canal de adquisición"
-            options={acquisitionOptions}
-            selected={answers.acquisitionMethod}
-            onSelect={(v) => handleOptionSelect('acquisitionMethod', v, 6)}
+            question="¿CÓMO CERRÁS LA MAYORÍA DE TUS VENTAS?"
+            options={salesChannelOptions}
+            selected={answers.canalVentas}
+            onSelect={(v) => handleOptionSelect('canalVentas', v, 6)}
             onBack={() => goTo(4)}
           />
         );
       case 6:
         return (
           <FunnelQuestion
-            question="¿CUÁL ES TU MAYOR DESAFÍO?"
-            subtitle="¿Qué es lo que más te frena hoy?"
-            options={challenges}
-            selected={answers.challenge}
-            onSelect={(v) => handleOptionSelect('challenge', v, 7)}
+            question="¿QUÉ QUERÉS LOGRAR CON MARKETING DIGITAL?"
+            options={goalOptions}
+            selected={answers.objetivo}
+            onSelect={(v) => handleOptionSelect('objetivo', v, 7)}
             onBack={() => goTo(5)}
           />
         );
@@ -241,7 +241,6 @@ const Funnel = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: FONT }}>
-      {/* Header */}
       <header className="bg-white sticky top-0 z-10 border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-4 flex items-center justify-center relative">
           <span className="text-xl md:text-2xl font-bold text-[#212121] tracking-tight" style={{ fontFamily: "'Nunito', sans-serif" }}>socialify</span>
@@ -261,7 +260,6 @@ const Funnel = () => {
         )}
       </header>
 
-      {/* Content with transition wrapper */}
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 md:px-6 md:py-12">
         <div
           key={step}
