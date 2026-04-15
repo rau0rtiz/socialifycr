@@ -1,76 +1,55 @@
 
+No es difícil en código; lo que se está poniendo necio aquí es Meta + dominio + validación.
 
-## Plan: Rebalancear pesos del scoring del funnel
+Qué encontré
+- El pixel ahorita sí está metido globalmente en `index.html`.
+- No vi GTM ni scripts duplicados en React.
+- `/roadmap` ya cuelga de la misma SPA, así que `index.html` cubre esa ruta también.
+- La URL publicada visible del proyecto es `socialifycr.lovable.app`, pero el dominio objetivo que ya existe en memoria del proyecto es `app.socialifycr.com`.
 
-### Problema actual
-- Un negocio con buenos ingresos ($15k+) pero sin inversión en pauta queda clasificado nivel 2-3
-- Pauta pesa 40% del score total, igual que ingresos
-- La lógica penaliza a quienes no invierten en pauta, cuando esos son los clientes ideales para Socialify
+Qué probablemente está fallando de verdad
+1. Si Meta está probando `app.socialifycr.com` pero esa URL no está sirviendo exactamente esta app, no va a detectar nada.
+2. Si estás usando preview o una URL distinta a la productiva, el configurador de eventos suele dar falsos negativos.
+3. “Todos los subdominios” no se logra con un snippet en una sola app si existen varias apps/hosts distintos.  
+   - Dentro de esta app: `index.html` cubre todas las páginas/rutas del mismo host.
+   - Entre subdominios distintos: cada subdominio que sirva HTML propio necesita el pixel también.
 
-### Propuesta de nuevos pesos
+Plan
+1. Confirmar el host real
+   - Verificar si `app.socialifycr.com` está conectado a esta app publicada.
+   - Si no lo está, corregir eso primero; si sí lo está, probar solo sobre ese dominio.
 
-**Ingresos** — Aumentar peso (de max 8 a max 10):
-```
-Menos de $1,000    → 0
-$1,000 – $5,000    → 3
-$5,000 – $15,000   → 5
-$15,000 – $50,000  → 8
-Más de $50,000     → 10
-```
+2. Reinstalación limpia y definitiva
+   - Dejar una sola instalación oficial del pixel.
+   - `<script>` en `<head>`, `<noscript>` en `<body>`.
+   - Sin GTM, sin doble carga, sin reinicializar `fbq` desde componentes.
 
-**Presencia social** — Mantener igual (max 4):
-```
-Sin presencia      → 0
-Perfil inactivo    → 1
-1-2 veces/semana   → 2
-3-5 veces/semana   → 3
-Todos los días     → 4
-```
+3. Asegurar cobertura real
+   - Mantener `PageView` global para todas las rutas del host.
+   - Si quieres medición útil en `/roadmap`, agregar eventos explícitos del funnel (`Lead` al enviar datos y `Schedule` al hacer clic en Calendly).
 
-**Inversión en pauta** — Reducir peso (de max 8 a max 5):
-```
-No invierto nada       → 1  (ya no penaliza tanto)
-Lo intenté pero lo dejé → 2
-Menos de $200/mes      → 3
-$200 – $500/mes        → 4
-$500 – $1,000/mes      → 4
-$1,000 – $2,000/mes    → 5
-Más de $2,000/mes      → 5
-```
+4. Blindar el configurador de eventos
+   - Revisar el script de recuperación de arranque de `index.html` + `src/main.tsx`.
+   - Marcar el app como “booted” al montar React para evitar recargas falsas cuando Meta mete su overlay.
 
-### Distribución resultante
+5. Verificación correcta
+   - Probar en producción real, no en preview.
+   - Validar 3 cosas: `window.fbq` existe, sale request a `facebook.com/tr`, y Meta lo reconoce en Test Events/Event Setup Tool.
 
-| Pregunta | Peso máximo | % del total |
-|---|---|---|
-| Ingresos | 10 pts | **53%** |
-| Presencia social | 4 pts | 21% |
-| Inversión en pauta | 5 pts | **26%** |
+Qué haría yo al implementarlo
+- Mantener el pixel global en `index.html`.
+- Añadir una inicialización segura mínima si hace falta, pero sin volverlo complejo.
+- Corregir el posible conflicto de recarga.
+- Luego dejar opcionales los eventos del funnel.
 
-Total máximo: 19 pts
+Nivel de dificultad real
+- Instalarlo: fácil.
+- Dejarlo funcionando y detectable por Meta: medio.
+- Hacer que funcione “en todos los subdominios” si son apps separadas: ya eso sí es trabajo de infraestructura, no solo de frontend.
 
-### Nuevos umbrales de nivel
-
-```
-≤ 3  → Nivel 1 (Starter)
-≤ 6  → Nivel 2 (Builder)
-≤ 10 → Nivel 3 (Growing)
-≤ 14 → Nivel 4 (Scaling)
-≤ 17 → Nivel 5 (Advanced)
-> 17 → Nivel 6 (Leader)
-```
-
-Los umbrales se mantienen casi iguales, pero ahora alguien con $15k+ de ingresos, presencia básica y sin pauta llega a nivel 3-4 en vez de quedarse en 2-3.
-
-### Ejemplo comparativo
-
-**Caso: Negocio con $15k-$50k, publica 1-2 veces/semana, $0 pauta**
-- Antes: 6 + 2 + 0 = **8 → Nivel 3**
-- Después: 8 + 2 + 1 = **11 → Nivel 4**
-
-**Caso: Negocio con $5k-$15k, perfil inactivo, $0 pauta**
-- Antes: 4 + 1 + 0 = **5 → Nivel 2**
-- Después: 5 + 1 + 1 = **7 → Nivel 3**
-
-### Cambio técnico
-Solo se modifica `src/pages/Funnel.tsx`: los arrays de `puntos` en `revenueOptions` y `adSpendOptions`, sin tocar UI ni estructura.
-
+Resultado esperado
+- Pixel funcionando en todas las rutas de esta app.
+- `/roadmap` medido correctamente.
+- Sin GTM.
+- Sin recargas locas del configurador.
+- Con claridad de si el pendiente final es código o dominio.
