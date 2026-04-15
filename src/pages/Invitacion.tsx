@@ -119,12 +119,7 @@ const Invitacion = () => {
 
       if (!authData.user) throw new Error('No se pudo crear el usuario');
 
-      // Accept invitation
-      try {
-        await supabase.rpc('accept_client_invitation', { _token: token });
-      } catch (acceptErr) {
-        console.error('Error accepting invitation (non-blocking):', acceptErr);
-      }
+      // Invitation is auto-accepted by database trigger on user creation
 
       setSuccess(true);
     } catch (err: any) {
