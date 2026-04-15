@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Download, Calendar, Crown, ArrowRight, Lock, Loader2 } from 'lucide-react';
+import { ArrowRight, Lock, Loader2, Mail, CheckCircle2 } from 'lucide-react';
 
 interface ResultsStepProps {
   level: number;
