@@ -181,7 +181,7 @@ export const SalesGoalBar = ({ clientId, currentSalesUSD, currentSalesCRC, prima
               }}
             />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-sm font-bold mix-blend-difference text-white tracking-wide">
+              <span className="text-sm font-bold text-white tracking-wide drop-shadow-sm">
                 {progress.toFixed(1)}%
               </span>
             </div>
