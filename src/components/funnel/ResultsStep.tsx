@@ -171,51 +171,45 @@ export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: Results
             Descargar mi estrategia (PDF)
           </Button>
 
-          {qualifiesForSession && (
-            <div className="p-5 md:p-6 rounded-2xl bg-[#FF6B35]/5 border-2 border-[#FF6B35]/20 space-y-3 md:space-y-4">
-              <div className="flex items-center gap-2 justify-center">
-                <Calendar className="h-5 w-5 text-[#FF6B35]" />
-                <h3 className="text-base md:text-lg font-bold text-[#212121]">¡Calificás para una sesión gratuita!</h3>
+          {/* Free planning session CTA — all levels */}
+          <div className="p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[#FF6B35]/10 to-[#FF6B35]/5 border-2 border-[#FF6B35]/30 space-y-4 text-left relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF6B35]/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="relative">
+              <div className="inline-flex items-center gap-1.5 bg-[#FF6B35] text-white text-[10px] md:text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">
+                <Calendar className="h-3 w-3" />
+                100% Gratis — Sin compromiso
               </div>
-              <p className="text-[#212121]/50 text-xs md:text-sm">
-                Basado en tu nivel de negocio, te ofrecemos una sesión de planificación estratégica sin costo.
+              <h3 className="text-lg md:text-xl font-bold text-[#212121] leading-snug">
+                Sesión de Planificación Estratégica Personalizada
+              </h3>
+              <p className="text-[#212121]/60 text-sm md:text-base mt-2 leading-relaxed">
+                En 30 minutos definimos juntos un plan de acción concreto para tu negocio. 
+                <span className="font-semibold text-[#212121]/80"> Lo ejecutés con nosotros o no, el plan es tuyo.</span>
               </p>
+              <ul className="mt-3 space-y-1.5 text-xs md:text-sm text-[#212121]/60">
+                <li className="flex items-start gap-2">
+                  <span className="text-[#FF6B35] font-bold mt-0.5">✓</span>
+                  Diagnóstico de tu presencia digital actual
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[#FF6B35] font-bold mt-0.5">✓</span>
+                  Estrategia personalizada según tu nivel
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[#FF6B35] font-bold mt-0.5">✓</span>
+                  Próximos pasos claros para crecer
+                </li>
+              </ul>
               <Button
                 size="lg"
-                className="gap-2 bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold px-6 md:px-8 rounded-xl text-sm md:text-base"
+                className="w-full mt-5 gap-2 bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold rounded-xl text-sm md:text-base py-6 shadow-lg shadow-[#FF6B35]/20"
                 onClick={onCalendlyClick}
               >
-                Agendar sesión gratuita
+                Agendar mi sesión gratuita
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
-          )}
-
-          {isPremium && (
-            <div className="p-5 md:p-6 rounded-2xl bg-[#FF6B35]/5 border-2 border-[#FF6B35]/20 space-y-3 md:space-y-4">
-              <div className="flex items-center gap-2 justify-center">
-                <Crown className="h-5 w-5 text-[#FF6B35]" />
-                <h3 className="text-base md:text-lg font-bold text-[#212121]">Consultoría Premium</h3>
-              </div>
-              <p className="text-[#212121]/50 text-xs md:text-sm">
-                Tu negocio está en un nivel avanzado. Te ofrecemos una consultoría premium personalizada.
-              </p>
-              <Button
-                size="lg"
-                className="gap-2 bg-[#FF6B35] hover:bg-[#e55a2b] text-white font-semibold px-6 md:px-8 rounded-xl text-sm md:text-base"
-                onClick={onCalendlyClick}
-              >
-                Solicitar consultoría
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-
-          {level <= 2 && (
-            <p className="text-xs md:text-sm text-[#212121]/40">
-              Descargá tu estrategia y empezá a implementar. Cuando tu negocio crezca, estaremos acá para ayudarte a escalar. 🚀
-            </p>
-          )}
+          </div>
         </div>
       )}
     </div>
