@@ -213,13 +213,15 @@ const DocumentsManager = () => {
       return (data || []).filter(f => f.id).map(f => {
         const { data: urlData } = supabase.storage.from('content-images').getPublicUrl(`documents/${f.name}`);
         const isPdf = f.name.toLowerCase().endsWith('.pdf');
+        const fullPath = `documents/${f.name}`;
         return {
           name: f.name,
-          fullPath: `documents/${f.name}`,
+          fullPath,
           url: urlData.publicUrl,
           created_at: f.created_at || '',
           size: (f.metadata as any)?.size || 0,
           isPdf,
+          emailConnection: EMAIL_CONNECTIONS[fullPath] || null,
         };
       });
     },
