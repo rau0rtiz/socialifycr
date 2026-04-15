@@ -275,7 +275,7 @@ const Funnel = () => {
         </div>
       </main>
 
-      <footer className="bg-[#212121] py-4 md:py-6 text-center text-[10px] md:text-xs text-white/40 uppercase tracking-wider">
+      <footer className="bg-[#212121] py-4 md:py-6 text-center text-[10px] md:text-xs text-white/40 uppercase tracking-wider relative z-[1]">
         © {new Date().getFullYear()} SOCIALIFY · TODOS LOS DERECHOS RESERVADOS
       </footer>
     </div>
