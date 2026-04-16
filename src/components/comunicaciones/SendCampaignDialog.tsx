@@ -37,80 +37,24 @@ const levelNames: Record<number, string> = {
   1: 'Idea', 2: 'Startup', 3: 'En crecimiento', 4: 'Escalando', 5: 'Establecido', 6: 'Imperio',
 };
 
-const answerLabels: Record<string, Record<string, string>> = {
-  industria: {
-    retail: 'Retail / Tienda', restaurante: 'Restaurante / Comida', salud: 'Salud y bienestar',
-    servicios: 'Servicios profesionales', educacion: 'Educación / Cursos', otro: 'Otro',
-  },
-  ingresos: {
-    menos1k: 'menos de $1,000/mes', '1k5k': '$1,000–$5,000/mes', '5k15k': '$5,000–$15,000/mes',
-    '15k50k': '$15,000–$50,000/mes', mas50k: 'más de $50,000/mes',
-  },
-  presencia: {
-    nada: 'sin presencia en redes', perfil_inactivo: 'perfil inactivo',
-    poco: 'publica 1-2 veces/semana', consistente: 'publica 3-5 veces/semana', diario: 'publica a diario',
-  },
-  pauta: {
-    nada: 'sin inversión en pauta', intente: 'probó pauta pero la dejó', menos200: 'invierte menos de $200/mes',
-    '200_500': 'invierte $200-$500/mes', '500_1000': 'invierte $500-$1,000/mes',
-    '1000_2000': 'invierte $1,000-$2,000/mes', mas2000: 'invierte más de $2,000/mes',
-  },
-  canalVentas: {
-    local: 'venta en persona', mensajes: 'venta por WhatsApp/redes', web: 'venta por página web',
-    outbound: 'contacto frío/outbound', marketplace: 'marketplace', puntos_venta: 'puntos de venta externos', otro: 'otro canal',
-  },
-  objetivo: {
-    awareness: 'que más gente conozca su producto', nuevos_clientes: 'conseguir más clientes nuevos',
-    retencion: 'venderle más a quienes ya compraron', lanzamiento: 'lanzar un nuevo producto',
-    marca: 'construir una marca reconocida',
-  },
+const levelIntros: Record<number, string> = {
+  1: 'Vi que estás en las primeras etapas de tu negocio y eso me parece increíble — arrancar es lo más difícil. Muchos emprendedores en esta fase tienen la idea clara pero no saben por dónde empezar con el marketing digital.',
+  2: 'Vi que ya arrancaste con tu negocio y estás dando los primeros pasos. Esta es una etapa clave donde tener una estrategia clara puede hacer toda la diferencia para empezar a generar tracción.',
+  3: 'Vi que tu negocio ya está creciendo y eso habla muy bien de lo que has construido. En esta etapa, una buena estrategia de marketing puede acelerar ese crecimiento y ayudarte a llegar al siguiente nivel.',
+  4: 'Vi que tu negocio está en una etapa de escalar y eso es un gran logro. Cuando un negocio llega a este punto, optimizar la estrategia digital se vuelve fundamental para crecer de forma sostenible.',
+  5: 'Vi que tienes un negocio establecido con buena tracción. En esta etapa, el reto suele ser encontrar nuevas palancas de crecimiento y maximizar el retorno de cada acción de marketing.',
+  6: 'Vi que manejas una operación sólida y consolidada. A este nivel, la diferencia la hace una estrategia digital de alto nivel que te permita seguir dominando tu mercado.',
 };
 
 function buildLeadVariables(lead: any): Record<string, string> {
   if (!lead) return {};
-  const answers = lead.answers || {};
-  const getLabel = (key: string, val: string) => answerLabels[key]?.[val] || val || '';
-
-  const industry = getLabel('industria', answers.industria || lead.industry || '');
-  const revenue = getLabel('ingresos', answers.ingresos || lead.revenue_range || '');
-  const presence = getLabel('presencia', answers.presencia || '');
-  const adSpend = getLabel('pauta', answers.pauta || '');
-  const salesChannel = getLabel('canalVentas', answers.canalVentas || '');
-  const goal = getLabel('objetivo', answers.objetivo || '');
-  const levelName = levelNames[lead.business_level] || `Nivel ${lead.business_level}`;
-
-  // Build challenge summary
-  let challengeSummary = lead.challenge || '';
-  if (!challengeSummary) {
-    const parts: string[] = [];
-    if (presence) parts.push(`actualmente ${presence}`);
-    if (adSpend) parts.push(adSpend);
-    if (salesChannel) parts.push(`su canal principal es ${salesChannel}`);
-    if (goal) parts.push(`su objetivo es ${goal}`);
-    challengeSummary = parts.length > 0 ? parts.join(', ') : 'crecer su negocio con marketing digital';
-  }
-
-  // Build context summary paragraph
-  const contextParts: string[] = [];
-  if (industry) contextParts.push(`en la industria de ${industry}`);
-  if (revenue) contextParts.push(`facturando ${revenue}`);
-  if (levelName) contextParts.push(`en etapa "${levelName}"`);
-  const contextSummary = contextParts.length > 0
-    ? `Tu negocio está ${contextParts.join(', ')}. ${challengeSummary ? `Veo que ${challengeSummary}.` : ''}`
-    : '';
+  const level = lead.business_level || 1;
+  const intro = levelIntros[level] || levelIntros[1];
 
   return {
     name: lead.name || '',
     email: lead.email || '',
-    industry: industry || 'tu industria',
-    business_level_name: levelName,
-    revenue_range_label: revenue || 'tu rango actual',
-    goal_label: goal || 'crecer tu negocio',
-    sales_channel_label: salesChannel || 'tu canal actual',
-    challenge_summary: challengeSummary,
-    context_summary: contextSummary,
-    custom_intro: '',
-    whatsapp: '50660173431',
+    custom_intro: intro,
   };
 }
 
@@ -152,8 +96,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         const vars = buildLeadVariables(leadContext);
         setEditedSubject(replaceVariables(template.subject, vars));
         setEditedHtml(replaceVariables(template.html_content, vars));
-        // Extract a default editable message from context
-        setEditedMessage(vars.context_summary || '');
+        setEditedMessage(vars.custom_intro || '');
       } else {
         setStep('audience');
         setSelectedIds(new Set());
@@ -322,18 +265,15 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} className="h-9" />
             </div>
 
-            {/* Editable message / context */}
+            {/* Editable intro */}
             <div className="space-y-1">
-              <Label className="text-xs">Mensaje personalizado (contexto del negocio)</Label>
+              <Label className="text-xs">Intro del email (basado en nivel {leadContext?.business_level})</Label>
               <Textarea
                 value={editedMessage}
                 onChange={e => setEditedMessage(e.target.value)}
-                className="min-h-[80px] text-sm resize-none"
-                placeholder="Escribe un mensaje personalizado basado en lo que sabes del lead..."
+                className="min-h-[70px] text-sm resize-none"
+                placeholder="Intro según el nivel del lead..."
               />
-              <p className="text-[10px] text-muted-foreground">
-                Este texto reemplaza {`{{custom_intro}}`} en la plantilla.
-              </p>
             </div>
 
             {/* Preview */}
