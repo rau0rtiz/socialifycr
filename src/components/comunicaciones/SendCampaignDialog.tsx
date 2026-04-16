@@ -308,7 +308,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
                 <TabsTrigger value="code" className="gap-1.5 text-xs"><Code className="h-3.5 w-3.5" /> HTML</TabsTrigger>
               </TabsList>
               <TabsContent value="preview" className="flex-1 min-h-0 mt-2">
-                <div className="border rounded-lg overflow-hidden bg-white h-[300px]">
+                <div className="border rounded-lg overflow-hidden bg-white h-[400px]">
                   <iframe
                     srcDoc={previewHtml}
                     className="w-full h-full border-0"
