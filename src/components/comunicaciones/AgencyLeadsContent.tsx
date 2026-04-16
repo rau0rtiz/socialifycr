@@ -418,6 +418,24 @@ const AgencyLeadsContent = () => {
                   </div>
                 </div>
               )}
+              {/* UTM Data */}
+              {selectedLead.answers && (
+                (['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const)
+                  .some(k => (selectedLead.answers as Record<string, string>)[k])
+              ) && (
+                <div>
+                  <span className="text-muted-foreground font-medium">Atribución (UTMs):</span>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const)
+                      .filter(k => (selectedLead.answers as Record<string, string>)[k])
+                      .map(k => (
+                        <div key={k} className="rounded-lg bg-purple-500/10 p-2.5">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{k.replace('utm_', '')}</p>
+                          <p className="font-medium text-xs mt-0.5">{(selectedLead.answers as Record<string, string>)[k]}</p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
               <div className="text-xs text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 {format(new Date(selectedLead.created_at), "dd MMM yyyy 'a las' HH:mm", { locale: es })}
