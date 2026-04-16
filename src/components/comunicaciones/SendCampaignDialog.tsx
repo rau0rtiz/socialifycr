@@ -19,6 +19,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   template: EmailTemplate | null;
+  preselectedRecipients?: { id: string; name: string; email: string }[];
 }
 
 type AudienceType = 'funnel_leads' | 'email_contacts';
