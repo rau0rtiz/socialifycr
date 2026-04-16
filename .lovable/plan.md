@@ -1,35 +1,30 @@
 
 
-## Plan: Agregar campo de Instagram/nombre de negocio al funnel
+User wants only C.6 (no share button).
 
-### Problema
-La pregunta de industria da categorías genéricas ("Servicios profesionales", "E-commerce") pero no te dice *qué* hace el negocio ni cómo encontrarlo. Necesitás más contexto para prepararte antes de una llamada.
+## Plan: Acciones concretas por nivel en el resultado del funnel
 
-### Solución
-Agregar un campo opcional de **@ de Instagram o nombre del negocio** en el paso de resultados (junto con nombre y email), en vez de agregar otra pregunta al quiz. Esto:
-- No agrega fricción al quiz (sigue siendo 6 preguntas rápidas)
-- Captura info accionable justo cuando el lead ya decidió dar sus datos
-- Te permite buscar el negocio antes de la llamada
+### Cambio único en `src/components/funnel/ResultsStep.tsx`
 
-### Cambios
+Agregar un array `levelActions` con 3 acciones específicas por nivel y renderizarlas dentro del card del nivel actual, debajo de la descripción.
 
-**1. `src/components/funnel/ResultsStep.tsx`**
-- Agregar un tercer campo en el formulario de contacto: "Instagram o nombre de tu negocio" (opcional, con placeholder `@tucuenta o Nombre del negocio`)
-- Pasar el valor como parámetro adicional en `onSubmitContact`
-- Icono de Instagram/edificio al lado del campo
+**Acciones por nivel:**
 
-**2. `src/pages/Funnel.tsx`**
-- Actualizar `handleSubmitContact` para recibir el nuevo campo (`businessHandle`)
-- Guardarlo en el objeto `answers` del insert a `funnel_leads` (dentro del JSON `answers`, no requiere nueva columna)
+- **Nivel 1 (Idea):** Definir propuesta de valor clara / Abrir cuentas en IG y TikTok / Publicar 3 piezas validando la idea
+- **Nivel 2 (Startup):** Publicar 3x/semana con 3 pilares de contenido / Activar primera campaña de tráfico ($5-10/día) / Configurar WhatsApp Business con respuestas rápidas
+- **Nivel 3 (Growing):** Implementar embudo de captación con lead magnet / Escalar pauta a $20-50/día con A/B testing / Automatizar respuestas iniciales en DM
+- **Nivel 4 (Scaling):** Diversificar a un 2do canal de pauta / Optimizar CAC por canal con atribución / Delegar producción creativa a un equipo
+- **Nivel 5 (Established):** Expandir a nuevos mercados o segmentos / Construir marca personal del fundador / Implementar atribución multi-touch
+- **Nivel 6 (Empire):** Alianzas estratégicas con marcas complementarias / Programa de afiliados o embajadores / Liderazgo de categoría con thought-leadership
 
-**3. Base de datos**
-- No se necesita migración — el campo se guarda dentro de la columna JSONB `answers` existente
-
-**4. Vistas de leads**
-- `src/pages/AgencyLeads.tsx` y `src/components/comunicaciones/AgencyLeadsContent.tsx`: mostrar el handle/nombre de negocio en la tabla y el detalle del lead (leyéndolo de `answers.businessHandle`)
+**Renderizado:**
+- Lista con icono `CheckCircle2` del color del nivel a la izquierda
+- Texto pequeño (`text-xs md:text-sm`)
+- Separador sutil arriba de la lista
+- Encabezado pequeño "Próximos pasos:" en uppercase
 
 ### Detalle técnico
-- El campo es opcional para no bajar la tasa de conversión
-- Se almacena en `answers.businessHandle` del registro `funnel_leads`
-- La firma de `onSubmitContact` cambia de `(name, email)` a `(name, email, businessHandle?)`
+- Solo se modifica `ResultsStep.tsx`
+- No requiere cambios en BD, edge functions, ni otros archivos
+- Sin botón de compartir
 
