@@ -209,6 +209,7 @@ const Funnel = () => {
         return (
           <FunnelQuestion
             question="¿CUÁNTO FACTURA TU NEGOCIO AL MES APROXIMADAMENTE?"
+            subtitle="💰 Este dato define el nivel de tu negocio"
             options={revenueOptions}
             selected={answers.ingresos}
             onSelect={(v) => handleOptionSelect('ingresos', v, 3)}
@@ -259,6 +260,7 @@ const Funnel = () => {
         return (
           <ResultsStep
             level={businessLevel}
+            revenueRange={answers.ingresos}
             onSubmitContact={handleSubmitContact}
             onCalendlyClick={handleCalendlyClick}
           />
