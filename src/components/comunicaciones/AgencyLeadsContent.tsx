@@ -5,15 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Download, Eye, Calendar, CheckCircle2, XCircle, ArrowLeft, Users, ExternalLink, Megaphone, Trash2 } from 'lucide-react';
+import { Search, Download, Calendar, CheckCircle2, ArrowLeft, Users, ExternalLink, Megaphone, Trash2, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { es } from 'date-fns/locale';
+import { SendCampaignDialog } from './SendCampaignDialog';
+import { useEmailTemplates } from '@/hooks/use-email-templates';
 
 const levelNames = ['', 'Idea', 'Startup', 'Growing', 'Scaling', 'Established', 'Empire'];
 const levelColors: Record<number, string> = {
@@ -89,11 +89,12 @@ const AgencyLeadsContent = () => {
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [selectedLead, setSelectedLead] = useState<any>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [emailLead, setEmailLead] = useState<any>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { data: emailTemplates = [] } = useEmailTemplates();
 
   // Fetch funnels
   const { data: funnels = [] } = useQuery({
@@ -169,41 +170,28 @@ const AgencyLeadsContent = () => {
     URL.revokeObjectURL(url);
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.size === filtered.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filtered.map(l => l.id)));
-    }
-  };
-
-  const handleDeleteSelected = async () => {
+  const handleDeleteLead = async (id: string) => {
     setDeleting(true);
     try {
       const { error } = await supabase
         .from('funnel_leads')
         .delete()
-        .in('id', Array.from(selectedIds));
+        .eq('id', id);
       if (error) throw error;
-      toast({ title: `${selectedIds.size} lead(s) eliminado(s)` });
-      setSelectedIds(new Set());
+      toast({ title: 'Lead eliminado' });
+      setSelectedLead(null);
+      setShowDeleteConfirm(false);
       queryClient.invalidateQueries({ queryKey: ['funnel-leads'] });
       queryClient.invalidateQueries({ queryKey: ['funnel-lead-counts'] });
     } catch (e: any) {
       toast({ title: 'Error al eliminar', description: e.message, variant: 'destructive' });
     } finally {
       setDeleting(false);
-      setShowDeleteConfirm(false);
     }
   };
+
+  // Find outbound template
+  const outboundTemplate = emailTemplates.find(t => t.slug === 'outbound-funnel-roadmap');
 
   const selectedFunnel = funnels.find((f: any) => f.id === selectedFunnelId);
   if (!selectedFunnelId) {
@@ -269,7 +257,7 @@ const AgencyLeadsContent = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => { setSelectedFunnelId(null); setSearch(''); setLevelFilter('all'); setSelectedIds(new Set()); }}>
+          <Button variant="ghost" size="icon" onClick={() => { setSelectedFunnelId(null); setSearch(''); setLevelFilter('all'); }}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -277,16 +265,9 @@ const AgencyLeadsContent = () => {
             <p className="text-sm text-muted-foreground">{filtered.length} leads</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {selectedIds.size > 0 && (
-            <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)} className="gap-2">
-              <Trash2 className="h-4 w-4" /> Eliminar ({selectedIds.size})
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
-            <Download className="h-4 w-4" /> Exportar CSV
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
+          <Download className="h-4 w-4" /> Exportar CSV
+        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -308,30 +289,41 @@ const AgencyLeadsContent = () => {
       {leadsLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1,2,3].map(i => (
-            <Card key={i} className="animate-pulse"><CardContent className="p-6 h-48" /></Card>
+            <Card key={i} className="animate-pulse"><CardContent className="p-4 h-36" /></Card>
           ))}
         </div>
       ) : filtered.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">No hay leads</CardContent></Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((lead) => {
             const utmData = (lead.answers as any)?.utm_source || (lead.answers as any)?.utm_campaign;
             return (
-              <Card key={lead.id} className="group hover:shadow-md hover:border-primary/30 transition-all relative">
-                <CardContent className="p-5 space-y-3">
-                  {/* Checkbox top-right */}
-                  <div className="absolute top-3 right-3">
-                    <Checkbox
-                      checked={selectedIds.has(lead.id)}
-                      onCheckedChange={() => toggleSelect(lead.id)}
-                    />
+              <Card
+                key={lead.id}
+                className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all relative"
+                onClick={() => setSelectedLead(lead)}
+              >
+                <CardContent className="p-4 space-y-2">
+                  {/* Mail button top-right */}
+                  <div className="absolute top-2.5 right-2.5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEmailLead(lead);
+                      }}
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
 
                   {/* Name + Level */}
-                  <div className="flex items-start gap-3 pr-8">
+                  <div className="flex items-center gap-2.5 pr-8">
                     <div
-                      className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
+                      className="h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
                       style={{ backgroundColor: levelColors[lead.business_level] }}
                     >
                       {lead.business_level}
@@ -343,7 +335,7 @@ const AgencyLeadsContent = () => {
                   </div>
 
                   {/* Tags row */}
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1">
                     <Badge variant="outline" className="text-[10px]" style={{ borderColor: levelColors[lead.business_level], color: levelColors[lead.business_level] }}>
                       {levelNames[lead.business_level]}
                     </Badge>
@@ -370,11 +362,6 @@ const AgencyLeadsContent = () => {
                       {format(new Date(lead.created_at), 'dd MMM', { locale: es })}
                     </span>
                   </div>
-
-                  {/* View button */}
-                  <Button variant="ghost" size="sm" className="w-full h-8 text-xs gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setSelectedLead(lead)}>
-                    <Eye className="h-3 w-3" /> Ver detalle
-                  </Button>
                 </CardContent>
               </Card>
             );
@@ -382,6 +369,7 @@ const AgencyLeadsContent = () => {
         </div>
       )}
 
+      {/* Lead detail dialog */}
       <Dialog open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{selectedLead?.name}</DialogTitle></DialogHeader>
@@ -441,27 +429,54 @@ const AgencyLeadsContent = () => {
                 <Calendar className="h-3 w-3" />
                 {format(new Date(selectedLead.created_at), "dd MMM yyyy 'a las' HH:mm", { locale: es })}
               </div>
+
+              {/* Delete button */}
+              <div className="pt-3 border-t">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 className="h-4 w-4" /> Eliminar lead
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
+      {/* Delete confirmation */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar {selectedIds.size} lead(s)?</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar este lead?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Los leads seleccionados serán eliminados permanentemente.
+              Esta acción no se puede deshacer. El lead será eliminado permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteSelected} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={() => selectedLead && handleDeleteLead(selectedLead.id)}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               {deleting ? 'Eliminando...' : 'Eliminar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Outbound email dialog */}
+      {emailLead && outboundTemplate && (
+        <SendCampaignDialog
+          open={!!emailLead}
+          onOpenChange={(open) => !open && setEmailLead(null)}
+          template={outboundTemplate}
+          preselectedRecipients={[{ id: emailLead.id, name: emailLead.name, email: emailLead.email }]}
+        />
+      )}
     </div>
   );
 };
