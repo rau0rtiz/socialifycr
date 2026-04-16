@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Download, Calendar, CheckCircle2, ArrowLeft, Users, ExternalLink, Megaphone, Trash2, Mail, TrendingUp, TrendingDown, MousePointerClick, BarChart3 } from 'lucide-react';
+import { Search, Download, Calendar, CheckCircle2, ArrowLeft, Users, ExternalLink, Megaphone, Trash2, Mail, TrendingUp, BarChart3 } from 'lucide-react';
 import { format, subDays, isAfter } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { es } from 'date-fns/locale';
