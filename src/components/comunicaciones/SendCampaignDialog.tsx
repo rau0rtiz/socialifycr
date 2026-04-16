@@ -104,10 +104,15 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
     );
   }, [allRecipients, recipientSearch]);
 
-  const selectedRecipients = useMemo(() =>
-    allRecipients.filter(r => selectedIds.has(r.id)),
-    [allRecipients, selectedIds]
-  );
+  const selectedRecipients = useMemo(() => {
+    const fromAll = allRecipients.filter(r => selectedIds.has(r.id));
+    if (preselectedRecipients && preselectedRecipients.length > 0) {
+      const existingIds = new Set(fromAll.map(r => r.id));
+      const extra = preselectedRecipients.filter(r => selectedIds.has(r.id) && !existingIds.has(r.id));
+      return [...fromAll, ...extra];
+    }
+    return fromAll;
+  }, [allRecipients, selectedIds, preselectedRecipients]);
 
   const toggleRecipient = (id: string) => {
     setSelectedIds(prev => {
