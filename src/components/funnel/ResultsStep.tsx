@@ -21,6 +21,39 @@ const levelData = [
   { name: 'Empire', revenue: '$200K+/mes', desc: 'Tu estrategia de marketing digital debería enfocarse en liderazgo de marca, alianzas estratégicas y crecimiento exponencial a través de múltiples plataformas.', color: '#ef4444' },
 ];
 
+const levelActions: string[][] = [
+  [
+    'Definí tu propuesta de valor en una frase clara',
+    'Abrí cuentas profesionales en Instagram y TikTok',
+    'Publicá 3 piezas de contenido validando tu idea',
+  ],
+  [
+    'Publicá 3 veces por semana con 3 pilares de contenido',
+    'Activá tu primera campaña de tráfico ($5–10/día)',
+    'Configurá WhatsApp Business con respuestas rápidas',
+  ],
+  [
+    'Implementá un embudo de captación con lead magnet',
+    'Escalá pauta a $20–50/día con A/B testing',
+    'Automatizá respuestas iniciales en DM',
+  ],
+  [
+    'Diversificá hacia un 2do canal de pauta',
+    'Optimizá tu CAC por canal con atribución',
+    'Delegá la producción creativa a un equipo',
+  ],
+  [
+    'Expandí a nuevos mercados o segmentos',
+    'Construí la marca personal del fundador',
+    'Implementá atribución multi-touch',
+  ],
+  [
+    'Cerrá alianzas estratégicas con marcas complementarias',
+    'Lanzá un programa de afiliados o embajadores',
+    'Liderá tu categoría con contenido thought-leadership',
+  ],
+];
+
 export const ResultsStep = ({ level, revenueRange, onSubmitContact, onCalendlyClick }: ResultsStepProps) => {
   const [revealed, setRevealed] = useState(false);
   const [name, setName] = useState('');
