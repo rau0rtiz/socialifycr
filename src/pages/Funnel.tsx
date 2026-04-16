@@ -172,6 +172,17 @@ const Funnel = () => {
         return false;
       }
 
+      const answersPayload: Record<string, any> = {
+          presencia: answers.presencia,
+          pauta: answers.pauta,
+          canalVentas: answers.canalVentas,
+          objetivo: answers.objetivo,
+        };
+      // Merge UTM params if present
+      if (utmParamsRef.current) {
+        Object.assign(answersPayload, utmParamsRef.current);
+      }
+
       const { error } = await supabase.from('funnel_leads').insert({
         id,
         name: name.trim().slice(0, 100),
@@ -180,12 +191,7 @@ const Funnel = () => {
         industry: answers.industry,
         revenue_range: answers.ingresos,
         funnel_id: resolvedFunnelId,
-        answers: {
-          presencia: answers.presencia,
-          pauta: answers.pauta,
-          canalVentas: answers.canalVentas,
-          objetivo: answers.objetivo,
-        },
+        answers: answersPayload,
       });
       if (error) throw error;
       setLeadId(id);
