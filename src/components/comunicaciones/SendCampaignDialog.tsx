@@ -321,7 +321,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
                 <Textarea
                   value={editedHtml}
                   onChange={e => setEditedHtml(e.target.value)}
-                  className="h-[300px] font-mono text-xs resize-none"
+                  className="h-[400px] font-mono text-xs resize-none"
                   spellCheck={false}
                 />
               </TabsContent>
