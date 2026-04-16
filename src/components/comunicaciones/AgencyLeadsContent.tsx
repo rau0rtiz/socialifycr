@@ -314,7 +314,7 @@ const AgencyLeadsContent = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                <TrendingUp className="h-4.5 w-4.5 text-blue-500" />
+                <TrendingUp className="h-5 w-5 text-blue-500" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -334,7 +334,7 @@ const AgencyLeadsContent = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                <MousePointerClick className="h-4.5 w-4.5 text-emerald-500" />
+                <MousePointerClick className="h-5 w-5 text-emerald-500" />
               </div>
               <div className="min-w-0">
                 <p className="text-2xl font-bold text-foreground">{kpiMetrics.calendlyRate}%</p>
@@ -349,7 +349,7 @@ const AgencyLeadsContent = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
-                <BarChart3 className="h-4.5 w-4.5 text-purple-500" />
+                <BarChart3 className="h-5 w-5 text-purple-500" />
               </div>
               <p className="text-xs text-muted-foreground">Distribución</p>
             </div>
