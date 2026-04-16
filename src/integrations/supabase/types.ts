@@ -1311,6 +1311,7 @@ export type Database = {
           status: string
           subscribed_at: string | null
           tags: string[] | null
+          unsubscribe_reason: string | null
           unsubscribed_at: string | null
           updated_at: string | null
         }
@@ -1324,6 +1325,7 @@ export type Database = {
           status?: string
           subscribed_at?: string | null
           tags?: string[] | null
+          unsubscribe_reason?: string | null
           unsubscribed_at?: string | null
           updated_at?: string | null
         }
@@ -1337,6 +1339,7 @@ export type Database = {
           status?: string
           subscribed_at?: string | null
           tags?: string[] | null
+          unsubscribe_reason?: string | null
           unsubscribed_at?: string | null
           updated_at?: string | null
         }
@@ -1508,6 +1511,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          reason: string | null
           token: string
           used_at: string | null
         }
@@ -1515,6 +1519,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          reason?: string | null
           token: string
           used_at?: string | null
         }
@@ -1522,6 +1527,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          reason?: string | null
           token?: string
           used_at?: string | null
         }

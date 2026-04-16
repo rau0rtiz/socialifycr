@@ -6,6 +6,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function buildUnsubscribeFooter(url: string): string {
+  return `<div style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center;">
+    <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.5;">Si no deseas recibir más correos, puedes <a href="${url}" style="color:#9ca3af;text-decoration:underline;">desuscribirte aquí</a>.</p>
+  </div>`;
+}
+
+async function generateUnsubscribeUrl(supabaseAdmin: any, email: string): Promise<string> {
+  const token = crypto.randomUUID();
+  await supabaseAdmin.from("email_unsubscribe_tokens").insert({ token, email: email.toLowerCase() });
+  return `https://app.socialifycr.com/desuscribirse?token=${token}`;
+}
+
+function injectFooter(html: string, footer: string): string {
+  if (html.includes("</body>")) return html.replace(/<\/body>/i, `${footer}</body>`);
+  return html + footer;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -65,7 +82,6 @@ serve(async (req) => {
       .eq("client_id", campaign.client_id)
       .eq("status", "active");
 
-    // Filter by tags if specified
     if (campaign.target_tags && campaign.target_tags.length > 0) {
       query = query.overlaps("tags", campaign.target_tags);
     }
@@ -74,7 +90,7 @@ serve(async (req) => {
     if (contactsErr) throw contactsErr;
     if (!contacts || contacts.length === 0) throw new Error("No contacts found");
 
-    // Update campaign status to sending
+    // Update campaign status
     await supabaseAdmin
       .from("email_campaigns")
       .update({
@@ -86,18 +102,22 @@ serve(async (req) => {
 
     let sentCount = 0;
     let failedCount = 0;
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 
-    // Send emails in batches of 5
     const batchSize = 5;
     for (let i = 0; i < contacts.length; i += batchSize) {
       const batch = contacts.slice(i, i + batchSize);
 
-      const results = await Promise.allSettled(
+      await Promise.allSettled(
         batch.map(async (contact) => {
           try {
-            const personalizedHtml = campaign.html_content
+            let personalizedHtml = campaign.html_content
               .replace(/\{\{name\}\}/g, contact.full_name || "")
               .replace(/\{\{email\}\}/g, contact.email);
+
+            // Inject unsubscribe footer
+            const unsubUrl = await generateUnsubscribeUrl(supabaseAdmin, contact.email);
+            personalizedHtml = injectFooter(personalizedHtml, buildUnsubscribeFooter(unsubUrl));
 
             const res = await fetch("https://api.resend.com/emails", {
               method: "POST",
@@ -114,12 +134,8 @@ serve(async (req) => {
             });
 
             const resData = await res.json();
+            if (!res.ok) throw new Error(JSON.stringify(resData));
 
-            if (!res.ok) {
-              throw new Error(JSON.stringify(resData));
-            }
-
-            // Log success
             await supabaseAdmin.from("email_send_logs").insert({
               campaign_id,
               contact_id: contact.id,
@@ -128,7 +144,6 @@ serve(async (req) => {
               sent_at: new Date().toISOString(),
             });
 
-            // Log to sent_emails for unified history with tracking pixel
             const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
               recipient_email: contact.email,
               recipient_name: contact.full_name || null,
@@ -141,7 +156,6 @@ serve(async (req) => {
             }).select("id").single();
 
             if (emailRecord?.id) {
-              const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
               const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
               const trackedHtml = personalizedHtml + `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
               await supabaseAdmin.from("sent_emails").update({ html_content: trackedHtml }).eq("id", emailRecord.id);
@@ -149,7 +163,6 @@ serve(async (req) => {
 
             sentCount++;
           } catch (err) {
-            // Log failure
             await supabaseAdmin.from("email_send_logs").insert({
               campaign_id,
               contact_id: contact.id,
@@ -157,7 +170,6 @@ serve(async (req) => {
               error_message: err.message,
             });
 
-            // Log failure to sent_emails
             await supabaseAdmin.from("sent_emails").insert({
               recipient_email: contact.email,
               recipient_name: contact.full_name || null,
@@ -173,13 +185,11 @@ serve(async (req) => {
         })
       );
 
-      // Small delay between batches to respect rate limits
       if (i + batchSize < contacts.length) {
         await new Promise((r) => setTimeout(r, 500));
       }
     }
 
-    // Update campaign final status
     await supabaseAdmin
       .from("email_campaigns")
       .update({
@@ -190,12 +200,7 @@ serve(async (req) => {
       .eq("id", campaign_id);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        total: contacts.length,
-        sent: sentCount,
-        failed: failedCount,
-      }),
+      JSON.stringify({ success: true, total: contacts.length, sent: sentCount, failed: failedCount }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
