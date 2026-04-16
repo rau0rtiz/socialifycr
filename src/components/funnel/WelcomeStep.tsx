@@ -28,7 +28,7 @@ export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
     <div className="space-y-2 pt-2">
       <p className="flex items-center justify-center gap-2 text-sm md:text-base font-semibold text-[#212121] uppercase">
         <Sparkles className="h-4 w-4 text-[#FF6B35]" />
-        OBTENÉ TU ROADMAP EN MENOS DE 2 MINUTOS
+        OBTENÉ TU DIAGNÓSTICO EN MENOS DE 2 MINUTOS
       </p>
       <p className="flex items-center justify-center gap-2 text-sm md:text-base font-semibold text-[#212121] uppercase">
         <Sparkles className="h-4 w-4 text-[#FF6B35]" />
