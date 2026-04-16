@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
@@ -8,8 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Download, Calendar, CheckCircle2, ArrowLeft, Users, ExternalLink, Megaphone, Trash2, Mail } from 'lucide-react';
-import { format } from 'date-fns';
+import { Search, Download, Calendar, CheckCircle2, ArrowLeft, Users, ExternalLink, Megaphone, Trash2, Mail, TrendingUp, TrendingDown, MousePointerClick, BarChart3 } from 'lucide-react';
+import { format, subDays, isAfter } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { es } from 'date-fns/locale';
 import { SendCampaignDialog } from './SendCampaignDialog';
@@ -193,6 +193,28 @@ const AgencyLeadsContent = () => {
   // Find outbound template
   const outboundTemplate = emailTemplates.find(t => t.slug === 'outbound-funnel-roadmap');
 
+  // ─── KPI Metrics (computed from leads array) ───
+  const kpiMetrics = useMemo(() => {
+    const now = new Date();
+    const d7 = subDays(now, 7);
+    const d14 = subDays(now, 14);
+
+    const last7 = leads.filter(l => isAfter(new Date(l.created_at), d7)).length;
+    const prev7 = leads.filter(l => {
+      const d = new Date(l.created_at);
+      return isAfter(d, d14) && !isAfter(d, d7);
+    }).length;
+    const growthDelta = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
+
+    const calendlyCount = leads.filter(l => l.calendly_clicked).length;
+    const calendlyRate = leads.length > 0 ? Math.round((calendlyCount / leads.length) * 100) : 0;
+
+    const levelDist: Record<number, number> = {};
+    leads.forEach(l => { levelDist[l.business_level] = (levelDist[l.business_level] || 0) + 1; });
+
+    return { total: leads.length, last7, growthDelta, calendlyRate, calendlyCount, levelDist };
+  }, [leads]);
+
   const selectedFunnel = funnels.find((f: any) => f.id === selectedFunnelId);
   if (!selectedFunnelId) {
     return (
@@ -268,6 +290,89 @@ const AgencyLeadsContent = () => {
         <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
           <Download className="h-4 w-4" /> Exportar CSV
         </Button>
+      </div>
+
+      {/* KPI Metrics Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Total Leads */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xl font-bold text-foreground">{kpiMetrics.total}</p>
+                <p className="text-xs text-muted-foreground">Total Leads</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Last 7 days */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                <TrendingUp className="h-5 w-5 text-blue-500" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-2xl font-bold text-foreground">{kpiMetrics.last7}</p>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${kpiMetrics.growthDelta >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive'}`}>
+                    {kpiMetrics.growthDelta >= 0 ? '+' : ''}{kpiMetrics.growthDelta}%
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">Últimos 7 días</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Calendly Rate */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <MousePointerClick className="h-5 w-5 text-emerald-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xl font-bold text-foreground">{kpiMetrics.calendlyRate}%</p>
+                <p className="text-xs text-muted-foreground">Tasa Calendly ({kpiMetrics.calendlyCount})</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Level Distribution */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                <BarChart3 className="h-5 w-5 text-purple-500" />
+              </div>
+              <p className="text-xs text-muted-foreground">Distribución</p>
+            </div>
+            <div className="flex items-end gap-0.5 h-5">
+              {[1,2,3,4,5,6].map(level => {
+                const count = kpiMetrics.levelDist[level] || 0;
+                const pct = kpiMetrics.total > 0 ? (count / kpiMetrics.total) * 100 : 0;
+                return (
+                  <div
+                    key={level}
+                    className="flex-1 rounded-t transition-all"
+                    style={{
+                      height: `${Math.max(pct, 8)}%`,
+                      backgroundColor: levelColors[level],
+                      opacity: count > 0 ? 1 : 0.2,
+                    }}
+                    title={`Nivel ${level}: ${count}`}
+                  />
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
