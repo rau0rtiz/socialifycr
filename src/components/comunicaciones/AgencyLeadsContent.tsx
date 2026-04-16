@@ -193,6 +193,28 @@ const AgencyLeadsContent = () => {
   // Find outbound template
   const outboundTemplate = emailTemplates.find(t => t.slug === 'outbound-funnel-roadmap');
 
+  // ─── KPI Metrics (computed from leads array) ───
+  const kpiMetrics = useMemo(() => {
+    const now = new Date();
+    const d7 = subDays(now, 7);
+    const d14 = subDays(now, 14);
+
+    const last7 = leads.filter(l => isAfter(new Date(l.created_at), d7)).length;
+    const prev7 = leads.filter(l => {
+      const d = new Date(l.created_at);
+      return isAfter(d, d14) && !isAfter(d, d7);
+    }).length;
+    const growthDelta = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
+
+    const calendlyCount = leads.filter(l => l.calendly_clicked).length;
+    const calendlyRate = leads.length > 0 ? Math.round((calendlyCount / leads.length) * 100) : 0;
+
+    const levelDist: Record<number, number> = {};
+    leads.forEach(l => { levelDist[l.business_level] = (levelDist[l.business_level] || 0) + 1; });
+
+    return { total: leads.length, last7, growthDelta, calendlyRate, calendlyCount, levelDist };
+  }, [leads]);
+
   const selectedFunnel = funnels.find((f: any) => f.id === selectedFunnelId);
   if (!selectedFunnelId) {
     return (
@@ -251,28 +273,6 @@ const AgencyLeadsContent = () => {
       </div>
     );
   }
-
-  // ─── KPI Metrics (computed from leads array) ───
-  const kpiMetrics = useMemo(() => {
-    const now = new Date();
-    const d7 = subDays(now, 7);
-    const d14 = subDays(now, 14);
-
-    const last7 = leads.filter(l => isAfter(new Date(l.created_at), d7)).length;
-    const prev7 = leads.filter(l => {
-      const d = new Date(l.created_at);
-      return isAfter(d, d14) && !isAfter(d, d7);
-    }).length;
-    const growthDelta = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
-
-    const calendlyCount = leads.filter(l => l.calendly_clicked).length;
-    const calendlyRate = leads.length > 0 ? Math.round((calendlyCount / leads.length) * 100) : 0;
-
-    const levelDist: Record<number, number> = {};
-    leads.forEach(l => { levelDist[l.business_level] = (levelDist[l.business_level] || 0) + 1; });
-
-    return { total: leads.length, last7, growthDelta, calendlyRate, calendlyCount, levelDist };
-  }, [leads]);
 
   // ─── Leads Drill-down View ───
   return (
