@@ -265,18 +265,15 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} className="h-9" />
             </div>
 
-            {/* Editable message / context */}
+            {/* Editable intro */}
             <div className="space-y-1">
-              <Label className="text-xs">Mensaje personalizado (contexto del negocio)</Label>
+              <Label className="text-xs">Intro del email (basado en nivel {leadContext?.business_level})</Label>
               <Textarea
                 value={editedMessage}
                 onChange={e => setEditedMessage(e.target.value)}
-                className="min-h-[80px] text-sm resize-none"
-                placeholder="Escribe un mensaje personalizado basado en lo que sabes del lead..."
+                className="min-h-[70px] text-sm resize-none"
+                placeholder="Intro según el nivel del lead..."
               />
-              <p className="text-[10px] text-muted-foreground">
-                Este texto reemplaza {`{{custom_intro}}`} en la plantilla.
-              </p>
             </div>
 
             {/* Preview */}
