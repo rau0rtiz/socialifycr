@@ -1,74 +1,52 @@
 
-## Plan: Popup outbound del funnel más útil, contextual y fácil de enviar
 
-### Hallazgos
-- El popup actual solo reemplaza `{{name}}` y `{{email}}`, así que el preview y el envío no usan industria, objetivo, canal de ventas, pauta ni contexto del lead.
-- En el flujo del icono de correo, el modal salta al paso 2 pero el preview ocupa mucho alto y el iframe puede atrapar scroll; eso hace que avanzar o confirmar se sienta “pegado” en ese paso.
-- La mayoría de leads actuales no tienen `challenge` guardado explícitamente, así que para esos casos hay que inferir el reto principal desde sus respuestas.
+## Plan: Flujo de desuscripción para todos los correos
 
-### Qué voy a cambiar
+### Resumen
+Agregar un botón de "Desuscribirse" al pie de todos los correos enviados, crear una página pública `/desuscribirse` donde el usuario confirma y opcionalmente indica el motivo, y una edge function que procese el token.
 
-**1. Mejorar `SendCampaignDialog.tsx` para el flujo del icono de correo**
-- Crear un modo especial para lead preseleccionado desde Funnels: más simple, más visual y con menos fricción.
-- Dejar como experiencia principal:
-  - asunto editable
-  - mensaje principal editable
-  - preview real y ancho
-  - envío claro y accesible
-- Mantener la edición HTML como opción avanzada, no como flujo principal.
+### Cambios
 
-**2. Hacer que el preview sea real**
-- Resolver el preview con los datos reales del lead seleccionado, no con valores dummy.
-- Mostrar un email a buen ancho dentro del modal.
-- Hacer el footer más accesible y evitar que el iframe bloquee el scroll del popup.
-- Asegurar que el mismo motor de reemplazo se use para:
-  - vista previa
-  - confirmación
-  - envío final
+**1. Edge function `handle-unsubscribe` (nueva)**
+- Recibe `?token=UUID` por GET (para el link del correo) y POST con `{ token, reason }` para confirmar
+- GET: valida el token en `email_unsubscribe_tokens`, devuelve HTML con la página de confirmación y selector de motivo (página standalone, sin React)
+- POST: marca el token como usado, actualiza `email_contacts` si existe (status = 'unsubscribed', unsubscribed_at = now), y registra el motivo en una nueva columna o en metadata
 
-**3. Usar contexto específico del negocio basado en sus respuestas**
-- Construir un mapper de contexto del lead usando:
-  - `name`, `email`
-  - `industry`, `revenue_range`, `business_level`
-  - `answers.presencia`, `answers.pauta`, `answers.canalVentas`, `answers.objetivo`
-  - `challenge` si existe
-- Si `challenge` no existe, generar un “reto principal detectado” a partir de sus respuestas.
-- Exponer placeholders útiles para la plantilla, por ejemplo:
-  - `{{industry}}`
-  - `{{business_level_name}}`
-  - `{{revenue_range_label}}`
-  - `{{goal_label}}`
-  - `{{sales_channel_label}}`
-  - `{{challenge_summary}}`
-  - `{{context_summary}}`
-  - `{{custom_intro}}`
+**2. Página React `/desuscribirse` (nueva)**
+- Página pública (sin ProtectedRoute) con diseño limpio estilo Socialify
+- Lee `?token=UUID` de la URL
+- Muestra formulario: confirmación + selector de motivo (opciones: "No me interesa", "Recibo muchos correos", "No solicité estos correos", "Otro" con campo de texto)
+- Llama a la edge function para procesar
+- Muestra mensaje de éxito/error
 
-**4. Actualizar la plantilla `outbound-funnel-roadmap`**
-- Ajustar el copy para reflejar exactamente esta oferta:
-  - llamada gratuita de planificación de 1 hora
-  - salen con un plan para 90 días
-  - se llevan dirección y claridad
-  - en la llamada entendemos el contexto completo del negocio, los principales retos y los pasos a seguir
-  - el plan es suyo, sea que lo ejecuten con Socialify o no
-- Cambiar el CTA para que sea escribir por WhatsApp para coordinar la llamada, no agendar directo.
-- Fijar el botón a `+50660173431`.
-- Mantener el estilo naranja Socialify/roadmap.
+**3. Modificar edge functions de envío para inyectar link de desuscripción**
+- `send-notification-email`: generar token en `email_unsubscribe_tokens`, inyectar footer con botón antes de `</body>`
+- `send-funnel-result`: igual, generar token e inyectar footer
+- `send-campaign`: igual para cada contacto
+- `send-client-invitation`: este NO lleva desuscripción (es transaccional)
+- `send-avatar-reminder`: inyectar también
+- El footer HTML será un bloque reutilizable con estilo discreto y link a `https://app.socialifycr.com/desuscribirse?token=XXX`
 
-**5. Ajustar `AgencyLeadsContent.tsx`**
-- Pasar al popup el lead completo desde el icono de correo, no solo `id/name/email`, para que la personalización tenga toda la data desde el primer render.
-- Mantener este flujo optimizado específicamente para el botón de correo del grid de funnels.
+**4. Migración SQL**
+- Agregar columna `reason` (text, nullable) a `email_unsubscribe_tokens`
+- Agregar columna `unsubscribe_reason` (text, nullable) a `email_contacts` (si aplica)
+
+**5. Ruta en App.tsx**
+- Agregar `<Route path="/desuscribirse" element={<Unsubscribe />} />` como ruta pública
 
 ### Archivos afectados
-- `src/components/comunicaciones/SendCampaignDialog.tsx`
-- `src/components/comunicaciones/AgencyLeadsContent.tsx`
-- opcional de consistencia futura: `src/pages/Funnel.tsx`
-- migración SQL para actualizar `email_templates` con el nuevo HTML/copy de `outbound-funnel-roadmap`
+- `supabase/functions/handle-unsubscribe/index.ts` (nuevo)
+- `src/pages/Unsubscribe.tsx` (nuevo)
+- `src/App.tsx` — nueva ruta pública
+- `supabase/functions/send-notification-email/index.ts` — inyectar footer
+- `supabase/functions/send-funnel-result/index.ts` — inyectar footer
+- `supabase/functions/send-campaign/index.ts` — inyectar footer
+- `supabase/functions/send-avatar-reminder/index.ts` — inyectar footer
+- Migración SQL: columna `reason` en `email_unsubscribe_tokens`
 
 ### Detalle técnico
-- No hace falta cambiar el esquema de base de datos.
-- Sí hace falta actualizar la plantilla persistida en la base de datos.
-- Voy a unificar la lógica de merge/reemplazo de variables para que preview y envío siempre coincidan.
-- Para no romper leads viejos, la personalización leerá tanto columnas top-level como `answers`.
-- El “challenge” seguirá esta prioridad:
-  1. `lead.challenge` si existe  
-  2. resumen inferido desde presencia + pauta + canal de ventas + objetivo
+- Los tokens ya existen en la tabla `email_unsubscribe_tokens` con columnas `token`, `email`, `created_at`, `used_at`
+- Solo se agrega `reason` como nueva columna
+- La página React usa el dominio de producción para los links en los correos
+- El footer de desuscripción es texto gris pequeño, no invasivo, al final del correo
+
