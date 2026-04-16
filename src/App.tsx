@@ -39,6 +39,7 @@ const ActualizarFoto = lazy(() => import("./pages/ActualizarFoto"));
 const Funnel = lazy(() => import("./pages/Funnel"));
 const AgencyLeads = lazy(() => import("./pages/AgencyLeads"));
 const Comunicaciones = lazy(() => import("./pages/Comunicaciones"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -173,6 +174,7 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
+                  <Route path="/desuscribirse" element={<Unsubscribe />} />
                   <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
                   <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
                   <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />

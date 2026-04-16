@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, AlertCircle, Loader2, MailOff } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, MailMinus } from "lucide-react";
 
 const REASONS = [
   { value: "no_interesa", label: "No me interesa este contenido" },
@@ -121,7 +121,7 @@ const Unsubscribe = () => {
         {view === "form" && (
           <div className="space-y-6">
             <div className="flex flex-col items-center gap-3">
-              <MailOff className="h-12 w-12 text-gray-400" />
+              <MailMinus className="h-12 w-12 text-muted-foreground" />
               <h1 className="text-xl font-semibold text-gray-800 text-center">¿Deseas desuscribirte?</h1>
               {email && (
                 <p className="text-sm text-gray-500 text-center">
