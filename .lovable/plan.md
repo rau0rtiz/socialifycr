@@ -1,28 +1,35 @@
 
 
-## Plan: Métricas KPI para la vista de leads del funnel
+## Plan: Agregar campo de Instagram/nombre de negocio al funnel
 
-### Resumen
-Agregar una fila de tarjetas métricas compactas en la parte superior de la vista drill-down de leads (dentro de `AgencyLeadsContent.tsx`), justo después del header y antes de los filtros de búsqueda.
+### Problema
+La pregunta de industria da categorías genéricas ("Servicios profesionales", "E-commerce") pero no te dice *qué* hace el negocio ni cómo encontrarlo. Necesitás más contexto para prepararte antes de una llamada.
 
-### Métricas a mostrar (4 tarjetas)
-1. **Total Leads** — cantidad total de leads del funnel seleccionado
-2. **Últimos 7 días** — leads nuevos en la última semana, con % de cambio vs semana anterior
-3. **Tasa Calendly** — porcentaje de leads que hicieron clic en Calendly (conversión)
-4. **Distribución por nivel** — mini barras horizontales mostrando la proporción por nivel (1-6)
+### Solución
+Agregar un campo opcional de **@ de Instagram o nombre del negocio** en el paso de resultados (junto con nombre y email), en vez de agregar otra pregunta al quiz. Esto:
+- No agrega fricción al quiz (sigue siendo 6 preguntas rápidas)
+- Captura info accionable justo cuando el lead ya decidió dar sus datos
+- Te permite buscar el negocio antes de la llamada
 
 ### Cambios
 
-**`src/components/comunicaciones/AgencyLeadsContent.tsx`**
-- Calcular las métricas derivadas del array `leads` ya cargado (sin queries adicionales):
-  - `totalLeads`, `last7d`, `last14dTo7d` (para delta %), `calendlyRate`, conteo por nivel
-- Insertar un grid `grid-cols-2 sm:grid-cols-4` de mini-cards entre el header (back + título) y los filtros de búsqueda
-- Cada card usa el mismo estilo compacto del `PipelineSummaryWidget`: icono con fondo coloreado, valor grande, subtítulo pequeño
-- La card de distribución por nivel muestra mini barras de colores proporcionales usando los `levelColors` existentes
+**1. `src/components/funnel/ResultsStep.tsx`**
+- Agregar un tercer campo en el formulario de contacto: "Instagram o nombre de tu negocio" (opcional, con placeholder `@tucuenta o Nombre del negocio`)
+- Pasar el valor como parámetro adicional en `onSubmitContact`
+- Icono de Instagram/edificio al lado del campo
+
+**2. `src/pages/Funnel.tsx`**
+- Actualizar `handleSubmitContact` para recibir el nuevo campo (`businessHandle`)
+- Guardarlo en el objeto `answers` del insert a `funnel_leads` (dentro del JSON `answers`, no requiere nueva columna)
+
+**3. Base de datos**
+- No se necesita migración — el campo se guarda dentro de la columna JSONB `answers` existente
+
+**4. Vistas de leads**
+- `src/pages/AgencyLeads.tsx` y `src/components/comunicaciones/AgencyLeadsContent.tsx`: mostrar el handle/nombre de negocio en la tabla y el detalle del lead (leyéndolo de `answers.businessHandle`)
 
 ### Detalle técnico
-- Todo se calcula client-side a partir de `leads` (ya está en memoria)
-- Se usan `date-fns` `isAfter`/`subDays` para filtrar por ventana temporal
-- No requiere migración SQL ni nuevas queries
-- Solo se modifica un archivo
+- El campo es opcional para no bajar la tasa de conversión
+- Se almacena en `answers.businessHandle` del registro `funnel_leads`
+- La firma de `onSubmitContact` cambia de `(name, email)` a `(name, email, businessHandle?)`
 
