@@ -6,6 +6,28 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function buildUnsubscribeFooter(unsubscribeUrl: string): string {
+  return `<div style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center;">
+    <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.5;">Si no deseas recibir más correos, puedes <a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;">desuscribirte aquí</a>.</p>
+  </div>`;
+}
+
+async function generateUnsubscribeUrl(supabaseAdmin: any, recipientEmail: string): Promise<string> {
+  const token = crypto.randomUUID();
+  await supabaseAdmin.from("email_unsubscribe_tokens").insert({
+    token,
+    email: recipientEmail.toLowerCase(),
+  });
+  return `https://app.socialifycr.com/desuscribirse?token=${token}`;
+}
+
+function injectUnsubscribeFooter(html: string, footer: string): string {
+  if (html.includes("</body>")) {
+    return html.replace(/<\/body>/i, `${footer}</body>`);
+  }
+  return html + footer;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -29,12 +51,17 @@ serve(async (req) => {
   try {
     const { to, toName, subject, html, sentBy, clientId } = await req.json();
 
+    // Generate unsubscribe link
+    const unsubUrl = await generateUnsubscribeUrl(supabaseAdmin, to);
+    const unsubFooter = buildUnsubscribeFooter(unsubUrl);
+    const htmlWithUnsub = injectUnsubscribeFooter(html, unsubFooter);
+
     // Insert sent_emails record first to get the ID for tracking pixel
     const { data: emailRecord, error: insertErr } = await supabaseAdmin.from("sent_emails").insert({
       recipient_email: to,
       recipient_name: toName || null,
       subject,
-      html_content: html,
+      html_content: htmlWithUnsub,
       status: "pending",
       source: "notification",
       sent_by: sentBy || null,
@@ -42,10 +69,10 @@ serve(async (req) => {
     }).select("id").single();
 
     // Inject tracking pixel
-    let finalHtml = html;
+    let finalHtml = htmlWithUnsub;
     if (emailRecord?.id) {
       const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
-      finalHtml = html.replace(/<\/body>/i, `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" /></body>`);
+      finalHtml = htmlWithUnsub.replace(/<\/body>/i, `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" /></body>`);
       if (!finalHtml.includes(pixelUrl)) {
         finalHtml += `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
       }

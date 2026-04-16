@@ -9,7 +9,6 @@ const corsHeaders = {
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 
-// Map business_level (1-6) to the exact storage path
 const levelPdfMap: Record<number, string> = {
   1: "documents/Nivel-1.pdf",
   2: "documents/NIVEL-2.pdf",
@@ -18,6 +17,23 @@ const levelPdfMap: Record<number, string> = {
   5: "documents/NIVEL-5.pdf",
   6: "documents/NIVEL-6.pdf",
 };
+
+function buildUnsubscribeFooter(url: string): string {
+  return `<div style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center;">
+    <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.5;">Si no deseas recibir más correos, puedes <a href="${url}" style="color:#9ca3af;text-decoration:underline;">desuscribirte aquí</a>.</p>
+  </div>`;
+}
+
+async function generateUnsubscribeUrl(supabaseAdmin: any, email: string): Promise<string> {
+  const token = crypto.randomUUID();
+  await supabaseAdmin.from("email_unsubscribe_tokens").insert({ token, email: email.toLowerCase() });
+  return `https://app.socialifycr.com/desuscribirse?token=${token}`;
+}
+
+function injectFooter(html: string, footer: string): string {
+  if (html.includes("</body>")) return html.replace(/<\/body>/i, `${footer}</body>`);
+  return html + footer;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -52,29 +68,19 @@ serve(async (req) => {
       .eq("status", "active")
       .single();
 
-    if (tplErr || !template) {
-      throw new Error("Email template 'funnel-result' not found");
-    }
+    if (tplErr || !template) throw new Error("Email template 'funnel-result' not found");
 
-    // Download the PDF for this level from storage
+    // Download PDF
     const pdfPath = levelPdfMap[business_level];
     let attachments: any[] = [];
-    
     if (pdfPath) {
-      const { data: pdfBlob, error: pdfErr } = await supabaseAdmin
-        .storage
-        .from("content-images")
-        .download(pdfPath);
-
+      const { data: pdfBlob, error: pdfErr } = await supabaseAdmin.storage.from("content-images").download(pdfPath);
       if (pdfErr) {
         console.error("PDF download error:", pdfErr);
       } else if (pdfBlob) {
         const arrayBuffer = await pdfBlob.arrayBuffer();
         const pdfBase64 = base64Encode(new Uint8Array(arrayBuffer));
-        attachments.push({
-          filename: `Roadmap-Nivel-${business_level}.pdf`,
-          content: pdfBase64,
-        });
+        attachments.push({ filename: `Roadmap-Nivel-${business_level}.pdf`, content: pdfBase64 });
       }
     }
 
@@ -89,21 +95,16 @@ serve(async (req) => {
 
     const level = levelData[business_level - 1] || levelData[0];
 
-    // Build conditional session CTA block
     const qualifiesForSession = business_level >= 4;
     const isExploratory = business_level === 6;
 
     let sessionCta = '';
     if (qualifiesForSession) {
-      const sessionTitle = isExploratory
-        ? '¿Querés llevar tu marca al siguiente nivel?'
-        : '¿Querés ayuda para implementarlo?';
+      const sessionTitle = isExploratory ? '¿Querés llevar tu marca al siguiente nivel?' : '¿Querés ayuda para implementarlo?';
       const sessionDesc = isExploratory
         ? 'Agendá una sesión exploratoria donde analizamos tu contexto y definimos un plan preliminar de trabajo. Lo ejecutés con nosotros o no, el plan es tuyo.'
         : 'Agendá una sesión gratuita de 1 hora donde definimos un plan concreto para tu negocio. Lo ejecutés con nosotros o no, el plan es tuyo.';
-      const sessionButton = isExploratory
-        ? 'Agendar sesión exploratoria'
-        : 'Agendar sesión gratuita';
+      const sessionButton = isExploratory ? 'Agendar sesión exploratoria' : 'Agendar sesión gratuita';
       const calendlyUrl = 'https://calendly.com/raul-socialifycr/sesion-gratuita-de-planificacion';
 
       sessionCta = `
@@ -114,7 +115,6 @@ serve(async (req) => {
         </div>`;
     }
 
-    // Replace template variables
     let html = template.html_content
       .replace(/\{\{name\}\}/g, name)
       .replace(/\{\{level_name\}\}/g, level.name)
@@ -127,19 +127,18 @@ serve(async (req) => {
       .replace(/\{\{name\}\}/g, name)
       .replace(/\{\{level_name\}\}/g, level.name);
 
-    // Build email payload
+    // Inject unsubscribe footer
+    const unsubUrl = await generateUnsubscribeUrl(supabaseAdmin, email);
+    html = injectFooter(html, buildUnsubscribeFooter(unsubUrl));
+
     const emailPayload: any = {
       from: "Socialify <hola@socialifycr.com>",
       to: [email],
       subject,
       html,
     };
+    if (attachments.length > 0) emailPayload.attachments = attachments;
 
-    if (attachments.length > 0) {
-      emailPayload.attachments = attachments;
-    }
-
-    // Send via Resend gateway
     const emailRes = await fetch(`${GATEWAY_URL}/emails`, {
       method: "POST",
       headers: {
@@ -152,7 +151,6 @@ serve(async (req) => {
 
     const emailResult = await emailRes.json();
 
-    // Log to email_send_log
     await supabaseAdmin.from("email_send_log").insert({
       recipient_email: email,
       template_name: "funnel-result",
@@ -161,7 +159,6 @@ serve(async (req) => {
       metadata: { name, business_level, level_name: level.name, has_pdf: attachments.length > 0 },
     });
 
-    // Log to sent_emails for unified history (insert first to get ID for tracking pixel)
     const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
       recipient_email: email,
       recipient_name: name,
@@ -173,12 +170,10 @@ serve(async (req) => {
       resend_id: emailRes.ok ? emailResult?.id || null : null,
     }).select("id").single();
 
-    // Note: tracking pixel will be injected in future emails since we insert after sending here.
-    // For funnel emails, we update the html with the pixel for the stored version.
     if (emailRecord?.id) {
       const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
       const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
-      let trackedHtml = html + `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+      const trackedHtml = html + `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
       await supabaseAdmin.from("sent_emails").update({ html_content: trackedHtml }).eq("id", emailRecord.id);
     }
 
