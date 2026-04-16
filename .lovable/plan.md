@@ -1,31 +1,74 @@
 
+## Plan: Popup outbound del funnel más útil, contextual y fácil de enviar
 
-## Plan: Mejorar popup de correo outbound y actualizar plantilla
+### Hallazgos
+- El popup actual solo reemplaza `{{name}}` y `{{email}}`, así que el preview y el envío no usan industria, objetivo, canal de ventas, pauta ni contexto del lead.
+- En el flujo del icono de correo, el modal salta al paso 2 pero el preview ocupa mucho alto y el iframe puede atrapar scroll; eso hace que avanzar o confirmar se sienta “pegado” en ese paso.
+- La mayoría de leads actuales no tienen `challenge` guardado explícitamente, así que para esos casos hay que inferir el reto principal desde sus respuestas.
 
-### Cambios
+### Qué voy a cambiar
 
-**1. Ampliar el popup de correo (`SendCampaignDialog.tsx`)**
-- Cambiar `max-w-2xl` a `max-w-4xl` para que el preview del email se vea con buen ancho
-- Aumentar la altura del iframe de preview de `h-[300px]` a `h-[400px]`
-- Cuando viene con `preselectedRecipients`, saltar directo al editor (ya lo hace) pero mostrar un banner compacto con el nombre del destinatario
+**1. Mejorar `SendCampaignDialog.tsx` para el flujo del icono de correo**
+- Crear un modo especial para lead preseleccionado desde Funnels: más simple, más visual y con menos fricción.
+- Dejar como experiencia principal:
+  - asunto editable
+  - mensaje principal editable
+  - preview real y ancho
+  - envío claro y accesible
+- Mantener la edición HTML como opción avanzada, no como flujo principal.
 
-**2. Actualizar la plantilla HTML en la base de datos (`email_templates` → slug `outbound-funnel-roadmap`)**
-- Recolorizar con naranja Socialify (`#FF6B35` primary, `#FF8F5E` secondary)
-- Agregar un botón de WhatsApp al final del email: "Escríbeme por WhatsApp" con link `https://wa.me/50688888888?text=...` (placeholder editable)
-- El botón tendrá estilo verde WhatsApp (`#25D366`)
-- Mejorar el diseño general: header con logo naranja, separadores, tipografía más limpia
+**2. Hacer que el preview sea real**
+- Resolver el preview con los datos reales del lead seleccionado, no con valores dummy.
+- Mostrar un email a buen ancho dentro del modal.
+- Hacer el footer más accesible y evitar que el iframe bloquee el scroll del popup.
+- Asegurar que el mismo motor de reemplazo se use para:
+  - vista previa
+  - confirmación
+  - envío final
 
-**3. Hacer el cuerpo del email editable en el popup**
-- Ya existe la pestaña "HTML" para editar código directo — esto ya funciona
-- Agregar una tercera pestaña "Editar" entre Preview y HTML que muestre un editor visual simplificado: un `Textarea` con el texto plano extraído, más amigable que el HTML crudo
-- Alternativamente, hacer que el tab de preview se convierta en un iframe editable o mantener las 2 pestañas existentes (preview + HTML) que ya permiten editar
+**3. Usar contexto específico del negocio basado en sus respuestas**
+- Construir un mapper de contexto del lead usando:
+  - `name`, `email`
+  - `industry`, `revenue_range`, `business_level`
+  - `answers.presencia`, `answers.pauta`, `answers.canalVentas`, `answers.objetivo`
+  - `challenge` si existe
+- Si `challenge` no existe, generar un “reto principal detectado” a partir de sus respuestas.
+- Exponer placeholders útiles para la plantilla, por ejemplo:
+  - `{{industry}}`
+  - `{{business_level_name}}`
+  - `{{revenue_range_label}}`
+  - `{{goal_label}}`
+  - `{{sales_channel_label}}`
+  - `{{challenge_summary}}`
+  - `{{context_summary}}`
+  - `{{custom_intro}}`
 
-### Detalle técnico
-- La plantilla se actualiza vía migración SQL (`UPDATE email_templates SET html_content = ... WHERE slug = 'outbound-funnel-roadmap'`)
-- El número de WhatsApp será un placeholder `{{whatsapp}}` en la plantilla que se puede personalizar
-- No se requieren cambios de esquema de base de datos, solo UPDATE de contenido
+**4. Actualizar la plantilla `outbound-funnel-roadmap`**
+- Ajustar el copy para reflejar exactamente esta oferta:
+  - llamada gratuita de planificación de 1 hora
+  - salen con un plan para 90 días
+  - se llevan dirección y claridad
+  - en la llamada entendemos el contexto completo del negocio, los principales retos y los pasos a seguir
+  - el plan es suyo, sea que lo ejecuten con Socialify o no
+- Cambiar el CTA para que sea escribir por WhatsApp para coordinar la llamada, no agendar directo.
+- Fijar el botón a `+50660173431`.
+- Mantener el estilo naranja Socialify/roadmap.
+
+**5. Ajustar `AgencyLeadsContent.tsx`**
+- Pasar al popup el lead completo desde el icono de correo, no solo `id/name/email`, para que la personalización tenga toda la data desde el primer render.
+- Mantener este flujo optimizado específicamente para el botón de correo del grid de funnels.
 
 ### Archivos afectados
-- `src/components/comunicaciones/SendCampaignDialog.tsx` — ampliar ancho del dialog y mejorar UX del editor
-- Base de datos: `email_templates` — actualizar HTML de la plantilla `outbound-funnel-roadmap`
+- `src/components/comunicaciones/SendCampaignDialog.tsx`
+- `src/components/comunicaciones/AgencyLeadsContent.tsx`
+- opcional de consistencia futura: `src/pages/Funnel.tsx`
+- migración SQL para actualizar `email_templates` con el nuevo HTML/copy de `outbound-funnel-roadmap`
 
+### Detalle técnico
+- No hace falta cambiar el esquema de base de datos.
+- Sí hace falta actualizar la plantilla persistida en la base de datos.
+- Voy a unificar la lógica de merge/reemplazo de variables para que preview y envío siempre coincidan.
+- Para no romper leads viejos, la personalización leerá tanto columnas top-level como `answers`.
+- El “challenge” seguirá esta prioridad:
+  1. `lead.challenge` si existe  
+  2. resumen inferido desde presencia + pauta + canal de ventas + objetivo
