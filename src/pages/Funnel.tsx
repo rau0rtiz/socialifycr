@@ -82,6 +82,17 @@ const TOTAL_QUESTION_STEPS = 6;
 
 const ROADMAP_FUNNEL_SLUG = 'roadmap-personalizado';
 
+// Extract UTM params from URL
+const getUtmParams = () => {
+  const params = new URLSearchParams(window.location.search);
+  const utms: Record<string, string> = {};
+  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(k => {
+    const v = params.get(k);
+    if (v) utms[k] = v;
+  });
+  return Object.keys(utms).length > 0 ? utms : null;
+};
+
 const Funnel = () => {
   const { toast } = useToast();
   const [step, setStep] = useState(0);
@@ -90,6 +101,7 @@ const Funnel = () => {
   const [leadId, setLeadId] = useState<string | null>(null);
   const [funnelId, setFunnelId] = useState<string | null>(null);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const utmParamsRef = useRef(getUtmParams());
 
   const [answers, setAnswers] = useState({
     industry: '',
@@ -160,6 +172,17 @@ const Funnel = () => {
         return false;
       }
 
+      const answersPayload: Record<string, any> = {
+          presencia: answers.presencia,
+          pauta: answers.pauta,
+          canalVentas: answers.canalVentas,
+          objetivo: answers.objetivo,
+        };
+      // Merge UTM params if present
+      if (utmParamsRef.current) {
+        Object.assign(answersPayload, utmParamsRef.current);
+      }
+
       const { error } = await supabase.from('funnel_leads').insert({
         id,
         name: name.trim().slice(0, 100),
@@ -168,12 +191,7 @@ const Funnel = () => {
         industry: answers.industry,
         revenue_range: answers.ingresos,
         funnel_id: resolvedFunnelId,
-        answers: {
-          presencia: answers.presencia,
-          pauta: answers.pauta,
-          canalVentas: answers.canalVentas,
-          objetivo: answers.objetivo,
-        },
+        answers: answersPayload,
       });
       if (error) throw error;
       setLeadId(id);

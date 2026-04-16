@@ -305,60 +305,82 @@ const AgencyLeadsContent = () => {
         </Select>
       </div>
 
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10">
-                <Checkbox
-                  checked={filtered.length > 0 && selectedIds.size === filtered.length}
-                  onCheckedChange={toggleSelectAll}
-                />
-              </TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Nivel</TableHead>
-              <TableHead>Industria</TableHead>
-              <TableHead>Calendly</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead className="w-10"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {leadsLoading ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Cargando...</TableCell></TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No hay leads</TableCell></TableRow>
-            ) : (
-              filtered.map((lead) => (
-                <TableRow key={lead.id}>
-                  <TableCell>
+      {leadsLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3].map(i => (
+            <Card key={i} className="animate-pulse"><CardContent className="p-6 h-48" /></Card>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">No hay leads</CardContent></Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((lead) => {
+            const utmData = (lead.answers as any)?.utm_source || (lead.answers as any)?.utm_campaign;
+            return (
+              <Card key={lead.id} className="group hover:shadow-md hover:border-primary/30 transition-all relative">
+                <CardContent className="p-5 space-y-3">
+                  {/* Checkbox top-right */}
+                  <div className="absolute top-3 right-3">
                     <Checkbox
                       checked={selectedIds.has(lead.id)}
                       onCheckedChange={() => toggleSelect(lead.id)}
                     />
-                  </TableCell>
-                  <TableCell className="font-medium">{lead.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{lead.email}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" style={{ borderColor: levelColors[lead.business_level], color: levelColors[lead.business_level] }}>
-                      {lead.business_level} · {levelNames[lead.business_level]}
+                  </div>
+
+                  {/* Name + Level */}
+                  <div className="flex items-start gap-3 pr-8">
+                    <div
+                      className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
+                      style={{ backgroundColor: levelColors[lead.business_level] }}
+                    >
+                      {lead.business_level}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{lead.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
+                    </div>
+                  </div>
+
+                  {/* Tags row */}
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge variant="outline" className="text-[10px]" style={{ borderColor: levelColors[lead.business_level], color: levelColors[lead.business_level] }}>
+                      {levelNames[lead.business_level]}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="capitalize text-muted-foreground">{lead.industry || '—'}</TableCell>
-                  <TableCell>
-                    {lead.calendly_clicked ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-muted-foreground/40" />}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{format(new Date(lead.created_at), 'dd MMM yyyy', { locale: es })}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => setSelectedLead(lead)}><Eye className="h-4 w-4" /></Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                    {lead.industry && (
+                      <Badge variant="secondary" className="text-[10px] capitalize">{lead.industry}</Badge>
+                    )}
+                    {lead.calendly_clicked && (
+                      <Badge className="text-[10px] bg-green-500/10 text-green-600 border-green-500/30" variant="outline">
+                        <CheckCircle2 className="h-3 w-3 mr-0.5" /> Calendly
+                      </Badge>
+                    )}
+                    {utmData && (
+                      <Badge variant="outline" className="text-[10px] border-purple-400/40 text-purple-500">
+                        UTM
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Revenue + date */}
+                  <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t">
+                    <span>{lead.revenue_range ? answerLabels.ingresos?.[lead.revenue_range] || lead.revenue_range : '—'}</span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(lead.created_at), 'dd MMM', { locale: es })}
+                    </span>
+                  </div>
+
+                  {/* View button */}
+                  <Button variant="ghost" size="sm" className="w-full h-8 text-xs gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setSelectedLead(lead)}>
+                    <Eye className="h-3 w-3" /> Ver detalle
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       <Dialog open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
         <DialogContent className="max-w-md">
@@ -391,6 +413,25 @@ const AgencyLeadsContent = () => {
                         <div key={key} className="rounded-lg bg-muted p-3">
                           <p className="text-xs text-muted-foreground mb-1">{answerQuestions[key] || key}</p>
                           <p className="font-medium text-sm">{getAnswerLabel(key, (selectedLead.answers as Record<string, string>)[key])}</p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+              {/* UTM Data */}
+              {selectedLead.answers && (
+                (['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const)
+                  .some(k => (selectedLead.answers as Record<string, string>)[k])
+              ) && (
+                <div>
+                  <span className="text-muted-foreground font-medium">Atribución (UTMs):</span>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const)
+                      .filter(k => (selectedLead.answers as Record<string, string>)[k])
+                      .map(k => (
+                        <div key={k} className="rounded-lg bg-purple-500/10 p-2.5">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{k.replace('utm_', '')}</p>
+                          <p className="font-medium text-xs mt-0.5">{(selectedLead.answers as Record<string, string>)[k]}</p>
                         </div>
                       ))}
                   </div>
