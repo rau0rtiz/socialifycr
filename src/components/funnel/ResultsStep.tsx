@@ -141,6 +141,25 @@ export const ResultsStep = ({ level, revenueRange, onSubmitContact, onCalendlyCl
             </div>
           </div>
           <p className="text-xs md:text-sm text-[#212121]/70 leading-relaxed">{current.desc}</p>
+
+          <div className="pt-3 mt-1 border-t border-gray-100 space-y-2">
+            <p className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-[#212121]/40">
+              Próximos pasos
+            </p>
+            <ul className="space-y-1.5">
+              {levelActions[level - 1]?.map((action, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <CheckCircle2
+                    className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 mt-0.5"
+                    style={{ color: current.color }}
+                  />
+                  <span className="text-xs md:text-sm text-[#212121]/80 leading-snug">
+                    {action}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
