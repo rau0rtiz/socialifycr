@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Download, Calendar, CheckCircle2, ArrowLeft, Users, ExternalLink, Megaphone, Trash2, Mail, TrendingUp, TrendingDown, MousePointerClick, BarChart3 } from 'lucide-react';
+import { Search, Download, Calendar, CheckCircle2, ArrowLeft, Users, ExternalLink, Megaphone, Trash2, Mail, TrendingUp, BarChart3 } from 'lucide-react';
 import { format, subDays, isAfter } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { es } from 'date-fns/locale';
@@ -206,13 +206,13 @@ const AgencyLeadsContent = () => {
     }).length;
     const growthDelta = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
 
-    const calendlyCount = leads.filter(l => l.calendly_clicked).length;
-    const calendlyRate = leads.length > 0 ? Math.round((calendlyCount / leads.length) * 100) : 0;
+    const qualifiedCount = leads.filter(l => l.business_level >= 4).length;
+    const qualifiedRate = leads.length > 0 ? Math.round((qualifiedCount / leads.length) * 100) : 0;
 
     const levelDist: Record<number, number> = {};
     leads.forEach(l => { levelDist[l.business_level] = (levelDist[l.business_level] || 0) + 1; });
 
-    return { total: leads.length, last7, growthDelta, calendlyRate, calendlyCount, levelDist };
+    return { total: leads.length, last7, growthDelta, qualifiedRate, qualifiedCount, levelDist };
   }, [leads]);
 
   const selectedFunnel = funnels.find((f: any) => f.id === selectedFunnelId);
@@ -329,22 +329,22 @@ const AgencyLeadsContent = () => {
           </CardContent>
         </Card>
 
-        {/* Calendly Rate */}
+        {/* Qualified Rate (Level 4+) */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                <MousePointerClick className="h-5 w-5 text-emerald-500" />
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
               </div>
               <div className="min-w-0">
-                <p className="text-2xl font-bold text-foreground">{kpiMetrics.calendlyRate}%</p>
-                <p className="text-xs text-muted-foreground">Tasa Calendly ({kpiMetrics.calendlyCount})</p>
+                <p className="text-2xl font-bold text-foreground">{kpiMetrics.qualifiedRate}%</p>
+                <p className="text-xs text-muted-foreground">Calificados ({kpiMetrics.qualifiedCount})</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Level Distribution */}
+        {/* Level Distribution — Pie Chart */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3 mb-2">
@@ -353,23 +353,46 @@ const AgencyLeadsContent = () => {
               </div>
               <p className="text-xs text-muted-foreground">Distribución</p>
             </div>
-            <div className="flex items-end gap-0.5 h-5">
-              {[1,2,3,4,5,6].map(level => {
-                const count = kpiMetrics.levelDist[level] || 0;
-                const pct = kpiMetrics.total > 0 ? (count / kpiMetrics.total) * 100 : 0;
-                return (
-                  <div
-                    key={level}
-                    className="flex-1 rounded-t transition-all"
-                    style={{
-                      height: `${Math.max(pct, 8)}%`,
-                      backgroundColor: levelColors[level],
-                      opacity: count > 0 ? 1 : 0.2,
-                    }}
-                    title={`Nivel ${level}: ${count}`}
-                  />
-                );
-              })}
+            <div className="flex items-center gap-3">
+              {/* Mini SVG Pie Chart */}
+              <svg viewBox="0 0 32 32" className="h-12 w-12 shrink-0" style={{ transform: 'rotate(-90deg)' }}>
+                {(() => {
+                  let cumulative = 0;
+                  return [1,2,3,4,5,6].map(level => {
+                    const count = kpiMetrics.levelDist[level] || 0;
+                    const pct = kpiMetrics.total > 0 ? count / kpiMetrics.total : 0;
+                    if (pct === 0) return null;
+                    const dashArray = pct * 100;
+                    const dashOffset = -cumulative * 100;
+                    cumulative += pct;
+                    return (
+                      <circle
+                        key={level}
+                        cx="16" cy="16" r="15.9155"
+                        fill="none"
+                        stroke={levelColors[level]}
+                        strokeWidth="3.5"
+                        strokeDasharray={`${dashArray} ${100 - dashArray}`}
+                        strokeDashoffset={dashOffset}
+                        className="transition-all"
+                      />
+                    );
+                  });
+                })()}
+              </svg>
+              {/* Legend */}
+              <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                {[1,2,3,4,5,6].map(level => {
+                  const count = kpiMetrics.levelDist[level] || 0;
+                  if (count === 0) return null;
+                  return (
+                    <div key={level} className="flex items-center gap-1">
+                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: levelColors[level] }} />
+                      <span className="text-[10px] text-muted-foreground">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </CardContent>
         </Card>
