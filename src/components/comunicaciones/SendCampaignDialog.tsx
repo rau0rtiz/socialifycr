@@ -290,6 +290,13 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         {/* ─── Step 2: Editor ─── */}
         {step === 'editor' && (
           <div className="space-y-3 flex-1 min-h-0 flex flex-col">
+            {/* Recipient banner when preselected */}
+            {preselectedRecipients && preselectedRecipients.length > 0 && (
+              <div className="flex items-center gap-2 p-2.5 rounded-md bg-primary/10 border border-primary/20">
+                <User className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-sm font-medium">Para: {preselectedRecipients.map(r => r.name || r.email).join(', ')}</span>
+              </div>
+            )}
             <div className="space-y-1">
               <Label className="text-xs">Asunto</Label>
               <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} className="h-9" />
