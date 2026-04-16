@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ResultsStepProps {
   level: number;
+  revenueRange?: string;
   onSubmitContact: (name: string, email: string) => Promise<boolean>;
   onCalendlyClick: () => void;
 }

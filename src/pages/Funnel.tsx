@@ -259,6 +259,7 @@ const Funnel = () => {
         return (
           <ResultsStep
             level={businessLevel}
+            revenueRange={answers.ingresos}
             onSubmitContact={handleSubmitContact}
             onCalendlyClick={handleCalendlyClick}
           />
