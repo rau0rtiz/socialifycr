@@ -21,14 +21,14 @@ const levelData = [
   { name: 'Empire', revenue: '$200K+/mes', desc: 'Tu estrategia de marketing digital debería enfocarse en liderazgo de marca, alianzas estratégicas y crecimiento exponencial a través de múltiples plataformas.', color: '#ef4444' },
 ];
 
-export const ResultsStep = ({ level, onSubmitContact, onCalendlyClick }: ResultsStepProps) => {
+export const ResultsStep = ({ level, revenueRange, onSubmitContact, onCalendlyClick }: ResultsStepProps) => {
   const [revealed, setRevealed] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const current = levelData[level - 1];
-  const qualifiesForSession = level >= 4;
+  const qualifiesForSession = level >= 4 || (level === 3 && revenueRange === '5k15k');
   const isExploratory = level === 6;
   const canSubmit = name.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
