@@ -82,6 +82,17 @@ const TOTAL_QUESTION_STEPS = 6;
 
 const ROADMAP_FUNNEL_SLUG = 'roadmap-personalizado';
 
+// Extract UTM params from URL
+const getUtmParams = () => {
+  const params = new URLSearchParams(window.location.search);
+  const utms: Record<string, string> = {};
+  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(k => {
+    const v = params.get(k);
+    if (v) utms[k] = v;
+  });
+  return Object.keys(utms).length > 0 ? utms : null;
+};
+
 const Funnel = () => {
   const { toast } = useToast();
   const [step, setStep] = useState(0);
@@ -90,6 +101,7 @@ const Funnel = () => {
   const [leadId, setLeadId] = useState<string | null>(null);
   const [funnelId, setFunnelId] = useState<string | null>(null);
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const utmParamsRef = useRef(getUtmParams());
 
   const [answers, setAnswers] = useState({
     industry: '',
