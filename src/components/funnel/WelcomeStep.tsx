@@ -8,8 +8,8 @@ interface WelcomeStepProps {
 export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
   <div className="flex flex-col items-center justify-center text-center space-y-8 md:space-y-10 animate-fade-in min-h-[65vh]">
     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#212121] max-w-3xl leading-[1.1] uppercase">
-      OBTENÉ TU<br />
-      <span className="text-[#FF6B35]">ROADMAP DE CRECIMIENTO DIGITAL</span><br />
+      OBTENÉ EL<br />
+      <span className="text-[#FF6B35]">DIAGNÓSTICO DE TU MARKETING DIGITAL</span><br />
       PARA TU NEGOCIO
     </h1>
     <p className="text-lg md:text-xl text-[#212121]/60 font-medium tracking-wide -mt-4">
@@ -28,7 +28,7 @@ export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
     <div className="space-y-2 pt-2">
       <p className="flex items-center justify-center gap-2 text-sm md:text-base font-semibold text-[#212121] uppercase">
         <Sparkles className="h-4 w-4 text-[#FF6B35]" />
-        OBTENÉ TU ROADMAP EN MENOS DE 2 MINUTOS
+        OBTENÉ TU DIAGNÓSTICO EN MENOS DE 2 MINUTOS
       </p>
       <p className="flex items-center justify-center gap-2 text-sm md:text-base font-semibold text-[#212121] uppercase">
         <Sparkles className="h-4 w-4 text-[#FF6B35]" />
