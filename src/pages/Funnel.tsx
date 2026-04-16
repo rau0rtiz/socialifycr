@@ -162,7 +162,7 @@ const Funnel = () => {
     advanceTimerRef.current = setTimeout(() => goTo(7), AUTO_ADVANCE_DELAY);
   }, [goTo]);
 
-  const handleSubmitContact = async (name: string, email: string) => {
+  const handleSubmitContact = async (name: string, email: string, businessHandle?: string) => {
     const id = crypto.randomUUID();
     try {
       const resolvedFunnelId = await resolveFunnelId();
@@ -178,6 +178,9 @@ const Funnel = () => {
           canalVentas: answers.canalVentas,
           objetivo: answers.objetivo,
         };
+      if (businessHandle) {
+        answersPayload.businessHandle = businessHandle;
+      }
       // Merge UTM params if present
       if (utmParamsRef.current) {
         Object.assign(answersPayload, utmParamsRef.current);

@@ -436,6 +436,9 @@ const AgencyLeadsContent = () => {
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{lead.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
+                      {(lead.answers as any)?.businessHandle && (
+                        <p className="text-[10px] text-muted-foreground/70 truncate">{(lead.answers as any).businessHandle}</p>
+                      )}
                     </div>
                   </div>
 
@@ -495,6 +498,12 @@ const AgencyLeadsContent = () => {
                   <span className="text-muted-foreground">Calendly:</span>
                   <p className="font-medium">{selectedLead.calendly_clicked ? '✅ Sí' : '❌ No'}</p>
                 </div>
+                {(selectedLead.answers as any)?.businessHandle && (
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">Negocio:</span>
+                    <p className="font-medium">{(selectedLead.answers as any).businessHandle}</p>
+                  </div>
+                )}
               </div>
               {selectedLead.answers && Object.keys(selectedLead.answers).length > 0 && (
                 <div>
