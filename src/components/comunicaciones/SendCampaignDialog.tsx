@@ -187,7 +187,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5" />
@@ -290,6 +290,13 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         {/* ─── Step 2: Editor ─── */}
         {step === 'editor' && (
           <div className="space-y-3 flex-1 min-h-0 flex flex-col">
+            {/* Recipient banner when preselected */}
+            {preselectedRecipients && preselectedRecipients.length > 0 && (
+              <div className="flex items-center gap-2 p-2.5 rounded-md bg-primary/10 border border-primary/20">
+                <User className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-sm font-medium">Para: {preselectedRecipients.map(r => r.name || r.email).join(', ')}</span>
+              </div>
+            )}
             <div className="space-y-1">
               <Label className="text-xs">Asunto</Label>
               <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} className="h-9" />
@@ -301,7 +308,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
                 <TabsTrigger value="code" className="gap-1.5 text-xs"><Code className="h-3.5 w-3.5" /> HTML</TabsTrigger>
               </TabsList>
               <TabsContent value="preview" className="flex-1 min-h-0 mt-2">
-                <div className="border rounded-lg overflow-hidden bg-white h-[300px]">
+                <div className="border rounded-lg overflow-hidden bg-white h-[400px]">
                   <iframe
                     srcDoc={previewHtml}
                     className="w-full h-full border-0"
@@ -314,7 +321,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
                 <Textarea
                   value={editedHtml}
                   onChange={e => setEditedHtml(e.target.value)}
-                  className="h-[300px] font-mono text-xs resize-none"
+                  className="h-[400px] font-mono text-xs resize-none"
                   spellCheck={false}
                 />
               </TabsContent>
