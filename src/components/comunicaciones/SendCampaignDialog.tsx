@@ -31,7 +31,7 @@ interface Recipient {
   email: string;
 }
 
-export const SendCampaignDialog = ({ open, onOpenChange, template }: Props) => {
+export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRecipients }: Props) => {
   const [step, setStep] = useState<Step>('audience');
   const [audienceType, setAudienceType] = useState<AudienceType>('funnel_leads');
   const [selectedFunnelId, setSelectedFunnelId] = useState<string>('all');
@@ -45,14 +45,19 @@ export const SendCampaignDialog = ({ open, onOpenChange, template }: Props) => {
   // Reset state when opening/closing or template changes
   useEffect(() => {
     if (open && template) {
-      setStep('audience');
-      setSelectedIds(new Set());
       setRecipientSearch('');
       setEditedSubject(template.subject);
       setEditedHtml(template.html_content);
       setEditorTab('preview');
+      if (preselectedRecipients && preselectedRecipients.length > 0) {
+        setStep('editor');
+        setSelectedIds(new Set(preselectedRecipients.map(r => r.id)));
+      } else {
+        setStep('audience');
+        setSelectedIds(new Set());
+      }
     }
-  }, [open, template]);
+  }, [open, template, preselectedRecipients]);
 
   const { data: funnels } = useQuery({
     queryKey: ['funnels'],
