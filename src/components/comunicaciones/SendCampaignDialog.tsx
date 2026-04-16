@@ -20,6 +20,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   template: EmailTemplate | null;
   preselectedRecipients?: { id: string; name: string; email: string }[];
+  leadContext?: any; // Full lead object from funnel_leads
 }
 
 type AudienceType = 'funnel_leads' | 'email_contacts';
@@ -31,7 +32,99 @@ interface Recipient {
   email: string;
 }
 
-export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRecipients }: Props) => {
+// ─── Lead Context Mapper ───
+const levelNames: Record<number, string> = {
+  1: 'Idea', 2: 'Startup', 3: 'En crecimiento', 4: 'Escalando', 5: 'Establecido', 6: 'Imperio',
+};
+
+const answerLabels: Record<string, Record<string, string>> = {
+  industria: {
+    retail: 'Retail / Tienda', restaurante: 'Restaurante / Comida', salud: 'Salud y bienestar',
+    servicios: 'Servicios profesionales', educacion: 'Educación / Cursos', otro: 'Otro',
+  },
+  ingresos: {
+    menos1k: 'menos de $1,000/mes', '1k5k': '$1,000–$5,000/mes', '5k15k': '$5,000–$15,000/mes',
+    '15k50k': '$15,000–$50,000/mes', mas50k: 'más de $50,000/mes',
+  },
+  presencia: {
+    nada: 'sin presencia en redes', perfil_inactivo: 'perfil inactivo',
+    poco: 'publica 1-2 veces/semana', consistente: 'publica 3-5 veces/semana', diario: 'publica a diario',
+  },
+  pauta: {
+    nada: 'sin inversión en pauta', intente: 'probó pauta pero la dejó', menos200: 'invierte menos de $200/mes',
+    '200_500': 'invierte $200-$500/mes', '500_1000': 'invierte $500-$1,000/mes',
+    '1000_2000': 'invierte $1,000-$2,000/mes', mas2000: 'invierte más de $2,000/mes',
+  },
+  canalVentas: {
+    local: 'venta en persona', mensajes: 'venta por WhatsApp/redes', web: 'venta por página web',
+    outbound: 'contacto frío/outbound', marketplace: 'marketplace', puntos_venta: 'puntos de venta externos', otro: 'otro canal',
+  },
+  objetivo: {
+    awareness: 'que más gente conozca su producto', nuevos_clientes: 'conseguir más clientes nuevos',
+    retencion: 'venderle más a quienes ya compraron', lanzamiento: 'lanzar un nuevo producto',
+    marca: 'construir una marca reconocida',
+  },
+};
+
+function buildLeadVariables(lead: any): Record<string, string> {
+  if (!lead) return {};
+  const answers = lead.answers || {};
+  const getLabel = (key: string, val: string) => answerLabels[key]?.[val] || val || '';
+
+  const industry = getLabel('industria', answers.industria || lead.industry || '');
+  const revenue = getLabel('ingresos', answers.ingresos || lead.revenue_range || '');
+  const presence = getLabel('presencia', answers.presencia || '');
+  const adSpend = getLabel('pauta', answers.pauta || '');
+  const salesChannel = getLabel('canalVentas', answers.canalVentas || '');
+  const goal = getLabel('objetivo', answers.objetivo || '');
+  const levelName = levelNames[lead.business_level] || `Nivel ${lead.business_level}`;
+
+  // Build challenge summary
+  let challengeSummary = lead.challenge || '';
+  if (!challengeSummary) {
+    const parts: string[] = [];
+    if (presence) parts.push(`actualmente ${presence}`);
+    if (adSpend) parts.push(adSpend);
+    if (salesChannel) parts.push(`su canal principal es ${salesChannel}`);
+    if (goal) parts.push(`su objetivo es ${goal}`);
+    challengeSummary = parts.length > 0 ? parts.join(', ') : 'crecer su negocio con marketing digital';
+  }
+
+  // Build context summary paragraph
+  const contextParts: string[] = [];
+  if (industry) contextParts.push(`en la industria de ${industry}`);
+  if (revenue) contextParts.push(`facturando ${revenue}`);
+  if (levelName) contextParts.push(`en etapa "${levelName}"`);
+  const contextSummary = contextParts.length > 0
+    ? `Tu negocio está ${contextParts.join(', ')}. ${challengeSummary ? `Veo que ${challengeSummary}.` : ''}`
+    : '';
+
+  return {
+    name: lead.name || '',
+    email: lead.email || '',
+    industry: industry || 'tu industria',
+    business_level_name: levelName,
+    revenue_range_label: revenue || 'tu rango actual',
+    goal_label: goal || 'crecer tu negocio',
+    sales_channel_label: salesChannel || 'tu canal actual',
+    challenge_summary: challengeSummary,
+    context_summary: contextSummary,
+    custom_intro: '',
+    whatsapp: '50660173431',
+  };
+}
+
+function replaceVariables(html: string, vars: Record<string, string>): string {
+  let result = html;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+  }
+  return result;
+}
+
+export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRecipients, leadContext }: Props) => {
+  const isOutboundMode = !!leadContext && !!preselectedRecipients?.length;
+
   const [step, setStep] = useState<Step>('audience');
   const [audienceType, setAudienceType] = useState<AudienceType>('funnel_leads');
   const [selectedFunnelId, setSelectedFunnelId] = useState<string>('all');
@@ -39,25 +132,45 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   const [recipientSearch, setRecipientSearch] = useState('');
   const [editedSubject, setEditedSubject] = useState('');
   const [editedHtml, setEditedHtml] = useState('');
+  const [editedMessage, setEditedMessage] = useState('');
   const [editorTab, setEditorTab] = useState('preview');
   const [sending, setSending] = useState(false);
 
-  // Reset state when opening/closing or template changes
+  // Build variables from lead context
+  const leadVars = useMemo(() => buildLeadVariables(leadContext), [leadContext]);
+
+  // Reset state when opening
   useEffect(() => {
     if (open && template) {
       setRecipientSearch('');
-      setEditedSubject(template.subject);
-      setEditedHtml(template.html_content);
       setEditorTab('preview');
-      if (preselectedRecipients && preselectedRecipients.length > 0) {
+
+      if (isOutboundMode) {
+        // Outbound mode: pre-fill with lead context
         setStep('editor');
-        setSelectedIds(new Set(preselectedRecipients.map(r => r.id)));
+        setSelectedIds(new Set(preselectedRecipients!.map(r => r.id)));
+        const vars = buildLeadVariables(leadContext);
+        setEditedSubject(replaceVariables(template.subject, vars));
+        setEditedHtml(replaceVariables(template.html_content, vars));
+        // Extract a default editable message from context
+        setEditedMessage(vars.context_summary || '');
       } else {
         setStep('audience');
         setSelectedIds(new Set());
+        setEditedSubject(template.subject);
+        setEditedHtml(template.html_content);
+        setEditedMessage('');
       }
     }
-  }, [open, template, preselectedRecipients]);
+  }, [open, template, preselectedRecipients, leadContext, isOutboundMode]);
+
+  // When editedMessage changes in outbound mode, update the {{custom_intro}} in html
+  useEffect(() => {
+    if (isOutboundMode && template && editedMessage !== undefined) {
+      const vars = { ...buildLeadVariables(leadContext), custom_intro: editedMessage };
+      setEditedHtml(replaceVariables(template.html_content, vars));
+    }
+  }, [editedMessage]);
 
   const { data: funnels } = useQuery({
     queryKey: ['funnels'],
@@ -66,7 +179,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
       if (error) throw error;
       return data || [];
     },
-    enabled: open,
+    enabled: open && !isOutboundMode,
   });
 
   const { data: funnelLeads } = useQuery({
@@ -78,7 +191,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
       if (error) throw error;
       return (data || []).map((r: any) => ({ id: r.id, name: r.name, email: r.email }));
     },
-    enabled: open && audienceType === 'funnel_leads',
+    enabled: open && !isOutboundMode && audienceType === 'funnel_leads',
   });
 
   const { data: emailContacts } = useQuery({
@@ -91,7 +204,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
       if (error) throw error;
       return (data || []).map((r: any) => ({ id: r.id, name: r.full_name || '', email: r.email }));
     },
-    enabled: open && audienceType === 'email_contacts',
+    enabled: open && !isOutboundMode && audienceType === 'email_contacts',
   });
 
   const allRecipients: Recipient[] = audienceType === 'funnel_leads' ? (funnelLeads || []) : (emailContacts || []);
@@ -105,6 +218,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   }, [allRecipients, recipientSearch]);
 
   const selectedRecipients = useMemo(() => {
+    if (isOutboundMode && preselectedRecipients) return preselectedRecipients;
     const fromAll = allRecipients.filter(r => selectedIds.has(r.id));
     if (preselectedRecipients && preselectedRecipients.length > 0) {
       const existingIds = new Set(fromAll.map(r => r.id));
@@ -112,7 +226,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
       return [...fromAll, ...extra];
     }
     return fromAll;
-  }, [allRecipients, selectedIds, preselectedRecipients]);
+  }, [allRecipients, selectedIds, preselectedRecipients, isOutboundMode]);
 
   const toggleRecipient = (id: string) => {
     setSelectedIds(prev => {
@@ -144,14 +258,8 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
         const results = await Promise.allSettled(
           batch.map(async (r) => {
-            const personalizedHtml = editedHtml
-              .replace(/\{\{name\}\}/g, r.name)
-              .replace(/\{\{email\}\}/g, r.email)
-              .replace(/\{\{link\}\}/g, '');
-
-            const personalizedSubject = editedSubject
-              .replace(/\{\{name\}\}/g, r.name)
-              .replace(/\{\{email\}\}/g, r.email);
+            const personalizedHtml = replaceVariables(editedHtml, { name: r.name, email: r.email, link: '' });
+            const personalizedSubject = replaceVariables(editedSubject, { name: r.name, email: r.email });
 
             const { error } = await supabase.functions.invoke('send-notification-email', {
               body: {
@@ -180,11 +288,93 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
     }
   };
 
-  const previewHtml = editedHtml
-    .replace(/\{\{name\}\}/g, selectedRecipients[0]?.name || 'Nombre')
-    .replace(/\{\{email\}\}/g, selectedRecipients[0]?.email || 'email@ejemplo.com')
-    .replace(/\{\{link\}\}/g, '#');
+  const previewHtml = editedHtml;
 
+  // ─── Outbound Mode: simplified 2-panel layout ───
+  if (isOutboundMode) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5" />
+              Enviar email a {preselectedRecipients![0]?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto pr-1">
+            {/* Recipient banner */}
+            <div className="flex items-center gap-2 p-2.5 rounded-md bg-primary/10 border border-primary/20">
+              <User className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-sm font-medium">
+                Para: {preselectedRecipients!.map(r => r.name || r.email).join(', ')}
+              </span>
+              {leadContext?.business_level && (
+                <Badge variant="outline" className="ml-auto text-[10px]">
+                  Nivel {leadContext.business_level}: {levelNames[leadContext.business_level]}
+                </Badge>
+              )}
+            </div>
+
+            {/* Subject */}
+            <div className="space-y-1">
+              <Label className="text-xs">Asunto</Label>
+              <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} className="h-9" />
+            </div>
+
+            {/* Editable message / context */}
+            <div className="space-y-1">
+              <Label className="text-xs">Mensaje personalizado (contexto del negocio)</Label>
+              <Textarea
+                value={editedMessage}
+                onChange={e => setEditedMessage(e.target.value)}
+                className="min-h-[80px] text-sm resize-none"
+                placeholder="Escribe un mensaje personalizado basado en lo que sabes del lead..."
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Este texto reemplaza {`{{custom_intro}}`} en la plantilla.
+              </p>
+            </div>
+
+            {/* Preview */}
+            <Tabs value={editorTab} onValueChange={setEditorTab} className="flex-1 flex flex-col min-h-0">
+              <TabsList className="w-fit">
+                <TabsTrigger value="preview" className="gap-1.5 text-xs"><Eye className="h-3.5 w-3.5" /> Vista previa</TabsTrigger>
+                <TabsTrigger value="code" className="gap-1.5 text-xs"><Code className="h-3.5 w-3.5" /> HTML</TabsTrigger>
+              </TabsList>
+              <TabsContent value="preview" className="mt-2">
+                <div className="border rounded-lg overflow-hidden bg-white" style={{ height: '420px' }}>
+                  <iframe
+                    srcDoc={previewHtml}
+                    className="w-full h-full border-0"
+                    sandbox=""
+                    title="Preview"
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="code" className="mt-2">
+                <Textarea
+                  value={editedHtml}
+                  onChange={e => setEditedHtml(e.target.value)}
+                  className="h-[420px] font-mono text-xs resize-none"
+                  spellCheck={false}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <DialogFooter className="gap-2 pt-3 border-t sticky bottom-0 bg-background">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button onClick={handleSend} disabled={sending} className="gap-1.5">
+              {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : <><Send className="h-4 w-4" /> Enviar</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // ─── Standard Campaign Mode (multi-recipient, 3-step) ───
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
@@ -195,7 +385,6 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
             {step === 'editor' && 'Editar plantilla'}
             {step === 'confirm' && 'Confirmar envío'}
           </DialogTitle>
-          {/* Step indicator */}
           <div className="flex items-center gap-2 pt-2">
             {(['audience', 'editor', 'confirm'] as const).map((s, i) => (
               <div key={s} className="flex items-center gap-2">
@@ -246,7 +435,6 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               )}
             </div>
 
-            {/* Search + select all */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -257,17 +445,13 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               </Button>
             </div>
 
-            {/* Recipients list */}
             <ScrollArea className="h-[240px] rounded-md border">
               <div className="p-1">
                 {filteredRecipients.length === 0 ? (
                   <p className="text-center text-sm text-muted-foreground py-8">No hay destinatarios</p>
                 ) : (
                   filteredRecipients.map(r => (
-                    <label
-                      key={r.id}
-                      className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-                    >
+                    <label key={r.id} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors">
                       <Checkbox checked={selectedIds.has(r.id)} onCheckedChange={() => toggleRecipient(r.id)} />
                       <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0 flex-1">
@@ -290,13 +474,6 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         {/* ─── Step 2: Editor ─── */}
         {step === 'editor' && (
           <div className="space-y-3 flex-1 min-h-0 flex flex-col">
-            {/* Recipient banner when preselected */}
-            {preselectedRecipients && preselectedRecipients.length > 0 && (
-              <div className="flex items-center gap-2 p-2.5 rounded-md bg-primary/10 border border-primary/20">
-                <User className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-sm font-medium">Para: {preselectedRecipients.map(r => r.name || r.email).join(', ')}</span>
-              </div>
-            )}
             <div className="space-y-1">
               <Label className="text-xs">Asunto</Label>
               <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} className="h-9" />
@@ -309,21 +486,11 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               </TabsList>
               <TabsContent value="preview" className="flex-1 min-h-0 mt-2">
                 <div className="border rounded-lg overflow-hidden bg-white h-[400px]">
-                  <iframe
-                    srcDoc={previewHtml}
-                    className="w-full h-full border-0"
-                    sandbox=""
-                    title="Preview"
-                  />
+                  <iframe srcDoc={previewHtml} className="w-full h-full border-0" sandbox="" title="Preview" />
                 </div>
               </TabsContent>
               <TabsContent value="code" className="flex-1 min-h-0 mt-2">
-                <Textarea
-                  value={editedHtml}
-                  onChange={e => setEditedHtml(e.target.value)}
-                  className="h-[400px] font-mono text-xs resize-none"
-                  spellCheck={false}
-                />
+                <Textarea value={editedHtml} onChange={e => setEditedHtml(e.target.value)} className="h-[400px] font-mono text-xs resize-none" spellCheck={false} />
               </TabsContent>
             </Tabs>
 
@@ -347,18 +514,9 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         {step === 'confirm' && (
           <div className="space-y-4 flex-1">
             <div className="p-4 rounded-lg bg-muted space-y-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Plantilla</p>
-                <p className="font-medium text-sm">{template?.name}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Asunto</p>
-                <p className="font-medium text-sm">{editedSubject}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Destinatarios</p>
-                <p className="font-medium text-sm">{selectedRecipients.length} personas</p>
-              </div>
+              <div><p className="text-xs text-muted-foreground">Plantilla</p><p className="font-medium text-sm">{template?.name}</p></div>
+              <div><p className="text-xs text-muted-foreground">Asunto</p><p className="font-medium text-sm">{editedSubject}</p></div>
+              <div><p className="text-xs text-muted-foreground">Destinatarios</p><p className="font-medium text-sm">{selectedRecipients.length} personas</p></div>
             </div>
 
             <ScrollArea className="h-[180px] rounded-md border">
@@ -373,7 +531,6 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               </div>
             </ScrollArea>
 
-            {/* Mini preview */}
             <div className="border rounded-lg overflow-hidden bg-white h-[120px]">
               <iframe
                 srcDoc={previewHtml}

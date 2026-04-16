@@ -475,6 +475,7 @@ const AgencyLeadsContent = () => {
           onOpenChange={(open) => !open && setEmailLead(null)}
           template={outboundTemplate}
           preselectedRecipients={[{ id: emailLead.id, name: emailLead.name, email: emailLead.email }]}
+          leadContext={emailLead}
         />
       )}
     </div>
