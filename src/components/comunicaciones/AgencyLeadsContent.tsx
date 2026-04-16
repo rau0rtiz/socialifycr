@@ -293,7 +293,7 @@ const AgencyLeadsContent = () => {
       </div>
 
       {/* KPI Metrics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {/* Total Leads */}
         <Card>
           <CardContent className="p-4">
@@ -343,60 +343,59 @@ const AgencyLeadsContent = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Level Distribution — Pie Chart */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
-                <BarChart3 className="h-5 w-5 text-purple-500" />
-              </div>
-              <p className="text-xs text-muted-foreground">Distribución</p>
-            </div>
-            <div className="flex items-center gap-3">
-              {/* Mini SVG Pie Chart */}
-              <svg viewBox="0 0 32 32" className="h-12 w-12 shrink-0" style={{ transform: 'rotate(-90deg)' }}>
-                {(() => {
-                  let cumulative = 0;
-                  return [1,2,3,4,5,6].map(level => {
-                    const count = kpiMetrics.levelDist[level] || 0;
-                    const pct = kpiMetrics.total > 0 ? count / kpiMetrics.total : 0;
-                    if (pct === 0) return null;
-                    const dashArray = pct * 100;
-                    const dashOffset = -cumulative * 100;
-                    cumulative += pct;
-                    return (
-                      <circle
-                        key={level}
-                        cx="16" cy="16" r="15.9155"
-                        fill="none"
-                        stroke={levelColors[level]}
-                        strokeWidth="3.5"
-                        strokeDasharray={`${dashArray} ${100 - dashArray}`}
-                        strokeDashoffset={dashOffset}
-                        className="transition-all"
-                      />
-                    );
-                  });
-                })()}
-              </svg>
-              {/* Legend */}
-              <div className="flex flex-wrap gap-x-2 gap-y-0.5">
-                {[1,2,3,4,5,6].map(level => {
-                  const count = kpiMetrics.levelDist[level] || 0;
-                  if (count === 0) return null;
-                  return (
-                    <div key={level} className="flex items-center gap-1">
-                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: levelColors[level] }} />
-                      <span className="text-[10px] text-muted-foreground">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Distribution Donut Chart */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-6">
+            {/* Donut */}
+            <svg viewBox="0 0 36 36" className="h-24 w-24 shrink-0">
+              {(() => {
+                let cumulative = 0;
+                const R = 15.9155;
+                const C = 2 * Math.PI * R; // ~100
+                return [1,2,3,4,5,6].map(level => {
+                  const count = kpiMetrics.levelDist[level] || 0;
+                  const pct = kpiMetrics.total > 0 ? count / kpiMetrics.total : 0;
+                  if (pct === 0) return null;
+                  const dash = pct * C;
+                  const offset = C - cumulative * C + C * 0.25; // rotate to top
+                  cumulative += pct;
+                  return (
+                    <circle
+                      key={level}
+                      cx="18" cy="18" r={R}
+                      fill="none"
+                      stroke={levelColors[level]}
+                      strokeWidth="5"
+                      strokeDasharray={`${dash} ${C - dash}`}
+                      strokeDashoffset={offset}
+                    />
+                  );
+                });
+              })()}
+              {/* Center text */}
+              <text x="18" y="17" textAnchor="middle" className="fill-foreground text-[6px] font-bold">{kpiMetrics.total}</text>
+              <text x="18" y="22" textAnchor="middle" className="fill-muted-foreground text-[3.5px]">leads</text>
+            </svg>
+            {/* Legend */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 flex-1">
+              {[1,2,3,4,5,6].map(level => {
+                const count = kpiMetrics.levelDist[level] || 0;
+                const pct = kpiMetrics.total > 0 ? Math.round((count / kpiMetrics.total) * 100) : 0;
+                return (
+                  <div key={level} className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-sm shrink-0" style={{ backgroundColor: levelColors[level], opacity: count > 0 ? 1 : 0.25 }} />
+                    <span className="text-xs text-foreground font-medium">{levelNames[level]}</span>
+                    <span className="text-xs text-muted-foreground ml-auto">{count} <span className="text-[10px]">({pct}%)</span></span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
