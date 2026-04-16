@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Lock, Loader2, Mail, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Lock, Loader2, Mail, CheckCircle2, Instagram } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ResultsStepProps {
   level: number;
   revenueRange?: string;
-  onSubmitContact: (name: string, email: string) => Promise<boolean>;
+  onSubmitContact: (name: string, email: string, businessHandle?: string) => Promise<boolean>;
   onCalendlyClick: () => void;
 }
 
@@ -25,6 +25,7 @@ export const ResultsStep = ({ level, revenueRange, onSubmitContact, onCalendlyCl
   const [revealed, setRevealed] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [businessHandle, setBusinessHandle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const current = levelData[level - 1];
@@ -34,7 +35,7 @@ export const ResultsStep = ({ level, revenueRange, onSubmitContact, onCalendlyCl
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    const ok = await onSubmitContact(name, email);
+    const ok = await onSubmitContact(name, email, businessHandle.trim() || undefined);
     setIsSubmitting(false);
     if (ok) {
       setRevealed(true);
@@ -145,6 +146,22 @@ export const ResultsStep = ({ level, revenueRange, onSubmitContact, onCalendlyCl
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 maxLength={255}
+                className="h-10 md:h-12 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm px-4 bg-white text-black placeholder:text-gray-400 funnel-autofill"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="businessHandle" className="font-semibold text-[#212121] text-xs md:text-sm flex items-center gap-1.5">
+                <Instagram className="h-3.5 w-3.5" />
+                Instagram o nombre del negocio
+                <span className="text-[#212121]/30 font-normal">(opcional)</span>
+              </Label>
+              <Input
+                id="businessHandle"
+                autoComplete="organization"
+                placeholder="@tucuenta o Nombre del negocio"
+                value={businessHandle}
+                onChange={(e) => setBusinessHandle(e.target.value)}
+                maxLength={100}
                 className="h-10 md:h-12 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm px-4 bg-white text-black placeholder:text-gray-400 funnel-autofill"
               />
             </div>
