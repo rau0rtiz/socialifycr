@@ -96,8 +96,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         const vars = buildLeadVariables(leadContext);
         setEditedSubject(replaceVariables(template.subject, vars));
         setEditedHtml(replaceVariables(template.html_content, vars));
-        // Extract a default editable message from context
-        setEditedMessage(vars.context_summary || '');
+        setEditedMessage(vars.custom_intro || '');
       } else {
         setStep('audience');
         setSelectedIds(new Set());
