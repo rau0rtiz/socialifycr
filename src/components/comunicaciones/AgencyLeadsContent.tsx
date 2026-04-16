@@ -436,6 +436,7 @@ const AgencyLeadsContent = () => {
                       ))}
                   </div>
                 </div>
+              )}
               <div className="text-xs text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 {format(new Date(selectedLead.created_at), "dd MMM yyyy 'a las' HH:mm", { locale: es })}
