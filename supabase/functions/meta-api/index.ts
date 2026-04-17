@@ -775,9 +775,10 @@ serve(async (req) => {
 
             // Get insights for the specified date range
             // Note: Instagram API only returns last 30 days for these metrics with period=day
+            // Note: 'impressions' was deprecated by Meta — use 'views' instead.
             const insightsMetrics = [
               'reach',
-              'impressions', 
+              'views',
               'profile_views',
               'website_clicks',
               'follower_count'
@@ -808,6 +809,7 @@ serve(async (req) => {
                     results.dailyReach = dailyValues;
                     break;
                   case 'impressions':
+                  case 'views':
                     results.impressions = totalValue;
                     results.dailyImpressions = dailyValues;
                     break;
