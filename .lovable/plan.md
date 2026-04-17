@@ -1,40 +1,58 @@
 
 
-User wants index.html meta tags updated to match new "DIAGNÓSTICO DE TU MARKETING DIGITAL" terminology. But index.html is global (not funnel-specific) — currently uses generic Socialify dashboard copy. Need to clarify: the funnel is at `/funnel` route, but index.html serves the entire app.
+User wants a speed/performance diagnostic of the dashboard load. This is an investigation task, not a code change. I should plan how to diagnose, then present findings as a plan with potential optimizations.
 
-Looking at current index.html:
-- title: "Socialify DB"
-- description: "Gestiona tus redes sociales, campañas y ventas en un solo lugar..."
-- og:title: "Socialify — Dashboard de Marketing Digital"
+Let me think about what I know about the dashboard:
+- Multi-client architecture with many widgets
+- Already uses TanStack Query with `staleTime: 5m` and disabled `refetchOnMount`
+- Uses `React.useTransition` for navigation
+- Has conditional fetching via `enabled` parameter mapped to feature flags
+- Many hooks: use-ads-data, use-campaigns-data, use-kpi-data, use-content-data, use-meta-api, use-stories, use-daily-metrics, use-ai-insights, etc.
+- Multiple edge function calls (meta-api, youtube-api, linkedin-api)
 
-The funnel is just one route. Replacing the global meta with funnel-specific copy would hurt the dashboard's SEO/social previews. Better approach: keep global Socialify branding but add the diagnostic angle since it's a key public entry point. Or set up route-specific meta via react-helmet for `/funnel` only.
+To do a proper diagnostic I need to:
+1. Use `browser--performance_profile` on /dashboard to get Web Vitals, long tasks, resource counts
+2. Use `browser--start_profiling` + reproduce + `stop_profiling` to find slow JS
+3. Read network requests to count parallel API calls and identify slow ones
+4. Check Dashboard.tsx and key hooks for potential bottlenecks (parallel queries, bundle size, lazy loading)
+5. Check edge function logs for slow responses
 
-Simplest interpretation of user request: they want the global meta to reflect the diagnostic funnel since that's the public-facing lead gen tool. I'll propose updating the global tags with diagnostic-aligned copy that still represents Socialify.
+This needs default mode (browser tools + profiling). Present plan and execute after approval.
 
-## Plan: Actualizar metadatos del index.html
+## Plan: Diagnóstico de velocidad de carga del Dashboard
 
-### Cambios en `index.html`
+### Objetivo
+Identificar cuellos de botella reales en el tiempo de carga del `/dashboard` (Web Vitals, JS pesado, llamadas a APIs lentas, render cascada) y entregar un reporte priorizado con recomendaciones accionables.
 
-**Title:**
-- Antes: `Socialify DB`
-- Después: `Socialify — Diagnóstico de tu Marketing Digital`
+### Pasos del diagnóstico
 
-**Meta description:**
-- Antes: `Gestiona tus redes sociales, campañas y ventas en un solo lugar. Socialify — tu dashboard de marketing digital.`
-- Después: `Obtené el diagnóstico de tu marketing digital en menos de 2 minutos. Descubrí en qué nivel está tu negocio y qué hacer para escalar.`
+**1. Métricas en navegador (browser tools)**
+- `navigate_to_sandbox` a `/dashboard` con un cliente activo.
+- `performance_profile`: capturar LCP, FCP, TTI, CLS, total de recursos, tamaño de transferencia, long tasks, complejidad del DOM.
+- `start_profiling` → recargar dashboard → `stop_profiling`: identificar funciones JS más costosas (renders, hooks, parsing).
 
-**Open Graph:**
-- `og:title`: `Socialify — Diagnóstico de tu Marketing Digital`
-- `og:description`: `Obtené el diagnóstico de tu marketing digital en menos de 2 minutos. Descubrí en qué nivel está tu negocio y qué hacer para escalar.`
+**2. Análisis de red**
+- `list_network_requests` con `resource_types=all`: contar requests paralelos, identificar los más lentos, detectar requests duplicados o en cascada (waterfalls).
+- Revisar llamadas a `meta-api`, `youtube-api`, `linkedin-api`, `ai-insights`, `gamma-report`.
 
-**Twitter Card:**
-- `twitter:title`: igual al og:title
-- `twitter:description`: igual al og:description
+**3. Logs de Edge Functions**
+- `supabase--edge_function_logs` para `meta-api`, `youtube-api`, `ai-insights`: tiempos de ejecución (`execution_time_ms`) y errores.
 
-**Apple mobile title:** se mantiene `Socialify DB` (es el nombre del PWA instalado, no debe cambiar).
+**4. Auditoría de código (lectura estática)**
+- `Dashboard.tsx`: mapear cuántos widgets se montan en paralelo y qué hooks dispara cada uno al inicio.
+- Hooks pesados (`use-kpi-data`, `use-campaigns-data`, `use-content-data`, `use-stories`, `use-ai-insights`): verificar `enabled`, `staleTime`, `select`, paginación.
+- Verificar lazy-loading: ¿se importan widgets pesados con `React.lazy` o todos al inicio?
+- Bundle: revisar `vite.config.ts` para code-splitting y chunks manuales.
+
+**5. Reporte final**
+Entregaré un reporte con:
+- Web Vitals actuales (LCP/FCP/TTI/CLS) vs targets recomendados.
+- Top 5 requests más lentos y top 3 long tasks JS.
+- Lista de widgets que disparan fetches al montar y cuáles se podrían diferir.
+- Recomendaciones priorizadas (quick wins vs cambios estructurales): por ejemplo lazy-loading de widgets bajo el fold, virtualizar grids, consolidar queries, agregar `select` para reducir payload, deferir `ai-insights` hasta interacción, etc.
 
 ### Notas
-- Solo se modifica `index.html`.
-- No se cambian imágenes OG, favicon, ni la URL canónica.
-- Cambio global: aplica al dashboard también, pero el copy diagnóstico es lo suficientemente amplio para representar la propuesta de valor de Socialify como entrada pública.
+- Solo lectura/diagnóstico — no se modifica código en este paso.
+- Tras revisar el reporte, podés aprobar la implementación de las optimizaciones priorizadas en un segundo plan.
+- El diagnóstico tarda ~1-2 minutos de ejecución de herramientas.
 
