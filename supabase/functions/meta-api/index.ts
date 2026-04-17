@@ -809,6 +809,7 @@ serve(async (req) => {
                     results.dailyReach = dailyValues;
                     break;
                   case 'impressions':
+                  case 'views':
                     results.impressions = totalValue;
                     results.dailyImpressions = dailyValues;
                     break;
