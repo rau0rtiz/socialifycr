@@ -248,6 +248,21 @@ export const ResultsStep = ({ level, revenueRange, triedAdsAndQuit, onSubmitCont
             </p>
           </div>
 
+          {/* Tried-ads-and-quit branch acknowledgment */}
+          {triedAdsAndQuit && (
+            <div className="flex items-start gap-2.5 p-3 md:p-4 rounded-xl bg-[#FF6B35]/5 border border-[#FF6B35]/30 text-left">
+              <Sparkles className="h-4 w-4 text-[#FF6B35] shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-xs md:text-sm font-semibold text-[#212121]">
+                  Vimos que ya intentaste pauta antes
+                </p>
+                <p className="text-[11px] md:text-xs text-[#212121]/60 leading-relaxed">
+                  Incluiremos en tu diagnóstico recomendaciones específicas para evitar los errores que te frenaron y aprovechar lo que ya aprendiste.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Session CTA — only for levels 4+ */}
           {qualifiesForSession && (
             <div className="p-4 md:p-5 rounded-xl border border-gray-200 bg-white text-left space-y-2">
