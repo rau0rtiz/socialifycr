@@ -1,58 +1,89 @@
 
 
-User wants a speed/performance diagnostic of the dashboard load. This is an investigation task, not a code change. I should plan how to diagnose, then present findings as a plan with potential optimizations.
+Usuario pregunta "que más" — quiere las siguientes optimizaciones después de los 3 quick wins ya aplicados (fonts preconnect, límite 50 posts, fix métrica IG views).
 
-Let me think about what I know about the dashboard:
-- Multi-client architecture with many widgets
-- Already uses TanStack Query with `staleTime: 5m` and disabled `refetchOnMount`
-- Uses `React.useTransition` for navigation
-- Has conditional fetching via `enabled` parameter mapped to feature flags
-- Many hooks: use-ads-data, use-campaigns-data, use-kpi-data, use-content-data, use-meta-api, use-stories, use-daily-metrics, use-ai-insights, etc.
-- Multiple edge function calls (meta-api, youtube-api, linkedin-api)
+Mirando los network requests reales del dashboard de Alma Bendita: **18 queries en paralelo al cargar `/`**. Eso es lo que más duele. Muchas devuelven arrays vacíos `[]` (content_metadata, content_tags, video_ideas, client_setters, setter_appointments, content_models) — siguen costando round-trip aunque no haya datos.
 
-To do a proper diagnostic I need to:
-1. Use `browser--performance_profile` on /dashboard to get Web Vitals, long tasks, resource counts
-2. Use `browser--start_profiling` + reproduce + `stop_profiling` to find slow JS
-3. Read network requests to count parallel API calls and identify slow ones
-4. Check Dashboard.tsx and key hooks for potential bottlenecks (parallel queries, bundle size, lazy loading)
-5. Check edge function logs for slow responses
+Patrones detectados:
+1. **2 queries duplicadas a `user_roles`** (mismo user_id, mismo select) en el mismo segundo → desperdicio.
+2. **Prefetch masivo en SplashScreen** (15 queries) + queries adicionales que disparan los hooks al montar widgets → algunas se duplican.
+3. **Sin code-splitting**: `Dashboard.tsx` importa todos los widgets directamente, no usa `React.lazy`. Bundle inicial grande.
+4. **Fetches innecesarios cuando feature flag está OFF**: el flag de Alma Bendita tiene casi todo en `false` (sales_tracking, content_grid, etc.) pero igual se hace prefetch de `message_sales`, `video_ideas`, `content_metadata`, `setter_appointments`, etc. en el splash.
+5. **`message_sales` sin paginación**: trae todas las ventas históricas (`select=*`).
+6. **Logo grande**: PetShop2GoCR usa una imagen de 1.5MB+ desde wordpress sin optimizar.
 
-This needs default mode (browser tools + profiling). Present plan and execute after approval.
+Voy a presentar 5 optimizaciones priorizadas por impacto/esfuerzo.
 
-## Plan: Diagnóstico de velocidad de carga del Dashboard
+## Plan: Siguientes optimizaciones del dashboard
 
-### Objetivo
-Identificar cuellos de botella reales en el tiempo de carga del `/dashboard` (Web Vitals, JS pesado, llamadas a APIs lentas, render cascada) y entregar un reporte priorizado con recomendaciones accionables.
+### Contexto medido (Alma Bendita, ruta `/`)
+- 18 queries Supabase en paralelo al cargar.
+- 6 de esas queries devuelven `[]` (datos vacíos).
+- 2 queries duplicadas a `user_roles`.
+- Prefetch en SplashScreen ignora feature flags → trae datos de módulos apagados.
 
-### Pasos del diagnóstico
+---
 
-**1. Métricas en navegador (browser tools)**
-- `navigate_to_sandbox` a `/dashboard` con un cliente activo.
-- `performance_profile`: capturar LCP, FCP, TTI, CLS, total de recursos, tamaño de transferencia, long tasks, complejidad del DOM.
-- `start_profiling` → recargar dashboard → `stop_profiling`: identificar funciones JS más costosas (renders, hooks, parsing).
+### 1. Prefetch condicionado por feature flags (alto impacto)
+**Archivo:** `src/components/SplashScreen.tsx`
 
-**2. Análisis de red**
-- `list_network_requests` con `resource_types=all`: contar requests paralelos, identificar los más lentos, detectar requests duplicados o en cascada (waterfalls).
-- Revisar llamadas a `meta-api`, `youtube-api`, `linkedin-api`, `ai-insights`, `gamma-report`.
+Hoy el splash precarga 15 queries para todos los clientes por igual. Para clientes como Alma Bendita (con `sales_tracking`, `content_grid`, `video_ideas` en `false`) eso es trabajo desperdiciado.
 
-**3. Logs de Edge Functions**
-- `supabase--edge_function_logs` para `meta-api`, `youtube-api`, `ai-insights`: tiempos de ejecución (`execution_time_ms`) y errores.
+**Cambio:** Cargar primero `client_feature_flags`, luego prefetch SOLO de los datasets cuyos flags estén activos:
+- `message_sales` solo si `sales_tracking || ventas_section`
+- `video_ideas` solo si `video_ideas`
+- `content_metadata`, `content_tags`, `content_models` solo si `contenido_section || content_grid`
+- `setter_appointments`, `client_setters` solo si `setter_tracker || setter_daily`
+- `client_competitors` solo si `competitors`
 
-**4. Auditoría de código (lectura estática)**
-- `Dashboard.tsx`: mapear cuántos widgets se montan en paralelo y qué hooks dispara cada uno al inicio.
-- Hooks pesados (`use-kpi-data`, `use-campaigns-data`, `use-content-data`, `use-stories`, `use-ai-insights`): verificar `enabled`, `staleTime`, `select`, paginación.
-- Verificar lazy-loading: ¿se importan widgets pesados con `React.lazy` o todos al inicio?
-- Bundle: revisar `vite.config.ts` para code-splitting y chunks manuales.
+**Impacto esperado:** 8-12 queries menos por cliente en clientes con flags acotados.
 
-**5. Reporte final**
-Entregaré un reporte con:
-- Web Vitals actuales (LCP/FCP/TTI/CLS) vs targets recomendados.
-- Top 5 requests más lentos y top 3 long tasks JS.
-- Lista de widgets que disparan fetches al montar y cuáles se podrían diferir.
-- Recomendaciones priorizadas (quick wins vs cambios estructurales): por ejemplo lazy-loading de widgets bajo el fold, virtualizar grids, consolidar queries, agregar `select` para reducir payload, deferir `ai-insights` hasta interacción, etc.
+---
+
+### 2. Eliminar queries duplicadas a `user_roles`
+**Archivos:** `src/hooks/use-user-role.ts` + componentes que llaman a `user_roles` directamente.
+
+Hay 2 GET idénticos a `user_roles` en el mismo segundo. Auditar quién las dispara y consolidar todo a `useUserRole` con TanStack Query (ya cacheado 10min). Buscar `from('user_roles')` en el código y reemplazar llamadas directas por el hook.
+
+---
+
+### 3. Code-splitting de widgets pesados
+**Archivo:** `src/pages/Dashboard.tsx`
+
+Convertir a `React.lazy()` los widgets que están bajo el fold o detrás de feature flags:
+- `AdvancedFunnelModule`, `FunnelModule`
+- `CampaignsTable`, `CampaignsDrilldown`
+- `AIInsightsPanel`
+- `ContentGrid`, `ContentCalendar`, `StoriesSection`
+- `AdSalesRanking`, `SalesByBrandChart`, `SalesByProductChart`
+- `CompetitorsPanel`
+
+Envolver cada uno en `<Suspense fallback={<Skeleton />}>`. Reduce el bundle inicial de Dashboard significativamente.
+
+---
+
+### 4. Paginar / limitar `message_sales`
+**Archivo:** `src/components/SplashScreen.tsx` y hooks de ventas.
+
+Hoy: `select('*').order('sale_date desc')` sin límite → trae historial completo. Limitar a últimos 90 días o `.limit(200)` en la carga inicial; widgets que necesiten más historial (reportes, story tracker) que hagan su propio fetch bajo demanda.
+
+---
+
+### 5. Optimizar logos de clientes (medio impacto, fácil)
+**Archivos:** `ClientSelector`, `ClientBanner`, `Sidebar`.
+
+Logos como el de PetShop2GoCR (PNG 1MB+ desde WordPress) se cargan en sidebar y banner. Agregar:
+- `loading="lazy"` y `decoding="async"` en `<img>` de logos secundarios.
+- Para logos del cliente activo: limitar tamaño con `width`/`height` explícito y `object-fit: contain` (ya está).
+- Sugerencia futura: subirlos al storage propio con resize.
+
+---
 
 ### Notas
-- Solo lectura/diagnóstico — no se modifica código en este paso.
-- Tras revisar el reporte, podés aprobar la implementación de las optimizaciones priorizadas en un segundo plan.
-- El diagnóstico tarda ~1-2 minutos de ejecución de herramientas.
+- Estos cambios son de bajo a medio riesgo, todos backwards-compatible.
+- El #1 y #3 son los de mayor impacto en tiempo de carga percibido.
+- Después de aplicar, vale correr otro `performance_profile` para medir mejora real.
+- No incluyo refactors estructurales mayores (virtualización, SSR, etc.) — eso va en una segunda fase si hace falta.
+
+¿Aplico los 5? ¿O priorizamos solo #1 y #3 que son los de mayor impacto?
 
