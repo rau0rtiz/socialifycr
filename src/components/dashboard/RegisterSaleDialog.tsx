@@ -1466,54 +1466,35 @@ export const RegisterSaleDialog = ({
                 <Label className="text-xs font-medium flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5" /> Producto / Servicio
                 </Label>
-                {showNewProduct ? (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Nombre del producto"
-                      value={newProductName}
-                      onChange={e => setNewProductName(e.target.value)}
-                      className="h-10 text-sm flex-1"
-                      autoFocus
-                      onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }}
-                    />
-                    <Button size="sm" className="h-10 text-xs" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>
-                      {addProduct.isPending ? '...' : 'OK'}
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setShowNewProduct(false)}>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Select value={product || '_none'} onValueChange={handleProductChange}>
-                      <SelectTrigger className="h-10 text-sm flex-1 min-w-0 overflow-hidden"><SelectValue placeholder="Seleccionar producto" className="truncate block max-w-[200px]" /></SelectTrigger>
-                      <SelectContent className="max-w-[320px]">
-                        <SelectItem value="_none">Sin producto</SelectItem>
-                        {allProductOptions.map(name => {
-                          const matched = products.find(p => p.name === name);
-                          return (
-                            <SelectItem key={name} value={name}>
-                              <div className="flex items-center gap-2 max-w-[280px]">
-                                {matched?.photo_url && (
-                                  <img src={matched.photo_url} className="w-5 h-5 rounded object-cover flex-shrink-0" alt="" />
-                                )}
-                                <span className="truncate">{name}</span>
-                                {matched?.price != null && (
-                                  <span className="text-muted-foreground ml-1 flex-shrink-0">
-                                    ({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})
-                                  </span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setShowNewProduct(true)}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
-                    </Button>
-                  </div>
-                )}
+                <div className="flex gap-2">
+                  <Select value={product || '_none'} onValueChange={handleProductChange}>
+                    <SelectTrigger className="h-10 text-sm flex-1 min-w-0 overflow-hidden"><SelectValue placeholder="Seleccionar producto" className="truncate block max-w-[200px]" /></SelectTrigger>
+                    <SelectContent className="max-w-[320px]">
+                      <SelectItem value="_none">Sin producto</SelectItem>
+                      {allProductOptions.map(name => {
+                        const matched = products.find(p => p.name === name);
+                        return (
+                          <SelectItem key={name} value={name}>
+                            <div className="flex items-center gap-2 max-w-[280px]">
+                              {matched?.photo_url && (
+                                <img src={matched.photo_url} className="w-5 h-5 rounded object-cover flex-shrink-0" alt="" />
+                              )}
+                              <span className="truncate">{name}</span>
+                              {matched?.price != null && (
+                                <span className="text-muted-foreground ml-1 flex-shrink-0">
+                                  ({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" className="h-10 text-xs" onClick={() => setProductDialogOpen(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo
+                  </Button>
+                </div>
               </div>
 
               {/* Payment scheme selector */}
@@ -1927,6 +1908,25 @@ export const RegisterSaleDialog = ({
           )}
         </div>
       </DialogContent>
+
+      {/* Full product creation dialog (synced with Business Setup) */}
+      {clientId && (
+        <ProductFormDialog
+          open={productDialogOpen}
+          onOpenChange={setProductDialogOpen}
+          clientId={clientId}
+          defaultName={newProductName}
+          onSaved={(p) => {
+            setProduct(p.name);
+            if (p.price != null) {
+              setAmount(String(p.price));
+              setCurrency(p.currency as 'CRC' | 'USD');
+              setTotalSaleAmount(p.price);
+            }
+            setNewProductName('');
+          }}
+        />
+      )}
     </Dialog>
   );
 };
