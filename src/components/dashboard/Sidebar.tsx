@@ -131,6 +131,8 @@ export const Sidebar = () => {
               src={platformBrand.logoUrl} 
               alt={platformBrand.name} 
               className="w-8 h-8 rounded-lg object-contain"
+              loading="eager"
+              decoding="async"
             />
           ) : (
             <div 

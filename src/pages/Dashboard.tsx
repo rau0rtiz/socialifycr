@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { ClientBanner } from '@/components/dashboard/ClientBanner';
 
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
@@ -6,10 +6,13 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
 import { InstagramTopPosts } from '@/components/dashboard/InstagramTopPosts';
 import { YouTubeTopVideos } from '@/components/dashboard/YouTubeTopVideos';
-import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
-import { AdvancedFunnelModule } from '@/components/dashboard/AdvancedFunnelModule';
-import { ContentGrid } from '@/components/dashboard/ContentGrid';
 import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Heavy widgets — code-split to shrink initial bundle
+const CampaignsDrilldown = lazy(() => import('@/components/dashboard/CampaignsDrilldown').then(m => ({ default: m.CampaignsDrilldown })));
+const AdvancedFunnelModule = lazy(() => import('@/components/dashboard/AdvancedFunnelModule').then(m => ({ default: m.AdvancedFunnelModule })));
+const ContentGrid = lazy(() => import('@/components/dashboard/ContentGrid').then(m => ({ default: m.ContentGrid })));
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
@@ -338,37 +341,43 @@ const Dashboard = () => {
       {/* Content Grid - 2x3 Grid below Social */}
       {showContentGrid && (
         <div className="mb-3 md:mb-6">
-        <ContentGrid
-          data={content}
-          isLoading={contentLoading}
-          isLiveData={contentIsLive}
-          onRefresh={refetchContent}
-          tags={tags}
-          models={models}
-          metadata={metadata}
-          onCreateTag={createTag}
-          onCreateModel={createModel}
-          onUpdateMetadata={updateMetadata}
-          onCapture48hMetrics={capture48hMetrics}
-          crosspostLinks={crosspostLinks}
-          onAddCrosspostLink={addCrosspostLink}
-          onRemoveCrosspostLink={removeCrosspostLink}
-          getLinkedPosts={getLinkedPosts}
-        />
+          <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+            <ContentGrid
+              data={content}
+              isLoading={contentLoading}
+              isLiveData={contentIsLive}
+              onRefresh={refetchContent}
+              tags={tags}
+              models={models}
+              metadata={metadata}
+              onCreateTag={createTag}
+              onCreateModel={createModel}
+              onUpdateMetadata={updateMetadata}
+              onCapture48hMetrics={capture48hMetrics}
+              crosspostLinks={crosspostLinks}
+              onAddCrosspostLink={addCrosspostLink}
+              onRemoveCrosspostLink={removeCrosspostLink}
+              getLinkedPosts={getLinkedPosts}
+            />
+          </Suspense>
         </div>
       )}
 
       {/* Advanced Funnel Analytics */}
       {showFunnel && (
         <div className="mb-3 md:mb-6">
-          <AdvancedFunnelModule clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
+          <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+            <AdvancedFunnelModule clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
+          </Suspense>
         </div>
       )}
 
       {/* Campaigns Drilldown */}
       {showCampaigns && (
         <div className="mb-3 md:mb-6">
-          <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
+          <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+            <CampaignsDrilldown clientId={selectedClient.id} hasAdAccount={hasAdAccount} />
+          </Suspense>
         </div>
       )}
 
