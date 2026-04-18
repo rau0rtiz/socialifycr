@@ -8,10 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
+import { useClientProducts, ClientProduct, ProductInput, useStockMovements } from '@/hooks/use-client-products';
 import { usePaymentSchemes, PaymentSchemeInput, useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard, GraduationCap, Users, BookOpen, MoreHorizontal } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard, GraduationCap, Users, BookOpen, MoreHorizontal, Boxes, AlertTriangle, ArrowUp, ArrowDown, Edit3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBrand } from '@/contexts/BrandContext';
@@ -231,12 +231,26 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
           {p.description && (
             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</p>
           )}
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
             {minPrice != null && (
               <span className="text-xs font-medium text-foreground">
                 {variantCount > 0 ? 'Desde ' : ''}{formatCurrency(minPrice, minCurrency)}
               </span>
             )}
+            {p.track_stock && (() => {
+              const low = p.low_stock_threshold > 0 && p.stock_quantity <= p.low_stock_threshold;
+              const out = p.stock_quantity <= 0;
+              return (
+                <span className={cn(
+                  'text-[10px] font-medium px-1.5 py-0.5 rounded-full inline-flex items-center gap-1',
+                  out ? 'bg-red-500/10 text-red-600' : low ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'
+                )}>
+                  {(out || low) && <AlertTriangle className="h-2.5 w-2.5" />}
+                  <Boxes className="h-2.5 w-2.5" />
+                  {p.stock_quantity}{p.stock_unit ? ` ${p.stock_unit}` : ''}
+                </span>
+              );
+            })()}
           </div>
         </div>
         <div className="text-muted-foreground/30 group-hover:text-primary/50 transition-colors">
@@ -292,6 +306,147 @@ const ProductList = ({ products, allSchemes, onSelect, clientId }: { products: C
           </div>
         );
       })}
+    </div>
+  );
+};
+
+// ====== Stock management section (shown inside the product detail dialog) ======
+const StockSection = ({ product, clientId }: { product: ClientProduct; clientId: string }) => {
+  const { applyStockMovement } = useClientProducts(clientId);
+  const { data: movements = [] } = useStockMovements(product.id);
+  const [type, setType] = useState<'in' | 'out' | 'adjust'>('in');
+  const [qty, setQty] = useState('');
+  const [reason, setReason] = useState('');
+
+  if (!product.track_stock) {
+    return (
+      <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-4 text-center">
+        <Boxes className="h-5 w-5 text-muted-foreground/40 mx-auto mb-1.5" />
+        <p className="text-xs text-muted-foreground">
+          Inventario desactivado para este producto.
+        </p>
+        <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+          Editá el producto y activá "Llevar control de inventario" para empezar a registrar entradas y salidas.
+        </p>
+      </div>
+    );
+  }
+
+  const submit = async () => {
+    const n = parseFloat(qty);
+    if (!qty || isNaN(n) || n < 0) { toast.error('Ingresá una cantidad válida'); return; }
+    try {
+      await applyStockMovement.mutateAsync({ productId: product.id, type, quantity: n, reason });
+      toast.success(type === 'in' ? 'Entrada registrada' : type === 'out' ? 'Salida registrada' : 'Stock ajustado');
+      setQty('');
+      setReason('');
+    } catch (e: any) {
+      toast.error(e.message || 'Error al registrar movimiento');
+    }
+  };
+
+  const isLow = product.low_stock_threshold > 0 && product.stock_quantity <= product.low_stock_threshold;
+  const isOut = product.stock_quantity <= 0;
+  const unit = product.stock_unit || 'unidades';
+
+  return (
+    <div className="space-y-4">
+      {/* Current stock summary */}
+      <div className={cn(
+        'rounded-xl border p-3 flex items-center justify-between',
+        isOut ? 'bg-red-500/5 border-red-500/30' : isLow ? 'bg-amber-500/5 border-amber-500/30' : 'bg-emerald-500/5 border-emerald-500/30'
+      )}>
+        <div className="flex items-center gap-2.5">
+          <Boxes className={cn('h-5 w-5', isOut ? 'text-red-500' : isLow ? 'text-amber-500' : 'text-emerald-500')} />
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Stock actual</div>
+            <div className="text-lg font-bold text-foreground leading-tight">
+              {product.stock_quantity} <span className="text-xs font-normal text-muted-foreground">{unit}</span>
+            </div>
+          </div>
+        </div>
+        {(isOut || isLow) && (
+          <div className="flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full bg-background/60">
+            <AlertTriangle className={cn('h-3 w-3', isOut ? 'text-red-500' : 'text-amber-500')} />
+            {isOut ? 'Sin stock' : `Bajo (mín ${product.low_stock_threshold})`}
+          </div>
+        )}
+      </div>
+
+      {/* Movement form */}
+      <div className="rounded-lg border border-border/50 p-3 space-y-2.5">
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={type === 'in' ? 'default' : 'outline'}
+            onClick={() => setType('in')}
+            className="h-8 text-xs gap-1 flex-1"
+          >
+            <ArrowUp className="h-3 w-3" /> Entrada
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={type === 'out' ? 'default' : 'outline'}
+            onClick={() => setType('out')}
+            className="h-8 text-xs gap-1 flex-1"
+          >
+            <ArrowDown className="h-3 w-3" /> Salida
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={type === 'adjust' ? 'default' : 'outline'}
+            onClick={() => setType('adjust')}
+            className="h-8 text-xs gap-1 flex-1"
+          >
+            <Edit3 className="h-3 w-3" /> Ajuste
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-[10px] text-muted-foreground">
+              {type === 'adjust' ? `Stock final (${unit})` : `Cantidad (${unit})`}
+            </Label>
+            <Input type="number" min={0} step="any" value={qty} onChange={e => setQty(e.target.value)} placeholder="0" className="mt-1 h-9 text-sm" />
+          </div>
+          <div>
+            <Label className="text-[10px] text-muted-foreground">Motivo (opcional)</Label>
+            <Input value={reason} onChange={e => setReason(e.target.value)} placeholder="Compra, merma, etc." className="mt-1 h-9 text-sm" />
+          </div>
+        </div>
+        <Button size="sm" className="w-full h-8 text-xs" onClick={submit} disabled={applyStockMovement.isPending}>
+          {applyStockMovement.isPending ? 'Registrando...' : 'Registrar movimiento'}
+        </Button>
+      </div>
+
+      {/* Recent movements */}
+      {movements.length > 0 && (
+        <div>
+          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Últimos movimientos</div>
+          <div className="space-y-1 max-h-[160px] overflow-y-auto">
+            {movements.map(m => {
+              const Icon = m.movement_type === 'in' ? ArrowUp : m.movement_type === 'out' || m.movement_type === 'sale' ? ArrowDown : Edit3;
+              const color = m.movement_type === 'in' ? 'text-emerald-500' : m.movement_type === 'out' || m.movement_type === 'sale' ? 'text-red-500' : 'text-blue-500';
+              const label = m.movement_type === 'in' ? 'Entrada' : m.movement_type === 'out' ? 'Salida' : m.movement_type === 'sale' ? 'Venta' : 'Ajuste';
+              return (
+                <div key={m.id} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-muted/30 text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Icon className={cn('h-3 w-3 shrink-0', color)} />
+                    <span className="font-medium text-foreground">{label}</span>
+                    <span className={cn('font-semibold', color)}>
+                      {m.movement_type === 'in' ? '+' : m.movement_type === 'adjust' ? '' : '-'}{Math.abs(m.quantity)}
+                    </span>
+                    {m.reason && <span className="text-muted-foreground truncate">· {m.reason}</span>}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground shrink-0">→ {m.resulting_stock}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -507,8 +662,15 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
 
               <Separator />
 
-               {/* Variants section */}
-              <div className="px-6 py-4 overflow-y-auto" style={{ maxHeight: '40vh' }}>
+              {/* Stock + Variants — scrollable */}
+              <div className="px-6 py-4 overflow-y-auto space-y-5" style={{ maxHeight: '50vh' }}>
+                <div>
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Boxes className="h-3 w-3" /> Inventario
+                  </div>
+                  <StockSection product={detailProduct} clientId={clientId} />
+                </div>
+                <Separator />
                 <VariantsSection
                   productId={detailProduct.id}
                   clientId={clientId}

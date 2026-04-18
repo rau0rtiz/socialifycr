@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Camera, Loader2, X } from 'lucide-react';
+import { Package, Camera, Loader2, X, Boxes } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ProductFormDialogProps {
@@ -50,6 +51,11 @@ export const ProductFormDialog = ({
   const [description, setDescription] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  // Stock
+  const [trackStock, setTrackStock] = useState(false);
+  const [stockQty, setStockQty] = useState('');
+  const [lowThreshold, setLowThreshold] = useState('');
+  const [stockUnit, setStockUnit] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync form state when opening / when editing target changes
@@ -62,6 +68,10 @@ export const ProductFormDialog = ({
       setCurrency(editing.currency || 'CRC');
       setDescription(editing.description || '');
       setPhotoUrl(editing.photo_url || null);
+      setTrackStock(!!editing.track_stock);
+      setStockQty(editing.stock_quantity != null ? String(editing.stock_quantity) : '');
+      setLowThreshold(editing.low_stock_threshold != null ? String(editing.low_stock_threshold) : '');
+      setStockUnit(editing.stock_unit || '');
     } else {
       setName(defaultName);
       setPrice('');
@@ -69,6 +79,10 @@ export const ProductFormDialog = ({
       setCurrency('CRC');
       setDescription('');
       setPhotoUrl(null);
+      setTrackStock(false);
+      setStockQty('');
+      setLowThreshold('');
+      setStockUnit('');
     }
   }, [open, editing, defaultName]);
 
@@ -104,6 +118,10 @@ export const ProductFormDialog = ({
       currency,
       description: description.trim(),
       photo_url: photoUrl,
+      track_stock: trackStock,
+      stock_quantity: trackStock && stockQty ? parseFloat(stockQty) : 0,
+      low_stock_threshold: trackStock && lowThreshold ? parseFloat(lowThreshold) : 0,
+      stock_unit: trackStock ? (stockUnit.trim() || null) : null,
     };
     try {
       if (editing) {
@@ -222,6 +240,35 @@ export const ProductFormDialog = ({
               </span>
             </div>
           )}
+
+          <Separator />
+
+          {/* Stock tracking */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Boxes className="h-3.5 w-3.5 text-muted-foreground" />
+                <Label className="text-xs font-medium">Llevar control de inventario</Label>
+              </div>
+              <Switch checked={trackStock} onCheckedChange={setTrackStock} />
+            </div>
+            {trackStock && (
+              <div className="grid grid-cols-3 gap-3 pl-1">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Stock actual</Label>
+                  <Input type="number" min={0} step="any" value={stockQty} onChange={e => setStockQty(e.target.value)} placeholder="0" className="mt-1 h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Alerta mínima</Label>
+                  <Input type="number" min={0} step="any" value={lowThreshold} onChange={e => setLowThreshold(e.target.value)} placeholder="0" className="mt-1 h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Unidad</Label>
+                  <Input value={stockUnit} onChange={e => setStockUnit(e.target.value)} placeholder="vial, caja, ud" className="mt-1 h-9 text-sm" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <DialogFooter className="pt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} size="sm">Cancelar</Button>

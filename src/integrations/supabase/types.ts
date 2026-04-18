@@ -654,11 +654,15 @@ export type Database = {
           description: string | null
           id: string
           is_recurring: boolean | null
+          low_stock_threshold: number
           name: string
           photo_url: string | null
           price: number | null
+          stock_quantity: number
+          stock_unit: string | null
           tax_applicable: boolean | null
           tax_rate: number | null
+          track_stock: boolean
           updated_at: string
         }
         Insert: {
@@ -673,11 +677,15 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
+          low_stock_threshold?: number
           name: string
           photo_url?: string | null
           price?: number | null
+          stock_quantity?: number
+          stock_unit?: string | null
           tax_applicable?: boolean | null
           tax_rate?: number | null
+          track_stock?: boolean
           updated_at?: string
         }
         Update: {
@@ -692,11 +700,15 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
+          low_stock_threshold?: number
           name?: string
           photo_url?: string | null
           price?: number | null
+          stock_quantity?: number
+          stock_unit?: string | null
           tax_applicable?: boolean | null
           tax_rate?: number | null
+          track_stock?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -2066,6 +2078,53 @@ export type Database = {
           },
           {
             foreignKeyName: "product_payment_schemes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "client_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_stock_movements: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          movement_type: string
+          product_id: string
+          quantity: number
+          reason: string | null
+          resulting_stock: number
+          sale_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          movement_type: string
+          product_id: string
+          quantity: number
+          reason?: string | null
+          resulting_stock: number
+          sale_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          movement_type?: string
+          product_id?: string
+          quantity?: number
+          reason?: string | null
+          resulting_stock?: number
+          sale_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_stock_movements_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "client_products"
