@@ -8,10 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
+import { useClientProducts, ClientProduct, ProductInput, useStockMovements } from '@/hooks/use-client-products';
 import { usePaymentSchemes, PaymentSchemeInput, useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard, GraduationCap, Users, BookOpen, MoreHorizontal } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, DollarSign, TrendingUp, Camera, Loader2, X, CreditCard, GraduationCap, Users, BookOpen, MoreHorizontal, Boxes, AlertTriangle, ArrowUp, ArrowDown, Edit3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBrand } from '@/contexts/BrandContext';
@@ -231,12 +231,26 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
           {p.description && (
             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</p>
           )}
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
             {minPrice != null && (
               <span className="text-xs font-medium text-foreground">
                 {variantCount > 0 ? 'Desde ' : ''}{formatCurrency(minPrice, minCurrency)}
               </span>
             )}
+            {p.track_stock && (() => {
+              const low = p.low_stock_threshold > 0 && p.stock_quantity <= p.low_stock_threshold;
+              const out = p.stock_quantity <= 0;
+              return (
+                <span className={cn(
+                  'text-[10px] font-medium px-1.5 py-0.5 rounded-full inline-flex items-center gap-1',
+                  out ? 'bg-red-500/10 text-red-600' : low ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'
+                )}>
+                  {(out || low) && <AlertTriangle className="h-2.5 w-2.5" />}
+                  <Boxes className="h-2.5 w-2.5" />
+                  {p.stock_quantity}{p.stock_unit ? ` ${p.stock_unit}` : ''}
+                </span>
+              );
+            })()}
           </div>
         </div>
         <div className="text-muted-foreground/30 group-hover:text-primary/50 transition-colors">
