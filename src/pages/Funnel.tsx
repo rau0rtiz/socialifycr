@@ -108,6 +108,8 @@ const Funnel = () => {
     ingresos: '',
     presencia: '',
     pauta: '',
+    pautaIntento: '',  // sub-rama: cuánto invirtió cuando lo intentó
+    pautaRazon: '',    // sub-rama: por qué lo dejó
     canalVentas: '',
     objetivo: '',
   });
