@@ -16,6 +16,7 @@ import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-con
 import { useClientTeachers } from '@/hooks/use-client-teachers';
 import { useClassGroups } from '@/hooks/use-class-groups';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
+import { ProductFormDialog } from '@/components/ventas/ProductFormDialog';
 import { FREQUENCY_LABELS, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet, CalendarIcon, Banknote, Search, GraduationCap, Clock, UserCheck, Receipt, Percent, Users } from 'lucide-react';
@@ -277,18 +278,8 @@ export const RegisterSaleDialog = ({
     }
   }, [editingSale, prefill, open]);
 
-  const handleAddProduct = async () => {
-    if (!newProductName.trim()) return;
-    try {
-      const result = await addProduct.mutateAsync({ name: newProductName.trim() });
-      setProduct(result.name);
-      setShowNewProduct(false);
-      setNewProductName('');
-      toast.success('Producto creado');
-    } catch {
-      toast.error('Error creando producto');
-    }
-  };
+  // Full product creation now uses ProductFormDialog (synced with Business Setup)
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
 
   const canAdvance = (s: number) => {
     // Step 0: product not strictly required but encouraged
@@ -567,35 +558,27 @@ export const RegisterSaleDialog = ({
                   <Package className="h-3.5 w-3.5" /> Producto
                 </p>
                 <div className="space-y-2">
-                  {showNewProduct ? (
-                    <div className="flex gap-2">
-                      <Input placeholder="Nombre del producto" value={newProductName} onChange={e => setNewProductName(e.target.value)} className="h-9 text-sm flex-1" autoFocus onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); }} />
-                      <Button size="sm" className="h-9 text-xs" onClick={handleAddProduct} disabled={!newProductName.trim() || addProduct.isPending}>{addProduct.isPending ? '...' : 'OK'}</Button>
-                      <Button variant="ghost" size="sm" className="h-9" onClick={() => setShowNewProduct(false)}><X className="h-3.5 w-3.5" /></Button>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Select value={product || '_none'} onValueChange={handleProductChange}>
-                        <SelectTrigger className="h-9 text-sm flex-1"><SelectValue placeholder="Seleccionar producto" /></SelectTrigger>
-                        <SelectContent className="max-w-[320px]">
-                          <SelectItem value="_none">Sin producto</SelectItem>
-                          {allProductOptions.map(name => {
-                            const matched = products.find(p => p.name === name);
-                            return (
-                              <SelectItem key={name} value={name}>
-                                <div className="flex items-center gap-2 max-w-[280px]">
-                                  {matched?.photo_url && <img src={matched.photo_url} className="w-5 h-5 rounded object-cover flex-shrink-0" alt="" />}
-                                  <span className="truncate">{name}</span>
-                                  {matched?.price != null && <span className="text-muted-foreground ml-1 flex-shrink-0">({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})</span>}
-                                </div>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                      <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setShowNewProduct(true)}><Plus className="h-3.5 w-3.5 mr-1" /> Nuevo</Button>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    <Select value={product || '_none'} onValueChange={handleProductChange}>
+                      <SelectTrigger className="h-9 text-sm flex-1"><SelectValue placeholder="Seleccionar producto" /></SelectTrigger>
+                      <SelectContent className="max-w-[320px]">
+                        <SelectItem value="_none">Sin producto</SelectItem>
+                        {allProductOptions.map(name => {
+                          const matched = products.find(p => p.name === name);
+                          return (
+                            <SelectItem key={name} value={name}>
+                              <div className="flex items-center gap-2 max-w-[280px]">
+                                {matched?.photo_url && <img src={matched.photo_url} className="w-5 h-5 rounded object-cover flex-shrink-0" alt="" />}
+                                <span className="truncate">{name}</span>
+                                {matched?.price != null && <span className="text-muted-foreground ml-1 flex-shrink-0">({matched.currency === 'CRC' ? '₡' : '$'}{matched.price.toLocaleString()})</span>}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setProductDialogOpen(true)}><Plus className="h-3.5 w-3.5 mr-1" /> Nuevo</Button>
+                  </div>
 
                   {product && productSchemes.length > 0 && (
                     <div className="space-y-2">
