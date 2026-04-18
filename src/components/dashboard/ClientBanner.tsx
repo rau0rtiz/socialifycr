@@ -100,6 +100,8 @@ export const ClientBanner = ({ clientId, bannerUrl, canEdit, onBannerUpdate }: C
           src={bannerUrl}
           alt="Client banner"
           className="w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
         />
       )}
 

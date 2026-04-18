@@ -70,6 +70,8 @@ export const ClientSelector = () => {
                           src={clientBrands[client.id]?.logoUrl || client.logo_url || ''} 
                           alt={client.name} 
                           className="h-5 w-5 rounded flex-shrink-0 object-contain"
+                          loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <div 
@@ -111,6 +113,8 @@ export const ClientSelector = () => {
                 src={clientBrands[selectedClient.id]?.logoUrl || selectedClient.logo_url || ''} 
                 alt={selectedClient.name} 
                 className="h-5 w-5 rounded flex-shrink-0 object-contain"
+                loading="eager"
+                decoding="async"
               />
             ) : (
               <div 
@@ -148,6 +152,8 @@ export const ClientSelector = () => {
                         src={clientBrands[client.id]?.logoUrl || client.logo_url || ''} 
                         alt={client.name} 
                         className="h-5 w-5 rounded flex-shrink-0 object-contain"
+                        loading="lazy"
+                        decoding="async"
                       />
                     ) : (
                       <div 
