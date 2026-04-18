@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Lock, Loader2, Mail, CheckCircle2, Instagram } from 'lucide-react';
+import { ArrowRight, Lock, Loader2, Mail, CheckCircle2, Instagram, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ResultsStepProps {
   level: number;
   revenueRange?: string;
+  triedAdsAndQuit?: boolean;
   onSubmitContact: (name: string, email: string, businessHandle?: string) => Promise<boolean>;
   onCalendlyClick: () => void;
 }
@@ -54,7 +55,7 @@ const levelActions: string[][] = [
   ],
 ];
 
-export const ResultsStep = ({ level, revenueRange, onSubmitContact, onCalendlyClick }: ResultsStepProps) => {
+export const ResultsStep = ({ level, revenueRange, triedAdsAndQuit, onSubmitContact, onCalendlyClick }: ResultsStepProps) => {
   const [revealed, setRevealed] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
