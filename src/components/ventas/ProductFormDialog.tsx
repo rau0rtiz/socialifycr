@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Camera, Loader2, X } from 'lucide-react';
+import { Package, Camera, Loader2, X, Boxes } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ProductFormDialogProps {
@@ -50,6 +51,11 @@ export const ProductFormDialog = ({
   const [description, setDescription] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  // Stock
+  const [trackStock, setTrackStock] = useState(false);
+  const [stockQty, setStockQty] = useState('');
+  const [lowThreshold, setLowThreshold] = useState('');
+  const [stockUnit, setStockUnit] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync form state when opening / when editing target changes
@@ -62,6 +68,10 @@ export const ProductFormDialog = ({
       setCurrency(editing.currency || 'CRC');
       setDescription(editing.description || '');
       setPhotoUrl(editing.photo_url || null);
+      setTrackStock(!!editing.track_stock);
+      setStockQty(editing.stock_quantity != null ? String(editing.stock_quantity) : '');
+      setLowThreshold(editing.low_stock_threshold != null ? String(editing.low_stock_threshold) : '');
+      setStockUnit(editing.stock_unit || '');
     } else {
       setName(defaultName);
       setPrice('');
@@ -69,6 +79,10 @@ export const ProductFormDialog = ({
       setCurrency('CRC');
       setDescription('');
       setPhotoUrl(null);
+      setTrackStock(false);
+      setStockQty('');
+      setLowThreshold('');
+      setStockUnit('');
     }
   }, [open, editing, defaultName]);
 
@@ -104,6 +118,10 @@ export const ProductFormDialog = ({
       currency,
       description: description.trim(),
       photo_url: photoUrl,
+      track_stock: trackStock,
+      stock_quantity: trackStock && stockQty ? parseFloat(stockQty) : 0,
+      low_stock_threshold: trackStock && lowThreshold ? parseFloat(lowThreshold) : 0,
+      stock_unit: trackStock ? (stockUnit.trim() || null) : null,
     };
     try {
       if (editing) {
