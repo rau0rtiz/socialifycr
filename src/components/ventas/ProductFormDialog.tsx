@@ -240,6 +240,35 @@ export const ProductFormDialog = ({
               </span>
             </div>
           )}
+
+          <Separator />
+
+          {/* Stock tracking */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Boxes className="h-3.5 w-3.5 text-muted-foreground" />
+                <Label className="text-xs font-medium">Llevar control de inventario</Label>
+              </div>
+              <Switch checked={trackStock} onCheckedChange={setTrackStock} />
+            </div>
+            {trackStock && (
+              <div className="grid grid-cols-3 gap-3 pl-1">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Stock actual</Label>
+                  <Input type="number" min={0} step="any" value={stockQty} onChange={e => setStockQty(e.target.value)} placeholder="0" className="mt-1 h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Alerta mínima</Label>
+                  <Input type="number" min={0} step="any" value={lowThreshold} onChange={e => setLowThreshold(e.target.value)} placeholder="0" className="mt-1 h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Unidad</Label>
+                  <Input value={stockUnit} onChange={e => setStockUnit(e.target.value)} placeholder="vial, caja, ud" className="mt-1 h-9 text-sm" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <DialogFooter className="pt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} size="sm">Cancelar</Button>
