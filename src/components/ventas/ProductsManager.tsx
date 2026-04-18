@@ -662,8 +662,15 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
 
               <Separator />
 
-               {/* Variants section */}
-              <div className="px-6 py-4 overflow-y-auto" style={{ maxHeight: '40vh' }}>
+              {/* Stock + Variants — scrollable */}
+              <div className="px-6 py-4 overflow-y-auto space-y-5" style={{ maxHeight: '50vh' }}>
+                <div>
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Boxes className="h-3 w-3" /> Inventario
+                  </div>
+                  <StockSection product={detailProduct} clientId={clientId} />
+                </div>
+                <Separator />
                 <VariantsSection
                   productId={detailProduct.id}
                   clientId={clientId}
