@@ -108,6 +108,8 @@ const Funnel = () => {
     ingresos: '',
     presencia: '',
     pauta: '',
+    pautaIntento: '',  // sub-rama: cuánto invirtió cuando lo intentó
+    pautaRazon: '',    // sub-rama: por qué lo dejó
     canalVentas: '',
     objetivo: '',
   });
@@ -178,6 +180,10 @@ const Funnel = () => {
           canalVentas: answers.canalVentas,
           objetivo: answers.objetivo,
         };
+      if (answers.pauta === 'intente') {
+        if (answers.pautaIntento) answersPayload.pautaIntento = answers.pautaIntento;
+        if (answers.pautaRazon) answersPayload.pautaRazon = answers.pautaRazon;
+      }
       if (businessHandle) {
         answersPayload.businessHandle = businessHandle;
       }
@@ -253,8 +259,45 @@ const Funnel = () => {
             question="¿CUÁNTO INVERTÍS MENSUALMENTE EN PUBLICIDAD PAGADA?"
             options={adSpendOptions}
             selected={answers.pauta}
-            onSelect={(v) => handleOptionSelect('pauta', v, 5)}
+            onSelect={(v) => handleOptionSelect('pauta', v, v === 'intente' ? 41 : 5)}
             onBack={() => goTo(3)}
+          />
+        );
+      case 41:
+        return (
+          <FunnelQuestion
+            question="CUANDO LO INTENTASTE, ¿CUÁNTO INVERTISTE EN TOTAL?"
+            subtitle="📊 Esto nos ayuda a entender tu experiencia previa"
+            options={[
+              { value: 'menos50', label: 'Menos de $50 en total' },
+              { value: '50_200', label: 'Entre $50 y $200' },
+              { value: '200_500', label: 'Entre $200 y $500' },
+              { value: '500_1500', label: 'Entre $500 y $1,500' },
+              { value: 'mas1500', label: 'Más de $1,500' },
+              { value: 'no_recuerdo', label: 'No recuerdo / no sé' },
+            ]}
+            selected={answers.pautaIntento}
+            onSelect={(v) => handleOptionSelect('pautaIntento', v, 42)}
+            onBack={() => goTo(4)}
+          />
+        );
+      case 42:
+        return (
+          <FunnelQuestion
+            question="¿POR QUÉ LO DEJASTE?"
+            subtitle="🎯 Tu respuesta nos ayuda a darte mejores recomendaciones"
+            options={[
+              { value: 'sin_resultados', label: 'No vi resultados / no generó ventas' },
+              { value: 'caro', label: 'Me pareció muy caro para lo que ganaba' },
+              { value: 'no_entendi', label: 'No entendí cómo configurarlo bien' },
+              { value: 'mal_asesor', label: 'Trabajé con alguien que no entregó resultados' },
+              { value: 'sin_tiempo', label: 'No tuve tiempo de gestionarlo' },
+              { value: 'cuenta_bloqueada', label: 'Me bloquearon o restringieron la cuenta' },
+              { value: 'otro', label: 'Otro motivo' },
+            ]}
+            selected={answers.pautaRazon}
+            onSelect={(v) => handleOptionSelect('pautaRazon', v, 5)}
+            onBack={() => goTo(41)}
           />
         );
       case 5:
@@ -282,6 +325,7 @@ const Funnel = () => {
           <ResultsStep
             level={businessLevel}
             revenueRange={answers.ingresos}
+            triedAdsAndQuit={answers.pauta === 'intente'}
             onSubmitContact={handleSubmitContact}
             onCalendlyClick={handleCalendlyClick}
           />

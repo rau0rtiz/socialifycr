@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Lock, Loader2, Mail, CheckCircle2, Instagram } from 'lucide-react';
+import { ArrowRight, Lock, Loader2, Mail, CheckCircle2, Instagram, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ResultsStepProps {
   level: number;
   revenueRange?: string;
+  triedAdsAndQuit?: boolean;
   onSubmitContact: (name: string, email: string, businessHandle?: string) => Promise<boolean>;
   onCalendlyClick: () => void;
 }
@@ -54,7 +55,7 @@ const levelActions: string[][] = [
   ],
 ];
 
-export const ResultsStep = ({ level, revenueRange, onSubmitContact, onCalendlyClick }: ResultsStepProps) => {
+export const ResultsStep = ({ level, revenueRange, triedAdsAndQuit, onSubmitContact, onCalendlyClick }: ResultsStepProps) => {
   const [revealed, setRevealed] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -246,6 +247,21 @@ export const ResultsStep = ({ level, revenueRange, onSubmitContact, onCalendlyCl
               Te enviamos tu estrategia personalizada a <span className="font-semibold">{email}</span>
             </p>
           </div>
+
+          {/* Tried-ads-and-quit branch acknowledgment */}
+          {triedAdsAndQuit && (
+            <div className="flex items-start gap-2.5 p-3 md:p-4 rounded-xl bg-[#FF6B35]/5 border border-[#FF6B35]/30 text-left">
+              <Sparkles className="h-4 w-4 text-[#FF6B35] shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-xs md:text-sm font-semibold text-[#212121]">
+                  Vimos que ya intentaste pauta antes
+                </p>
+                <p className="text-[11px] md:text-xs text-[#212121]/60 leading-relaxed">
+                  Incluiremos en tu diagnóstico recomendaciones específicas para evitar los errores que te frenaron y aprovechar lo que ya aprendiste.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Session CTA — only for levels 4+ */}
           {qualifiesForSession && (
