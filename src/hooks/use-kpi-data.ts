@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { SocialMetric, getClientKPIs, getClientSocialMetrics } from '@/data/mockData';
 import { KPIItem } from '@/components/dashboard/KPISection';
+import { useTargetedMetaConnections } from './use-targeted-meta-connections';
 
 interface AccountInsights {
   reach: number;
@@ -63,6 +64,8 @@ export function useKPIData(clientId: string | null, platform: string = 'all', da
     return num.toString();
   };
 
+  const { connections: metaConnections } = useTargetedMetaConnections(clientId);
+
   const fetchData = useCallback(async () => {
     if (!clientId) {
       setKpis([]);
@@ -74,17 +77,10 @@ export function useKPIData(clientId: string | null, platform: string = 'all', da
     setIsLoading(true);
 
     try {
-      // Check for active Meta connection
-      const { data: connection } = await supabase
-        .from('platform_connections')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('platform', 'meta')
-        .eq('status', 'active')
-        .maybeSingle();
+      // Use the first targeted Meta connection (respects multi-account filter)
+      const connection = metaConnections[0];
 
       if (!connection) {
-        // No Meta connection, use mock data
         const mockKpis = getClientKPIs(clientId);
         setKpis(
           mockKpis.map((k, i) => ({
@@ -115,12 +111,13 @@ export function useKPIData(clientId: string | null, platform: string = 'all', da
       }
       setAvailablePlatforms(platforms);
 
-      // Fetch real data from Meta API with date range
+      // Fetch real data from Meta API with date range, targeting this specific connection
       const { data, error } = await supabase.functions.invoke('meta-api', {
         body: {
           clientId,
           endpoint: 'account-insights',
           params: { datePreset },
+          connectionId: connection.id,
         },
       });
 
@@ -268,7 +265,7 @@ export function useKPIData(clientId: string | null, platform: string = 'all', da
     } finally {
       setIsLoading(false);
     }
-  }, [clientId, platform, datePreset]);
+  }, [clientId, platform, datePreset, metaConnections]);
 
   useEffect(() => {
     fetchData();
