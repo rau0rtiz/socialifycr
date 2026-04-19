@@ -652,12 +652,14 @@ export type Database = {
           created_at: string
           currency: string
           description: string | null
+          estimated_duration_min: number | null
           id: string
           is_recurring: boolean | null
           low_stock_threshold: number
           name: string
           photo_url: string | null
           price: number | null
+          product_type: string
           stock_quantity: number
           stock_unit: string | null
           tax_applicable: boolean | null
@@ -675,12 +677,14 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          estimated_duration_min?: number | null
           id?: string
           is_recurring?: boolean | null
           low_stock_threshold?: number
           name: string
           photo_url?: string | null
           price?: number | null
+          product_type?: string
           stock_quantity?: number
           stock_unit?: string | null
           tax_applicable?: boolean | null
@@ -698,12 +702,14 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          estimated_duration_min?: number | null
           id?: string
           is_recurring?: boolean | null
           low_stock_threshold?: number
           name?: string
           photo_url?: string | null
           price?: number | null
+          product_type?: string
           stock_quantity?: number
           stock_unit?: string | null
           tax_applicable?: boolean | null

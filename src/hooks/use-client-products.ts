@@ -12,6 +12,8 @@ export interface ScheduleBlock {
   end: string;
 }
 
+export type ProductType = 'product' | 'service';
+
 export interface ClientProduct {
   id: string;
   client_id: string;
@@ -23,6 +25,8 @@ export interface ClientProduct {
   photo_url: string | null;
   category: string | null;
   audience: string | null;
+  product_type: ProductType;
+  estimated_duration_min: number | null;
   is_recurring: boolean;
   class_frequency: ClassFrequency | null;
   available_schedules: ScheduleBlock[];
@@ -45,6 +49,8 @@ export interface ProductInput {
   photo_url?: string | null;
   category?: string | null;
   audience?: string | null;
+  product_type?: ProductType;
+  estimated_duration_min?: number | null;
   is_recurring?: boolean;
   class_frequency?: ClassFrequency | null;
   available_schedules?: ScheduleBlock[];
@@ -96,12 +102,14 @@ export const useClientProducts = (clientId: string | null) => {
     photo_url: input.photo_url ?? null,
     category: input.category ?? null,
     audience: input.audience ?? 'all',
+    product_type: input.product_type ?? 'product',
+    estimated_duration_min: input.estimated_duration_min ?? null,
     is_recurring: input.is_recurring ?? false,
     class_frequency: (input.class_frequency ?? null) as any,
     available_schedules: (input.available_schedules ?? []) as any,
     tax_applicable: input.tax_applicable ?? false,
     tax_rate: input.tax_rate ?? 13,
-    track_stock: input.track_stock ?? false,
+    track_stock: (input.product_type ?? 'product') === 'service' ? false : (input.track_stock ?? false),
     stock_quantity: input.stock_quantity ?? 0,
     low_stock_threshold: input.low_stock_threshold ?? 0,
     stock_unit: input.stock_unit ?? null,
