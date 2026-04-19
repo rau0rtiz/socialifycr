@@ -2293,12 +2293,15 @@ export type Database = {
       }
       sent_emails: {
         Row: {
+          attachments_meta: Json | null
           client_id: string | null
           created_at: string
           error_message: string | null
           html_content: string | null
           id: string
+          metadata: Json | null
           opened_at: string | null
+          parent_email_id: string | null
           recipient_email: string
           recipient_name: string | null
           resend_id: string | null
@@ -2308,12 +2311,15 @@ export type Database = {
           subject: string
         }
         Insert: {
+          attachments_meta?: Json | null
           client_id?: string | null
           created_at?: string
           error_message?: string | null
           html_content?: string | null
           id?: string
+          metadata?: Json | null
           opened_at?: string | null
+          parent_email_id?: string | null
           recipient_email: string
           recipient_name?: string | null
           resend_id?: string | null
@@ -2323,12 +2329,15 @@ export type Database = {
           subject: string
         }
         Update: {
+          attachments_meta?: Json | null
           client_id?: string | null
           created_at?: string
           error_message?: string | null
           html_content?: string | null
           id?: string
+          metadata?: Json | null
           opened_at?: string | null
+          parent_email_id?: string | null
           recipient_email?: string
           recipient_name?: string | null
           resend_id?: string | null
@@ -2343,6 +2352,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sent_emails_parent_email_id_fkey"
+            columns: ["parent_email_id"]
+            isOneToOne: false
+            referencedRelation: "sent_emails"
             referencedColumns: ["id"]
           },
         ]
@@ -2868,6 +2884,17 @@ export type Database = {
           status: string
           token_expires_at: string
           updated_at: string
+        }[]
+      }
+      get_team_members_with_activity: {
+        Args: { _client_id: string }
+        Returns: {
+          avatar_url: string
+          email: string
+          full_name: string
+          last_sign_in_at: string
+          role: Database["public"]["Enums"]["client_role"]
+          user_id: string
         }[]
       }
       get_users_last_sign_in: {

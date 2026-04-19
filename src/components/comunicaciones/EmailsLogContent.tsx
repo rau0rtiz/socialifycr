@@ -9,8 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Send, Search, Filter, Eye, CheckCircle, XCircle, Loader2, Camera, MailOpen } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Send, Search, Filter, Eye, CheckCircle, XCircle, Loader2, Camera, MailOpen, Paperclip, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ const sourceLabels: Record<string, string> = {
   campaign: 'Campaña',
   funnel: 'Funnel',
   avatar_reminder: 'Recordatorio Foto',
+  resend: 'Reenvío',
 };
 
 const EmailsLogContent = () => {
@@ -31,6 +32,9 @@ const EmailsLogContent = () => {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [previewEmail, setPreviewEmail] = useState<any>(null);
+  const [resendEmail, setResendEmail] = useState<any>(null);
+  const [resendOverride, setResendOverride] = useState('');
+  const [resending, setResending] = useState(false);
 
   const [composeTo, setComposeTo] = useState('');
   const [composeSubject, setComposeSubject] = useState('');
@@ -49,6 +53,29 @@ const EmailsLogContent = () => {
       toast.error('Error: ' + (err.message || 'Error desconocido'));
     } finally {
       setSendingAvatarReminder(false);
+    }
+  };
+
+  const openResend = (email: any) => {
+    setResendEmail(email);
+    setResendOverride(email.recipient_email || '');
+  };
+
+  const handleResend = async () => {
+    if (!resendEmail || !resendOverride) return;
+    setResending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-email', {
+        body: { sent_email_id: resendEmail.id, override_email: resendOverride },
+      });
+      if (error) throw error;
+      toast.success(`Correo reenviado a ${data.recipient}${data.attachments_count ? ` con ${data.attachments_count} adjunto(s)` : ''}`);
+      setResendEmail(null);
+      queryClient.invalidateQueries({ queryKey: ['sent-emails'] });
+    } catch (err: any) {
+      toast.error('Error al reenviar: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setResending(false);
     }
   };
 
@@ -192,6 +219,12 @@ const EmailsLogContent = () => {
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="truncate">{email.recipient_name ? `${email.recipient_name} <${email.recipient_email}>` : email.recipient_email}</span>
                           <Badge variant="outline" className="text-xs shrink-0">{sourceLabels[email.source] || email.source}</Badge>
+                          {Array.isArray(email.attachments_meta) && email.attachments_meta.length > 0 && (
+                            <Badge variant="secondary" className="text-xs shrink-0 gap-1">
+                              <Paperclip className="h-3 w-3" />
+                              {email.attachments_meta.length}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -201,6 +234,9 @@ const EmailsLogContent = () => {
                             <span className="text-[10px] text-green-600">Abierto: {format(new Date(email.opened_at), "d MMM HH:mm", { locale: es })}</span>
                           )}
                         </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openResend(email)} title="Reenviar">
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
                         {email.html_content && (
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewEmail(email)}><Eye className="h-4 w-4" /></Button>
                         )}
@@ -241,6 +277,44 @@ const EmailsLogContent = () => {
             Para: {previewEmail?.recipient_email}{' · '}{previewEmail?.created_at && format(new Date(previewEmail.created_at), "d MMM yyyy HH:mm", { locale: es })}
           </div>
           <div className="border rounded-lg p-4 bg-white" dangerouslySetInnerHTML={{ __html: previewEmail?.html_content || '' }} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!resendEmail} onOpenChange={(o) => !o && setResendEmail(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reenviar correo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-muted-foreground">Asunto original</label>
+              <p className="text-sm font-medium truncate">{resendEmail?.subject}</p>
+            </div>
+            {Array.isArray(resendEmail?.attachments_meta) && resendEmail.attachments_meta.length > 0 && (
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Paperclip className="h-3 w-3" />
+                Incluye {resendEmail.attachments_meta.length} adjunto(s) original(es)
+              </div>
+            )}
+            <div>
+              <label className="text-sm font-medium mb-1 block">Enviar a</label>
+              <Input
+                type="email"
+                value={resendOverride}
+                onChange={(e) => setResendOverride(e.target.value)}
+                placeholder="email@ejemplo.com"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResendEmail(null)} disabled={resending}>
+              Cancelar
+            </Button>
+            <Button onClick={handleResend} disabled={resending || !resendOverride}>
+              {resending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Reenviar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
