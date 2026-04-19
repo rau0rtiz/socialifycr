@@ -1,69 +1,69 @@
 
 
-## Soporte de múltiples cuentas Meta por cliente (Tissue)
+## Implementar 4 mejoras a Productos & Servicios
 
-### Diagnóstico
+### 1. Categorías custom por cliente
+- **Nueva tabla** `client_product_categories` (id, client_id, name, color, sort_order, created_at). RLS: team members read, admins manage.
+- **UI**: dentro del `ProductFormDialog`, el campo "Categoría" se vuelve un selector con las categorías del cliente + opción "+ Nueva categoría" (crea inline).
+- **Para Speak Up**: mantener compat con las 5 categorías hardcodeadas — si no hay categorías custom creadas, mostrar las predefinidas. Si el admin crea aunque sea una, usa solo las custom (o ambas, decidimos: **ambas concatenadas**).
+- **Filtro**: en `ProductsManager` agregar dropdown "Categoría: Todas / X / Y / Z" junto a los demás filtros.
+- **Visual**: chip de color en la tarjeta del producto.
+- **Gestión**: agregar mini-pestaña "Categorías" dentro de la sección Productos & Servicios para CRUD de categorías (admin).
 
-Hoy el sistema asume **1 cliente = 1 conexión por plataforma**:
+### 2. Histórico de cambios de precio
+- **Nueva tabla** `product_price_history` (id, product_id, client_id, old_price, new_price, old_cost, new_cost, currency, changed_by, changed_at, reason).
+- **Trigger** en `client_products` que detecta cambios en `price` o `cost` y graba automáticamente. `changed_by = auth.uid()`.
+- **UI**: en el detalle del producto (al expandir), nueva sección "Historial de precios" con tabla compacta (fecha, precio anterior → nuevo, costo anterior → nuevo, quién, %). Sparkline mini opcional.
+- **Hook**: `useProductPriceHistory(productId)`.
 
-- Tabla `platform_connections`: aunque no tiene un UNIQUE explícito en `(client_id, platform)`, todo el código usa `.maybeSingle()` o `.find(c => c.platform === 'meta')` (ej: `useMetaConnection`, `useCampaignsData`, `usePlatformConnections`).
-- El OAuth flow probablemente sobrescribe la conexión existente al conectar una segunda cuenta del mismo `platform`.
-- Los widgets (campañas, insights, ads) leen **solo el primer ad_account_id** que encuentran.
+### 3. Importar productos desde CSV
+- **UI**: botón "Importar CSV" arriba del listado (admin only). Abre dialog con:
+  - Drop zone para `.csv`
+  - Preview de las primeras 10 filas con mapeo de columnas (Nombre → name, Precio → price, etc.)
+  - Plantilla descargable: link "Descargar plantilla CSV" con headers correctos y 2 filas ejemplo (1 producto + 1 servicio).
+  - Selector de comportamiento: "Solo crear nuevos" / "Actualizar existentes por nombre" / "Reemplazar todo" (este último con confirmación fuerte).
+- **Parser**: usar `papaparse` (ya común en stack) o parser nativo simple. Validación: nombre obligatorio, precio numérico, type ∈ {producto, servicio}.
+- **Reporte final**: "Creados: X | Actualizados: Y | Errores: Z" con lista de filas con error.
 
-Resultado: si conectás dos portafolios de Meta para Tissue, el segundo pisa al primero y los widgets solo muestran datos de uno.
+### 4. Etiquetas/tags por producto
+- **Nuevas tablas**:
+  - `client_product_tags` (id, client_id, name, color, created_at) — catálogo de tags del cliente
+  - `product_tag_assignments` (product_id, tag_id) — junction
+- **RLS** estándar (team read, admin manage).
+- **UI en `ProductFormDialog`**: nueva sección "Etiquetas" con multi-select (similar a `MultiTagSelector` de contenido) + botón "+ Crear nueva".
+- **UI en `ProductCard`**: chips pequeños de tags debajo del nombre (max 3 visibles, "+N" para el resto).
+- **Filtro**: en `ProductsManager` agregar filtro "Etiqueta" (multi-select). Producto debe tener TODAS las etiquetas seleccionadas para aparecer.
 
-### Lo que hay que implementar
+---
 
-#### 1. Permitir N conexiones del mismo platform por cliente
-- **DB**: agregar `account_label` (text, nullable) a `platform_connections` para que el usuario nombre cada conexión ("Tissue Retail", "Tissue B2B"). No agregar UNIQUE en `(client_id, platform)`.
-- **OAuth callback** (`meta-oauth/index.ts`): en lugar de upsert por `(client_id, platform)`, insertar siempre una nueva fila si el `ad_account_id` es distinto al de las conexiones existentes. Si el usuario reconecta la misma cuenta, sí actualizar.
+### Cambios técnicos resumidos
 
-#### 2. UI de gestión de múltiples cuentas
-- **`PlatformConnections.tsx`**: mostrar **todas** las conexiones Meta del cliente como una lista (no una sola tarjeta). Botón "+ Conectar otra cuenta de Meta". Cada tarjeta permite renombrar (`account_label`), ver qué ad account/IG/page tiene, y desconectar individualmente.
-- **`MetaAccountSelector.tsx`** (ya existe parcialmente): se reutiliza para que dentro de cada conexión el usuario elija qué Page/IG/AdAccount usar (Meta entrega múltiples por token, esto ya funciona).
-
-#### 3. Widgets que agreguen datos de múltiples conexiones
-- **`usePlatformConnections`**: ya devuelve un array, perfecto.
-- **`useCampaignsData`** y `useMetaApi`: cambiar `connections.find(c => c.platform === 'meta')` por `connections.filter(...)`. Hacer el fetch en paralelo a cada conexión y **mergear** resultados:
-  - Campañas: concatenar listas, agregar campo `_accountLabel` para distinguir en UI.
-  - Insights agregados (reach, spend, leads): sumar entre cuentas.
-  - Top posts / Stories: concatenar y reordenar por engagement.
-- **Edge function `meta-api`**: aceptar `connectionId` opcional en el body. Si no viene, usa la primera (compatibilidad). Si viene, usa esa específica.
-
-#### 4. Selector opcional de cuenta en widgets clave
-En el `TopBar` o dentro del dashboard de Tissue, agregar un toggle pequeño: **"Todas las cuentas | Tissue Retail | Tissue B2B"** para que puedas filtrar la vista cuando quieras analizar una sola.
-- Por defecto: "Todas" (datos sumados).
-- Estado guardado en `sessionStorage` por cliente.
-
-### Cambios concretos
-
-**DB (1 migración):**
-- `ALTER TABLE platform_connections ADD COLUMN account_label text;`
-- Verificar que no exista UNIQUE en `(client_id, platform)`.
-
-**Backend:**
-- `supabase/functions/meta-oauth/index.ts`: cambiar lógica de upsert para permitir múltiples conexiones por client si `ad_account_id` difiere.
-- `supabase/functions/meta-api/index.ts`: aceptar `connectionId` opcional para targeting específico.
+**Migración SQL (1 archivo):**
+- 4 tablas nuevas: `client_product_categories`, `product_price_history`, `client_product_tags`, `product_tag_assignments`
+- 1 trigger: `track_product_price_changes` en `client_products`
+- RLS para todas
 
 **Frontend:**
-- `src/components/clientes/PlatformConnections.tsx`: lista de conexiones Meta con renombrar/agregar/eliminar.
-- `src/hooks/use-meta-api.ts`: `useMetaConnection` → `useMetaConnections` (plural). Mantener `useMetaConnection` como alias deprecado que devuelve la primera.
-- `src/hooks/use-campaigns-data.ts`: fetch paralelo + merge.
-- `src/hooks/use-content-data.ts`, `use-kpi-data.ts`, `use-ads-data.ts`: mismo patrón de merge.
-- Nuevo: `src/components/dashboard/MetaAccountFilter.tsx` (toggle "Todas | cuenta A | cuenta B") + estado en `BrandContext` o sessionStorage.
+- `src/hooks/use-client-products.ts`: agregar fetch de tag IDs por producto
+- `src/hooks/use-client-product-categories.ts` (nuevo)
+- `src/hooks/use-client-product-tags.ts` (nuevo)
+- `src/hooks/use-product-price-history.ts` (nuevo)
+- `src/components/ventas/ProductFormDialog.tsx`: integrar selector de categoría custom + multi-tag
+- `src/components/ventas/ProductsManager.tsx`:
+  - Filtros: agregar Categoría + Etiqueta
+  - Tarjeta: chip de categoría + chips de tags
+  - Botones: "Importar CSV" + "Categorías"
+  - Detalle: sección "Historial de precios"
+- `src/components/ventas/ProductCategoriesDialog.tsx` (nuevo) — CRUD de categorías
+- `src/components/ventas/ProductImportDialog.tsx` (nuevo) — wizard de import CSV
+- `src/components/ventas/ProductPriceHistory.tsx` (nuevo) — tabla compacta
 
-### Qué te queda hacer manualmente
-1. Crear cliente "Tissue" en `/clientes`.
-2. Conectar la primera cuenta Meta (portafolio 1) → renombrarla "Tissue [nombre del portafolio]".
-3. Click "+ Conectar otra cuenta de Meta" → autorizar el segundo portafolio → renombrarla.
-4. Asignar Pages/IG/AdAccount correctos en cada conexión vía `MetaAccountSelector`.
+---
 
-### Notas técnicas
-- Como vos ya tenés permisos en ambos portafolios desde tu mismo Facebook user, el OAuth flow estándar ya te permitirá conectar ambos sin cambios en scopes. El access_token será diferente por sesión OAuth (uno por click en "Conectar"), pero ambos funcionarán.
-- LinkedIn / TikTok / YouTube siguen igual (1 por cliente), no necesitamos tocarlos a menos que pidás lo mismo después.
-- Sin límite forzado: podrías conectar 3, 4, N cuentas si en el futuro Tissue agrega más portafolios.
-
-### Dudas antes de implementar
-1. **Filtro por cuenta en TopBar**: ¿lo querés visible siempre, o solo aparece cuando el cliente tiene >1 conexión Meta? (mi recomendación: solo si >1, para no agregar ruido visual a clientes single-account).
-2. **Vista por defecto** cuando hay múltiples cuentas: ¿agregada (suma de todas) o requerir que selecciones una?
+### Decisiones tomadas (te aviso si querés cambiar alguna)
+- **Speak Up**: las 5 categorías hardcodeadas siguen disponibles + las que el admin agregue (concatenadas). Si querés migrarlas a la nueva tabla y borrar el hardcode, decímelo.
+- **Tags = multi**: un producto puede tener varias.
+- **Historial de precios**: arranca desde el momento en que se aplica esta migración (no se backfilea). Productos existentes muestran "Sin cambios registrados".
+- **CSV**: solo admin puede importar (no editores). Encoding esperado UTF-8.
+- **Eliminar categoría con productos asignados**: bloqueado con mensaje "X productos usan esta categoría, reasignalos primero".
 
