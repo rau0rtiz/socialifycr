@@ -159,6 +159,10 @@ serve(async (req) => {
       metadata: { name, business_level, level_name: level.name, has_pdf: attachments.length > 0 },
     });
 
+    const attachmentsMeta = pdfPath
+      ? [{ source: "storage", bucket: "content-images", path: pdfPath, filename: `Roadmap-Nivel-${business_level}.pdf` }]
+      : null;
+
     const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
       recipient_email: email,
       recipient_name: name,
@@ -168,6 +172,8 @@ serve(async (req) => {
       status: emailRes.ok ? "sent" : "failed",
       error_message: emailRes.ok ? null : JSON.stringify(emailResult),
       resend_id: emailRes.ok ? emailResult?.id || null : null,
+      attachments_meta: attachmentsMeta,
+      metadata: { business_level, name, level_name: level.name },
     }).select("id").single();
 
     if (emailRecord?.id) {
