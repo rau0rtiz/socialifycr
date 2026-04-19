@@ -239,7 +239,7 @@ serve(async (req) => {
       }
 
       const body = await req.json();
-      const { clientId, pageId, pageName, pageAccessToken, instagramId, adAccountId, tokenExpiresAt, accessToken } = body;
+      const { clientId, pageId, pageName, pageAccessToken, instagramId, adAccountId, tokenExpiresAt, accessToken, accountLabel } = body;
 
       if (!clientId || !pageId || !pageName || !pageAccessToken) {
         return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -259,15 +259,22 @@ serve(async (req) => {
 
       console.log('Saving connection for client:', clientId, 'page:', pageName);
 
-      // Check if connection already exists
-      const { data: existingConnection } = await supabase
+      // Multi-account support: only update an existing row if it represents the SAME account
+      // (same page OR same ad_account). Otherwise insert a new row so multiple Meta portfolios
+      // can coexist for the same client (e.g. Tissue Retail + Tissue B2B).
+      const { data: existingConnections } = await supabase
         .from('platform_connections')
-        .select('id')
+        .select('id, platform_page_id, ad_account_id')
         .eq('client_id', clientId)
-        .eq('platform', 'meta')
-        .maybeSingle();
+        .eq('platform', 'meta');
 
-      const connectionData = {
+      const sameAccountRow = existingConnections?.find((row) => {
+        if (pageId && row.platform_page_id && row.platform_page_id === pageId) return true;
+        if (adAccountId && row.ad_account_id && row.ad_account_id === adAccountId) return true;
+        return false;
+      });
+
+      const connectionData: Record<string, unknown> = {
         client_id: clientId,
         platform: 'meta',
         access_token: accessToken || pageAccessToken,
@@ -278,15 +285,18 @@ serve(async (req) => {
         instagram_account_id: instagramId || null,
         ad_account_id: adAccountId || null,
         token_expires_at: tokenExpiresAt,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
+      if (accountLabel !== undefined) {
+        connectionData.account_label = accountLabel || null;
+      }
 
       let result;
-      if (existingConnection) {
+      if (sameAccountRow) {
         result = await supabase
           .from('platform_connections')
           .update(connectionData)
-          .eq('id', existingConnection.id)
+          .eq('id', sameAccountRow.id)
           .select()
           .single();
       } else {

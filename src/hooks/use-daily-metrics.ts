@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DailyMetric, getClientDailyMetrics } from '@/data/mockData';
+import { useTargetedMetaConnections } from './use-targeted-meta-connections';
 
 interface UseDailyMetricsResult {
   dailyMetrics: DailyMetric[];
@@ -11,6 +12,8 @@ interface UseDailyMetricsResult {
 }
 
 export function useDailyMetrics(clientId: string | null, days: number = 30): UseDailyMetricsResult {
+  const { connections: metaConnections, isLoading: connectionsLoading } = useTargetedMetaConnections(clientId);
+
   const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLiveData, setIsLiveData] = useState(false);
@@ -26,17 +29,7 @@ export function useDailyMetrics(clientId: string | null, days: number = 30): Use
     setIsLoading(true);
 
     try {
-      // Check for active Meta connection
-      const { data: connection } = await supabase
-        .from('platform_connections')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('platform', 'meta')
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (!connection) {
-        // No Meta connection, use mock data
+      if (metaConnections.length === 0) {
         setDailyMetrics(getClientDailyMetrics(clientId));
         setIsLiveData(false);
         setSource('mock');
@@ -44,30 +37,45 @@ export function useDailyMetrics(clientId: string | null, days: number = 30): Use
         return;
       }
 
-      // Fetch real data from Meta API
-      const { data, error } = await supabase.functions.invoke('meta-api', {
-        body: {
-          clientId,
-          endpoint: 'daily-insights',
-          params: { days },
-        },
-      });
+      // Fetch in parallel for every active Meta connection.
+      const responses = await Promise.all(
+        metaConnections.map((conn) =>
+          supabase.functions.invoke('meta-api', {
+            body: { clientId, endpoint: 'daily-insights', params: { days }, connectionId: conn.id },
+          })
+        )
+      );
 
-      if (error || data?.error) {
-        console.error('Error fetching daily insights:', error || data?.error);
-        setDailyMetrics(getClientDailyMetrics(clientId));
-        setIsLiveData(false);
-        setSource('mock');
-        setIsLoading(false);
-        return;
+      // Aggregate by date — sum numeric metrics across connections.
+      const byDate = new Map<string, DailyMetric>();
+      let detectedSource: 'instagram' | 'facebook' | 'mock' = 'mock';
+
+      for (const { data, error } of responses) {
+        if (error || data?.error || !data?.data) continue;
+        if (data.source === 'instagram' || data.source === 'facebook') {
+          detectedSource = data.source;
+        }
+        for (const item of data.data as DailyMetric[]) {
+          const existing = byDate.get(item.date);
+          if (!existing) {
+            byDate.set(item.date, { ...item });
+          } else {
+            byDate.set(item.date, {
+              ...existing,
+              reach: (existing.reach || 0) + (item.reach || 0),
+              impressions: (existing.impressions || 0) + (item.impressions || 0),
+              engagement: (existing.engagement || 0) + (item.engagement || 0),
+            });
+          }
+        }
       }
 
-      if (data?.data && data.data.length > 0) {
-        setDailyMetrics(data.data);
+      if (byDate.size > 0) {
+        const merged = Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
+        setDailyMetrics(merged);
         setIsLiveData(true);
-        setSource(data.source || 'instagram');
+        setSource(detectedSource);
       } else {
-        // No data returned, use mock
         setDailyMetrics(getClientDailyMetrics(clientId));
         setIsLiveData(false);
         setSource('mock');
@@ -80,15 +88,15 @@ export function useDailyMetrics(clientId: string | null, days: number = 30): Use
     } finally {
       setIsLoading(false);
     }
-  }, [clientId, days]);
+  }, [clientId, days, metaConnections]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!connectionsLoading) fetchData();
+  }, [fetchData, connectionsLoading]);
 
   return {
     dailyMetrics,
-    isLoading,
+    isLoading: connectionsLoading || isLoading,
     isLiveData,
     source,
     refetch: fetchData,

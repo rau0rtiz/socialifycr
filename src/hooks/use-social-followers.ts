@@ -18,41 +18,52 @@ interface UseSocialFollowersResult {
 export function useSocialFollowers(clientId: string | null): UseSocialFollowersResult {
   const { data: connections, isLoading: connectionsLoading } = usePlatformConnections(clientId);
 
-  const metaConnection = connections?.find(c => c.platform === 'meta');
+  const metaConnections = (connections || []).filter(c => c.platform === 'meta');
   const youtubeConnection = connections?.find(c => c.platform === 'youtube');
   const linkedinConnection = connections?.find(c => c.platform === 'linkedin');
 
   const { data, isLoading: dataLoading, refetch } = useQuery({
-    queryKey: ['social-followers', clientId, !!metaConnection, !!youtubeConnection, !!linkedinConnection],
+    queryKey: ['social-followers', clientId, metaConnections.map(c => c.id).join(','), !!youtubeConnection, !!linkedinConnection],
     queryFn: async () => {
       const results: PlatformFollowers[] = [];
-
-      // Fire all API calls in parallel
       const promises: Promise<void>[] = [];
 
-      if (metaConnection) {
+      // Sum followers across every Meta connection
+      for (const metaConnection of metaConnections) {
         promises.push(
           supabase.functions.invoke('meta-api', {
             body: {
               clientId,
               endpoint: 'account-insights',
               params: { datePreset: 'last_30d' },
+              connectionId: metaConnection.id,
             },
           }).then(({ data, error }) => {
             if (!error && !data?.error) {
               if (data.instagram && metaConnection.instagram_account_id) {
-                results.push({
-                  platform: 'instagram',
-                  followers: data.instagram.followers || 0,
-                  name: data.instagram.username,
-                });
+                const existing = results.find(r => r.platform === 'instagram');
+                if (existing) {
+                  existing.followers += data.instagram.followers || 0;
+                } else {
+                  results.push({
+                    platform: 'instagram',
+                    followers: data.instagram.followers || 0,
+                    name: data.instagram.username,
+                  });
+                }
               }
               if (data.facebook && metaConnection.platform_page_id) {
-                results.push({
-                  platform: 'facebook',
-                  followers: data.facebook.fans || data.facebook.followers || 0,
-                  name: data.facebook.name,
-                });
+                const existing = results.find(r => r.platform === 'facebook');
+                const fbFollowers = data.facebook.fans || data.facebook.followers || 0;
+                if (existing) {
+                  existing.followers += fbFollowers;
+                } else {
+                  results.push({
+                    platform: 'facebook',
+                    followers: fbFollowers,
+                    name: data.facebook.name,
+                  });
+                }
               }
             }
           })

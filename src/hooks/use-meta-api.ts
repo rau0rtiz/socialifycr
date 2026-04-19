@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { usePlatformConnections } from './use-platform-connections';
+import { usePlatformConnections, useMetaConnections } from './use-platform-connections';
+import { useBrand } from '@/contexts/BrandContext';
 
 interface MetaApiParams {
   [key: string]: string | number | boolean;
@@ -26,6 +27,7 @@ export const useMetaApi = (clientId: string | null) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { selectedMetaConnectionId } = useBrand();
 
   const fetchMetaData = useCallback(async (endpoint: string, params: MetaApiParams = {}) => {
     if (!clientId) {
@@ -37,8 +39,11 @@ export const useMetaApi = (clientId: string | null) => {
     setError(null);
 
     try {
+      const body: Record<string, unknown> = { clientId, endpoint, params };
+      if (selectedMetaConnectionId) body.connectionId = selectedMetaConnectionId;
+
       const { data, error: invokeError } = await supabase.functions.invoke('meta-api', {
-        body: { clientId, endpoint, params }
+        body,
       });
 
       if (invokeError) {
@@ -62,7 +67,7 @@ export const useMetaApi = (clientId: string | null) => {
     } finally {
       setLoading(false);
     }
-  }, [clientId]);
+  }, [clientId, selectedMetaConnectionId]);
 
   const getPageInsights = useCallback((period: string = 'day', days: number = 30) => {
     const since = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;

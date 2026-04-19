@@ -35,7 +35,7 @@ serve(async (req) => {
     }
     const user = { id: claimsData.claims.sub as string };
 
-    const { clientId, endpoint, params = {} } = await req.json();
+    const { clientId, endpoint, params = {}, connectionId } = await req.json();
 
     if (!clientId || !endpoint) {
       return new Response(JSON.stringify({ error: 'Missing clientId or endpoint' }), {
@@ -53,17 +53,27 @@ serve(async (req) => {
       });
     }
 
-    // Get connection from database
-    const { data: connection, error: connectionError } = await supabase
+    // Get connection from database — supports multi-account by accepting an optional connectionId.
+    // Without connectionId we fall back to the first active Meta connection (legacy behavior).
+    let connectionQuery = supabase
       .from('platform_connections')
       .select('*')
       .eq('client_id', clientId)
       .eq('platform', 'meta')
-      .eq('status', 'active')
-      .maybeSingle();
+      .eq('status', 'active');
+
+    if (connectionId) {
+      connectionQuery = connectionQuery.eq('id', connectionId);
+    }
+
+    const { data: connectionRows, error: connectionError } = await connectionQuery
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    const connection = connectionRows?.[0];
 
     if (connectionError || !connection) {
-      console.log('No active Meta connection for client:', clientId);
+      console.log('No active Meta connection for client:', clientId, 'connectionId:', connectionId);
       return new Response(JSON.stringify({ connected: false, data: null, error: null }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
