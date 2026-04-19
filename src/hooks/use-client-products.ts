@@ -12,6 +12,8 @@ export interface ScheduleBlock {
   end: string;
 }
 
+export type ProductType = 'product' | 'service';
+
 export interface ClientProduct {
   id: string;
   client_id: string;
@@ -23,6 +25,8 @@ export interface ClientProduct {
   photo_url: string | null;
   category: string | null;
   audience: string | null;
+  product_type: ProductType;
+  estimated_duration_min: number | null;
   is_recurring: boolean;
   class_frequency: ClassFrequency | null;
   available_schedules: ScheduleBlock[];
@@ -45,6 +49,8 @@ export interface ProductInput {
   photo_url?: string | null;
   category?: string | null;
   audience?: string | null;
+  product_type?: ProductType;
+  estimated_duration_min?: number | null;
   is_recurring?: boolean;
   class_frequency?: ClassFrequency | null;
   available_schedules?: ScheduleBlock[];
