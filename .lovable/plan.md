@@ -1,82 +1,110 @@
 
-User wants 2 things:
 
-1. **Reenvío de correos con attachments en el historial** (`EmailsLogContent` / `sent_emails`).
-2. **Barra de "miembros del equipo del cliente"** en el tope con indicador online/offline + tooltip de última conexión.
+User wants a major overhaul of the products section for Dra Silvia. Let me check the current ProductsManager to understand what exists.
+<lov-tool-use id="toolu_vrtx_01HT5jyJdAZ72ACNrem788xt" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/ventas/ProductsManager.tsx\"}">
+</lov-tool-use>
 
-Let me check the relevant files briefly.
-<br>
+<lov-tool-use id="toolu_vrtx_01BPFEn7DvsfR98FRKMLSctY" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/ventas/ProductsManager.tsx\"}">
+</lov-tool-use>
+I have enough context. Let me also check briefly the ProductFormDialog area for the broken inventory toggle issue.
+<lov-tool-use id="toolu_vrtx_014btvC3m7m72bVDw3AWgjnW" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/ventas/ProductsManager.tsx\", \"lines\": \"500-799\"}">
+</lov-tool-use>
+Found the bug — `ProductsManager.tsx` has its **own local edit dialog** (lines 686–780) that **doesn't include the inventory fields** at all, which is why the toggle "no aparece" cuando se edita desde la sección Productos. The standalone `ProductFormDialog` sí los tiene, pero no se está usando aquí.
 
-### Investigación
-<br>
+Now I have a clear picture. Let me present the plan.
 
-**Reenvío:**
-- Tabla `sent_emails` ya guarda `html_content`, `subject`, `recipient_email`. Pero **no guarda attachments**. Para el caso del funnel, los PDFs se generan dinámicamente en `send-funnel-result` desde storage (`documents/Nivel-N.pdf`). 
-- Para reenviar con el PDF correcto necesitamos saber el `business_level`. Eso puede venir del lead asociado o de un metadata nuevo.
-- Plan: agregar columna `attachments_meta jsonb` en `sent_emails` para guardar referencia (ej: `[{type:'storage', path:'documents/Nivel-3.pdf', filename:'Roadmap-Nivel-3.pdf'}]`). Las funciones que envían correos con attachment guardan la referencia. Una nueva edge function `resend-email` reconstruye el envío.
-- Para correos viejos sin metadata: si es de `source='funnel'`, buscar el lead por email y deducir el nivel.
-<br>
+<lov-plan>
 
-**Equipo del cliente online:**
-- Ya existe `client_team_members` con `user_id` → `profiles` (full_name, avatar_url) + `get_users_last_sign_in` RPC para admins.
-- Necesitamos exponer `last_sign_in_at` para usuarios del mismo cliente (no solo admins). Crear nueva función SECURITY DEFINER: `get_team_last_sign_in(_client_id uuid)` que retorna last_sign_in solo si el caller tiene `has_client_access`.
-- "Online" = `last_sign_in_at` dentro de últimos 5 min. Mejor aún: usar Supabase Realtime Presence para online en vivo. Eso es más limpio y verdaderamente real-time.
-- Componente nuevo: `TeamPresenceBar` — avatares circulares con dot verde/gris, tooltip con "Última vez: hace X". Va en el `TopBar` o debajo del header del dashboard.
-<br>
+## Resumen de mejoras a Productos & Servicios
 
-### Plan
-<br>
+### Bug confirmado
+El dialog de **editar producto** en `ProductsManager.tsx` (líneas 686-780) es una versión vieja que **no incluye los campos de inventario** — por eso no podés activar "Llevar control de inventario" al editar. El `ProductFormDialog` reusable sí los tiene pero no se usa en esta sección. Solución: reemplazar el dialog inline por el componente reusable (que ya tiene todo).
 
-#### Parte 1 — Reenviar correos con attachments
+---
 
-**DB:**
-- Agregar columna `sent_emails.attachments_meta jsonb` (nullable). Guarda referencias del tipo `[{source:'storage', bucket:'content-images', path:'documents/Nivel-3.pdf', filename:'Roadmap-Nivel-3.pdf'}]`.
-- Agregar columna `sent_emails.metadata jsonb` (si no existe ya en forma utilizable) para guardar `{business_level, name, ...}` para reconstrucción.
+### Cambios propuestos
 
-**Backend (edge functions):**
-- Modificar `send-funnel-result` para guardar `attachments_meta` y `metadata` en el insert de `sent_emails`.
-- Crear nueva edge function `resend-email`:
-  - Recibe `{ sent_email_id, override_email? }`.
-  - Lee el registro original (html_content, subject, attachments_meta).
-  - Descarga attachments desde storage si hay.
-  - Reenvía vía Resend gateway.
-  - Inserta nuevo row en `sent_emails` con `source='resend'` y `parent_email_id` referenciando el original.
+#### 1. Renombrar sección → "Productos y Servicios"
+Card title + ícono dual (Package / Wrench).
 
-**Frontend (`EmailsLogContent.tsx`):**
-- Botón "Reenviar" en cada fila + opción de cambiar email destino antes de reenviar (popover/dialog pequeño).
-- Indicador visual si tiene attachments (📎 con count).
-- Toast de confirmación.
+#### 2. Tipo: Producto vs Servicio (color-coded)
+- Nueva columna `product_type` en `client_products` (`'product' | 'service'`, default `'product'`).
+- Selector en el form: tarjetitas grandes con ícono.
+- En la tarjeta del listado: chip de color (azul = Producto, púrpura = Servicio) + barra lateral del mismo color.
+- Servicios ocultan automáticamente la sección de inventario (muestran "No aplica para servicios").
 
-**Backfill:** correr 1 SQL para correos `source='funnel'` que vinculen al `funnel_leads` por email y popule `attachments_meta` con el PDF correspondiente al `business_level`.
-<br>
+#### 3. Información visible en cada tarjeta (sin abrir)
+Layout enriquecido del `ProductCard`:
+- Nombre + chip tipo (producto/servicio)
+- Precio | Costo | **Profit** (calculado: precio − costo, con color verde/ámbar/rojo según margen)
+- **Stock con color**: verde (OK), ámbar (≤ umbral), **rojo grande con ⚠** (sin stock o crítico)
+- Duración estimada (ej: "45 min") con ícono de reloj
+- Para servicios: solo precio + duración (sin stock)
 
-#### Parte 2 — Barra de presencia del equipo
+#### 4. Buscador + filtros
+Barra arriba del listado con:
+- **Input de búsqueda** (filtra nombre + descripción, en vivo)
+- **Filtro tipo**: Todos / Productos / Servicios
+- **Filtro stock**: Todos / Bajo stock / Sin stock / OK (solo aplica a productos)
+- **Orden**: Nombre / Precio / Stock / Margen
+- Contador de resultados ("12 de 34")
 
-**DB:**
-- Nueva función SECURITY DEFINER `get_team_members_with_activity(_client_id uuid)` que retorna `(user_id, full_name, avatar_url, role, last_sign_in_at)` para todos los miembros del cliente, restringido a `has_client_access(auth.uid(), _client_id)`. Visible para todos los miembros del cliente, no solo admins.
+#### 5. Fix dialog de edición
+Reemplazar el form inline (líneas 686-780) con `<ProductFormDialog>` que ya tiene:
+- Toggle "Llevar control de inventario" funcional
+- Campos stock_quantity / low_stock_threshold / stock_unit
+Agregar al `ProductFormDialog`:
+- Tipo (producto/servicio)
+- Duración estimada en minutos (`estimated_duration_min`)
+- Validación: si tipo=servicio, oculta sección de inventario completa
 
-**Frontend:**
-- Nuevo componente `TeamPresenceBar.tsx`:
-  - Fetch con `useQuery` la lista de miembros del cliente activo.
-  - Suscribe canal de Supabase Realtime Presence: `team:{clientId}` para detectar quién está online ahora mismo.
-  - Renderiza avatares circulares (-overlap), max 8 visibles + contador.
-  - Dot verde (online) / gris (offline), borde según rol.
-  - **Hover/Tooltip:** nombre, rol, "En línea" o "Última vez: hace 2h" (formato relativo en español).
-- Integrarlo en `TopBar.tsx` (al lado del selector de cliente) — visible para TODOS los miembros del cliente, no solo agencia.
-<br>
+#### 6. Profit visible
+- En la tarjeta: badge "Profit: ₡X (margen Y%)" cuando hay precio + costo
+- En el detalle: ya existe pero refinado
 
-#### Detalles técnicos
-- Realtime presence se trackea cuando el usuario monta el dashboard (canal por cliente activo). Untrack al desmontar.
-- Online = presencia actual en el canal. Offline = no presente, mostrar `last_sign_in_at`.
-- Para clientes con muchos miembros (>8), mostrar +N con popover de lista completa.
-- Tooltip usa `date-fns` con locale `es` para "hace X minutos/horas/días".
+#### 7. Stock "No aplica" para servicios
+En la sección de inventario del detalle, si es servicio: muestra mensaje "Los servicios no llevan inventario" en lugar del estado actual.
 
-#### Archivos a crear/editar
-- **Migración SQL:** `sent_emails.attachments_meta`, `sent_emails.metadata`, `sent_emails.parent_email_id`, función `get_team_members_with_activity`.
-- **Crear:** `supabase/functions/resend-email/index.ts`, `src/components/dashboard/TeamPresenceBar.tsx`, `src/hooks/use-team-presence.ts`.
-- **Editar:** `supabase/functions/send-funnel-result/index.ts` (guardar metadata), `src/components/comunicaciones/EmailsLogContent.tsx` (botón reenvío + dialog), `src/components/dashboard/TopBar.tsx` (montar TeamPresenceBar).
+---
 
-#### Notas
-- El reenvío de correos que NO son funnel (otros emails sin attachments) funcionará igual, solo sin PDFs.
-- Para correos viejos del funnel sin metadata, el backfill SQL los rellena.
-- Presencia es por cliente activo (no global), así cada quien ve solo su equipo.
+### Cambios a base de datos
+Migración:
+```sql
+ALTER TABLE client_products
+  ADD COLUMN product_type text NOT NULL DEFAULT 'product' 
+    CHECK (product_type IN ('product','service')),
+  ADD COLUMN estimated_duration_min integer;
+```
+
+Backfill: nada — todos los productos existentes quedan como `'product'`. La Dra Silvia puede marcar consultas/tratamientos como servicio después.
+
+---
+
+### Archivos a editar
+- **Migración SQL**: agregar `product_type` + `estimated_duration_min`.
+- `src/hooks/use-client-products.ts`: agregar campos al interface + `buildPayload`.
+- `src/components/ventas/ProductFormDialog.tsx`: agregar selector tipo, campo duración, ocultar inventario si tipo=servicio.
+- `src/components/ventas/ProductsManager.tsx`:
+  - Renombrar título.
+  - Agregar barra de búsqueda + filtros (estado local + `useMemo`).
+  - Enriquecer `ProductCard` (chip tipo, profit, duración, alerta stock más prominente).
+  - **Eliminar** dialog inline de edición y usar `ProductFormDialog` reusable.
+  - Ajustar `StockSection` para mostrar "No aplica" cuando es servicio.
+
+---
+
+### Lo que sentí que falta y agregué a la propuesta
+1. **Color lateral** en la tarjeta (no solo un chip) para distinguir tipo de un vistazo.
+2. **Profit visible en la tarjeta** (no solo en detalle).
+3. **Filtro por estado de stock** (no solo búsqueda por nombre).
+4. **Ordenamiento** (útil cuando hay >20 productos como en la clínica).
+5. **Contador de resultados** filtrados.
+
+### Lo que NO incluyo (decímelo si querés que sí)
+- Categorías custom por cliente (ya existe el campo `category` pero solo Speak Up lo usa con grupos predefinidos). Para Dra Silvia podría agregarse ("Tratamientos faciales", "Inyectables", "Consultas"…) — ¿lo agregamos?
+- Histórico de cambios de precio.
+- Importar productos desde CSV.
+- Etiquetas/tags por producto.
+
+¿Procedo con esta implementación o ajustás algo (por ejemplo agregar categorías custom para clínica)?
+
