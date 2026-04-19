@@ -33,7 +33,7 @@ export const MetaAccountFilter = () => {
         className="h-9 w-[180px] gap-2"
         aria-label="Filtrar por cuenta Meta"
       >
-        <Facebook className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+        <Facebook className="h-3.5 w-3.5 text-primary shrink-0" />
         <SelectValue placeholder="Todas las cuentas" />
       </SelectTrigger>
       <SelectContent className="bg-popover z-50">

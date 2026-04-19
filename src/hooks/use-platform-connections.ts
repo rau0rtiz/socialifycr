@@ -35,7 +35,7 @@ export const usePlatformConnections = (clientId: string | null) => {
 
       const { data, error } = await supabase
         .from('platform_connections')
-        .select('id, client_id, platform, status, ad_account_id, instagram_account_id, platform_page_id, platform_page_name, platform_user_id, permissions, token_expires_at, connected_by, account_label, created_at, updated_at')
+        .select('*')
         .eq('client_id', clientId)
         .eq('status', 'active')
         .order('created_at', { ascending: true });
@@ -45,7 +45,7 @@ export const usePlatformConnections = (clientId: string | null) => {
         return [];
       }
 
-      return (data || []) as PlatformConnection[];
+      return (data || []) as unknown as PlatformConnection[];
     },
     enabled: !!clientId,
     staleTime: 5 * 60 * 1000,
