@@ -43,11 +43,18 @@ interface BrandContextType {
   saveBrandSettings: () => Promise<void>;
   hasUnsavedChanges: boolean;
   refetchClients: () => Promise<void>;
+  /**
+   * When the active client has multiple Meta connections, the user can pick one
+   * specific connection to focus on. `null` means "all accounts aggregated".
+   */
+  selectedMetaConnectionId: string | null;
+  setSelectedMetaConnectionId: (id: string | null) => void;
 }
 
 const BrandContext = createContext<BrandContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'brand-settings';
+const META_CONN_STORAGE_PREFIX = 'meta-conn-filter:';
 
 const getInitialClientBrands = (): Record<string, ClientBrand> => {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -79,17 +86,34 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
   const [selectedClient, setSelectedClientState] = useState<Client | null>(null);
+  const [selectedMetaConnectionId, setSelectedMetaConnectionIdState] = useState<string | null>(null);
 
   const setSelectedClient = (client: Client | null) => {
     setSelectedClientState(client);
     if (client) {
       localStorage.setItem('selected-client-id', client.id);
+      const stored = sessionStorage.getItem(META_CONN_STORAGE_PREFIX + client.id);
+      setSelectedMetaConnectionIdState(stored || null);
     } else {
       localStorage.removeItem('selected-client-id');
+      setSelectedMetaConnectionIdState(null);
     }
   };
+
+  const setSelectedMetaConnectionId = (id: string | null) => {
+    setSelectedMetaConnectionIdState(id);
+    if (selectedClient) {
+      const key = META_CONN_STORAGE_PREFIX + selectedClient.id;
+      if (id) {
+        sessionStorage.setItem(key, id);
+      } else {
+        sessionStorage.removeItem(key);
+      }
+    }
+  };
+
   const [clientBrands, setClientBrands] = useState<Record<string, ClientBrand>>(getInitialClientBrands);
-  const [savedState, setSavedState] = useState<string>(() => 
+  const [savedState, setSavedState] = useState<string>(() =>
     JSON.stringify({ platformBrand: getInitialPlatformBrand(), clientBrands: getInitialClientBrands() })
   );
 
@@ -114,12 +138,14 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setClients(data || []);
-      
-      // Restore previously selected client or auto-select first
+
       if (data && data.length > 0 && !selectedClient) {
         const savedClientId = localStorage.getItem('selected-client-id');
         const savedClient = savedClientId ? data.find(c => c.id === savedClientId) : null;
-        setSelectedClient(savedClient || data[0]);
+        const initial = savedClient || data[0];
+        setSelectedClientState(initial);
+        const storedConn = sessionStorage.getItem(META_CONN_STORAGE_PREFIX + initial.id);
+        setSelectedMetaConnectionIdState(storedConn || null);
       }
     } finally {
       setClientsLoading(false);
@@ -142,7 +168,6 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     setSavedState(JSON.stringify(data));
 
-    // Persist client brand changes to the database
     const updates = Object.entries(clientBrands).map(([clientId, brand]) =>
       supabase
         .from('clients')
@@ -172,6 +197,8 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
         saveBrandSettings,
         hasUnsavedChanges,
         refetchClients: fetchClients,
+        selectedMetaConnectionId,
+        setSelectedMetaConnectionId,
       }}
     >
       {children}
