@@ -46,7 +46,7 @@ const MemberAvatar = ({ member, online, size = 'md' }: MemberDotProps) => {
         className={cn(
           'absolute -bottom-0.5 -right-0.5 rounded-full ring-2 ring-background',
           dotSize,
-          online ? 'bg-green-500' : 'bg-muted-foreground/40'
+          online ? 'bg-emerald-500' : 'bg-muted-foreground/40'
         )}
       />
     </div>
@@ -57,7 +57,7 @@ const MemberTooltipBody = ({ member, online }: { member: any; online: boolean })
   <div className="text-xs space-y-0.5">
     <p className="font-medium">{member.full_name || member.email}</p>
     {member.role && <p className="text-muted-foreground">{roleLabels[member.role] || member.role}</p>}
-    <p className={online ? 'text-green-500' : 'text-muted-foreground'}>
+    <p className={online ? 'text-emerald-500' : 'text-muted-foreground'}>
       {online
         ? 'En línea'
         : member.last_sign_in_at

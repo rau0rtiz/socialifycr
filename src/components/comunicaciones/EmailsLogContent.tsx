@@ -9,8 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Send, Search, Filter, Eye, CheckCircle, XCircle, Loader2, Camera, MailOpen } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Send, Search, Filter, Eye, CheckCircle, XCircle, Loader2, Camera, MailOpen, Paperclip, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ const sourceLabels: Record<string, string> = {
   campaign: 'Campaña',
   funnel: 'Funnel',
   avatar_reminder: 'Recordatorio Foto',
+  resend: 'Reenvío',
 };
 
 const EmailsLogContent = () => {
@@ -31,6 +32,9 @@ const EmailsLogContent = () => {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [previewEmail, setPreviewEmail] = useState<any>(null);
+  const [resendEmail, setResendEmail] = useState<any>(null);
+  const [resendOverride, setResendOverride] = useState('');
+  const [resending, setResending] = useState(false);
 
   const [composeTo, setComposeTo] = useState('');
   const [composeSubject, setComposeSubject] = useState('');
@@ -49,6 +53,29 @@ const EmailsLogContent = () => {
       toast.error('Error: ' + (err.message || 'Error desconocido'));
     } finally {
       setSendingAvatarReminder(false);
+    }
+  };
+
+  const openResend = (email: any) => {
+    setResendEmail(email);
+    setResendOverride(email.recipient_email || '');
+  };
+
+  const handleResend = async () => {
+    if (!resendEmail || !resendOverride) return;
+    setResending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-email', {
+        body: { sent_email_id: resendEmail.id, override_email: resendOverride },
+      });
+      if (error) throw error;
+      toast.success(`Correo reenviado a ${data.recipient}${data.attachments_count ? ` con ${data.attachments_count} adjunto(s)` : ''}`);
+      setResendEmail(null);
+      queryClient.invalidateQueries({ queryKey: ['sent-emails'] });
+    } catch (err: any) {
+      toast.error('Error al reenviar: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setResending(false);
     }
   };
 
