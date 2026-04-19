@@ -1,110 +1,69 @@
 
 
-User wants a major overhaul of the products section for Dra Silvia. Let me check the current ProductsManager to understand what exists.
-<lov-tool-use id="toolu_vrtx_01HT5jyJdAZ72ACNrem788xt" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/ventas/ProductsManager.tsx\"}">
-</lov-tool-use>
+## Soporte de múltiples cuentas Meta por cliente (Tissue)
 
-<lov-tool-use id="toolu_vrtx_01BPFEn7DvsfR98FRKMLSctY" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/ventas/ProductsManager.tsx\"}">
-</lov-tool-use>
-I have enough context. Let me also check briefly the ProductFormDialog area for the broken inventory toggle issue.
-<lov-tool-use id="toolu_vrtx_014btvC3m7m72bVDw3AWgjnW" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/ventas/ProductsManager.tsx\", \"lines\": \"500-799\"}">
-</lov-tool-use>
-Found the bug — `ProductsManager.tsx` has its **own local edit dialog** (lines 686–780) that **doesn't include the inventory fields** at all, which is why the toggle "no aparece" cuando se edita desde la sección Productos. The standalone `ProductFormDialog` sí los tiene, pero no se está usando aquí.
+### Diagnóstico
 
-Now I have a clear picture. Let me present the plan.
+Hoy el sistema asume **1 cliente = 1 conexión por plataforma**:
 
-<lov-plan>
+- Tabla `platform_connections`: aunque no tiene un UNIQUE explícito en `(client_id, platform)`, todo el código usa `.maybeSingle()` o `.find(c => c.platform === 'meta')` (ej: `useMetaConnection`, `useCampaignsData`, `usePlatformConnections`).
+- El OAuth flow probablemente sobrescribe la conexión existente al conectar una segunda cuenta del mismo `platform`.
+- Los widgets (campañas, insights, ads) leen **solo el primer ad_account_id** que encuentran.
 
-## Resumen de mejoras a Productos & Servicios
+Resultado: si conectás dos portafolios de Meta para Tissue, el segundo pisa al primero y los widgets solo muestran datos de uno.
 
-### Bug confirmado
-El dialog de **editar producto** en `ProductsManager.tsx` (líneas 686-780) es una versión vieja que **no incluye los campos de inventario** — por eso no podés activar "Llevar control de inventario" al editar. El `ProductFormDialog` reusable sí los tiene pero no se usa en esta sección. Solución: reemplazar el dialog inline por el componente reusable (que ya tiene todo).
+### Lo que hay que implementar
 
----
+#### 1. Permitir N conexiones del mismo platform por cliente
+- **DB**: agregar `account_label` (text, nullable) a `platform_connections` para que el usuario nombre cada conexión ("Tissue Retail", "Tissue B2B"). No agregar UNIQUE en `(client_id, platform)`.
+- **OAuth callback** (`meta-oauth/index.ts`): en lugar de upsert por `(client_id, platform)`, insertar siempre una nueva fila si el `ad_account_id` es distinto al de las conexiones existentes. Si el usuario reconecta la misma cuenta, sí actualizar.
 
-### Cambios propuestos
+#### 2. UI de gestión de múltiples cuentas
+- **`PlatformConnections.tsx`**: mostrar **todas** las conexiones Meta del cliente como una lista (no una sola tarjeta). Botón "+ Conectar otra cuenta de Meta". Cada tarjeta permite renombrar (`account_label`), ver qué ad account/IG/page tiene, y desconectar individualmente.
+- **`MetaAccountSelector.tsx`** (ya existe parcialmente): se reutiliza para que dentro de cada conexión el usuario elija qué Page/IG/AdAccount usar (Meta entrega múltiples por token, esto ya funciona).
 
-#### 1. Renombrar sección → "Productos y Servicios"
-Card title + ícono dual (Package / Wrench).
+#### 3. Widgets que agreguen datos de múltiples conexiones
+- **`usePlatformConnections`**: ya devuelve un array, perfecto.
+- **`useCampaignsData`** y `useMetaApi`: cambiar `connections.find(c => c.platform === 'meta')` por `connections.filter(...)`. Hacer el fetch en paralelo a cada conexión y **mergear** resultados:
+  - Campañas: concatenar listas, agregar campo `_accountLabel` para distinguir en UI.
+  - Insights agregados (reach, spend, leads): sumar entre cuentas.
+  - Top posts / Stories: concatenar y reordenar por engagement.
+- **Edge function `meta-api`**: aceptar `connectionId` opcional en el body. Si no viene, usa la primera (compatibilidad). Si viene, usa esa específica.
 
-#### 2. Tipo: Producto vs Servicio (color-coded)
-- Nueva columna `product_type` en `client_products` (`'product' | 'service'`, default `'product'`).
-- Selector en el form: tarjetitas grandes con ícono.
-- En la tarjeta del listado: chip de color (azul = Producto, púrpura = Servicio) + barra lateral del mismo color.
-- Servicios ocultan automáticamente la sección de inventario (muestran "No aplica para servicios").
+#### 4. Selector opcional de cuenta en widgets clave
+En el `TopBar` o dentro del dashboard de Tissue, agregar un toggle pequeño: **"Todas las cuentas | Tissue Retail | Tissue B2B"** para que puedas filtrar la vista cuando quieras analizar una sola.
+- Por defecto: "Todas" (datos sumados).
+- Estado guardado en `sessionStorage` por cliente.
 
-#### 3. Información visible en cada tarjeta (sin abrir)
-Layout enriquecido del `ProductCard`:
-- Nombre + chip tipo (producto/servicio)
-- Precio | Costo | **Profit** (calculado: precio − costo, con color verde/ámbar/rojo según margen)
-- **Stock con color**: verde (OK), ámbar (≤ umbral), **rojo grande con ⚠** (sin stock o crítico)
-- Duración estimada (ej: "45 min") con ícono de reloj
-- Para servicios: solo precio + duración (sin stock)
+### Cambios concretos
 
-#### 4. Buscador + filtros
-Barra arriba del listado con:
-- **Input de búsqueda** (filtra nombre + descripción, en vivo)
-- **Filtro tipo**: Todos / Productos / Servicios
-- **Filtro stock**: Todos / Bajo stock / Sin stock / OK (solo aplica a productos)
-- **Orden**: Nombre / Precio / Stock / Margen
-- Contador de resultados ("12 de 34")
+**DB (1 migración):**
+- `ALTER TABLE platform_connections ADD COLUMN account_label text;`
+- Verificar que no exista UNIQUE en `(client_id, platform)`.
 
-#### 5. Fix dialog de edición
-Reemplazar el form inline (líneas 686-780) con `<ProductFormDialog>` que ya tiene:
-- Toggle "Llevar control de inventario" funcional
-- Campos stock_quantity / low_stock_threshold / stock_unit
-Agregar al `ProductFormDialog`:
-- Tipo (producto/servicio)
-- Duración estimada en minutos (`estimated_duration_min`)
-- Validación: si tipo=servicio, oculta sección de inventario completa
+**Backend:**
+- `supabase/functions/meta-oauth/index.ts`: cambiar lógica de upsert para permitir múltiples conexiones por client si `ad_account_id` difiere.
+- `supabase/functions/meta-api/index.ts`: aceptar `connectionId` opcional para targeting específico.
 
-#### 6. Profit visible
-- En la tarjeta: badge "Profit: ₡X (margen Y%)" cuando hay precio + costo
-- En el detalle: ya existe pero refinado
+**Frontend:**
+- `src/components/clientes/PlatformConnections.tsx`: lista de conexiones Meta con renombrar/agregar/eliminar.
+- `src/hooks/use-meta-api.ts`: `useMetaConnection` → `useMetaConnections` (plural). Mantener `useMetaConnection` como alias deprecado que devuelve la primera.
+- `src/hooks/use-campaigns-data.ts`: fetch paralelo + merge.
+- `src/hooks/use-content-data.ts`, `use-kpi-data.ts`, `use-ads-data.ts`: mismo patrón de merge.
+- Nuevo: `src/components/dashboard/MetaAccountFilter.tsx` (toggle "Todas | cuenta A | cuenta B") + estado en `BrandContext` o sessionStorage.
 
-#### 7. Stock "No aplica" para servicios
-En la sección de inventario del detalle, si es servicio: muestra mensaje "Los servicios no llevan inventario" en lugar del estado actual.
+### Qué te queda hacer manualmente
+1. Crear cliente "Tissue" en `/clientes`.
+2. Conectar la primera cuenta Meta (portafolio 1) → renombrarla "Tissue [nombre del portafolio]".
+3. Click "+ Conectar otra cuenta de Meta" → autorizar el segundo portafolio → renombrarla.
+4. Asignar Pages/IG/AdAccount correctos en cada conexión vía `MetaAccountSelector`.
 
----
+### Notas técnicas
+- Como vos ya tenés permisos en ambos portafolios desde tu mismo Facebook user, el OAuth flow estándar ya te permitirá conectar ambos sin cambios en scopes. El access_token será diferente por sesión OAuth (uno por click en "Conectar"), pero ambos funcionarán.
+- LinkedIn / TikTok / YouTube siguen igual (1 por cliente), no necesitamos tocarlos a menos que pidás lo mismo después.
+- Sin límite forzado: podrías conectar 3, 4, N cuentas si en el futuro Tissue agrega más portafolios.
 
-### Cambios a base de datos
-Migración:
-```sql
-ALTER TABLE client_products
-  ADD COLUMN product_type text NOT NULL DEFAULT 'product' 
-    CHECK (product_type IN ('product','service')),
-  ADD COLUMN estimated_duration_min integer;
-```
-
-Backfill: nada — todos los productos existentes quedan como `'product'`. La Dra Silvia puede marcar consultas/tratamientos como servicio después.
-
----
-
-### Archivos a editar
-- **Migración SQL**: agregar `product_type` + `estimated_duration_min`.
-- `src/hooks/use-client-products.ts`: agregar campos al interface + `buildPayload`.
-- `src/components/ventas/ProductFormDialog.tsx`: agregar selector tipo, campo duración, ocultar inventario si tipo=servicio.
-- `src/components/ventas/ProductsManager.tsx`:
-  - Renombrar título.
-  - Agregar barra de búsqueda + filtros (estado local + `useMemo`).
-  - Enriquecer `ProductCard` (chip tipo, profit, duración, alerta stock más prominente).
-  - **Eliminar** dialog inline de edición y usar `ProductFormDialog` reusable.
-  - Ajustar `StockSection` para mostrar "No aplica" cuando es servicio.
-
----
-
-### Lo que sentí que falta y agregué a la propuesta
-1. **Color lateral** en la tarjeta (no solo un chip) para distinguir tipo de un vistazo.
-2. **Profit visible en la tarjeta** (no solo en detalle).
-3. **Filtro por estado de stock** (no solo búsqueda por nombre).
-4. **Ordenamiento** (útil cuando hay >20 productos como en la clínica).
-5. **Contador de resultados** filtrados.
-
-### Lo que NO incluyo (decímelo si querés que sí)
-- Categorías custom por cliente (ya existe el campo `category` pero solo Speak Up lo usa con grupos predefinidos). Para Dra Silvia podría agregarse ("Tratamientos faciales", "Inyectables", "Consultas"…) — ¿lo agregamos?
-- Histórico de cambios de precio.
-- Importar productos desde CSV.
-- Etiquetas/tags por producto.
-
-¿Procedo con esta implementación o ajustás algo (por ejemplo agregar categorías custom para clínica)?
+### Dudas antes de implementar
+1. **Filtro por cuenta en TopBar**: ¿lo querés visible siempre, o solo aparece cuando el cliente tiene >1 conexión Meta? (mi recomendación: solo si >1, para no agregar ruido visual a clientes single-account).
+2. **Vista por defecto** cuando hay múltiples cuentas: ¿agregada (suma de todas) o requerir que selecciones una?
 
