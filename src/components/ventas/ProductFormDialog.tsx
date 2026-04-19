@@ -7,9 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useClientProducts, ClientProduct, ProductInput } from '@/hooks/use-client-products';
+import { useClientProducts, ClientProduct, ProductInput, ProductType } from '@/hooks/use-client-products';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Camera, Loader2, X, Boxes } from 'lucide-react';
+import { Package, Camera, Loader2, X, Boxes, Wrench, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface ProductFormDialogProps {
@@ -17,9 +18,7 @@ interface ProductFormDialogProps {
   onOpenChange: (open: boolean) => void;
   clientId: string;
   editing?: ClientProduct | null;
-  /** Optional default name to seed the form (useful when invoked from a sale wizard) */
   defaultName?: string;
-  /** Called after a successful create/update with the resulting product */
   onSaved?: (product: ClientProduct) => void;
 }
 
@@ -28,12 +27,6 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
 };
 
-/**
- * Reusable product create/edit dialog.
- * Uses the shared `useClientProducts` hook so any consumer (Business Setup,
- * RegisterSaleDialog, AppointmentFormDialog) automatically sees the new
- * product via React Query cache invalidation.
- */
 export const ProductFormDialog = ({
   open,
   onOpenChange,
@@ -45,24 +38,26 @@ export const ProductFormDialog = ({
   const { addProduct, updateProduct } = useClientProducts(clientId);
 
   const [name, setName] = useState('');
+  const [productType, setProductType] = useState<ProductType>('product');
+  const [duration, setDuration] = useState('');
   const [price, setPrice] = useState('');
   const [cost, setCost] = useState('');
   const [currency, setCurrency] = useState('CRC');
   const [description, setDescription] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  // Stock
   const [trackStock, setTrackStock] = useState(false);
   const [stockQty, setStockQty] = useState('');
   const [lowThreshold, setLowThreshold] = useState('');
   const [stockUnit, setStockUnit] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync form state when opening / when editing target changes
   useEffect(() => {
     if (!open) return;
     if (editing) {
       setName(editing.name);
+      setProductType(editing.product_type || 'product');
+      setDuration(editing.estimated_duration_min != null ? String(editing.estimated_duration_min) : '');
       setPrice(editing.price != null ? String(editing.price) : '');
       setCost(editing.cost != null ? String(editing.cost) : '');
       setCurrency(editing.currency || 'CRC');
@@ -74,6 +69,8 @@ export const ProductFormDialog = ({
       setStockUnit(editing.stock_unit || '');
     } else {
       setName(defaultName);
+      setProductType('product');
+      setDuration('');
       setPrice('');
       setCost('');
       setCurrency('CRC');
@@ -111,52 +108,98 @@ export const ProductFormDialog = ({
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('El nombre es obligatorio'); return; }
+    const isService = productType === 'service';
     const input: ProductInput = {
       name: name.trim(),
+      product_type: productType,
+      estimated_duration_min: duration ? parseInt(duration) : null,
       price: price ? parseFloat(price) : null,
       cost: cost ? parseFloat(cost) : null,
       currency,
       description: description.trim(),
       photo_url: photoUrl,
-      track_stock: trackStock,
-      stock_quantity: trackStock && stockQty ? parseFloat(stockQty) : 0,
-      low_stock_threshold: trackStock && lowThreshold ? parseFloat(lowThreshold) : 0,
-      stock_unit: trackStock ? (stockUnit.trim() || null) : null,
+      track_stock: isService ? false : trackStock,
+      stock_quantity: !isService && trackStock && stockQty ? parseFloat(stockQty) : 0,
+      low_stock_threshold: !isService && trackStock && lowThreshold ? parseFloat(lowThreshold) : 0,
+      stock_unit: !isService && trackStock ? (stockUnit.trim() || null) : null,
     };
     try {
       if (editing) {
         await updateProduct.mutateAsync({ id: editing.id, ...input });
-        toast.success('Producto actualizado');
-        // updateProduct mutation doesn't return the row; build an optimistic merge
+        toast.success(isService ? 'Servicio actualizado' : 'Producto actualizado');
         onSaved?.({ ...editing, ...input } as ClientProduct);
       } else {
         const result = await addProduct.mutateAsync(input);
-        toast.success('Producto creado');
+        toast.success(isService ? 'Servicio creado' : 'Producto creado');
         onSaved?.(result);
       }
       onOpenChange(false);
     } catch {
-      toast.error('Error al guardar producto');
+      toast.error('Error al guardar');
     }
   };
 
   const isPending = addProduct.isPending || updateProduct.isPending;
+  const isService = productType === 'service';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-blue-500/10">
-              <Package className="h-4 w-4 text-blue-500" />
+            <div className={cn('p-1.5 rounded-lg', isService ? 'bg-purple-500/10' : 'bg-blue-500/10')}>
+              {isService ? <Wrench className="h-4 w-4 text-purple-500" /> : <Package className="h-4 w-4 text-blue-500" />}
             </div>
-            {editing ? 'Editar Producto' : 'Nuevo Producto'}
+            {editing ? `Editar ${isService ? 'Servicio' : 'Producto'}` : `Nuevo ${isService ? 'Servicio' : 'Producto'}`}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
+          {/* Type selector */}
+          <div>
+            <Label className="text-xs">Tipo <span className="text-destructive">*</span></Label>
+            <div className="mt-1.5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setProductType('product')}
+                className={cn(
+                  'rounded-lg border-2 p-3 text-left transition-all',
+                  productType === 'product'
+                    ? 'border-blue-500 bg-blue-500/5'
+                    : 'border-border/50 hover:border-border bg-background'
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Package className={cn('h-4 w-4', productType === 'product' ? 'text-blue-500' : 'text-muted-foreground')} />
+                  <span className={cn('text-sm font-semibold', productType === 'product' ? 'text-foreground' : 'text-muted-foreground')}>
+                    Producto
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Físico, con inventario</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setProductType('service')}
+                className={cn(
+                  'rounded-lg border-2 p-3 text-left transition-all',
+                  productType === 'service'
+                    ? 'border-purple-500 bg-purple-500/5'
+                    : 'border-border/50 hover:border-border bg-background'
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Wrench className={cn('h-4 w-4', productType === 'service' ? 'text-purple-500' : 'text-muted-foreground')} />
+                  <span className={cn('text-sm font-semibold', productType === 'service' ? 'text-foreground' : 'text-muted-foreground')}>
+                    Servicio
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Sin inventario</p>
+              </button>
+            </div>
+          </div>
+
           {/* Photo upload */}
           <div>
-            <Label className="text-xs">Foto del producto</Label>
+            <Label className="text-xs">Foto</Label>
             <div className="mt-1.5 flex items-center gap-3">
               {photoUrl ? (
                 <div className="relative">
@@ -195,24 +238,27 @@ export const ProductFormDialog = ({
             <Input
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Nombre del producto"
+              placeholder={isService ? 'Ej: Consulta general, Limpieza facial' : 'Ej: Toxina botulínica 100u'}
               className="mt-1.5"
               autoFocus
             />
           </div>
+
           <div>
             <Label className="text-xs">Descripción</Label>
             <Textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Descripción del producto o servicio..."
+              placeholder="Descripción..."
               className="mt-1.5 min-h-[70px] text-sm"
             />
           </div>
+
           <Separator />
+
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label className="text-xs">Precio base</Label>
+              <Label className="text-xs">Precio venta</Label>
               <Input type="number" min={0} value={price} onChange={e => setPrice(e.target.value)} placeholder="0" className="mt-1.5" />
             </div>
             <div>
@@ -230,45 +276,77 @@ export const ProductFormDialog = ({
               </Select>
             </div>
           </div>
-          {price && cost && parseFloat(cost) > 0 && (
+          {price && cost && parseFloat(cost) > 0 && parseFloat(price) > 0 && (
             <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg">
               Margen: <span className="font-semibold text-foreground">
                 {Math.round(((parseFloat(price) - parseFloat(cost)) / parseFloat(price)) * 100)}%
               </span>
-              {' '}· Ganancia: <span className="font-semibold text-foreground">
+              {' '}· Profit: <span className="font-semibold text-emerald-600">
                 {formatCurrency(parseFloat(price) - parseFloat(cost), currency)}
               </span>
             </div>
           )}
 
+          {/* Duration */}
+          <div>
+            <Label className="text-xs flex items-center gap-1.5">
+              <Clock className="h-3 w-3 text-muted-foreground" />
+              Duración aproximada (minutos)
+            </Label>
+            <Input
+              type="number"
+              min={0}
+              value={duration}
+              onChange={e => setDuration(e.target.value)}
+              placeholder={isService ? '30' : '15'}
+              className="mt-1.5"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              {isService
+                ? 'Tiempo que toma realizar el servicio. Útil para planificar agenda.'
+                : 'Tiempo aproximado de uso/aplicación. Opcional para productos.'}
+            </p>
+          </div>
+
           <Separator />
 
-          {/* Stock tracking */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Boxes className="h-3.5 w-3.5 text-muted-foreground" />
-                <Label className="text-xs font-medium">Llevar control de inventario</Label>
-              </div>
-              <Switch checked={trackStock} onCheckedChange={setTrackStock} />
+          {/* Stock tracking — only for products */}
+          {isService ? (
+            <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-3 text-center">
+              <Wrench className="h-5 w-5 text-purple-500/60 mx-auto mb-1.5" />
+              <p className="text-xs text-muted-foreground">
+                Los servicios no llevan inventario.
+              </p>
             </div>
-            {trackStock && (
-              <div className="grid grid-cols-3 gap-3 pl-1">
-                <div>
-                  <Label className="text-[10px] text-muted-foreground">Stock actual</Label>
-                  <Input type="number" min={0} step="any" value={stockQty} onChange={e => setStockQty(e.target.value)} placeholder="0" className="mt-1 h-9 text-sm" />
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Boxes className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Label className="text-xs font-medium cursor-pointer" onClick={() => setTrackStock(v => !v)}>
+                    Llevar control de inventario
+                  </Label>
                 </div>
-                <div>
-                  <Label className="text-[10px] text-muted-foreground">Alerta mínima</Label>
-                  <Input type="number" min={0} step="any" value={lowThreshold} onChange={e => setLowThreshold(e.target.value)} placeholder="0" className="mt-1 h-9 text-sm" />
-                </div>
-                <div>
-                  <Label className="text-[10px] text-muted-foreground">Unidad</Label>
-                  <Input value={stockUnit} onChange={e => setStockUnit(e.target.value)} placeholder="vial, caja, ud" className="mt-1 h-9 text-sm" />
-                </div>
+                <Switch checked={trackStock} onCheckedChange={setTrackStock} />
               </div>
-            )}
-          </div>
+              {trackStock && (
+                <div className="grid grid-cols-3 gap-3 pl-1">
+                  <div>
+                    <Label className="text-[10px] text-muted-foreground">Stock actual</Label>
+                    <Input type="number" min={0} step="any" value={stockQty} onChange={e => setStockQty(e.target.value)} placeholder="0" className="mt-1 h-9 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] text-muted-foreground">Alerta mínima</Label>
+                    <Input type="number" min={0} step="any" value={lowThreshold} onChange={e => setLowThreshold(e.target.value)} placeholder="0" className="mt-1 h-9 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] text-muted-foreground">Unidad</Label>
+                    <Input value={stockUnit} onChange={e => setStockUnit(e.target.value)} placeholder="vial, caja, ud" className="mt-1 h-9 text-sm" />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <DialogFooter className="pt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} size="sm">Cancelar</Button>
