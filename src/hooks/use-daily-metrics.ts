@@ -65,7 +65,6 @@ export function useDailyMetrics(clientId: string | null, days: number = 30): Use
               reach: (existing.reach || 0) + (item.reach || 0),
               impressions: (existing.impressions || 0) + (item.impressions || 0),
               engagement: (existing.engagement || 0) + (item.engagement || 0),
-              followers: Math.max(existing.followers || 0, item.followers || 0),
             });
           }
         }
