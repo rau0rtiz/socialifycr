@@ -26,29 +26,29 @@ function parseDuration(duration: string): number {
 export const useContentData = (clientId: string | null, limit: number = 50, enabled: boolean = true): UseContentDataResult => {
   const { data: connections, isLoading: connectionsLoading } = usePlatformConnections(clientId);
 
-  const metaConnection = connections?.find(c => c.platform === 'meta');
+  const metaConnections = (connections || []).filter(c => c.platform === 'meta' && c.instagram_account_id);
   const youtubeConnection = connections?.find(c => c.platform === 'youtube');
 
   const { data, isLoading: dataLoading, error: queryError, refetch } = useQuery({
-    queryKey: ['content-data', clientId, limit, !!metaConnection, !!youtubeConnection],
+    queryKey: ['content-data', clientId, limit, metaConnections.map(c => c.id).join(','), !!youtubeConnection],
     queryFn: async () => {
       const allContent: ContentPost[] = [];
       const activePlatforms: NetworkType[] = [];
       let hasLiveData = false;
 
-      // Fire both platform fetches in parallel
       const promises: Promise<void>[] = [];
 
-      if (metaConnection) {
+      // Fetch Instagram content from each Meta connection in parallel
+      for (const metaConnection of metaConnections) {
         promises.push(
           supabase.functions.invoke('meta-api', {
-            body: { clientId, endpoint: 'instagram-media-with-insights', params: { limit } }
+            body: { clientId, endpoint: 'instagram-media-with-insights', params: { limit }, connectionId: metaConnection.id }
           }).then(({ data, error: functionError }) => {
             if (!functionError && !data?.error && data?.data) {
               hasLiveData = true;
-              activePlatforms.push('instagram');
+              if (!activePlatforms.includes('instagram')) activePlatforms.push('instagram');
               const instagramContent: ContentPost[] = (data.data || []).map((item: any) => ({
-                id: item.id,
+                id: `${metaConnection.id}:${item.id}`,
                 title: item.caption ? item.caption.substring(0, 50) + (item.caption.length > 50 ? '...' : '') : 'Sin descripción',
                 caption: item.caption || 'Sin descripción',
                 network: 'instagram' as NetworkType,

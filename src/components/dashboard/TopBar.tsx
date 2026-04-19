@@ -5,6 +5,7 @@ import { NotificationsPanel } from './NotificationsPanel';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { ClientSelector } from './ClientSelector';
 import { TeamPresenceBar } from './TeamPresenceBar';
+import { MetaAccountFilter } from './MetaAccountFilter';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
@@ -64,6 +65,8 @@ export const TopBar = () => {
 
         <div className="flex items-center gap-2 md:gap-4">
           {isAgency && <div data-tour="client-selector"><ClientSelector /></div>}
+
+          <MetaAccountFilter />
 
           <TeamPresenceBar />
 
