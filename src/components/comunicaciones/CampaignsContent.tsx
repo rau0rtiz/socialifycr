@@ -90,7 +90,11 @@ const CampaignsContent = () => {
           const cfg = statusConfig[c.status];
           const Icon = cfg.icon;
           return (
-            <Card key={c.id} className="hover:shadow-sm transition-shadow">
+            <Card
+              key={c.id}
+              className="hover:shadow-sm hover:border-primary/40 transition-all cursor-pointer"
+              onClick={() => setPreviewCampaign(c)}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1 space-y-1.5">
