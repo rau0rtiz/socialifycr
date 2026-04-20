@@ -131,13 +131,21 @@ const CampaignsContent = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-xs gap-1 text-muted-foreground"
+                      onClick={(e) => { e.stopPropagation(); setPreviewCampaign(c); }}
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Ver
+                    </Button>
                     {c.status === 'scheduled' && (
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-8 text-xs gap-1"
-                        onClick={() => setCancelId(c.id)}
+                        onClick={(e) => { e.stopPropagation(); setCancelId(c.id); }}
                       >
                         <X className="h-3 w-3" /> Cancelar
                       </Button>
@@ -147,7 +155,7 @@ const CampaignsContent = () => {
                         size="sm"
                         variant="ghost"
                         className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeleteId(c.id)}
+                        onClick={(e) => { e.stopPropagation(); setDeleteId(c.id); }}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
