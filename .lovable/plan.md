@@ -1,13 +1,11 @@
 
+User wants to send standalone emails without templates. The current `SendCampaignDialog` requires a template. Need to make it possible to compose a campaign from scratch with a rich editor or HTML editor, plus subject + recipients + send/schedule.
 
-The user wants to schedule emails from the Comunicaciones tool. Let me look at the existing campaign structure to understand what they have.
+Plan: Add a "Nueva campaña" button at top of CampaignsContent that opens a dialog where you compose subject + content directly (with WYSIWYG or rich textarea), pick recipients, and send/schedule. Keep template-based sending as is.
 
-Looking at the codebase:
-- `email_campaigns` table exists with `status` field, used by `send-campaign` edge function
-- There's a `SendCampaignDialog.tsx` component
-- Currently campaigns are sent immediately
+Quick implementation:
+1. Refactor SendCampaignDialog to make `template` optional. When null, show subject + content fields editable from scratch.
+2. Add "Nueva campaña" button in CampaignsContent that opens it with template=null.
+3. Use a simple rich-text-ish approach: a textarea with HTML support + live preview, OR use the existing email template editor's content area.
 
-Plan: Add scheduling capability — pick a future date/time, save as `scheduled`, and a cron job dispatches them when due.
-
-Keep concise.
-
+Actually the cleanest: extract a small composer. Let me look at SendCampaignDialog quickly.
