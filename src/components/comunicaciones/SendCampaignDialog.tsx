@@ -342,6 +342,16 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Bake custom variables (defined by user with a fixed value) into subject + html
+      // before saving. Per-recipient variables ({{name}}, {{email}}) remain for the
+      // edge function to replace per recipient using recipients_snapshot.
+      const customVarMap: Record<string, string> = {};
+      for (const v of customVariables) {
+        if (v.key.trim()) customVarMap[v.key.trim()] = v.value;
+      }
+      const finalSubject = replaceVariables(editedSubject, customVarMap);
+      const finalHtml = replaceVariables(editedHtml, customVarMap);
+
       const recipientsSnapshot = selectedRecipients.map((r) => ({
         id: r.id,
         email: r.email,
@@ -353,8 +363,8 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         .insert({
           client_id: anyClient.id,
           name: finalName + (sendMode === 'scheduled' ? ' (programada)' : ''),
-          subject: editedSubject,
-          html_content: editedHtml,
+          subject: finalSubject,
+          html_content: finalHtml,
           target_tags: [],
           recipients_snapshot: recipientsSnapshot,
           total_recipients: recipientsSnapshot.length,
