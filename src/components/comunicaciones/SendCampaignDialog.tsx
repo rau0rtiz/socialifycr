@@ -601,18 +601,23 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
                 </div>
               </TabsContent>
               <TabsContent value="code" className="flex-1 min-h-0 mt-2">
-                <Textarea value={editedHtml} onChange={e => setEditedHtml(e.target.value)} className="h-[400px] font-mono text-xs resize-none" spellCheck={false} />
+                <Textarea ref={htmlTextareaRef} value={editedHtml} onChange={e => setEditedHtml(e.target.value)} className="h-[400px] font-mono text-xs resize-none" spellCheck={false} />
               </TabsContent>
             </Tabs>
 
-            {template && template.variables.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                <span className="text-xs text-muted-foreground mr-1">Variables:</span>
-                {template.variables.map(v => (
-                  <Badge key={v.key} variant="outline" className="text-[10px] font-mono cursor-pointer hover:bg-muted" onClick={() => {
-                    navigator.clipboard.writeText(`{{${v.key}}}`);
-                    toast.success(`{{${v.key}}} copiado`);
-                  }}>
+            {composerVariables.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1 rounded-md border bg-muted/30 p-2">
+                <span className="text-xs text-muted-foreground mr-1">
+                  Variables {editorTab === 'code' ? '(click para insertar):' : '(click para copiar):'}
+                </span>
+                {composerVariables.map(v => (
+                  <Badge
+                    key={v.key}
+                    variant="outline"
+                    className="text-[10px] font-mono cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-colors"
+                    title={v.label}
+                    onClick={() => insertVariable(v.key)}
+                  >
                     {`{{${v.key}}}`}
                   </Badge>
                 ))}
