@@ -259,16 +259,16 @@ const Ventas = () => {
   );
 
   const salesDistributionSection = (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+    <div className={`grid grid-cols-1 ${isSilvia ? '' : 'md:grid-cols-2'} gap-4 lg:gap-6`}>
       {hasSalesChartData ? (
         <>
           <SalesByProductChart sales={chartSales} products={clientProducts} />
-          <SalesByBrandChart sales={chartSales} />
+          {!isSilvia && <SalesByBrandChart sales={chartSales} />}
         </>
       ) : (
         <>
           {renderEmptySalesCard('Ventas por Producto')}
-          {renderEmptySalesCard('Ventas por Marca')}
+          {!isSilvia && renderEmptySalesCard('Ventas por Marca')}
         </>
       )}
     </div>
