@@ -1,61 +1,41 @@
 
-Diagnóstico real:
-- El problema ya no es JWT: `handle-unsubscribe` ya está público (`verify_jwt = false`).
-- La ruta `/desuscribirse` también existe y la página sí está leyendo `?token=...`.
-- El fallo real está en la generación del link: la tabla `email_unsubscribe_tokens` tiene `email UNIQUE`, pero varias funciones crean un token nuevo con `insert(...)` en cada envío y no manejan el error si ese email ya tenía token.
-- Resultado: el correo puede salir con un token nuevo que nunca quedó guardado en DB, y después la página muestra “token inválido”. Los logs actuales encajan exactamente con eso: la función recibe token, pero “Token not found”.
+## Plan: reemplazar el donut chart de leads por una visualización mejor
 
-Plan de arreglo:
-1. Crear una lógica única de “obtener o crear token”
-- En vez de generar siempre un UUID nuevo, cada email debe reutilizar su token existente.
-- Flujo:
-  - buscar token por email
-  - si existe, devolverlo
-  - si no existe, crearlo y devolverlo
-- Importante: no rotar el token en cada envío, para que links viejos sigan funcionando.
+### Problema
+El donut chart en `Comunicaciones > Funnels` (drill-down view) ocupa espacio, requiere leer la leyenda al lado, y los porcentajes pequeños son difíciles de comparar entre niveles. Pie/donut charts son notoriamente malos para comparar valores.
 
-2. Aplicar esa lógica en todos los correos que agregan footer de desuscripción
-- `supabase/functions/send-notification-email/index.ts`
-- `supabase/functions/send-campaign/index.ts`
-- `supabase/functions/send-avatar-reminder/index.ts`
-- `supabase/functions/send-funnel-result/index.ts`
-- `supabase/functions/send-mindcoach-avatar-urgent/index.ts`
+### Propuesta: barras horizontales apiladas por nivel
+Reemplazar todo el `<Card>` del donut (líneas 348-398 de `AgencyLeadsContent.tsx`) por una visualización tipo **"distribution bars"**:
 
-3. Simplificar la UX como pediste
-- Cambiar los links para que vayan con `token` y también `email` visible en query.
-- La página `src/pages/Unsubscribe.tsx` debe:
-  - mostrar el email prefilled de inmediato
-  - no depender de una validación previa para renderizar la UI
-  - dejar solo: email + motivo opcional + botón confirmar
-- El token sigue usándose por detrás para seguridad, pero la experiencia se siente “simple”.
+```text
+NIVEL 1 · Idea         ████░░░░░░░░░░░░░░  12   (8%)
+NIVEL 2 · Startup      ██████████░░░░░░░░  34  (24%)
+NIVEL 3 · Growing      ████████████████░░  48  (33%) ← más grande
+NIVEL 4 · Scaling      ████████░░░░░░░░░░  22  (15%) ⭐ calificado
+NIVEL 5 · Established  ██████░░░░░░░░░░░░  18  (13%) ⭐
+NIVEL 6 · Empire       ████░░░░░░░░░░░░░░  10   (7%) ⭐
+                                            ─────
+                                            144 leads · 35% calificados
+```
 
-4. Hacer la acción de desuscribir realmente global
-- En `handle-unsubscribe` además de actualizar `email_contacts`, insertar el email en `suppressed_emails`.
-- Si ya está suprimido o el token ya fue usado, devolver estado “ya desuscrito”.
-- Así evitamos que futuros envíos le sigan llegando desde otros flujos.
+### Diseño visual
+- **6 filas**, una por nivel (siempre las 6, aunque tengan 0).
+- Cada fila: chip de nivel a la izquierda (badge con color del nivel), barra de progreso horizontal en el centro (full width, color del nivel, fondo `bg-muted`), conteo + porcentaje a la derecha.
+- **Highlight visual** para niveles 4-6 (calificados): pequeño ⭐ o badge "calificado" sutil al final de la fila → refuerza qué leads importan más.
+- **Barra superior apilada delgada** (opcional, encima de las filas): una sola barra horizontal de 6px dividida en 6 segmentos proporcionales con los colores de cada nivel — da sensación de "totalidad" sin ser un donut.
+- Animación: las barras crecen de 0% al valor real al montar (`transition-all duration-700`).
+- Hover en cada fila: highlight sutil + tooltip con el nombre completo del nivel.
 
-5. Blindar los envíos futuros
-- Antes de enviar correos manuales o automatizados, validar si el destinatario está en `suppressed_emails`.
-- Si está desuscrito, saltar el envío silenciosamente o registrarlo como omitido.
-- Esto evita que “desuscribirse” sea solo visual.
+### Por qué es mejor
+1. **Comparación directa**: el ojo compara longitudes mucho mejor que ángulos.
+2. **Más información por píxel**: nombre + número + porcentaje + color, todo alineado.
+3. **Mobile-friendly**: las barras se apilan naturalmente, el donut se veía minúsculo en móvil.
+4. **Resalta lo accionable**: marca los calificados (4-6) que son los que el equipo de ventas quiere atacar.
 
-6. Endurecer errores y mensajes
-- Si falta token pero viene email, mostrar mensaje amigable, no “token inválido”.
-- Si token no existe de verdad, mostrar error claro.
-- Si ya estaba desuscrito, mostrar confirmación positiva.
+### Bonus opcional
+Añadir botón pequeño "Filtrar" en cada fila → al hacer click, aplica `setLevelFilter(String(level))` y la tabla de leads de abajo se filtra por ese nivel. Convierte la visualización en un control interactivo.
 
-Archivos a tocar:
-- `src/pages/Unsubscribe.tsx`
-- `supabase/functions/handle-unsubscribe/index.ts`
-- `supabase/functions/send-notification-email/index.ts`
-- `supabase/functions/send-campaign/index.ts`
-- `supabase/functions/send-avatar-reminder/index.ts`
-- `supabase/functions/send-funnel-result/index.ts`
-- `supabase/functions/send-mindcoach-avatar-urgent/index.ts`
+### Archivo a modificar
+- `src/components/comunicaciones/AgencyLeadsContent.tsx` — reemplazar bloque líneas 348-398 (el `<Card>` del donut + leyenda).
 
-Resultado esperado:
-- El link de desuscripción deja de romperse.
-- La página abre con el correo ya visible y solo pide motivo + confirmar.
-- Los links viejos siguen funcionando mejor.
-- Si alguien ya se desuscribió, el sistema lo reconoce.
-- El email queda realmente bloqueado para envíos futuros.
+Sin cambios en datos, hooks, ni nada más. Solo es un swap visual del componente.
