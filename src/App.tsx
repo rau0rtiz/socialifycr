@@ -40,6 +40,7 @@ const Funnel = lazy(() => import("./pages/Funnel"));
 const AgencyLeads = lazy(() => import("./pages/AgencyLeads"));
 const Comunicaciones = lazy(() => import("./pages/Comunicaciones"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const Comisiones = lazy(() => import("./pages/Comisiones"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -151,6 +152,7 @@ const App = () => (
                   <Route path="/reports" element={<ProtectedRoute><Reportes /></ProtectedRoute>} />
                   <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
                   <Route path="/asistencia" element={<ProtectedRoute><Asistencia /></ProtectedRoute>} />
+                  <Route path="/comisiones" element={<ProtectedRoute><Comisiones /></ProtectedRoute>} />
                   <Route path="/actualizar-foto" element={<ProtectedRoute><ActualizarFoto /></ProtectedRoute>} />
                   <Route path="/roadmap" element={<Funnel />} />
                   <Route path="/comunicaciones" element={
