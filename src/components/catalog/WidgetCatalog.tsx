@@ -61,14 +61,8 @@ const WIDGET_CATALOG: WidgetDef[] = [
   // Contenido widgets
   { id: 'content-grid', name: 'Grid de Contenido', description: 'Cuadrícula visual de publicaciones con filtros por tag, modelo, plataforma y búsqueda. Incluye métricas 48h.', icon: Layers, featureFlag: 'content_grid', section: 'contenido', tags: ['contenido', 'grid'] },
   { id: 'content-calendar', name: 'Calendario de Contenido', description: 'Vista mensual de publicaciones con thumbnails, codificación por color por tipo de contenido.', icon: CalendarDays, section: 'contenido', tags: ['calendario', 'planificación'] },
-  { id: 'video-ideas', name: 'Ideas de Video', description: 'Board de ideas de contenido con URLs de referencia, scripts, descripciones y to-dos por publicación.', icon: BookOpen, featureFlag: 'video_ideas', section: 'contenido', tags: ['ideas', 'planificación'] },
   { id: 'generador-pauta', name: 'Generador de Estáticos', description: 'Herramienta para crear anuncios en formatos 1:1, 4:5, 9:16 y 2:1 con logo, textos y exportación HD.', icon: Palette, featureFlag: 'generador_pauta', section: 'contenido', tags: ['diseño', 'ads', 'creativos'] },
   { id: 'giveaway-widget', name: 'Widget de Sorteos', description: 'Selección de publicación, configuración de reglas y animación de sorteo aleatorio para Instagram.', icon: Sparkles, section: 'contenido', clientSpecific: ['petshop2go'], tags: ['sorteo', 'instagram'] },
-
-  // Reportes widgets
-  { id: 'ai-report-generator', name: 'Generador de Reportes IA', description: 'Generación de reportes narrativos con IA basados en datos de rendimiento del cliente.', icon: FileText, section: 'reportes', tags: ['reportes', 'ia'] },
-  { id: 'monthly-sales-report', name: 'Reporte Mensual de Ventas', description: 'Resumen mensual de ventas con gráficos, breakdown por fuente y comparativa.', icon: BarChart3, featureFlag: 'monthly_sales_report', section: 'reportes', tags: ['reportes', 'ventas'] },
-  { id: 'social-performance-report', name: 'Reporte de Rendimiento Social', description: 'Exportación de métricas sociales con gráficos de tendencia y comparativas.', icon: LineChart, section: 'reportes', tags: ['reportes', 'social'] },
 
   // Email Marketing
   { id: 'email-campaigns', name: 'Campañas de Email', description: 'Creación, segmentación por tags y envío masivo de emails con tracking de entrega.', icon: Mail, section: 'email', tags: ['email', 'campañas'] },
@@ -82,7 +76,6 @@ const SECTION_CONFIG: Record<string, { label: string; icon: React.ElementType; c
   dashboard: { label: 'Dashboard', icon: LayoutDashboard, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
   ventas: { label: 'Ventas', icon: ShoppingCart, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
   contenido: { label: 'Contenido', icon: FileText, color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20' },
-  reportes: { label: 'Reportes', icon: BarChart3, color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
   email: { label: 'Email Marketing', icon: Mail, color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' },
   standalone: { label: 'Independiente', icon: Layers, color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20' },
 };
