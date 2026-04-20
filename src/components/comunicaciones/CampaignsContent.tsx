@@ -152,7 +152,16 @@ const CampaignsContent = () => {
             </Card>
           );
         })}
-      </div>
+        </div>
+      )}
+
+      {/* Composer for standalone (no-template) campaigns */}
+      <SendCampaignDialog
+        open={composerOpen}
+        onOpenChange={setComposerOpen}
+        template={null}
+        blankCompose
+      />
 
       {/* Cancel confirmation */}
       <AlertDialog open={!!cancelId} onOpenChange={(o) => !o && setCancelId(null)}>
