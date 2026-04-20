@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, AlertCircle, Loader2, MailMinus } from "lucide-react";
@@ -17,27 +18,24 @@ const REASONS = [
   { value: "otro", label: "Otro" },
 ];
 
-type ViewState = "loading" | "form" | "success" | "already" | "error";
+type ViewState = "form" | "success" | "already" | "error";
 
 const Unsubscribe = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
+  const emailParam = searchParams.get("email");
 
-  const [view, setView] = useState<ViewState>("loading");
-  const [email, setEmail] = useState("");
+  const [view, setView] = useState<ViewState>("form");
+  const [email, setEmail] = useState(emailParam?.toLowerCase() || "");
   const [reason, setReason] = useState("");
   const [otherText, setOtherText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Best-effort: ask backend for canonical email if we only have token
   useEffect(() => {
-    if (!token) {
-      setErrorMsg("No se proporcionó un enlace válido.");
-      setView("error");
-      return;
-    }
-
-    const validate = async () => {
+    if (emailParam || !token) return;
+    (async () => {
       try {
         const res = await fetch(
           `${FN_URL}?token=${encodeURIComponent(token)}`,
@@ -50,27 +48,23 @@ const Unsubscribe = () => {
           }
         );
         const result = await res.json();
-
-        if (!res.ok || !result.valid) {
-          setErrorMsg(result.error || "Enlace inválido o expirado.");
-          setView("error");
-          return;
+        if (res.ok && result.valid && result.email) {
+          setEmail(result.email);
+          if (result.already_used) setView("already");
         }
-
-        setEmail(result.email || "");
-        setView(result.already_used ? "already" : "form");
       } catch (e) {
         console.error("validate error:", e);
-        setErrorMsg("No pudimos validar el enlace. Intentá de nuevo.");
-        setView("error");
       }
-    };
-
-    validate();
-  }, [token]);
+    })();
+  }, [token, emailParam]);
 
   const handleSubmit = async () => {
+    if (!email.trim()) {
+      setErrorMsg("Ingresá un correo válido.");
+      return;
+    }
     setSubmitting(true);
+    setErrorMsg("");
     try {
       const finalReason =
         reason === "otro"
@@ -84,7 +78,7 @@ const Unsubscribe = () => {
           apikey: SUPABASE_ANON_KEY,
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ token, reason: finalReason }),
+        body: JSON.stringify({ token, email, reason: finalReason }),
       });
 
       const result = await res.json();
@@ -109,28 +103,30 @@ const Unsubscribe = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        {/* Logo */}
         <div className="text-center mb-6">
           <h2 className="font-wordmark text-3xl uppercase text-[#212121]">SOCIALIFY</h2>
         </div>
-
-        {view === "loading" && (
-          <div className="flex flex-col items-center gap-4 py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-[#FF6B35]" />
-            <p className="text-gray-500">Validando enlace...</p>
-          </div>
-        )}
 
         {view === "form" && (
           <div className="space-y-6">
             <div className="flex flex-col items-center gap-3">
               <MailMinus className="h-12 w-12 text-muted-foreground" />
               <h1 className="text-xl font-semibold text-gray-800 text-center">¿Deseas desuscribirte?</h1>
-              {email && (
-                <p className="text-sm text-gray-500 text-center">
-                  Dejarás de recibir correos en <strong>{email}</strong>
-                </p>
-              )}
+              <p className="text-sm text-gray-500 text-center">
+                Confirmá el correo que querés desuscribir.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">Correo</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@correo.com"
+                className="bg-gray-50"
+              />
             </div>
 
             <div className="space-y-3">
@@ -157,9 +153,13 @@ const Unsubscribe = () => {
               )}
             </div>
 
+            {errorMsg && (
+              <p className="text-sm text-red-500 text-center">{errorMsg}</p>
+            )}
+
             <Button
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || !email.trim()}
               className="w-full bg-red-500 hover:bg-red-600 text-white"
             >
               {submitting ? (
@@ -179,7 +179,7 @@ const Unsubscribe = () => {
             <CheckCircle className="h-16 w-16 text-green-500" />
             <h1 className="text-xl font-semibold text-gray-800">¡Listo!</h1>
             <p className="text-sm text-gray-500 text-center">
-              Te hemos desuscrito exitosamente. No recibirás más correos de nuestra parte.
+              Te hemos desuscrito exitosamente. <strong>{email}</strong> no recibirá más correos de nuestra parte.
             </p>
           </div>
         )}
@@ -189,7 +189,7 @@ const Unsubscribe = () => {
             <CheckCircle className="h-16 w-16 text-blue-500" />
             <h1 className="text-xl font-semibold text-gray-800">Ya estás desuscrito</h1>
             <p className="text-sm text-gray-500 text-center">
-              Este enlace ya fue utilizado previamente. No recibirás más correos.
+              <strong>{email}</strong> ya no recibirá correos de nuestra parte.
             </p>
           </div>
         )}
@@ -199,6 +199,9 @@ const Unsubscribe = () => {
             <AlertCircle className="h-16 w-16 text-red-400" />
             <h1 className="text-xl font-semibold text-gray-800">Error</h1>
             <p className="text-sm text-gray-500 text-center">{errorMsg}</p>
+            <Button variant="outline" onClick={() => { setView("form"); setErrorMsg(""); }}>
+              Volver
+            </Button>
           </div>
         )}
 
