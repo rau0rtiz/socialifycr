@@ -57,6 +57,15 @@ export interface CloserDirectoryEntry {
   avatarUrl: string | null;
 }
 
+const getMethodAdjustment = (paymentMethod: string | null | undefined) => {
+  const normalized = (paymentMethod || '').toLowerCase();
+  if (normalized.includes('stripe')) return 5;
+  if (normalized.includes('transfer')) return 2;
+  return 0;
+};
+
+const roundMoney = (value: number) => Number(value.toFixed(2));
+
 export const useCommissions = (clientId: string | null) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -131,7 +140,6 @@ export const useCommissions = (clientId: string | null) => {
 
       const saleIds = rawCommissions.map((c: any) => c.sale_id);
 
-      // Fetch all paid collections for these sales
       const { data: collections } = await supabase
         .from('payment_collections')
         .select('sale_id, amount, status')
@@ -150,31 +158,31 @@ export const useCommissions = (clientId: string | null) => {
         const totalSale = Number(c.sale_total || sale.total_sale_amount || 0);
         const tracked = cashBySale.get(c.sale_id);
 
-        // Compute cash collected from THREE possible signals (use the highest):
-        // 1) payment_collections marked as paid
-        // 2) message_sales.installments_paid * installment_amount (manual tracking on the sale itself)
-        // 3) If single payment (no installments), assume fully collected
         const collectionsCollected = tracked?.collected ?? 0;
         const installmentsPaid = Number(sale.installments_paid || 0);
         const installmentAmount = Number(sale.installment_amount || 0);
         const installmentsCollected = installmentsPaid * installmentAmount;
         const numInstallments = Number(sale.num_installments || 1);
 
-        let cashCollected: number;
-        if (numInstallments <= 1) {
-          // Pago único — asumimos cobrado completo (heurística histórica)
-          cashCollected = totalSale;
-        } else {
-          // Tomar el máximo entre lo que indican payment_collections y lo registrado en la venta
-          cashCollected = Math.max(collectionsCollected, installmentsCollected);
-        }
+        const cashCollected = numInstallments <= 1
+          ? totalSale
+          : Math.max(collectionsCollected, installmentsCollected);
 
+        const baseRate = Number(c.base_rate || 10);
+        const methodAdjustment = getMethodAdjustment(c.payment_method);
+        const effectiveRate = Math.max(baseRate - methodAdjustment, 0);
+        const totalCommission = roundMoney(totalSale * (effectiveRate / 100));
         const cashPct = totalSale > 0 ? Math.min(cashCollected / totalSale, 1) : 0;
-        const earnedToDate = Number((c.total_commission * cashPct).toFixed(2));
-        const pendingToPay = Math.max(earnedToDate - Number(c.paid_amount || 0), 0);
+        const earnedToDate = roundMoney(totalCommission * cashPct);
+        const paidAmount = Number(c.paid_amount || 0);
+        const pendingToPay = Math.max(roundMoney(earnedToDate - paidAmount), 0);
 
         return {
           ...c,
+          method_adjustment: methodAdjustment,
+          effective_rate: effectiveRate,
+          total_commission: totalCommission,
+          full_payment_bonus: false,
           customer_name: sale.customer_name ?? null,
           product: sale.product ?? null,
           sale_date: sale.sale_date ?? null,

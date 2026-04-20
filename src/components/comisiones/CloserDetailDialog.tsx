@@ -29,6 +29,11 @@ interface CloserDetailDialogProps {
 const formatMoney = (n: number, currency = 'USD') =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n || 0);
 
+const formatPercent = (n: number) => `${Number(n || 0).toFixed(0)}%`;
+
+const formatMethodLabel = (method: string | null) =>
+  method ? method.charAt(0).toUpperCase() + method.slice(1).toLowerCase() : '—';
+
 const initials = (name: string) =>
   name
     .split(' ')
@@ -68,7 +73,6 @@ export const CloserDetailDialog = ({
     return { sales, totalSales, totalCommission, earned, pending };
   }, [monthCommissions]);
 
-  // Filter payouts to only this closer
   const closerPayouts = useMemo(() => {
     return payouts.filter(p => {
       if (closerUserId && p.closer_user_id === closerUserId) return true;
@@ -77,12 +81,17 @@ export const CloserDetailDialog = ({
     });
   }, [payouts, closerName, closerUserId, closerManualId]);
 
+  const sortedMonthCommissions = useMemo(
+    () => [...monthCommissions].sort((a, b) => (b.sale_date || '').localeCompare(a.sale_date || '')),
+    [monthCommissions]
+  );
+
   const pendingCommissions = monthCommissions.filter(c => (c.pending_to_pay || 0) > 0);
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
@@ -98,10 +107,9 @@ export const CloserDetailDialog = ({
             </DialogTitle>
           </DialogHeader>
 
-          {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <Stat icon={<DollarSign className="h-3.5 w-3.5" />} label="Ventas" value={String(stats.sales)} sub={formatMoney(stats.totalSales, currency)} />
-            <Stat icon={<TrendingUp className="h-3.5 w-3.5 text-blue-500" />} label="Comisión total" value={formatMoney(stats.totalCommission, currency)} />
+            <Stat icon={<TrendingUp className="h-3.5 w-3.5 text-blue-500" />} label="Comisión potencial" value={formatMoney(stats.totalCommission, currency)} />
             <Stat icon={<CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />} label="Devengado" value={formatMoney(stats.earned, currency)} />
             <Stat
               icon={<Clock className="h-3.5 w-3.5 text-amber-500" />}
@@ -129,75 +137,64 @@ export const CloserDetailDialog = ({
             </TabsList>
 
             <TabsContent value="ventas" className="mt-3">
-              <div className="rounded-md border max-h-[50vh] overflow-y-auto">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-card">
-                    <TableRow>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead className="text-right">Venta</TableHead>
-                      <TableHead className="text-center">Método</TableHead>
-                      <TableHead className="text-right">% Com.</TableHead>
-                      <TableHead className="text-right">% Cobrado</TableHead>
-                      <TableHead className="text-right">Comisión</TableHead>
-                      <TableHead className="text-right">Por pagar</TableHead>
-                      <TableHead className="text-center">Estado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {monthCommissions.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                          Sin ventas en este mes
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {monthCommissions.map(c => {
-                      const status = STATUS_LABELS[c.status];
-                      const methodLabel = c.payment_method
-                        ? c.payment_method.charAt(0).toUpperCase() + c.payment_method.slice(1).toLowerCase()
-                        : '—';
-                      return (
-                        <TableRow key={c.id}>
-                          <TableCell className="text-xs whitespace-nowrap">
-                            {c.sale_date ? format(parseISO(c.sale_date), 'dd MMM', { locale: es }) : '—'}
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            <div className="font-medium truncate max-w-[180px]">{c.customer_name || 'Sin nombre'}</div>
-                            {c.product && <div className="text-xs text-muted-foreground truncate max-w-[180px]">{c.product}</div>}
-                          </TableCell>
-                          <TableCell className="text-right text-sm tabular-nums">{formatMoney(c.sale_total, c.currency)}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline" className="text-[10px] font-normal">{methodLabel}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right text-xs tabular-nums">
-                            <div className="font-medium">{Number(c.effective_rate || 0).toFixed(0)}%</div>
-                            {Number(c.method_adjustment || 0) > 0 && (
-                              <div className="text-[9px] text-muted-foreground">
-                                base {Number(c.base_rate || 0).toFixed(0)}% −{Number(c.method_adjustment).toFixed(0)}
-                              </div>
+              <div className="max-h-[52vh] space-y-3 overflow-y-auto pr-1">
+                {sortedMonthCommissions.length === 0 && (
+                  <div className="rounded-lg border py-8 text-center text-sm text-muted-foreground">
+                    Sin ventas en este mes
+                  </div>
+                )}
+
+                {sortedMonthCommissions.map(c => {
+                  const status = STATUS_LABELS[c.status];
+                  const collectedPct = (c.cash_collected_pct || 0) * 100;
+                  const formulaText = `${formatPercent(c.effective_rate)} × ${formatPercent(collectedPct)} cobrado`;
+
+                  return (
+                    <div key={c.id} className="rounded-xl border bg-card p-4 shadow-sm">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-base truncate">{c.customer_name || 'Sin nombre'}</div>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <span>{c.sale_date ? format(parseISO(c.sale_date), 'dd MMM yyyy', { locale: es }) : '—'}</span>
+                            {c.product && (
+                              <>
+                                <span>•</span>
+                                <span className="truncate">{c.product}</span>
+                              </>
                             )}
-                            {c.full_payment_bonus && (
-                              <div className="text-[9px] text-emerald-600 dark:text-emerald-400">bono pago full</div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
-                            {((c.cash_collected_pct || 0) * 100).toFixed(0)}%
-                          </TableCell>
-                          <TableCell className="text-right text-sm font-semibold tabular-nums">
-                            {formatMoney(c.total_commission, c.currency)}
-                          </TableCell>
-                          <TableCell className="text-right text-sm text-amber-600 dark:text-amber-400 tabular-nums">
-                            {formatMoney(c.pending_to_pay || 0, c.currency)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline" className={`text-[10px] ${status.color}`}>{status.label}</Badge>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                          </div>
+                        </div>
+
+                        <Badge variant="outline" className={`w-fit text-[10px] ${status.color}`}>
+                          {status.label}
+                        </Badge>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+                        <MiniMetric label="Venta" value={formatMoney(c.sale_total, c.currency)} />
+                        <MiniMetric label="Método" value={formatMethodLabel(c.payment_method)} />
+                        <MiniMetric
+                          label="Tasa"
+                          value={formatPercent(c.effective_rate)}
+                          hint={Number(c.method_adjustment || 0) > 0 ? `10% - ${formatPercent(c.method_adjustment)}` : 'Sin ajuste'}
+                        />
+                        <MiniMetric
+                          label="Cobrado"
+                          value={formatPercent(collectedPct)}
+                          hint={formatMoney(c.cash_collected || 0, c.currency)}
+                        />
+                        <MiniMetric label="Comisión total" value={formatMoney(c.total_commission, c.currency)} />
+                        <MiniMetric label="Devengado" value={formatMoney(c.earned_to_date || 0, c.currency)} tone="info" />
+                        <MiniMetric label="Pagado" value={formatMoney(c.paid_amount, c.currency)} tone="success" />
+                        <MiniMetric label="Por pagar" value={formatMoney(c.pending_to_pay || 0, c.currency)} tone="warning" />
+                      </div>
+
+                      <div className="mt-3 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">Fórmula:</span> {formulaText} = {formatMoney(c.earned_to_date || 0, c.currency)}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </TabsContent>
 
@@ -294,3 +291,31 @@ const Stat = ({
     {sub && <div className="text-[10px] text-muted-foreground tabular-nums">{sub}</div>}
   </div>
 );
+
+const MiniMetric = ({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: 'info' | 'success' | 'warning';
+}) => {
+  const toneClass = tone === 'info'
+    ? 'text-blue-600 dark:text-blue-400'
+    : tone === 'success'
+    ? 'text-emerald-600 dark:text-emerald-400'
+    : tone === 'warning'
+    ? 'text-amber-600 dark:text-amber-400'
+    : 'text-foreground';
+
+  return (
+    <div className="rounded-lg border bg-muted/20 p-3">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`mt-1 text-sm font-semibold tabular-nums ${toneClass}`}>{value}</div>
+      {hint && <div className="mt-1 text-[10px] text-muted-foreground">{hint}</div>}
+    </div>
+  );
+};
