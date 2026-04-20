@@ -109,10 +109,10 @@ export const CloserDetailDialog = ({
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <Stat icon={<DollarSign className="h-3.5 w-3.5" />} label="Ventas" value={String(stats.sales)} sub={formatMoney(stats.totalSales, currency)} />
-            <Stat icon={<TrendingUp className="h-3.5 w-3.5 text-blue-500" />} label="Comisión potencial" value={formatMoney(stats.totalCommission, currency)} />
-            <Stat icon={<CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />} label="Devengado" value={formatMoney(stats.earned, currency)} />
+            <Stat icon={<TrendingUp className="h-3.5 w-3.5 text-primary" />} label="Comisión potencial" value={formatMoney(stats.totalCommission, currency)} />
+            <Stat icon={<CheckCircle2 className="h-3.5 w-3.5 text-primary" />} label="Devengado" value={formatMoney(stats.earned, currency)} />
             <Stat
-              icon={<Clock className="h-3.5 w-3.5 text-amber-500" />}
+              icon={<Clock className="h-3.5 w-3.5 text-primary" />}
               label="Por pagar"
               value={formatMoney(stats.pending, currency)}
               highlight={stats.pending > 0}
@@ -278,14 +278,14 @@ const Stat = ({
 }) => (
   <div
     className={`rounded-lg border p-2.5 ${
-      highlight ? 'border-amber-500/40 bg-amber-500/5' : 'bg-muted/30'
+      highlight ? 'border-primary/40 bg-primary/5' : 'bg-muted/30'
     }`}
   >
     <div className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
       {icon}
       {label}
     </div>
-    <div className={`text-base font-bold tabular-nums ${highlight ? 'text-amber-700 dark:text-amber-400' : ''}`}>
+    <div className={`text-base font-bold tabular-nums ${highlight ? 'text-primary' : ''}`}>
       {value}
     </div>
     {sub && <div className="text-[10px] text-muted-foreground tabular-nums">{sub}</div>}
@@ -303,13 +303,7 @@ const MiniMetric = ({
   hint?: string;
   tone?: 'info' | 'success' | 'warning';
 }) => {
-  const toneClass = tone === 'info'
-    ? 'text-blue-600 dark:text-blue-400'
-    : tone === 'success'
-    ? 'text-emerald-600 dark:text-emerald-400'
-    : tone === 'warning'
-    ? 'text-amber-600 dark:text-amber-400'
-    : 'text-foreground';
+  const toneClass = tone ? 'text-primary' : 'text-foreground';
 
   return (
     <div className="rounded-lg border bg-muted/20 p-3">
