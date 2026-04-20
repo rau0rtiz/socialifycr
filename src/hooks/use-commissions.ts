@@ -49,9 +49,64 @@ export interface CommissionPayout {
   updated_at: string;
 }
 
+export interface CloserDirectoryEntry {
+  key: string;
+  name: string;
+  userId: string | null;
+  manualId: string | null;
+  avatarUrl: string | null;
+}
+
 export const useCommissions = (clientId: string | null) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+
+  const { data: closersDirectory = [] } = useQuery({
+    queryKey: ['closers-directory', clientId],
+    queryFn: async (): Promise<CloserDirectoryEntry[]> => {
+      if (!clientId) return [];
+      const map = new Map<string, CloserDirectoryEntry>();
+
+      // 1) client_closers (manual)
+      const { data: manual } = await (supabase as any)
+        .from('client_closers')
+        .select('id, name')
+        .eq('client_id', clientId);
+      (manual || []).forEach((m: any) => {
+        const key = `manual:${m.id}`;
+        map.set(key, { key, name: m.name, userId: null, manualId: m.id, avatarUrl: null });
+      });
+
+      // 2) client_team_members con rol closer + perfiles
+      const { data: members } = await supabase
+        .from('client_team_members')
+        .select('user_id, role')
+        .eq('client_id', clientId);
+      const memberCloserIds = (members || [])
+        .filter((m: any) => m.role === 'closer')
+        .map((m: any) => m.user_id);
+      if (memberCloserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, email')
+          .in('id', memberCloserIds);
+        (profiles || []).forEach((p: any) => {
+          const key = `user:${p.id}`;
+          map.set(key, {
+            key,
+            name: p.full_name || p.email || 'Sin nombre',
+            userId: p.id,
+            manualId: null,
+            avatarUrl: p.avatar_url,
+          });
+        });
+      }
+
+      return Array.from(map.values());
+    },
+    enabled: !!clientId,
+    staleTime: 1000 * 60 * 5,
+  });
 
   const { data: commissions = [], isLoading } = useQuery({
     queryKey: ['closer-commissions', clientId],
@@ -254,5 +309,5 @@ export const useCommissions = (clientId: string | null) => {
     },
   });
 
-  return { commissions, payouts, isLoading, recordPayout, markCommissionPaid, updateCommission, deletePayout };
+  return { commissions, payouts, closersDirectory, isLoading, recordPayout, markCommissionPaid, updateCommission, deletePayout };
 };
