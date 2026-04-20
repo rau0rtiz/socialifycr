@@ -33,26 +33,21 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Still loading clients, show minimal loader
-  if (!splashDone && clientsLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const clientBrand = selectedClient ? clientBrands[selectedClient.id] : null;
+  const showSplash = !splashDone && (clientsLoading || !!selectedClient);
 
-  // Show splash once per session
-  if (!splashDone && selectedClient) {
-    const clientBrand = clientBrands[selectedClient.id];
-    return (
-      <SplashScreen
-        client={selectedClient}
-        clientLogo={clientBrand?.logoUrl}
-        onComplete={handleSplashComplete}
-      />
-    );
-  }
+  return (
+    <>
+      {/* Render the app underneath so it loads in parallel with the splash */}
+      {children}
 
-  return <>{children}</>;
+      {showSplash && (
+        <SplashScreen
+          client={selectedClient}
+          clientLogo={clientBrand?.logoUrl}
+          onComplete={handleSplashComplete}
+        />
+      )}
+    </>
+  );
 };
