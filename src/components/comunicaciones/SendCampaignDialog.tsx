@@ -595,7 +595,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         {step === 'confirm' && (
           <div className="space-y-4 flex-1">
             <div className="p-4 rounded-lg bg-muted space-y-3">
-              <div><p className="text-xs text-muted-foreground">Plantilla</p><p className="font-medium text-sm">{template?.name}</p></div>
+              <div><p className="text-xs text-muted-foreground">{template ? 'Plantilla' : 'Campaña'}</p><p className="font-medium text-sm">{template?.name || campaignName.trim() || editedSubject || '(sin nombre)'}</p></div>
               <div><p className="text-xs text-muted-foreground">Asunto</p><p className="font-medium text-sm">{editedSubject}</p></div>
               <div><p className="text-xs text-muted-foreground">Destinatarios</p><p className="font-medium text-sm">{selectedRecipients.length} personas</p></div>
             </div>
