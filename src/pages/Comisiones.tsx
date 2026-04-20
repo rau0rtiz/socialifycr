@@ -8,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RecordPayoutDialog } from '@/components/comisiones/RecordPayoutDialog';
-import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
+import { CloserCommissionCard } from '@/components/comisiones/CloserCommissionCard';
+import { CloserDetailDialog } from '@/components/comisiones/CloserDetailDialog';
+import { MonthSelector } from '@/components/comisiones/MonthSelector';
+import { format, endOfMonth, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { DollarSign, TrendingUp, Wallet, AlertCircle, CheckCircle2, Clock, Trash2, Receipt } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertCircle, CheckCircle2, Clock, Trash2 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -41,63 +42,129 @@ const Comisiones = () => {
 
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
 
-  const { commissions, payouts, isLoading, markCommissionPaid, deletePayout } = useCommissions(hasAccess && isMindCoach ? clientId : null);
+  const { commissions, payouts, closersDirectory, isLoading, markCommissionPaid, deletePayout } = useCommissions(hasAccess && isMindCoach ? clientId : null);
 
-  const [filterCloser, setFilterCloser] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterMonth, setFilterMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
-  const [payoutDialog, setPayoutDialog] = useState<{ closerName: string; closerUserId: string | null; closerManualId: string | null } | null>(null);
-
-  const closers = useMemo(() => {
-    const map = new Map<string, { name: string; userId: string | null; manualId: string | null }>();
-    commissions.forEach(c => {
-      const key = c.closer_user_id || c.closer_manual_id || c.closer_name;
-      if (!map.has(key)) {
-        map.set(key, { name: c.closer_name, userId: c.closer_user_id, manualId: c.closer_manual_id });
-      }
-    });
-    return Array.from(map.entries()).map(([key, v]) => ({ key, ...v }));
-  }, [commissions]);
+  const [openCloser, setOpenCloser] = useState<{
+    name: string;
+    userId: string | null;
+    manualId: string | null;
+    avatarUrl: string | null;
+    currency: string;
+  } | null>(null);
 
   const monthStart = parseISO(`${filterMonth}-01`);
   const monthEnd = endOfMonth(monthStart);
 
-  const filtered = useMemo(() => {
+  // Commissions inside the selected month
+  const monthCommissions = useMemo(() => {
     return commissions.filter(c => {
-      if (filterCloser !== 'all') {
-        const key = c.closer_user_id || c.closer_manual_id || c.closer_name;
-        if (key !== filterCloser) return false;
-      }
-      if (filterStatus !== 'all' && c.status !== filterStatus) return false;
-      if (c.sale_date) {
-        const d = parseISO(c.sale_date);
-        if (d < monthStart || d > monthEnd) return false;
-      }
-      return true;
+      if (!c.sale_date) return false;
+      const d = parseISO(c.sale_date);
+      return d >= monthStart && d <= monthEnd;
     });
-  }, [commissions, filterCloser, filterStatus, monthStart, monthEnd]);
+  }, [commissions, monthStart, monthEnd]);
 
-  // Stats
+  // For "Detalle por venta" tab — month + status filter
+  const filteredDetail = useMemo(() => {
+    return monthCommissions.filter(c => filterStatus === 'all' || c.status === filterStatus);
+  }, [monthCommissions, filterStatus]);
+
+  // KPIs (based on selected month)
   const stats = useMemo(() => {
-    const totalCommissions = filtered.reduce((s, c) => s + c.total_commission, 0);
-    const earnedToDate = filtered.reduce((s, c) => s + (c.earned_to_date || 0), 0);
-    const paidOut = filtered.reduce((s, c) => s + c.paid_amount, 0);
-    const pendingToPay = filtered.reduce((s, c) => s + (c.pending_to_pay || 0), 0);
+    const totalCommissions = monthCommissions.reduce((s, c) => s + c.total_commission, 0);
+    const earnedToDate = monthCommissions.reduce((s, c) => s + (c.earned_to_date || 0), 0);
+    const paidOut = monthCommissions.reduce((s, c) => s + c.paid_amount, 0);
+    const pendingToPay = monthCommissions.reduce((s, c) => s + (c.pending_to_pay || 0), 0);
     return { totalCommissions, earnedToDate, paidOut, pendingToPay };
-  }, [filtered]);
+  }, [monthCommissions]);
 
-  // Group by closer for "Pay" view
-  const byCloser = useMemo(() => {
-    const map = new Map<string, { closerName: string; closerUserId: string | null; closerManualId: string | null; commissions: CloserCommission[]; pendingToPay: number; currency: string }>();
-    filtered.forEach(c => {
-      const key = c.closer_user_id || c.closer_manual_id || c.closer_name;
-      const cur = map.get(key) || { closerName: c.closer_name, closerUserId: c.closer_user_id, closerManualId: c.closer_manual_id, commissions: [], pendingToPay: 0, currency: c.currency };
-      cur.commissions.push(c);
-      cur.pendingToPay += c.pending_to_pay || 0;
-      map.set(key, cur);
+  // Build list of closer cards: merge directory + closers seen in commissions (both historical & this month)
+  const closerCards = useMemo(() => {
+    type CloserInfo = {
+      key: string;
+      name: string;
+      userId: string | null;
+      manualId: string | null;
+      avatarUrl: string | null;
+      commissions: CloserCommission[];
+      currency: string;
+    };
+    const map = new Map<string, CloserInfo>();
+
+    const keyFor = (userId: string | null, manualId: string | null, name: string) =>
+      userId ? `user:${userId}` : manualId ? `manual:${manualId}` : `name:${name.toLowerCase()}`;
+
+    // Seed with directory (so closers without sales still appear)
+    closersDirectory.forEach(d => {
+      map.set(d.key, {
+        key: d.key,
+        name: d.name,
+        userId: d.userId,
+        manualId: d.manualId,
+        avatarUrl: d.avatarUrl,
+        commissions: [],
+        currency: 'USD',
+      });
     });
-    return Array.from(map.values());
-  }, [filtered]);
+
+    // Add commissions for the selected month
+    monthCommissions.forEach(c => {
+      const k = keyFor(c.closer_user_id, c.closer_manual_id, c.closer_name);
+      const existing = map.get(k);
+      if (existing) {
+        existing.commissions.push(c);
+        existing.currency = c.currency;
+      } else {
+        map.set(k, {
+          key: k,
+          name: c.closer_name,
+          userId: c.closer_user_id,
+          manualId: c.closer_manual_id,
+          avatarUrl: null,
+          commissions: [c],
+          currency: c.currency,
+        });
+      }
+    });
+
+    // Also include closers that have historical commissions even if not in this month (so they always appear)
+    commissions.forEach(c => {
+      const k = keyFor(c.closer_user_id, c.closer_manual_id, c.closer_name);
+      if (!map.has(k)) {
+        map.set(k, {
+          key: k,
+          name: c.closer_name,
+          userId: c.closer_user_id,
+          manualId: c.closer_manual_id,
+          avatarUrl: null,
+          commissions: [],
+          currency: c.currency,
+        });
+      }
+    });
+
+    // Sort: pending first (desc), then by sales count desc, then alphabetic
+    return Array.from(map.values()).sort((a, b) => {
+      const pa = a.commissions.reduce((s, c) => s + (c.pending_to_pay || 0), 0);
+      const pb = b.commissions.reduce((s, c) => s + (c.pending_to_pay || 0), 0);
+      if (pb !== pa) return pb - pa;
+      if (b.commissions.length !== a.commissions.length) return b.commissions.length - a.commissions.length;
+      return a.name.localeCompare(b.name);
+    });
+  }, [closersDirectory, monthCommissions, commissions]);
+
+  // Commissions to pass to dialog when a closer is opened
+  const openCloserMonthCommissions = useMemo(() => {
+    if (!openCloser) return [];
+    const k = openCloser.userId
+      ? `user:${openCloser.userId}`
+      : openCloser.manualId
+      ? `manual:${openCloser.manualId}`
+      : `name:${openCloser.name.toLowerCase()}`;
+    return closerCards.find(c => c.key === k)?.commissions || [];
+  }, [openCloser, closerCards]);
 
   if (roleLoading) {
     return <DashboardLayout><div className="p-8">Cargando...</div></DashboardLayout>;
@@ -147,21 +214,7 @@ const Comisiones = () => {
             </p>
           </div>
           <div className="flex gap-2 items-center flex-wrap">
-            <Input
-              type="month"
-              value={filterMonth}
-              onChange={(e) => setFilterMonth(e.target.value)}
-              className="w-40"
-            />
-            <Select value={filterCloser} onValueChange={setFilterCloser}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Closer" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los closers</SelectItem>
-                {closers.map(c => (
-                  <SelectItem key={c.key} value={c.key}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MonthSelector value={filterMonth} onChange={setFilterMonth} />
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-36"><SelectValue placeholder="Estado" /></SelectTrigger>
               <SelectContent>
@@ -209,47 +262,36 @@ const Comisiones = () => {
             <TabsTrigger value="historial">Historial de pagos</TabsTrigger>
           </TabsList>
 
-          {/* By closer / pay */}
+          {/* Por closer — Grid de cards 3:4 */}
           <TabsContent value="por-pagar">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pagos pendientes por closer</CardTitle>
-                <CardDescription>
-                  Monto ya devengado (basado en cobranzas registradas) menos lo ya pagado.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {byCloser.length === 0 ? (
-                  <div className="text-sm text-muted-foreground py-8 text-center">Sin comisiones en este mes.</div>
-                ) : (
-                  <div className="space-y-3">
-                    {byCloser.map(g => (
-                      <div key={g.closerName} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30">
-                        <div>
-                          <div className="font-medium">{g.closerName}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {g.commissions.length} venta{g.commissions.length !== 1 ? 's' : ''}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="text-xs text-muted-foreground">Por pagar</div>
-                            <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{formatMoney(g.pendingToPay, g.currency)}</div>
-                          </div>
-                          <Button
-                            disabled={g.pendingToPay <= 0}
-                            onClick={() => setPayoutDialog({ closerName: g.closerName, closerUserId: g.closerUserId, closerManualId: g.closerManualId })}
-                          >
-                            <Receipt className="h-4 w-4 mr-2" />
-                            Registrar pago
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {closerCards.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                  No hay closers registrados todavía.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {closerCards.map(g => (
+                  <CloserCommissionCard
+                    key={g.key}
+                    closerName={g.name}
+                    avatarUrl={g.avatarUrl}
+                    commissions={g.commissions}
+                    currency={g.currency}
+                    onClick={() =>
+                      setOpenCloser({
+                        name: g.name,
+                        userId: g.userId,
+                        manualId: g.manualId,
+                        avatarUrl: g.avatarUrl,
+                        currency: g.currency,
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Detail by sale */}
@@ -278,10 +320,10 @@ const Comisiones = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.length === 0 && (
+                    {filteredDetail.length === 0 && (
                       <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground py-8">Sin comisiones</TableCell></TableRow>
                     )}
-                    {filtered.map(c => {
+                    {filteredDetail.map(c => {
                       const status = STATUS_LABELS[c.status];
                       const StatusIcon = status.icon;
                       return (
@@ -400,16 +442,19 @@ const Comisiones = () => {
         </Tabs>
       </div>
 
-      {payoutDialog && clientId && (
-        <RecordPayoutDialog
+      {openCloser && clientId && (
+        <CloserDetailDialog
           open
-          onOpenChange={(v) => !v && setPayoutDialog(null)}
+          onOpenChange={(v) => !v && setOpenCloser(null)}
           clientId={clientId}
-          closerName={payoutDialog.closerName}
-          closerUserId={payoutDialog.closerUserId}
-          closerManualId={payoutDialog.closerManualId}
-          pendingCommissions={byCloser.find(g => g.closerName === payoutDialog.closerName)?.commissions.filter(c => (c.pending_to_pay || 0) > 0) || []}
-          currency={byCloser.find(g => g.closerName === payoutDialog.closerName)?.currency || 'USD'}
+          closerName={openCloser.name}
+          closerUserId={openCloser.userId}
+          closerManualId={openCloser.manualId}
+          avatarUrl={openCloser.avatarUrl}
+          monthCommissions={openCloserMonthCommissions}
+          monthLabel={format(monthStart, 'MMMM yyyy', { locale: es })}
+          payouts={payouts}
+          currency={openCloser.currency}
         />
       )}
     </DashboardLayout>
