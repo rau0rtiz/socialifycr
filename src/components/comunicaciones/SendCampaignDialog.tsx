@@ -95,12 +95,16 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   const [sending, setSending] = useState(false);
   const [sendMode, setSendMode] = useState<'now' | 'scheduled'>('now');
   const [scheduledFor, setScheduledFor] = useState<string>(''); // datetime-local value
+  // Custom variables defined by the user (applied to all recipients before send)
+  const [customVariables, setCustomVariables] = useState<{ key: string; label: string; value: string }[]>([]);
+  const [newVarKey, setNewVarKey] = useState('');
+  const [newVarLabel, setNewVarLabel] = useState('');
+  const [newVarValue, setNewVarValue] = useState('');
   const htmlTextareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
 
-  // Variables disponibles en el composer estándar (multi-recipient).
-  // Estas las reemplaza la edge function send-campaign por destinatario.
-  const composerVariables = useMemo(() => {
+  // Per-recipient variables (replaced server-side by send-campaign per recipient)
+  const recipientVariables = useMemo(() => {
     if (template) return template.variables;
     return [
       { key: 'name', label: 'Nombre del destinatario' },
