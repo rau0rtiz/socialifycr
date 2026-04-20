@@ -28,7 +28,7 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
   return (
     <SidebarProvider>
       <div 
-        className="min-h-screen flex w-full bg-muted/30"
+        className="min-h-screen flex w-full bg-background"
         style={combinedStyle}
       >
         <Sidebar />
