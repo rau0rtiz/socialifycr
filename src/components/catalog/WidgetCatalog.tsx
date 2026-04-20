@@ -119,7 +119,6 @@ export const WidgetCatalog = () => {
           dashboard: null,
           ventas: 'ventas_section',
           contenido: 'contenido_section',
-          reportes: 'reportes_section',
           email: 'email_marketing_section',
           standalone: null,
         };

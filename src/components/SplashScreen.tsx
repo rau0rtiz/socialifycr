@@ -233,20 +233,6 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
       );
     }
 
-    // Reports
-    if (flagOn('reportes_section') || flagOn('ai_report_generator') || flagOn('monthly_sales_report')) {
-      conditional.push(
-        queryClient.prefetchQuery({
-          queryKey: ['saved-reports', clientId],
-          queryFn: async () => {
-            const { data } = await supabase.from('saved_reports').select('*').eq('client_id', clientId).order('updated_at', { ascending: false });
-            return data || [];
-          },
-          staleTime: 2 * 60 * 1000,
-        }),
-      );
-    }
-
     await Promise.allSettled(conditional);
   }, [client?.id, queryClient]);
 
