@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Send, Users, Search, ArrowRight, ArrowLeft, Eye, Code, User } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Loader2, Send, Users, Search, ArrowRight, ArrowLeft, Eye, Code, User, Clock, CalendarClock } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { EmailTemplate } from '@/hooks/use-email-templates';
@@ -79,6 +80,9 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   const [editedMessage, setEditedMessage] = useState('');
   const [editorTab, setEditorTab] = useState('preview');
   const [sending, setSending] = useState(false);
+  const [sendMode, setSendMode] = useState<'now' | 'scheduled'>('now');
+  const [scheduledFor, setScheduledFor] = useState<string>(''); // datetime-local value
+  const queryClient = useQueryClient();
 
   // Build variables from lead context
   const leadVars = useMemo(() => buildLeadVariables(leadContext), [leadContext]);
