@@ -345,54 +345,90 @@ const AgencyLeadsContent = () => {
         </Card>
       </div>
 
-      {/* Distribution Donut Chart */}
+      {/* Distribution Bars by Level */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-6">
-            {/* Donut */}
-            <svg viewBox="0 0 36 36" className="h-24 w-24 shrink-0">
-              {(() => {
-                let cumulative = 0;
-                const R = 15.9155;
-                const C = 2 * Math.PI * R; // ~100
-                return [1,2,3,4,5,6].map(level => {
-                  const count = kpiMetrics.levelDist[level] || 0;
-                  const pct = kpiMetrics.total > 0 ? count / kpiMetrics.total : 0;
-                  if (pct === 0) return null;
-                  const dash = pct * C;
-                  const offset = C - cumulative * C + C * 0.25; // rotate to top
-                  cumulative += pct;
-                  return (
-                    <circle
-                      key={level}
-                      cx="18" cy="18" r={R}
-                      fill="none"
-                      stroke={levelColors[level]}
-                      strokeWidth="5"
-                      strokeDasharray={`${dash} ${C - dash}`}
-                      strokeDashoffset={offset}
-                    />
-                  );
-                });
-              })()}
-              {/* Center text */}
-              <text x="18" y="17" textAnchor="middle" className="fill-foreground text-[6px] font-bold">{kpiMetrics.total}</text>
-              <text x="18" y="22" textAnchor="middle" className="fill-muted-foreground text-[3.5px]">leads</text>
-            </svg>
-            {/* Legend */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 flex-1">
-              {[1,2,3,4,5,6].map(level => {
-                const count = kpiMetrics.levelDist[level] || 0;
-                const pct = kpiMetrics.total > 0 ? Math.round((count / kpiMetrics.total) * 100) : 0;
-                return (
-                  <div key={level} className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-sm shrink-0" style={{ backgroundColor: levelColors[level], opacity: count > 0 ? 1 : 0.25 }} />
-                    <span className="text-xs text-foreground font-medium">{levelNames[level]}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">{count} <span className="text-[10px]">({pct}%)</span></span>
-                  </div>
-                );
-              })}
+        <CardContent className="p-4 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Distribución por nivel</h3>
             </div>
+            <div className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{kpiMetrics.total}</span> leads ·{' '}
+              <span className="font-semibold text-emerald-600">{kpiMetrics.qualifiedRate}%</span> calificados
+            </div>
+          </div>
+
+          {/* Stacked summary bar */}
+          <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            {[1, 2, 3, 4, 5, 6].map((level) => {
+              const count = kpiMetrics.levelDist[level] || 0;
+              const pct = kpiMetrics.total > 0 ? (count / kpiMetrics.total) * 100 : 0;
+              if (pct === 0) return null;
+              return (
+                <div
+                  key={level}
+                  className="h-full transition-all duration-700"
+                  style={{ width: `${pct}%`, backgroundColor: levelColors[level] }}
+                  title={`Nivel ${level} · ${levelNames[level]}: ${count}`}
+                />
+              );
+            })}
+          </div>
+
+          {/* Per-level rows */}
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5, 6].map((level) => {
+              const count = kpiMetrics.levelDist[level] || 0;
+              const pct = kpiMetrics.total > 0 ? Math.round((count / kpiMetrics.total) * 100) : 0;
+              const isQualified = level >= 4;
+              const isActive = levelFilter === String(level);
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setLevelFilter(isActive ? 'all' : String(level))}
+                  className={`group flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted/60 ${
+                    isActive ? 'bg-muted' : ''
+                  }`}
+                  title={`Filtrar por Nivel ${level}: ${levelNames[level]}`}
+                >
+                  {/* Level chip */}
+                  <div className="flex w-32 shrink-0 items-center gap-2">
+                    <span
+                      className="inline-flex h-5 min-w-5 items-center justify-center rounded px-1.5 text-[10px] font-bold text-white"
+                      style={{ backgroundColor: levelColors[level], opacity: count > 0 ? 1 : 0.4 }}
+                    >
+                      N{level}
+                    </span>
+                    <span className="truncate text-xs font-medium text-foreground">{levelNames[level]}</span>
+                  </div>
+
+                  {/* Bar */}
+                  <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 ease-out"
+                      style={{
+                        width: `${pct}%`,
+                        backgroundColor: levelColors[level],
+                        opacity: count > 0 ? 1 : 0,
+                      }}
+                    />
+                  </div>
+
+                  {/* Count + percentage */}
+                  <div className="flex w-24 shrink-0 items-center justify-end gap-1.5">
+                    <span className="text-xs font-semibold tabular-nums text-foreground">{count}</span>
+                    <span className="text-[10px] tabular-nums text-muted-foreground">({pct}%)</span>
+                    {isQualified && count > 0 && (
+                      <span className="ml-1 text-[10px]" title="Lead calificado">
+                        ⭐
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
