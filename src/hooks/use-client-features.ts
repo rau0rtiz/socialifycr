@@ -91,8 +91,11 @@ export const SECTION_LABELS: Record<string, string> = {
   asistencia_section: 'Asistencia',
 };
 
-// Dashboard widget flags (deprecated content/social widgets hidden from UI)
+// Dashboard widget flags
 export const DASHBOARD_WIDGET_LABELS: Record<string, string> = {
+  social_followers: 'Seguidores de Redes',
+  instagram_posts: 'Top Posts de Instagram',
+  youtube_videos: 'Top Videos de YouTube',
   funnel: 'Embudo (Funnel)',
   campaigns: 'Campañas',
 };
