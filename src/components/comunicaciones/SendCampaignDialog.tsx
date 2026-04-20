@@ -78,14 +78,16 @@ function replaceVariables(html: string, vars: Record<string, string>): string {
   return result;
 }
 
-export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRecipients, leadContext }: Props) => {
+export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRecipients, leadContext, blankCompose }: Props) => {
   const isOutboundMode = !!leadContext && !!preselectedRecipients?.length;
+  const isBlankMode = !template && !!blankCompose;
 
   const [step, setStep] = useState<Step>('audience');
   const [audienceType, setAudienceType] = useState<AudienceType>('funnel_leads');
   const [selectedFunnelId, setSelectedFunnelId] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [recipientSearch, setRecipientSearch] = useState('');
+  const [campaignName, setCampaignName] = useState('');
   const [editedSubject, setEditedSubject] = useState('');
   const [editedHtml, setEditedHtml] = useState('');
   const [editedMessage, setEditedMessage] = useState('');
@@ -100,29 +102,38 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
   // Reset state when opening
   useEffect(() => {
-    if (open && template) {
-      setRecipientSearch('');
-      setEditorTab('preview');
+    if (!open) return;
+    setRecipientSearch('');
+    setEditorTab('preview');
+    setSendMode('now');
+    setScheduledFor('');
 
+    if (template) {
       if (isOutboundMode) {
-        // Outbound mode: pre-fill with lead context
         setStep('editor');
         setSelectedIds(new Set(preselectedRecipients!.map(r => r.id)));
         const vars = buildLeadVariables(leadContext);
+        setCampaignName(template.name);
         setEditedSubject(replaceVariables(template.subject, vars));
         setEditedHtml(replaceVariables(template.html_content, vars));
         setEditedMessage(vars.custom_intro || '');
       } else {
         setStep('audience');
         setSelectedIds(new Set());
+        setCampaignName(template.name);
         setEditedSubject(template.subject);
         setEditedHtml(template.html_content);
         setEditedMessage('');
       }
-      setSendMode('now');
-      setScheduledFor('');
+    } else if (isBlankMode) {
+      setStep('audience');
+      setSelectedIds(new Set());
+      setCampaignName('');
+      setEditedSubject('');
+      setEditedHtml(DEFAULT_BLANK_HTML);
+      setEditedMessage('');
     }
-  }, [open, template, preselectedRecipients, leadContext, isOutboundMode]);
+  }, [open, template, preselectedRecipients, leadContext, isOutboundMode, isBlankMode]);
 
   // When editedMessage changes in outbound mode, update the {{custom_intro}} in html
   useEffect(() => {
