@@ -1026,6 +1026,185 @@ export type Database = {
         }
         Relationships: []
       }
+      closer_commissions: {
+        Row: {
+          base_rate: number
+          client_id: string
+          closer_manual_id: string | null
+          closer_name: string
+          closer_user_id: string | null
+          created_at: string
+          currency: string
+          earned_amount: number
+          effective_rate: number
+          full_payment_bonus: boolean
+          id: string
+          method_adjustment: number
+          notes: string | null
+          paid_amount: number
+          payment_method: string | null
+          sale_id: string
+          sale_total: number
+          status: string
+          total_commission: number
+          updated_at: string
+        }
+        Insert: {
+          base_rate?: number
+          client_id: string
+          closer_manual_id?: string | null
+          closer_name: string
+          closer_user_id?: string | null
+          created_at?: string
+          currency?: string
+          earned_amount?: number
+          effective_rate: number
+          full_payment_bonus?: boolean
+          id?: string
+          method_adjustment?: number
+          notes?: string | null
+          paid_amount?: number
+          payment_method?: string | null
+          sale_id: string
+          sale_total: number
+          status?: string
+          total_commission: number
+          updated_at?: string
+        }
+        Update: {
+          base_rate?: number
+          client_id?: string
+          closer_manual_id?: string | null
+          closer_name?: string
+          closer_user_id?: string | null
+          created_at?: string
+          currency?: string
+          earned_amount?: number
+          effective_rate?: number
+          full_payment_bonus?: boolean
+          id?: string
+          method_adjustment?: number
+          notes?: string | null
+          paid_amount?: number
+          payment_method?: string | null
+          sale_id?: string
+          sale_total?: number
+          status?: string
+          total_commission?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "closer_commissions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "closer_commissions_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "message_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_payout_items: {
+        Row: {
+          amount_applied: number
+          commission_id: string
+          created_at: string
+          id: string
+          payout_id: string
+        }
+        Insert: {
+          amount_applied: number
+          commission_id: string
+          created_at?: string
+          id?: string
+          payout_id: string
+        }
+        Update: {
+          amount_applied?: number
+          commission_id?: string
+          created_at?: string
+          id?: string
+          payout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_payout_items_commission_id_fkey"
+            columns: ["commission_id"]
+            isOneToOne: false
+            referencedRelation: "closer_commissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_payout_items_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "commission_payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_payouts: {
+        Row: {
+          amount: number
+          client_id: string
+          closer_manual_id: string | null
+          closer_name: string
+          closer_user_id: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          id: string
+          notes: string | null
+          paid_at: string
+          payment_method: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          closer_manual_id?: string | null
+          closer_name: string
+          closer_user_id?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          payment_method?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          closer_manual_id?: string | null
+          closer_name?: string
+          closer_user_id?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          payment_method?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_payouts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_metadata: {
         Row: {
           client_id: string
