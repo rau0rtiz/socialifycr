@@ -348,10 +348,25 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
     });
   };
 
-  // ROAS calculation: ad-attributed sales / ad spend
-  const roas = adSpend > 0 && summary.adAttributedUSD > 0
-    ? (summary.adAttributedUSD / adSpend).toFixed(2)
-    : null;
+  // ROAS calculation: total contract value of ad-attributed sales / ad spend
+  // Uses total_sale_amount (full contract value) — that's the revenue the ad generated,
+  // even when the customer pays in installments. Includes both USD and CRC (converted ~520).
+  // Respects active filters so the ROAS reflects the visible slice of sales.
+  const roas = useMemo(() => {
+    if (adSpend <= 0) return null;
+    const adSales = sales.filter(s => s.source === 'ad' && s.status !== 'cancelled');
+    let revenueUSD = 0;
+    for (const s of adSales) {
+      const contractValue = Number(s.total_sale_amount || s.amount || 0);
+      if (s.currency === 'CRC') {
+        revenueUSD += contractValue / 520;
+      } else {
+        revenueUSD += contractValue;
+      }
+    }
+    if (revenueUSD <= 0) return null;
+    return (revenueUSD / adSpend).toFixed(2);
+  }, [sales, adSpend]);
 
   if (isLoading) {
     return (
