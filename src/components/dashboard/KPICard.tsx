@@ -20,7 +20,7 @@ export const KPICard = ({ data, accentColor }: KPICardProps) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Card className="hover:shadow-md transition-shadow cursor-pointer group">
+        <Card className="cursor-pointer group border-t-[3px] border-t-primary/50">
           <CardContent className="p-3 md:p-5">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-0.5 md:space-y-1 min-w-0">

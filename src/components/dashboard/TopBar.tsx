@@ -78,9 +78,9 @@ export const TopBar = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button data-tour="user-menu" className="flex items-center gap-2 pl-3 md:pl-4 border-l border-border outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md py-1 pr-1 hover:bg-accent/50 transition-colors">
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-8 w-8 ring-2 ring-primary/30">
                   <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                  <AvatarFallback className="text-xs bg-primary/10 text-primary">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="hidden lg:block text-left">
                   <p className="text-sm font-medium text-foreground truncate max-w-[120px]">{displayName}</p>
