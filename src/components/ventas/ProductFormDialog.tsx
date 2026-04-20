@@ -8,8 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useClientProducts, ClientProduct, ProductInput, ProductType } from '@/hooks/use-client-products';
+import { useClientProductCategories } from '@/hooks/use-client-product-categories';
+import { useClientProductTags } from '@/hooks/use-client-product-tags';
+import { ProductTagSelector } from './ProductTagSelector';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Camera, Loader2, X, Boxes, Wrench, Clock } from 'lucide-react';
+import { Package, Camera, Loader2, X, Boxes, Wrench, Clock, Plus, Tag as TagIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -36,6 +39,8 @@ export const ProductFormDialog = ({
   onSaved,
 }: ProductFormDialogProps) => {
   const { addProduct, updateProduct } = useClientProducts(clientId);
+  const { categories } = useClientProductCategories(clientId);
+  const { getTagsForProduct, setProductTags } = useClientProductTags(clientId);
 
   const [name, setName] = useState('');
   const [productType, setProductType] = useState<ProductType>('product');
@@ -50,6 +55,8 @@ export const ProductFormDialog = ({
   const [stockQty, setStockQty] = useState('');
   const [lowThreshold, setLowThreshold] = useState('');
   const [stockUnit, setStockUnit] = useState('');
+  const [category, setCategory] = useState<string>('');
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -67,6 +74,8 @@ export const ProductFormDialog = ({
       setStockQty(editing.stock_quantity != null ? String(editing.stock_quantity) : '');
       setLowThreshold(editing.low_stock_threshold != null ? String(editing.low_stock_threshold) : '');
       setStockUnit(editing.stock_unit || '');
+      setCategory(editing.category || '');
+      setSelectedTagIds(getTagsForProduct(editing.id));
     } else {
       setName(defaultName);
       setProductType('product');
@@ -80,7 +89,10 @@ export const ProductFormDialog = ({
       setStockQty('');
       setLowThreshold('');
       setStockUnit('');
+      setCategory('');
+      setSelectedTagIds([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editing, defaultName]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,21 +130,32 @@ export const ProductFormDialog = ({
       currency,
       description: description.trim(),
       photo_url: photoUrl,
+      category: category.trim() || null,
       track_stock: isService ? false : trackStock,
       stock_quantity: !isService && trackStock && stockQty ? parseFloat(stockQty) : 0,
       low_stock_threshold: !isService && trackStock && lowThreshold ? parseFloat(lowThreshold) : 0,
       stock_unit: !isService && trackStock ? (stockUnit.trim() || null) : null,
     };
     try {
+      let savedId: string;
+      let saved: ClientProduct;
       if (editing) {
         await updateProduct.mutateAsync({ id: editing.id, ...input });
+        savedId = editing.id;
+        saved = { ...editing, ...input } as ClientProduct;
         toast.success(isService ? 'Servicio actualizado' : 'Producto actualizado');
-        onSaved?.({ ...editing, ...input } as ClientProduct);
       } else {
-        const result = await addProduct.mutateAsync(input);
+        saved = await addProduct.mutateAsync(input);
+        savedId = saved.id;
         toast.success(isService ? 'Servicio creado' : 'Producto creado');
-        onSaved?.(result);
       }
+      // Persist tags
+      try {
+        await setProductTags.mutateAsync({ productId: savedId, tagIds: selectedTagIds });
+      } catch (e) {
+        console.warn('Error guardando etiquetas', e);
+      }
+      onSaved?.(saved);
       onOpenChange(false);
     } catch {
       toast.error('Error al guardar');
@@ -253,6 +276,39 @@ export const ProductFormDialog = ({
               className="mt-1.5 min-h-[70px] text-sm"
             />
           </div>
+
+          {/* Category */}
+          <div>
+            <Label className="text-xs flex items-center gap-1.5">
+              <TagIcon className="h-3 w-3 text-muted-foreground" />
+              Categoría
+            </Label>
+            {categories.length > 0 ? (
+              <Select value={category || '__none__'} onValueChange={(v) => setCategory(v === '__none__' ? '' : v)}>
+                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Sin categoría" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin categoría</SelectItem>
+                  {categories.map(c => (
+                    <SelectItem key={c.id} value={c.name}>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }} />
+                        {c.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input value={category} onChange={e => setCategory(e.target.value)} placeholder="Sin categorías creadas" className="mt-1.5" />
+            )}
+          </div>
+
+          {/* Tags */}
+          <ProductTagSelector
+            clientId={clientId}
+            selectedTagIds={selectedTagIds}
+            onChange={setSelectedTagIds}
+          />
 
           <Separator />
 

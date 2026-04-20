@@ -641,6 +641,76 @@ export type Database = {
           },
         ]
       }
+      client_product_categories: {
+        Row: {
+          client_id: string
+          color: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_product_categories_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_product_tags: {
+        Row: {
+          client_id: string
+          color: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          client_id: string
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          client_id?: string
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_product_tags_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_products: {
         Row: {
           audience: string | null
@@ -2091,6 +2161,63 @@ export type Database = {
           },
         ]
       }
+      product_price_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          client_id: string
+          currency: string
+          id: string
+          new_cost: number | null
+          new_price: number | null
+          old_cost: number | null
+          old_price: number | null
+          product_id: string
+          reason: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          client_id: string
+          currency?: string
+          id?: string
+          new_cost?: number | null
+          new_price?: number | null
+          old_cost?: number | null
+          old_price?: number | null
+          product_id: string
+          reason?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          client_id?: string
+          currency?: string
+          id?: string
+          new_cost?: number | null
+          new_price?: number | null
+          old_cost?: number | null
+          old_price?: number | null
+          product_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_price_history_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "client_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_stock_movements: {
         Row: {
           client_id: string
@@ -2134,6 +2261,42 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "client_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_tag_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_tag_assignments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "client_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_tag_assignments_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "client_product_tags"
             referencedColumns: ["id"]
           },
         ]
