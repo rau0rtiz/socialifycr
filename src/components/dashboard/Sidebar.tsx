@@ -156,9 +156,11 @@ export const Sidebar = () => {
           <SidebarGroupLabel>Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {menuItems.map((item) => {
+                const active = isActive(item.url.split('?')[0]);
+                return (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url.split('?')[0])}>
+                  <SidebarMenuButton asChild isActive={active}>
                     <a 
                       href={item.url}
                       data-tour={item.dataTour}
@@ -167,16 +169,19 @@ export const Sidebar = () => {
                         transitionNavigate(item.url);
                       }}
                       className={cn(
-                        "flex items-center gap-3 transition-colors",
-                        isActive(item.url.split('?')[0]) && "bg-accent text-accent-foreground"
+                        "flex items-center gap-3 transition-colors relative",
+                        active
+                          ? "bg-primary/10 text-primary font-semibold before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-r-full before:bg-primary"
+                          : "hover:bg-primary/5 hover:text-primary"
                       )}
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className={cn("h-4 w-4", active && "text-primary")} />
                       <span>{item.title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -205,9 +210,11 @@ export const Sidebar = () => {
             <SidebarGroupLabel>Gestión</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {managementMenuItems.map((item) => (
+                {managementMenuItems.map((item) => {
+                  const active = isActive(item.url);
+                  return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                    <SidebarMenuButton asChild isActive={active}>
                       <a 
                         href={item.url}
                         onClick={(e) => {
@@ -215,16 +222,19 @@ export const Sidebar = () => {
                           transitionNavigate(item.url);
                         }}
                         className={cn(
-                          "flex items-center gap-3 transition-colors",
-                          isActive(item.url) && "bg-accent text-accent-foreground"
+                          "flex items-center gap-3 transition-colors relative",
+                          active
+                            ? "bg-primary/10 text-primary font-semibold before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-r-full before:bg-primary"
+                            : "hover:bg-primary/5 hover:text-primary"
                         )}
                       >
-                        <item.icon className="h-4 w-4" />
+                        <item.icon className={cn("h-4 w-4", active && "text-primary")} />
                         <span>{item.title}</span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                ))}
+                  );
+                })}
                 {isOwnerOrAdmin && selectedClient && (
                   <SidebarMenuItem>
                     <SidebarMenuButton
