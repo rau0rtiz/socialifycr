@@ -39,6 +39,8 @@ function buildHtml(name: string, link: string): string {
   </div>`;
 }
 
+import { generateUnsubscribeUrl, isEmailSuppressed } from "../_shared/unsubscribe.ts";
+
 function buildUnsubscribeFooter(url: string): string {
   return `<div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center;max-width:600px;margin-left:auto;margin-right:auto;">
     <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.5;font-family:Arial,sans-serif;">Si no deseas recibir más correos, puedes <a href="${url}" style="color:#9ca3af;text-decoration:underline;">desuscribirte aquí</a>.</p>
@@ -107,15 +109,16 @@ serve(async (req) => {
 
     for (const profile of recipients) {
       try {
+        // Skip suppressed recipients
+        if (await isEmailSuppressed(supabaseAdmin, profile.email)) {
+          results.push({ email: profile.email, ok: false, skipped: "suppressed" });
+          continue;
+        }
+
         const firstName = (profile.full_name || "").split(" ")[0] || "";
 
-        // Generate per-recipient unsubscribe token
-        const unsubToken = crypto.randomUUID();
-        await supabaseAdmin.from("email_unsubscribe_tokens").insert({
-          token: unsubToken,
-          email: profile.email.toLowerCase(),
-        });
-        const unsubUrl = `https://app.socialifycr.com/desuscribirse?token=${unsubToken}`;
+        // Reuse existing token (or create) so older links keep working
+        const unsubUrl = await generateUnsubscribeUrl(supabaseAdmin, profile.email);
 
         const html = buildHtml(firstName, AVATAR_UPDATE_URL) + buildUnsubscribeFooter(unsubUrl);
 

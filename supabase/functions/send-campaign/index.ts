@@ -101,6 +101,17 @@ serve(async (req) => {
       await Promise.allSettled(
         batch.map(async (contact) => {
           try {
+            // Skip suppressed recipients
+            if (await isEmailSuppressed(supabaseAdmin, contact.email)) {
+              await supabaseAdmin.from("email_send_logs").insert({
+                campaign_id,
+                contact_id: contact.id,
+                status: "skipped",
+                error_message: "suppressed",
+              });
+              return;
+            }
+
             let personalizedHtml = campaign.html_content
               .replace(/\{\{name\}\}/g, contact.full_name || "")
               .replace(/\{\{email\}\}/g, contact.email);

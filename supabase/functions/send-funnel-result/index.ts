@@ -44,6 +44,18 @@ serve(async (req) => {
       });
     }
 
+    const supabaseAdminEarly = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    if (await isEmailSuppressed(supabaseAdminEarly, email)) {
+      console.log(`[send-funnel-result] Skipped suppressed recipient: ${email}`);
+      return new Response(JSON.stringify({ success: true, skipped: true, reason: "suppressed" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,

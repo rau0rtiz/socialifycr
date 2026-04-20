@@ -36,7 +36,16 @@ serve(async (req) => {
   try {
     const { to, toName, subject, html, sentBy, clientId } = await req.json();
 
-    // Generate unsubscribe link
+    // Skip if recipient is suppressed (unsubscribed/bounced)
+    if (await isEmailSuppressed(supabaseAdmin, to)) {
+      console.log(`[send-notification-email] Skipped suppressed recipient: ${to}`);
+      return new Response(JSON.stringify({ success: true, skipped: true, reason: "suppressed" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Generate unsubscribe link (reuses existing token if present)
     const unsubUrl = await generateUnsubscribeUrl(supabaseAdmin, to);
     const unsubFooter = buildUnsubscribeFooter(unsubUrl);
     const htmlWithUnsub = injectUnsubscribeFooter(html, unsubFooter);

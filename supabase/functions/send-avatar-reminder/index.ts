@@ -121,6 +121,11 @@ serve(async (req) => {
 
     for (const profile of usersToNotify) {
       try {
+        // Skip suppressed recipients
+        if (await isEmailSuppressed(supabaseAdmin, profile.email)) {
+          continue;
+        }
+
         // Inject unsubscribe footer per recipient
         const unsubUrl = await generateUnsubscribeUrl(supabaseAdmin, profile.email);
         const emailHtml = injectFooter(baseHtml, buildUnsubscribeFooter(unsubUrl));
