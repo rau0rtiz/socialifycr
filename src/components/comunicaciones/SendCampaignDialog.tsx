@@ -193,10 +193,10 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
     }
   };
 
-  const handleSend = async () => {
+  // Outbound (single-recipient direct send) — keeps existing behavior
+  const handleOutboundSend = async () => {
     if (!template || selectedRecipients.length === 0) return;
     setSending(true);
-
     try {
       let successCount = 0;
       let failCount = 0;
@@ -236,6 +236,99 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
       setSending(false);
     }
   };
+
+  // Standard campaign send/schedule — creates email_campaigns row, then invokes send-campaign or leaves it scheduled
+  const handleCampaignSend = async () => {
+    if (!template || selectedRecipients.length === 0) return;
+
+    // Validate scheduled date
+    let scheduledIso: string | null = null;
+    if (sendMode === 'scheduled') {
+      if (!scheduledFor) {
+        toast.error('Selecciona fecha y hora');
+        return;
+      }
+      const dt = new Date(scheduledFor);
+      if (isNaN(dt.getTime())) {
+        toast.error('Fecha inválida');
+        return;
+      }
+      if (dt.getTime() <= Date.now() + 30_000) {
+        toast.error('La fecha debe ser al menos 1 minuto en el futuro');
+        return;
+      }
+      scheduledIso = dt.toISOString();
+    }
+
+    setSending(true);
+    try {
+      // Resolve a client_id for storage (campaign FK requires it).
+      // Pick any client the user has access to. Comunicaciones is agency-wide,
+      // so this is just a storage owner — recipients_snapshot drives the actual audience.
+      const { data: anyClient, error: clientErr } = await supabase
+        .from('clients')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+      if (clientErr || !anyClient) throw new Error('No se encontró un cliente para asociar la campaña');
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const recipientsSnapshot = selectedRecipients.map((r) => ({
+        id: r.id,
+        email: r.email,
+        name: r.name || null,
+      }));
+
+      const { data: campaign, error: insertErr } = await supabase
+        .from('email_campaigns')
+        .insert({
+          client_id: anyClient.id,
+          name: template.name + (sendMode === 'scheduled' ? ' (programada)' : ''),
+          subject: editedSubject,
+          html_content: editedHtml,
+          target_tags: [],
+          recipients_snapshot: recipientsSnapshot,
+          total_recipients: recipientsSnapshot.length,
+          status: sendMode === 'scheduled' ? 'scheduled' : 'draft',
+          scheduled_for: scheduledIso,
+          created_by: user?.id || null,
+        })
+        .select('id')
+        .single();
+
+      if (insertErr || !campaign) throw insertErr || new Error('No se pudo crear la campaña');
+
+      if (sendMode === 'scheduled') {
+        toast.success(`Campaña programada para ${new Date(scheduledIso!).toLocaleString('es-CR')}`);
+        queryClient.invalidateQueries({ queryKey: ['email-campaigns'] });
+        onOpenChange(false);
+      } else {
+        const { error: invErr } = await supabase.functions.invoke('send-campaign', {
+          body: { campaign_id: campaign.id },
+        });
+        if (invErr) throw invErr;
+        toast.success(`Enviando a ${recipientsSnapshot.length} destinatarios`);
+        queryClient.invalidateQueries({ queryKey: ['email-campaigns'] });
+        queryClient.invalidateQueries({ queryKey: ['sent-emails'] });
+        onOpenChange(false);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error en el envío');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSend = isOutboundMode ? handleOutboundSend : handleCampaignSend;
+
+  // Minimum datetime-local value (now + 1 min, in local time)
+  const minScheduledFor = useMemo(() => {
+    const d = new Date(Date.now() + 60_000);
+    const tzOffset = d.getTimezoneOffset() * 60_000;
+    return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+  }, [open]);
+
 
   const previewHtml = editedHtml;
 
