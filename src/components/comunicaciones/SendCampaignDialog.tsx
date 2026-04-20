@@ -544,9 +544,20 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         {/* ─── Step 2: Editor ─── */}
         {step === 'editor' && (
           <div className="space-y-3 flex-1 min-h-0 flex flex-col">
+            {!template && (
+              <div className="space-y-1">
+                <Label className="text-xs">Nombre interno de la campaña</Label>
+                <Input
+                  value={campaignName}
+                  onChange={e => setCampaignName(e.target.value)}
+                  placeholder="Ej: Newsletter de noviembre"
+                  className="h-9"
+                />
+              </div>
+            )}
             <div className="space-y-1">
               <Label className="text-xs">Asunto</Label>
-              <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} className="h-9" />
+              <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} placeholder="Asunto del correo" className="h-9" />
             </div>
 
             <Tabs value={editorTab} onValueChange={setEditorTab} className="flex-1 flex flex-col min-h-0">
