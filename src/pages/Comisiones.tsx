@@ -42,63 +42,129 @@ const Comisiones = () => {
 
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
 
-  const { commissions, payouts, isLoading, markCommissionPaid, deletePayout } = useCommissions(hasAccess && isMindCoach ? clientId : null);
+  const { commissions, payouts, closersDirectory, isLoading, markCommissionPaid, deletePayout } = useCommissions(hasAccess && isMindCoach ? clientId : null);
 
-  const [filterCloser, setFilterCloser] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterMonth, setFilterMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
-  const [payoutDialog, setPayoutDialog] = useState<{ closerName: string; closerUserId: string | null; closerManualId: string | null } | null>(null);
-
-  const closers = useMemo(() => {
-    const map = new Map<string, { name: string; userId: string | null; manualId: string | null }>();
-    commissions.forEach(c => {
-      const key = c.closer_user_id || c.closer_manual_id || c.closer_name;
-      if (!map.has(key)) {
-        map.set(key, { name: c.closer_name, userId: c.closer_user_id, manualId: c.closer_manual_id });
-      }
-    });
-    return Array.from(map.entries()).map(([key, v]) => ({ key, ...v }));
-  }, [commissions]);
+  const [openCloser, setOpenCloser] = useState<{
+    name: string;
+    userId: string | null;
+    manualId: string | null;
+    avatarUrl: string | null;
+    currency: string;
+  } | null>(null);
 
   const monthStart = parseISO(`${filterMonth}-01`);
   const monthEnd = endOfMonth(monthStart);
 
-  const filtered = useMemo(() => {
+  // Commissions inside the selected month
+  const monthCommissions = useMemo(() => {
     return commissions.filter(c => {
-      if (filterCloser !== 'all') {
-        const key = c.closer_user_id || c.closer_manual_id || c.closer_name;
-        if (key !== filterCloser) return false;
-      }
-      if (filterStatus !== 'all' && c.status !== filterStatus) return false;
-      if (c.sale_date) {
-        const d = parseISO(c.sale_date);
-        if (d < monthStart || d > monthEnd) return false;
-      }
-      return true;
+      if (!c.sale_date) return false;
+      const d = parseISO(c.sale_date);
+      return d >= monthStart && d <= monthEnd;
     });
-  }, [commissions, filterCloser, filterStatus, monthStart, monthEnd]);
+  }, [commissions, monthStart, monthEnd]);
 
-  // Stats
+  // For "Detalle por venta" tab — month + status filter
+  const filteredDetail = useMemo(() => {
+    return monthCommissions.filter(c => filterStatus === 'all' || c.status === filterStatus);
+  }, [monthCommissions, filterStatus]);
+
+  // KPIs (based on selected month)
   const stats = useMemo(() => {
-    const totalCommissions = filtered.reduce((s, c) => s + c.total_commission, 0);
-    const earnedToDate = filtered.reduce((s, c) => s + (c.earned_to_date || 0), 0);
-    const paidOut = filtered.reduce((s, c) => s + c.paid_amount, 0);
-    const pendingToPay = filtered.reduce((s, c) => s + (c.pending_to_pay || 0), 0);
+    const totalCommissions = monthCommissions.reduce((s, c) => s + c.total_commission, 0);
+    const earnedToDate = monthCommissions.reduce((s, c) => s + (c.earned_to_date || 0), 0);
+    const paidOut = monthCommissions.reduce((s, c) => s + c.paid_amount, 0);
+    const pendingToPay = monthCommissions.reduce((s, c) => s + (c.pending_to_pay || 0), 0);
     return { totalCommissions, earnedToDate, paidOut, pendingToPay };
-  }, [filtered]);
+  }, [monthCommissions]);
 
-  // Group by closer for "Pay" view
-  const byCloser = useMemo(() => {
-    const map = new Map<string, { closerName: string; closerUserId: string | null; closerManualId: string | null; commissions: CloserCommission[]; pendingToPay: number; currency: string }>();
-    filtered.forEach(c => {
-      const key = c.closer_user_id || c.closer_manual_id || c.closer_name;
-      const cur = map.get(key) || { closerName: c.closer_name, closerUserId: c.closer_user_id, closerManualId: c.closer_manual_id, commissions: [], pendingToPay: 0, currency: c.currency };
-      cur.commissions.push(c);
-      cur.pendingToPay += c.pending_to_pay || 0;
-      map.set(key, cur);
+  // Build list of closer cards: merge directory + closers seen in commissions (both historical & this month)
+  const closerCards = useMemo(() => {
+    type CloserInfo = {
+      key: string;
+      name: string;
+      userId: string | null;
+      manualId: string | null;
+      avatarUrl: string | null;
+      commissions: CloserCommission[];
+      currency: string;
+    };
+    const map = new Map<string, CloserInfo>();
+
+    const keyFor = (userId: string | null, manualId: string | null, name: string) =>
+      userId ? `user:${userId}` : manualId ? `manual:${manualId}` : `name:${name.toLowerCase()}`;
+
+    // Seed with directory (so closers without sales still appear)
+    closersDirectory.forEach(d => {
+      map.set(d.key, {
+        key: d.key,
+        name: d.name,
+        userId: d.userId,
+        manualId: d.manualId,
+        avatarUrl: d.avatarUrl,
+        commissions: [],
+        currency: 'USD',
+      });
     });
-    return Array.from(map.values());
-  }, [filtered]);
+
+    // Add commissions for the selected month
+    monthCommissions.forEach(c => {
+      const k = keyFor(c.closer_user_id, c.closer_manual_id, c.closer_name);
+      const existing = map.get(k);
+      if (existing) {
+        existing.commissions.push(c);
+        existing.currency = c.currency;
+      } else {
+        map.set(k, {
+          key: k,
+          name: c.closer_name,
+          userId: c.closer_user_id,
+          manualId: c.closer_manual_id,
+          avatarUrl: null,
+          commissions: [c],
+          currency: c.currency,
+        });
+      }
+    });
+
+    // Also include closers that have historical commissions even if not in this month (so they always appear)
+    commissions.forEach(c => {
+      const k = keyFor(c.closer_user_id, c.closer_manual_id, c.closer_name);
+      if (!map.has(k)) {
+        map.set(k, {
+          key: k,
+          name: c.closer_name,
+          userId: c.closer_user_id,
+          manualId: c.closer_manual_id,
+          avatarUrl: null,
+          commissions: [],
+          currency: c.currency,
+        });
+      }
+    });
+
+    // Sort: pending first (desc), then by sales count desc, then alphabetic
+    return Array.from(map.values()).sort((a, b) => {
+      const pa = a.commissions.reduce((s, c) => s + (c.pending_to_pay || 0), 0);
+      const pb = b.commissions.reduce((s, c) => s + (c.pending_to_pay || 0), 0);
+      if (pb !== pa) return pb - pa;
+      if (b.commissions.length !== a.commissions.length) return b.commissions.length - a.commissions.length;
+      return a.name.localeCompare(b.name);
+    });
+  }, [closersDirectory, monthCommissions, commissions]);
+
+  // Commissions to pass to dialog when a closer is opened
+  const openCloserMonthCommissions = useMemo(() => {
+    if (!openCloser) return [];
+    const k = openCloser.userId
+      ? `user:${openCloser.userId}`
+      : openCloser.manualId
+      ? `manual:${openCloser.manualId}`
+      : `name:${openCloser.name.toLowerCase()}`;
+    return closerCards.find(c => c.key === k)?.commissions || [];
+  }, [openCloser, closerCards]);
 
   if (roleLoading) {
     return <DashboardLayout><div className="p-8">Cargando...</div></DashboardLayout>;
