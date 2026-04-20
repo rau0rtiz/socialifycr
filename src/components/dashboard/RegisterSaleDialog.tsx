@@ -1870,17 +1870,19 @@ export const RegisterSaleDialog = ({
           {/* Notes step (last step for standard flow) */}
           {step === notesStepIndex && (
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Plataforma del mensaje</Label>
-                <Select value={messagePlatform} onValueChange={setMessagePlatform}>
-                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
-                  <SelectContent>
-                    {PLATFORM_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {!isSilvia && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Plataforma del mensaje</Label>
+                  <Select value={messagePlatform} onValueChange={setMessagePlatform}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                    <SelectContent>
+                      {PLATFORM_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Notas</Label>
                 <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="text-sm" />
