@@ -292,6 +292,30 @@ export const ResultsStep = ({ level, revenueRange, triedAdsAndQuit, onSubmitCont
               </Button>
             </div>
           )}
+
+          {/* Portfolio CTA — visible for all levels */}
+          {(() => {
+            const portfolioUrl = `https://www.socialifycr.com/?utm_source=funnel&utm_medium=quiz&utm_campaign=business_level_quiz&utm_content=level_${level}_${current.name.toLowerCase()}`;
+            return (
+              <a
+                href={portfolioUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  if (typeof window !== 'undefined' && (window as any).fbq) {
+                    (window as any).fbq('track', 'ViewContent', {
+                      content_name: 'Portfolio Visit from Funnel',
+                      content_category: `Level ${level} - ${current.name}`,
+                    });
+                  }
+                }}
+                className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl border-2 border-[#212121]/10 bg-white hover:bg-[#212121]/5 hover:border-[#212121]/20 transition-colors text-xs md:text-sm font-semibold text-[#212121]"
+              >
+                Ver nuestro portafolio
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            );
+          })()}
         </div>
       )}
     </div>
