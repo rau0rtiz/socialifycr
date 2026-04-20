@@ -315,7 +315,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         .from('email_campaigns')
         .insert({
           client_id: anyClient.id,
-          name: template.name + (sendMode === 'scheduled' ? ' (programada)' : ''),
+          name: finalName + (sendMode === 'scheduled' ? ' (programada)' : ''),
           subject: editedSubject,
           html_content: editedHtml,
           target_tags: [],
