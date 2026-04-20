@@ -96,6 +96,7 @@ export const DASHBOARD_WIDGET_LABELS: Record<string, string> = {
   social_followers: 'Seguidores de Redes',
   instagram_posts: 'Top Posts de Instagram',
   youtube_videos: 'Top Videos de YouTube',
+  content_grid: 'Grid de Contenido',
   funnel: 'Embudo (Funnel)',
   campaigns: 'Campañas',
 };

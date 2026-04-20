@@ -4,19 +4,24 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
 import { InstagramTopPosts } from '@/components/dashboard/InstagramTopPosts';
 import { YouTubeTopVideos } from '@/components/dashboard/YouTubeTopVideos';
+import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Heavy widgets — code-split to shrink initial bundle
 const CampaignsDrilldown = lazy(() => import('@/components/dashboard/CampaignsDrilldown').then(m => ({ default: m.CampaignsDrilldown })));
 const AdvancedFunnelModule = lazy(() => import('@/components/dashboard/AdvancedFunnelModule').then(m => ({ default: m.AdvancedFunnelModule })));
+const ContentGrid = lazy(() => import('@/components/dashboard/ContentGrid').then(m => ({ default: m.ContentGrid })));
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
+import { useContentMetadata } from '@/hooks/use-content-metadata';
 import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { useYouTubeVideos } from '@/hooks/use-youtube-videos';
+import { useCrosspostLinks } from '@/hooks/use-crosspost-links';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useClientFeatures } from '@/hooks/use-client-features';
 
+import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Building2, Plus, RefreshCw, X, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +35,7 @@ const Dashboard = () => {
 
   const { selectedClient, clientBrands, clients, clientsLoading, setSelectedClient } = useBrand();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const { isAgency, isClient, clientAccess, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
 
@@ -63,6 +69,11 @@ const Dashboard = () => {
   const showSocialFollowers = !shouldRespectFlags || flags.social_followers;
   const showInstagramPosts = !shouldRespectFlags || flags.instagram_posts;
   const showYouTubeVideos = !shouldRespectFlags || flags.youtube_videos;
+  const showContentGrid = !shouldRespectFlags || flags.content_grid;
+
+  // Only fetch data when corresponding widget is visible
+  const needsContent = showContentGrid || showInstagramPosts;
+  const needsCrosspost = showContentGrid;
 
   const { data: metaConnection, refetch: refetchConnection } = useMetaConnection(clientId);
 
@@ -78,7 +89,19 @@ const Dashboard = () => {
     isLoading: contentLoading,
     isLiveData: contentIsLive,
     refetch: refetchContent,
-  } = useContentData(clientId, 100, showInstagramPosts);
+  } = useContentData(clientId, 100, needsContent);
+
+  const {
+    tags,
+    models,
+    metadata,
+    createTag,
+    createModel,
+    updateMetadata,
+    updateMetadataMultiple,
+    capture48hMetrics,
+    refetch: refetchMetadata,
+  } = useContentMetadata(needsContent ? clientId : null);
 
   const {
     videos: youtubeVideos,
@@ -87,6 +110,14 @@ const Dashboard = () => {
     refetch: refetchYouTube,
   } = useYouTubeVideos(clientId, 10, showYouTubeVideos);
 
+  const {
+    links: crosspostLinks,
+    addLink: addCrosspostLink,
+    removeLink: removeCrosspostLink,
+    getLinkedPosts,
+    refetch: refetchCrosspostLinks,
+  } = useCrosspostLinks(clientId, needsCrosspost);
+
   // Refresh dashboard data
   const handleRefreshAll = useCallback(async () => {
     setIsRefreshing(true);
@@ -94,10 +125,12 @@ const Dashboard = () => {
       refetchConnection(),
       refetchSocial(),
       refetchContent(),
+      refetchMetadata(),
       refetchYouTube(),
+      refetchCrosspostLinks(),
     ]);
     setIsRefreshing(false);
-  }, [refetchConnection, refetchSocial, refetchContent, refetchYouTube]);
+  }, [refetchConnection, refetchSocial, refetchContent, refetchMetadata, refetchYouTube, refetchCrosspostLinks]);
 
   const hasAdAccount = !!metaConnection?.ad_account_id;
   const hasMetaConnection = !!metaConnection;
@@ -265,6 +298,7 @@ const Dashboard = () => {
             isLoading={contentLoading}
             isLiveData={contentIsLive}
             isConnected={hasMetaConnection}
+            onPostClick={setSelectedPost}
           />
         </div>
       )}
@@ -277,6 +311,31 @@ const Dashboard = () => {
             isLoading={youtubeLoading}
             isConnected={youtubeConnected}
           />
+        </div>
+      )}
+
+      {/* Content Grid */}
+      {showContentGrid && (
+        <div className="mb-3 md:mb-6">
+          <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+            <ContentGrid
+              data={content}
+              isLoading={contentLoading}
+              isLiveData={contentIsLive}
+              onRefresh={refetchContent}
+              tags={tags}
+              models={models}
+              metadata={metadata}
+              onCreateTag={createTag}
+              onCreateModel={createModel}
+              onUpdateMetadata={updateMetadata}
+              onCapture48hMetrics={capture48hMetrics}
+              crosspostLinks={crosspostLinks}
+              onAddCrosspostLink={addCrosspostLink}
+              onRemoveCrosspostLink={removeCrosspostLink}
+              getLinkedPosts={getLinkedPosts}
+            />
+          </Suspense>
         </div>
       )}
 
@@ -297,6 +356,21 @@ const Dashboard = () => {
           </Suspense>
         </div>
       )}
+
+      {/* Content Detail Modal for Top Posts */}
+      <ContentDetailModal
+        post={selectedPost}
+        isOpen={!!selectedPost}
+        onClose={() => setSelectedPost(null)}
+        tags={tags}
+        models={models}
+        metadata={selectedPost ? metadata[selectedPost.id] : undefined}
+        onCreateTag={createTag}
+        onCreateModel={createModel}
+        onUpdateMetadata={updateMetadata}
+        onUpdateMetadataMultiple={updateMetadataMultiple}
+        onCapture48hMetrics={capture48hMetrics}
+      />
     </DashboardLayout>
   );
 };
