@@ -130,21 +130,32 @@ export const ProductFormDialog = ({
       currency,
       description: description.trim(),
       photo_url: photoUrl,
+      category: category.trim() || null,
       track_stock: isService ? false : trackStock,
       stock_quantity: !isService && trackStock && stockQty ? parseFloat(stockQty) : 0,
       low_stock_threshold: !isService && trackStock && lowThreshold ? parseFloat(lowThreshold) : 0,
       stock_unit: !isService && trackStock ? (stockUnit.trim() || null) : null,
     };
     try {
+      let savedId: string;
+      let saved: ClientProduct;
       if (editing) {
         await updateProduct.mutateAsync({ id: editing.id, ...input });
+        savedId = editing.id;
+        saved = { ...editing, ...input } as ClientProduct;
         toast.success(isService ? 'Servicio actualizado' : 'Producto actualizado');
-        onSaved?.({ ...editing, ...input } as ClientProduct);
       } else {
-        const result = await addProduct.mutateAsync(input);
+        saved = await addProduct.mutateAsync(input);
+        savedId = saved.id;
         toast.success(isService ? 'Servicio creado' : 'Producto creado');
-        onSaved?.(result);
       }
+      // Persist tags
+      try {
+        await setProductTags.mutateAsync({ productId: savedId, tagIds: selectedTagIds });
+      } catch (e) {
+        console.warn('Error guardando etiquetas', e);
+      }
+      onSaved?.(saved);
       onOpenChange(false);
     } catch {
       toast.error('Error al guardar');
