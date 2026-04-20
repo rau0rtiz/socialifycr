@@ -1510,6 +1510,7 @@ export type Database = {
           html_content: string
           id: string
           name: string
+          recipients_snapshot: Json | null
           scheduled_at: string | null
           scheduled_for: string | null
           sent_at: string | null
@@ -1530,6 +1531,7 @@ export type Database = {
           html_content?: string
           id?: string
           name: string
+          recipients_snapshot?: Json | null
           scheduled_at?: string | null
           scheduled_for?: string | null
           sent_at?: string | null
@@ -1550,6 +1552,7 @@ export type Database = {
           html_content?: string
           id?: string
           name?: string
+          recipients_snapshot?: Json | null
           scheduled_at?: string | null
           scheduled_for?: string | null
           sent_at?: string | null
