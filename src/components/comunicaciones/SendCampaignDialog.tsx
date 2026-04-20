@@ -452,7 +452,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5" />
             {step === 'audience' && 'Seleccionar destinatarios'}
-            {step === 'editor' && 'Editar plantilla'}
+            {step === 'editor' && (template ? 'Editar plantilla' : 'Componer email')}
             {step === 'confirm' && 'Confirmar envío'}
           </DialogTitle>
           <div className="flex items-center gap-2 pt-2">
