@@ -221,6 +221,61 @@ const CampaignsContent = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Email preview */}
+      <Dialog open={!!previewCampaign} onOpenChange={(o) => !o && setPreviewCampaign(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+          {previewCampaign && (
+            <>
+              <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <DialogTitle className="text-base">{previewCampaign.name}</DialogTitle>
+                  {(() => {
+                    const cfg = statusConfig[previewCampaign.status];
+                    const Icon = cfg.icon;
+                    return (
+                      <Badge variant="outline" className={`text-[10px] gap-1 ${cfg.color}`}>
+                        <Icon className="h-3 w-3" />
+                        {cfg.label}
+                      </Badge>
+                    );
+                  })()}
+                </div>
+                <DialogDescription className="space-y-1 text-xs pt-1">
+                  <div><span className="font-medium text-foreground">Asunto:</span> {previewCampaign.subject}</div>
+                  <div><span className="font-medium text-foreground">De:</span> {previewCampaign.from_name} &lt;{previewCampaign.from_email}&gt;</div>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      {previewCampaign.total_recipients ?? 0} destinatarios
+                    </span>
+                    {previewCampaign.status === 'scheduled' && previewCampaign.scheduled_for && (
+                      <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                        <CalendarClock className="h-3 w-3" />
+                        Sale el {formatDate(previewCampaign.scheduled_for)}
+                      </span>
+                    )}
+                    {previewCampaign.status === 'sent' && previewCampaign.sent_at && (
+                      <span>Enviada el {formatDate(previewCampaign.sent_at)}</span>
+                    )}
+                  </div>
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex-1 overflow-auto bg-muted/30 p-4">
+                <div className="bg-background rounded-lg shadow-sm mx-auto max-w-2xl overflow-hidden">
+                  <iframe
+                    title="Email preview"
+                    srcDoc={previewCampaign.html_content || '<p style="padding:24px;color:#888;font-family:sans-serif">Sin contenido HTML</p>'}
+                    className="w-full border-0"
+                    style={{ minHeight: '60vh', height: '70vh' }}
+                    sandbox=""
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
