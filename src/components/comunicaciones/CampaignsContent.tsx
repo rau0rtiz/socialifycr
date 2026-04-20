@@ -33,54 +33,55 @@ const CampaignsContent = () => {
   const deleteMut = useDeleteCampaign();
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
 
-  if (isLoading) {
-    return (
-      <div className="space-y-3 mt-4">
-        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
-      </div>
-    );
-  }
-
-  if (!campaigns || campaigns.length === 0) {
-    return (
-      <Card className="border-dashed mt-4">
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <CalendarClock className="h-10 w-10 text-muted-foreground/50 mb-3" />
-          <p className="text-muted-foreground text-sm">No hay campañas todavía</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">
-            Crea una campaña desde la pestaña <strong>Plantillas</strong>.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Group: scheduled first, then sending, then rest by date desc
-  const order: Record<EmailCampaign['status'], number> = { scheduled: 0, sending: 1, draft: 2, failed: 3, sent: 4 };
-  const sorted = [...campaigns].sort((a, b) => {
-    const oa = order[a.status] ?? 9;
-    const ob = order[b.status] ?? 9;
-    if (oa !== ob) return oa - ob;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
+  const sorted = campaigns ? (() => {
+    const order: Record<EmailCampaign['status'], number> = { scheduled: 0, sending: 1, draft: 2, failed: 3, sent: 4 };
+    return [...campaigns].sort((a, b) => {
+      const oa = order[a.status] ?? 9;
+      const ob = order[b.status] ?? 9;
+      if (oa !== ob) return oa - ob;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  })() : [];
 
   const scheduled = sorted.filter(c => c.status === 'scheduled');
 
   return (
     <div className="space-y-6 mt-4">
-      <div>
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Send className="h-5 w-5 text-primary" />
-          Campañas
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Histórico de envíos masivos y campañas programadas
-          {scheduled.length > 0 && (
-            <> · <span className="text-amber-600 dark:text-amber-400 font-medium">{scheduled.length} programada{scheduled.length === 1 ? '' : 's'}</span></>
-          )}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Send className="h-5 w-5 text-primary" />
+            Campañas
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Histórico de envíos masivos y campañas programadas
+            {scheduled.length > 0 && (
+              <> · <span className="text-amber-600 dark:text-amber-400 font-medium">{scheduled.length} programada{scheduled.length === 1 ? '' : 's'}</span></>
+            )}
+          </p>
+        </div>
+        <Button onClick={() => setComposerOpen(true)} className="gap-1.5 shrink-0">
+          <Plus className="h-4 w-4" /> Nueva campaña
+        </Button>
       </div>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        </div>
+      ) : sorted.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <CalendarClock className="h-10 w-10 text-muted-foreground/50 mb-3" />
+            <p className="text-muted-foreground text-sm">No hay campañas todavía</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Empieza con <strong>Nueva campaña</strong> arriba o usa una <strong>Plantilla</strong>.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
 
       <div className="space-y-2.5">
         {sorted.map((c) => {
