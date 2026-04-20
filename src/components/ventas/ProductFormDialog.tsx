@@ -39,6 +39,8 @@ export const ProductFormDialog = ({
   onSaved,
 }: ProductFormDialogProps) => {
   const { addProduct, updateProduct } = useClientProducts(clientId);
+  const { categories } = useClientProductCategories(clientId);
+  const { getTagsForProduct, setProductTags } = useClientProductTags(clientId);
 
   const [name, setName] = useState('');
   const [productType, setProductType] = useState<ProductType>('product');
@@ -53,6 +55,8 @@ export const ProductFormDialog = ({
   const [stockQty, setStockQty] = useState('');
   const [lowThreshold, setLowThreshold] = useState('');
   const [stockUnit, setStockUnit] = useState('');
+  const [category, setCategory] = useState<string>('');
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
