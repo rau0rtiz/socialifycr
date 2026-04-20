@@ -1,12 +1,16 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Progress } from '@/components/ui/progress';
-import { SaleGroup, EnrichedCollection } from '@/hooks/use-payment-collections';
-import { CheckCircle2, Clock, AlertTriangle, CalendarDays, Trash2 } from 'lucide-react';
+import { SaleGroup, EnrichedCollection, usePaymentCollections } from '@/hooks/use-payment-collections';
+import { CheckCircle2, Clock, AlertTriangle, CalendarDays, Trash2, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 interface CollectionDetailDialogProps {
   group: SaleGroup;
@@ -15,11 +19,33 @@ interface CollectionDetailDialogProps {
   onMarkPaid: (collection: EnrichedCollection) => void;
   onDelete: (id: string) => void;
   isPending: boolean;
+  clientId: string;
 }
 
 export const CollectionDetailDialog = ({
-  group, open, onOpenChange, onMarkPaid, onDelete, isPending,
+  group, open, onOpenChange, onMarkPaid, onDelete, isPending, clientId,
 }: CollectionDetailDialogProps) => {
+  const { updateCollection } = usePaymentCollections(clientId);
+  const [editingDateId, setEditingDateId] = useState<string | null>(null);
+
+  const handleDateChange = (collection: EnrichedCollection, newDate: Date | undefined) => {
+    if (!newDate) return;
+    const dateStr = format(newDate, 'yyyy-MM-dd');
+    if (dateStr === collection.due_date) {
+      setEditingDateId(null);
+      return;
+    }
+    updateCollection.mutate(
+      { id: collection.id, updates: { due_date: dateStr }, saleId: collection.sale_id },
+      {
+        onSuccess: () => {
+          toast.success('Fecha de cobro actualizada');
+          setEditingDateId(null);
+        },
+        onError: () => toast.error('No se pudo actualizar la fecha'),
+      }
+    );
+  };
   const sym = group.currency === 'CRC' ? '₡' : '$';
   const progressPct = group.totalCount > 0 ? (group.paidCount / group.totalCount) * 100 : 0;
 
