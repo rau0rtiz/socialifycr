@@ -385,6 +385,7 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
           onMarkPaid={handleMarkPaid}
           onDelete={(id) => setDeleteTarget(id)}
           isPending={updateCollection.isPending}
+          clientId={clientId}
         />
       )}
 
