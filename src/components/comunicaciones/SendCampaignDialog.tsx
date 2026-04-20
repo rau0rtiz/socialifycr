@@ -22,7 +22,18 @@ interface Props {
   template: EmailTemplate | null;
   preselectedRecipients?: { id: string; name: string; email: string }[];
   leadContext?: any; // Full lead object from funnel_leads
+  /** When true and template is null, opens the dialog as a blank composer (no template). */
+  blankCompose?: boolean;
 }
+
+const DEFAULT_BLANK_HTML = `<!doctype html>
+<html>
+  <body style="font-family: Arial, sans-serif; color: #1a1a1a; line-height: 1.6; padding: 24px; max-width: 640px; margin: 0 auto;">
+    <p>Hola,</p>
+    <p>Escribe aquí tu mensaje.</p>
+    <p>Saludos,<br/>El equipo</p>
+  </body>
+</html>`;
 
 type AudienceType = 'funnel_leads' | 'email_contacts';
 type Step = 'audience' | 'editor' | 'confirm';
@@ -67,14 +78,16 @@ function replaceVariables(html: string, vars: Record<string, string>): string {
   return result;
 }
 
-export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRecipients, leadContext }: Props) => {
+export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRecipients, leadContext, blankCompose }: Props) => {
   const isOutboundMode = !!leadContext && !!preselectedRecipients?.length;
+  const isBlankMode = !template && !!blankCompose;
 
   const [step, setStep] = useState<Step>('audience');
   const [audienceType, setAudienceType] = useState<AudienceType>('funnel_leads');
   const [selectedFunnelId, setSelectedFunnelId] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [recipientSearch, setRecipientSearch] = useState('');
+  const [campaignName, setCampaignName] = useState('');
   const [editedSubject, setEditedSubject] = useState('');
   const [editedHtml, setEditedHtml] = useState('');
   const [editedMessage, setEditedMessage] = useState('');
@@ -89,29 +102,38 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
   // Reset state when opening
   useEffect(() => {
-    if (open && template) {
-      setRecipientSearch('');
-      setEditorTab('preview');
+    if (!open) return;
+    setRecipientSearch('');
+    setEditorTab('preview');
+    setSendMode('now');
+    setScheduledFor('');
 
+    if (template) {
       if (isOutboundMode) {
-        // Outbound mode: pre-fill with lead context
         setStep('editor');
         setSelectedIds(new Set(preselectedRecipients!.map(r => r.id)));
         const vars = buildLeadVariables(leadContext);
+        setCampaignName(template.name);
         setEditedSubject(replaceVariables(template.subject, vars));
         setEditedHtml(replaceVariables(template.html_content, vars));
         setEditedMessage(vars.custom_intro || '');
       } else {
         setStep('audience');
         setSelectedIds(new Set());
+        setCampaignName(template.name);
         setEditedSubject(template.subject);
         setEditedHtml(template.html_content);
         setEditedMessage('');
       }
-      setSendMode('now');
-      setScheduledFor('');
+    } else if (isBlankMode) {
+      setStep('audience');
+      setSelectedIds(new Set());
+      setCampaignName('');
+      setEditedSubject('');
+      setEditedHtml(DEFAULT_BLANK_HTML);
+      setEditedMessage('');
     }
-  }, [open, template, preselectedRecipients, leadContext, isOutboundMode]);
+  }, [open, template, preselectedRecipients, leadContext, isOutboundMode, isBlankMode]);
 
   // When editedMessage changes in outbound mode, update the {{custom_intro}} in html
   useEffect(() => {
@@ -239,7 +261,16 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
   // Standard campaign send/schedule — creates email_campaigns row, then invokes send-campaign or leaves it scheduled
   const handleCampaignSend = async () => {
-    if (!template || selectedRecipients.length === 0) return;
+    if (selectedRecipients.length === 0) return;
+    if (!editedSubject.trim()) {
+      toast.error('Agrega un asunto');
+      return;
+    }
+    if (!editedHtml.trim()) {
+      toast.error('El contenido del email está vacío');
+      return;
+    }
+    const finalName = (campaignName.trim() || template?.name || editedSubject.trim()).slice(0, 200);
 
     // Validate scheduled date
     let scheduledIso: string | null = null;
@@ -284,7 +315,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         .from('email_campaigns')
         .insert({
           client_id: anyClient.id,
-          name: template.name + (sendMode === 'scheduled' ? ' (programada)' : ''),
+          name: finalName + (sendMode === 'scheduled' ? ' (programada)' : ''),
           subject: editedSubject,
           html_content: editedHtml,
           target_tags: [],
@@ -421,7 +452,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5" />
             {step === 'audience' && 'Seleccionar destinatarios'}
-            {step === 'editor' && 'Editar plantilla'}
+            {step === 'editor' && (template ? 'Editar plantilla' : 'Componer email')}
             {step === 'confirm' && 'Confirmar envío'}
           </DialogTitle>
           <div className="flex items-center gap-2 pt-2">
@@ -513,9 +544,20 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         {/* ─── Step 2: Editor ─── */}
         {step === 'editor' && (
           <div className="space-y-3 flex-1 min-h-0 flex flex-col">
+            {!template && (
+              <div className="space-y-1">
+                <Label className="text-xs">Nombre interno de la campaña</Label>
+                <Input
+                  value={campaignName}
+                  onChange={e => setCampaignName(e.target.value)}
+                  placeholder="Ej: Newsletter de noviembre"
+                  className="h-9"
+                />
+              </div>
+            )}
             <div className="space-y-1">
               <Label className="text-xs">Asunto</Label>
-              <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} className="h-9" />
+              <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} placeholder="Asunto del correo" className="h-9" />
             </div>
 
             <Tabs value={editorTab} onValueChange={setEditorTab} className="flex-1 flex flex-col min-h-0">
@@ -553,7 +595,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         {step === 'confirm' && (
           <div className="space-y-4 flex-1">
             <div className="p-4 rounded-lg bg-muted space-y-3">
-              <div><p className="text-xs text-muted-foreground">Plantilla</p><p className="font-medium text-sm">{template?.name}</p></div>
+              <div><p className="text-xs text-muted-foreground">{template ? 'Plantilla' : 'Campaña'}</p><p className="font-medium text-sm">{template?.name || campaignName.trim() || editedSubject || '(sin nombre)'}</p></div>
               <div><p className="text-xs text-muted-foreground">Asunto</p><p className="font-medium text-sm">{editedSubject}</p></div>
               <div><p className="text-xs text-muted-foreground">Destinatarios</p><p className="font-medium text-sm">{selectedRecipients.length} personas</p></div>
             </div>
@@ -628,7 +670,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
             </>
           )}
           {step === 'editor' && (
-            <Button onClick={() => setStep('confirm')} className="gap-1.5">
+            <Button onClick={() => setStep('confirm')} disabled={!editedSubject.trim() || !editedHtml.trim()} className="gap-1.5">
               Siguiente <ArrowRight className="h-4 w-4" />
             </Button>
           )}
