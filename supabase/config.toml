@@ -47,3 +47,9 @@ verify_jwt = true
 
 [functions.handle-unsubscribe]
 verify_jwt = false
+
+[functions.dispatch-scheduled-campaigns]
+verify_jwt = false
+
+[functions.send-campaign]
+verify_jwt = true

@@ -1510,7 +1510,9 @@ export type Database = {
           html_content: string
           id: string
           name: string
+          recipients_snapshot: Json | null
           scheduled_at: string | null
+          scheduled_for: string | null
           sent_at: string | null
           sent_count: number | null
           status: string
@@ -1529,7 +1531,9 @@ export type Database = {
           html_content?: string
           id?: string
           name: string
+          recipients_snapshot?: Json | null
           scheduled_at?: string | null
+          scheduled_for?: string | null
           sent_at?: string | null
           sent_count?: number | null
           status?: string
@@ -1548,7 +1552,9 @@ export type Database = {
           html_content?: string
           id?: string
           name?: string
+          recipients_snapshot?: Json | null
           scheduled_at?: string | null
+          scheduled_for?: string | null
           sent_at?: string | null
           sent_count?: number | null
           status?: string

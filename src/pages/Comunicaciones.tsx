@@ -3,12 +3,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Mail, Megaphone, FileText, Loader2, RefreshCw } from 'lucide-react';
+import { Mail, Megaphone, FileText, Loader2, RefreshCw, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 const EmailsLogContent = lazy(() => import('@/components/comunicaciones/EmailsLogContent'));
 const AgencyLeadsContent = lazy(() => import('@/components/comunicaciones/AgencyLeadsContent'));
 const EmailTemplatesContent = lazy(() => import('@/components/comunicaciones/EmailTemplatesContent'));
+const CampaignsContent = lazy(() => import('@/components/comunicaciones/CampaignsContent'));
 
 const Loader = () => (
   <div className="flex justify-center py-12">
@@ -28,6 +29,7 @@ const Comunicaciones = () => {
       queryClient.invalidateQueries({ queryKey: ['funnel-lead-counts'] }),
       queryClient.invalidateQueries({ queryKey: ['funnels'] }),
       queryClient.invalidateQueries({ queryKey: ['email-templates'] }),
+      queryClient.invalidateQueries({ queryKey: ['email-campaigns'] }),
     ]);
     setRefreshing(false);
     toast.success('Datos actualizados');
@@ -61,6 +63,10 @@ const Comunicaciones = () => {
               <FileText className="h-4 w-4" />
               Plantillas
             </TabsTrigger>
+            <TabsTrigger value="campanas" className="gap-1.5">
+              <Send className="h-4 w-4" />
+              Campañas
+            </TabsTrigger>
             <TabsTrigger value="leads" className="gap-1.5">
               <Megaphone className="h-4 w-4" />
               Funnels
@@ -79,6 +85,12 @@ const Comunicaciones = () => {
             </Suspense>
           </TabsContent>
 
+          <TabsContent value="campanas">
+            <Suspense fallback={<Loader />}>
+              <CampaignsContent />
+            </Suspense>
+          </TabsContent>
+
           <TabsContent value="leads">
             <Suspense fallback={<Loader />}>
               <AgencyLeadsContent />
@@ -91,3 +103,4 @@ const Comunicaciones = () => {
 };
 
 export default Comunicaciones;
+

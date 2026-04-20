@@ -19,7 +19,6 @@ serve(async (req) => {
   }
 
   try {
-    // Validate auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -27,33 +26,36 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not configured");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: corsHeaders,
-      });
-    }
 
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY not configured");
+    // Allow either a real user JWT or the service-role key (used by dispatcher)
+    let isServiceRoleCall = false;
+    if (token === SERVICE_ROLE_KEY) {
+      isServiceRoleCall = true;
+    } else {
+      const supabase = createClient(SUPABASE_URL, ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+      if (claimsError || !claimsData?.claims) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: corsHeaders,
+        });
+      }
     }
 
     const { campaign_id } = await req.json();
     if (!campaign_id) throw new Error("campaign_id is required");
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     // Get campaign
     const { data: campaign, error: campErr } = await supabaseAdmin
@@ -65,20 +67,33 @@ serve(async (req) => {
     if (campErr || !campaign) throw new Error("Campaign not found");
     if (campaign.status === "sent") throw new Error("Campaign already sent");
 
-    // Get contacts
-    let query = supabaseAdmin
-      .from("email_contacts")
-      .select("id, email, full_name")
-      .eq("client_id", campaign.client_id)
-      .eq("status", "active");
+    // Resolve recipients: prefer snapshot, fallback to email_contacts query
+    type Recipient = { id: string; email: string; full_name: string | null };
+    let contacts: Recipient[] = [];
 
-    if (campaign.target_tags && campaign.target_tags.length > 0) {
-      query = query.overlaps("tags", campaign.target_tags);
+    if (Array.isArray(campaign.recipients_snapshot) && campaign.recipients_snapshot.length > 0) {
+      contacts = (campaign.recipients_snapshot as any[]).map((r) => ({
+        id: r.id || r.email,
+        email: r.email,
+        full_name: r.name || r.full_name || null,
+      }));
+    } else {
+      let query = supabaseAdmin
+        .from("email_contacts")
+        .select("id, email, full_name")
+        .eq("client_id", campaign.client_id)
+        .eq("status", "active");
+
+      if (campaign.target_tags && campaign.target_tags.length > 0) {
+        query = query.overlaps("tags", campaign.target_tags);
+      }
+
+      const { data, error: contactsErr } = await query;
+      if (contactsErr) throw contactsErr;
+      contacts = (data || []) as Recipient[];
     }
 
-    const { data: contacts, error: contactsErr } = await query;
-    if (contactsErr) throw contactsErr;
-    if (!contacts || contacts.length === 0) throw new Error("No contacts found");
+    if (contacts.length === 0) throw new Error("No contacts found");
 
     // Update campaign status
     await supabaseAdmin
@@ -92,7 +107,6 @@ serve(async (req) => {
 
     let sentCount = 0;
     let failedCount = 0;
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 
     const batchSize = 5;
     for (let i = 0; i < contacts.length; i += batchSize) {
@@ -101,7 +115,6 @@ serve(async (req) => {
       await Promise.allSettled(
         batch.map(async (contact) => {
           try {
-            // Skip suppressed recipients
             if (await isEmailSuppressed(supabaseAdmin, contact.email)) {
               await supabaseAdmin.from("email_send_logs").insert({
                 campaign_id,
@@ -116,7 +129,10 @@ serve(async (req) => {
               .replace(/\{\{name\}\}/g, contact.full_name || "")
               .replace(/\{\{email\}\}/g, contact.email);
 
-            // Inject unsubscribe footer
+            const personalizedSubject = campaign.subject
+              .replace(/\{\{name\}\}/g, contact.full_name || "")
+              .replace(/\{\{email\}\}/g, contact.email);
+
             const unsubUrl = await generateUnsubscribeUrl(supabaseAdmin, contact.email);
             personalizedHtml = injectFooter(personalizedHtml, buildUnsubscribeFooter(unsubUrl));
 
@@ -129,7 +145,7 @@ serve(async (req) => {
               body: JSON.stringify({
                 from: `${campaign.from_name} <${campaign.from_email}>`,
                 to: [contact.email],
-                subject: campaign.subject,
+                subject: personalizedSubject,
                 html: personalizedHtml,
               }),
             });
@@ -148,7 +164,7 @@ serve(async (req) => {
             const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
               recipient_email: contact.email,
               recipient_name: contact.full_name || null,
-              subject: campaign.subject,
+              subject: personalizedSubject,
               html_content: personalizedHtml,
               source: "campaign",
               status: "sent",
@@ -163,7 +179,7 @@ serve(async (req) => {
             }
 
             sentCount++;
-          } catch (err) {
+          } catch (err: any) {
             await supabaseAdmin.from("email_send_logs").insert({
               campaign_id,
               contact_id: contact.id,
@@ -204,7 +220,7 @@ serve(async (req) => {
       JSON.stringify({ success: true, total: contacts.length, sent: sentCount, failed: failedCount }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error sending campaign:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

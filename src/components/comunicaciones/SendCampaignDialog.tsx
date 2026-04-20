@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Send, Users, Search, ArrowRight, ArrowLeft, Eye, Code, User } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Loader2, Send, Users, Search, ArrowRight, ArrowLeft, Eye, Code, User, Clock, CalendarClock } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { EmailTemplate } from '@/hooks/use-email-templates';
@@ -79,6 +80,9 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   const [editedMessage, setEditedMessage] = useState('');
   const [editorTab, setEditorTab] = useState('preview');
   const [sending, setSending] = useState(false);
+  const [sendMode, setSendMode] = useState<'now' | 'scheduled'>('now');
+  const [scheduledFor, setScheduledFor] = useState<string>(''); // datetime-local value
+  const queryClient = useQueryClient();
 
   // Build variables from lead context
   const leadVars = useMemo(() => buildLeadVariables(leadContext), [leadContext]);
@@ -104,6 +108,8 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         setEditedHtml(template.html_content);
         setEditedMessage('');
       }
+      setSendMode('now');
+      setScheduledFor('');
     }
   }, [open, template, preselectedRecipients, leadContext, isOutboundMode]);
 
@@ -187,10 +193,10 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
     }
   };
 
-  const handleSend = async () => {
+  // Outbound (single-recipient direct send) — keeps existing behavior
+  const handleOutboundSend = async () => {
     if (!template || selectedRecipients.length === 0) return;
     setSending(true);
-
     try {
       let successCount = 0;
       let failCount = 0;
@@ -230,6 +236,99 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
       setSending(false);
     }
   };
+
+  // Standard campaign send/schedule — creates email_campaigns row, then invokes send-campaign or leaves it scheduled
+  const handleCampaignSend = async () => {
+    if (!template || selectedRecipients.length === 0) return;
+
+    // Validate scheduled date
+    let scheduledIso: string | null = null;
+    if (sendMode === 'scheduled') {
+      if (!scheduledFor) {
+        toast.error('Selecciona fecha y hora');
+        return;
+      }
+      const dt = new Date(scheduledFor);
+      if (isNaN(dt.getTime())) {
+        toast.error('Fecha inválida');
+        return;
+      }
+      if (dt.getTime() <= Date.now() + 30_000) {
+        toast.error('La fecha debe ser al menos 1 minuto en el futuro');
+        return;
+      }
+      scheduledIso = dt.toISOString();
+    }
+
+    setSending(true);
+    try {
+      // Resolve a client_id for storage (campaign FK requires it).
+      // Pick any client the user has access to. Comunicaciones is agency-wide,
+      // so this is just a storage owner — recipients_snapshot drives the actual audience.
+      const { data: anyClient, error: clientErr } = await supabase
+        .from('clients')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+      if (clientErr || !anyClient) throw new Error('No se encontró un cliente para asociar la campaña');
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const recipientsSnapshot = selectedRecipients.map((r) => ({
+        id: r.id,
+        email: r.email,
+        name: r.name || null,
+      }));
+
+      const { data: campaign, error: insertErr } = await supabase
+        .from('email_campaigns')
+        .insert({
+          client_id: anyClient.id,
+          name: template.name + (sendMode === 'scheduled' ? ' (programada)' : ''),
+          subject: editedSubject,
+          html_content: editedHtml,
+          target_tags: [],
+          recipients_snapshot: recipientsSnapshot,
+          total_recipients: recipientsSnapshot.length,
+          status: sendMode === 'scheduled' ? 'scheduled' : 'draft',
+          scheduled_for: scheduledIso,
+          created_by: user?.id || null,
+        })
+        .select('id')
+        .single();
+
+      if (insertErr || !campaign) throw insertErr || new Error('No se pudo crear la campaña');
+
+      if (sendMode === 'scheduled') {
+        toast.success(`Campaña programada para ${new Date(scheduledIso!).toLocaleString('es-CR')}`);
+        queryClient.invalidateQueries({ queryKey: ['email-campaigns'] });
+        onOpenChange(false);
+      } else {
+        const { error: invErr } = await supabase.functions.invoke('send-campaign', {
+          body: { campaign_id: campaign.id },
+        });
+        if (invErr) throw invErr;
+        toast.success(`Enviando a ${recipientsSnapshot.length} destinatarios`);
+        queryClient.invalidateQueries({ queryKey: ['email-campaigns'] });
+        queryClient.invalidateQueries({ queryKey: ['sent-emails'] });
+        onOpenChange(false);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error en el envío');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSend = isOutboundMode ? handleOutboundSend : handleCampaignSend;
+
+  // Minimum datetime-local value (now + 1 min, in local time)
+  const minScheduledFor = useMemo(() => {
+    const d = new Date(Date.now() + 60_000);
+    const tzOffset = d.getTimezoneOffset() * 60_000;
+    return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+  }, [open]);
+
 
   const previewHtml = editedHtml;
 
@@ -480,6 +579,37 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
                 style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '200%' }}
               />
             </div>
+
+            {/* Scheduling */}
+            <div className="rounded-lg border p-3 space-y-3">
+              <Label className="text-xs flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" /> ¿Cuándo enviar?
+              </Label>
+              <RadioGroup value={sendMode} onValueChange={(v) => setSendMode(v as 'now' | 'scheduled')} className="grid grid-cols-2 gap-2">
+                <label className={`flex items-center gap-2 rounded-md border p-2.5 cursor-pointer transition-colors ${sendMode === 'now' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}>
+                  <RadioGroupItem value="now" />
+                  <Send className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium">Enviar ahora</span>
+                </label>
+                <label className={`flex items-center gap-2 rounded-md border p-2.5 cursor-pointer transition-colors ${sendMode === 'scheduled' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}>
+                  <RadioGroupItem value="scheduled" />
+                  <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium">Programar</span>
+                </label>
+              </RadioGroup>
+              {sendMode === 'scheduled' && (
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Fecha y hora (zona horaria local)</Label>
+                  <Input
+                    type="datetime-local"
+                    min={minScheduledFor}
+                    value={scheduledFor}
+                    onChange={(e) => setScheduledFor(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -503,8 +633,14 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
             </Button>
           )}
           {step === 'confirm' && (
-            <Button onClick={handleSend} disabled={sending} className="gap-1.5">
-              {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : <><Send className="h-4 w-4" /> Enviar a {selectedRecipients.length}</>}
+            <Button onClick={handleSend} disabled={sending || (sendMode === 'scheduled' && !scheduledFor)} className="gap-1.5">
+              {sending ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Procesando...</>
+              ) : sendMode === 'scheduled' ? (
+                <><CalendarClock className="h-4 w-4" /> Programar envío</>
+              ) : (
+                <><Send className="h-4 w-4" /> Enviar a {selectedRecipients.length}</>
+              )}
             </Button>
           )}
         </DialogFooter>
