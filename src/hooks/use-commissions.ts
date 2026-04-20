@@ -122,7 +122,7 @@ export const useCommissions = (clientId: string | null) => {
 
       const { data: rawCommissions, error } = await (supabase as any)
         .from('closer_commissions')
-        .select('*, message_sales(customer_name, product, sale_date, total_sale_amount, num_installments, installment_amount)')
+        .select('*, message_sales(customer_name, product, sale_date, total_sale_amount, num_installments, installment_amount, installments_paid)')
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
 
@@ -149,20 +149,27 @@ export const useCommissions = (clientId: string | null) => {
         const sale = c.message_sales || {};
         const totalSale = Number(c.sale_total || sale.total_sale_amount || 0);
         const tracked = cashBySale.get(c.sale_id);
-        // If sale has installments tracked, use them. Otherwise, assume fully collected if status sale completed.
-        let cashCollected = 0;
-        let cashPct = 0;
 
-        if (tracked && tracked.total > 0) {
-          // installments exist
-          cashCollected = tracked.collected;
-          cashPct = totalSale > 0 ? Math.min(cashCollected / totalSale, 1) : 0;
-        } else {
-          // No installments — assume single payment fully collected (heuristic)
+        // Compute cash collected from THREE possible signals (use the highest):
+        // 1) payment_collections marked as paid
+        // 2) message_sales.installments_paid * installment_amount (manual tracking on the sale itself)
+        // 3) If single payment (no installments), assume fully collected
+        const collectionsCollected = tracked?.collected ?? 0;
+        const installmentsPaid = Number(sale.installments_paid || 0);
+        const installmentAmount = Number(sale.installment_amount || 0);
+        const installmentsCollected = installmentsPaid * installmentAmount;
+        const numInstallments = Number(sale.num_installments || 1);
+
+        let cashCollected: number;
+        if (numInstallments <= 1) {
+          // Pago único — asumimos cobrado completo (heurística histórica)
           cashCollected = totalSale;
-          cashPct = 1;
+        } else {
+          // Tomar el máximo entre lo que indican payment_collections y lo registrado en la venta
+          cashCollected = Math.max(collectionsCollected, installmentsCollected);
         }
 
+        const cashPct = totalSale > 0 ? Math.min(cashCollected / totalSale, 1) : 0;
         const earnedToDate = Number((c.total_commission * cashPct).toFixed(2));
         const pendingToPay = Math.max(earnedToDate - Number(c.paid_amount || 0), 0);
 
