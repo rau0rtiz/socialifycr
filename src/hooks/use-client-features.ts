@@ -58,7 +58,7 @@ export interface ClientFeatureFlags {
   generador_pauta: boolean;
   content_calendar: boolean;
   giveaway: boolean;
-  // Reportes widgets
+  // Reportes widgets (deprecated — kept in DB for compatibility, no longer surfaced in UI)
   monthly_sales_report: boolean;
   ai_report_generator: boolean;
   social_performance_report: boolean;
@@ -83,17 +83,16 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = Object.fromE
   ['checklist_items', DEFAULT_CHECKLIST_ITEMS],
 ]) as any;
 
-// Navigation section flags
+// Navigation section flags (visible in Accesos UI)
 export const SECTION_LABELS: Record<string, string> = {
   ventas_section: 'Ventas',
   contenido_section: 'Contenido',
-  reportes_section: 'Reportes',
   email_marketing_section: 'Email Marketing',
   business_setup_section: 'Business Setup',
   asistencia_section: 'Asistencia',
 };
 
-// Dashboard widget flags
+// Dashboard widget flags (ai_insights deprecated, hidden from UI)
 export const DASHBOARD_WIDGET_LABELS: Record<string, string> = {
   social_followers: 'Seguidores de Redes',
   instagram_posts: 'Top Posts Instagram',
@@ -104,7 +103,6 @@ export const DASHBOARD_WIDGET_LABELS: Record<string, string> = {
   social_performance: 'Rendimiento Social',
   stories_section: 'Historias de Instagram',
   publication_goals: 'Metas de Publicación',
-  ai_insights: 'Insights de IA',
   competitors: 'Competidores',
 };
 
@@ -128,18 +126,10 @@ export const VENTAS_WIDGET_LABELS: Record<string, string> = {
 
 export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
   content_grid: 'Grid de Contenido',
-  ai_insights: 'Insights de IA',
-  video_ideas: 'Ideas de Video',
   competitors: 'Competidores',
   generador_pauta: 'Generador de Pauta',
   content_calendar: 'Calendario de Contenido',
   giveaway: 'Widget de Sorteos',
-};
-
-export const REPORTES_WIDGET_LABELS: Record<string, string> = {
-  monthly_sales_report: 'Reporte Mensual de Ventas',
-  ai_report_generator: 'Generador de Reportes IA',
-  social_performance_report: 'Reporte Rendimiento Social',
 };
 
 // Combined for backward compat
@@ -148,7 +138,6 @@ export const FEATURE_LABELS: Record<string, string> = {
   ...DASHBOARD_WIDGET_LABELS,
   ...VENTAS_WIDGET_LABELS,
   ...CONTENIDO_WIDGET_LABELS,
-  ...REPORTES_WIDGET_LABELS,
 };
 
 export const useClientFeatures = (clientId: string | null) => {

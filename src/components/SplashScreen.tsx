@@ -133,20 +133,6 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
       );
     }
 
-    // Video ideas
-    if (flagOn('video_ideas')) {
-      conditional.push(
-        queryClient.prefetchQuery({
-          queryKey: ['video-ideas', clientId],
-          queryFn: async () => {
-            const { data } = await supabase.from('video_ideas').select('*').eq('client_id', clientId).order('created_at', { ascending: false });
-            return data || [];
-          },
-          staleTime: 2 * 60 * 1000,
-        }),
-      );
-    }
-
     // Content metadata/tags/models
     if (flagOn('contenido_section') || flagOn('content_grid')) {
       conditional.push(
