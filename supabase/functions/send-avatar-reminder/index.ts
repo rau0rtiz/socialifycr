@@ -8,22 +8,12 @@ const corsHeaders = {
 
 const AVATAR_UPDATE_URL = "https://socialifycr.lovable.app/actualizar-foto";
 
-function buildUnsubscribeFooter(url: string): string {
-  return `<div style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center;">
-    <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.5;">Si no deseas recibir más correos, puedes <a href="${url}" style="color:#9ca3af;text-decoration:underline;">desuscribirte aquí</a>.</p>
-  </div>`;
-}
-
-async function generateUnsubscribeUrl(supabaseAdmin: any, email: string): Promise<string> {
-  const token = crypto.randomUUID();
-  await supabaseAdmin.from("email_unsubscribe_tokens").insert({ token, email: email.toLowerCase() });
-  return `https://app.socialifycr.com/desuscribirse?token=${token}`;
-}
-
-function injectFooter(html: string, footer: string): string {
-  if (html.includes("</body>")) return html.replace(/<\/body>/i, `${footer}</body>`);
-  return html + footer;
-}
+import {
+  buildUnsubscribeFooter,
+  generateUnsubscribeUrl,
+  injectUnsubscribeFooter as injectFooter,
+  isEmailSuppressed,
+} from "../_shared/unsubscribe.ts";
 
 const FALLBACK_HTML = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
   <div style="text-align: center; margin-bottom: 32px;">
