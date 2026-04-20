@@ -34,6 +34,7 @@ const CampaignsContent = () => {
   const deleteMut = useDeleteCampaign();
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [previewCampaign, setPreviewCampaign] = useState<EmailCampaign | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
 
   const sorted = campaigns ? (() => {
