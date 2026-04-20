@@ -13,7 +13,6 @@ import { TeachersManager } from '@/components/ventas/TeachersManager';
 import { useClientFeatures } from '@/hooks/use-client-features';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
-import { ClientBanner } from '@/components/dashboard/ClientBanner';
 import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, ToggleRight, GraduationCap, UsersRound } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -164,21 +163,6 @@ const BusinessSetup = () => {
   // ── Section content renderers ──────────────────────────────────
   const renderBrand = () => (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Banner</CardTitle>
-          <CardDescription>Imagen de portada del dashboard del cliente</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ClientBanner
-            clientId={selectedClient.id}
-            bannerUrl={selectedClient.banner_url}
-            canEdit={true}
-            onBannerUpdate={() => queryClient.invalidateQueries({ queryKey: ['clients'] })}
-          />
-        </CardContent>
-      </Card>
-
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Identidad de Marca</CardTitle>

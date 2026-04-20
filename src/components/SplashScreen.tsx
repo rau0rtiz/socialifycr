@@ -133,36 +133,6 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
       );
     }
 
-    // Content metadata/tags/models
-    if (flagOn('contenido_section') || flagOn('content_grid')) {
-      conditional.push(
-        queryClient.prefetchQuery({
-          queryKey: ['content-tags', clientId],
-          queryFn: async () => {
-            const { data } = await supabase.from('content_tags').select('*').eq('client_id', clientId).order('name');
-            return data || [];
-          },
-          staleTime: 5 * 60 * 1000,
-        }),
-        queryClient.prefetchQuery({
-          queryKey: ['content-models', clientId],
-          queryFn: async () => {
-            const { data } = await supabase.from('content_models').select('*').eq('client_id', clientId).order('name');
-            return data || [];
-          },
-          staleTime: 5 * 60 * 1000,
-        }),
-        queryClient.prefetchQuery({
-          queryKey: ['content-metadata', clientId],
-          queryFn: async () => {
-            const { data } = await supabase.from('content_metadata').select('*').eq('client_id', clientId);
-            return data || [];
-          },
-          staleTime: 5 * 60 * 1000,
-        }),
-      );
-    }
-
     // Setter / appointments
     if (flagOn('setter_tracker') || flagOn('setter_daily')) {
       conditional.push(
@@ -212,20 +182,6 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
           queryKey: ['sales-goals', clientId],
           queryFn: async () => {
             const { data } = await supabase.from('sales_goals').select('*').eq('client_id', clientId);
-            return data || [];
-          },
-          staleTime: 5 * 60 * 1000,
-        }),
-      );
-    }
-
-    // Competitors
-    if (flagOn('competitors')) {
-      conditional.push(
-        queryClient.prefetchQuery({
-          queryKey: ['client-competitors', clientId],
-          queryFn: async () => {
-            const { data } = await supabase.from('client_competitors').select('*').eq('client_id', clientId);
             return data || [];
           },
           staleTime: 5 * 60 * 1000,

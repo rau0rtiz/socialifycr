@@ -1,10 +1,10 @@
-import { useClientFeatures, SECTION_LABELS, FEATURE_LABELS, DASHBOARD_WIDGET_LABELS, VENTAS_WIDGET_LABELS, CONTENIDO_WIDGET_LABELS } from '@/hooks/use-client-features';
+import { useClientFeatures, SECTION_LABELS, FEATURE_LABELS, DASHBOARD_WIDGET_LABELS, VENTAS_WIDGET_LABELS } from '@/hooks/use-client-features';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
-  LayoutDashboard, ShoppingCart, FileText, Mail, Database, Lock, Settings2, ClipboardCheck,
+  LayoutDashboard, ShoppingCart, Mail, Database, Lock, Settings2, ClipboardCheck,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -25,7 +25,6 @@ type SectionDef = {
 const SECTIONS: SectionDef[] = [
   { key: null, label: 'Dashboard', icon: LayoutDashboard, locked: true, widgets: DASHBOARD_WIDGET_LABELS },
   { key: 'ventas_section', label: 'Ventas', icon: ShoppingCart, widgets: VENTAS_WIDGET_LABELS },
-  { key: 'contenido_section', label: 'Contenido', icon: FileText, widgets: CONTENIDO_WIDGET_LABELS },
   { key: 'email_marketing_section', label: 'Email Marketing', icon: Mail, widgets: {} },
   { key: 'business_setup_section', label: 'Business Setup', icon: Settings2, widgets: {} },
   { key: 'asistencia_section', label: 'Asistencia', icon: ClipboardCheck, widgets: {} },
