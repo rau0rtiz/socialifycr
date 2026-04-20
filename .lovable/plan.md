@@ -1,120 +1,45 @@
 
-## Plan: Unificar el dashboard con el estilo del Roadmap
 
-### Sistema de diseño del Roadmap (`/roadmap`)
-- **Fondo:** blanco puro (`#FFFFFF`) con SVGs sutiles naranja al fondo
-- **Texto principal:** `#212121` (casi negro), nunca gris azulado
-- **Texto secundario:** `#212121/60`, `#212121/50`, `#212121/40`
-- **Acento único (CTA, selección, iconos clave):** `#FF6B35` (naranja Socialify), hover `#e55a2b`
-- **Bordes:** `border-gray-200`, hover `border-[#FF6B35]/40`
-- **Cards/botones:** `rounded-2xl`, `border-2`, `shadow-md` / `shadow-xl`
-- **Tipografía:** `'DM Sans'` para body, `'Nunito' 700` para el wordmark "SOCIALIFY"
-- **Estilo:** títulos `uppercase font-extrabold tracking-tight`, botones `uppercase tracking-wide`
-- **Logo:** "SOCIALIFY" en mayúsculas Nunito Bold, color `#212121`
+## Diagnóstico del problema
 
-### Estrategia de implementación
+El botón "Desuscribirse" en los correos sí lleva a `/desuscribirse?token=...` correctamente, pero la página falla porque:
 
-En lugar de reescribir cada página, redefinimos las **variables del design system** y los componentes base. Como casi todo el dashboard usa `bg-card`, `text-foreground`, `border-border`, `bg-primary`, etc. via Tailwind tokens, **un solo cambio de tokens propaga a todo**.
+1. **`handle-unsubscribe` requiere JWT por defecto** — al no estar registrada en `supabase/config.toml` con `verify_jwt = false`, las llamadas anónimas (desde un correo, sin sesión) son rechazadas → la página interpreta el rechazo como "token inválido".
+2. **`Unsubscribe.tsx` tiene código confuso** — hace primero un `supabase.functions.invoke('handle-unsubscribe', { method: 'GET' })` mal formado (no se puede mandar GET con body por invoke) y luego un `fetch` directo. La primera llamada fallida puede contaminar el estado.
 
-### 1. Tokens globales (`src/index.css`)
-Reescribir tokens del modo `:root` (claro) y `.dark` para alinearlos al roadmap:
+## Plan: simplificar el flujo de desuscripción
 
-```css
-:root {
-  --background: 0 0% 100%;          /* blanco puro */
-  --foreground: 0 0% 13%;           /* #212121 */
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 13%;
-  --primary: 16 100% 60%;           /* #FF6B35 naranja */
-  --primary-foreground: 0 0% 100%;
-  --accent: 16 100% 60%;            /* mismo naranja */
-  --accent-foreground: 0 0% 100%;
-  --secondary: 0 0% 97%;
-  --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 40%;     /* #212121/60 */
-  --border: 0 0% 88%;               /* gray-200 */
-  --input: 0 0% 88%;
-  --ring: 16 100% 60%;
-  --radius: 1rem;                   /* rounded-2xl por defecto */
+Como pediste, hago el flujo trivial: el botón del correo lleva a la página, ésta muestra el correo prellenado, el usuario elige motivo y confirma → se procesa y se muestra confirmación.
 
-  --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 0 0% 13%;
-  --sidebar-primary: 16 100% 60%;
-  --sidebar-accent: 0 0% 96%;
-  --sidebar-accent-foreground: 0 0% 13%;
-  --sidebar-border: 0 0% 90%;
-  --sidebar-ring: 16 100% 60%;
+### Cambios
 
-  --client-accent: 16 100% 60%;     /* default cliente = naranja */
-  --client-primary: 0 0% 13%;
-
-  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
-}
-
-.dark {
-  /* Mantener oscuro pero re-anclar acento al naranja */
-  --primary: 16 100% 60%;
-  --accent: 16 100% 60%;
-  --ring: 16 100% 60%;
-  --client-accent: 16 100% 60%;
-  /* resto: mantener tonos actuales */
-}
+**1. `supabase/config.toml`** — agregar:
+```toml
+[functions.handle-unsubscribe]
+verify_jwt = false
 ```
+Esto permite que cualquiera (sin sesión) pueda validar/usar el token desde el correo.
 
-Resultado: **toda página, card, botón, input, sidebar y badge** que use tokens (la mayoría) hereda automáticamente blanco/naranja/#212121.
+**2. `supabase/functions/handle-unsubscribe/index.ts`** — simplificar:
+- Mantener GET (validar token + devolver email) y POST (marcar como usado + suprimir).
+- Asegurar respuestas claras: `{ valid, email, already_used }` en GET y `{ success }` o `{ already_unsubscribed }` en POST.
+- Logging extra para debug (`console.log` en cada paso).
 
-### 2. Tailwind (`tailwind.config.ts`)
-- Cambiar `fontFamily.sans` de Poppins → **DM Sans** (igual que roadmap)
-- Mantener Nunito disponible para el wordmark
+**3. `src/pages/Unsubscribe.tsx`** — limpiar:
+- **Eliminar** la llamada confusa a `supabase.functions.invoke('handle-unsubscribe', { method: 'GET', body: undefined })` — no funciona y puede generar el error de "token inválido".
+- Usar un único `fetch` directo a la edge function tanto para validar (GET) como para confirmar (POST). El `anon key` se incluye en `Authorization: Bearer` para cumplir con el gateway de Supabase aunque `verify_jwt=false`.
+- Flujo visual final (3 estados solamente):
+  - **Loading** → validando.
+  - **Form** → muestra "Vamos a desuscribir **email@x.com**", radio de motivos opcional, textarea si elige "Otro", botón **Confirmar desuscripción**.
+  - **Success** → ✅ "Listo, te desuscribimos exitosamente."
+  - **Already** → ✅ "Este correo ya estaba desuscrito."
+  - **Error** → solo si el token realmente no existe (no por fallo de auth).
 
-### 3. Componentes base
-- **`button.tsx`**: `default` y `lg` → `rounded-2xl`, `font-semibold uppercase tracking-wide`, sombra `shadow-md hover:shadow-xl`
-- **`card.tsx`**: `rounded-2xl border-2`, sombra suave
-- **`input.tsx`**: `rounded-xl border-2`
-
-### 4. Logo / wordmark unificado
-Reemplazar todas las menciones del logo por el wordmark estilo roadmap ("SOCIALIFY" en Nunito 700, `#212121`):
-- `TopBar.tsx` → breadcrumb "Socialify"
-- `Auth.tsx` → CardTitle "Socialify"
-- `BrandSettings.tsx` → títulos
-- `Unsubscribe.tsx` → header
-- `OnboardingTour.tsx` → mantiene texto pero estilo coherente
-
-Importar `@fontsource/nunito/700.css` globalmente en `main.tsx` para tenerlo disponible.
-
-### 5. Dashboard layout (`DashboardLayout.tsx`)
-Cambiar `bg-muted/30` → `bg-background` (blanco puro) para igualar el fondo limpio del roadmap.
-
-### 6. Sidebar
-Ya usa tokens `--sidebar-*` → al cambiarlos en CSS automáticamente queda blanco con acento naranja. Verificar y ajustar `Sidebar.tsx` si tiene clases hardcoded.
-
-### 7. KPICard y otros widgets con color hardcoded
-Revisión rápida para reemplazar acentos `text-emerald-600`, `bg-primary` con valores hardcoded → seguirán los tokens.
+### Resultado
+- Click en "desuscribirse" del correo → página abre con el email visible → 1 click en "Confirmar" → se elimina de la lista y se muestra confirmación. Sin pedir login, sin errores de token.
 
 ### Archivos a modificar
-1. `src/index.css` — tokens (cambio principal, ~80% del impacto visual)
-2. `tailwind.config.ts` — fuente DM Sans
-3. `src/main.tsx` — importar Nunito
-4. `src/components/ui/button.tsx` — radius/uppercase
-5. `src/components/ui/card.tsx` — radius/border-2
-6. `src/components/ui/input.tsx` — radius
-7. `src/components/dashboard/DashboardLayout.tsx` — fondo
-8. `src/components/dashboard/TopBar.tsx` — wordmark Nunito
-9. `src/pages/Auth.tsx` — wordmark Nunito
-10. `src/pages/BrandSettings.tsx` — wordmark
-11. `src/pages/Unsubscribe.tsx` — color del header (de indigo → #212121)
-12. Pasada de revisión a `KPICard`, `Sidebar`, `Dashboard.tsx` para limpiar colores hardcoded que no respeten tokens
+1. `supabase/config.toml` — añadir bloque `[functions.handle-unsubscribe]` con `verify_jwt = false`
+2. `supabase/functions/handle-unsubscribe/index.ts` — limpiar logs, mantener lógica
+3. `src/pages/Unsubscribe.tsx` — eliminar la llamada `invoke` rota, usar solo `fetch` directo con headers de Supabase
 
-### Lo que NO cambia
-- Branding por cliente (cada cliente sigue pudiendo definir su `accent_color` propio que sobrescribe `--client-accent`)
-- Modo oscuro sigue disponible vía toggle
-- Funcionalidad: cero cambios lógicos
-
-### Resultado esperado
-Toda página del dashboard pasa a verse blanca, con texto `#212121`, acento naranja `#FF6B35`, esquinas `rounded-2xl`, fuente DM Sans y wordmark "SOCIALIFY" en Nunito — idéntico al roadmap público.
-
-<lov-actions>
-<lov-suggestion message="Apruebo el plan, aplicalo">Aprobar y aplicar</lov-suggestion>
-<lov-suggestion message="Aplicalo pero mantengamos el branding por cliente intacto en sus dashboards (que solo el chrome de agencia/login/auth use el estilo roadmap)">Solo chrome de agencia</lov-suggestion>
-<lov-suggestion message="Aplicalo y además quita el modo oscuro completo, dejá solo el modo claro estilo roadmap">Solo modo claro</lov-suggestion>
-</lov-actions>
