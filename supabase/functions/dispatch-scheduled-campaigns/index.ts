@@ -53,20 +53,27 @@ serve(async (req) => {
         continue;
       }
 
-      // Invoke send-campaign using the Supabase client (more reliable than raw fetch)
+      // Invoke send-campaign with service-role auth via direct fetch
+      // (supabase.functions.invoke uses anon key which send-campaign rejects)
       try {
         console.log(`[${campaign.id}] Invoking send-campaign...`);
-        const { data: invokeData, error: invokeErr } = await supabaseAdmin.functions.invoke(
-          "send-campaign",
-          { body: { campaign_id: campaign.id } }
-        );
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/send-campaign`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+            apikey: SERVICE_ROLE_KEY,
+          },
+          body: JSON.stringify({ campaign_id: campaign.id }),
+        });
 
-        if (invokeErr) {
-          throw new Error(invokeErr.message || "invoke error");
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(body?.error || `HTTP ${res.status}`);
         }
 
-        console.log(`[${campaign.id}] send-campaign OK:`, invokeData);
-        results.push({ id: campaign.id, ok: true, data: invokeData });
+        console.log(`[${campaign.id}] send-campaign OK:`, body);
+        results.push({ id: campaign.id, ok: true, ...body });
       } catch (err: any) {
         console.error(`[${campaign.id}] Dispatch failed:`, err?.message || err);
         await supabaseAdmin
