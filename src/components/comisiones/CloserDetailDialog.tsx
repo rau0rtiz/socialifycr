@@ -136,6 +136,8 @@ export const CloserDetailDialog = ({
                       <TableHead>Fecha</TableHead>
                       <TableHead>Cliente</TableHead>
                       <TableHead className="text-right">Venta</TableHead>
+                      <TableHead className="text-center">Método</TableHead>
+                      <TableHead className="text-right">% Com.</TableHead>
                       <TableHead className="text-right">% Cobrado</TableHead>
                       <TableHead className="text-right">Comisión</TableHead>
                       <TableHead className="text-right">Por pagar</TableHead>
@@ -145,13 +147,16 @@ export const CloserDetailDialog = ({
                   <TableBody>
                     {monthCommissions.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                           Sin ventas en este mes
                         </TableCell>
                       </TableRow>
                     )}
                     {monthCommissions.map(c => {
                       const status = STATUS_LABELS[c.status];
+                      const methodLabel = c.payment_method
+                        ? c.payment_method.charAt(0).toUpperCase() + c.payment_method.slice(1).toLowerCase()
+                        : '—';
                       return (
                         <TableRow key={c.id}>
                           <TableCell className="text-xs whitespace-nowrap">
@@ -162,6 +167,20 @@ export const CloserDetailDialog = ({
                             {c.product && <div className="text-xs text-muted-foreground truncate max-w-[180px]">{c.product}</div>}
                           </TableCell>
                           <TableCell className="text-right text-sm tabular-nums">{formatMoney(c.sale_total, c.currency)}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="text-[10px] font-normal">{methodLabel}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right text-xs tabular-nums">
+                            <div className="font-medium">{Number(c.effective_rate || 0).toFixed(0)}%</div>
+                            {Number(c.method_adjustment || 0) > 0 && (
+                              <div className="text-[9px] text-muted-foreground">
+                                base {Number(c.base_rate || 0).toFixed(0)}% −{Number(c.method_adjustment).toFixed(0)}
+                              </div>
+                            )}
+                            {c.full_payment_bonus && (
+                              <div className="text-[9px] text-emerald-600 dark:text-emerald-400">bono pago full</div>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
                             {((c.cash_collected_pct || 0) * 100).toFixed(0)}%
                           </TableCell>
