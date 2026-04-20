@@ -86,24 +86,15 @@ const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = Object.fromE
 // Navigation section flags (visible in Accesos UI)
 export const SECTION_LABELS: Record<string, string> = {
   ventas_section: 'Ventas',
-  contenido_section: 'Contenido',
   email_marketing_section: 'Email Marketing',
   business_setup_section: 'Business Setup',
   asistencia_section: 'Asistencia',
 };
 
-// Dashboard widget flags (ai_insights deprecated, hidden from UI)
+// Dashboard widget flags (deprecated content/social widgets hidden from UI)
 export const DASHBOARD_WIDGET_LABELS: Record<string, string> = {
-  social_followers: 'Seguidores de Redes',
-  instagram_posts: 'Top Posts Instagram',
-  youtube_videos: 'Top Videos YouTube',
   funnel: 'Embudo (Funnel)',
   campaigns: 'Campañas',
-  reach_chart: 'Gráfico de Alcance',
-  social_performance: 'Rendimiento Social',
-  stories_section: 'Historias de Instagram',
-  publication_goals: 'Metas de Publicación',
-  competitors: 'Competidores',
 };
 
 export const VENTAS_WIDGET_LABELS: Record<string, string> = {
@@ -124,20 +115,11 @@ export const VENTAS_WIDGET_LABELS: Record<string, string> = {
   collections: 'Widget de Cobros',
 };
 
-export const CONTENIDO_WIDGET_LABELS: Record<string, string> = {
-  content_grid: 'Grid de Contenido',
-  competitors: 'Competidores',
-  generador_pauta: 'Generador de Pauta',
-  content_calendar: 'Calendario de Contenido',
-  giveaway: 'Widget de Sorteos',
-};
-
 // Combined for backward compat
 export const FEATURE_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
   ...DASHBOARD_WIDGET_LABELS,
   ...VENTAS_WIDGET_LABELS,
-  ...CONTENIDO_WIDGET_LABELS,
 };
 
 export const useClientFeatures = (clientId: string | null) => {

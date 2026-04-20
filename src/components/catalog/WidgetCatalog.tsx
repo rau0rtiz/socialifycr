@@ -29,17 +29,8 @@ interface WidgetDef {
 const WIDGET_CATALOG: WidgetDef[] = [
   // Dashboard widgets
   { id: 'kpi-section', name: 'KPI Cards', description: 'Tarjetas de métricas principales: alcance, impresiones, engagement, seguidores, publicaciones.', icon: BarChart3, section: 'dashboard', tags: ['métricas', 'analytics'] },
-  { id: 'social-followers', name: 'Seguidores de Redes', description: 'Seguimiento de crecimiento de seguidores en Instagram, Facebook, TikTok, YouTube y LinkedIn con sparklines.', icon: Users, featureFlag: 'social_followers', section: 'dashboard', tags: ['redes sociales', 'crecimiento'] },
-  { id: 'reach-chart', name: 'Gráfico de Alcance', description: 'Chart de área con alcance e impresiones por día, con selector de rango de fechas.', icon: LineChart, section: 'dashboard', tags: ['gráficos', 'alcance'] },
-  { id: 'social-performance', name: 'Rendimiento Social', description: 'Gráfico de barras comparando likes, comments, saves y shares por publicación.', icon: BarChart, section: 'dashboard', tags: ['engagement', 'gráficos'] },
-  { id: 'instagram-top-posts', name: 'Top Posts Instagram', description: 'Grid de mejores publicaciones de Instagram ordenadas por engagement, con thumbnails y métricas.', icon: Eye, featureFlag: 'instagram_posts', section: 'dashboard', tags: ['instagram', 'contenido'] },
-  { id: 'youtube-top-videos', name: 'Top Videos YouTube', description: 'Ranking de videos de YouTube con views, likes y duración.', icon: Video, featureFlag: 'youtube_videos', section: 'dashboard', tags: ['youtube', 'video'] },
   { id: 'funnel-module', name: 'Embudo de Conversión', description: 'Visualización del funnel: impresiones → clics → leads → ventas con tasas de conversión.', icon: TrendingUp, featureFlag: 'funnel', section: 'dashboard', tags: ['conversión', 'embudo'] },
   { id: 'campaigns-table', name: 'Tabla de Campañas', description: 'Listado de campañas de Meta Ads con métricas de rendimiento, presupuesto y CPA.', icon: Megaphone, featureFlag: 'campaigns', section: 'dashboard', tags: ['ads', 'campañas', 'meta'] },
-  { id: 'stories-section', name: 'Historias de Instagram', description: 'Panel de historias activas y archivadas con métricas de reach, impresiones y replies.', icon: Film, section: 'dashboard', tags: ['stories', 'instagram'] },
-  { id: 'publication-goals', name: 'Metas de Publicación', description: 'Barra de progreso mensual de publicaciones vs meta establecida.', icon: Target, section: 'dashboard', tags: ['metas', 'publicaciones'] },
-  { id: 'ai-insights', name: 'Insights de IA', description: 'Panel de análisis inteligente con recomendaciones generadas por IA basadas en el rendimiento.', icon: Sparkles, featureFlag: 'ai_insights', section: 'dashboard', tags: ['ia', 'análisis'] },
-  { id: 'competitors', name: 'Panel de Competidores', description: 'Seguimiento de cuentas competidoras con comparación de métricas.', icon: Swords, featureFlag: 'competitors', section: 'dashboard', tags: ['competencia', 'análisis'] },
 
   // Ventas widgets
   { id: 'pipeline-summary', name: 'Resumen Pipeline', description: 'Cuadrícula de 8 KPIs: Ingresos, Conversaciones, Tasa Asistencia, No asistió, Ventas, Tasa Cierre, Por cobrar.', icon: PieChart, featureFlag: 'sales_tracking', section: 'ventas', tags: ['pipeline', 'kpis'] },
@@ -57,12 +48,6 @@ const WIDGET_CATALOG: WidgetDef[] = [
   { id: 'clinic-summary', name: 'Vista Clínica', description: 'KPIs médicos: Valoraciones, Procedimientos, Ingresos, Por cobrar. Diseñado para clínicas.', icon: ClipboardList, section: 'ventas', clientSpecific: ['Dra Silvia Alvarado'], tags: ['clínica', 'médico'] },
   { id: 'speakup-analytics', name: 'Analytics de Retención', description: 'Dashboard de MRR, churn y retención de estudiantes con terminología educativa.', icon: TrendingUp, section: 'ventas', clientSpecific: ['Speak Up Costa Rica'], tags: ['mrr', 'retención', 'educación'] },
   { id: 'sales-by-product', name: 'Ventas por Producto', description: 'Gráfico de barras con distribución de ventas por producto/servicio.', icon: BarChart, section: 'ventas', tags: ['productos', 'gráficos'] },
-
-  // Contenido widgets
-  { id: 'content-grid', name: 'Grid de Contenido', description: 'Cuadrícula visual de publicaciones con filtros por tag, modelo, plataforma y búsqueda. Incluye métricas 48h.', icon: Layers, featureFlag: 'content_grid', section: 'contenido', tags: ['contenido', 'grid'] },
-  { id: 'content-calendar', name: 'Calendario de Contenido', description: 'Vista mensual de publicaciones con thumbnails, codificación por color por tipo de contenido.', icon: CalendarDays, section: 'contenido', tags: ['calendario', 'planificación'] },
-  { id: 'generador-pauta', name: 'Generador de Estáticos', description: 'Herramienta para crear anuncios en formatos 1:1, 4:5, 9:16 y 2:1 con logo, textos y exportación HD.', icon: Palette, featureFlag: 'generador_pauta', section: 'contenido', tags: ['diseño', 'ads', 'creativos'] },
-  { id: 'giveaway-widget', name: 'Widget de Sorteos', description: 'Selección de publicación, configuración de reglas y animación de sorteo aleatorio para Instagram.', icon: Sparkles, section: 'contenido', clientSpecific: ['petshop2go'], tags: ['sorteo', 'instagram'] },
 
   // Email Marketing
   { id: 'email-campaigns', name: 'Campañas de Email', description: 'Creación, segmentación por tags y envío masivo de emails con tracking de entrega.', icon: Mail, section: 'email', tags: ['email', 'campañas'] },

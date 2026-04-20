@@ -99,7 +99,6 @@ export const Sidebar = () => {
 
   // For agency users (not in preview), always show all sections. Otherwise respect flags.
   const showVentas = effectiveAgency || flags.ventas_section;
-  const showContenido = effectiveAgency || flags.contenido_section;
 
   if (showVentas) {
     const ventasLabel = 'Ventas';
@@ -119,9 +118,6 @@ export const Sidebar = () => {
   const canSeeCommissions = isMindCoach && (canManage || isAccountManager) && !isPreviewMode;
   if (canSeeCommissions) {
     menuItems.push({ title: 'Comisiones', url: '/comisiones', icon: DollarSign });
-  }
-  if (showContenido) {
-    menuItems.push({ title: 'Contenido', url: '/content', icon: FileText, dataTour: 'contenido-link' });
   }
   menuItems.push({ title: 'Client Database', url: '/client-database', icon: Database });
   const showBusinessSetup = effectiveAgency || (flags as any).business_setup_section;
