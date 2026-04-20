@@ -9,7 +9,7 @@ import {
   ClipboardCheck,
   History,
   BarChart3,
-  CreditCard,
+  
   Eye,
   FolderOpen,
   Mail,
