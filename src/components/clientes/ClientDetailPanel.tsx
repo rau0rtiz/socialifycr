@@ -5,7 +5,6 @@ import { Separator } from '@/components/ui/separator';
 import { X } from 'lucide-react';
 import { PlatformConnections } from './PlatformConnections';
 import { TeamMembers } from './TeamMembers';
-import { AIContextEditor } from './AIContextEditor';
 
 
 interface ClientDetailPanelProps {
@@ -66,15 +65,6 @@ export const ClientDetailPanel = ({ client, onClose, onUpdate }: ClientDetailPan
             </div>
           </div>
         </div>
-
-        <Separator />
-
-        {/* AI Context Editor */}
-        <AIContextEditor 
-          clientId={client.id} 
-          initialContext={client.ai_context}
-          onUpdate={onUpdate}
-        />
 
         <Separator />
 

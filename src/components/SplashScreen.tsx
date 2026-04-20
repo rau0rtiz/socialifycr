@@ -133,20 +133,6 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
       );
     }
 
-    // Video ideas
-    if (flagOn('video_ideas')) {
-      conditional.push(
-        queryClient.prefetchQuery({
-          queryKey: ['video-ideas', clientId],
-          queryFn: async () => {
-            const { data } = await supabase.from('video_ideas').select('*').eq('client_id', clientId).order('created_at', { ascending: false });
-            return data || [];
-          },
-          staleTime: 2 * 60 * 1000,
-        }),
-      );
-    }
-
     // Content metadata/tags/models
     if (flagOn('contenido_section') || flagOn('content_grid')) {
       conditional.push(
@@ -243,20 +229,6 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
             return data || [];
           },
           staleTime: 5 * 60 * 1000,
-        }),
-      );
-    }
-
-    // Reports
-    if (flagOn('reportes_section') || flagOn('ai_report_generator') || flagOn('monthly_sales_report')) {
-      conditional.push(
-        queryClient.prefetchQuery({
-          queryKey: ['saved-reports', clientId],
-          queryFn: async () => {
-            const { data } = await supabase.from('saved_reports').select('*').eq('client_id', clientId).order('updated_at', { ascending: false });
-            return data || [];
-          },
-          staleTime: 2 * 60 * 1000,
         }),
       );
     }

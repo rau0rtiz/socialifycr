@@ -100,7 +100,6 @@ export const Sidebar = () => {
   // For agency users (not in preview), always show all sections. Otherwise respect flags.
   const showVentas = effectiveAgency || flags.ventas_section;
   const showContenido = effectiveAgency || flags.contenido_section;
-  const showReportes = effectiveAgency || flags.reportes_section;
 
   if (showVentas) {
     const ventasLabel = 'Ventas';
@@ -123,9 +122,6 @@ export const Sidebar = () => {
   }
   if (showContenido) {
     menuItems.push({ title: 'Contenido', url: '/content', icon: FileText, dataTour: 'contenido-link' });
-  }
-  if (showReportes) {
-    menuItems.push({ title: 'Reportes', url: '/reportes', icon: BarChart3 });
   }
   menuItems.push({ title: 'Client Database', url: '/client-database', icon: Database });
   const showBusinessSetup = effectiveAgency || (flags as any).business_setup_section;

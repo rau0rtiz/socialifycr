@@ -13,9 +13,8 @@ import { TeachersManager } from '@/components/ventas/TeachersManager';
 import { useClientFeatures } from '@/hooks/use-client-features';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
-import { AIContextEditor } from '@/components/clientes/AIContextEditor';
 import { ClientBanner } from '@/components/dashboard/ClientBanner';
-import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, Brain, ToggleRight, GraduationCap, UsersRound } from 'lucide-react';
+import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, ToggleRight, GraduationCap, UsersRound } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
@@ -241,22 +240,6 @@ const BusinessSetup = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Brain className="h-4 w-4 text-muted-foreground" />
-            Contexto AI
-          </CardTitle>
-          <CardDescription>Información que la IA usa para generar contenido relevante</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AIContextEditor
-            clientId={selectedClient.id}
-            initialContext={selectedClient.ai_context}
-            onUpdate={handleClientUpdate}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 
