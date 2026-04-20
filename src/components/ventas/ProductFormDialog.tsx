@@ -8,8 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useClientProducts, ClientProduct, ProductInput, ProductType } from '@/hooks/use-client-products';
+import { useClientProductCategories } from '@/hooks/use-client-product-categories';
+import { useClientProductTags } from '@/hooks/use-client-product-tags';
+import { ProductTagSelector } from './ProductTagSelector';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Camera, Loader2, X, Boxes, Wrench, Clock } from 'lucide-react';
+import { Package, Camera, Loader2, X, Boxes, Wrench, Clock, Plus, Tag as TagIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
