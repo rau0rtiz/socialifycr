@@ -1511,6 +1511,7 @@ export type Database = {
           id: string
           name: string
           scheduled_at: string | null
+          scheduled_for: string | null
           sent_at: string | null
           sent_count: number | null
           status: string
@@ -1530,6 +1531,7 @@ export type Database = {
           id?: string
           name: string
           scheduled_at?: string | null
+          scheduled_for?: string | null
           sent_at?: string | null
           sent_count?: number | null
           status?: string
@@ -1549,6 +1551,7 @@ export type Database = {
           id?: string
           name?: string
           scheduled_at?: string | null
+          scheduled_for?: string | null
           sent_at?: string | null
           sent_count?: number | null
           status?: string
