@@ -477,7 +477,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   // ─── Standard Campaign Mode (multi-recipient, 3-step) ───
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-7xl w-[95vw] max-h-[92vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5" />
