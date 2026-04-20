@@ -129,14 +129,14 @@ const MetricCard = ({
   value: string;
   subValue?: string;
 }) => (
-  <div className="flex items-center gap-2 p-2 md:p-3 bg-muted/50 rounded-lg min-w-0 overflow-hidden">
-    <div className="p-1.5 md:p-2 bg-background rounded-md shrink-0">
-      <Icon className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+  <div className="flex items-center gap-2.5 p-2.5 md:p-3 bg-muted/50 rounded-lg min-w-0 overflow-hidden">
+    <div className="p-2 bg-background rounded-md shrink-0">
+      <Icon className="h-4 w-4 text-muted-foreground" />
     </div>
-    <div className="min-w-0 overflow-hidden">
-      <p className="text-[10px] md:text-xs text-muted-foreground truncate">{label}</p>
-      <p className="text-xs md:text-sm font-semibold truncate">{value}</p>
-      {subValue && <p className="text-[10px] md:text-xs text-muted-foreground truncate">{subValue}</p>}
+    <div className="min-w-0 overflow-hidden flex-1">
+      <p className="text-[11px] md:text-xs text-muted-foreground truncate leading-tight">{label}</p>
+      <p className="text-sm md:text-base font-semibold truncate leading-tight mt-0.5">{value}</p>
+      {subValue && <p className="text-[10px] md:text-xs text-muted-foreground truncate leading-tight mt-0.5">{subValue}</p>}
     </div>
   </div>
 );
