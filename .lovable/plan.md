@@ -1,77 +1,120 @@
 
+## Plan: Unificar el dashboard con el estilo del Roadmap
 
-The user approved the cleanup. Plan: start removing AI + Reports, and ask about ambiguous widget groups in parallel via questions during implementation. Keep this plan tight.
+### Sistema de diseño del Roadmap (`/roadmap`)
+- **Fondo:** blanco puro (`#FFFFFF`) con SVGs sutiles naranja al fondo
+- **Texto principal:** `#212121` (casi negro), nunca gris azulado
+- **Texto secundario:** `#212121/60`, `#212121/50`, `#212121/40`
+- **Acento único (CTA, selección, iconos clave):** `#FF6B35` (naranja Socialify), hover `#e55a2b`
+- **Bordes:** `border-gray-200`, hover `border-[#FF6B35]/40`
+- **Cards/botones:** `rounded-2xl`, `border-2`, `shadow-md` / `shadow-xl`
+- **Tipografía:** `'DM Sans'` para body, `'Nunito' 700` para el wordmark "SOCIALIFY"
+- **Estilo:** títulos `uppercase font-extrabold tracking-tight`, botones `uppercase tracking-wide`
+- **Logo:** "SOCIALIFY" en mayúsculas Nunito Bold, color `#212121`
 
-## Plan: Limpieza profunda — Fase 1
+### Estrategia de implementación
 
-### Fase 1A — Eliminar IA (todos los puntos de uso)
-**Componentes a borrar:**
-- `src/components/dashboard/AIInsightsPanel.tsx`
-- `src/components/dashboard/AIContextDialog.tsx`
-- `src/components/clientes/AIContextEditor.tsx`
-- `src/components/dashboard/AvatarPrompt.tsx`
-- `src/components/dashboard/DevelopIdeaModal.tsx`
-- `src/components/dashboard/VideoIdeasSection.tsx`
-- `src/components/files/HtmlDesigner.tsx`
-- `src/components/reports/AIReportGenerator.tsx`
+En lugar de reescribir cada página, redefinimos las **variables del design system** y los componentes base. Como casi todo el dashboard usa `bg-card`, `text-foreground`, `border-border`, `bg-primary`, etc. via Tailwind tokens, **un solo cambio de tokens propaga a todo**.
 
-**Hooks a borrar:**
-- `src/hooks/use-ai-insights.ts`
-- `src/hooks/use-video-ideas.ts`
+### 1. Tokens globales (`src/index.css`)
+Reescribir tokens del modo `:root` (claro) y `.dark` para alinearlos al roadmap:
 
-**Edge functions a borrar (incluye llamada a `supabase--delete_edge_functions`):**
-- `ai-insights`, `polish-context`, `generate-copy`, `generate-html-design`
+```css
+:root {
+  --background: 0 0% 100%;          /* blanco puro */
+  --foreground: 0 0% 13%;           /* #212121 */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 13%;
+  --primary: 16 100% 60%;           /* #FF6B35 naranja */
+  --primary-foreground: 0 0% 100%;
+  --accent: 16 100% 60%;            /* mismo naranja */
+  --accent-foreground: 0 0% 100%;
+  --secondary: 0 0% 97%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 40%;     /* #212121/60 */
+  --border: 0 0% 88%;               /* gray-200 */
+  --input: 0 0% 88%;
+  --ring: 16 100% 60%;
+  --radius: 1rem;                   /* rounded-2xl por defecto */
 
-**Limpieza de referencias:**
-- `Dashboard.tsx`: quitar imports y renders de AI panels, AvatarPrompt
-- `Contenido.tsx`: quitar VideoIdeasSection y DevelopIdeaModal
-- `Clientes.tsx` / `ClientDetailPanel.tsx`: quitar AIContextEditor
-- `Archivos.tsx`: quitar HtmlDesigner si está
-- `client_feature_flags`: deprecar columnas `ai_insights`, `ai_report_generator`, `video_ideas` (las dejo en DB para no romper, pero las saco de UI de Accesos)
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 0 0% 13%;
+  --sidebar-primary: 16 100% 60%;
+  --sidebar-accent: 0 0% 96%;
+  --sidebar-accent-foreground: 0 0% 13%;
+  --sidebar-border: 0 0% 90%;
+  --sidebar-ring: 16 100% 60%;
 
-### Fase 1B — Eliminar Reportería
-**Páginas a borrar:**
-- `src/pages/Reports.tsx` (`/reports`)
-- `src/pages/Reportes.tsx` (`/reportes`)
+  --client-accent: 16 100% 60%;     /* default cliente = naranja */
+  --client-primary: 0 0% 13%;
 
-**Componentes a borrar:**
-- `src/components/reports/` completa: `GammaReportGenerator`, `MonthlySalesReport`, `ReportPreview`, `SavedReportsList`, `SocialContentOverview`, `SocialPerformanceReport`
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
 
-**Hooks a borrar:**
-- `src/hooks/use-saved-reports.ts`
-- `src/hooks/use-gamma-report.ts`
+.dark {
+  /* Mantener oscuro pero re-anclar acento al naranja */
+  --primary: 16 100% 60%;
+  --accent: 16 100% 60%;
+  --ring: 16 100% 60%;
+  --client-accent: 16 100% 60%;
+  /* resto: mantener tonos actuales */
+}
+```
 
-**Edge functions a borrar:**
-- `generate-report`, `generate-monthly-sales-report`, `prepare-gamma-report`, `gamma-report`
+Resultado: **toda página, card, botón, input, sidebar y badge** que use tokens (la mayoría) hereda automáticamente blanco/naranja/#212121.
 
-**Limpieza:**
-- `App.tsx`: quitar rutas `/reports` y `/reportes`
-- `Sidebar.tsx`: quitar entrada "Reportes"
-- `client_feature_flags`: deprecar `reportes_section`, `monthly_sales_report`, `social_performance_report` en UI de Accesos
-- Pantalla Accesos / `ClientFeatureFlags.tsx`: ocultar los toggles eliminados
+### 2. Tailwind (`tailwind.config.ts`)
+- Cambiar `fontFamily.sans` de Poppins → **DM Sans** (igual que roadmap)
+- Mantener Nunito disponible para el wordmark
 
-### Fase 2 — Widgets candidatos (te pregunto antes de borrar)
-Cuando termine 1A+1B, te lanzo un `ask_questions` agrupando los widgets dudosos para que decidas qué cae:
+### 3. Componentes base
+- **`button.tsx`**: `default` y `lg` → `rounded-2xl`, `font-semibold uppercase tracking-wide`, sombra `shadow-md hover:shadow-xl`
+- **`card.tsx`**: `rounded-2xl border-2`, sombra suave
+- **`input.tsx`**: `rounded-xl border-2`
 
-- **Grupo Contenido/Social**: `ContentCalendar`, `PublicationGoalsSection`, `StoriesSection`, `TopPostsSection`, `InstagramTopPosts`, `YouTubeTopVideos`, `ReachChart`, `SocialPerformanceChart`, `ContentGrid`, `SocialFollowersSection` → ¿borramos toda la sección `/contenido` o solo widgets específicos?
-- **Funnels públicos**: `/funnel` (quiz lead-gen) + `AdvancedFunnelModule` + `FunnelModule` del dashboard
-- **Competidores**: `CompetitorsPanel` + `/competitors`
-- **Generador de pauta estática**: `/generador-pauta`
-- **Giveaway widget** (Petshop2go)
-- **Banner/branding decorativo**: hero banner del dashboard
+### 4. Logo / wordmark unificado
+Reemplazar todas las menciones del logo por el wordmark estilo roadmap ("SOCIALIFY" en Nunito 700, `#212121`):
+- `TopBar.tsx` → breadcrumb "Socialify"
+- `Auth.tsx` → CardTitle "Socialify"
+- `BrandSettings.tsx` → títulos
+- `Unsubscribe.tsx` → header
+- `OnboardingTour.tsx` → mantiene texto pero estilo coherente
 
-### Orden de ejecución
-1. Crear migración para limpiar flags (opcional, primero solo ocultar en UI)
-2. Borrar componentes/hooks IA → fix imports rotos
-3. Borrar componentes/hooks Reports → fix imports rotos + rutas
-4. Borrar edge functions con `supabase--delete_edge_functions`
-5. Verificar que `/dashboard`, `/ventas`, `/clientes`, `/contenido` siguen renderizando
-6. Preguntarte sobre widgets de Fase 2
+Importar `@fontsource/nunito/700.css` globalmente en `main.tsx` para tenerlo disponible.
 
-### Notas técnicas
-- No toco DB schema todavía (las columnas de flags quedan, solo se ocultan) — así si algo sale mal, revertir es trivial.
-- Si un componente sobrevive pero importa algo borrado, lo limpio sobre la marcha.
-- Edge functions: borrar archivo + llamar a `supabase--delete_edge_functions` para que se desplieguen los cambios.
+### 5. Dashboard layout (`DashboardLayout.tsx`)
+Cambiar `bg-muted/30` → `bg-background` (blanco puro) para igualar el fondo limpio del roadmap.
 
-Arrancamos por IA.
+### 6. Sidebar
+Ya usa tokens `--sidebar-*` → al cambiarlos en CSS automáticamente queda blanco con acento naranja. Verificar y ajustar `Sidebar.tsx` si tiene clases hardcoded.
 
+### 7. KPICard y otros widgets con color hardcoded
+Revisión rápida para reemplazar acentos `text-emerald-600`, `bg-primary` con valores hardcoded → seguirán los tokens.
+
+### Archivos a modificar
+1. `src/index.css` — tokens (cambio principal, ~80% del impacto visual)
+2. `tailwind.config.ts` — fuente DM Sans
+3. `src/main.tsx` — importar Nunito
+4. `src/components/ui/button.tsx` — radius/uppercase
+5. `src/components/ui/card.tsx` — radius/border-2
+6. `src/components/ui/input.tsx` — radius
+7. `src/components/dashboard/DashboardLayout.tsx` — fondo
+8. `src/components/dashboard/TopBar.tsx` — wordmark Nunito
+9. `src/pages/Auth.tsx` — wordmark Nunito
+10. `src/pages/BrandSettings.tsx` — wordmark
+11. `src/pages/Unsubscribe.tsx` — color del header (de indigo → #212121)
+12. Pasada de revisión a `KPICard`, `Sidebar`, `Dashboard.tsx` para limpiar colores hardcoded que no respeten tokens
+
+### Lo que NO cambia
+- Branding por cliente (cada cliente sigue pudiendo definir su `accent_color` propio que sobrescribe `--client-accent`)
+- Modo oscuro sigue disponible vía toggle
+- Funcionalidad: cero cambios lógicos
+
+### Resultado esperado
+Toda página del dashboard pasa a verse blanca, con texto `#212121`, acento naranja `#FF6B35`, esquinas `rounded-2xl`, fuente DM Sans y wordmark "SOCIALIFY" en Nunito — idéntico al roadmap público.
+
+<lov-actions>
+<lov-suggestion message="Apruebo el plan, aplicalo">Aprobar y aplicar</lov-suggestion>
+<lov-suggestion message="Aplicalo pero mantengamos el branding por cliente intacto en sus dashboards (que solo el chrome de agencia/login/auth use el estilo roadmap)">Solo chrome de agencia</lov-suggestion>
+<lov-suggestion message="Aplicalo y además quita el modo oscuro completo, dejá solo el modo claro estilo roadmap">Solo modo claro</lov-suggestion>
+</lov-actions>
