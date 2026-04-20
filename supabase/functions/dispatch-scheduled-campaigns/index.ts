@@ -19,7 +19,6 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Find campaigns scheduled for now or earlier
     const { data: campaigns, error } = await supabaseAdmin
       .from("email_campaigns")
       .select("id, name, scheduled_for")
@@ -36,45 +35,52 @@ serve(async (req) => {
       });
     }
 
+    console.log(`Dispatching ${campaigns.length} campaign(s)`);
     const results: any[] = [];
 
     for (const campaign of campaigns) {
-      // Mark as sending immediately to prevent double-dispatch
-      const { error: lockErr } = await supabaseAdmin
+      // Optimistic lock: mark as sending before invoking
+      const { data: locked, error: lockErr } = await supabaseAdmin
         .from("email_campaigns")
         .update({ status: "sending" })
         .eq("id", campaign.id)
-        .eq("status", "scheduled"); // optimistic lock
+        .eq("status", "scheduled")
+        .select("id");
 
-      if (lockErr) {
-        console.error(`Lock failed for ${campaign.id}:`, lockErr);
-        results.push({ id: campaign.id, ok: false, error: lockErr.message });
+      if (lockErr || !locked || locked.length === 0) {
+        console.error(`[${campaign.id}] Lock failed:`, lockErr?.message);
+        results.push({ id: campaign.id, ok: false, error: "lock_failed" });
         continue;
       }
 
-      // Invoke send-campaign with service-role auth
+      // Invoke send-campaign with service-role auth via direct fetch
+      // (supabase.functions.invoke uses anon key which send-campaign rejects)
       try {
+        console.log(`[${campaign.id}] Invoking send-campaign...`);
         const res = await fetch(`${SUPABASE_URL}/functions/v1/send-campaign`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+            apikey: SERVICE_ROLE_KEY,
           },
           body: JSON.stringify({ campaign_id: campaign.id }),
         });
 
-        const body = await res.json();
+        const body = await res.json().catch(() => ({}));
         if (!res.ok) {
           throw new Error(body?.error || `HTTP ${res.status}`);
         }
+
+        console.log(`[${campaign.id}] send-campaign OK:`, body);
         results.push({ id: campaign.id, ok: true, ...body });
       } catch (err: any) {
-        console.error(`Dispatch failed for ${campaign.id}:`, err);
+        console.error(`[${campaign.id}] Dispatch failed:`, err?.message || err);
         await supabaseAdmin
           .from("email_campaigns")
           .update({ status: "failed" })
           .eq("id", campaign.id);
-        results.push({ id: campaign.id, ok: false, error: err.message });
+        results.push({ id: campaign.id, ok: false, error: err?.message || String(err) });
       }
     }
 
@@ -83,8 +89,8 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
-    console.error("Dispatcher error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Dispatcher top-level error:", error?.message || error);
+    return new Response(JSON.stringify({ error: error?.message || String(error) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
