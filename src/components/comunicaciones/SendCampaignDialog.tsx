@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -95,7 +95,37 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   const [sending, setSending] = useState(false);
   const [sendMode, setSendMode] = useState<'now' | 'scheduled'>('now');
   const [scheduledFor, setScheduledFor] = useState<string>(''); // datetime-local value
+  const htmlTextareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
+
+  // Variables disponibles en el composer estándar (multi-recipient).
+  // Estas las reemplaza la edge function send-campaign por destinatario.
+  const composerVariables = useMemo(() => {
+    if (template) return template.variables;
+    return [
+      { key: 'name', label: 'Nombre del destinatario' },
+      { key: 'email', label: 'Email del destinatario' },
+    ];
+  }, [template]);
+
+  const insertVariable = (key: string) => {
+    const tag = `{{${key}}}`;
+    // Si está la pestaña de código abierta y hay textarea, insertar en el cursor
+    if (editorTab === 'code' && htmlTextareaRef.current) {
+      const ta = htmlTextareaRef.current;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const next = editedHtml.substring(0, start) + tag + editedHtml.substring(end);
+      setEditedHtml(next);
+      setTimeout(() => {
+        ta.focus();
+        ta.setSelectionRange(start + tag.length, start + tag.length);
+      }, 0);
+    } else {
+      navigator.clipboard.writeText(tag);
+      toast.success(`${tag} copiado — pégalo en el HTML o en el asunto`);
+    }
+  };
 
   // Build variables from lead context
   const leadVars = useMemo(() => buildLeadVariables(leadContext), [leadContext]);
@@ -571,18 +601,23 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
                 </div>
               </TabsContent>
               <TabsContent value="code" className="flex-1 min-h-0 mt-2">
-                <Textarea value={editedHtml} onChange={e => setEditedHtml(e.target.value)} className="h-[400px] font-mono text-xs resize-none" spellCheck={false} />
+                <Textarea ref={htmlTextareaRef} value={editedHtml} onChange={e => setEditedHtml(e.target.value)} className="h-[400px] font-mono text-xs resize-none" spellCheck={false} />
               </TabsContent>
             </Tabs>
 
-            {template && template.variables.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                <span className="text-xs text-muted-foreground mr-1">Variables:</span>
-                {template.variables.map(v => (
-                  <Badge key={v.key} variant="outline" className="text-[10px] font-mono cursor-pointer hover:bg-muted" onClick={() => {
-                    navigator.clipboard.writeText(`{{${v.key}}}`);
-                    toast.success(`{{${v.key}}} copiado`);
-                  }}>
+            {composerVariables.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1 rounded-md border bg-muted/30 p-2">
+                <span className="text-xs text-muted-foreground mr-1">
+                  Variables {editorTab === 'code' ? '(click para insertar):' : '(click para copiar):'}
+                </span>
+                {composerVariables.map(v => (
+                  <Badge
+                    key={v.key}
+                    variant="outline"
+                    className="text-[10px] font-mono cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-colors"
+                    title={v.label}
+                    onClick={() => insertVariable(v.key)}
+                  >
                     {`{{${v.key}}}`}
                   </Badge>
                 ))}
