@@ -579,6 +579,37 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
                 style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '200%' }}
               />
             </div>
+
+            {/* Scheduling */}
+            <div className="rounded-lg border p-3 space-y-3">
+              <Label className="text-xs flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" /> ¿Cuándo enviar?
+              </Label>
+              <RadioGroup value={sendMode} onValueChange={(v) => setSendMode(v as 'now' | 'scheduled')} className="grid grid-cols-2 gap-2">
+                <label className={`flex items-center gap-2 rounded-md border p-2.5 cursor-pointer transition-colors ${sendMode === 'now' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}>
+                  <RadioGroupItem value="now" />
+                  <Send className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium">Enviar ahora</span>
+                </label>
+                <label className={`flex items-center gap-2 rounded-md border p-2.5 cursor-pointer transition-colors ${sendMode === 'scheduled' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}>
+                  <RadioGroupItem value="scheduled" />
+                  <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium">Programar</span>
+                </label>
+              </RadioGroup>
+              {sendMode === 'scheduled' && (
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Fecha y hora (zona horaria local)</Label>
+                  <Input
+                    type="datetime-local"
+                    min={minScheduledFor}
+                    value={scheduledFor}
+                    onChange={(e) => setScheduledFor(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -602,8 +633,14 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
             </Button>
           )}
           {step === 'confirm' && (
-            <Button onClick={handleSend} disabled={sending} className="gap-1.5">
-              {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : <><Send className="h-4 w-4" /> Enviar a {selectedRecipients.length}</>}
+            <Button onClick={handleSend} disabled={sending || (sendMode === 'scheduled' && !scheduledFor)} className="gap-1.5">
+              {sending ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Procesando...</>
+              ) : sendMode === 'scheduled' ? (
+                <><CalendarClock className="h-4 w-4" /> Programar envío</>
+              ) : (
+                <><Send className="h-4 w-4" /> Enviar a {selectedRecipients.length}</>
+              )}
             </Button>
           )}
         </DialogFooter>
