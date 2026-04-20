@@ -706,18 +706,20 @@ export const RegisterSaleDialog = ({
                   <Tag className="h-3.5 w-3.5" /> Detalles
                 </p>
                 <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs font-medium">{isSpkUp ? 'Vendedor' : 'Closer'}</Label>
-                      <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
-                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Sin asignar" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
-                          {closerName && !closers.some(c => c.fullName === closerName) && <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>}
-                          {closers.map(c => <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className={cn("grid gap-2", isSilvia ? "grid-cols-1" : "grid-cols-2")}>
+                    {!isSilvia && (
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium">{isSpkUp ? 'Vendedor' : 'Closer'}</Label>
+                        <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                            {closerName && !closers.some(c => c.fullName === closerName) && <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>}
+                            {closers.map(c => <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <div className="space-y-1">
                       <Label className="text-xs font-medium">Fuente *</Label>
                       <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
@@ -729,7 +731,7 @@ export const RegisterSaleDialog = ({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={cn("grid gap-2", isSilvia ? "grid-cols-1" : "grid-cols-2")}>
                     <div className="space-y-1">
                       <Label className="text-xs font-medium">Método de pago</Label>
                       {showNewPaymentMethod ? (
@@ -754,16 +756,18 @@ export const RegisterSaleDialog = ({
                         </div>
                       )}
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs font-medium">Plataforma</Label>
-                      <Select value={messagePlatform || '_none'} onValueChange={v => setMessagePlatform(v === '_none' ? '' : v)}>
-                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="_none">Sin especificar</SelectItem>
-                          {PLATFORM_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {!isSilvia && (
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium">Plataforma</Label>
+                        <Select value={messagePlatform || '_none'} onValueChange={v => setMessagePlatform(v === '_none' ? '' : v)}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none">Sin especificar</SelectItem>
+                            {PLATFORM_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-1">
