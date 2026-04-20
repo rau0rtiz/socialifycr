@@ -214,21 +214,7 @@ const Comisiones = () => {
             </p>
           </div>
           <div className="flex gap-2 items-center flex-wrap">
-            <Input
-              type="month"
-              value={filterMonth}
-              onChange={(e) => setFilterMonth(e.target.value)}
-              className="w-40"
-            />
-            <Select value={filterCloser} onValueChange={setFilterCloser}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Closer" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los closers</SelectItem>
-                {closers.map(c => (
-                  <SelectItem key={c.key} value={c.key}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MonthSelector value={filterMonth} onChange={setFilterMonth} />
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-36"><SelectValue placeholder="Estado" /></SelectTrigger>
               <SelectContent>
@@ -276,47 +262,36 @@ const Comisiones = () => {
             <TabsTrigger value="historial">Historial de pagos</TabsTrigger>
           </TabsList>
 
-          {/* By closer / pay */}
+          {/* Por closer — Grid de cards 3:4 */}
           <TabsContent value="por-pagar">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pagos pendientes por closer</CardTitle>
-                <CardDescription>
-                  Monto ya devengado (basado en cobranzas registradas) menos lo ya pagado.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {byCloser.length === 0 ? (
-                  <div className="text-sm text-muted-foreground py-8 text-center">Sin comisiones en este mes.</div>
-                ) : (
-                  <div className="space-y-3">
-                    {byCloser.map(g => (
-                      <div key={g.closerName} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30">
-                        <div>
-                          <div className="font-medium">{g.closerName}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {g.commissions.length} venta{g.commissions.length !== 1 ? 's' : ''}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="text-xs text-muted-foreground">Por pagar</div>
-                            <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{formatMoney(g.pendingToPay, g.currency)}</div>
-                          </div>
-                          <Button
-                            disabled={g.pendingToPay <= 0}
-                            onClick={() => setPayoutDialog({ closerName: g.closerName, closerUserId: g.closerUserId, closerManualId: g.closerManualId })}
-                          >
-                            <Receipt className="h-4 w-4 mr-2" />
-                            Registrar pago
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {closerCards.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                  No hay closers registrados todavía.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {closerCards.map(g => (
+                  <CloserCommissionCard
+                    key={g.key}
+                    closerName={g.name}
+                    avatarUrl={g.avatarUrl}
+                    commissions={g.commissions}
+                    currency={g.currency}
+                    onClick={() =>
+                      setOpenCloser({
+                        name: g.name,
+                        userId: g.userId,
+                        manualId: g.manualId,
+                        avatarUrl: g.avatarUrl,
+                        currency: g.currency,
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Detail by sale */}
