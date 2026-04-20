@@ -2,7 +2,7 @@ import { ReactNode, CSSProperties } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
-import { AvatarPrompt } from './AvatarPrompt';
+
 import { useBrand } from '@/contexts/BrandContext';
 
 
@@ -38,7 +38,7 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
              {children}
            </main>
         </div>
-        <AvatarPrompt />
+        
       </div>
     </SidebarProvider>
   );

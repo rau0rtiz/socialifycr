@@ -19,7 +19,6 @@ const Clientes = lazy(() => import("./pages/Clientes"));
 const Contenido = lazy(() => import("./pages/Contenido"));
 const Ventas = lazy(() => import("./pages/Ventas"));
 const Facturacion = lazy(() => import("./pages/Facturacion"));
-const Reportes = lazy(() => import("./pages/Reportes"));
 const Historial = lazy(() => import("./pages/Historial"));
 const Auth = lazy(() => import("./pages/Auth"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
@@ -148,8 +147,6 @@ const App = () => (
                   {/* Shared routes */}
                   <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                   <Route path="/content" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
-                  <Route path="/reportes" element={<ProtectedRoute><Reportes /></ProtectedRoute>} />
-                  <Route path="/reports" element={<ProtectedRoute><Reportes /></ProtectedRoute>} />
                   <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
                   <Route path="/asistencia" element={<ProtectedRoute><Asistencia /></ProtectedRoute>} />
                   <Route path="/comisiones" element={<ProtectedRoute><Comisiones /></ProtectedRoute>} />
