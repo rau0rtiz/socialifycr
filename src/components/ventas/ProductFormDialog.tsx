@@ -277,6 +277,39 @@ export const ProductFormDialog = ({
             />
           </div>
 
+          {/* Category */}
+          <div>
+            <Label className="text-xs flex items-center gap-1.5">
+              <TagIcon className="h-3 w-3 text-muted-foreground" />
+              Categoría
+            </Label>
+            {categories.length > 0 ? (
+              <Select value={category || '__none__'} onValueChange={(v) => setCategory(v === '__none__' ? '' : v)}>
+                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Sin categoría" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin categoría</SelectItem>
+                  {categories.map(c => (
+                    <SelectItem key={c.id} value={c.name}>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }} />
+                        {c.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input value={category} onChange={e => setCategory(e.target.value)} placeholder="Sin categorías creadas" className="mt-1.5" />
+            )}
+          </div>
+
+          {/* Tags */}
+          <ProductTagSelector
+            clientId={clientId}
+            selectedTagIds={selectedTagIds}
+            onChange={setSelectedTagIds}
+          />
+
           <Separator />
 
           <div className="grid grid-cols-3 gap-3">
