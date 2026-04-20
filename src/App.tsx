@@ -17,7 +17,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const BrandSettings = lazy(() => import("./pages/BrandSettings"));
 const Clientes = lazy(() => import("./pages/Clientes"));
 const Ventas = lazy(() => import("./pages/Ventas"));
-const Facturacion = lazy(() => import("./pages/Facturacion"));
+
 const Historial = lazy(() => import("./pages/Historial"));
 const Auth = lazy(() => import("./pages/Auth"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
@@ -93,13 +93,6 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <Clientes />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/facturacion" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <Facturacion />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />

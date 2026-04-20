@@ -9,7 +9,7 @@ import {
   ClipboardCheck,
   History,
   BarChart3,
-  CreditCard,
+  
   Eye,
   FolderOpen,
   Mail,
@@ -44,7 +44,7 @@ const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
   { title: 'Comunicaciones', url: '/comunicaciones', icon: Mail },
   { title: 'Accesos', url: '/accesos', icon: KeyRound },
-  { title: 'Facturación', url: '/facturacion', icon: CreditCard },
+  
   { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },
   { title: 'Historial', url: '/historial', icon: History },
   { title: 'Archivos', url: '/archivos', icon: FolderOpen },
