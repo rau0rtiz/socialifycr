@@ -134,10 +134,40 @@ export const CollectionDetailDialog = ({
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                        <CalendarDays className="h-3 w-3" />
-                        {format(dueDate, "d 'de' MMMM, yyyy", { locale: es })}
-                      </span>
+                      {isPaid ? (
+                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <CalendarDays className="h-3 w-3" />
+                          {format(dueDate, "d 'de' MMMM, yyyy", { locale: es })}
+                        </span>
+                      ) : (
+                        <Popover
+                          open={editingDateId === c.id}
+                          onOpenChange={(o) => setEditingDateId(o ? c.id : null)}
+                        >
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              className="text-[11px] text-muted-foreground flex items-center gap-1 hover:text-foreground transition-colors group"
+                              disabled={isPending}
+                            >
+                              <CalendarDays className="h-3 w-3" />
+                              <span className="underline decoration-dotted underline-offset-2">
+                                {format(dueDate, "d 'de' MMMM, yyyy", { locale: es })}
+                              </span>
+                              <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60 transition-opacity" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={dueDate}
+                              onSelect={(d) => handleDateChange(c, d)}
+                              initialFocus
+                              locale={es}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      )}
                       {c.paid_at && (
                         <span className="text-[10px] text-emerald-600 dark:text-emerald-400">
                           Pagado {format(new Date(c.paid_at), 'dd/MM/yy')}
