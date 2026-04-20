@@ -7,6 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
+const json = (status: number, body: Record<string, unknown>) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -18,134 +24,127 @@ serve(async (req) => {
   );
 
   try {
-    // ---- POST: process unsubscription ----
+    // ─── POST: process unsubscription ─────────────────────────────────
     if (req.method === "POST") {
-      const { token, reason } = await req.json();
-      console.log("[handle-unsubscribe] POST received, token:", token?.slice(0, 8));
+      const body = await req.json().catch(() => ({}));
+      const token: string | undefined = body.token;
+      const emailFromBody: string | undefined = body.email;
+      const reason: string | null = body.reason || null;
 
-      if (!token) {
-        return new Response(JSON.stringify({ error: "Token requerido" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      // Resolve target email — prefer token lookup, fall back to body email
+      let resolvedEmail: string | null = null;
+      let tokenRecord: any = null;
+
+      if (token) {
+        const { data } = await supabaseAdmin
+          .from("email_unsubscribe_tokens")
+          .select("*")
+          .eq("token", token)
+          .maybeSingle();
+        if (data) {
+          tokenRecord = data;
+          resolvedEmail = data.email;
+        }
       }
 
-      const { data: tokenRecord, error: tokenErr } = await supabaseAdmin
-        .from("email_unsubscribe_tokens")
-        .select("*")
-        .eq("token", token)
+      if (!resolvedEmail && emailFromBody) {
+        resolvedEmail = emailFromBody.trim().toLowerCase();
+      }
+
+      if (!resolvedEmail) {
+        return json(400, { error: "No se pudo identificar el correo a desuscribir." });
+      }
+
+      const normalizedEmail = resolvedEmail.trim().toLowerCase();
+
+      // Already suppressed? Treat as success.
+      const { data: existingSuppression } = await supabaseAdmin
+        .from("suppressed_emails")
+        .select("email")
+        .eq("email", normalizedEmail)
         .maybeSingle();
 
-      if (tokenErr) {
-        console.error("[handle-unsubscribe] DB error:", tokenErr);
-        return new Response(JSON.stringify({ error: "Error al validar token" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      if (existingSuppression) {
+        return json(200, { already_unsubscribed: true, email: normalizedEmail });
+      }
+
+      // Mark token as used (best-effort)
+      if (tokenRecord && !tokenRecord.used_at) {
+        await supabaseAdmin
+          .from("email_unsubscribe_tokens")
+          .update({ used_at: new Date().toISOString(), reason })
+          .eq("id", tokenRecord.id);
+      }
+
+      // Insert into suppression list — global block across all flows
+      const { error: suppressErr } = await supabaseAdmin
+        .from("suppressed_emails")
+        .insert({
+          email: normalizedEmail,
+          reason: "unsubscribe",
+          metadata: { reason_text: reason, source: "unsubscribe_page" },
         });
+
+      if (suppressErr && !suppressErr.message.includes("duplicate")) {
+        console.error("[handle-unsubscribe] suppression insert error:", suppressErr);
       }
 
-      if (!tokenRecord) {
-        console.warn("[handle-unsubscribe] Token not found");
-        return new Response(JSON.stringify({ error: "Token inválido o expirado" }), {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      if (tokenRecord.used_at) {
-        console.log("[handle-unsubscribe] Token already used:", tokenRecord.email);
-        return new Response(JSON.stringify({
-          already_unsubscribed: true,
-          email: tokenRecord.email,
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Mark token as used
-      const { error: updateTokenErr } = await supabaseAdmin
-        .from("email_unsubscribe_tokens")
-        .update({ used_at: new Date().toISOString(), reason: reason || null })
-        .eq("id", tokenRecord.id);
-
-      if (updateTokenErr) {
-        console.error("[handle-unsubscribe] Failed to mark token used:", updateTokenErr);
-      }
-
-      // Update email_contacts (best-effort; not all emails may be in the contacts table)
-      const { error: contactErr } = await supabaseAdmin
+      // Update email_contacts (best-effort across all clients)
+      await supabaseAdmin
         .from("email_contacts")
         .update({
           status: "unsubscribed",
           unsubscribed_at: new Date().toISOString(),
-          unsubscribe_reason: reason || null,
+          unsubscribe_reason: reason,
         })
-        .eq("email", tokenRecord.email.toLowerCase());
+        .eq("email", normalizedEmail);
 
-      if (contactErr) {
-        console.warn("[handle-unsubscribe] email_contacts update warning:", contactErr.message);
-      }
-
-      console.log("[handle-unsubscribe] Successfully unsubscribed:", tokenRecord.email);
-
-      return new Response(JSON.stringify({
-        success: true,
-        email: tokenRecord.email,
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json(200, { success: true, email: normalizedEmail });
     }
 
-    // ---- GET: validate token + return email ----
+    // ─── GET: validate token + return prefill email ───────────────────
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
-    console.log("[handle-unsubscribe] GET received, token:", token?.slice(0, 8));
+    const emailParam = url.searchParams.get("email");
 
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Token requerido" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let email: string | null = null;
+    let alreadyUsed = false;
+
+    if (token) {
+      const { data } = await supabaseAdmin
+        .from("email_unsubscribe_tokens")
+        .select("email, used_at")
+        .eq("token", token)
+        .maybeSingle();
+      if (data) {
+        email = data.email;
+        alreadyUsed = !!data.used_at;
+      }
     }
 
-    const { data: tokenRecord, error: tokenErr } = await supabaseAdmin
-      .from("email_unsubscribe_tokens")
-      .select("email, used_at")
-      .eq("token", token)
+    if (!email && emailParam) {
+      email = emailParam.trim().toLowerCase();
+    }
+
+    if (!email) {
+      return json(400, { error: "Falta token o correo en el enlace." });
+    }
+
+    // Check suppression
+    const { data: suppression } = await supabaseAdmin
+      .from("suppressed_emails")
+      .select("email")
+      .eq("email", email)
       .maybeSingle();
 
-    if (tokenErr) {
-      console.error("[handle-unsubscribe] GET DB error:", tokenErr);
-      return new Response(JSON.stringify({ error: "Error al validar token" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (!tokenRecord) {
-      console.warn("[handle-unsubscribe] GET Token not found");
-      return new Response(JSON.stringify({ error: "Token inválido" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({
+    return json(200, {
       valid: true,
-      email: tokenRecord.email,
-      already_used: !!tokenRecord.used_at,
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      email,
+      already_used: alreadyUsed || !!suppression,
     });
   } catch (error) {
     console.error("[handle-unsubscribe] Unhandled error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json(500, { error: msg });
   }
 });

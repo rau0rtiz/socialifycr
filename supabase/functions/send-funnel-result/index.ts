@@ -18,22 +18,12 @@ const levelPdfMap: Record<number, string> = {
   6: "documents/NIVEL-6.pdf",
 };
 
-function buildUnsubscribeFooter(url: string): string {
-  return `<div style="margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center;">
-    <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.5;">Si no deseas recibir más correos, puedes <a href="${url}" style="color:#9ca3af;text-decoration:underline;">desuscribirte aquí</a>.</p>
-  </div>`;
-}
-
-async function generateUnsubscribeUrl(supabaseAdmin: any, email: string): Promise<string> {
-  const token = crypto.randomUUID();
-  await supabaseAdmin.from("email_unsubscribe_tokens").insert({ token, email: email.toLowerCase() });
-  return `https://app.socialifycr.com/desuscribirse?token=${token}`;
-}
-
-function injectFooter(html: string, footer: string): string {
-  if (html.includes("</body>")) return html.replace(/<\/body>/i, `${footer}</body>`);
-  return html + footer;
-}
+import {
+  buildUnsubscribeFooter,
+  generateUnsubscribeUrl,
+  injectUnsubscribeFooter as injectFooter,
+  isEmailSuppressed,
+} from "../_shared/unsubscribe.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -51,6 +41,18 @@ serve(async (req) => {
     if (!name || !email || !business_level) {
       return new Response(JSON.stringify({ error: "name, email, and business_level are required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseAdminEarly = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    if (await isEmailSuppressed(supabaseAdminEarly, email)) {
+      console.log(`[send-funnel-result] Skipped suppressed recipient: ${email}`);
+      return new Response(JSON.stringify({ success: true, skipped: true, reason: "suppressed" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
