@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 serve(async (req) => {
@@ -17,8 +18,11 @@ serve(async (req) => {
   );
 
   try {
+    // ---- POST: process unsubscription ----
     if (req.method === "POST") {
       const { token, reason } = await req.json();
+      console.log("[handle-unsubscribe] POST received, token:", token?.slice(0, 8));
+
       if (!token) {
         return new Response(JSON.stringify({ error: "Token requerido" }), {
           status: 400,
@@ -26,35 +30,51 @@ serve(async (req) => {
         });
       }
 
-      // Validate token
       const { data: tokenRecord, error: tokenErr } = await supabaseAdmin
         .from("email_unsubscribe_tokens")
         .select("*")
         .eq("token", token)
-        .single();
+        .maybeSingle();
 
-      if (tokenErr || !tokenRecord) {
-        return new Response(JSON.stringify({ error: "Token inválido o no encontrado" }), {
+      if (tokenErr) {
+        console.error("[handle-unsubscribe] DB error:", tokenErr);
+        return new Response(JSON.stringify({ error: "Error al validar token" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!tokenRecord) {
+        console.warn("[handle-unsubscribe] Token not found");
+        return new Response(JSON.stringify({ error: "Token inválido o expirado" }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       if (tokenRecord.used_at) {
-        return new Response(JSON.stringify({ error: "Ya te desuscribiste anteriormente", already_unsubscribed: true }), {
+        console.log("[handle-unsubscribe] Token already used:", tokenRecord.email);
+        return new Response(JSON.stringify({
+          already_unsubscribed: true,
+          email: tokenRecord.email,
+        }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       // Mark token as used
-      await supabaseAdmin
+      const { error: updateTokenErr } = await supabaseAdmin
         .from("email_unsubscribe_tokens")
         .update({ used_at: new Date().toISOString(), reason: reason || null })
         .eq("id", tokenRecord.id);
 
-      // Update email_contacts if exists
-      await supabaseAdmin
+      if (updateTokenErr) {
+        console.error("[handle-unsubscribe] Failed to mark token used:", updateTokenErr);
+      }
+
+      // Update email_contacts (best-effort; not all emails may be in the contacts table)
+      const { error: contactErr } = await supabaseAdmin
         .from("email_contacts")
         .update({
           status: "unsubscribed",
@@ -63,15 +83,25 @@ serve(async (req) => {
         })
         .eq("email", tokenRecord.email.toLowerCase());
 
-      return new Response(JSON.stringify({ success: true }), {
+      if (contactErr) {
+        console.warn("[handle-unsubscribe] email_contacts update warning:", contactErr.message);
+      }
+
+      console.log("[handle-unsubscribe] Successfully unsubscribed:", tokenRecord.email);
+
+      return new Response(JSON.stringify({
+        success: true,
+        email: tokenRecord.email,
+      }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // GET — validate token exists
+    // ---- GET: validate token + return email ----
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
+    console.log("[handle-unsubscribe] GET received, token:", token?.slice(0, 8));
 
     if (!token) {
       return new Response(JSON.stringify({ error: "Token requerido" }), {
@@ -84,9 +114,18 @@ serve(async (req) => {
       .from("email_unsubscribe_tokens")
       .select("email, used_at")
       .eq("token", token)
-      .single();
+      .maybeSingle();
 
-    if (tokenErr || !tokenRecord) {
+    if (tokenErr) {
+      console.error("[handle-unsubscribe] GET DB error:", tokenErr);
+      return new Response(JSON.stringify({ error: "Error al validar token" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!tokenRecord) {
+      console.warn("[handle-unsubscribe] GET Token not found");
       return new Response(JSON.stringify({ error: "Token inválido" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -102,7 +141,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("handle-unsubscribe error:", error);
+    console.error("[handle-unsubscribe] Unhandled error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
