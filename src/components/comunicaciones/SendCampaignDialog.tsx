@@ -110,9 +110,8 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
   const insertVariable = (key: string) => {
     const tag = `{{${key}}}`;
-    // Si está la pestaña de código abierta y hay textarea, insertar en el cursor
-    if (editorTab === 'code' && htmlTextareaRef.current) {
-      const ta = htmlTextareaRef.current;
+    const ta = htmlTextareaRef.current;
+    if (ta) {
       const start = ta.selectionStart;
       const end = ta.selectionEnd;
       const next = editedHtml.substring(0, start) + tag + editedHtml.substring(end);
@@ -123,7 +122,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
       }, 0);
     } else {
       navigator.clipboard.writeText(tag);
-      toast.success(`${tag} copiado — pégalo en el HTML o en el asunto`);
+      toast.success(`${tag} copiado`);
     }
   };
 
