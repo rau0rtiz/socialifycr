@@ -95,7 +95,37 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   const [sending, setSending] = useState(false);
   const [sendMode, setSendMode] = useState<'now' | 'scheduled'>('now');
   const [scheduledFor, setScheduledFor] = useState<string>(''); // datetime-local value
+  const htmlTextareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
+
+  // Variables disponibles en el composer estándar (multi-recipient).
+  // Estas las reemplaza la edge function send-campaign por destinatario.
+  const composerVariables = useMemo(() => {
+    if (template) return template.variables;
+    return [
+      { key: 'name', label: 'Nombre del destinatario' },
+      { key: 'email', label: 'Email del destinatario' },
+    ];
+  }, [template]);
+
+  const insertVariable = (key: string) => {
+    const tag = `{{${key}}}`;
+    // Si está la pestaña de código abierta y hay textarea, insertar en el cursor
+    if (editorTab === 'code' && htmlTextareaRef.current) {
+      const ta = htmlTextareaRef.current;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const next = editedHtml.substring(0, start) + tag + editedHtml.substring(end);
+      setEditedHtml(next);
+      setTimeout(() => {
+        ta.focus();
+        ta.setSelectionRange(start + tag.length, start + tag.length);
+      }, 0);
+    } else {
+      navigator.clipboard.writeText(tag);
+      toast.success(`${tag} copiado — pégalo en el HTML o en el asunto`);
+    }
+  };
 
   // Build variables from lead context
   const leadVars = useMemo(() => buildLeadVariables(leadContext), [leadContext]);
