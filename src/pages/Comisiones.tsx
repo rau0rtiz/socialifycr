@@ -320,10 +320,10 @@ const Comisiones = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.length === 0 && (
+                    {filteredDetail.length === 0 && (
                       <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground py-8">Sin comisiones</TableCell></TableRow>
                     )}
-                    {filtered.map(c => {
+                    {filteredDetail.map(c => {
                       const status = STATUS_LABELS[c.status];
                       const StatusIcon = status.icon;
                       return (
@@ -442,16 +442,19 @@ const Comisiones = () => {
         </Tabs>
       </div>
 
-      {payoutDialog && clientId && (
-        <RecordPayoutDialog
+      {openCloser && clientId && (
+        <CloserDetailDialog
           open
-          onOpenChange={(v) => !v && setPayoutDialog(null)}
+          onOpenChange={(v) => !v && setOpenCloser(null)}
           clientId={clientId}
-          closerName={payoutDialog.closerName}
-          closerUserId={payoutDialog.closerUserId}
-          closerManualId={payoutDialog.closerManualId}
-          pendingCommissions={byCloser.find(g => g.closerName === payoutDialog.closerName)?.commissions.filter(c => (c.pending_to_pay || 0) > 0) || []}
-          currency={byCloser.find(g => g.closerName === payoutDialog.closerName)?.currency || 'USD'}
+          closerName={openCloser.name}
+          closerUserId={openCloser.userId}
+          closerManualId={openCloser.manualId}
+          avatarUrl={openCloser.avatarUrl}
+          monthCommissions={openCloserMonthCommissions}
+          monthLabel={format(monthStart, 'MMMM yyyy', { locale: es })}
+          payouts={payouts}
+          currency={openCloser.currency}
         />
       )}
     </DashboardLayout>
