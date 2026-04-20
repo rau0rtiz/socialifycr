@@ -108,6 +108,8 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         setEditedHtml(template.html_content);
         setEditedMessage('');
       }
+      setSendMode('now');
+      setScheduledFor('');
     }
   }, [open, template, preselectedRecipients, leadContext, isOutboundMode]);
 
