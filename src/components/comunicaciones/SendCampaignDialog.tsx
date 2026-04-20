@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Send, Users, Search, ArrowRight, ArrowLeft, Eye, Code, User, Clock, CalendarClock } from 'lucide-react';
+import { Loader2, Send, Users, Search, ArrowRight, ArrowLeft, Eye, Code, User, Clock, CalendarClock, Plus, X } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
