@@ -3,12 +3,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarClock, Send, CheckCircle2, AlertCircle, Trash2, X, FileText, Users, Plus } from 'lucide-react';
+import { CalendarClock, Send, CheckCircle2, AlertCircle, Trash2, X, FileText, Users, Plus, Eye } from 'lucide-react';
 import { useEmailCampaigns, useCancelScheduledCampaign, useDeleteCampaign, type EmailCampaign } from '@/hooks/use-email-campaigns';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { SendCampaignDialog } from './SendCampaignDialog';
 
 const statusConfig: Record<EmailCampaign['status'], { label: string; color: string; icon: React.ElementType }> = {
@@ -33,6 +34,7 @@ const CampaignsContent = () => {
   const deleteMut = useDeleteCampaign();
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [previewCampaign, setPreviewCampaign] = useState<EmailCampaign | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
 
   const sorted = campaigns ? (() => {
@@ -88,7 +90,11 @@ const CampaignsContent = () => {
           const cfg = statusConfig[c.status];
           const Icon = cfg.icon;
           return (
-            <Card key={c.id} className="hover:shadow-sm transition-shadow">
+            <Card
+              key={c.id}
+              className="hover:shadow-sm hover:border-primary/40 transition-all cursor-pointer"
+              onClick={() => setPreviewCampaign(c)}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1 space-y-1.5">
@@ -125,13 +131,21 @@ const CampaignsContent = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-xs gap-1 text-muted-foreground"
+                      onClick={(e) => { e.stopPropagation(); setPreviewCampaign(c); }}
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Ver
+                    </Button>
                     {c.status === 'scheduled' && (
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-8 text-xs gap-1"
-                        onClick={() => setCancelId(c.id)}
+                        onClick={(e) => { e.stopPropagation(); setCancelId(c.id); }}
                       >
                         <X className="h-3 w-3" /> Cancelar
                       </Button>
@@ -141,7 +155,7 @@ const CampaignsContent = () => {
                         size="sm"
                         variant="ghost"
                         className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeleteId(c.id)}
+                        onClick={(e) => { e.stopPropagation(); setDeleteId(c.id); }}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -207,6 +221,61 @@ const CampaignsContent = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Email preview */}
+      <Dialog open={!!previewCampaign} onOpenChange={(o) => !o && setPreviewCampaign(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+          {previewCampaign && (
+            <>
+              <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <DialogTitle className="text-base">{previewCampaign.name}</DialogTitle>
+                  {(() => {
+                    const cfg = statusConfig[previewCampaign.status];
+                    const Icon = cfg.icon;
+                    return (
+                      <Badge variant="outline" className={`text-[10px] gap-1 ${cfg.color}`}>
+                        <Icon className="h-3 w-3" />
+                        {cfg.label}
+                      </Badge>
+                    );
+                  })()}
+                </div>
+                <DialogDescription className="space-y-1 text-xs pt-1">
+                  <div><span className="font-medium text-foreground">Asunto:</span> {previewCampaign.subject}</div>
+                  <div><span className="font-medium text-foreground">De:</span> {previewCampaign.from_name} &lt;{previewCampaign.from_email}&gt;</div>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      {previewCampaign.total_recipients ?? 0} destinatarios
+                    </span>
+                    {previewCampaign.status === 'scheduled' && previewCampaign.scheduled_for && (
+                      <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                        <CalendarClock className="h-3 w-3" />
+                        Sale el {formatDate(previewCampaign.scheduled_for)}
+                      </span>
+                    )}
+                    {previewCampaign.status === 'sent' && previewCampaign.sent_at && (
+                      <span>Enviada el {formatDate(previewCampaign.sent_at)}</span>
+                    )}
+                  </div>
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex-1 overflow-auto bg-muted/30 p-4">
+                <div className="bg-background rounded-lg shadow-sm mx-auto max-w-2xl overflow-hidden">
+                  <iframe
+                    title="Email preview"
+                    srcDoc={previewCampaign.html_content || '<p style="padding:24px;color:#888;font-family:sans-serif">Sin contenido HTML</p>'}
+                    className="w-full border-0"
+                    style={{ minHeight: '60vh', height: '70vh' }}
+                    sandbox=""
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
