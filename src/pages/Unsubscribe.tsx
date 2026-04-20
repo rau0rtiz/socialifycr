@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, AlertCircle, Loader2, MailMinus } from "lucide-react";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const FN_URL = `${SUPABASE_URL}/functions/v1/handle-unsubscribe`;
 
 const REASONS = [
   { value: "no_interesa", label: "No me interesa este contenido" },
@@ -36,33 +39,29 @@ const Unsubscribe = () => {
 
     const validate = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("handle-unsubscribe", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          body: undefined,
-        });
-
-        // Use fetch directly for GET with query params
-        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
         const res = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/handle-unsubscribe?token=${encodeURIComponent(token)}`
+          `${FN_URL}?token=${encodeURIComponent(token)}`,
+          {
+            method: "GET",
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+          }
         );
         const result = await res.json();
 
-        if (!res.ok) {
-          setErrorMsg(result.error || "Enlace inválido.");
+        if (!res.ok || !result.valid) {
+          setErrorMsg(result.error || "Enlace inválido o expirado.");
           setView("error");
           return;
         }
 
         setEmail(result.email || "");
-        if (result.already_used) {
-          setView("already");
-        } else {
-          setView("form");
-        }
-      } catch {
-        setErrorMsg("Error al validar el enlace.");
+        setView(result.already_used ? "already" : "form");
+      } catch (e) {
+        console.error("validate error:", e);
+        setErrorMsg("No pudimos validar el enlace. Intentá de nuevo.");
         setView("error");
       }
     };
@@ -73,17 +72,20 @@ const Unsubscribe = () => {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const finalReason = reason === "otro" ? (otherText || "Otro") : REASONS.find(r => r.value === reason)?.label || "";
+      const finalReason =
+        reason === "otro"
+          ? otherText || "Otro"
+          : REASONS.find((r) => r.value === reason)?.label || "";
 
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/handle-unsubscribe`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, reason: finalReason }),
-        }
-      );
+      const res = await fetch(FN_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ token, reason: finalReason }),
+      });
 
       const result = await res.json();
 
@@ -92,11 +94,12 @@ const Unsubscribe = () => {
       } else if (result.success) {
         setView("success");
       } else {
-        setErrorMsg(result.error || "Error al procesar.");
+        setErrorMsg(result.error || "Error al procesar la solicitud.");
         setView("error");
       }
-    } catch {
-      setErrorMsg("Error de conexión.");
+    } catch (e) {
+      console.error("submit error:", e);
+      setErrorMsg("Error de conexión. Intentá de nuevo.");
       setView("error");
     } finally {
       setSubmitting(false);
