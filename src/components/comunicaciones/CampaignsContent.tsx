@@ -3,12 +3,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarClock, Send, CheckCircle2, AlertCircle, Trash2, X, FileText, Users, Plus } from 'lucide-react';
+import { CalendarClock, Send, CheckCircle2, AlertCircle, Trash2, X, FileText, Users, Plus, Eye } from 'lucide-react';
 import { useEmailCampaigns, useCancelScheduledCampaign, useDeleteCampaign, type EmailCampaign } from '@/hooks/use-email-campaigns';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { SendCampaignDialog } from './SendCampaignDialog';
 
 const statusConfig: Record<EmailCampaign['status'], { label: string; color: string; icon: React.ElementType }> = {
