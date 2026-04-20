@@ -129,14 +129,14 @@ const MetricCard = ({
   value: string;
   subValue?: string;
 }) => (
-  <div className="flex items-center gap-2 p-2 md:p-3 bg-muted/50 rounded-lg min-w-0 overflow-hidden">
-    <div className="p-1.5 md:p-2 bg-background rounded-md shrink-0">
-      <Icon className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+  <div className="flex items-center gap-2.5 p-2.5 md:p-3 bg-muted/50 rounded-lg min-w-0 overflow-hidden">
+    <div className="p-2 bg-background rounded-md shrink-0">
+      <Icon className="h-4 w-4 text-muted-foreground" />
     </div>
-    <div className="min-w-0 overflow-hidden">
-      <p className="text-[10px] md:text-xs text-muted-foreground truncate">{label}</p>
-      <p className="text-xs md:text-sm font-semibold truncate">{value}</p>
-      {subValue && <p className="text-[10px] md:text-xs text-muted-foreground truncate">{subValue}</p>}
+    <div className="min-w-0 overflow-hidden flex-1">
+      <p className="text-[11px] md:text-xs text-muted-foreground truncate leading-tight">{label}</p>
+      <p className="text-sm md:text-base font-semibold truncate leading-tight mt-0.5">{value}</p>
+      {subValue && <p className="text-[10px] md:text-xs text-muted-foreground truncate leading-tight mt-0.5">{subValue}</p>}
     </div>
   </div>
 );
@@ -258,7 +258,7 @@ const CampaignRow = ({
       </div>
     </div>
 
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
       <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(campaign.spend, currency)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(campaign.reach)} />
       <MetricCard icon={Target} label={campaign.resultType} value={formatNumber(campaign.results)} />
@@ -405,7 +405,7 @@ const AdSetRow = ({ adset, currency, onClick, isPurchaseGoal }: { adset: AdSetIn
       <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
     </div>
 
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
       <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(adset.spend, currency)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(adset.reach)} />
       <MetricCard icon={Target} label={adset.resultType} value={formatNumber(adset.results)} />
@@ -448,7 +448,7 @@ const AdRow = ({ ad, currency, isPurchaseGoal }: { ad: AdInsights; currency: str
       </div>
     </div>
 
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
       <MetricCard icon={DollarSign} label="Gastado" value={formatCurrency(ad.spend, currency)} />
       <MetricCard icon={Eye} label="Alcance" value={formatNumber(ad.reach)} />
       <MetricCard icon={Target} label={ad.resultType} value={formatNumber(ad.results)} />
@@ -736,21 +736,21 @@ export const CampaignsDrilldown = ({ clientId, hasAdAccount, datePreset: externa
 
     {/* Campaign Detail Dialog */}
     <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) handleDialogClose(); }}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[88vh] overflow-y-auto">
+        <DialogHeader className="pb-2">
           <div className="flex items-center gap-2">
             {dialogViewLevel !== 'detail' && (
-              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={handleDialogBack}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleDialogBack}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
             )}
-            <div>
-              <DialogTitle className="text-sm">
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="text-base md:text-lg leading-tight truncate">
                 {dialogViewLevel === 'detail' && selectedCampaign?.name}
                 {dialogViewLevel === 'adsets' && 'Conjuntos de anuncios'}
                 {dialogViewLevel === 'ads' && dialogSelectedAdSet?.name}
               </DialogTitle>
-              <DialogDescription className="text-xs">
+              <DialogDescription className="text-xs mt-0.5 truncate">
                 {dialogViewLevel === 'detail' && 'Detalle de campaña'}
                 {dialogViewLevel === 'adsets' && selectedCampaign?.name}
                 {dialogViewLevel === 'ads' && `${selectedCampaign?.name} → ${dialogSelectedAdSet?.name}`}
