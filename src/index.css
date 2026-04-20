@@ -129,6 +129,44 @@
   display: none;
 }
 
+/* Roadmap-style section title — orange accent bar on the left */
+.section-title {
+  @apply border-l-4 border-primary pl-3 text-2xl md:text-3xl font-bold tracking-tight text-foreground;
+}
+
+/* Icon chip — orange tinted square holding a section icon */
+.icon-chip {
+  @apply inline-flex items-center justify-center rounded-xl bg-primary/10 text-primary p-2;
+}
+
+/* Subtle decorative blobs for the dashboard background — roadmap-style */
+.dashboard-bg-decor::before,
+.dashboard-bg-decor::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.18) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.dashboard-bg-decor::before {
+  width: 480px;
+  height: 480px;
+  top: -120px;
+  right: -120px;
+}
+.dashboard-bg-decor::after {
+  width: 360px;
+  height: 360px;
+  bottom: -80px;
+  left: -80px;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.10) 0%, transparent 70%);
+}
+.dashboard-bg-decor > * {
+  position: relative;
+  z-index: 1;
+}
+
 /* Funnel autofill fix — force dark text on white bg for browser autocomplete */
 .funnel-autofill:-webkit-autofill,
 .funnel-autofill:-webkit-autofill:hover,
