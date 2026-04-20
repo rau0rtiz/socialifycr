@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Send, Users, Search, ArrowRight, ArrowLeft, Eye, Code, User, Clock, CalendarClock } from 'lucide-react';
+import { Loader2, Send, Users, Search, ArrowRight, ArrowLeft, Eye, Code, User, Clock, CalendarClock, Plus, X } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -95,12 +95,16 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   const [sending, setSending] = useState(false);
   const [sendMode, setSendMode] = useState<'now' | 'scheduled'>('now');
   const [scheduledFor, setScheduledFor] = useState<string>(''); // datetime-local value
+  // Custom variables defined by the user (applied to all recipients before send)
+  const [customVariables, setCustomVariables] = useState<{ key: string; label: string; value: string }[]>([]);
+  const [newVarKey, setNewVarKey] = useState('');
+  const [newVarLabel, setNewVarLabel] = useState('');
+  const [newVarValue, setNewVarValue] = useState('');
   const htmlTextareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
 
-  // Variables disponibles en el composer estándar (multi-recipient).
-  // Estas las reemplaza la edge function send-campaign por destinatario.
-  const composerVariables = useMemo(() => {
+  // Per-recipient variables (replaced server-side by send-campaign per recipient)
+  const recipientVariables = useMemo(() => {
     if (template) return template.variables;
     return [
       { key: 'name', label: 'Nombre del destinatario' },
@@ -136,6 +140,10 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
     setEditorTab('preview');
     setSendMode('now');
     setScheduledFor('');
+    setCustomVariables([]);
+    setNewVarKey('');
+    setNewVarLabel('');
+    setNewVarValue('');
 
     if (template) {
       if (isOutboundMode) {
@@ -334,6 +342,16 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Bake custom variables (defined by user with a fixed value) into subject + html
+      // before saving. Per-recipient variables ({{name}}, {{email}}) remain for the
+      // edge function to replace per recipient using recipients_snapshot.
+      const customVarMap: Record<string, string> = {};
+      for (const v of customVariables) {
+        if (v.key.trim()) customVarMap[v.key.trim()] = v.value;
+      }
+      const finalSubject = replaceVariables(editedSubject, customVarMap);
+      const finalHtml = replaceVariables(editedHtml, customVarMap);
+
       const recipientsSnapshot = selectedRecipients.map((r) => ({
         id: r.id,
         email: r.email,
@@ -345,8 +363,8 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         .insert({
           client_id: anyClient.id,
           name: finalName + (sendMode === 'scheduled' ? ' (programada)' : ''),
-          subject: editedSubject,
-          html_content: editedHtml,
+          subject: finalSubject,
+          html_content: finalHtml,
           target_tags: [],
           recipients_snapshot: recipientsSnapshot,
           total_recipients: recipientsSnapshot.length,
@@ -613,24 +631,102 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               </div>
             </div>
 
-            {composerVariables.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1 rounded-md border bg-muted/30 p-2">
-                <span className="text-xs text-muted-foreground mr-1">
-                  Variables (click para insertar en el cursor del HTML):
-                </span>
-                {composerVariables.map(v => (
-                  <Badge
-                    key={v.key}
+            {/* Variables panel */}
+            <div className="rounded-md border bg-muted/30 p-3 space-y-3">
+              {recipientVariables.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground">
+                    Por destinatario (se reemplaza al enviar a cada persona):
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {recipientVariables.map(v => (
+                      <Badge
+                        key={v.key}
+                        variant="outline"
+                        className="text-[10px] font-mono cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-colors"
+                        title={v.label}
+                        onClick={() => insertVariable(v.key)}
+                      >
+                        {`{{${v.key}}}`}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">
+                  Personalizadas (mismo valor para todos — define key y valor):
+                </p>
+                {customVariables.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {customVariables.map(v => (
+                      <Badge
+                        key={v.key}
+                        variant="outline"
+                        className="text-[10px] font-mono cursor-pointer hover:bg-primary/10 gap-1"
+                        title={`${v.label || v.key} → "${v.value}"`}
+                        onClick={() => insertVariable(v.key)}
+                      >
+                        {`{{${v.key}}}`}
+                        <X
+                          className="h-3 w-3 opacity-60 hover:opacity-100 hover:text-destructive"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setCustomVariables(prev => prev.filter(x => x.key !== v.key));
+                          }}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <div className="grid grid-cols-[1fr_1fr_2fr_auto] gap-1.5 items-end">
+                  <div className="space-y-0.5">
+                    <Label className="text-[10px] text-muted-foreground">Key</Label>
+                    <Input
+                      value={newVarKey}
+                      onChange={e => setNewVarKey(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                      placeholder="empresa"
+                      className="h-7 text-xs font-mono"
+                    />
+                  </div>
+                  <div className="space-y-0.5">
+                    <Label className="text-[10px] text-muted-foreground">Etiqueta</Label>
+                    <Input
+                      value={newVarLabel}
+                      onChange={e => setNewVarLabel(e.target.value)}
+                      placeholder="Nombre empresa"
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-0.5">
+                    <Label className="text-[10px] text-muted-foreground">Valor</Label>
+                    <Input
+                      value={newVarValue}
+                      onChange={e => setNewVarValue(e.target.value)}
+                      placeholder="Acme Corp"
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
                     variant="outline"
-                    className="text-[10px] font-mono cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-colors"
-                    title={v.label}
-                    onClick={() => insertVariable(v.key)}
+                    className="h-7 px-2"
+                    disabled={!newVarKey.trim() || customVariables.some(v => v.key === newVarKey.trim()) || recipientVariables.some(v => v.key === newVarKey.trim())}
+                    onClick={() => {
+                      const k = newVarKey.trim();
+                      if (!k) return;
+                      setCustomVariables(prev => [...prev, { key: k, label: newVarLabel.trim() || k, value: newVarValue }]);
+                      setNewVarKey('');
+                      setNewVarLabel('');
+                      setNewVarValue('');
+                    }}
                   >
-                    {`{{${v.key}}}`}
-                  </Badge>
-                ))}
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         )}
 
