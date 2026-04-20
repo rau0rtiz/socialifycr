@@ -3289,6 +3289,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      sync_mindcoach_commission_from_sale_id: {
+        Args: { _sale_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       client_role:
