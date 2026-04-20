@@ -22,7 +22,18 @@ interface Props {
   template: EmailTemplate | null;
   preselectedRecipients?: { id: string; name: string; email: string }[];
   leadContext?: any; // Full lead object from funnel_leads
+  /** When true and template is null, opens the dialog as a blank composer (no template). */
+  blankCompose?: boolean;
 }
+
+const DEFAULT_BLANK_HTML = `<!doctype html>
+<html>
+  <body style="font-family: Arial, sans-serif; color: #1a1a1a; line-height: 1.6; padding: 24px; max-width: 640px; margin: 0 auto;">
+    <p>Hola,</p>
+    <p>Escribe aquí tu mensaje.</p>
+    <p>Saludos,<br/>El equipo</p>
+  </body>
+</html>`;
 
 type AudienceType = 'funnel_leads' | 'email_contacts';
 type Step = 'audience' | 'editor' | 'confirm';
