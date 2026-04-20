@@ -74,6 +74,8 @@ export const ProductFormDialog = ({
       setStockQty(editing.stock_quantity != null ? String(editing.stock_quantity) : '');
       setLowThreshold(editing.low_stock_threshold != null ? String(editing.low_stock_threshold) : '');
       setStockUnit(editing.stock_unit || '');
+      setCategory(editing.category || '');
+      setSelectedTagIds(getTagsForProduct(editing.id));
     } else {
       setName(defaultName);
       setProductType('product');
@@ -87,7 +89,10 @@ export const ProductFormDialog = ({
       setStockQty('');
       setLowThreshold('');
       setStockUnit('');
+      setCategory('');
+      setSelectedTagIds([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editing, defaultName]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
