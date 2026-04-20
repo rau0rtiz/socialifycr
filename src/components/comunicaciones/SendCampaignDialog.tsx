@@ -261,7 +261,16 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
   // Standard campaign send/schedule — creates email_campaigns row, then invokes send-campaign or leaves it scheduled
   const handleCampaignSend = async () => {
-    if (!template || selectedRecipients.length === 0) return;
+    if (selectedRecipients.length === 0) return;
+    if (!editedSubject.trim()) {
+      toast.error('Agrega un asunto');
+      return;
+    }
+    if (!editedHtml.trim()) {
+      toast.error('El contenido del email está vacío');
+      return;
+    }
+    const finalName = (campaignName.trim() || template?.name || editedSubject.trim()).slice(0, 200);
 
     // Validate scheduled date
     let scheduledIso: string | null = null;
