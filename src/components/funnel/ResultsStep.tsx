@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Lock, Loader2, Mail, CheckCircle2, Instagram, Sparkles } from 'lucide-react';
+import { ArrowRight, Lock, Loader2, Mail, CheckCircle2, Instagram, Sparkles, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ResultsStepProps {
