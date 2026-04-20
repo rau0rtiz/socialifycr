@@ -110,9 +110,8 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
   const insertVariable = (key: string) => {
     const tag = `{{${key}}}`;
-    // Si está la pestaña de código abierta y hay textarea, insertar en el cursor
-    if (editorTab === 'code' && htmlTextareaRef.current) {
-      const ta = htmlTextareaRef.current;
+    const ta = htmlTextareaRef.current;
+    if (ta) {
       const start = ta.selectionStart;
       const end = ta.selectionEnd;
       const next = editedHtml.substring(0, start) + tag + editedHtml.substring(end);
@@ -123,7 +122,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
       }, 0);
     } else {
       navigator.clipboard.writeText(tag);
-      toast.success(`${tag} copiado — pégalo en el HTML o en el asunto`);
+      toast.success(`${tag} copiado`);
     }
   };
 
@@ -477,7 +476,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   // ─── Standard Campaign Mode (multi-recipient, 3-step) ───
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-7xl w-[95vw] max-h-[92vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5" />
@@ -590,25 +589,34 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} placeholder="Asunto del correo" className="h-9" />
             </div>
 
-            <Tabs value={editorTab} onValueChange={setEditorTab} className="flex-1 flex flex-col min-h-0">
-              <TabsList className="w-fit">
-                <TabsTrigger value="preview" className="gap-1.5 text-xs"><Eye className="h-3.5 w-3.5" /> Vista previa</TabsTrigger>
-                <TabsTrigger value="code" className="gap-1.5 text-xs"><Code className="h-3.5 w-3.5" /> HTML</TabsTrigger>
-              </TabsList>
-              <TabsContent value="preview" className="flex-1 min-h-0 mt-2">
-                <div className="border rounded-lg overflow-hidden bg-white h-[400px]">
+            {/* Side-by-side HTML editor + live preview */}
+            <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
+              <div className="flex flex-col min-h-0">
+                <Label className="text-xs mb-1.5 flex items-center gap-1.5">
+                  <Code className="h-3.5 w-3.5" /> HTML
+                </Label>
+                <Textarea
+                  ref={htmlTextareaRef}
+                  value={editedHtml}
+                  onChange={e => setEditedHtml(e.target.value)}
+                  className="flex-1 min-h-[500px] font-mono text-xs resize-none leading-relaxed"
+                  spellCheck={false}
+                />
+              </div>
+              <div className="flex flex-col min-h-0">
+                <Label className="text-xs mb-1.5 flex items-center gap-1.5">
+                  <Eye className="h-3.5 w-3.5" /> Vista previa
+                </Label>
+                <div className="flex-1 min-h-[500px] border rounded-lg overflow-hidden bg-white">
                   <iframe srcDoc={previewHtml} className="w-full h-full border-0" sandbox="" title="Preview" />
                 </div>
-              </TabsContent>
-              <TabsContent value="code" className="flex-1 min-h-0 mt-2">
-                <Textarea ref={htmlTextareaRef} value={editedHtml} onChange={e => setEditedHtml(e.target.value)} className="h-[400px] font-mono text-xs resize-none" spellCheck={false} />
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
 
             {composerVariables.length > 0 && (
               <div className="flex flex-wrap items-center gap-1 rounded-md border bg-muted/30 p-2">
                 <span className="text-xs text-muted-foreground mr-1">
-                  Variables {editorTab === 'code' ? '(click para insertar):' : '(click para copiar):'}
+                  Variables (click para insertar en el cursor del HTML):
                 </span>
                 {composerVariables.map(v => (
                   <Badge
