@@ -140,6 +140,10 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
     setEditorTab('preview');
     setSendMode('now');
     setScheduledFor('');
+    setCustomVariables([]);
+    setNewVarKey('');
+    setNewVarLabel('');
+    setNewVarValue('');
 
     if (template) {
       if (isOutboundMode) {
