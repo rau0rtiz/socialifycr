@@ -104,7 +104,7 @@ const Auth = () => {
       {/* Card */}
       <Card className="w-full max-w-md relative z-10 mx-4 border-border/50 shadow-2xl bg-card/95 backdrop-blur-md">
         <CardHeader className="text-center pb-2">
-          <CardTitle className="text-3xl font-bold tracking-tight">Socialify</CardTitle>
+          <CardTitle className="font-wordmark text-4xl uppercase text-foreground">SOCIALIFY</CardTitle>
           <CardDescription className="text-base">Dashboard</CardDescription>
         </CardHeader>
         <CardContent>

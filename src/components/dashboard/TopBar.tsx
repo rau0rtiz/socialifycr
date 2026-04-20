@@ -49,7 +49,7 @@ export const TopBar = () => {
           <Breadcrumb className="hidden sm:flex">
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/">Socialify</BreadcrumbLink>
+                <BreadcrumbLink href="/" className="font-wordmark uppercase text-foreground tracking-tight">SOCIALIFY</BreadcrumbLink>
               </BreadcrumbItem>
               {selectedClient && (
                 <>

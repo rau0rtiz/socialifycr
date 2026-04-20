@@ -108,12 +108,12 @@ const Unsubscribe = () => {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         {/* Logo */}
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-indigo-600">Socialify</h2>
+          <h2 className="font-wordmark text-3xl uppercase text-[#212121]">SOCIALIFY</h2>
         </div>
 
         {view === "loading" && (
           <div className="flex flex-col items-center gap-4 py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#FF6B35]" />
             <p className="text-gray-500">Validando enlace...</p>
           </div>
         )}

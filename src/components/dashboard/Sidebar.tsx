@@ -146,7 +146,7 @@ export const Sidebar = () => {
             </div>
           )}
           {!collapsed && (
-            <span className="font-semibold text-foreground text-lg">{platformBrand.name}</span>
+            <span className="font-wordmark uppercase text-foreground text-xl tracking-tight">{platformBrand.name}</span>
           )}
         </div>
       </SidebarHeader>
