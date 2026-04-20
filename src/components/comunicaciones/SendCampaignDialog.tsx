@@ -670,7 +670,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
             </>
           )}
           {step === 'editor' && (
-            <Button onClick={() => setStep('confirm')} className="gap-1.5">
+            <Button onClick={() => setStep('confirm')} disabled={!editedSubject.trim() || !editedHtml.trim()} className="gap-1.5">
               Siguiente <ArrowRight className="h-4 w-4" />
             </Button>
           )}
