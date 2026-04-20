@@ -1,12 +1,18 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
+import { InstagramTopPosts } from '@/components/dashboard/InstagramTopPosts';
+import { YouTubeTopVideos } from '@/components/dashboard/YouTubeTopVideos';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Heavy widgets — code-split to shrink initial bundle
 const CampaignsDrilldown = lazy(() => import('@/components/dashboard/CampaignsDrilldown').then(m => ({ default: m.CampaignsDrilldown })));
 const AdvancedFunnelModule = lazy(() => import('@/components/dashboard/AdvancedFunnelModule').then(m => ({ default: m.AdvancedFunnelModule })));
 import { useBrand } from '@/contexts/BrandContext';
+import { useContentData } from '@/hooks/use-content-data';
+import { useSocialFollowers } from '@/hooks/use-social-followers';
+import { useYouTubeVideos } from '@/hooks/use-youtube-videos';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useClientFeatures } from '@/hooks/use-client-features';
@@ -53,16 +59,48 @@ const Dashboard = () => {
 
   const clientId = selectedClient?.id || null;
 
+  // Widget visibility — agency sees all unless in preview mode
+  const showSocialFollowers = !shouldRespectFlags || flags.social_followers;
+  const showInstagramPosts = !shouldRespectFlags || flags.instagram_posts;
+  const showYouTubeVideos = !shouldRespectFlags || flags.youtube_videos;
+
   const { data: metaConnection, refetch: refetchConnection } = useMetaConnection(clientId);
+
+  const {
+    platforms: socialPlatforms,
+    isLoading: socialLoading,
+    isLiveData: socialIsLive,
+    refetch: refetchSocial,
+  } = useSocialFollowers(showSocialFollowers ? clientId : null);
+
+  const {
+    content,
+    isLoading: contentLoading,
+    isLiveData: contentIsLive,
+    refetch: refetchContent,
+  } = useContentData(clientId, 100, showInstagramPosts);
+
+  const {
+    videos: youtubeVideos,
+    isLoading: youtubeLoading,
+    isConnected: youtubeConnected,
+    refetch: refetchYouTube,
+  } = useYouTubeVideos(clientId, 10, showYouTubeVideos);
 
   // Refresh dashboard data
   const handleRefreshAll = useCallback(async () => {
     setIsRefreshing(true);
-    await refetchConnection();
+    await Promise.all([
+      refetchConnection(),
+      refetchSocial(),
+      refetchContent(),
+      refetchYouTube(),
+    ]);
     setIsRefreshing(false);
-  }, [refetchConnection]);
+  }, [refetchConnection, refetchSocial, refetchContent, refetchYouTube]);
 
   const hasAdAccount = !!metaConnection?.ad_account_id;
+  const hasMetaConnection = !!metaConnection;
 
   const showFunnel = !shouldRespectFlags || flags.funnel;
   const showCampaigns = !shouldRespectFlags || flags.campaigns;
@@ -207,6 +245,40 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Social Followers - Full Width */}
+      {showSocialFollowers && (socialLoading || socialPlatforms.length > 0) && (
+        <div className="mb-3 md:mb-6" data-tour="kpi-section">
+          <SocialFollowersSection
+            platforms={socialPlatforms}
+            isLoading={socialLoading}
+            isLiveData={socialIsLive}
+          />
+        </div>
+      )}
+
+      {/* Top Posts - Instagram */}
+      {showInstagramPosts && (contentLoading || content.length > 0 || hasMetaConnection) && (
+        <div className="mb-3 md:mb-6">
+          <InstagramTopPosts
+            content={content}
+            isLoading={contentLoading}
+            isLiveData={contentIsLive}
+            isConnected={hasMetaConnection}
+          />
+        </div>
+      )}
+
+      {/* Top Videos - YouTube */}
+      {showYouTubeVideos && (youtubeLoading || youtubeConnected) && (
+        <div className="mb-3 md:mb-6">
+          <YouTubeTopVideos
+            videos={youtubeVideos}
+            isLoading={youtubeLoading}
+            isConnected={youtubeConnected}
+          />
+        </div>
+      )}
 
       {/* Advanced Funnel Analytics */}
       {showFunnel && (
