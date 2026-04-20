@@ -1772,21 +1772,23 @@ export const RegisterSaleDialog = ({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Closer / Vendedor</Label>
-                <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
-                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿Quién cerró la venta?" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
-                    {closerName && !closers.some(c => c.fullName === closerName) && (
-                      <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>
-                    )}
-                    {closers.map(c => (
-                      <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {!isSilvia && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Closer / Vendedor</Label>
+                  <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿Quién cerró la venta?" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                      {closerName && !closers.some(c => c.fullName === closerName) && (
+                        <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>
+                      )}
+                      {closers.map(c => (
+                        <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
