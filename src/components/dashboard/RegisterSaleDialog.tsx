@@ -455,10 +455,13 @@ export const RegisterSaleDialog = ({
 
   const getStepDescription = () => {
     if (step === 0) return 'Selecciona el producto y variante';
-    if (step === 1) return `Nombre, contacto, ${isSpkUp ? 'vendedor' : 'closer'} y fuente de la venta`;
+    if (step === 1) {
+      if (isSilvia) return 'Datos del paciente y fuente de la venta';
+      return `Nombre, contacto, ${isSpkUp ? 'vendedor' : 'closer'} y fuente de la venta`;
+    }
     const adStepIdx = needsAdStep ? 2 : -1;
     if (step === adStepIdx) return 'Selecciona el anuncio que originó esta venta';
-    return 'Plataforma, notas y fecha';
+    return isSilvia ? 'Notas y fecha' : 'Plataforma, notas y fecha';
   };
 
   // Determine which step index is the "ad" step and which is "notes"
