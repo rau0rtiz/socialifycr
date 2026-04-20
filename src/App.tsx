@@ -16,7 +16,6 @@ import { Loader2 } from 'lucide-react';
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const BrandSettings = lazy(() => import("./pages/BrandSettings"));
 const Clientes = lazy(() => import("./pages/Clientes"));
-const Contenido = lazy(() => import("./pages/Contenido"));
 const Ventas = lazy(() => import("./pages/Ventas"));
 const Facturacion = lazy(() => import("./pages/Facturacion"));
 const Historial = lazy(() => import("./pages/Historial"));
@@ -145,8 +144,6 @@ const App = () => (
                   {/* External PIN-protected image DB */}
                   <Route path="/imgdb" element={<ImageDBPinGate />} />
                   {/* Shared routes */}
-                  <Route path="/contenido" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
-                  <Route path="/content" element={<ProtectedRoute><Contenido /></ProtectedRoute>} />
                   <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
                   <Route path="/asistencia" element={<ProtectedRoute><Asistencia /></ProtectedRoute>} />
                   <Route path="/comisiones" element={<ProtectedRoute><Comisiones /></ProtectedRoute>} />

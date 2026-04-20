@@ -1,31 +1,18 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
-import { ClientBanner } from '@/components/dashboard/ClientBanner';
-
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { SocialFollowersSection } from '@/components/dashboard/SocialFollowersSection';
-import { InstagramTopPosts } from '@/components/dashboard/InstagramTopPosts';
-import { YouTubeTopVideos } from '@/components/dashboard/YouTubeTopVideos';
-import { ContentDetailModal } from '@/components/dashboard/ContentDetailModal';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Heavy widgets — code-split to shrink initial bundle
 const CampaignsDrilldown = lazy(() => import('@/components/dashboard/CampaignsDrilldown').then(m => ({ default: m.CampaignsDrilldown })));
 const AdvancedFunnelModule = lazy(() => import('@/components/dashboard/AdvancedFunnelModule').then(m => ({ default: m.AdvancedFunnelModule })));
-const ContentGrid = lazy(() => import('@/components/dashboard/ContentGrid').then(m => ({ default: m.ContentGrid })));
 import { useBrand } from '@/contexts/BrandContext';
-import { useContentData } from '@/hooks/use-content-data';
-import { useContentMetadata } from '@/hooks/use-content-metadata';
-import { useSocialFollowers } from '@/hooks/use-social-followers';
 import { useMetaConnection } from '@/hooks/use-meta-api';
 import { useUserRole } from '@/hooks/use-user-role';
-import { useYouTubeVideos } from '@/hooks/use-youtube-videos';
-import { useCrosspostLinks } from '@/hooks/use-crosspost-links';
 import { useClientFeatures } from '@/hooks/use-client-features';
 
-import { ContentPost } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
-import { Download, Share2, Building2, Plus, RefreshCw, X, Eye } from 'lucide-react';
+import { Building2, Plus, RefreshCw, X, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -34,11 +21,9 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const previewClientId = searchParams.get('preview');
   const isPreviewMode = !!previewClientId;
-  
+
   const { selectedClient, clientBrands, clients, clientsLoading, setSelectedClient } = useBrand();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
-  const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const { isAgency, isClient, clientAccess, loading: roleLoading } = useUserRole();
   const { flags } = useClientFeatures(selectedClient?.id ?? null);
 
@@ -66,91 +51,22 @@ const Dashboard = () => {
     }
   }, [isClient, clientAccess, clients, selectedClient, setSelectedClient, roleLoading]);
 
-  // Sync banner URL from selectedClient
-  useEffect(() => {
-    setBannerUrl((selectedClient as any)?.banner_url || null);
-  }, [selectedClient]);
-
-  // All hooks must be called before any conditional returns
   const clientId = selectedClient?.id || null;
-
-  // Widget visibility — agency sees all unless in preview mode
-  const showSocialFollowers = !shouldRespectFlags || flags.social_followers;
-  const showInstagramPosts = !shouldRespectFlags || flags.instagram_posts;
-  const showYouTubeVideos = !shouldRespectFlags || flags.youtube_videos;
-  const showContentGrid = !shouldRespectFlags || flags.content_grid;
-
-  // Only fetch data when the corresponding widget is visible
-  const needsContent = showContentGrid || showInstagramPosts;
-  const needsYouTube = showYouTubeVideos;
-  const needsCrosspost = showContentGrid;
-
-  const {
-    platforms: socialPlatforms,
-    isLoading: socialLoading,
-    isLiveData: socialIsLive,
-    refetch: refetchSocial,
-  } = useSocialFollowers(showSocialFollowers ? clientId : null);
-
-  const {
-    content,
-    isLoading: contentLoading,
-    isLiveData: contentIsLive,
-    refetch: refetchContent,
-  } = useContentData(clientId, 100, needsContent);
-
-  const {
-    tags,
-    models,
-    metadata,
-    createTag,
-    createModel,
-    updateMetadata,
-    updateMetadataMultiple,
-    capture48hMetrics,
-    refetch: refetchMetadata,
-  } = useContentMetadata(needsContent ? clientId : null);
 
   const { data: metaConnection, refetch: refetchConnection } = useMetaConnection(clientId);
 
-  const {
-    videos: youtubeVideos,
-    isLoading: youtubeLoading,
-    isConnected: youtubeConnected,
-    refetch: refetchYouTube,
-  } = useYouTubeVideos(clientId, 10, needsYouTube);
-
-  const {
-    links: crosspostLinks,
-    addLink: addCrosspostLink,
-    removeLink: removeCrosspostLink,
-    getLinkedPosts,
-    refetch: refetchCrosspostLinks,
-  } = useCrosspostLinks(clientId, needsCrosspost);
-
-  
-  // Refresh all dashboard data
+  // Refresh dashboard data
   const handleRefreshAll = useCallback(async () => {
     setIsRefreshing(true);
-    await Promise.all([
-      refetchSocial(),
-      refetchContent(),
-      refetchConnection(),
-      refetchMetadata(),
-      refetchYouTube(),
-      refetchCrosspostLinks(),
-    ]);
+    await refetchConnection();
     setIsRefreshing(false);
-  }, [refetchSocial, refetchContent, refetchConnection, refetchMetadata, refetchYouTube, refetchCrosspostLinks]);
+  }, [refetchConnection]);
 
-  // Derived values (not hooks)
   const hasAdAccount = !!metaConnection?.ad_account_id;
-  const hasMetaConnection = !!metaConnection;
 
   const showFunnel = !shouldRespectFlags || flags.funnel;
   const showCampaigns = !shouldRespectFlags || flags.campaigns;
 
-  // Show loading state while clients are being fetched or role is loading
   if (clientsLoading || roleLoading) {
     return (
       <DashboardLayout>
@@ -161,9 +77,7 @@ const Dashboard = () => {
     );
   }
 
-  // Show empty state if no clients or no selected client
   if (clients.length === 0 || !selectedClient) {
-    // For client users without access, show a different message
     if (isClient && clientAccess.length === 0) {
       return (
         <DashboardLayout>
@@ -221,7 +135,6 @@ const Dashboard = () => {
   const primaryColor = clientBrand?.primaryColor || selectedClient.primary_color || '220 70% 50%';
   const accentColor = clientBrand?.accentColor || selectedClient.accent_color || '262 83% 58%';
 
-  // Apply client brand colors as CSS custom properties
   const brandStyle = {
     '--client-primary': primaryColor,
     '--client-accent': accentColor,
@@ -253,14 +166,6 @@ const Dashboard = () => {
           </Button>
         </div>
       )}
-
-      {/* Client Banner */}
-      <ClientBanner
-        clientId={selectedClient.id}
-        bannerUrl={bannerUrl}
-        canEdit={isAgency}
-        onBannerUpdate={setBannerUrl}
-      />
 
       {/* Client Header */}
       <div className="flex flex-col gap-2 sm:gap-3 mb-3 md:mb-6">
@@ -303,66 +208,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Social Followers - Full Width */}
-      {showSocialFollowers && (socialLoading || socialPlatforms.length > 0) && (
-        <div className="mb-3 md:mb-6" data-tour="kpi-section">
-          <SocialFollowersSection
-            platforms={socialPlatforms}
-            isLoading={socialLoading}
-            isLiveData={socialIsLive}
-          />
-        </div>
-      )}
-
-      {/* Top Posts - Instagram */}
-      {showInstagramPosts && (contentLoading || content.length > 0 || hasMetaConnection) && (
-        <div className="mb-3 md:mb-6">
-          <InstagramTopPosts
-            content={content}
-            isLoading={contentLoading}
-            isLiveData={contentIsLive}
-            isConnected={hasMetaConnection}
-            onPostClick={setSelectedPost}
-          />
-        </div>
-      )}
-
-      {/* Top Videos - YouTube */}
-      {showYouTubeVideos && (youtubeLoading || youtubeConnected) && (
-        <div className="mb-3 md:mb-6">
-          <YouTubeTopVideos
-            videos={youtubeVideos}
-            isLoading={youtubeLoading}
-            isConnected={youtubeConnected}
-          />
-        </div>
-      )}
-
-      {/* Content Grid - 2x3 Grid below Social */}
-      {showContentGrid && (
-        <div className="mb-3 md:mb-6">
-          <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
-            <ContentGrid
-              data={content}
-              isLoading={contentLoading}
-              isLiveData={contentIsLive}
-              onRefresh={refetchContent}
-              tags={tags}
-              models={models}
-              metadata={metadata}
-              onCreateTag={createTag}
-              onCreateModel={createModel}
-              onUpdateMetadata={updateMetadata}
-              onCapture48hMetrics={capture48hMetrics}
-              crosspostLinks={crosspostLinks}
-              onAddCrosspostLink={addCrosspostLink}
-              onRemoveCrosspostLink={removeCrosspostLink}
-              getLinkedPosts={getLinkedPosts}
-            />
-          </Suspense>
-        </div>
-      )}
-
       {/* Advanced Funnel Analytics */}
       {showFunnel && (
         <div className="mb-3 md:mb-6">
@@ -380,21 +225,6 @@ const Dashboard = () => {
           </Suspense>
         </div>
       )}
-
-      {/* Content Detail Modal for Top Posts */}
-      <ContentDetailModal
-        post={selectedPost}
-        isOpen={!!selectedPost}
-        onClose={() => setSelectedPost(null)}
-        tags={tags}
-        models={models}
-        metadata={selectedPost ? metadata[selectedPost.id] : undefined}
-        onCreateTag={createTag}
-        onCreateModel={createModel}
-        onUpdateMetadata={updateMetadata}
-        onUpdateMetadataMultiple={updateMetadataMultiple}
-        onCapture48hMetrics={capture48hMetrics}
-      />
     </DashboardLayout>
   );
 };
