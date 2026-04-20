@@ -67,17 +67,7 @@ export const useCommissions = (clientId: string | null) => {
       if (!clientId) return [];
       const map = new Map<string, CloserDirectoryEntry>();
 
-      // 1) client_closers (manual)
-      const { data: manual } = await (supabase as any)
-        .from('client_closers')
-        .select('id, name')
-        .eq('client_id', clientId);
-      (manual || []).forEach((m: any) => {
-        const key = `manual:${m.id}`;
-        map.set(key, { key, name: m.name, userId: null, manualId: m.id, avatarUrl: null });
-      });
-
-      // 2) client_team_members con rol closer + perfiles
+      // 1) client_team_members con rol closer + perfiles (PRIORIDAD: usuarios reales)
       const { data: members } = await supabase
         .from('client_team_members')
         .select('user_id, role')
@@ -85,22 +75,39 @@ export const useCommissions = (clientId: string | null) => {
       const memberCloserIds = (members || [])
         .filter((m: any) => m.role === 'closer')
         .map((m: any) => m.user_id);
+
+      const realNames = new Set<string>(); // para deduplicar manuales con el mismo nombre
+
       if (memberCloserIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url, email')
           .in('id', memberCloserIds);
         (profiles || []).forEach((p: any) => {
+          const displayName = p.full_name || p.email || 'Sin nombre';
           const key = `user:${p.id}`;
           map.set(key, {
             key,
-            name: p.full_name || p.email || 'Sin nombre',
+            name: displayName,
             userId: p.id,
             manualId: null,
             avatarUrl: p.avatar_url,
           });
+          realNames.add(displayName.trim().toLowerCase());
         });
       }
+
+      // 2) client_closers (manual) — saltar si ya existe un usuario real con el mismo nombre
+      const { data: manual } = await (supabase as any)
+        .from('client_closers')
+        .select('id, name')
+        .eq('client_id', clientId);
+      (manual || []).forEach((m: any) => {
+        const normalized = (m.name || '').trim().toLowerCase();
+        if (realNames.has(normalized)) return; // evitar duplicado
+        const key = `manual:${m.id}`;
+        map.set(key, { key, name: m.name, userId: null, manualId: m.id, avatarUrl: null });
+      });
 
       return Array.from(map.values());
     },
