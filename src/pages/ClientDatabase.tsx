@@ -520,7 +520,7 @@ const ClientDatabase = () => {
                           .filter(Boolean).join(', ')
                       : '';
                     return (
-                      <TableRow key={c.id} className="text-xs">
+                      <TableRow key={c.id} className="text-xs cursor-pointer hover:bg-muted/40" onClick={() => setSelectedCustomer(c)}>
                         <TableCell className="font-medium">{c.full_name}</TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-0.5">
