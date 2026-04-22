@@ -20,8 +20,12 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
-import { upsertCustomerContact } from '@/hooks/use-customer-contacts';
+import { upsertCustomerContact, useCustomerContacts, CustomerAddress, CustomerContact } from '@/hooks/use-customer-contacts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { MapPin, ChevronsUpDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 const GARMENT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Única'];
 
@@ -93,6 +97,11 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [confirmingReservation, setConfirmingReservation] = useState<string | null>(null);
+  // Delivery address state
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([]);
+  const [contactPickerOpen, setContactPickerOpen] = useState(false);
+  const { contacts: customerContacts } = useCustomerContacts(clientId);
 
   const applyScannedData = (sd: { customer_name?: string | null; customer_phone?: string | null; brand?: string | null; garment_type?: string | null; amount?: number | null; notes?: string | null } | null) => {
     if (!sd) return;
@@ -118,6 +127,8 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     setSaleDate(format(new Date(), 'yyyy-MM-dd'));
     setSellerName(profileName || '');
     setNotes('');
+    setDeliveryAddress('');
+    setSavedAddresses([]);
     setDialogOpen(true);
 
     // If archived story has scanned data, use it immediately
@@ -176,12 +187,16 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
       // Upsert customer contact (CRM) — only on completed sales to avoid duplicates from reservations
       if (!asReserved) {
         try {
+          const addr: CustomerAddress | null = deliveryAddress.trim()
+            ? { label: 'Entrega', address_line_1: deliveryAddress.trim() }
+            : null;
           await upsertCustomerContact({
             clientId,
             fullName: customerName.trim(),
             phone: customerPhone.trim() || null,
             garmentSize: garmentSize || null,
             brand: brand.trim() || null,
+            address: addr,
             isNewSale: true,
           });
         } catch {
