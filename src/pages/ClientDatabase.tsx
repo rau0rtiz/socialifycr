@@ -407,6 +407,69 @@ const ClientDatabase = () => {
                   ))}
                 </TableBody>
               </Table>
+            ) : isAlmaBendita ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Nombre</TableHead>
+                    <TableHead className="text-xs">Contacto</TableHead>
+                    <TableHead className="text-xs">Cédula</TableHead>
+                    <TableHead className="text-xs">Tallas</TableHead>
+                    <TableHead className="text-xs">Compras</TableHead>
+                    <TableHead className="text-xs min-w-[200px]">Dirección principal</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {customersLoading ? (
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">Cargando...</TableCell></TableRow>
+                  ) : filteredCustomers.length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">No se encontraron clientas</TableCell></TableRow>
+                  ) : filteredCustomers.map((c: CustomerContact) => {
+                    const primaryAddress = (c.addresses || [])[0] as CustomerAddress | undefined;
+                    const addressText = primaryAddress
+                      ? [primaryAddress.address_line_1, primaryAddress.district, primaryAddress.city, primaryAddress.state]
+                          .filter(Boolean).join(', ')
+                      : '';
+                    return (
+                      <TableRow key={c.id} className="text-xs">
+                        <TableCell className="font-medium">{c.full_name}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-0.5">
+                            {c.phone && <span className="flex items-center gap-1 text-muted-foreground"><Phone className="h-3 w-3" />{c.phone}</span>}
+                            {c.email && <span className="flex items-center gap-1 text-muted-foreground"><Mail className="h-3 w-3" />{c.email}</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{c.id_number || '—'}</TableCell>
+                        <TableCell>
+                          {(c.garment_sizes || []).length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {(c.garment_sizes || []).map((sz, i) => (
+                                <Badge key={i} variant="outline" className="text-[10px] gap-1">
+                                  <Shirt className="h-2.5 w-2.5" />{sz}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[10px]">{c.total_purchases || 0}</Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {addressText ? (
+                            <div className="flex items-start gap-1">
+                              <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                              <span className="line-clamp-2">{addressText}</span>
+                              {(c.addresses || []).length > 1 && (
+                                <Badge variant="outline" className="text-[9px] ml-1">+{(c.addresses || []).length - 1}</Badge>
+                              )}
+                            </div>
+                          ) : '—'}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             ) : (
               <Table>
                 <TableHeader>
@@ -443,9 +506,9 @@ const ClientDatabase = () => {
               </Table>
             )}
           </div>
-          {(isSpkUp ? filteredStudents.length : filteredLeads.length) > 0 && (
+          {(isSpkUp ? filteredStudents.length : isAlmaBendita ? filteredCustomers.length : filteredLeads.length) > 0 && (
             <div className="px-4 py-2 border-t text-xs text-muted-foreground">
-              Mostrando {isSpkUp ? filteredStudents.length : filteredLeads.length} de {totalCount} {isSpkUp ? 'estudiantes' : 'leads'}
+              Mostrando {isSpkUp ? filteredStudents.length : isAlmaBendita ? filteredCustomers.length : filteredLeads.length} de {totalCount} {isSpkUp ? 'estudiantes' : isAlmaBendita ? 'clientas' : 'leads'}
             </div>
           )}
         </CardContent></Card>
