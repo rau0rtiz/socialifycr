@@ -699,6 +699,20 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                     </div>
                   </div>
 
+                  <div>
+                    <Label className="text-xs">Talla</Label>
+                    <Select value={garmentSize} onValueChange={setGarmentSize}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Selecciona talla" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GARMENT_SIZES.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Monto (₡)</Label>
