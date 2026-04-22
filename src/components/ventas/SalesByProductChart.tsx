@@ -68,10 +68,10 @@ export const SalesByProductChart = ({ sales, products = [], title, variant = 'pr
     <Card className="border-border/50 shadow-sm h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2.5 text-foreground">
-          <div className="p-1.5 rounded-lg bg-blue-500/10">
-            <Package className="h-4 w-4 text-blue-500" />
+          <div className={`p-1.5 rounded-lg ${iconBg}`}>
+            <Icon className={`h-4 w-4 ${iconColor}`} />
           </div>
-          Ventas por Producto
+          {resolvedTitle}
         </CardTitle>
       </CardHeader>
       <CardContent>
