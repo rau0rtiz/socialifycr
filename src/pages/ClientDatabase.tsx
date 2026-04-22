@@ -275,15 +275,17 @@ const ClientDatabase = () => {
     );
   }
 
-  const totalCount = isSpkUp ? students.length : allLeads.length;
+  const totalCount = isSpkUp ? students.length : isAlmaBendita ? customerContacts.length : allLeads.length;
   const activeCount = isSpkUp ? students.filter(s => s.status === 'active').length : allLeads.filter(l => ['scheduled', 'confirmed', 'rescheduled'].includes(l.status)).length;
   const soldCount = isSpkUp ? 0 : allLeads.filter(l => l.status === 'sold').length;
+  const customerWithPurchasesCount = customerContacts.filter(c => (c.total_purchases || 0) > 0).length;
+  const customerWithAddressCount = customerContacts.filter(c => (c.addresses || []).length > 0).length;
 
   return (
     <DashboardLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : 'Base de Clientes'}</h1>
+          <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : isAlmaBendita ? 'Base de Clientas' : 'Base de Clientes'}</h1>
           {isSpkUp && (
             <Button size="sm" onClick={openNewStudent} className="gap-1.5 h-8 text-xs">
               <Plus className="h-3.5 w-3.5" /> Nuevo estudiante
