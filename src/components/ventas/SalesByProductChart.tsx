@@ -2,13 +2,15 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell } from 'recharts';
-import { Package } from 'lucide-react';
+import { Package, Shirt } from 'lucide-react';
 import { MessageSale } from '@/hooks/use-sales-tracking';
 import { ClientProduct } from '@/hooks/use-client-products';
 
 interface SalesByProductChartProps {
   sales: MessageSale[];
   products?: ClientProduct[];
+  title?: string;
+  variant?: 'product' | 'garment';
 }
 
 const COLORS = [
