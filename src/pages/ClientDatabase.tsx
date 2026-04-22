@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
 import { StudentDetailDialog } from '@/components/ventas/StudentDetailDialog';
+import { CustomerDetailDialog } from '@/components/clientes/CustomerDetailDialog';
 import { MapPin, Shirt } from 'lucide-react';
 
 // ── Legacy lead type for non-SpkUp clients ──
