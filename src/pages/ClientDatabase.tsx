@@ -733,6 +733,15 @@ const ClientDatabase = () => {
           clientId={clientId || undefined}
         />
       )}
+
+      {isAlmaBendita && (
+        <CustomerDetailDialog
+          open={!!selectedCustomer}
+          onOpenChange={(open) => { if (!open) setSelectedCustomer(null); }}
+          customer={selectedCustomer}
+          clientId={clientId}
+        />
+      )}
     </DashboardLayout>
   );
 };
