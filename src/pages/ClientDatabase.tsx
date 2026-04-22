@@ -17,10 +17,12 @@ import { es } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStudentContacts, StudentContact, StudentContactInput } from '@/hooks/use-student-contacts';
+import { useCustomerContacts, CustomerContact, CustomerAddress } from '@/hooks/use-customer-contacts';
 import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
 import { StudentDetailDialog } from '@/components/ventas/StudentDetailDialog';
+import { MapPin, Shirt } from 'lucide-react';
 
 // ── Legacy lead type for non-SpkUp clients ──
 type LeadRecord = {
@@ -38,6 +40,7 @@ const ClientDatabase = () => {
   const { selectedClient } = useBrand();
   const clientId = selectedClient?.id ?? null;
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
+  const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { systemRole, clientAccess } = useUserRole();
@@ -56,6 +59,9 @@ const ClientDatabase = () => {
 
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
+
+  // ── Alma Bendita: customer_contacts (retail clients) ──
+  const { contacts: customerContacts, isLoading: customersLoading } = useCustomerContacts(isAlmaBendita ? clientId : null);
 
   // ── Purchase counts per student ──
   const { data: purchaseCounts = {} } = useQuery<Record<string, number>>({
@@ -216,6 +222,19 @@ const ClientDatabase = () => {
     });
   }, [students, search, statusFilter]);
 
+  const filteredCustomers = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return customerContacts.filter(c => {
+      if (!q) return true;
+      return (
+        c.full_name.toLowerCase().includes(q) ||
+        (c.phone && c.phone.includes(search)) ||
+        (c.email && c.email.toLowerCase().includes(q)) ||
+        (c.id_number && c.id_number.toLowerCase().includes(q))
+      );
+    });
+  }, [customerContacts, search]);
+
   const handleDeleteLead = async () => {
     if (!deleteTarget) return;
     if (isSpkUp) {
@@ -256,15 +275,17 @@ const ClientDatabase = () => {
     );
   }
 
-  const totalCount = isSpkUp ? students.length : allLeads.length;
+  const totalCount = isSpkUp ? students.length : isAlmaBendita ? customerContacts.length : allLeads.length;
   const activeCount = isSpkUp ? students.filter(s => s.status === 'active').length : allLeads.filter(l => ['scheduled', 'confirmed', 'rescheduled'].includes(l.status)).length;
   const soldCount = isSpkUp ? 0 : allLeads.filter(l => l.status === 'sold').length;
+  const customerWithPurchasesCount = customerContacts.filter(c => (c.total_purchases || 0) > 0).length;
+  const customerWithAddressCount = customerContacts.filter(c => (c.addresses || []).length > 0).length;
 
   return (
     <DashboardLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : 'Base de Clientes'}</h1>
+          <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : isAlmaBendita ? 'Base de Clientas' : 'Base de Clientes'}</h1>
           {isSpkUp && (
             <Button size="sm" onClick={openNewStudent} className="gap-1.5 h-8 text-xs">
               <Plus className="h-3.5 w-3.5" /> Nuevo estudiante
@@ -274,9 +295,14 @@ const ClientDatabase = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-2xl font-bold">{totalCount}</p><p className="text-xs text-muted-foreground">{isSpkUp ? 'Total estudiantes' : 'Total leads'}</p></div></CardContent></Card>
+          <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-2xl font-bold">{totalCount}</p><p className="text-xs text-muted-foreground">{isSpkUp ? 'Total estudiantes' : isAlmaBendita ? 'Total clientas' : 'Total leads'}</p></div></CardContent></Card>
           {isSpkUp ? (
             <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-emerald-500/10"><Calendar className="h-5 w-5 text-emerald-600" /></div><div><p className="text-2xl font-bold">{activeCount}</p><p className="text-xs text-muted-foreground">Activos</p></div></CardContent></Card>
+          ) : isAlmaBendita ? (
+            <>
+              <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-green-500/10"><DollarSign className="h-5 w-5 text-green-600" /></div><div><p className="text-2xl font-bold">{customerWithPurchasesCount}</p><p className="text-xs text-muted-foreground">Con compras</p></div></CardContent></Card>
+              <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><MapPin className="h-5 w-5 text-blue-600" /></div><div><p className="text-2xl font-bold">{customerWithAddressCount}</p><p className="text-xs text-muted-foreground">Con dirección</p></div></CardContent></Card>
+            </>
           ) : (
             <>
               <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-green-500/10"><DollarSign className="h-5 w-5 text-green-600" /></div><div><p className="text-2xl font-bold">{soldCount}</p><p className="text-xs text-muted-foreground">Vendidos</p></div></CardContent></Card>
@@ -304,7 +330,7 @@ const ClientDatabase = () => {
                   <SelectItem value="inactive">Inactivos</SelectItem>
                 </SelectContent>
               </Select>
-            ) : (
+            ) : isAlmaBendita ? null : (
               <>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm"><Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Estado" /></SelectTrigger>
@@ -381,6 +407,69 @@ const ClientDatabase = () => {
                   ))}
                 </TableBody>
               </Table>
+            ) : isAlmaBendita ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Nombre</TableHead>
+                    <TableHead className="text-xs">Contacto</TableHead>
+                    <TableHead className="text-xs">Cédula</TableHead>
+                    <TableHead className="text-xs">Tallas</TableHead>
+                    <TableHead className="text-xs">Compras</TableHead>
+                    <TableHead className="text-xs min-w-[200px]">Dirección principal</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {customersLoading ? (
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">Cargando...</TableCell></TableRow>
+                  ) : filteredCustomers.length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">No se encontraron clientas</TableCell></TableRow>
+                  ) : filteredCustomers.map((c: CustomerContact) => {
+                    const primaryAddress = (c.addresses || [])[0] as CustomerAddress | undefined;
+                    const addressText = primaryAddress
+                      ? [primaryAddress.address_line_1, primaryAddress.district, primaryAddress.city, primaryAddress.state]
+                          .filter(Boolean).join(', ')
+                      : '';
+                    return (
+                      <TableRow key={c.id} className="text-xs">
+                        <TableCell className="font-medium">{c.full_name}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-0.5">
+                            {c.phone && <span className="flex items-center gap-1 text-muted-foreground"><Phone className="h-3 w-3" />{c.phone}</span>}
+                            {c.email && <span className="flex items-center gap-1 text-muted-foreground"><Mail className="h-3 w-3" />{c.email}</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{c.id_number || '—'}</TableCell>
+                        <TableCell>
+                          {(c.garment_sizes || []).length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {(c.garment_sizes || []).map((sz, i) => (
+                                <Badge key={i} variant="outline" className="text-[10px] gap-1">
+                                  <Shirt className="h-2.5 w-2.5" />{sz}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[10px]">{c.total_purchases || 0}</Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {addressText ? (
+                            <div className="flex items-start gap-1">
+                              <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                              <span className="line-clamp-2">{addressText}</span>
+                              {(c.addresses || []).length > 1 && (
+                                <Badge variant="outline" className="text-[9px] ml-1">+{(c.addresses || []).length - 1}</Badge>
+                              )}
+                            </div>
+                          ) : '—'}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             ) : (
               <Table>
                 <TableHeader>
@@ -417,9 +506,9 @@ const ClientDatabase = () => {
               </Table>
             )}
           </div>
-          {(isSpkUp ? filteredStudents.length : filteredLeads.length) > 0 && (
+          {(isSpkUp ? filteredStudents.length : isAlmaBendita ? filteredCustomers.length : filteredLeads.length) > 0 && (
             <div className="px-4 py-2 border-t text-xs text-muted-foreground">
-              Mostrando {isSpkUp ? filteredStudents.length : filteredLeads.length} de {totalCount} {isSpkUp ? 'estudiantes' : 'leads'}
+              Mostrando {isSpkUp ? filteredStudents.length : isAlmaBendita ? filteredCustomers.length : filteredLeads.length} de {totalCount} {isSpkUp ? 'estudiantes' : isAlmaBendita ? 'clientas' : 'leads'}
             </div>
           )}
         </CardContent></Card>
