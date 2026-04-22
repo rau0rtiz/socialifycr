@@ -2,13 +2,15 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell } from 'recharts';
-import { Package } from 'lucide-react';
+import { Package, Shirt } from 'lucide-react';
 import { MessageSale } from '@/hooks/use-sales-tracking';
 import { ClientProduct } from '@/hooks/use-client-products';
 
 interface SalesByProductChartProps {
   sales: MessageSale[];
   products?: ClientProduct[];
+  title?: string;
+  variant?: 'product' | 'garment';
 }
 
 const COLORS = [
@@ -27,7 +29,12 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 };
 
-export const SalesByProductChart = ({ sales, products = [] }: SalesByProductChartProps) => {
+export const SalesByProductChart = ({ sales, products = [], title, variant = 'product' }: SalesByProductChartProps) => {
+  const isGarment = variant === 'garment';
+  const resolvedTitle = title ?? (isGarment ? 'Ventas por Tipo de Prenda' : 'Ventas por Producto');
+  const Icon = isGarment ? Shirt : Package;
+  const iconBg = isGarment ? 'bg-pink-500/10' : 'bg-blue-500/10';
+  const iconColor = isGarment ? 'text-pink-500' : 'text-blue-500';
   const data = useMemo(() => {
     const completed = sales.filter(s => s.status === 'completed');
     const byProduct: Record<string, { amount: number; count: number; currency: string }> = {};
@@ -61,10 +68,10 @@ export const SalesByProductChart = ({ sales, products = [] }: SalesByProductChar
     <Card className="border-border/50 shadow-sm h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2.5 text-foreground">
-          <div className="p-1.5 rounded-lg bg-blue-500/10">
-            <Package className="h-4 w-4 text-blue-500" />
+          <div className={`p-1.5 rounded-lg ${iconBg}`}>
+            <Icon className={`h-4 w-4 ${iconColor}`} />
           </div>
-          Ventas por Producto
+          {resolvedTitle}
         </CardTitle>
       </CardHeader>
       <CardContent>
