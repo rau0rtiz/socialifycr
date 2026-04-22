@@ -17,10 +17,12 @@ import { es } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStudentContacts, StudentContact, StudentContactInput } from '@/hooks/use-student-contacts';
+import { useCustomerContacts, CustomerContact, CustomerAddress } from '@/hooks/use-customer-contacts';
 import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
 import { StudentDetailDialog } from '@/components/ventas/StudentDetailDialog';
+import { MapPin, Shirt } from 'lucide-react';
 
 // ── Legacy lead type for non-SpkUp clients ──
 type LeadRecord = {
