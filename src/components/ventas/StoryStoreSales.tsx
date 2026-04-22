@@ -20,8 +20,12 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
-import { upsertCustomerContact } from '@/hooks/use-customer-contacts';
+import { upsertCustomerContact, useCustomerContacts, CustomerAddress, CustomerContact } from '@/hooks/use-customer-contacts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { MapPin, ChevronsUpDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 const GARMENT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Única'];
 
@@ -93,6 +97,11 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [confirmingReservation, setConfirmingReservation] = useState<string | null>(null);
+  // Delivery address state
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([]);
+  const [contactPickerOpen, setContactPickerOpen] = useState(false);
+  const { contacts: customerContacts } = useCustomerContacts(clientId);
 
   const applyScannedData = (sd: { customer_name?: string | null; customer_phone?: string | null; brand?: string | null; garment_type?: string | null; amount?: number | null; notes?: string | null } | null) => {
     if (!sd) return;
@@ -118,6 +127,8 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     setSaleDate(format(new Date(), 'yyyy-MM-dd'));
     setSellerName(profileName || '');
     setNotes('');
+    setDeliveryAddress('');
+    setSavedAddresses([]);
     setDialogOpen(true);
 
     // If archived story has scanned data, use it immediately
@@ -176,12 +187,16 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
       // Upsert customer contact (CRM) — only on completed sales to avoid duplicates from reservations
       if (!asReserved) {
         try {
+          const addr: CustomerAddress | null = deliveryAddress.trim()
+            ? { label: 'Entrega', address_line_1: deliveryAddress.trim() }
+            : null;
           await upsertCustomerContact({
             clientId,
             fullName: customerName.trim(),
             phone: customerPhone.trim() || null,
             garmentSize: garmentSize || null,
             brand: brand.trim() || null,
+            address: addr,
             isNewSale: true,
           });
         } catch {
@@ -659,10 +674,52 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs">Cliente *</Label>
+                      <Label className="text-xs flex items-center justify-between">
+                        Cliente *
+                        <Popover open={contactPickerOpen} onOpenChange={setContactPickerOpen}>
+                          <PopoverTrigger asChild>
+                            <button type="button" className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
+                              Buscar <ChevronsUpDown className="h-3 w-3" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] p-0" align="end">
+                            <Command>
+                              <CommandInput placeholder="Buscar cliente..." className="h-9" />
+                              <CommandList>
+                                <CommandEmpty>Sin resultados</CommandEmpty>
+                                <CommandGroup>
+                                  {customerContacts.slice(0, 100).map((c: CustomerContact) => (
+                                    <CommandItem
+                                      key={c.id}
+                                      value={`${c.full_name} ${c.phone || ''}`}
+                                      onSelect={() => {
+                                        setCustomerName(c.full_name);
+                                        if (c.phone) setCustomerPhone(c.phone);
+                                        setSavedAddresses(c.addresses || []);
+                                        if ((c.addresses || []).length === 1) {
+                                          setDeliveryAddress(c.addresses[0].address_line_1 || '');
+                                        }
+                                        setContactPickerOpen(false);
+                                      }}
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="text-xs font-medium">{c.full_name}</span>
+                                        {c.phone && <span className="text-[10px] text-muted-foreground">{c.phone}</span>}
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </Label>
                       <Input
                         value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
+                        onChange={(e) => {
+                          setCustomerName(e.target.value);
+                          // auto-find contact on phone match
+                        }}
                         placeholder="Nombre del cliente"
                         className="h-9 text-sm"
                       />
@@ -671,7 +728,22 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                       <Label className="text-xs">Teléfono</Label>
                       <Input
                         value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setCustomerPhone(v);
+                          // Try to find by phone
+                          const trimmed = v.trim();
+                          if (trimmed.length >= 6) {
+                            const match = customerContacts.find(c => c.phone === trimmed);
+                            if (match) {
+                              if (!customerName.trim()) setCustomerName(match.full_name);
+                              setSavedAddresses(match.addresses || []);
+                              if ((match.addresses || []).length === 1 && !deliveryAddress) {
+                                setDeliveryAddress(match.addresses[0].address_line_1 || '');
+                              }
+                            }
+                          }
+                        }}
                         placeholder="8888-8888"
                         className="h-9 text-sm"
                       />
@@ -743,6 +815,36 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                       onChange={(e) => setSellerName(e.target.value)}
                       placeholder="Nombre del vendedor"
                       className="h-9 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> Dirección de entrega
+                    </Label>
+                    {savedAddresses.length > 0 && (
+                      <Select
+                        value={deliveryAddress}
+                        onValueChange={(v) => setDeliveryAddress(v === '_new' ? '' : v)}
+                      >
+                        <SelectTrigger className="h-8 text-xs mt-1">
+                          <SelectValue placeholder="Direcciones guardadas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {savedAddresses.map((a, i) => (
+                            <SelectItem key={i} value={a.address_line_1}>
+                              <span className="text-xs">{a.label ? `${a.label}: ` : ''}{a.address_line_1.slice(0, 60)}{a.address_line_1.length > 60 ? '…' : ''}</span>
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="_new"><span className="text-xs italic">+ Nueva dirección</span></SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <Textarea
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Dirección completa de entrega"
+                      className="text-sm min-h-[60px] mt-1.5"
                     />
                   </div>
 

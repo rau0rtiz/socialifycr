@@ -530,8 +530,8 @@ export const RegisterSaleDialog = ({
               <Input placeholder="Nombre del vendedor" value={closerName} onChange={e => setCloserName(e.target.value)} className="h-9 text-sm" />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-medium">Notas adicionales</Label>
-              <Input placeholder="Detalles adicionales" value={notes} onChange={e => setNotes(e.target.value)} className="h-9 text-sm" />
+              <Label className="text-xs font-medium">Dirección de entrega</Label>
+              <Textarea placeholder="Dirección completa de entrega" value={notes} onChange={e => setNotes(e.target.value)} className="text-sm min-h-[60px]" />
             </div>
           </div>
           <div className="px-6 pb-4">
