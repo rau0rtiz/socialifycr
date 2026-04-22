@@ -259,7 +259,21 @@ const Ventas = () => {
     </Card>
   );
 
-  const salesDistributionSection = (
+  const salesDistributionSection = isAlmaBendita ? (
+    <div className="grid grid-cols-1 gap-4 lg:gap-6">
+      {hasSalesChartData ? (
+        <>
+          <SalesByProductChart sales={chartSales} products={clientProducts} variant="garment" />
+          <SalesByBrandChart sales={chartSales} />
+        </>
+      ) : (
+        <>
+          {renderEmptySalesCard('Ventas por Tipo de Prenda')}
+          {renderEmptySalesCard('Ventas por Marca')}
+        </>
+      )}
+    </div>
+  ) : (
     <div className={`grid grid-cols-1 ${isSilvia ? '' : 'md:grid-cols-2'} gap-4 lg:gap-6`}>
       {hasSalesChartData ? (
         <>
