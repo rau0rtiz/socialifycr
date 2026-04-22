@@ -108,9 +108,19 @@
     @apply border-border;
   }
 
+  html, body {
+    /* Prevent horizontal scroll and lock zoom gestures in PWA / mobile */
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
+    -ms-touch-action: pan-y;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 }
 
