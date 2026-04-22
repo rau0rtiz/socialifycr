@@ -674,10 +674,52 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs">Cliente *</Label>
+                      <Label className="text-xs flex items-center justify-between">
+                        Cliente *
+                        <Popover open={contactPickerOpen} onOpenChange={setContactPickerOpen}>
+                          <PopoverTrigger asChild>
+                            <button type="button" className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
+                              Buscar <ChevronsUpDown className="h-3 w-3" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] p-0" align="end">
+                            <Command>
+                              <CommandInput placeholder="Buscar cliente..." className="h-9" />
+                              <CommandList>
+                                <CommandEmpty>Sin resultados</CommandEmpty>
+                                <CommandGroup>
+                                  {customerContacts.slice(0, 100).map((c: CustomerContact) => (
+                                    <CommandItem
+                                      key={c.id}
+                                      value={`${c.full_name} ${c.phone || ''}`}
+                                      onSelect={() => {
+                                        setCustomerName(c.full_name);
+                                        if (c.phone) setCustomerPhone(c.phone);
+                                        setSavedAddresses(c.addresses || []);
+                                        if ((c.addresses || []).length === 1) {
+                                          setDeliveryAddress(c.addresses[0].address_line_1 || '');
+                                        }
+                                        setContactPickerOpen(false);
+                                      }}
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="text-xs font-medium">{c.full_name}</span>
+                                        {c.phone && <span className="text-[10px] text-muted-foreground">{c.phone}</span>}
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </Label>
                       <Input
                         value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
+                        onChange={(e) => {
+                          setCustomerName(e.target.value);
+                          // auto-find contact on phone match
+                        }}
                         placeholder="Nombre del cliente"
                         className="h-9 text-sm"
                       />
@@ -686,7 +728,22 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                       <Label className="text-xs">Teléfono</Label>
                       <Input
                         value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setCustomerPhone(v);
+                          // Try to find by phone
+                          const trimmed = v.trim();
+                          if (trimmed.length >= 6) {
+                            const match = customerContacts.find(c => c.phone === trimmed);
+                            if (match) {
+                              if (!customerName.trim()) setCustomerName(match.full_name);
+                              setSavedAddresses(match.addresses || []);
+                              if ((match.addresses || []).length === 1 && !deliveryAddress) {
+                                setDeliveryAddress(match.addresses[0].address_line_1 || '');
+                              }
+                            }
+                          }
+                        }}
                         placeholder="8888-8888"
                         className="h-9 text-sm"
                       />
