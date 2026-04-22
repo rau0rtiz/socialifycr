@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
 import { StudentDetailDialog } from '@/components/ventas/StudentDetailDialog';
+import { CustomerDetailDialog } from '@/components/clientes/CustomerDetailDialog';
 import { MapPin, Shirt } from 'lucide-react';
 
 // ── Legacy lead type for non-SpkUp clients ──
@@ -56,6 +57,11 @@ const ClientDatabase = () => {
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+  // Alma Bendita-specific filters
+  const [sizeFilter, setSizeFilter] = useState<string>('all');
+  const [purchasesFilter, setPurchasesFilter] = useState<string>('all'); // all | with | without | gt3 | gt5
+  const [amountFilter, setAmountFilter] = useState<string>('all'); // all | gt50k | gt100k | gt250k
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerContact | null>(null);
 
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
@@ -207,33 +213,87 @@ const ClientDatabase = () => {
 
   const sources = useMemo(() => Array.from(new Set(allLeads.map(l => l.source).filter(Boolean))) as string[], [allLeads]);
 
-  const filteredLeads = useMemo(() => allLeads.filter(lead => {
-    const matchSearch = !search || lead.lead_name.toLowerCase().includes(search.toLowerCase()) || (lead.lead_phone && lead.lead_phone.includes(search)) || (lead.lead_email && lead.lead_email.toLowerCase().includes(search.toLowerCase()));
-    const matchStatus = statusFilter === 'all' || lead.status === statusFilter;
-    const matchSource = sourceFilter === 'all' || lead.source === sourceFilter;
-    return matchSearch && matchStatus && matchSource;
-  }), [allLeads, search, statusFilter, sourceFilter]);
+  const filteredLeads = useMemo(() => {
+    const filtered = allLeads.filter(lead => {
+      const matchSearch = !search || lead.lead_name.toLowerCase().includes(search.toLowerCase()) || (lead.lead_phone && lead.lead_phone.includes(search)) || (lead.lead_email && lead.lead_email.toLowerCase().includes(search.toLowerCase()));
+      const matchStatus = statusFilter === 'all' || lead.status === statusFilter;
+      const matchSource = sourceFilter === 'all' || lead.source === sourceFilter;
+      return matchSearch && matchStatus && matchSource;
+    });
+    return filtered.sort((a, b) => a.lead_name.localeCompare(b.lead_name, 'es', { sensitivity: 'base' }));
+  }, [allLeads, search, statusFilter, sourceFilter]);
 
   const filteredStudents = useMemo(() => {
-    return students.filter(s => {
+    const filtered = students.filter(s => {
       const matchSearch = !search || s.full_name.toLowerCase().includes(search.toLowerCase()) || (s.phone && s.phone.includes(search)) || (s.email && s.email.toLowerCase().includes(search.toLowerCase()));
       const matchStatus = statusFilter === 'all' || s.status === statusFilter;
       return matchSearch && matchStatus;
     });
+    return filtered.sort((a, b) => a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' }));
   }, [students, search, statusFilter]);
+
+  // ── Alma Bendita: total spent per customer (for amount filter) ──
+  const { data: customerSpend = {} } = useQuery<Record<string, number>>({
+    queryKey: ['customer-spend', clientId],
+    queryFn: async () => {
+      if (!clientId) return {};
+      const { data, error } = await supabase
+        .from('message_sales')
+        .select('customer_phone, customer_name, amount')
+        .eq('client_id', clientId)
+        .not('customer_name', 'is', null);
+      if (error) throw error;
+      const totals: Record<string, number> = {};
+      for (const row of (data ?? []) as any[]) {
+        const key = (row.customer_phone || row.customer_name || '').toString().trim().toLowerCase();
+        if (!key) continue;
+        totals[key] = (totals[key] || 0) + Number(row.amount || 0);
+      }
+      return totals;
+    },
+    enabled: !!clientId && !!isAlmaBendita,
+    staleTime: 60_000,
+  });
+
+  const customerSpendFor = (c: CustomerContact) => {
+    const key = (c.phone || c.full_name || '').toString().trim().toLowerCase();
+    return customerSpend[key] || 0;
+  };
+
+  const allSizes = useMemo(() => {
+    const set = new Set<string>();
+    customerContacts.forEach(c => (c.garment_sizes || []).forEach(s => { if (s) set.add(s); }));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+  }, [customerContacts]);
 
   const filteredCustomers = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return customerContacts.filter(c => {
-      if (!q) return true;
-      return (
-        c.full_name.toLowerCase().includes(q) ||
-        (c.phone && c.phone.includes(search)) ||
-        (c.email && c.email.toLowerCase().includes(q)) ||
-        (c.id_number && c.id_number.toLowerCase().includes(q))
-      );
+    const filtered = customerContacts.filter(c => {
+      if (q) {
+        const matchesSearch =
+          c.full_name.toLowerCase().includes(q) ||
+          (c.phone && c.phone.includes(search)) ||
+          (c.email && c.email.toLowerCase().includes(q)) ||
+          (c.id_number && c.id_number.toLowerCase().includes(q));
+        if (!matchesSearch) return false;
+      }
+      // Size filter
+      if (sizeFilter !== 'all' && !(c.garment_sizes || []).includes(sizeFilter)) return false;
+      // Purchases filter
+      const tp = c.total_purchases || 0;
+      if (purchasesFilter === 'with' && tp <= 0) return false;
+      if (purchasesFilter === 'without' && tp > 0) return false;
+      if (purchasesFilter === 'gt3' && tp < 3) return false;
+      if (purchasesFilter === 'gt5' && tp < 5) return false;
+      // Amount filter
+      const spent = customerSpendFor(c);
+      if (amountFilter === 'gt50k' && spent < 50_000) return false;
+      if (amountFilter === 'gt100k' && spent < 100_000) return false;
+      if (amountFilter === 'gt250k' && spent < 250_000) return false;
+      return true;
     });
-  }, [customerContacts, search]);
+    return filtered.sort((a, b) => a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' }));
+  }, [customerContacts, search, sizeFilter, purchasesFilter, amountFilter, customerSpend]);
 
   const handleDeleteLead = async () => {
     if (!deleteTarget) return;
@@ -330,7 +390,36 @@ const ClientDatabase = () => {
                   <SelectItem value="inactive">Inactivos</SelectItem>
                 </SelectContent>
               </Select>
-            ) : isAlmaBendita ? null : (
+            ) : isAlmaBendita ? (
+              <>
+                <Select value={sizeFilter} onValueChange={setSizeFilter}>
+                  <SelectTrigger className="w-full sm:w-[130px] h-9 text-sm"><Shirt className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Talla" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las tallas</SelectItem>
+                    {allSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={purchasesFilter} onValueChange={setPurchasesFilter}>
+                  <SelectTrigger className="w-full sm:w-[150px] h-9 text-sm"><Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Compras" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las compras</SelectItem>
+                    <SelectItem value="with">Con compras</SelectItem>
+                    <SelectItem value="without">Sin compras</SelectItem>
+                    <SelectItem value="gt3">3 o más</SelectItem>
+                    <SelectItem value="gt5">5 o más</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={amountFilter} onValueChange={setAmountFilter}>
+                  <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm"><DollarSign className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Monto" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Cualquier monto</SelectItem>
+                    <SelectItem value="gt50k">≥ ₡50,000</SelectItem>
+                    <SelectItem value="gt100k">≥ ₡100,000</SelectItem>
+                    <SelectItem value="gt250k">≥ ₡250,000</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
+            ) : (
               <>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm"><Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Estado" /></SelectTrigger>
@@ -431,7 +520,7 @@ const ClientDatabase = () => {
                           .filter(Boolean).join(', ')
                       : '';
                     return (
-                      <TableRow key={c.id} className="text-xs">
+                      <TableRow key={c.id} className="text-xs cursor-pointer hover:bg-muted/40" onClick={() => setSelectedCustomer(c)}>
                         <TableCell className="font-medium">{c.full_name}</TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-0.5">
@@ -642,6 +731,15 @@ const ClientDatabase = () => {
           student={selectedStudent}
           purchaseCount={selectedStudent ? purchaseCounts[selectedStudent.id] || 0 : 0}
           clientId={clientId || undefined}
+        />
+      )}
+
+      {isAlmaBendita && (
+        <CustomerDetailDialog
+          open={!!selectedCustomer}
+          onOpenChange={(open) => { if (!open) setSelectedCustomer(null); }}
+          customer={selectedCustomer}
+          clientId={clientId}
         />
       )}
     </DashboardLayout>
