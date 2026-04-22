@@ -29,7 +29,12 @@ const formatCurrency = (amount: number, currency: string) => {
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 };
 
-export const SalesByProductChart = ({ sales, products = [] }: SalesByProductChartProps) => {
+export const SalesByProductChart = ({ sales, products = [], title, variant = 'product' }: SalesByProductChartProps) => {
+  const isGarment = variant === 'garment';
+  const resolvedTitle = title ?? (isGarment ? 'Ventas por Tipo de Prenda' : 'Ventas por Producto');
+  const Icon = isGarment ? Shirt : Package;
+  const iconBg = isGarment ? 'bg-pink-500/10' : 'bg-blue-500/10';
+  const iconColor = isGarment ? 'text-pink-500' : 'text-blue-500';
   const data = useMemo(() => {
     const completed = sales.filter(s => s.status === 'completed');
     const byProduct: Record<string, { amount: number; count: number; currency: string }> = {};
