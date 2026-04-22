@@ -60,6 +60,9 @@ const ClientDatabase = () => {
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
 
+  // ── Alma Bendita: customer_contacts (retail clients) ──
+  const { contacts: customerContacts, isLoading: customersLoading } = useCustomerContacts(isAlmaBendita ? clientId : null);
+
   // ── Purchase counts per student ──
   const { data: purchaseCounts = {} } = useQuery<Record<string, number>>({
     queryKey: ['student-purchase-counts', clientId],
