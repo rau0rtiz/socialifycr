@@ -17,6 +17,7 @@ import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
 import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
 import { StoryStoreSales } from '@/components/ventas/StoryStoreSales';
+import { SalesBySizeChart } from '@/components/ventas/SalesBySizeChart';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 
@@ -400,6 +401,7 @@ const Ventas = () => {
           <>
             <StoryRevenueTracker clientId={selectedClient.id} dateRange={globalRange} />
             <StoryStoreSales clientId={selectedClient.id} />
+            <SalesBySizeChart clientId={selectedClient.id} dateRange={globalRange} />
             {salesDistributionSection}
           </>
         )}
