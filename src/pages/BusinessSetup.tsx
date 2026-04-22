@@ -300,35 +300,14 @@ const BusinessSetup = () => {
               <CardTitle className="text-lg">Items del Checklist</CardTitle>
               <CardDescription>Personaliza los pasos de preparación que debe completar cada lead antes de la llamada</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {checklistItems.map((item, idx) => (
-                <div key={item.key} className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground w-5 shrink-0">{idx + 1}.</span>
-                  <Input
-                    value={item.label}
-                    onChange={(e) => updateItemLabel(item.key, e.target.value)}
-                    onBlur={() => {
-                      if (item.label.trim()) {
-                        updateChecklistItems.mutate(checklistItems);
-                      }
-                    }}
-                    placeholder="Ej: Ya vio el video introductorio"
-                    className="flex-1"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeChecklistItem(item.key)}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                  </Button>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={addChecklistItem}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                Agregar item
-              </Button>
+            <CardContent>
+              <ChecklistItemsEditor
+                items={checklistItems}
+                isSaving={updateChecklistItems.isPending}
+                onSave={async (next) => {
+                  await updateChecklistItems.mutateAsync(next);
+                }}
+              />
             </CardContent>
           </Card>
         )}
