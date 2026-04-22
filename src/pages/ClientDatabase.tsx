@@ -213,33 +213,87 @@ const ClientDatabase = () => {
 
   const sources = useMemo(() => Array.from(new Set(allLeads.map(l => l.source).filter(Boolean))) as string[], [allLeads]);
 
-  const filteredLeads = useMemo(() => allLeads.filter(lead => {
-    const matchSearch = !search || lead.lead_name.toLowerCase().includes(search.toLowerCase()) || (lead.lead_phone && lead.lead_phone.includes(search)) || (lead.lead_email && lead.lead_email.toLowerCase().includes(search.toLowerCase()));
-    const matchStatus = statusFilter === 'all' || lead.status === statusFilter;
-    const matchSource = sourceFilter === 'all' || lead.source === sourceFilter;
-    return matchSearch && matchStatus && matchSource;
-  }), [allLeads, search, statusFilter, sourceFilter]);
+  const filteredLeads = useMemo(() => {
+    const filtered = allLeads.filter(lead => {
+      const matchSearch = !search || lead.lead_name.toLowerCase().includes(search.toLowerCase()) || (lead.lead_phone && lead.lead_phone.includes(search)) || (lead.lead_email && lead.lead_email.toLowerCase().includes(search.toLowerCase()));
+      const matchStatus = statusFilter === 'all' || lead.status === statusFilter;
+      const matchSource = sourceFilter === 'all' || lead.source === sourceFilter;
+      return matchSearch && matchStatus && matchSource;
+    });
+    return filtered.sort((a, b) => a.lead_name.localeCompare(b.lead_name, 'es', { sensitivity: 'base' }));
+  }, [allLeads, search, statusFilter, sourceFilter]);
 
   const filteredStudents = useMemo(() => {
-    return students.filter(s => {
+    const filtered = students.filter(s => {
       const matchSearch = !search || s.full_name.toLowerCase().includes(search.toLowerCase()) || (s.phone && s.phone.includes(search)) || (s.email && s.email.toLowerCase().includes(search.toLowerCase()));
       const matchStatus = statusFilter === 'all' || s.status === statusFilter;
       return matchSearch && matchStatus;
     });
+    return filtered.sort((a, b) => a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' }));
   }, [students, search, statusFilter]);
+
+  // ── Alma Bendita: total spent per customer (for amount filter) ──
+  const { data: customerSpend = {} } = useQuery<Record<string, number>>({
+    queryKey: ['customer-spend', clientId],
+    queryFn: async () => {
+      if (!clientId) return {};
+      const { data, error } = await supabase
+        .from('message_sales')
+        .select('customer_phone, customer_name, amount')
+        .eq('client_id', clientId)
+        .not('customer_name', 'is', null);
+      if (error) throw error;
+      const totals: Record<string, number> = {};
+      for (const row of (data ?? []) as any[]) {
+        const key = (row.customer_phone || row.customer_name || '').toString().trim().toLowerCase();
+        if (!key) continue;
+        totals[key] = (totals[key] || 0) + Number(row.amount || 0);
+      }
+      return totals;
+    },
+    enabled: !!clientId && !!isAlmaBendita,
+    staleTime: 60_000,
+  });
+
+  const customerSpendFor = (c: CustomerContact) => {
+    const key = (c.phone || c.full_name || '').toString().trim().toLowerCase();
+    return customerSpend[key] || 0;
+  };
+
+  const allSizes = useMemo(() => {
+    const set = new Set<string>();
+    customerContacts.forEach(c => (c.garment_sizes || []).forEach(s => { if (s) set.add(s); }));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+  }, [customerContacts]);
 
   const filteredCustomers = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return customerContacts.filter(c => {
-      if (!q) return true;
-      return (
-        c.full_name.toLowerCase().includes(q) ||
-        (c.phone && c.phone.includes(search)) ||
-        (c.email && c.email.toLowerCase().includes(q)) ||
-        (c.id_number && c.id_number.toLowerCase().includes(q))
-      );
+    const filtered = customerContacts.filter(c => {
+      if (q) {
+        const matchesSearch =
+          c.full_name.toLowerCase().includes(q) ||
+          (c.phone && c.phone.includes(search)) ||
+          (c.email && c.email.toLowerCase().includes(q)) ||
+          (c.id_number && c.id_number.toLowerCase().includes(q));
+        if (!matchesSearch) return false;
+      }
+      // Size filter
+      if (sizeFilter !== 'all' && !(c.garment_sizes || []).includes(sizeFilter)) return false;
+      // Purchases filter
+      const tp = c.total_purchases || 0;
+      if (purchasesFilter === 'with' && tp <= 0) return false;
+      if (purchasesFilter === 'without' && tp > 0) return false;
+      if (purchasesFilter === 'gt3' && tp < 3) return false;
+      if (purchasesFilter === 'gt5' && tp < 5) return false;
+      // Amount filter
+      const spent = customerSpendFor(c);
+      if (amountFilter === 'gt50k' && spent < 50_000) return false;
+      if (amountFilter === 'gt100k' && spent < 100_000) return false;
+      if (amountFilter === 'gt250k' && spent < 250_000) return false;
+      return true;
     });
-  }, [customerContacts, search]);
+    return filtered.sort((a, b) => a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' }));
+  }, [customerContacts, search, sizeFilter, purchasesFilter, amountFilter, customerSpend]);
 
   const handleDeleteLead = async () => {
     if (!deleteTarget) return;
