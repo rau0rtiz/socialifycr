@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { ProductsManager } from '@/components/ventas/ProductsManager';
 import { TeachersManager } from '@/components/ventas/TeachersManager';
 import { useClientFeatures } from '@/hooks/use-client-features';
+import { ChecklistItemsEditor } from '@/components/business-setup/ChecklistItemsEditor';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
 import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, ToggleRight, GraduationCap, UsersRound } from 'lucide-react';
@@ -261,28 +262,6 @@ const BusinessSetup = () => {
     ];
 
     const checklistItems = featureFlags.checklist_items || [];
-
-    const addChecklistItem = () => {
-      const newKey = `custom_${Date.now()}`;
-      const updated = [...checklistItems, { key: newKey, label: '' }];
-      updateChecklistItems.mutate(updated, {
-        onSuccess: () => toast.success('Item agregado'),
-        onError: () => toast.error('Error al agregar'),
-      });
-    };
-
-    const removeChecklistItem = (key: string) => {
-      const updated = checklistItems.filter(i => i.key !== key);
-      updateChecklistItems.mutate(updated, {
-        onSuccess: () => toast.success('Item eliminado'),
-        onError: () => toast.error('Error al eliminar'),
-      });
-    };
-
-    const updateItemLabel = (key: string, label: string) => {
-      const updated = checklistItems.map(i => i.key === key ? { ...i, label } : i);
-      updateChecklistItems.mutate(updated);
-    };
 
     return (
       <div className="space-y-6">
