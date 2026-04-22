@@ -57,6 +57,11 @@ const ClientDatabase = () => {
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+  // Alma Bendita-specific filters
+  const [sizeFilter, setSizeFilter] = useState<string>('all');
+  const [purchasesFilter, setPurchasesFilter] = useState<string>('all'); // all | with | without | gt3 | gt5
+  const [amountFilter, setAmountFilter] = useState<string>('all'); // all | gt50k | gt100k | gt250k
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerContact | null>(null);
 
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
