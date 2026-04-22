@@ -20,6 +20,7 @@ export interface MessageSale {
   brand: string | null;
   notes: string | null;
   product: string | null;
+  garment_size: string | null;
   message_platform: string | null;
   status: 'completed' | 'pending' | 'cancelled';
   closer_name: string | null;
@@ -45,6 +46,7 @@ export interface SaleInput {
   brand?: string;
   notes?: string;
   product?: string;
+  garment_size?: string;
   message_platform?: string;
   status?: 'completed' | 'pending' | 'cancelled';
   closer_name?: string;
