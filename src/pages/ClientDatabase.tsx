@@ -222,6 +222,19 @@ const ClientDatabase = () => {
     });
   }, [students, search, statusFilter]);
 
+  const filteredCustomers = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return customerContacts.filter(c => {
+      if (!q) return true;
+      return (
+        c.full_name.toLowerCase().includes(q) ||
+        (c.phone && c.phone.includes(search)) ||
+        (c.email && c.email.toLowerCase().includes(q)) ||
+        (c.id_number && c.id_number.toLowerCase().includes(q))
+      );
+    });
+  }, [customerContacts, search]);
+
   const handleDeleteLead = async () => {
     if (!deleteTarget) return;
     if (isSpkUp) {
