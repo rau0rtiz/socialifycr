@@ -40,6 +40,7 @@ const ClientDatabase = () => {
   const { selectedClient } = useBrand();
   const clientId = selectedClient?.id ?? null;
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
+  const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { systemRole, clientAccess } = useUserRole();
