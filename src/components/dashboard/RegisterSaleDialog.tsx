@@ -91,6 +91,7 @@ export const RegisterSaleDialog = ({
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [garmentSize, setGarmentSize] = useState('');
   const [product, setProduct] = useState('');
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProductName, setNewProductName] = useState('');
@@ -214,6 +215,7 @@ export const RegisterSaleDialog = ({
       setCustomerName(editingSale.customer_name || '');
       setCustomerPhone((editingSale as any).customer_phone || '');
       setProduct(editingSale.product || (editingSale as any).brand || '');
+      setGarmentSize((editingSale as any).garment_size || '');
       setMessagePlatform(editingSale.message_platform || '');
       setNotes(editingSale.notes || '');
       setStatus(editingSale.status);
@@ -275,6 +277,7 @@ export const RegisterSaleDialog = ({
       setNotes('');
       setStatus('completed');
       setCloserName('');
+      setGarmentSize('');
     }
   }, [editingSale, prefill, open]);
 
@@ -349,7 +352,9 @@ export const RegisterSaleDialog = ({
       currency,
       source: source as SaleInput['source'],
       customer_name: customerName || undefined,
+      customer_phone: customerPhone || undefined,
       product: product || undefined,
+      garment_size: garmentSize || undefined,
       message_platform: messagePlatform || undefined,
       notes: notes || undefined,
       status: status as SaleInput['status'],
@@ -507,6 +512,20 @@ export const RegisterSaleDialog = ({
               </div>
             </div>
             <div className="space-y-1">
+              <Label className="text-xs font-medium">Talla</Label>
+              <Select value={garmentSize || '_none'} onValueChange={v => setGarmentSize(v === '_none' ? '' : v)}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Selecciona talla" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Sin especificar</SelectItem>
+                  {['XS','S','M','L','XL','XXL','Única'].map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
               <Label className="text-xs font-medium">Vendedor</Label>
               <Input placeholder="Nombre del vendedor" value={closerName} onChange={e => setCloserName(e.target.value)} className="h-9 text-sm" />
             </div>
@@ -527,6 +546,7 @@ export const RegisterSaleDialog = ({
                 customer_name: customerName.trim() || undefined,
                 customer_phone: customerPhone.trim() || undefined,
                 brand: product.trim() || undefined,
+                garment_size: garmentSize || undefined,
                 closer_name: closerName.trim() || undefined,
                 notes: notes || undefined,
                 status: 'completed',

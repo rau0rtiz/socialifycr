@@ -20,6 +20,10 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
+import { upsertCustomerContact } from '@/hooks/use-customer-contacts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const GARMENT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Única'];
 
 interface StoryStoreSalesProps {
   clientId: string;
@@ -81,6 +85,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
   const [customerPhone, setCustomerPhone] = useState('');
   const [brand, setBrand] = useState('');
   const [garmentType, setGarmentType] = useState('');
+  const [garmentSize, setGarmentSize] = useState('');
   const [amount, setAmount] = useState('');
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [sellerName, setSellerName] = useState('');
@@ -108,6 +113,7 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
     setCustomerPhone('');
     setBrand('');
     setGarmentType('');
+    setGarmentSize('');
     setAmount('');
     setSaleDate(format(new Date(), 'yyyy-MM-dd'));
     setSellerName(profileName || '');
@@ -159,12 +165,29 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
         customer_phone: customerPhone.trim() || undefined,
         brand: brand.trim() || undefined,
         product: garmentType.trim() || undefined,
+        garment_size: garmentSize || undefined,
         closer_name: sellerName.trim() || undefined,
         notes: notes || undefined,
         story_id: selectedStory.storyId,
         status: asReserved ? 'reserved' as any : 'completed',
       };
       await addSale.mutateAsync(saleInput);
+
+      // Upsert customer contact (CRM) — only on completed sales to avoid duplicates from reservations
+      if (!asReserved) {
+        try {
+          await upsertCustomerContact({
+            clientId,
+            fullName: customerName.trim(),
+            phone: customerPhone.trim() || null,
+            garmentSize: garmentSize || null,
+            brand: brand.trim() || null,
+            isNewSale: true,
+          });
+        } catch {
+          // non-critical
+        }
+      }
 
       // Auto-sync: upsert daily_story_tracker for this date (only for completed sales)
       if (!asReserved) {
@@ -674,6 +697,20 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                         className="h-9 text-sm"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs">Talla</Label>
+                    <Select value={garmentSize} onValueChange={setGarmentSize}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Selecciona talla" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GARMENT_SIZES.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">

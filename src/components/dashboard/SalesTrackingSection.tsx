@@ -256,6 +256,25 @@ export const SalesTrackingSection = ({ clientId, campaigns = [], adSpend = 0, ad
           setCurrentPrefill(null);
           if (onSaleFromSetter) onSaleFromSetter(appointmentId, saleId);
 
+          // Alma Bendita: upsert customer contact (CRM with sizes)
+          const isAlmaBenditaClient = (selectedClient?.name || '').toLowerCase().includes('alma bendita');
+          if (isAlmaBenditaClient && sale.customer_name && sale.status !== 'cancelled') {
+            try {
+              const { upsertCustomerContact } = await import('@/hooks/use-customer-contacts');
+              await upsertCustomerContact({
+                clientId,
+                fullName: sale.customer_name,
+                phone: sale.customer_phone || null,
+                garmentSize: sale.garment_size || null,
+                brand: sale.brand || sale.product || null,
+                isNewSale: true,
+              });
+              qc.invalidateQueries({ queryKey: ['customer-contacts', clientId] });
+            } catch {
+              // non-critical
+            }
+          }
+
           // Auto-enroll student in class group if both group_id and student_contact_id are present
           if (sale.group_id && sale.student_contact_id && saleId) {
             try {
