@@ -295,9 +295,14 @@ const ClientDatabase = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-2xl font-bold">{totalCount}</p><p className="text-xs text-muted-foreground">{isSpkUp ? 'Total estudiantes' : 'Total leads'}</p></div></CardContent></Card>
+          <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-2xl font-bold">{totalCount}</p><p className="text-xs text-muted-foreground">{isSpkUp ? 'Total estudiantes' : isAlmaBendita ? 'Total clientas' : 'Total leads'}</p></div></CardContent></Card>
           {isSpkUp ? (
             <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-emerald-500/10"><Calendar className="h-5 w-5 text-emerald-600" /></div><div><p className="text-2xl font-bold">{activeCount}</p><p className="text-xs text-muted-foreground">Activos</p></div></CardContent></Card>
+          ) : isAlmaBendita ? (
+            <>
+              <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-green-500/10"><DollarSign className="h-5 w-5 text-green-600" /></div><div><p className="text-2xl font-bold">{customerWithPurchasesCount}</p><p className="text-xs text-muted-foreground">Con compras</p></div></CardContent></Card>
+              <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><MapPin className="h-5 w-5 text-blue-600" /></div><div><p className="text-2xl font-bold">{customerWithAddressCount}</p><p className="text-xs text-muted-foreground">Con dirección</p></div></CardContent></Card>
+            </>
           ) : (
             <>
               <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-green-500/10"><DollarSign className="h-5 w-5 text-green-600" /></div><div><p className="text-2xl font-bold">{soldCount}</p><p className="text-xs text-muted-foreground">Vendidos</p></div></CardContent></Card>
