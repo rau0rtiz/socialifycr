@@ -330,7 +330,7 @@ const ClientDatabase = () => {
                   <SelectItem value="inactive">Inactivos</SelectItem>
                 </SelectContent>
               </Select>
-            ) : (
+            ) : isAlmaBendita ? null : (
               <>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm"><Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Estado" /></SelectTrigger>
