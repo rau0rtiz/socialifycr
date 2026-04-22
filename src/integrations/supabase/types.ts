@@ -1454,12 +1454,15 @@ export type Database = {
       }
       customer_contacts: {
         Row: {
+          addresses: Json
           client_id: string
           created_at: string
           email: string | null
           full_name: string
           garment_sizes: string[] | null
           id: string
+          id_number: string | null
+          last_name: string | null
           last_purchase_at: string | null
           notes: string | null
           phone: string | null
@@ -1468,12 +1471,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          addresses?: Json
           client_id: string
           created_at?: string
           email?: string | null
           full_name: string
           garment_sizes?: string[] | null
           id?: string
+          id_number?: string | null
+          last_name?: string | null
           last_purchase_at?: string | null
           notes?: string | null
           phone?: string | null
@@ -1482,12 +1488,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          addresses?: Json
           client_id?: string
           created_at?: string
           email?: string | null
           full_name?: string
           garment_sizes?: string[] | null
           id?: string
+          id_number?: string | null
+          last_name?: string | null
           last_purchase_at?: string | null
           notes?: string | null
           phone?: string | null
