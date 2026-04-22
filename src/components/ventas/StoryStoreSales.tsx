@@ -819,6 +819,36 @@ export const StoryStoreSales = ({ clientId }: StoryStoreSalesProps) => {
                   </div>
 
                   <div>
+                    <Label className="text-xs flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> Dirección de entrega
+                    </Label>
+                    {savedAddresses.length > 0 && (
+                      <Select
+                        value={deliveryAddress}
+                        onValueChange={(v) => setDeliveryAddress(v === '_new' ? '' : v)}
+                      >
+                        <SelectTrigger className="h-8 text-xs mt-1">
+                          <SelectValue placeholder="Direcciones guardadas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {savedAddresses.map((a, i) => (
+                            <SelectItem key={i} value={a.address_line_1}>
+                              <span className="text-xs">{a.label ? `${a.label}: ` : ''}{a.address_line_1.slice(0, 60)}{a.address_line_1.length > 60 ? '…' : ''}</span>
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="_new"><span className="text-xs italic">+ Nueva dirección</span></SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <Textarea
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Dirección completa de entrega"
+                      className="text-sm min-h-[60px] mt-1.5"
+                    />
+                  </div>
+
+                  <div>
                     <Label className="text-xs">Notas adicionales</Label>
                     <Input
                       value={notes}
