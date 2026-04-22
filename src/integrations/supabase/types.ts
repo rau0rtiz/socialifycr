@@ -1452,6 +1452,51 @@ export type Database = {
           },
         ]
       }
+      customer_contacts: {
+        Row: {
+          client_id: string
+          created_at: string
+          email: string | null
+          full_name: string
+          garment_sizes: string[] | null
+          id: string
+          last_purchase_at: string | null
+          notes: string | null
+          phone: string | null
+          preferred_brands: string[] | null
+          total_purchases: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          garment_sizes?: string[] | null
+          id?: string
+          last_purchase_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferred_brands?: string[] | null
+          total_purchases?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          garment_sizes?: string[] | null
+          id?: string
+          last_purchase_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferred_brands?: string[] | null
+          total_purchases?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_story_tracker: {
         Row: {
           client_id: string
@@ -1913,6 +1958,7 @@ export type Database = {
           customer_phone: string | null
           discount_amount: number | null
           discount_reason: string | null
+          garment_size: string | null
           group_id: string | null
           id: string
           installment_amount: number | null
@@ -1952,6 +1998,7 @@ export type Database = {
           customer_phone?: string | null
           discount_amount?: number | null
           discount_reason?: string | null
+          garment_size?: string | null
           group_id?: string | null
           id?: string
           installment_amount?: number | null
@@ -1991,6 +2038,7 @@ export type Database = {
           customer_phone?: string | null
           discount_amount?: number | null
           discount_reason?: string | null
+          garment_size?: string | null
           group_id?: string | null
           id?: string
           installment_amount?: number | null
