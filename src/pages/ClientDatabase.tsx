@@ -390,7 +390,36 @@ const ClientDatabase = () => {
                   <SelectItem value="inactive">Inactivos</SelectItem>
                 </SelectContent>
               </Select>
-            ) : isAlmaBendita ? null : (
+            ) : isAlmaBendita ? (
+              <>
+                <Select value={sizeFilter} onValueChange={setSizeFilter}>
+                  <SelectTrigger className="w-full sm:w-[130px] h-9 text-sm"><Shirt className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Talla" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las tallas</SelectItem>
+                    {allSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={purchasesFilter} onValueChange={setPurchasesFilter}>
+                  <SelectTrigger className="w-full sm:w-[150px] h-9 text-sm"><Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Compras" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las compras</SelectItem>
+                    <SelectItem value="with">Con compras</SelectItem>
+                    <SelectItem value="without">Sin compras</SelectItem>
+                    <SelectItem value="gt3">3 o más</SelectItem>
+                    <SelectItem value="gt5">5 o más</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={amountFilter} onValueChange={setAmountFilter}>
+                  <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm"><DollarSign className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Monto" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Cualquier monto</SelectItem>
+                    <SelectItem value="gt50k">≥ ₡50,000</SelectItem>
+                    <SelectItem value="gt100k">≥ ₡100,000</SelectItem>
+                    <SelectItem value="gt250k">≥ ₡250,000</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
+            ) : (
               <>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm"><Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Estado" /></SelectTrigger>
