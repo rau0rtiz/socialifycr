@@ -56,7 +56,7 @@ const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; col
   cancelled: { label: 'Cancelada', color: 'bg-muted text-muted-foreground border-border', icon: AlertTriangle },
 };
 
-export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodStartIso, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS, enableReservations = false }: SetterTrackerProps) => {
+export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodStartIso, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS, enableReservations = false, enableReschedule = false }: SetterTrackerProps) => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<SetterAppointment | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -452,6 +452,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
         showChecklist={showChecklist}
         checklistItems={checklistItems}
         enableReservations={enableReservations}
+        enableReschedule={enableReschedule}
         onUpdateChecklist={async (id, updates) => {
           try {
             await updateAppointment.mutateAsync({ id, ...updates } as any);
