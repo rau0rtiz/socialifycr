@@ -326,6 +326,17 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
                   No Show
                 </Button>
               </div>
+              {enableReservations && clientId && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full h-9 text-xs border-violet-500/40 text-violet-700 hover:bg-violet-500/10 dark:text-violet-400"
+                  onClick={() => setShowReservationDialog(true)}
+                >
+                  <Bookmark className="h-3.5 w-3.5 mr-1" />
+                  Reservar espacio (depósito)
+                </Button>
+              )}
               <p className="text-[10px] text-muted-foreground text-center">
                 Venta y No Venta implican que sí hubo llamada
               </p>
@@ -345,6 +356,24 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
           )}
         </div>
       </DialogContent>
+
+      {enableReservations && clientId && appointment && (
+        <ReservationFormDialog
+          open={showReservationDialog}
+          onOpenChange={setShowReservationDialog}
+          clientId={clientId}
+          prefill={{
+            lead_id: appointment.id,
+            customer_name: appointment.lead_name,
+            customer_phone: appointment.lead_phone,
+            customer_email: appointment.lead_email,
+          }}
+          onSuccess={() => {
+            setShowReservationDialog(false);
+            onOpenChange(false);
+          }}
+        />
+      )}
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
