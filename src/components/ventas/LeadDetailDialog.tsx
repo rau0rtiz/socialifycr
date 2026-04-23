@@ -5,13 +5,17 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
-import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save, ShoppingCart, ThumbsDown, XCircle, Trash2, Loader2, Pencil, Bookmark } from 'lucide-react';
+import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save, ShoppingCart, ThumbsDown, XCircle, Trash2, Loader2, Pencil, Bookmark, CalendarClock } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AdGridSelector } from './AdGridSelector';
 import { useAllAds } from '@/hooks/use-ads-data';
 import { ReservationFormDialog } from './ReservationFormDialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollTimePicker } from '@/components/ui/scroll-time-picker';
+import { cn } from '@/lib/utils';
 
 interface LeadDetailDialogProps {
   open: boolean;
@@ -26,6 +30,8 @@ interface LeadDetailDialogProps {
   checklistItems?: ChecklistItem[];
   /** Enable the "Reservar" action in the call result panel (e.g. The Mind Coach) */
   enableReservations?: boolean;
+  /** Enable "Reagendar llamada" action (e.g. The Mind Coach) */
+  enableReschedule?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -47,13 +53,17 @@ const SOURCE_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
-export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS, enableReservations = false }: LeadDetailDialogProps) => {
+export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS, enableReservations = false, enableReschedule = false }: LeadDetailDialogProps) => {
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [dirty, setDirty] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showAdSelector, setShowAdSelector] = useState(false);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [showReschedulePopover, setShowReschedulePopover] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>(undefined);
+  const [rescheduleTime, setRescheduleTime] = useState('10:00');
+  const [isRescheduling, setIsRescheduling] = useState(false);
 
   const allAdsQuery = useAllAds(clientId || '', hasAdAccount || false);
   const ads = allAdsQuery.data?.ads || [];
@@ -326,6 +336,67 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
                   No Show
                 </Button>
               </div>
+              {enableReschedule && onUpdateChecklist && (
+                <Popover open={showReschedulePopover} onOpenChange={(o) => {
+                  setShowReschedulePopover(o);
+                  if (o) {
+                    // Pre-fill with existing call date or today
+                    const base = salesCallDate ? new Date(salesCallDate) : new Date();
+                    setRescheduleDate(base);
+                    setRescheduleTime(`${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`);
+                  }
+                }}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full h-9 text-xs border-sky-500/40 text-sky-700 hover:bg-sky-500/10 dark:text-sky-400"
+                    >
+                      <CalendarClock className="h-3.5 w-3.5 mr-1" />
+                      Reagendar llamada
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-3 space-y-3" align="center">
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium">Nueva fecha y hora</p>
+                      <p className="text-[10px] text-muted-foreground">La cita queda en estado "Agendada"</p>
+                    </div>
+                    <Calendar
+                      mode="single"
+                      selected={rescheduleDate}
+                      onSelect={setRescheduleDate}
+                      initialFocus
+                      className={cn("p-0 pointer-events-auto")}
+                    />
+                    <ScrollTimePicker value={rescheduleTime} onChange={setRescheduleTime} />
+                    <Button
+                      size="sm"
+                      className="w-full h-8 text-xs"
+                      disabled={!rescheduleDate || isRescheduling}
+                      onClick={async () => {
+                        if (!rescheduleDate || !onUpdateChecklist) return;
+                        setIsRescheduling(true);
+                        try {
+                          const [hh, mm] = rescheduleTime.split(':').map(Number);
+                          const next = new Date(rescheduleDate);
+                          next.setHours(hh || 0, mm || 0, 0, 0);
+                          onUpdateChecklist(apt.id, {
+                            sales_call_date: next.toISOString(),
+                            status: 'scheduled',
+                          });
+                          setShowReschedulePopover(false);
+                          onOpenChange(false);
+                        } finally {
+                          setIsRescheduling(false);
+                        }
+                      }}
+                    >
+                      {isRescheduling ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CalendarClock className="h-3.5 w-3.5 mr-1" />}
+                      Confirmar nueva fecha
+                    </Button>
+                  </PopoverContent>
+                </Popover>
+              )}
               {enableReservations && clientId && (
                 <Button
                   size="sm"
