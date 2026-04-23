@@ -5,13 +5,17 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
-import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save, ShoppingCart, ThumbsDown, XCircle, Trash2, Loader2, Pencil, Bookmark } from 'lucide-react';
+import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save, ShoppingCart, ThumbsDown, XCircle, Trash2, Loader2, Pencil, Bookmark, CalendarClock } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AdGridSelector } from './AdGridSelector';
 import { useAllAds } from '@/hooks/use-ads-data';
 import { ReservationFormDialog } from './ReservationFormDialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollTimePicker } from '@/components/ui/scroll-time-picker';
+import { cn } from '@/lib/utils';
 
 interface LeadDetailDialogProps {
   open: boolean;
@@ -26,6 +30,8 @@ interface LeadDetailDialogProps {
   checklistItems?: ChecklistItem[];
   /** Enable the "Reservar" action in the call result panel (e.g. The Mind Coach) */
   enableReservations?: boolean;
+  /** Enable "Reagendar llamada" action (e.g. The Mind Coach) */
+  enableReschedule?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -47,13 +53,17 @@ const SOURCE_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
-export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS, enableReservations = false }: LeadDetailDialogProps) => {
+export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS, enableReservations = false, enableReschedule = false }: LeadDetailDialogProps) => {
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [dirty, setDirty] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showAdSelector, setShowAdSelector] = useState(false);
   const [showReservationDialog, setShowReservationDialog] = useState(false);
+  const [showReschedulePopover, setShowReschedulePopover] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>(undefined);
+  const [rescheduleTime, setRescheduleTime] = useState('10:00');
+  const [isRescheduling, setIsRescheduling] = useState(false);
 
   const allAdsQuery = useAllAds(clientId || '', hasAdAccount || false);
   const ads = allAdsQuery.data?.ads || [];
