@@ -43,6 +43,7 @@ interface SetterTrackerProps {
   showChecklist?: boolean;
   checklistItems?: ChecklistItem[];
   enableReservations?: boolean;
+  enableReschedule?: boolean;
 }
 
 const STATUS_CONFIG: Record<AppointmentStatus | 'not_sold', { label: string; color: string; icon: React.ElementType }> = {
