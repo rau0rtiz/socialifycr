@@ -5,12 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
-import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save, ShoppingCart, ThumbsDown, XCircle, Trash2, Loader2, Pencil } from 'lucide-react';
+import { User, Phone, Mail, Megaphone, CalendarDays, DollarSign, FileText, Clock, PhoneCall, ClipboardCheck, MessageSquare, Save, ShoppingCart, ThumbsDown, XCircle, Trash2, Loader2, Pencil, Bookmark } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AdGridSelector } from './AdGridSelector';
 import { useAllAds } from '@/hooks/use-ads-data';
+import { ReservationFormDialog } from './ReservationFormDialog';
 
 interface LeadDetailDialogProps {
   open: boolean;
@@ -23,6 +24,8 @@ interface LeadDetailDialogProps {
   hasAdAccount?: boolean;
   showChecklist?: boolean;
   checklistItems?: ChecklistItem[];
+  /** Enable the "Reservar" action in the call result panel (e.g. The Mind Coach) */
+  enableReservations?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -44,12 +47,13 @@ const SOURCE_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
-export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS }: LeadDetailDialogProps) => {
+export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChecklist, onStatusChange, onDelete, clientId, hasAdAccount, showChecklist = true, checklistItems = DEFAULT_CHECKLIST_ITEMS, enableReservations = false }: LeadDetailDialogProps) => {
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [dirty, setDirty] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showAdSelector, setShowAdSelector] = useState(false);
+  const [showReservationDialog, setShowReservationDialog] = useState(false);
 
   const allAdsQuery = useAllAds(clientId || '', hasAdAccount || false);
   const ads = allAdsQuery.data?.ads || [];
