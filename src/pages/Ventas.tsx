@@ -456,6 +456,7 @@ const Ventas = () => {
             showChecklist={flags.setter_checklist}
             checklistItems={flags.checklist_items}
             enableReservations={(isMindCoach || isHildaLopez) && (flags as any).reservations_widget}
+            enableReschedule={isMindCoach || isHildaLopez}
           />
         )}
 
