@@ -12,6 +12,7 @@ import { PipelineSummaryWidget } from '@/components/ventas/PipelineSummaryWidget
 import { SetterDailyCalendar } from '@/components/ventas/SetterDailyCalendar';
 import { CampaignsDrilldown } from '@/components/dashboard/CampaignsDrilldown';
 import { CollectionsWidget } from '@/components/ventas/CollectionsWidget';
+import { ReservationsWidget } from '@/components/ventas/ReservationsWidget';
 import { SpeakUpSalesSummary } from '@/components/ventas/SpeakUpSalesSummary';
 import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
@@ -454,6 +455,7 @@ const Ventas = () => {
             periodStartIso={periodStartIso}
             showChecklist={flags.setter_checklist}
             checklistItems={flags.checklist_items}
+            enableReservations={(isMindCoach || isHildaLopez) && (flags as any).reservations_widget}
           />
         )}
 
@@ -473,6 +475,11 @@ const Ventas = () => {
 
         {/* Collections (pending installments) — hidden for Alma Bendita */}
         {!isAlmaBendita && <CollectionsWidget clientId={selectedClient.id} />}
+
+        {/* Reservas — para Mind Coach / Hilda con flag activo */}
+        {(isMindCoach || isHildaLopez) && (flags as any).reservations_widget && (
+          <ReservationsWidget clientId={selectedClient.id} />
+        )}
 
 
         {(isMindCoach || isHildaLopez) && hasAdAccount && (

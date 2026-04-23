@@ -52,6 +52,7 @@ export interface ClientFeatureFlags {
   sales_by_product: boolean;
   sales_by_brand: boolean;
   collections: boolean;
+  reservations_widget: boolean;
   // Contenido widgets
   content_grid: boolean;
   video_ideas: boolean;
@@ -73,7 +74,7 @@ const BOOLEAN_FLAG_KEYS: (keyof Omit<ClientFeatureFlags, 'id' | 'client_id' | 'c
   'reach_chart', 'social_performance', 'stories_section', 'publication_goals', 'ai_insights', 'competitors',
   'sales_tracking', 'setter_tracker', 'setter_checklist', 'setter_daily',
   'pipeline_summary', 'sales_goal', 'closure_rate', 'ad_sales_ranking', 'lead_source',
-  'whatsapp_conversations', 'story_store', 'story_revenue_tracker', 'sales_by_product', 'sales_by_brand', 'collections',
+  'whatsapp_conversations', 'story_store', 'story_revenue_tracker', 'sales_by_product', 'sales_by_brand', 'collections', 'reservations_widget',
   'content_grid', 'video_ideas', 'generador_pauta', 'content_calendar', 'giveaway',
   'monthly_sales_report', 'ai_report_generator', 'social_performance_report',
 ];
@@ -117,6 +118,7 @@ export const VENTAS_WIDGET_LABELS: Record<string, string> = {
   sales_by_product: 'Ventas por Producto',
   sales_by_brand: 'Ventas por Marca',
   collections: 'Widget de Cobros',
+  reservations_widget: 'Reservas (depósitos)',
 };
 
 // Combined for backward compat
