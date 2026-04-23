@@ -469,6 +469,7 @@ export type Database = {
           publication_goals: boolean
           reach_chart: boolean
           reportes_section: boolean
+          reservations_widget: boolean
           sales_by_brand: boolean
           sales_by_product: boolean
           sales_goal: boolean
@@ -517,6 +518,7 @@ export type Database = {
           publication_goals?: boolean
           reach_chart?: boolean
           reportes_section?: boolean
+          reservations_widget?: boolean
           sales_by_brand?: boolean
           sales_by_product?: boolean
           sales_goal?: boolean
@@ -565,6 +567,7 @@ export type Database = {
           publication_goals?: boolean
           reach_chart?: boolean
           reportes_section?: boolean
+          reservations_widget?: boolean
           sales_by_brand?: boolean
           sales_by_product?: boolean
           sales_goal?: boolean
@@ -1948,6 +1951,77 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      lead_reservations: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string
+          currency: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          deposit_amount: number
+          expires_at: string
+          id: string
+          lead_id: string | null
+          notes: string | null
+          product_id: string | null
+          product_name: string | null
+          reserved_at: string
+          sale_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          deposit_amount?: number
+          expires_at: string
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          reserved_at?: string
+          sale_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          deposit_amount?: number
+          expires_at?: string
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          reserved_at?: string
+          sale_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_reservations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_sales: {
         Row: {
@@ -3335,6 +3409,7 @@ export type Database = {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
       }
+      mark_expired_reservations: { Args: never; Returns: undefined }
       move_to_dlq: {
         Args: {
           dlq_name: string
