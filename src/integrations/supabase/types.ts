@@ -312,9 +312,12 @@ export type Database = {
           billing_account_id: string | null
           billing_frequency: string
           churn_reason: string | null
-          client_id: string
+          client_id: string | null
           created_at: string
           currency: string
+          customer_name: string | null
+          discontinued_at: string | null
+          discontinued_reason: string | null
           end_date: string | null
           id: string
           monthly_amount: number
@@ -329,9 +332,12 @@ export type Database = {
           billing_account_id?: string | null
           billing_frequency?: string
           churn_reason?: string | null
-          client_id: string
+          client_id?: string | null
           created_at?: string
           currency?: string
+          customer_name?: string | null
+          discontinued_at?: string | null
+          discontinued_reason?: string | null
           end_date?: string | null
           id?: string
           monthly_amount?: number
@@ -346,9 +352,12 @@ export type Database = {
           billing_account_id?: string | null
           billing_frequency?: string
           churn_reason?: string | null
-          client_id?: string
+          client_id?: string | null
           created_at?: string
           currency?: string
+          customer_name?: string | null
+          discontinued_at?: string | null
+          discontinued_reason?: string | null
           end_date?: string | null
           id?: string
           monthly_amount?: number
@@ -365,6 +374,59 @@ export type Database = {
             columns: ["billing_account_id"]
             isOneToOne: false
             referencedRelation: "agency_billing_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_invoices: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          currency: string
+          customer_name: string
+          id: string
+          invoice_date: string
+          invoice_external_id: string | null
+          invoice_number: string | null
+          source: string
+          status: string | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_name: string
+          id?: string
+          invoice_date: string
+          invoice_external_id?: string | null
+          invoice_number?: string | null
+          source?: string
+          status?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_name?: string
+          id?: string
+          invoice_date?: string
+          invoice_external_id?: string | null
+          invoice_number?: string | null
+          source?: string
+          status?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
