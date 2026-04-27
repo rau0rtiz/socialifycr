@@ -12,8 +12,8 @@ export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
       <span className="text-[#FF6B35]">DIAGNÓSTICO DE TU MARKETING DIGITAL</span><br />
       PARA TU NEGOCIO
     </h1>
-    <p className="text-lg md:text-xl text-[#212121]/60 font-medium tracking-wide -mt-4">
-      En menos de 2 minutos
+    <p className="text-lg md:text-xl text-[#212121]/60 font-medium tracking-wide -mt-4 max-w-2xl">
+      Recibí un plan específico para tu negocio en menos de 2 minutos
     </p>
 
     <Button
