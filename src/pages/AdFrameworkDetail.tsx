@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { FrameworkBuilder } from '@/components/ad-frameworks/FrameworkBuilder';
-import { ReferencesPanel } from '@/components/ad-frameworks/ReferencesPanel';
+
 import { Progress } from '@/components/ui/progress';
 
 const AdFrameworkDetail = () => {
@@ -110,8 +110,6 @@ const AdFrameworkDetail = () => {
           ))}
         </div>
 
-        {/* Referencias */}
-        {id && <ReferencesPanel frameworkId={id} />}
 
         {/* Campañas */}
         <div>

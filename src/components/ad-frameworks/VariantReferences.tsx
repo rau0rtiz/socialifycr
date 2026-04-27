@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Link2, Plus, X } from 'lucide-react';
+import { Link2, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useAdReferences, useCreateAdReference } from '@/hooks/use-ad-references';
 import { parseReferenceUrl, PLATFORM_META } from '@/lib/embed-url';
@@ -13,11 +13,11 @@ import { ReferenceCard } from './ReferenceCard';
 import { Badge } from '@/components/ui/badge';
 
 interface Props {
-  frameworkId: string;
+  variantId: string;
 }
 
-export const ReferencesPanel = ({ frameworkId }: Props) => {
-  const { data: references, isLoading } = useAdReferences(frameworkId);
+export const VariantReferences = ({ variantId }: Props) => {
+  const { data: references, isLoading } = useAdReferences({ variant_id: variantId });
   const create = useCreateAdReference();
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState('');
@@ -31,7 +31,11 @@ export const ReferencesPanel = ({ frameworkId }: Props) => {
 
   const handleCreate = async () => {
     if (!url.trim()) return;
-    await create.mutateAsync({ framework_id: frameworkId, url: url.trim(), notes: notes.trim() || undefined });
+    await create.mutateAsync({
+      variant_id: variantId,
+      url: url.trim(),
+      notes: notes.trim() || undefined,
+    });
     setUrl(''); setNotes('');
     setOpen(false);
   };
@@ -39,39 +43,28 @@ export const ReferencesPanel = ({ frameworkId }: Props) => {
   const count = references?.length ?? 0;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <h2 className="font-semibold text-lg flex items-center gap-2">
-            <Link2 className="h-5 w-5 text-primary" />
-            Referencias
-          </h2>
-          {count > 0 && (
-            <Badge variant="secondary" className="font-mono text-xs">{count}</Badge>
-          )}
-        </div>
-        <Button onClick={() => setOpen(true)} size="sm" className="gap-1.5">
-          <Plus className="h-4 w-4" /> Agregar referencia
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="flex items-center gap-1.5">
+          <Link2 className="h-3.5 w-3.5 text-primary" />
+          Referencias
+          {count > 0 && <Badge variant="secondary" className="font-mono text-[10px] h-4 px-1.5">{count}</Badge>}
+        </Label>
+        <Button size="sm" variant="outline" onClick={() => setOpen(true)} className="h-7 gap-1">
+          <Plus className="h-3.5 w-3.5" /> Agregar
         </Button>
       </div>
 
       {isLoading ? (
-        <Card className="p-6 text-center text-sm text-muted-foreground">Cargando referencias...</Card>
+        <Card className="p-3 text-center text-xs text-muted-foreground">Cargando...</Card>
       ) : count === 0 ? (
-        <Card className="p-8 text-center space-y-2">
-          <Link2 className="h-8 w-8 mx-auto text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">
-            Pegá links de YouTube, IG, TikTok, FB, LinkedIn, Vimeo o Loom para inspirarte.
+        <Card className="p-4 text-center border-dashed">
+          <p className="text-xs text-muted-foreground">
+            Pegá links inspiracionales para esta pieza específica.
           </p>
-          <p className="text-xs text-muted-foreground/70">
-            El sistema detecta la plataforma y genera el preview embebido automáticamente.
-          </p>
-          <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="gap-1.5 mt-2">
-            <Plus className="h-4 w-4" /> Agregar primera referencia
-          </Button>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {references!.map((r) => (
             <ReferenceCard key={r.id} reference={r} />
           ))}
@@ -83,18 +76,18 @@ export const ReferencesPanel = ({ frameworkId }: Props) => {
           <DialogHeader>
             <DialogTitle>Nueva referencia</DialogTitle>
             <DialogDescription>
-              Pegá la URL del video o post. Compatible con YouTube, Shorts, Reels/Posts de Instagram, TikTok, Facebook, LinkedIn, X/Twitter, Vimeo y Loom.
+              Esta referencia se asocia únicamente a esta pieza creativa. Compatible con YouTube, Reels/Posts de IG, TikTok, Facebook, LinkedIn, X/Twitter, Vimeo y Loom.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ref-url">URL</Label>
+              <Label htmlFor="vref-url">URL</Label>
               <Input
-                id="ref-url"
+                id="vref-url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..."
+                placeholder="https://www.instagram.com/reel/..."
                 autoFocus
               />
               {previewParsed && (
@@ -123,12 +116,12 @@ export const ReferencesPanel = ({ frameworkId }: Props) => {
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="ref-notes">Nota (opcional)</Label>
+              <Label htmlFor="vref-notes">Nota (opcional)</Label>
               <Textarea
-                id="ref-notes"
+                id="vref-notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="¿Qué te llama la atención de esta referencia?"
+                placeholder="¿Qué te llama la atención?"
                 rows={3}
               />
             </div>

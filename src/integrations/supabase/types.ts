@@ -110,7 +110,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           embed_url: string | null
-          framework_id: string
+          framework_id: string | null
           id: string
           notes: string | null
           platform: string | null
@@ -119,12 +119,13 @@ export type Database = {
           title: string | null
           updated_at: string
           url: string
+          variant_id: string | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           embed_url?: string | null
-          framework_id: string
+          framework_id?: string | null
           id?: string
           notes?: string | null
           platform?: string | null
@@ -133,12 +134,13 @@ export type Database = {
           title?: string | null
           updated_at?: string
           url: string
+          variant_id?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
           embed_url?: string | null
-          framework_id?: string
+          framework_id?: string | null
           id?: string
           notes?: string | null
           platform?: string | null
@@ -147,8 +149,17 @@ export type Database = {
           title?: string | null
           updated_at?: string
           url?: string
+          variant_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ad_framework_references_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "ad_variants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ad_frameworks: {
         Row: {
