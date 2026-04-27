@@ -14,6 +14,207 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_campaigns: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          framework_id: string
+          id: string
+          name: string
+          status: string
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          framework_id: string
+          id?: string
+          name: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          framework_id?: string
+          id?: string
+          name?: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_campaigns_framework_id_fkey"
+            columns: ["framework_id"]
+            isOneToOne: false
+            referencedRelation: "ad_frameworks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_framework_dimensions: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          dimension_type: string
+          framework_id: string
+          id: string
+          label: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          dimension_type: string
+          framework_id: string
+          id?: string
+          label: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          dimension_type?: string
+          framework_id?: string
+          id?: string
+          label?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_framework_dimensions_framework_id_fkey"
+            columns: ["framework_id"]
+            isOneToOne: false
+            referencedRelation: "ad_frameworks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_frameworks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ad_variants: {
+        Row: {
+          angle_id: string
+          assets: Json
+          assigned_to: string | null
+          campaign_id: string
+          copy: string | null
+          created_at: string
+          cta: string | null
+          format_id: string
+          hook_id: string
+          hook_text: string | null
+          id: string
+          notes: string | null
+          script: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          angle_id: string
+          assets?: Json
+          assigned_to?: string | null
+          campaign_id: string
+          copy?: string | null
+          created_at?: string
+          cta?: string | null
+          format_id: string
+          hook_id: string
+          hook_text?: string | null
+          id?: string
+          notes?: string | null
+          script?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          angle_id?: string
+          assets?: Json
+          assigned_to?: string | null
+          campaign_id?: string
+          copy?: string | null
+          created_at?: string
+          cta?: string | null
+          format_id?: string
+          hook_id?: string
+          hook_text?: string | null
+          id?: string
+          notes?: string | null
+          script?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_variants_angle_id_fkey"
+            columns: ["angle_id"]
+            isOneToOne: false
+            referencedRelation: "ad_framework_dimensions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_variants_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_variants_format_id_fkey"
+            columns: ["format_id"]
+            isOneToOne: false
+            referencedRelation: "ad_framework_dimensions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_variants_hook_id_fkey"
+            columns: ["hook_id"]
+            isOneToOne: false
+            referencedRelation: "ad_framework_dimensions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       archived_stories: {
         Row: {
           captured_at: string
@@ -3334,6 +3535,7 @@ export type Database = {
           role: Database["public"]["Enums"]["client_role"]
         }[]
       }
+      can_manage_ad_frameworks: { Args: { _user_id: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -3342,6 +3544,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      generate_ad_variants: { Args: { _campaign_id: string }; Returns: number }
       get_client_invitation_public: {
         Args: { _token: string }
         Returns: {
@@ -3405,6 +3608,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_higher: { Args: { _user_id: string }; Returns: boolean }
+      is_agency_member: { Args: { _user_id: string }; Returns: boolean }
       is_team_member: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean

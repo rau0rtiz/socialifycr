@@ -37,6 +37,9 @@ const AgencyLeads = lazy(() => import("./pages/AgencyLeads"));
 const Comunicaciones = lazy(() => import("./pages/Comunicaciones"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const Comisiones = lazy(() => import("./pages/Comisiones"));
+const AdFrameworks = lazy(() => import("./pages/AdFrameworks"));
+const AdFrameworkDetail = lazy(() => import("./pages/AdFrameworkDetail"));
+const AdCampaignCanvas = lazy(() => import("./pages/AdCampaignCanvas"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -114,6 +117,27 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <WidgetCatalogPage />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/ad-frameworks" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AdFrameworks />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/ad-frameworks/:id" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AdFrameworkDetail />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/ad-frameworks/:id/campaigns/:campaignId" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AdCampaignCanvas />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />

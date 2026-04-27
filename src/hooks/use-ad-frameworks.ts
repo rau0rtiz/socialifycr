@@ -1,0 +1,230 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+
+export type DimensionType = 'angle' | 'format' | 'hook';
+
+export interface AdFramework {
+  id: string;
+  name: string;
+  description: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdFrameworkDimension {
+  id: string;
+  framework_id: string;
+  dimension_type: DimensionType;
+  label: string;
+  description: string | null;
+  color: string | null;
+  position: number;
+}
+
+export interface AdFrameworkWithDimensions extends AdFramework {
+  dimensions: AdFrameworkDimension[];
+  campaign_count?: number;
+  variant_count?: number;
+}
+
+export const useAdFrameworks = () => {
+  return useQuery({
+    queryKey: ['ad-frameworks'],
+    queryFn: async () => {
+      const { data: frameworks, error } = await supabase
+        .from('ad_frameworks')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+
+      const ids = (frameworks ?? []).map((f) => f.id);
+      if (ids.length === 0) return [] as AdFrameworkWithDimensions[];
+
+      const [{ data: dims }, { data: campaigns }] = await Promise.all([
+        supabase
+          .from('ad_framework_dimensions')
+          .select('*')
+          .in('framework_id', ids)
+          .order('position', { ascending: true }),
+        supabase
+          .from('ad_campaigns')
+          .select('id, framework_id'),
+      ]);
+
+      const variantsByCampaign: Record<string, number> = {};
+      if (campaigns && campaigns.length > 0) {
+        const { data: variants } = await supabase
+          .from('ad_variants')
+          .select('campaign_id')
+          .in('campaign_id', campaigns.map((c) => c.id));
+        (variants ?? []).forEach((v: any) => {
+          variantsByCampaign[v.campaign_id] = (variantsByCampaign[v.campaign_id] ?? 0) + 1;
+        });
+      }
+
+      return (frameworks ?? []).map((f) => {
+        const fwCampaigns = (campaigns ?? []).filter((c) => c.framework_id === f.id);
+        const variantCount = fwCampaigns.reduce((acc, c) => acc + (variantsByCampaign[c.id] ?? 0), 0);
+        return {
+          ...f,
+          dimensions: (dims ?? []).filter((d) => d.framework_id === f.id) as AdFrameworkDimension[],
+          campaign_count: fwCampaigns.length,
+          variant_count: variantCount,
+        } as AdFrameworkWithDimensions;
+      });
+    },
+  });
+};
+
+export const useAdFramework = (frameworkId: string | undefined) => {
+  return useQuery({
+    queryKey: ['ad-framework', frameworkId],
+    queryFn: async () => {
+      if (!frameworkId) return null;
+      const { data: framework, error } = await supabase
+        .from('ad_frameworks')
+        .select('*')
+        .eq('id', frameworkId)
+        .single();
+      if (error) throw error;
+
+      const { data: dims, error: dimErr } = await supabase
+        .from('ad_framework_dimensions')
+        .select('*')
+        .eq('framework_id', frameworkId)
+        .order('position', { ascending: true });
+      if (dimErr) throw dimErr;
+
+      return { ...framework, dimensions: (dims ?? []) as AdFrameworkDimension[] } as AdFrameworkWithDimensions;
+    },
+    enabled: !!frameworkId,
+  });
+};
+
+export const useCreateAdFramework = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (input: { name: string; description?: string }) => {
+      const { data, error } = await supabase
+        .from('ad_frameworks')
+        .insert({ name: input.name, description: input.description ?? null, created_by: user?.id ?? null })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ad-frameworks'] });
+      toast.success('Framework creado');
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Error creando framework'),
+  });
+};
+
+export const useUpdateAdFramework = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; name?: string; description?: string | null }) => {
+      const { id, ...rest } = input;
+      const { data, error } = await supabase
+        .from('ad_frameworks')
+        .update(rest)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['ad-frameworks'] });
+      qc.invalidateQueries({ queryKey: ['ad-framework', vars.id] });
+    },
+  });
+};
+
+export const useDeleteAdFramework = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('ad_frameworks').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ad-frameworks'] });
+      toast.success('Framework eliminado');
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Error eliminando'),
+  });
+};
+
+export const useUpsertDimension = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: Partial<AdFrameworkDimension> & { framework_id: string; dimension_type: DimensionType; label: string }) => {
+      if (input.id) {
+        const { id, ...rest } = input;
+        const { data, error } = await supabase
+          .from('ad_framework_dimensions')
+          .update(rest)
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
+      const { data, error } = await supabase
+        .from('ad_framework_dimensions')
+        .insert({
+          framework_id: input.framework_id,
+          dimension_type: input.dimension_type,
+          label: input.label,
+          description: input.description ?? null,
+          color: input.color ?? null,
+          position: input.position ?? 0,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['ad-framework', vars.framework_id] });
+      qc.invalidateQueries({ queryKey: ['ad-frameworks'] });
+    },
+  });
+};
+
+export const useDeleteDimension = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; framework_id: string }) => {
+      const { error } = await supabase.from('ad_framework_dimensions').delete().eq('id', input.id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['ad-framework', vars.framework_id] });
+      qc.invalidateQueries({ queryKey: ['ad-frameworks'] });
+    },
+  });
+};
+
+export const useReorderDimensions = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { framework_id: string; items: { id: string; position: number }[] }) => {
+      // Use parallel updates
+      await Promise.all(
+        input.items.map((it) =>
+          supabase.from('ad_framework_dimensions').update({ position: it.position }).eq('id', it.id),
+        ),
+      );
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['ad-framework', vars.framework_id] });
+    },
+  });
+};
