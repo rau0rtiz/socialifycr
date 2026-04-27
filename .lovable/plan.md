@@ -1,87 +1,104 @@
-# Framework MASTERCLASS para The Mind Coach
+## Objetivo
 
-## 1. Crear el framework MASTERCLASS (semilla en BD)
+Crear una sección interna **/agencia/finanzas** (solo agencia) que reemplace tu uso de Zoho con vistas claras de:
+- **MRR** del mes y crecimiento mes a mes
+- **Churn rate** y clientes en riesgo
+- **Tabla maestra** de clientes con monto, frecuencia de publicación y gasto Meta
+- **Cohortes y LTV** por cliente
+- Soporte especial para **paraguas (Hilda Lopez)** que factura por varios sub-clientes
+- Conexión a **pauta Meta** vía nueva conexión OAuth dedicada del Business Manager de la agencia
 
-Se crea una migración que inserta:
+---
 
-**Framework**
-- Nombre: `MASTERCLASS`
-- Descripción: "Framework de pauta y contenido para masterclass de The Mind Coach. 4 formatos × 3 ángulos psicológicos."
+## Modelo de datos (nuevas tablas)
 
-**Dimensiones (3 hooks, 4 formatos, 3 ángulos):**
+**`agency_billing_accounts`** — el "pagador" (puede ser un cliente directo o un paraguas como Hilda)
+- `id`, `name`, `contact_email`, `notes`, `created_at`
 
-- **Ángulos (hooks psicológicos):**
-  1. Dolor — rojo
-  2. Transformación — verde
-  3. Autoridad — azul
+**`agency_contracts`** — un contrato por cliente
+- `client_id` (FK clients), `billing_account_id` (FK agency_billing_accounts)
+- `monthly_amount`, `currency` (USD/CRC), `billing_frequency` ('monthly' | 'quarterly' | 'annual')
+- `posts_per_month` (entero), `services` (jsonb: pauta, contenido, reportes, etc.)
+- `start_date`, `end_date` (null = activo), `status` ('active' | 'paused' | 'churned')
+- `churn_reason` (text, opcional)
 
-- **Formatos:**
-  1. Historias Puro Texto (1 por ángulo → 3 piezas)
-  2. Historias de Respuesta (2 por ángulo → 6 piezas)
-  3. Anuncios cortos 20s (1 por ángulo → 3 piezas)
-  4. Contenido Orgánico + CTA (aplica a todo el contenido del periodo)
+**`agency_meta_accounts`** — ad accounts del BM de la agencia mapeadas al cliente que pertenecen
+- `id`, `meta_ad_account_id`, `account_name`, `client_id` (FK, nullable hasta asignar), `currency`
 
-- **Hooks (mismos 3 ángulos psicológicos):** Dolor, Transformación, Autoridad
+MRR se calcula derivado: `SUM(monthly_amount normalizado a mensual)` de contratos `status='active'`. Churn mensual = contratos que pasaron a `churned` en el mes / activos al inicio del mes. LTV = `monthly_amount * meses_activo` (histórico real desde `start_date`).
 
-> Nota: el cartesian product genera 3×4×3=36 variantes base. Como Historias de Respuesta requiere 2 piezas por ángulo, dejamos eso como instrucción dentro de la descripción del formato — el usuario duplicará manualmente esa fila si quiere 2 entradas separadas. Alternativa abajo en "Decisiones a confirmar".
+---
 
-## 2. Crear automáticamente la primera campaña asignada a The Mind Coach
+## Conexión Meta dedicada de la agencia (Business Manager)
 
-La migración también inserta una campaña inicial `MASTERCLASS — Lanzamiento` vinculada al `client_id` de The Mind Coach, lista para que el cliente la vea en su sección.
+Reusamos la infraestructura OAuth de Meta existente, pero guardamos el token en una nueva tabla **`agency_meta_connection`** (no ligada a `client_id`). Una sola fila por agencia. Una nueva edge function **`agency-meta-spend`** consulta el endpoint `/me/adaccounts` y luego `insights` por ad_account para el rango de fechas pedido y devuelve gasto agregado + por ad_account.
 
-## 3. Nueva sección "MASTERCLASS" en el sidebar de The Mind Coach
+El admin mapea cada `meta_ad_account_id` a un `client_id` desde la UI (tabla `agency_meta_accounts`). Las cuentas no mapeadas aparecen en una sección "Sin asignar".
 
-- Agregar entrada en `src/components/dashboard/Sidebar.tsx` con icono `GraduationCap`, ruta `/masterclass`.
-- Visible solo cuando `selectedClient?.name` incluye "mind coach" (mismo patrón que "Comisiones") y para usuarios con acceso al cliente (no requiere ser agencia).
-- Añadir feature flag `masterclass_section` (default `true` para The Mind Coach) por consistencia con el sistema, pero la condición dura es por nombre del cliente.
+---
 
-## 4. Nueva página `/masterclass` (vista cliente)
+## UI — Página `/agencia/finanzas`
 
-Archivo: `src/pages/MindCoachMasterclass.tsx`
+Acceso restringido a roles `owner | admin | manager` (sidebar item solo visible para agencia, igual que Widget Catalog).
 
-Layout:
-- Header: "MASTERCLASS — Framework de Contenido y Pauta"
-- Subtítulo explicativo del framework (4 formatos × 3 ángulos).
-- Lista de campañas MASTERCLASS asignadas a The Mind Coach (`ad_campaigns` filtradas por `framework_id` MASTERCLASS + `client_id` del cliente actual).
-- Cada campaña abre el canvas existente (`/ad-frameworks/:id/campaigns/:campaignId`) reutilizando el `VariantDetailSheet` ya implementado, así el cliente puede colaborar en cada variante (script, hook, copy, referencias, asignación, estado).
-- Si el usuario es agency, además muestra botón "+ Nueva campaña MASTERCLASS".
+**Layout vertical:**
 
-## 5. RLS — sin cambios de schema necesarios
+1. **Hero KPIs (4 cards)**
+   - MRR actual (USD) + delta % vs mes pasado + sparkline 12 meses
+   - Clientes activos + altas/bajas del mes
+   - Churn rate del mes + tendencia
+   - Pauta Meta total del mes (BM agencia) + delta %
 
-Las policies actuales ya permiten:
-- `ad_campaigns` SELECT: agency O `has_client_access(client_id)` ✅
-- `ad_variants` SELECT: agency O acceso al cliente vía campaign ✅
-- `ad_framework_dimensions` SELECT: solo agency ❌ → **necesita policy nueva** para que el cliente vea las dimensiones (Dolor, Anuncios 20s, etc.) cuando entra a una campaña asignada a él.
-- `ad_framework_references` SELECT: solo agency ❌ → **necesita policy nueva** análoga.
-- `ad_frameworks` SELECT: solo agency ❌ → **necesita policy nueva** para leer el framework asociado a una campaña que tiene acceso.
+2. **Gráfico MRR 12 meses** (line chart, verde estándar). Toggle entre MRR neto / nuevo MRR / MRR perdido.
 
-Nuevas policies (SELECT only, sin permitir editar):
-```sql
--- Cliente puede leer dimensiones de frameworks usados en campañas de su cliente
-CREATE POLICY "Clients can view dimensions of their campaigns"
-ON ad_framework_dimensions FOR SELECT
-USING (EXISTS (
-  SELECT 1 FROM ad_campaigns c
-  WHERE c.framework_id = ad_framework_dimensions.framework_id
-    AND c.client_id IS NOT NULL
-    AND has_client_access(auth.uid(), c.client_id)
-));
--- Idem para ad_frameworks y ad_framework_references (filtrando por variant→campaign→client)
-```
+3. **Tabla maestra de clientes** (sortable, filtros por estado y paraguas)
+   - Columnas: Cliente · Paraguas · Monto/mes · Frecuencia publicación · Gasto Meta mes · LTV acumulado · Antigüedad · Estado
+   - Agrupable por `billing_account` (Hilda Lopez expandible muestra sus sub-clientes)
+   - Acciones por fila: editar contrato, marcar churn
 
-## 6. Decisiones a confirmar antes de implementar
+4. **Cohortes** — heatmap mes de alta vs meses de retención (clásico, % retenidos).
 
-1. **Historias de Respuesta = 2 por ángulo:** ¿Las generamos como 2 hooks "Dolor A" / "Dolor B" (rompe la matriz uniforme), o dejamos 1 variante por celda y el operador duplica manualmente la variante en el canvas (ya soportado)? → mi recomendación: **dejar 1 por celda** y que la nota del formato indique "crear 2 variaciones por ángulo".
-2. **Contenido Orgánico = "agregar CTA":** ¿Lo modelamos como formato dentro de la matriz (genera 3 variantes, una por ángulo, donde el script es solo "CTA a usar"), o como una nota global del framework? → recomendación: **formato en la matriz** con descripción "Agregar este CTA a todo el contenido orgánico del periodo".
+5. **Clientes en riesgo** — lista automática:
+   - Sin pauta Meta activa últimos 30 días
+   - Contrato venciendo en <30 días
+   - Caída >50% en gasto Meta vs mes anterior
 
-## 7. Resumen de archivos
+6. **Cuentas Meta sin asignar** — accordion con ad accounts del BM que no tienen `client_id` mapeado, con dropdown para asignar.
 
-**Migraciones:**
-- `supabase/migrations/<ts>_masterclass_framework.sql` — inserta framework, dimensiones, campaña inicial; añade 3 RLS SELECT policies para clientes; opcional flag `masterclass_section`.
+---
 
-**Frontend:**
-- `src/pages/MindCoachMasterclass.tsx` (nuevo)
-- `src/App.tsx` — registrar ruta `/masterclass`
-- `src/components/dashboard/Sidebar.tsx` — añadir entrada condicional a "Mind Coach"
+## Gestión de contratos
 
-**Sin cambios:** hooks de ad-frameworks, FrameworkBuilder, VariantDetailSheet, ReferenceCard (se reutilizan tal cual).
+Modal de "Nuevo contrato / editar":
+- Selector cliente (existente)
+- Selector o creación rápida de billing_account (paraguas)
+- Monto + moneda + frecuencia
+- Posts/mes + servicios (multiselect chips: Pauta, Contenido orgánico, Reportes, Setter, Closer, Frameworks)
+- Fechas inicio/fin
+- Notas
+
+Para Hilda: creas un `billing_account` "Hilda Lopez" y asignás todos sus sub-clientes (cada uno con su propio contrato). MRR consolidado por paraguas en la tabla.
+
+---
+
+## Pasos de implementación
+
+1. **Migración DB**: crear `agency_billing_accounts`, `agency_contracts`, `agency_meta_connection`, `agency_meta_accounts` con RLS restringido a `is_agency_member(auth.uid())`.
+2. **Edge function** `agency-meta-spend` (verify_jwt: false, service role) que lee `agency_meta_connection`, llama Graph API v21, devuelve gasto por ad account y agregado.
+3. **Edge function** `agency-meta-oauth-callback` para conectar el BM (reusa patrón de meta-oauth pero guarda en `agency_meta_connection`).
+4. **Hooks**: `use-agency-finances.ts` (MRR, churn, cohortes — derivados client-side de contratos), `use-agency-meta-spend.ts`.
+5. **Página** `src/pages/AgencyFinances.tsx` con los 6 bloques descritos.
+6. **Componentes**: `MrrKpiCards`, `MrrTrendChart`, `ContractsTable` (con agrupación por paraguas), `CohortHeatmap`, `AtRiskList`, `UnmappedMetaAccounts`, `ContractFormDialog`, `BillingAccountFormDialog`.
+7. **Sidebar**: añadir item "Finanzas Agencia" con icono `TrendingUp`, visible solo si `isAgencyMember`.
+8. **Ruta** `/agencia/finanzas` en `App.tsx` con guard `requireAgency`.
+9. **Seed inicial**: una vez creado, te abro un modal donde pegás tu lista de clientes + montos + frecuencia para poblar contratos rápidamente (bulk import por CSV o tabla editable).
+10. **Memoria**: registrar feature en `mem://features/agency/finances-dashboard`.
+
+---
+
+## Notas
+
+- No se toca el flujo OAuth Meta de cada cliente — la conexión BM agencia es independiente.
+- Si en algún cliente no querés migrar de su Meta personal, la tabla maestra muestra "—" en gasto Meta hasta mapearlo.
+- Tu lista preliminar de clientes no llegó adjunta en este turno; en la primera carga de la página aparece un CTA "Importar clientes" con tabla editable para pegarla.
+- Toda la sección queda invisible para clientes (RLS + sidebar guard).
