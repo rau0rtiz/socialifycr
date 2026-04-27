@@ -117,7 +117,7 @@ const AdCampaignCanvas = () => {
                                 {v ? (
                                   <VariantCard variant={v} angleColor={angle.color} onClick={() => setSelectedVariantId(v.id)} />
                                 ) : (
-                                  <Card className="p-3 border-dashed text-xs text-muted-foreground italic h-full min-h-[100px] flex items-center justify-center">
+                                  <Card className="p-3 border-dashed text-xs text-muted-foreground italic min-h-[220px] flex items-center justify-center">
                                     Sin variante
                                   </Card>
                                 )}
