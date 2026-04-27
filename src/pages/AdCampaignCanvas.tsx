@@ -149,14 +149,23 @@ const AdCampaignCanvas = () => {
 
 const VariantCard = ({ variant, angleColor, onClick }: { variant: AdVariant; angleColor?: string | null; onClick: () => void }) => {
   const meta = STATUS_META[variant.status];
+  const creative = variant.creative_type ? CREATIVE_META[variant.creative_type] : null;
+  const CreativeIcon = creative?.icon;
   return (
     <Card
       onClick={onClick}
       className={cn(
-        'p-3 cursor-pointer hover:shadow-md transition-all border-l-4 min-h-[100px] flex flex-col gap-1.5',
+        'p-3 cursor-pointer hover:shadow-md transition-all border-l-4 min-h-[110px] flex flex-col gap-1.5',
       )}
       style={angleColor ? { borderLeftColor: angleColor } : {}}
     >
+      {creative && CreativeIcon ? (
+        <div className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+          <CreativeIcon className="h-3 w-3" /> {creative.label}
+        </div>
+      ) : (
+        <div className="text-[10px] font-medium text-muted-foreground/60 italic">Sin tipo</div>
+      )}
       <p className="text-xs line-clamp-3 font-medium leading-snug">
         {variant.hook_text || <span className="text-muted-foreground italic font-normal">Sin hook escrito</span>}
       </p>
