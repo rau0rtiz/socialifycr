@@ -105,6 +105,51 @@ export type Database = {
           },
         ]
       }
+      ad_framework_references: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          embed_url: string | null
+          framework_id: string
+          id: string
+          notes: string | null
+          platform: string | null
+          position: number
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          embed_url?: string | null
+          framework_id: string
+          id?: string
+          notes?: string | null
+          platform?: string | null
+          position?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          embed_url?: string | null
+          framework_id?: string
+          id?: string
+          notes?: string | null
+          platform?: string | null
+          position?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       ad_frameworks: {
         Row: {
           created_at: string
