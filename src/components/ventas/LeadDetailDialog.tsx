@@ -440,6 +440,14 @@ export const LeadDetailDialog = ({ open, onOpenChange, appointment, onUpdateChec
             customer_email: appointment.lead_email,
           }}
           onSuccess={() => {
+            // Al convertir la agenda en reserva, sacarla del flujo activo
+            // marcándola como cancelada con motivo claro.
+            if (appointment && onUpdateChecklist) {
+              onUpdateChecklist(appointment.id, {
+                status: 'cancelled',
+                not_sold_reason: 'Convertido en reserva',
+              });
+            }
             setShowReservationDialog(false);
             onOpenChange(false);
           }}
