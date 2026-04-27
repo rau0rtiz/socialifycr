@@ -182,6 +182,32 @@ const VariantCard = ({ variant, angleColor, onClick }: { variant: AdVariant; ang
         )}
       </div>
 
+      {/* Fecha de entrega con color coding */}
+      {variant.due_date && (() => {
+        const d = parseISO(variant.due_date);
+        const days = differenceInCalendarDays(d, new Date());
+        const isDone = variant.status === 'published';
+        const cls = isDone
+          ? 'bg-blue-100 text-blue-900 dark:bg-blue-500/20 dark:text-blue-300'
+          : days < 0
+            ? 'bg-red-100 text-red-900 dark:bg-red-500/20 dark:text-red-300'
+            : days <= 2
+              ? 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-300'
+              : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-300';
+        const label = isDone
+          ? `Entregado · ${formatDate(d, 'd MMM', { locale: es })}`
+          : days < 0
+            ? `Vencida · ${Math.abs(days)}d`
+            : days === 0
+              ? 'Entrega hoy'
+              : `${formatDate(d, 'd MMM', { locale: es })} · en ${days}d`;
+        return (
+          <div className={cn('flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded w-fit', cls)}>
+            <CalendarIcon className="h-2.5 w-2.5" /> {label}
+          </div>
+        );
+      })()}
+
       {/* Hook */}
       <div>
         <div className="text-[9px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-0.5">Hook</div>
