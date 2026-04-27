@@ -20,6 +20,7 @@ import {
   Loader2,
   DollarSign,
   Layers,
+  GraduationCap,
 } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -120,6 +121,10 @@ export const Sidebar = () => {
   const canSeeCommissions = isMindCoach && (canManage || isAccountManager) && !isPreviewMode;
   if (canSeeCommissions) {
     menuItems.push({ title: 'Comisiones', url: '/comisiones', icon: DollarSign });
+  }
+  // MASTERCLASS — exclusive section for The Mind Coach (visible to all team members)
+  if (isMindCoach) {
+    menuItems.push({ title: 'MASTERCLASS', url: '/masterclass', icon: GraduationCap });
   }
   menuItems.push({ title: 'Client Database', url: '/client-database', icon: Database });
   const showBusinessSetup = effectiveAgency || (flags as any).business_setup_section;

@@ -40,6 +40,7 @@ const Comisiones = lazy(() => import("./pages/Comisiones"));
 const AdFrameworks = lazy(() => import("./pages/AdFrameworks"));
 const AdFrameworkDetail = lazy(() => import("./pages/AdFrameworkDetail"));
 const AdCampaignCanvas = lazy(() => import("./pages/AdCampaignCanvas"));
+const MindCoachMasterclass = lazy(() => import("./pages/MindCoachMasterclass"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -136,9 +137,12 @@ const App = () => (
                   } />
                   <Route path="/ad-frameworks/:id/campaigns/:campaignId" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <AdCampaignCanvas />
-                      </RoleProtectedRoute>
+                      <AdCampaignCanvas />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/masterclass" element={
+                    <ProtectedRoute>
+                      <MindCoachMasterclass />
                     </ProtectedRoute>
                   } />
                   <Route path="/image-db" element={
