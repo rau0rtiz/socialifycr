@@ -60,7 +60,7 @@ export const useUpdateAdVariant = () => {
         .select()
         .single();
       if (error) throw error;
-      return data as AdVariant;
+      return data as unknown as AdVariant;
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['ad-variants', data.campaign_id] });
