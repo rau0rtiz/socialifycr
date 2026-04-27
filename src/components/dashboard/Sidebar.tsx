@@ -123,9 +123,9 @@ export const Sidebar = () => {
   if (canSeeCommissions) {
     menuItems.push({ title: 'Comisiones', url: '/comisiones', icon: DollarSign });
   }
-  // MASTERCLASS — exclusive section for The Mind Coach (visible to all team members)
+  // Frameworks — exclusive section for The Mind Coach (visible to all team members)
   if (isMindCoach) {
-    menuItems.push({ title: 'MASTERCLASS', url: '/masterclass', icon: GraduationCap });
+    menuItems.push({ title: 'Frameworks', url: '/masterclass', icon: GraduationCap });
   }
   menuItems.push({ title: 'Client Database', url: '/client-database', icon: Database });
   const showBusinessSetup = effectiveAgency || (flags as any).business_setup_section;
