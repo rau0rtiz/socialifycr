@@ -44,6 +44,7 @@ export const VariantDetailSheet = ({ variant, framework, open, onOpenChange }: P
   const [assets, setAssets] = useState<AdVariantAsset[]>(variant.assets ?? []);
   const [slides, setSlides] = useState<CarouselSlide[]>(variant.slides ?? []);
   const [status, setStatus] = useState<VariantStatus>(variant.status);
+  const [dueDate, setDueDate] = useState<string>(variant.due_date ?? '');
   const [newAssetUrl, setNewAssetUrl] = useState('');
   const debounceRef = useRef<number | null>(null);
 
