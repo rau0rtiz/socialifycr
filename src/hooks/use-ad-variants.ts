@@ -63,6 +63,7 @@ export const useUpdateAdVariant = () => {
       const { id, ...rest } = input;
       const payload: any = { ...rest };
       if (rest.assets !== undefined) payload.assets = rest.assets;
+      if (rest.slides !== undefined) payload.slides = rest.slides;
       const { data, error } = await supabase
         .from('ad_variants')
         .update(payload)
