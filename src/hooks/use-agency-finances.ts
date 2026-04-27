@@ -20,10 +20,165 @@ export interface AgencyContract {
   services: string[];
   start_date: string;
   end_date: string | null;
-  status: 'active' | 'paused' | 'churned';
+  status: 'active' | 'paused' | 'churned' | 'discontinued';
   churn_reason: string | null;
   notes: string | null;
+  customer_name: string | null;
+  discontinued_at: string | null;
+  discontinued_reason: string | null;
 }
+
+export interface AgencyInvoice {
+  id: string;
+  invoice_external_id: string | null;
+  invoice_number: string | null;
+  invoice_date: string;
+  customer_name: string;
+  client_id: string | null;
+  currency: string;
+  total: number;
+  status: string | null;
+}
+
+export interface CustomerSummary {
+  customer_name: string;
+  client_id: string | null;
+  invoice_count: number;
+  first_invoice: string;
+  last_invoice: string;
+  total_revenue: number;
+  avg_monthly: number; // last 6 months
+  status: 'active' | 'inactive' | 'discontinued';
+  daysSinceLastInvoice: number;
+  discontinuedReason?: string | null;
+}
+
+export const useAgencyInvoices = () => {
+  return useQuery({
+    queryKey: ['agency-invoices'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('agency_invoices')
+        .select('*')
+        .order('invoice_date', { ascending: false })
+        .limit(2000);
+      if (error) throw error;
+      return (data || []) as AgencyInvoice[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const computeCustomerSummaries = (
+  invoices: AgencyInvoice[],
+  discontinued: Map<string, { reason: string | null; at: string }>
+): CustomerSummary[] => {
+  const map = new Map<string, AgencyInvoice[]>();
+  invoices.forEach(i => {
+    const k = i.customer_name.trim();
+    if (!map.has(k)) map.set(k, []);
+    map.get(k)!.push(i);
+  });
+  const now = Date.now();
+  const sixMonthsMs = 1000 * 60 * 60 * 24 * 180;
+  const result: CustomerSummary[] = [];
+  for (const [name, list] of map.entries()) {
+    list.sort((a, b) => a.invoice_date.localeCompare(b.invoice_date));
+    const first = list[0].invoice_date;
+    const last = list[list.length - 1].invoice_date;
+    const total = list.reduce((s, i) => s + toUsd(Number(i.total) || 0, i.currency), 0);
+    const sixCutoff = now - sixMonthsMs;
+    const recent = list.filter(i => new Date(i.invoice_date).getTime() >= sixCutoff);
+    const avg = recent.reduce((s, i) => s + toUsd(Number(i.total) || 0, i.currency), 0) / 6;
+    const daysSince = Math.floor((now - new Date(last).getTime()) / (1000 * 60 * 60 * 24));
+    const disc = discontinued.get(name.toLowerCase());
+    let status: CustomerSummary['status'] = 'active';
+    if (disc) status = 'discontinued';
+    else if (daysSince > 180) status = 'inactive';
+    result.push({
+      customer_name: name,
+      client_id: list[0].client_id,
+      invoice_count: list.length,
+      first_invoice: first,
+      last_invoice: last,
+      total_revenue: total,
+      avg_monthly: avg,
+      status,
+      daysSinceLastInvoice: daysSince,
+      discontinuedReason: disc?.reason ?? null,
+    });
+  }
+  return result.sort((a, b) => b.last_invoice.localeCompare(a.last_invoice));
+};
+
+export const computeInvoiceMrrTimeline = (invoices: AgencyInvoice[], months = 12) => {
+  const now = new Date();
+  const points: { month: string; revenue: number; activeCustomers: number }[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+    const monthInv = invoices.filter(inv => inv.invoice_date.startsWith(key));
+    const revenue = monthInv.reduce((s, inv) => s + toUsd(Number(inv.total) || 0, inv.currency), 0);
+    const activeCustomers = new Set(monthInv.map(i => i.customer_name)).size;
+    points.push({ month: key, revenue, activeCustomers });
+  }
+  return points;
+};
+
+export const useMarkDiscontinued = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ customer_name, client_id, reason }: { customer_name: string; client_id: string | null; reason: string }) => {
+      // Find or create contract record to flag discontinuation
+      const { data: existing } = await (supabase as any)
+        .from('agency_contracts')
+        .select('id')
+        .or(client_id ? `client_id.eq.${client_id},customer_name.eq.${customer_name}` : `customer_name.eq.${customer_name}`)
+        .maybeSingle();
+      if (existing?.id) {
+        const { error } = await (supabase as any).from('agency_contracts').update({
+          status: 'discontinued',
+          discontinued_at: new Date().toISOString(),
+          discontinued_reason: reason,
+        }).eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any).from('agency_contracts').insert({
+          client_id: client_id,
+          customer_name,
+          monthly_amount: 0,
+          status: 'discontinued',
+          discontinued_at: new Date().toISOString(),
+          discontinued_reason: reason,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['agency-contracts'] });
+      toast.success('Cliente marcado como no continúa');
+    },
+    onError: (e: any) => toast.error(e.message || 'Error'),
+  });
+};
+
+export const useReactivateCustomer = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ customer_name, client_id }: { customer_name: string; client_id: string | null }) => {
+      const { error } = await (supabase as any)
+        .from('agency_contracts')
+        .update({ status: 'active', discontinued_at: null, discontinued_reason: null })
+        .or(client_id ? `client_id.eq.${client_id},customer_name.eq.${customer_name}` : `customer_name.eq.${customer_name}`)
+        .eq('status', 'discontinued');
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['agency-contracts'] });
+      toast.success('Cliente reactivado');
+    },
+  });
+};
 
 const CRC_PER_USD = 520;
 
