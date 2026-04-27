@@ -48,6 +48,8 @@ export const useAdVariants = (campaignId: string | undefined) => {
       return (data ?? []).map((v: any) => ({
         ...v,
         assets: Array.isArray(v.assets) ? v.assets : [],
+        slides: Array.isArray(v.slides) ? v.slides : [],
+        creative_type: v.creative_type ?? null,
       })) as AdVariant[];
     },
     enabled: !!campaignId,
