@@ -21,13 +21,22 @@ export const ReferenceCard = ({ reference }: Props) => {
   const [draft, setDraft] = useState(reference.notes ?? '');
 
   const handleSave = async () => {
-    await update.mutateAsync({ id: reference.id, framework_id: reference.framework_id, notes: draft });
+    await update.mutateAsync({
+      id: reference.id,
+      framework_id: reference.framework_id,
+      variant_id: reference.variant_id,
+      notes: draft,
+    });
     setEditing(false);
   };
 
   const handleDelete = () => {
     if (confirm('¿Eliminar esta referencia?')) {
-      del.mutate({ id: reference.id, framework_id: reference.framework_id });
+      del.mutate({
+        id: reference.id,
+        framework_id: reference.framework_id,
+        variant_id: reference.variant_id,
+      });
     }
   };
 
