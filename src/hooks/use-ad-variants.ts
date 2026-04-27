@@ -2,11 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export type VariantStatus = 'draft' | 'in_progress' | 'ready' | 'published';
+export type CreativeType = 'photo' | 'reel' | 'carousel';
 
 export interface AdVariantAsset {
   url: string;
   label?: string;
   type?: 'image' | 'video' | 'link' | 'file';
+}
+
+export interface CarouselSlide {
+  title?: string;
+  text?: string;
 }
 
 export interface AdVariant {
@@ -20,6 +26,8 @@ export interface AdVariant {
   copy: string | null;
   cta: string | null;
   assets: AdVariantAsset[];
+  slides: CarouselSlide[];
+  creative_type: CreativeType | null;
   notes: string | null;
   status: VariantStatus;
   assigned_to: string | null;
@@ -40,6 +48,8 @@ export const useAdVariants = (campaignId: string | undefined) => {
       return (data ?? []).map((v: any) => ({
         ...v,
         assets: Array.isArray(v.assets) ? v.assets : [],
+        slides: Array.isArray(v.slides) ? v.slides : [],
+        creative_type: v.creative_type ?? null,
       })) as AdVariant[];
     },
     enabled: !!campaignId,
@@ -53,6 +63,7 @@ export const useUpdateAdVariant = () => {
       const { id, ...rest } = input;
       const payload: any = { ...rest };
       if (rest.assets !== undefined) payload.assets = rest.assets;
+      if (rest.slides !== undefined) payload.slides = rest.slides;
       const { data, error } = await supabase
         .from('ad_variants')
         .update(payload)
