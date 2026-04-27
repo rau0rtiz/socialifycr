@@ -117,7 +117,7 @@ const AdCampaignCanvas = () => {
                                 {v ? (
                                   <VariantCard variant={v} angleColor={angle.color} onClick={() => setSelectedVariantId(v.id)} />
                                 ) : (
-                                  <Card className="p-3 border-dashed text-xs text-muted-foreground italic h-full min-h-[100px] flex items-center justify-center">
+                                  <Card className="p-3 border-dashed text-xs text-muted-foreground italic min-h-[220px] flex items-center justify-center">
                                     Sin variante
                                   </Card>
                                 )}
@@ -151,33 +151,67 @@ const VariantCard = ({ variant, angleColor, onClick }: { variant: AdVariant; ang
   const meta = STATUS_META[variant.status];
   const creative = variant.creative_type ? CREATIVE_META[variant.creative_type] : null;
   const CreativeIcon = creative?.icon;
+  const slideCount = Array.isArray(variant.slides) ? variant.slides.length : 0;
+
   return (
     <Card
       onClick={onClick}
       className={cn(
-        'p-3 cursor-pointer hover:shadow-md transition-all border-l-4 min-h-[110px] flex flex-col gap-1.5',
+        'p-3 cursor-pointer hover:shadow-md transition-all border-l-4 min-h-[220px] flex flex-col gap-2',
       )}
       style={angleColor ? { borderLeftColor: angleColor } : {}}
     >
-      {creative && CreativeIcon ? (
-        <div className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
-          <CreativeIcon className="h-3 w-3" /> {creative.label}
-        </div>
-      ) : (
-        <div className="text-[10px] font-medium text-muted-foreground/60 italic">Sin tipo</div>
-      )}
-      <p className="text-xs line-clamp-3 font-medium leading-snug">
-        {variant.hook_text || <span className="text-muted-foreground italic font-normal">Sin hook escrito</span>}
-      </p>
-      <div className="mt-auto flex items-center justify-between gap-2">
-        <Badge variant="secondary" className={cn('text-[10px] px-1.5 py-0', meta.cls)}>
-          {meta.label}
-        </Badge>
+      {/* Header: tipo creativo + assets */}
+      <div className="flex items-center justify-between gap-2">
+        {creative && CreativeIcon ? (
+          <div className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            <CreativeIcon className="h-3 w-3" /> {creative.label}
+            {variant.creative_type === 'carousel' && slideCount > 0 && (
+              <span className="text-muted-foreground/70">· {slideCount} slides</span>
+            )}
+          </div>
+        ) : (
+          <div className="text-[10px] font-medium text-muted-foreground/60 italic uppercase tracking-wider">Sin tipo</div>
+        )}
         {variant.assets.length > 0 && (
           <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
             <Paperclip className="h-2.5 w-2.5" /> {variant.assets.length}
           </span>
         )}
+      </div>
+
+      {/* Hook */}
+      <div>
+        <div className="text-[9px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-0.5">Hook</div>
+        <p className="text-xs line-clamp-3 font-semibold leading-snug">
+          {variant.hook_text || <span className="text-muted-foreground italic font-normal">Sin hook escrito</span>}
+        </p>
+      </div>
+
+      {/* Copy */}
+      <div className="flex-1 min-h-0">
+        <div className="text-[9px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-0.5">Copy</div>
+        {variant.copy ? (
+          <p className="text-[11px] text-muted-foreground line-clamp-4 leading-snug whitespace-pre-wrap">
+            {variant.copy}
+          </p>
+        ) : (
+          <p className="text-[11px] text-muted-foreground/50 italic">Sin copy</p>
+        )}
+      </div>
+
+      {/* Footer: CTA + estado */}
+      <div className="mt-auto flex items-center justify-between gap-2 pt-1 border-t border-border/40">
+        {variant.cta ? (
+          <span className="text-[10px] font-medium text-primary truncate max-w-[60%]" title={variant.cta}>
+            → {variant.cta}
+          </span>
+        ) : (
+          <span className="text-[10px] text-muted-foreground/50 italic">Sin CTA</span>
+        )}
+        <Badge variant="secondary" className={cn('text-[10px] px-1.5 py-0 shrink-0', meta.cls)}>
+          {meta.label}
+        </Badge>
       </div>
     </Card>
   );
