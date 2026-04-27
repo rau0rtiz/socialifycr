@@ -140,6 +140,7 @@ export type Database = {
           campaign_id: string
           copy: string | null
           created_at: string
+          creative_type: string | null
           cta: string | null
           format_id: string
           hook_id: string
@@ -147,6 +148,7 @@ export type Database = {
           id: string
           notes: string | null
           script: string | null
+          slides: Json
           status: string
           updated_at: string
         }
@@ -157,6 +159,7 @@ export type Database = {
           campaign_id: string
           copy?: string | null
           created_at?: string
+          creative_type?: string | null
           cta?: string | null
           format_id: string
           hook_id: string
@@ -164,6 +167,7 @@ export type Database = {
           id?: string
           notes?: string | null
           script?: string | null
+          slides?: Json
           status?: string
           updated_at?: string
         }
@@ -174,6 +178,7 @@ export type Database = {
           campaign_id?: string
           copy?: string | null
           created_at?: string
+          creative_type?: string | null
           cta?: string | null
           format_id?: string
           hook_id?: string
@@ -181,6 +186,7 @@ export type Database = {
           id?: string
           notes?: string | null
           script?: string | null
+          slides?: Json
           status?: string
           updated_at?: string
         }
