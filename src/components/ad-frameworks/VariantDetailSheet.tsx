@@ -58,6 +58,7 @@ export const VariantDetailSheet = ({ variant, framework, open, onOpenChange }: P
     setAssets(variant.assets ?? []);
     setSlides(variant.slides ?? []);
     setStatus(variant.status);
+    setDueDate(variant.due_date ?? '');
   }, [variant.id]);
 
   const angle = framework.dimensions.find((d) => d.id === variant.angle_id);
