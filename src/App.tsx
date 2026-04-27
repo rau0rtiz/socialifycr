@@ -120,6 +120,27 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
+                  <Route path="/ad-frameworks" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AdFrameworks />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/ad-frameworks/:id" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AdFrameworkDetail />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/ad-frameworks/:id/campaigns/:campaignId" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AdCampaignCanvas />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/image-db" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
