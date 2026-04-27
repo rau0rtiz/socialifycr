@@ -4,13 +4,19 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ArrowLeft, RefreshCw, Paperclip } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Paperclip, Image as ImageIcon, Film, GalleryHorizontal } from 'lucide-react';
 import { useAdFramework } from '@/hooks/use-ad-frameworks';
 import { useAdCampaign, useSyncCampaignVariants } from '@/hooks/use-ad-campaigns';
-import { useAdVariants, type AdVariant, type VariantStatus } from '@/hooks/use-ad-variants';
+import { useAdVariants, type AdVariant, type VariantStatus, type CreativeType } from '@/hooks/use-ad-variants';
 import { Badge } from '@/components/ui/badge';
 import { VariantDetailSheet } from '@/components/ad-frameworks/VariantDetailSheet';
 import { cn } from '@/lib/utils';
+
+const CREATIVE_META: Record<CreativeType, { icon: typeof ImageIcon; label: string }> = {
+  photo:    { icon: ImageIcon,         label: 'Foto' },
+  reel:     { icon: Film,              label: 'Reel' },
+  carousel: { icon: GalleryHorizontal, label: 'Carrusel' },
+};
 
 const STATUS_META: Record<VariantStatus, { label: string; cls: string }> = {
   draft:       { label: 'Borrador',    cls: 'bg-muted text-muted-foreground' },
