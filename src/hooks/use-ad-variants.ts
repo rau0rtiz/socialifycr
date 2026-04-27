@@ -31,6 +31,7 @@ export interface AdVariant {
   notes: string | null;
   status: VariantStatus;
   assigned_to: string | null;
+  due_date: string | null;
   created_at: string;
   updated_at: string;
 }
