@@ -21,10 +21,10 @@ interface Props {
 }
 
 const STATUSES: { value: VariantStatus; label: string }[] = [
-  { value: 'draft', label: 'Borrador' },
+  { value: 'draft', label: 'Pendiente' },
   { value: 'in_progress', label: 'En progreso' },
-  { value: 'ready', label: 'Listo' },
-  { value: 'published', label: 'Publicado' },
+  { value: 'ready', label: 'Listo para subir' },
+  { value: 'published', label: 'Subido / Publicado' },
 ];
 
 const CREATIVE_TYPES: { value: CreativeType; label: string; icon: typeof ImageIcon; hint: string }[] = [
