@@ -11,6 +11,7 @@ import { useUpdateAdVariant, type AdVariant, type VariantStatus, type AdVariantA
 import type { AdFrameworkWithDimensions } from '@/hooks/use-ad-frameworks';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { VariantReferences } from './VariantReferences';
 
 interface Props {
   variant: AdVariant;
