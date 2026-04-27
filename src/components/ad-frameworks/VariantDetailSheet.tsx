@@ -21,10 +21,10 @@ interface Props {
 }
 
 const STATUSES: { value: VariantStatus; label: string }[] = [
-  { value: 'draft', label: 'Borrador' },
+  { value: 'draft', label: 'Pendiente' },
   { value: 'in_progress', label: 'En progreso' },
-  { value: 'ready', label: 'Listo' },
-  { value: 'published', label: 'Publicado' },
+  { value: 'ready', label: 'Listo para subir' },
+  { value: 'published', label: 'Subido / Publicado' },
 ];
 
 const CREATIVE_TYPES: { value: CreativeType; label: string; icon: typeof ImageIcon; hint: string }[] = [
@@ -44,6 +44,7 @@ export const VariantDetailSheet = ({ variant, framework, open, onOpenChange }: P
   const [assets, setAssets] = useState<AdVariantAsset[]>(variant.assets ?? []);
   const [slides, setSlides] = useState<CarouselSlide[]>(variant.slides ?? []);
   const [status, setStatus] = useState<VariantStatus>(variant.status);
+  const [dueDate, setDueDate] = useState<string>(variant.due_date ?? '');
   const [newAssetUrl, setNewAssetUrl] = useState('');
   const debounceRef = useRef<number | null>(null);
 
@@ -57,6 +58,7 @@ export const VariantDetailSheet = ({ variant, framework, open, onOpenChange }: P
     setAssets(variant.assets ?? []);
     setSlides(variant.slides ?? []);
     setStatus(variant.status);
+    setDueDate(variant.due_date ?? '');
   }, [variant.id]);
 
   const angle = framework.dimensions.find((d) => d.id === variant.angle_id);
@@ -170,16 +172,31 @@ export const VariantDetailSheet = ({ variant, framework, open, onOpenChange }: P
             </div>
           </div>
 
-          {/* Estado */}
-          <div className="space-y-1.5">
-            <Label>Estado</Label>
-            <Select value={status} onValueChange={(v) => handleStatusChange(v as VariantStatus)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Estado + Fecha de entrega — flujo de tarea */}
+          <Card className="p-3 space-y-3 bg-muted/30">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Estado de la tarea</Label>
+                <Select value={status} onValueChange={(v) => handleStatusChange(v as VariantStatus)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Fecha de entrega</Label>
+                <Input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => {
+                    setDueDate(e.target.value);
+                    update.mutate({ id: variant.id, due_date: e.target.value || null } as any);
+                  }}
+                />
+              </div>
+            </div>
+          </Card>
 
           {!creativeType && (
             <Card className="p-4 text-center text-xs text-muted-foreground bg-muted/40 border-dashed">

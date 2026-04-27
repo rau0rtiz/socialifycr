@@ -198,6 +198,7 @@ export type Database = {
           created_at: string
           creative_type: string | null
           cta: string | null
+          due_date: string | null
           format_id: string
           hook_id: string
           hook_text: string | null
@@ -217,6 +218,7 @@ export type Database = {
           created_at?: string
           creative_type?: string | null
           cta?: string | null
+          due_date?: string | null
           format_id: string
           hook_id: string
           hook_text?: string | null
@@ -236,6 +238,7 @@ export type Database = {
           created_at?: string
           creative_type?: string | null
           cta?: string | null
+          due_date?: string | null
           format_id?: string
           hook_id?: string
           hook_text?: string | null

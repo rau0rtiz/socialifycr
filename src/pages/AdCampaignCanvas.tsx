@@ -4,13 +4,15 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ArrowLeft, RefreshCw, Paperclip, Image as ImageIcon, Film, GalleryHorizontal } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Paperclip, Image as ImageIcon, Film, GalleryHorizontal, Calendar as CalendarIcon } from 'lucide-react';
 import { useAdFramework } from '@/hooks/use-ad-frameworks';
 import { useAdCampaign, useSyncCampaignVariants } from '@/hooks/use-ad-campaigns';
 import { useAdVariants, type AdVariant, type VariantStatus, type CreativeType } from '@/hooks/use-ad-variants';
 import { Badge } from '@/components/ui/badge';
 import { VariantDetailSheet } from '@/components/ad-frameworks/VariantDetailSheet';
 import { cn } from '@/lib/utils';
+import { format as formatDate, differenceInCalendarDays, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const CREATIVE_META: Record<CreativeType, { icon: typeof ImageIcon; label: string }> = {
   photo:    { icon: ImageIcon,         label: 'Foto' },
@@ -19,10 +21,10 @@ const CREATIVE_META: Record<CreativeType, { icon: typeof ImageIcon; label: strin
 };
 
 const STATUS_META: Record<VariantStatus, { label: string; cls: string }> = {
-  draft:       { label: 'Borrador',    cls: 'bg-muted text-muted-foreground' },
+  draft:       { label: 'Pendiente',   cls: 'bg-muted text-muted-foreground' },
   in_progress: { label: 'En progreso', cls: 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-300' },
   ready:       { label: 'Listo',       cls: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-300' },
-  published:   { label: 'Publicado',   cls: 'bg-blue-100 text-blue-900 dark:bg-blue-500/20 dark:text-blue-300' },
+  published:   { label: 'Subido',      cls: 'bg-blue-100 text-blue-900 dark:bg-blue-500/20 dark:text-blue-300' },
 };
 
 const AdCampaignCanvas = () => {
@@ -179,6 +181,32 @@ const VariantCard = ({ variant, angleColor, onClick }: { variant: AdVariant; ang
           </span>
         )}
       </div>
+
+      {/* Fecha de entrega con color coding */}
+      {variant.due_date && (() => {
+        const d = parseISO(variant.due_date);
+        const days = differenceInCalendarDays(d, new Date());
+        const isDone = variant.status === 'published';
+        const cls = isDone
+          ? 'bg-blue-100 text-blue-900 dark:bg-blue-500/20 dark:text-blue-300'
+          : days < 0
+            ? 'bg-red-100 text-red-900 dark:bg-red-500/20 dark:text-red-300'
+            : days <= 2
+              ? 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-300'
+              : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-300';
+        const label = isDone
+          ? `Entregado · ${formatDate(d, 'd MMM', { locale: es })}`
+          : days < 0
+            ? `Vencida · ${Math.abs(days)}d`
+            : days === 0
+              ? 'Entrega hoy'
+              : `${formatDate(d, 'd MMM', { locale: es })} · en ${days}d`;
+        return (
+          <div className={cn('flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded w-fit', cls)}>
+            <CalendarIcon className="h-2.5 w-2.5" /> {label}
+          </div>
+        );
+      })()}
 
       {/* Hook */}
       <div>
