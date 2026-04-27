@@ -383,6 +383,10 @@ export const VariantDetailSheet = ({ variant, framework, open, onOpenChange }: P
           )}
 
           {creativeType && (
+            <VariantReferences variantId={variant.id} />
+          )}
+
+          {creativeType && (
             <div className="space-y-1.5">
               <Label htmlFor="v-notes">Notas internas</Label>
               <Textarea
