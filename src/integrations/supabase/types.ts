@@ -280,6 +280,161 @@ export type Database = {
           },
         ]
       }
+      agency_billing_accounts: {
+        Row: {
+          contact_email: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agency_contracts: {
+        Row: {
+          billing_account_id: string | null
+          billing_frequency: string
+          churn_reason: string | null
+          client_id: string
+          created_at: string
+          currency: string
+          end_date: string | null
+          id: string
+          monthly_amount: number
+          notes: string | null
+          posts_per_month: number
+          services: Json
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          billing_account_id?: string | null
+          billing_frequency?: string
+          churn_reason?: string | null
+          client_id: string
+          created_at?: string
+          currency?: string
+          end_date?: string | null
+          id?: string
+          monthly_amount?: number
+          notes?: string | null
+          posts_per_month?: number
+          services?: Json
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          billing_account_id?: string | null
+          billing_frequency?: string
+          churn_reason?: string | null
+          client_id?: string
+          created_at?: string
+          currency?: string
+          end_date?: string | null
+          id?: string
+          monthly_amount?: number
+          notes?: string | null
+          posts_per_month?: number
+          services?: Json
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_contracts_billing_account_id_fkey"
+            columns: ["billing_account_id"]
+            isOneToOne: false
+            referencedRelation: "agency_billing_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_meta_accounts: {
+        Row: {
+          account_name: string
+          client_id: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          meta_ad_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          client_id?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          meta_ad_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          client_id?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          meta_ad_account_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agency_meta_connection: {
+        Row: {
+          access_token: string
+          business_id: string | null
+          connected_by: string | null
+          created_at: string
+          id: string
+          token_expires_at: string | null
+          updated_at: string
+          user_meta_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          access_token: string
+          business_id?: string | null
+          connected_by?: string | null
+          created_at?: string
+          id?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_meta_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          access_token?: string
+          business_id?: string | null
+          connected_by?: string | null
+          created_at?: string
+          id?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_meta_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       archived_stories: {
         Row: {
           captured_at: string
