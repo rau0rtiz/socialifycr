@@ -305,5 +305,9 @@ const AgencyFinances = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </div>
+    </DashboardLayout>
+  );
+};
 
 export default AgencyFinances;
