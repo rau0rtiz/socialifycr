@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useSetterAppointments, SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
+import { useLeadReservations } from '@/hooks/use-lead-reservations';
 import { useClientSetters } from '@/hooks/use-client-setters';
 import { AppointmentFormDialog } from './AppointmentFormDialog';
 import { LeadDetailDialog } from './LeadDetailDialog';
@@ -100,10 +101,23 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
     }
   }, [deleteAppointment, refetchCompleted]);
 
+  // Active reservations: their lead_ids should be hidden from the Agenda section
+  // (they reappear automatically if the reservation is cancelled/expired or converted into a sale)
+  const { reservations } = useLeadReservations(clientId);
+  const reservedLeadIds = useMemo(
+    () => new Set(reservations.filter(r => r.status === 'active').map(r => r.lead_id).filter(Boolean) as string[]),
+    [reservations]
+  );
+
   // Split appointments into sections
   const activeAppointments = useMemo(() => 
-    appointments.filter(a => a.status !== 'not_sold' as any && a.status !== 'sold' && a.status !== 'no_show'), 
-    [appointments]
+    appointments.filter(a =>
+      a.status !== 'not_sold' as any &&
+      a.status !== 'sold' &&
+      a.status !== 'no_show' &&
+      !reservedLeadIds.has(a.id)
+    ),
+    [appointments, reservedLeadIds]
   );
   const lostAppointments = useMemo(() => 
     appointments.filter(a => (a.status as string) === 'not_sold'), 
