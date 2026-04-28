@@ -35,7 +35,11 @@ export const FrameworkBuilder = ({ framework, open, onOpenChange }: Props) => {
   const angles = framework.dimensions.filter((d) => d.dimension_type === 'angle');
   const formats = framework.dimensions.filter((d) => d.dimension_type === 'format');
   const hooks = framework.dimensions.filter((d) => d.dimension_type === 'hook');
-  const total = angles.length * formats.length * hooks.length;
+  const hasHooks = hooks.length > 0;
+  const total = hasHooks
+    ? angles.length * formats.length * hooks.length
+    : angles.length * formats.length;
+  const [showHooks, setShowHooks] = useState(hasHooks);
 
   const handleSaveMeta = async () => {
     if (name !== framework.name || description !== (framework.description ?? '')) {
@@ -49,7 +53,14 @@ export const FrameworkBuilder = ({ framework, open, onOpenChange }: Props) => {
         <SheetHeader>
           <SheetTitle>Editar framework</SheetTitle>
           <SheetDescription>
-            Define los valores de cada dimensión. Total actual: <span className="font-mono font-semibold text-foreground">{angles.length} × {formats.length} × {hooks.length} = {total} variantes</span>
+            Define los valores de cada dimensión. Total actual:{' '}
+            <span className="font-mono font-semibold text-foreground">
+              {hasHooks
+                ? `${angles.length} × ${formats.length} × ${hooks.length} = ${total} variantes`
+                : `${angles.length} × ${formats.length} = ${total} variantes (matriz 2D)`}
+            </span>
+            <br />
+            <span className="text-xs">Los cambios se reflejan en las campañas existentes; usa el botón <em>Sincronizar</em> en cada campaña para regenerar las variantes faltantes.</span>
           </SheetDescription>
         </SheetHeader>
 
@@ -65,7 +76,7 @@ export const FrameworkBuilder = ({ framework, open, onOpenChange }: Props) => {
             </div>
           </div>
 
-          {(['angle', 'format', 'hook'] as DimensionType[]).map((type) => (
+          {(['angle', 'format'] as DimensionType[]).map((type) => (
             <DimensionSection
               key={type}
               type={type}
@@ -73,6 +84,23 @@ export const FrameworkBuilder = ({ framework, open, onOpenChange }: Props) => {
               items={framework.dimensions.filter((d) => d.dimension_type === type)}
             />
           ))}
+
+          {showHooks ? (
+            <DimensionSection
+              type="hook"
+              frameworkId={framework.id}
+              items={hooks}
+            />
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-1.5"
+              onClick={() => setShowHooks(true)}
+            >
+              <Plus className="h-3.5 w-3.5" /> Convertir en matriz 3D (añadir Hooks)
+            </Button>
+          )}
         </div>
       </SheetContent>
     </Sheet>

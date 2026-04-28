@@ -218,6 +218,8 @@ export const useUpsertDimension = () => {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['ad-framework', vars.framework_id] });
       qc.invalidateQueries({ queryKey: ['ad-frameworks'] });
+      qc.invalidateQueries({ queryKey: ['ad-variants'] });
+      qc.invalidateQueries({ queryKey: ['ad-campaigns'] });
     },
   });
 };
@@ -232,6 +234,8 @@ export const useDeleteDimension = () => {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['ad-framework', vars.framework_id] });
       qc.invalidateQueries({ queryKey: ['ad-frameworks'] });
+      qc.invalidateQueries({ queryKey: ['ad-variants'] });
+      qc.invalidateQueries({ queryKey: ['ad-campaigns'] });
     },
   });
 };
