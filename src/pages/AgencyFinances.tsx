@@ -7,6 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const CHURN_REASONS = [
+  'Aumentamos precio y no accedió',
+  'Pocos resultados',
+  'Muy caro',
+  'No contestó para reagendar',
+  'Cierra operaciones / cierra el negocio',
+  'Cambio de proveedor / agencia',
+  'Decidió manejarlo internamente',
+  'Falta de presupuesto',
+  'Pausa temporal indefinida',
+  'Mala comunicación / no fit',
+  'Expectativas no alineadas',
+  'Otro',
+] as const;
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
