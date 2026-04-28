@@ -95,9 +95,12 @@ const AgencyFinances = () => {
 
   const handleConfirmDiscontinue = () => {
     if (!discDialog) return;
+    const finalReason = discReasonType === 'Otro'
+      ? discReason.trim()
+      : [discReasonType, discReason.trim()].filter(Boolean).join(' — ');
     markDisc.mutate(
-      { customer_name: discDialog.customer_name, client_id: discDialog.client_id, reason: discReason },
-      { onSuccess: () => { setDiscDialog(null); setDiscReason(''); } }
+      { customer_name: discDialog.customer_name, client_id: discDialog.client_id, reason: finalReason },
+      { onSuccess: () => { setDiscDialog(null); setDiscReason(''); setDiscReasonType(''); } }
     );
   };
 
