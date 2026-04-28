@@ -53,6 +53,7 @@ const AgencyFinances = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive' | 'discontinued'>('all');
   const [discDialog, setDiscDialog] = useState<CustomerSummary | null>(null);
+  const [discReasonType, setDiscReasonType] = useState<string>('');
   const [discReason, setDiscReason] = useState('');
 
   // Map of discontinued customers from contracts table
