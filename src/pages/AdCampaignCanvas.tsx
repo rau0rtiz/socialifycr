@@ -162,7 +162,7 @@ const AdCampaignCanvas = () => {
           </div>
         </div>
 
-        {angles.length === 0 || formats.length === 0 || hooks.length === 0 ? (
+        {angles.length === 0 || formats.length === 0 ? (
           <Card className="p-8 text-center text-sm text-muted-foreground">
             El framework no tiene todas las dimensiones configuradas.
           </Card>
