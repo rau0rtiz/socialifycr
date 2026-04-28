@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export type VariantStatus = 'draft' | 'in_progress' | 'ready' | 'published';
 export type CreativeType = 'photo' | 'reel' | 'carousel';
