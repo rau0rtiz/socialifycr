@@ -69,11 +69,16 @@ const AdCampaignCanvas = () => {
   const formats = useMemo(() => framework?.dimensions.filter((d) => d.dimension_type === 'format') ?? [], [framework]);
   const hooks = useMemo(() => framework?.dimensions.filter((d) => d.dimension_type === 'hook') ?? [], [framework]);
 
+  const hasHooks = hooks.length > 0;
+
   const variantMap = useMemo(() => {
     const m: Record<string, AdVariant> = {};
-    (variants ?? []).forEach((v) => { m[`${v.angle_id}|${v.format_id}|${v.hook_id}`] = v; });
+    (variants ?? []).forEach((v) => {
+      const key = hasHooks ? `${v.angle_id}|${v.format_id}|${v.hook_id}` : `${v.angle_id}|${v.format_id}`;
+      m[key] = v;
+    });
     return m;
-  }, [variants]);
+  }, [variants, hasHooks]);
 
   const selectedVariant = (variants ?? []).find((v) => v.id === selectedVariantId) ?? null;
 
@@ -81,7 +86,9 @@ const AdCampaignCanvas = () => {
     return <DashboardLayout><div className="text-muted-foreground py-12 text-center">Cargando campaña...</div></DashboardLayout>;
   }
 
-  const expectedTotal = angles.length * formats.length * hooks.length;
+  const expectedTotal = hasHooks
+    ? angles.length * formats.length * hooks.length
+    : angles.length * formats.length;
   const actualTotal = variants?.length ?? 0;
   const needsSync = actualTotal < expectedTotal;
   const missingCount = expectedTotal - actualTotal;
