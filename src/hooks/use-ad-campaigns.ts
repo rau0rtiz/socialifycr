@@ -156,3 +156,74 @@ export const useSyncCampaignVariants = () => {
     },
   });
 };
+
+export const useDuplicateCampaign = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (input: { source: AdCampaign; newName: string; copyContent: boolean }) => {
+      const { source, newName, copyContent } = input;
+      // Create campaign
+      const { data: newCamp, error: cErr } = await supabase
+        .from('ad_campaigns')
+        .insert({
+          framework_id: source.framework_id,
+          name: newName,
+          description: source.description,
+          client_id: source.client_id,
+          created_by: user?.id ?? null,
+        })
+        .select()
+        .single();
+      if (cErr) throw cErr;
+
+      // Sync variants (creates empty variants for every dimension combination)
+      const { error: syncErr } = await supabase.rpc('generate_ad_variants', { _campaign_id: newCamp.id });
+      if (syncErr) throw syncErr;
+
+      if (copyContent) {
+        // Copy content from source variants matched by (angle_id, format_id, hook_id)
+        const { data: srcVariants } = await supabase
+          .from('ad_variants')
+          .select('*')
+          .eq('campaign_id', source.id);
+        const { data: tgtVariants } = await supabase
+          .from('ad_variants')
+          .select('id, angle_id, format_id, hook_id')
+          .eq('campaign_id', newCamp.id);
+
+        const tgtMap: Record<string, string> = {};
+        (tgtVariants ?? []).forEach((v: any) => {
+          tgtMap[`${v.angle_id}|${v.format_id}|${v.hook_id}`] = v.id;
+        });
+
+        await Promise.all(
+          (srcVariants ?? []).map((s: any) => {
+            const tgtId = tgtMap[`${s.angle_id}|${s.format_id}|${s.hook_id}`];
+            if (!tgtId) return Promise.resolve();
+            return supabase
+              .from('ad_variants')
+              .update({
+                hook_text: s.hook_text,
+                script: s.script,
+                copy: s.copy,
+                cta: s.cta,
+                notes: s.notes,
+                assets: s.assets,
+                slides: s.slides,
+                creative_type: s.creative_type,
+              })
+              .eq('id', tgtId);
+          }),
+        );
+      }
+      return newCamp;
+    },
+    onSuccess: (newCamp) => {
+      qc.invalidateQueries({ queryKey: ['ad-campaigns', newCamp.framework_id] });
+      qc.invalidateQueries({ queryKey: ['ad-frameworks'] });
+      toast.success('Campaña duplicada');
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Error duplicando campaña'),
+  });
+};

@@ -1,104 +1,121 @@
-## Objetivo
+## Mejoras al flujo de Frameworks
 
-Crear una sección interna **/agencia/finanzas** (solo agencia) que reemplace tu uso de Zoho con vistas claras de:
-- **MRR** del mes y crecimiento mes a mes
-- **Churn rate** y clientes en riesgo
-- **Tabla maestra** de clientes con monto, frecuencia de publicación y gasto Meta
-- **Cohortes y LTV** por cliente
-- Soporte especial para **paraguas (Hilda Lopez)** que factura por varios sub-clientes
-- Conexión a **pauta Meta** vía nueva conexión OAuth dedicada del Business Manager de la agencia
+Después de revisar `AdFrameworks`, `AdFrameworkDetail`, `AdCampaignCanvas`, `FrameworkBuilder` y `VariantDetailSheet`, estos son los puntos de fricción reales y las mejoras propuestas. Cada una es independiente; podés aprobar todas o las que prefieras.
 
 ---
 
-## Modelo de datos (nuevas tablas)
+### 1. Edición inline en el canvas (sin abrir el sheet)
 
-**`agency_billing_accounts`** — el "pagador" (puede ser un cliente directo o un paraguas como Hilda)
-- `id`, `name`, `contact_email`, `notes`, `created_at`
+**Hoy:** para cambiar estado, fecha o tipo de creativo hay que abrir el sheet lateral, esperar a que cargue, hacer scroll y cerrarlo. Para 20–30 variantes es lento.
 
-**`agency_contracts`** — un contrato por cliente
-- `client_id` (FK clients), `billing_account_id` (FK agency_billing_accounts)
-- `monthly_amount`, `currency` (USD/CRC), `billing_frequency` ('monthly' | 'quarterly' | 'annual')
-- `posts_per_month` (entero), `services` (jsonb: pauta, contenido, reportes, etc.)
-- `start_date`, `end_date` (null = activo), `status` ('active' | 'paused' | 'churned')
-- `churn_reason` (text, opcional)
-
-**`agency_meta_accounts`** — ad accounts del BM de la agencia mapeadas al cliente que pertenecen
-- `id`, `meta_ad_account_id`, `account_name`, `client_id` (FK, nullable hasta asignar), `currency`
-
-MRR se calcula derivado: `SUM(monthly_amount normalizado a mensual)` de contratos `status='active'`. Churn mensual = contratos que pasaron a `churned` en el mes / activos al inicio del mes. LTV = `monthly_amount * meses_activo` (histórico real desde `start_date`).
+**Mejora:**
+- Click en el badge de estado en la VariantCard → menú rápido para cambiar estado (Pendiente / En progreso / Listo / Subido).
+- Click en el chip de fecha → date picker inline.
+- Botón rápido (icono lápiz al hover) para cambiar tipo de creativo sin abrir sheet.
+- El sheet completo queda solo para editar copy/script/slides.
 
 ---
 
-## Conexión Meta dedicada de la agencia (Business Manager)
+### 2. Vista Kanban como alternativa a la matriz
 
-Reusamos la infraestructura OAuth de Meta existente, pero guardamos el token en una nueva tabla **`agency_meta_connection`** (no ligada a `client_id`). Una sola fila por agencia. Una nueva edge function **`agency-meta-spend`** consulta el endpoint `/me/adaccounts` y luego `insights` por ad_account para el rango de fechas pedido y devuelve gasto agregado + por ad_account.
+**Hoy:** solo existe la vista matriz (ángulo × formato × hook). Para "qué tengo pendiente esta semana" no sirve.
 
-El admin mapea cada `meta_ad_account_id` a un `client_id` desde la UI (tabla `agency_meta_accounts`). Las cuentas no mapeadas aparecen en una sección "Sin asignar".
+**Mejora:** toggle en el canvas: **Matriz** | **Kanban** | **Calendario**.
+- **Kanban:** columnas por estado (Pendiente / En progreso / Listo / Subido). Drag para mover.
+- **Calendario:** mes con las variantes posicionadas en su `due_date`. Útil para ver carga semanal.
 
----
-
-## UI — Página `/agencia/finanzas`
-
-Acceso restringido a roles `owner | admin | manager` (sidebar item solo visible para agencia, igual que Widget Catalog).
-
-**Layout vertical:**
-
-1. **Hero KPIs (4 cards)**
-   - MRR actual (USD) + delta % vs mes pasado + sparkline 12 meses
-   - Clientes activos + altas/bajas del mes
-   - Churn rate del mes + tendencia
-   - Pauta Meta total del mes (BM agencia) + delta %
-
-2. **Gráfico MRR 12 meses** (line chart, verde estándar). Toggle entre MRR neto / nuevo MRR / MRR perdido.
-
-3. **Tabla maestra de clientes** (sortable, filtros por estado y paraguas)
-   - Columnas: Cliente · Paraguas · Monto/mes · Frecuencia publicación · Gasto Meta mes · LTV acumulado · Antigüedad · Estado
-   - Agrupable por `billing_account` (Hilda Lopez expandible muestra sus sub-clientes)
-   - Acciones por fila: editar contrato, marcar churn
-
-4. **Cohortes** — heatmap mes de alta vs meses de retención (clásico, % retenidos).
-
-5. **Clientes en riesgo** — lista automática:
-   - Sin pauta Meta activa últimos 30 días
-   - Contrato venciendo en <30 días
-   - Caída >50% en gasto Meta vs mes anterior
-
-6. **Cuentas Meta sin asignar** — accordion con ad accounts del BM que no tienen `client_id` mapeado, con dropdown para asignar.
+La matriz sigue siendo el default; las otras dos son vistas adicionales del mismo dataset.
 
 ---
 
-## Gestión de contratos
+### 3. Bulk actions sobre variantes
 
-Modal de "Nuevo contrato / editar":
-- Selector cliente (existente)
-- Selector o creación rápida de billing_account (paraguas)
-- Monto + moneda + frecuencia
-- Posts/mes + servicios (multiselect chips: Pauta, Contenido orgánico, Reportes, Setter, Closer, Frameworks)
-- Fechas inicio/fin
-- Notas
+**Hoy:** asignar fecha o cambiar estado de 12 variantes = 12 clicks × abrir sheet.
 
-Para Hilda: creas un `billing_account` "Hilda Lopez" y asignás todos sus sub-clientes (cada uno con su propio contrato). MRR consolidado por paraguas en la tabla.
+**Mejora:**
+- Checkbox en cada VariantCard (aparece al hover o con un toggle "Seleccionar").
+- Barra flotante inferior con: cambiar estado, asignar fecha, asignar tipo de creativo, eliminar, duplicar.
 
 ---
 
-## Pasos de implementación
+### 4. Duplicar variante / campaña
 
-1. **Migración DB**: crear `agency_billing_accounts`, `agency_contracts`, `agency_meta_connection`, `agency_meta_accounts` con RLS restringido a `is_agency_member(auth.uid())`.
-2. **Edge function** `agency-meta-spend` (verify_jwt: false, service role) que lee `agency_meta_connection`, llama Graph API v21, devuelve gasto por ad account y agregado.
-3. **Edge function** `agency-meta-oauth-callback` para conectar el BM (reusa patrón de meta-oauth pero guarda en `agency_meta_connection`).
-4. **Hooks**: `use-agency-finances.ts` (MRR, churn, cohortes — derivados client-side de contratos), `use-agency-meta-spend.ts`.
-5. **Página** `src/pages/AgencyFinances.tsx` con los 6 bloques descritos.
-6. **Componentes**: `MrrKpiCards`, `MrrTrendChart`, `ContractsTable` (con agrupación por paraguas), `CohortHeatmap`, `AtRiskList`, `UnmappedMetaAccounts`, `ContractFormDialog`, `BillingAccountFormDialog`.
-7. **Sidebar**: añadir item "Finanzas Agencia" con icono `TrendingUp`, visible solo si `isAgencyMember`.
-8. **Ruta** `/agencia/finanzas` en `App.tsx` con guard `requireAgency`.
-9. **Seed inicial**: una vez creado, te abro un modal donde pegás tu lista de clientes + montos + frecuencia para poblar contratos rápidamente (bulk import por CSV o tabla editable).
-10. **Memoria**: registrar feature en `mem://features/agency/finances-dashboard`.
+**Hoy:** no existe. Si hago un Reel que funciona, tengo que copiar manualmente hook, script, copy, CTA y assets a otra celda.
+
+**Mejora:**
+- Botón "Duplicar" en el sheet de variante → copia contenido (hook_text, script, copy, cta, slides) a otra celda elegida del grid.
+- "Duplicar campaña" en `AdFrameworkDetail` → crea nueva campaña con todas las variantes vacías + opción de copiar contenido.
 
 ---
 
-## Notas
+### 5. Templates de framework (arranque rápido)
 
-- No se toca el flujo OAuth Meta de cada cliente — la conexión BM agencia es independiente.
-- Si en algún cliente no querés migrar de su Meta personal, la tabla maestra muestra "—" en gasto Meta hasta mapearlo.
-- Tu lista preliminar de clientes no llegó adjunta en este turno; en la primera carga de la página aparece un CTA "Importar clientes" con tabla editable para pegarla.
-- Toda la sección queda invisible para clientes (RLS + sidebar guard).
+**Hoy:** crear framework requiere definir manualmente cada ángulo, formato y hook desde cero.
+
+**Mejora:** al crear framework, ofrecer 2–3 plantillas pre-cargadas:
+- **MASTERCLASS / Educación** (ángulos: dolor / autoridad / transformación / método; formatos: foto, reel, carrusel; hooks: pregunta / estadística / historia).
+- **E-commerce / Producto** (ángulos: beneficio / social proof / objeción / urgencia).
+- **En blanco** (como hoy).
+
+El usuario puede editar todo después.
+
+---
+
+### 6. Indicadores visuales en cards de campaña (`AdFrameworkDetail`)
+
+**Hoy:** la CampaignCard muestra contadores y % completado, pero no avisa de variantes vencidas ni próximas a vencer.
+
+**Mejora:** agregar a la CampaignCard:
+- Pill rojo con número de variantes vencidas (`due_date < hoy` y status ≠ published).
+- Pill ámbar con variantes que vencen en ≤ 2 días.
+- Próxima fecha de entrega.
+
+---
+
+### 7. Empty states con un botón (no varios pasos)
+
+**Hoy:** crear framework → entrar → editar dimensiones (sheet) → cerrar → crear campaña. Son 4 saltos antes de ver una variante.
+
+**Mejora:** al crear un framework nuevo (o entrar a uno sin dimensiones), abrir directamente el `FrameworkBuilder` en modo onboarding con los 3 grupos visibles y un botón "Listo, crear primera campaña" al final.
+
+---
+
+### 8. Cambios menores de claridad
+
+- Renombrar "Sin variante" en celdas vacías por "Crear" (clickeable que dispara `sync` solo de esa celda).
+- En el header del canvas: si `needsSync`, mostrar el botón "Sincronizar variantes" en color primario (no outline) con un mini badge "+N".
+- Confirm dialogs (`confirm()` nativo) → `AlertDialog` consistente con el resto de la app.
+- Auto-guardado: hoy hay debounce de 600 ms pero sin feedback visual. Agregar indicador "Guardado ✓" / "Guardando…" en el header del sheet.
+
+---
+
+### Detalles técnicos
+
+**Archivos a tocar:**
+- `src/pages/AdCampaignCanvas.tsx` — vistas Matriz/Kanban/Calendario, bulk select, edición inline, celdas vacías clickeables.
+- `src/pages/AdFrameworkDetail.tsx` — pills de alerta en CampaignCard, AlertDialog, botón duplicar campaña.
+- `src/pages/AdFrameworks.tsx` — selector de plantilla en el dialog de creación, AlertDialog.
+- `src/components/ad-frameworks/VariantDetailSheet.tsx` — botón duplicar, indicador de guardado.
+- `src/components/ad-frameworks/FrameworkBuilder.tsx` — modo onboarding cuando 0 dimensiones.
+- `src/hooks/use-ad-variants.ts` — `useDuplicateVariant`, `useBulkUpdateVariants`.
+- `src/hooks/use-ad-campaigns.ts` — `useDuplicateCampaign`.
+
+**Sin cambios de DB.** Todo se construye sobre el esquema actual (`ad_variants`, `ad_campaigns`, `ad_framework_dimensions`).
+
+**Plantillas de framework:** constantes en código (`src/lib/framework-templates.ts`), no requieren tabla. El insert al crear framework hace bulk insert a `ad_framework_dimensions`.
+
+---
+
+### Sugerencia de orden de implementación
+
+Si todo es demasiado, recomiendo este orden por impacto/esfuerzo:
+
+1. Edición inline (estado + fecha) en VariantCard — **mayor ahorro de tiempo diario**.
+2. Vista Kanban (la matriz no responde a "¿qué hago hoy?").
+3. Indicadores de vencidas/próximas en CampaignCard.
+4. Duplicar variante.
+5. Bulk actions.
+6. Templates + onboarding.
+7. Calendario + duplicar campaña + pulidos.
+
+¿Querés que implemente todo, o prefieres elegir un subset?

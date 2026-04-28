@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Layers, MoreVertical, Trash2, Edit, Copy as CopyIcon } from 'lucide-react';
+import { Plus, Layers, MoreVertical, Trash2, Edit, Sparkles } from 'lucide-react';
 import { useAdFrameworks, useCreateAdFramework, useDeleteAdFramework, type AdFrameworkWithDimensions } from '@/hooks/use-ad-frameworks';
 import { useUserRole } from '@/hooks/use-user-role';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -14,6 +15,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { FRAMEWORK_TEMPLATES, type FrameworkTemplate } from '@/lib/framework-templates';
 
 const AdFrameworks = () => {
   const navigate = useNavigate();
@@ -24,12 +27,21 @@ const AdFrameworks = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [templateId, setTemplateId] = useState<string>('blank');
+  const [toDelete, setToDelete] = useState<AdFrameworkWithDimensions | null>(null);
 
   const handleCreate = async () => {
     if (!name.trim()) return;
-    const fw = await createFramework.mutateAsync({ name: name.trim(), description: description.trim() || undefined });
+    const tmpl = FRAMEWORK_TEMPLATES.find((t) => t.id === templateId);
+    const fw = await createFramework.mutateAsync({
+      name: name.trim(),
+      description: description.trim() || undefined,
+      template: tmpl && tmpl.id !== 'blank'
+        ? { angles: tmpl.angles, formats: tmpl.formats, hooks: tmpl.hooks }
+        : undefined,
+    });
     setCreateOpen(false);
-    setName(''); setDescription('');
+    setName(''); setDescription(''); setTemplateId('blank');
     if (fw) navigate(`/ad-frameworks/${fw.id}`);
   };
 
@@ -73,11 +85,7 @@ const AdFrameworks = () => {
                 key={fw.id}
                 fw={fw}
                 onOpen={() => navigate(`/ad-frameworks/${fw.id}`)}
-                onDelete={canManage ? () => {
-                  if (confirm(`¿Eliminar "${fw.name}"? Esto borra también todas sus campañas y variantes.`)) {
-                    deleteFramework.mutate(fw.id);
-                  }
-                } : undefined}
+                onDelete={canManage ? () => setToDelete(fw) : undefined}
               />
             ))}
           </div>
@@ -85,19 +93,32 @@ const AdFrameworks = () => {
       </div>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Nuevo framework</DialogTitle>
-            <DialogDescription>Después de crearlo podrás definir sus dimensiones (ángulos, formatos, hooks).</DialogDescription>
+            <DialogDescription>Elige una plantilla para arrancar más rápido (después puedes editar todo).</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="fw-name">Nombre</Label>
               <Input id="fw-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Ad Framework v2" autoFocus />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="fw-desc">Descripción (opcional)</Label>
-              <Textarea id="fw-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+              <Textarea id="fw-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+            </div>
+            <div className="space-y-2">
+              <Label>Plantilla</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {FRAMEWORK_TEMPLATES.map((t) => (
+                  <TemplateOption
+                    key={t.id}
+                    template={t}
+                    selected={templateId === t.id}
+                    onSelect={() => setTemplateId(t.id)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -108,7 +129,59 @@ const AdFrameworks = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => { if (!o) setToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar framework?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se borrará "{toDelete?.name}" junto con todas sus campañas y variantes. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (toDelete) deleteFramework.mutate(toDelete.id);
+                setToDelete(null);
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
+  );
+};
+
+const TemplateOption = ({ template, selected, onSelect }: { template: FrameworkTemplate; selected: boolean; onSelect: () => void }) => {
+  const total = template.angles.length * template.formats.length * template.hooks.length;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        'border rounded-md p-3 text-left transition-all hover:border-primary/50',
+        selected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border',
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            {template.id !== 'blank' && <Sparkles className="h-3.5 w-3.5 text-primary" />}
+            <p className="font-semibold text-sm">{template.name}</p>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">{template.hint}</p>
+        </div>
+        {total > 0 && (
+          <Badge variant="secondary" className="font-mono text-[10px] shrink-0">
+            {template.angles.length}×{template.formats.length}×{template.hooks.length} = {total}
+          </Badge>
+        )}
+      </div>
+    </button>
   );
 };
 

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export type VariantStatus = 'draft' | 'in_progress' | 'ready' | 'published';
 export type CreativeType = 'photo' | 'reel' | 'carousel';
@@ -78,5 +79,57 @@ export const useUpdateAdVariant = () => {
       qc.invalidateQueries({ queryKey: ['ad-variants', data.campaign_id] });
       qc.invalidateQueries({ queryKey: ['ad-campaigns'] });
     },
+  });
+};
+
+export const useBulkUpdateVariants = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { ids: string[]; campaign_id: string; patch: Partial<AdVariant> }) => {
+      const { ids, patch } = input;
+      const payload: any = { ...patch };
+      delete payload.id;
+      const { error } = await supabase.from('ad_variants').update(payload).in('id', ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count, vars) => {
+      qc.invalidateQueries({ queryKey: ['ad-variants', vars.campaign_id] });
+      qc.invalidateQueries({ queryKey: ['ad-campaigns'] });
+      toast.success(`${count} variante${count === 1 ? '' : 's'} actualizada${count === 1 ? '' : 's'}`);
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Error en actualización masiva'),
+  });
+};
+
+export const useDuplicateVariantContent = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { source: AdVariant; targetId: string }) => {
+      const { source, targetId } = input;
+      const payload: any = {
+        hook_text: source.hook_text,
+        script: source.script,
+        copy: source.copy,
+        cta: source.cta,
+        notes: source.notes,
+        assets: source.assets,
+        slides: source.slides,
+        creative_type: source.creative_type,
+      };
+      const { data, error } = await supabase
+        .from('ad_variants')
+        .update(payload)
+        .eq('id', targetId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as unknown as AdVariant;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['ad-variants', data.campaign_id] });
+      toast.success('Contenido copiado a la variante destino');
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Error duplicando contenido'),
   });
 };

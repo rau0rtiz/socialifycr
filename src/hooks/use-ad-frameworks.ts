@@ -104,17 +104,41 @@ export const useAdFramework = (frameworkId: string | undefined) => {
   });
 };
 
+export interface CreateFrameworkDimensions {
+  angles?: { label: string; color?: string }[];
+  formats?: { label: string; color?: string }[];
+  hooks?: { label: string; color?: string }[];
+}
+
 export const useCreateAdFramework = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (input: { name: string; description?: string }) => {
+    mutationFn: async (input: { name: string; description?: string; template?: CreateFrameworkDimensions }) => {
       const { data, error } = await supabase
         .from('ad_frameworks')
         .insert({ name: input.name, description: input.description ?? null, created_by: user?.id ?? null })
         .select()
         .single();
       if (error) throw error;
+
+      const tmpl = input.template;
+      if (tmpl) {
+        const rows: any[] = [];
+        (tmpl.angles ?? []).forEach((d, i) =>
+          rows.push({ framework_id: data.id, dimension_type: 'angle', label: d.label, color: d.color ?? null, position: i }),
+        );
+        (tmpl.formats ?? []).forEach((d, i) =>
+          rows.push({ framework_id: data.id, dimension_type: 'format', label: d.label, color: d.color ?? null, position: i }),
+        );
+        (tmpl.hooks ?? []).forEach((d, i) =>
+          rows.push({ framework_id: data.id, dimension_type: 'hook', label: d.label, color: d.color ?? null, position: i }),
+        );
+        if (rows.length > 0) {
+          const { error: dErr } = await supabase.from('ad_framework_dimensions').insert(rows);
+          if (dErr) throw dErr;
+        }
+      }
       return data;
     },
     onSuccess: () => {
