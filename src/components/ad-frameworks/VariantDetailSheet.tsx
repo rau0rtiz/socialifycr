@@ -133,11 +133,21 @@ export const VariantDetailSheet = ({ variant, framework, open, onOpenChange }: P
     update.mutate({ id: variant.id, slides: next });
   };
 
+  const saving = update.isPending;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Variante</SheetTitle>
+          <div className="flex items-center justify-between gap-2">
+            <SheetTitle>Variante</SheetTitle>
+            <span className={cn(
+              'text-[10px] uppercase tracking-wider transition-opacity',
+              saving ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400',
+            )}>
+              {saving ? 'Guardando…' : '✓ Guardado'}
+            </span>
+          </div>
           <SheetDescription className="flex flex-wrap items-center gap-1.5 pt-1">
             {angle && (
               <Badge variant="outline" style={angle.color ? { borderColor: angle.color, color: angle.color } : {}}>
