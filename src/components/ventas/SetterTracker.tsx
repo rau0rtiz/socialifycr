@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useSetterAppointments, SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
+import { useLeadReservations } from '@/hooks/use-lead-reservations';
 import { useClientSetters } from '@/hooks/use-client-setters';
 import { AppointmentFormDialog } from './AppointmentFormDialog';
 import { LeadDetailDialog } from './LeadDetailDialog';
