@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { FrameworkBuilder } from '@/components/ad-frameworks/FrameworkBuilder';
 import { Progress } from '@/components/ui/progress';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useAdVariants } from '@/hooks/use-ad-variants';
+
 import { differenceInCalendarDays, format as formatDate, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
