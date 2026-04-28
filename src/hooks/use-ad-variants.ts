@@ -21,7 +21,7 @@ export interface AdVariant {
   campaign_id: string;
   angle_id: string;
   format_id: string;
-  hook_id: string;
+  hook_id: string | null;
   hook_text: string | null;
   script: string | null;
   copy: string | null;

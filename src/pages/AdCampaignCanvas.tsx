@@ -69,11 +69,16 @@ const AdCampaignCanvas = () => {
   const formats = useMemo(() => framework?.dimensions.filter((d) => d.dimension_type === 'format') ?? [], [framework]);
   const hooks = useMemo(() => framework?.dimensions.filter((d) => d.dimension_type === 'hook') ?? [], [framework]);
 
+  const hasHooks = hooks.length > 0;
+
   const variantMap = useMemo(() => {
     const m: Record<string, AdVariant> = {};
-    (variants ?? []).forEach((v) => { m[`${v.angle_id}|${v.format_id}|${v.hook_id}`] = v; });
+    (variants ?? []).forEach((v) => {
+      const key = hasHooks ? `${v.angle_id}|${v.format_id}|${v.hook_id}` : `${v.angle_id}|${v.format_id}`;
+      m[key] = v;
+    });
     return m;
-  }, [variants]);
+  }, [variants, hasHooks]);
 
   const selectedVariant = (variants ?? []).find((v) => v.id === selectedVariantId) ?? null;
 
@@ -81,7 +86,9 @@ const AdCampaignCanvas = () => {
     return <DashboardLayout><div className="text-muted-foreground py-12 text-center">Cargando campaña...</div></DashboardLayout>;
   }
 
-  const expectedTotal = angles.length * formats.length * hooks.length;
+  const expectedTotal = hasHooks
+    ? angles.length * formats.length * hooks.length
+    : angles.length * formats.length;
   const actualTotal = variants?.length ?? 0;
   const needsSync = actualTotal < expectedTotal;
   const missingCount = expectedTotal - actualTotal;
@@ -125,7 +132,7 @@ const AdCampaignCanvas = () => {
               <h1 className="text-2xl font-bold">{campaign.name}</h1>
               {campaign.description && <p className="text-muted-foreground text-sm mt-1">{campaign.description}</p>}
               <p className="text-xs text-muted-foreground mt-2">
-                {actualTotal} de {expectedTotal} variantes · {angles.length} ángulos × {formats.length} formatos × {hooks.length} hooks
+                {actualTotal} de {expectedTotal} variantes · {angles.length} ángulos × {formats.length} formatos{hasHooks ? ` × ${hooks.length} hooks` : ''}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -155,7 +162,7 @@ const AdCampaignCanvas = () => {
           </div>
         </div>
 
-        {angles.length === 0 || formats.length === 0 || hooks.length === 0 ? (
+        {angles.length === 0 || formats.length === 0 ? (
           <Card className="p-8 text-center text-sm text-muted-foreground">
             El framework no tiene todas las dimensiones configuradas.
           </Card>
@@ -273,6 +280,67 @@ const MatrixView = ({
   onSync: () => void;
   syncPending: boolean;
 }) => {
+  const hasHooks = hooks.length > 0;
+
+  // 2D mode: angles as columns/tabs, formats as rows, single cell per (angle,format)
+  if (!hasHooks) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full border-separate border-spacing-2">
+          <thead>
+            <tr>
+              <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32"></th>
+              {angles.map((a) => (
+                <th key={a.id} className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pb-1">
+                  <span className="inline-flex items-center gap-1.5">
+                    {a.color && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: a.color }} />}
+                    {a.label}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {formats.map((f) => (
+              <tr key={f.id}>
+                <td className="text-sm font-medium pr-2 w-32 align-top pt-3">{f.label}</td>
+                {angles.map((angle) => {
+                  const v = variantMap[`${angle.id}|${f.id}`];
+                  return (
+                    <td key={angle.id} className="align-top">
+                      {v ? (
+                        <VariantCard
+                          variant={v}
+                          angleColor={angle.color}
+                          onClick={() => {
+                            if (selectMode) onToggleSelect(v.id);
+                            else onOpenVariant(v.id);
+                          }}
+                          selectMode={selectMode}
+                          selected={selectedIds.has(v.id)}
+                        />
+                      ) : (
+                        <button
+                          onClick={onSync}
+                          disabled={syncPending}
+                          className="border border-dashed rounded-md p-3 text-xs text-muted-foreground italic min-h-[220px] w-full flex flex-col items-center justify-center gap-1 hover:border-primary/50 hover:text-foreground transition-colors"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Crear variante
+                        </button>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  // 3D mode: tabs by angle, hooks as columns, formats as rows
   return (
     <Tabs defaultValue={angles[0].id}>
       <TabsList className="flex-wrap h-auto">
