@@ -35,10 +35,11 @@ import {
   useMarkDiscontinued,
   useReactivateCustomer,
 } from '@/hooks/use-agency-finances';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { TrendingUp, TrendingDown, Users, DollarSign, AlertTriangle, UserMinus, RotateCcw, Search } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { TrendingUp, TrendingDown, Users, DollarSign, AlertTriangle, UserMinus, RotateCcw, Search, History } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CollectionsSection } from '@/components/agency-finances/CollectionsSection';
+import { CustomerHistoryDialog } from '@/components/agency-finances/CustomerHistoryDialog';
 
 const fmtUsd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 const fmtPct = (n: number) => `${n.toFixed(1)}%`;
@@ -55,6 +56,7 @@ const AgencyFinances = () => {
   const [discDialog, setDiscDialog] = useState<CustomerSummary | null>(null);
   const [discReasonType, setDiscReasonType] = useState<string>('');
   const [discReason, setDiscReason] = useState('');
+  const [historyCustomer, setHistoryCustomer] = useState<CustomerSummary | null>(null);
 
   // Map of discontinued customers from contracts table
   const discontinuedMap = useMemo(() => {
@@ -90,7 +92,8 @@ const AgencyFinances = () => {
   const filtered = useMemo(() => {
     return customers
       .filter(c => filter === 'all' || c.status === filter)
-      .filter(c => !search || c.customer_name.toLowerCase().includes(search.toLowerCase()));
+      .filter(c => !search || c.customer_name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => a.customer_name.localeCompare(b.customer_name, 'es', { sensitivity: 'base' }));
   }, [customers, filter, search]);
 
   const handleConfirmDiscontinue = () => {
