@@ -259,7 +259,7 @@ const AgencyFinances = () => {
         </Card>
 
         {/* Discontinue dialog */}
-        <Dialog open={!!discDialog} onOpenChange={(o) => { if (!o) { setDiscDialog(null); setDiscReason(''); } }}>
+        <Dialog open={!!discDialog} onOpenChange={(o) => { if (!o) { setDiscDialog(null); setDiscReason(''); setDiscReasonType(''); } }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Marcar como "no continúa"</DialogTitle>
@@ -270,25 +270,40 @@ const AgencyFinances = () => {
                 Esto cuenta como churn confirmado (distinto del auto-detectado por inactividad).
               </p>
               <div className="space-y-2">
-                <Label>Motivo (opcional)</Label>
+                <Label>Motivo principal</Label>
+                <Select value={discReasonType} onValueChange={setDiscReasonType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un motivo común..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CHURN_REASONS.map(r => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{discReasonType === 'Otro' ? 'Especifica el motivo' : 'Detalle adicional (opcional)'}</Label>
                 <Textarea
-                  placeholder="Ej: Cierran operaciones, presupuesto, cambio de proveedor..."
+                  placeholder={discReasonType === 'Otro'
+                    ? 'Describe el motivo...'
+                    : 'Contexto adicional, fecha de aviso, persona que comunicó...'}
                   value={discReason}
                   onChange={e => setDiscReason(e.target.value)}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => { setDiscDialog(null); setDiscReason(''); }}>Cancelar</Button>
-              <Button variant="destructive" onClick={handleConfirmDiscontinue} disabled={markDisc.isPending}>
+              <Button variant="outline" onClick={() => { setDiscDialog(null); setDiscReason(''); setDiscReasonType(''); }}>Cancelar</Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDiscontinue}
+                disabled={markDisc.isPending || !discReasonType || (discReasonType === 'Otro' && !discReason.trim())}
+              >
                 {markDisc.isPending ? 'Guardando...' : 'Confirmar'}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </DashboardLayout>
-  );
-};
 
 export default AgencyFinances;
