@@ -200,7 +200,7 @@ export type Database = {
           cta: string | null
           due_date: string | null
           format_id: string
-          hook_id: string
+          hook_id: string | null
           hook_text: string | null
           id: string
           notes: string | null
@@ -220,7 +220,7 @@ export type Database = {
           cta?: string | null
           due_date?: string | null
           format_id: string
-          hook_id: string
+          hook_id?: string | null
           hook_text?: string | null
           id?: string
           notes?: string | null
@@ -240,7 +240,7 @@ export type Database = {
           cta?: string | null
           due_date?: string | null
           format_id?: string
-          hook_id?: string
+          hook_id?: string | null
           hook_text?: string | null
           id?: string
           notes?: string | null
