@@ -307,6 +307,65 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_collections: {
+        Row: {
+          amount: number
+          client_id: string | null
+          collection_type: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_name: string
+          due_date: string
+          id: string
+          notes: string | null
+          paid_amount: number | null
+          paid_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_id?: string | null
+          collection_type?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_name: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string | null
+          collection_type?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_name?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_collections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_contracts: {
         Row: {
           billing_account_id: string | null

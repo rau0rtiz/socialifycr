@@ -35,10 +35,11 @@ import {
   useMarkDiscontinued,
   useReactivateCustomer,
 } from '@/hooks/use-agency-finances';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { TrendingUp, TrendingDown, Users, DollarSign, AlertTriangle, UserMinus, RotateCcw, Search } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { TrendingUp, TrendingDown, Users, DollarSign, AlertTriangle, UserMinus, RotateCcw, Search, History } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CollectionsSection } from '@/components/agency-finances/CollectionsSection';
+import { CustomerHistoryDialog } from '@/components/agency-finances/CustomerHistoryDialog';
 
 const fmtUsd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 const fmtPct = (n: number) => `${n.toFixed(1)}%`;
@@ -55,6 +56,7 @@ const AgencyFinances = () => {
   const [discDialog, setDiscDialog] = useState<CustomerSummary | null>(null);
   const [discReasonType, setDiscReasonType] = useState<string>('');
   const [discReason, setDiscReason] = useState('');
+  const [historyCustomer, setHistoryCustomer] = useState<CustomerSummary | null>(null);
 
   // Map of discontinued customers from contracts table
   const discontinuedMap = useMemo(() => {
@@ -90,7 +92,8 @@ const AgencyFinances = () => {
   const filtered = useMemo(() => {
     return customers
       .filter(c => filter === 'all' || c.status === filter)
-      .filter(c => !search || c.customer_name.toLowerCase().includes(search.toLowerCase()));
+      .filter(c => !search || c.customer_name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => a.customer_name.localeCompare(b.customer_name, 'es', { sensitivity: 'base' }));
   }, [customers, filter, search]);
 
   const handleConfirmDiscontinue = () => {
@@ -185,7 +188,10 @@ const AgencyFinances = () => {
           </CardContent>
         </Card>
 
-        {/* Customers table */}
+        {/* Cobros pendientes */}
+        <CollectionsSection customers={customers} />
+
+        {/* Customers cards (alfabético) */}
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -209,54 +215,72 @@ const AgencyFinances = () => {
           <CardContent>
             {loadingInv ? (
               <p className="text-sm text-muted-foreground">Cargando facturas...</p>
+            ) : filtered.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Sin resultados</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead className="text-right">Facturas</TableHead>
-                    <TableHead className="text-right">Total LTV</TableHead>
-                    <TableHead className="text-right">Promedio/mes (6m)</TableHead>
-                    <TableHead>Última factura</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map(c => (
-                    <TableRow key={c.customer_name}>
-                      <TableCell className="font-medium">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {filtered.map(c => (
+                  <div
+                    key={c.customer_name}
+                    className="border rounded-lg p-4 hover:border-primary/40 hover:shadow-sm transition-all bg-card flex flex-col gap-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <button
+                        onClick={() => setHistoryCustomer(c)}
+                        className="text-left font-semibold text-sm hover:text-primary transition-colors line-clamp-2 flex-1"
+                      >
                         {c.customer_name}
-                        {c.discontinuedReason && (
-                          <div className="text-xs text-muted-foreground italic mt-1">"{c.discontinuedReason}"</div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">{c.invoice_count}</TableCell>
-                      <TableCell className="text-right font-mono">{fmtUsd(c.total_revenue)}</TableCell>
-                      <TableCell className="text-right font-mono">{fmtUsd(c.avg_monthly)}</TableCell>
-                      <TableCell className="text-sm">{new Date(c.last_invoice).toLocaleDateString('es-CR')}</TableCell>
-                      <TableCell>{statusBadge(c.status, c.daysSinceLastInvoice)}</TableCell>
-                      <TableCell className="text-right">
-                        {c.status === 'discontinued' ? (
-                          <Button variant="ghost" size="sm" onClick={() => reactivate.mutate({ customer_name: c.customer_name, client_id: c.client_id })}>
-                            <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reactivar
-                          </Button>
-                        ) : (
-                          <Button variant="ghost" size="sm" onClick={() => setDiscDialog(c)}>
-                            <UserMinus className="h-3.5 w-3.5 mr-1" /> No continúa
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filtered.length === 0 && (
-                    <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Sin resultados</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                      </button>
+                      {statusBadge(c.status, c.daysSinceLastInvoice)}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <div className="text-muted-foreground">LTV</div>
+                        <div className="font-mono font-semibold text-sm">{fmtUsd(c.total_revenue)}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Prom/mes</div>
+                        <div className="font-mono font-semibold text-sm">{fmtUsd(c.avg_monthly)}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Facturas</div>
+                        <div className="font-mono">{c.invoice_count}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Última</div>
+                        <div className="text-xs">{new Date(c.last_invoice).toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: '2-digit' })}</div>
+                      </div>
+                    </div>
+                    {c.discontinuedReason && (
+                      <p className="text-[11px] text-muted-foreground italic border-t pt-2">"{c.discontinuedReason}"</p>
+                    )}
+                    <div className="flex gap-1 mt-auto pt-2 border-t">
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs flex-1" onClick={() => setHistoryCustomer(c)}>
+                        <History className="h-3 w-3 mr-1" /> Historial
+                      </Button>
+                      {c.status === 'discontinued' ? (
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => reactivate.mutate({ customer_name: c.customer_name, client_id: c.client_id })}>
+                          <RotateCcw className="h-3 w-3 mr-1" /> Reactivar
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive" onClick={() => setDiscDialog(c)}>
+                          <UserMinus className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
+
+        {/* History dialog */}
+        <CustomerHistoryDialog
+          customer={historyCustomer}
+          invoices={invoices}
+          onClose={() => setHistoryCustomer(null)}
+        />
 
         {/* Discontinue dialog */}
         <Dialog open={!!discDialog} onOpenChange={(o) => { if (!o) { setDiscDialog(null); setDiscReason(''); setDiscReasonType(''); } }}>
