@@ -112,33 +112,56 @@ const AdFrameworks = () => {
       </div>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nuevo framework</DialogTitle>
-            <DialogDescription>Elige una plantilla para arrancar más rápido (después puedes editar todo).</DialogDescription>
+            <DialogDescription>Elige el tipo de flujo que mejor representa cómo planificas tus anuncios.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="fw-name">Nombre</Label>
-              <Input id="fw-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Ad Framework v2" autoFocus />
+              <Input id="fw-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Lanzamiento Masterclass Q2" autoFocus />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="fw-desc">Descripción (opcional)</Label>
               <Textarea id="fw-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
             </div>
+
             <div className="space-y-2">
-              <Label>Plantilla</Label>
+              <Label>Tipo de framework</Label>
               <div className="grid grid-cols-1 gap-2">
-                {FRAMEWORK_TEMPLATES.map((t) => (
-                  <TemplateOption
-                    key={t.id}
-                    template={t}
-                    selected={templateId === t.id}
-                    onSelect={() => setTemplateId(t.id)}
-                  />
+                {FRAMEWORK_MOLDS.map((m) => (
+                  <MoldOption key={m.kind} mold={m} selected={moldKind === m.kind} onSelect={() => setMoldKind(m.kind)} />
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setMoldKind('legacy_matrix')}
+                  className={cn(
+                    'border rounded-md p-3 text-left transition-all hover:border-primary/50',
+                    moldKind === 'legacy_matrix' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border',
+                  )}
+                >
+                  <p className="font-semibold text-sm">Matriz clásica (Ángulo × Formato × Hook)</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Genera todas las combinaciones automáticamente. Útil para tests amplios.</p>
+                </button>
               </div>
             </div>
+
+            {moldKind === 'legacy_matrix' && (
+              <div className="space-y-2">
+                <Label>Plantilla base</Label>
+                <div className="grid grid-cols-1 gap-2">
+                  {FRAMEWORK_TEMPLATES.map((t) => (
+                    <TemplateOption
+                      key={t.id}
+                      template={t}
+                      selected={templateId === t.id}
+                      onSelect={() => setTemplateId(t.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
