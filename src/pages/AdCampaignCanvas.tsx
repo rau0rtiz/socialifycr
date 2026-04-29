@@ -9,7 +9,7 @@ import {
   Calendar as CalendarIcon, LayoutGrid, Columns3, Plus, Check, X, Trash2, Grid3x3,
 } from 'lucide-react';
 import { CampaignProgressHeader } from '@/components/ad-frameworks/CampaignProgressHeader';
-import { AngleSectionBoard } from '@/components/ad-frameworks/AngleSectionBoard';
+import { AngleColumnsBoard } from '@/components/ad-frameworks/AngleColumnsBoard';
 import { GalleryView } from '@/components/ad-frameworks/GalleryView';
 import { useAdFramework } from '@/hooks/use-ad-frameworks';
 import { useAdCampaign, useSyncCampaignVariants } from '@/hooks/use-ad-campaigns';
@@ -179,7 +179,7 @@ const AdCampaignCanvas = () => {
           </Card>
         ) : view === 'matrix' ? (
           hasHooks ? (
-            <AngleSectionBoard
+            <AngleColumnsBoard
               angles={angles}
               formats={formats}
               hooks={hooks}
