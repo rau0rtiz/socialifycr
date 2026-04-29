@@ -17,6 +17,8 @@ import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { FRAMEWORK_TEMPLATES, type FrameworkTemplate } from '@/lib/framework-templates';
+import { FRAMEWORK_MOLDS, type FrameworkMold } from '@/lib/framework-molds';
+import type { TemplateKind } from '@/hooks/use-ad-frameworks';
 
 const AdFrameworks = () => {
   const navigate = useNavigate();
