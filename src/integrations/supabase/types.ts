@@ -2109,6 +2109,7 @@ export type Database = {
           html_content: string
           id: string
           name: string
+          opened_count: number
           recipients_snapshot: Json | null
           scheduled_at: string | null
           scheduled_for: string | null
@@ -2130,6 +2131,7 @@ export type Database = {
           html_content?: string
           id?: string
           name: string
+          opened_count?: number
           recipients_snapshot?: Json | null
           scheduled_at?: string | null
           scheduled_for?: string | null
@@ -2151,6 +2153,7 @@ export type Database = {
           html_content?: string
           id?: string
           name?: string
+          opened_count?: number
           recipients_snapshot?: Json | null
           scheduled_at?: string | null
           scheduled_for?: string | null
@@ -3321,6 +3324,7 @@ export type Database = {
       sent_emails: {
         Row: {
           attachments_meta: Json | null
+          campaign_id: string | null
           client_id: string | null
           created_at: string
           error_message: string | null
@@ -3339,6 +3343,7 @@ export type Database = {
         }
         Insert: {
           attachments_meta?: Json | null
+          campaign_id?: string | null
           client_id?: string | null
           created_at?: string
           error_message?: string | null
@@ -3357,6 +3362,7 @@ export type Database = {
         }
         Update: {
           attachments_meta?: Json | null
+          campaign_id?: string | null
           client_id?: string | null
           created_at?: string
           error_message?: string | null
@@ -3374,6 +3380,13 @@ export type Database = {
           subject?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sent_emails_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sent_emails_client_id_fkey"
             columns: ["client_id"]
