@@ -11,6 +11,7 @@ import {
 import { CampaignProgressHeader } from '@/components/ad-frameworks/CampaignProgressHeader';
 import { AngleColumnsBoard } from '@/components/ad-frameworks/AngleColumnsBoard';
 import { GalleryView } from '@/components/ad-frameworks/GalleryView';
+import { MoldRouter } from '@/components/ad-frameworks/molds/MoldRouter';
 import { useAdFramework } from '@/hooks/use-ad-frameworks';
 import { useAdCampaign, useSyncCampaignVariants } from '@/hooks/use-ad-campaigns';
 import {
