@@ -135,13 +135,14 @@ const AdCampaignCanvas = () => {
               <h1 className="text-2xl font-bold">{campaign.name}</h1>
               {campaign.description && <p className="text-muted-foreground text-sm mt-1">{campaign.description}</p>}
               <p className="text-xs text-muted-foreground mt-2">
-                {actualTotal} de {expectedTotal} variantes · {angles.length} ángulos × {formats.length} formatos{hasHooks ? ` × ${hooks.length} hooks` : ''}
+                {angles.length} ángulos × {formats.length} formatos{hasHooks ? ` × ${hooks.length} hooks` : ''}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               {/* View switcher */}
               <div className="inline-flex items-center rounded-md border p-0.5 bg-muted/40">
-                <ViewBtn active={view === 'matrix'} onClick={() => setView('matrix')} icon={LayoutGrid} label="Matriz" />
+                <ViewBtn active={view === 'matrix'} onClick={() => setView('matrix')} icon={LayoutGrid} label="Board" />
+                <ViewBtn active={view === 'gallery'} onClick={() => setView('gallery')} icon={Grid3x3} label="Galería" />
                 <ViewBtn active={view === 'kanban'} onClick={() => setView('kanban')} icon={Columns3} label="Kanban" />
                 <ViewBtn active={view === 'calendar'} onClick={() => setView('calendar')} icon={CalendarIcon} label="Calendario" />
               </div>
@@ -165,23 +166,67 @@ const AdCampaignCanvas = () => {
           </div>
         </div>
 
+        {/* Progreso global siempre visible */}
+        <CampaignProgressHeader
+          variants={variants ?? []}
+          expectedTotal={expectedTotal}
+          angles={angles}
+        />
+
         {angles.length === 0 || formats.length === 0 ? (
           <Card className="p-8 text-center text-sm text-muted-foreground">
             El framework no tiene todas las dimensiones configuradas.
           </Card>
         ) : view === 'matrix' ? (
-          <MatrixView
+          hasHooks ? (
+            <AngleSectionBoard
+              angles={angles}
+              formats={formats}
+              hooks={hooks}
+              variantMap={variantMap}
+              renderVariant={(v) => {
+                const angle = framework.dimensions.find((d: any) => d.id === v.angle_id);
+                return (
+                  <VariantCard
+                    variant={v}
+                    angleColor={angle?.color}
+                    onClick={() => {
+                      if (selectMode) toggleSelect(v.id);
+                      else setSelectedVariantId(v.id);
+                    }}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(v.id)}
+                  />
+                );
+              }}
+              onCreateMissing={() => campaignId && sync.mutate(campaignId)}
+              syncPending={sync.isPending}
+            />
+          ) : (
+            <MatrixView
+              angles={angles}
+              formats={formats}
+              hooks={hooks}
+              variantMap={variantMap}
+              campaignId={campaignId!}
+              onOpenVariant={setSelectedVariantId}
+              selectMode={selectMode}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onSync={() => campaignId && sync.mutate(campaignId)}
+              syncPending={sync.isPending}
+            />
+          )
+        ) : view === 'gallery' ? (
+          <GalleryView
+            variants={variants ?? []}
             angles={angles}
             formats={formats}
             hooks={hooks}
-            variantMap={variantMap}
-            campaignId={campaignId!}
             onOpenVariant={setSelectedVariantId}
             selectMode={selectMode}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
-            onSync={() => campaignId && sync.mutate(campaignId)}
-            syncPending={sync.isPending}
           />
         ) : view === 'kanban' ? (
           <KanbanView
