@@ -17,6 +17,8 @@ import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { FRAMEWORK_TEMPLATES, type FrameworkTemplate } from '@/lib/framework-templates';
+import { FRAMEWORK_MOLDS, type FrameworkMold } from '@/lib/framework-molds';
+import type { TemplateKind } from '@/hooks/use-ad-frameworks';
 
 const AdFrameworks = () => {
   const navigate = useNavigate();
@@ -27,21 +29,38 @@ const AdFrameworks = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [moldKind, setMoldKind] = useState<TemplateKind | 'legacy_matrix'>('pool');
   const [templateId, setTemplateId] = useState<string>('blank');
   const [toDelete, setToDelete] = useState<AdFrameworkWithDimensions | null>(null);
 
   const handleCreate = async () => {
     if (!name.trim()) return;
-    const tmpl = FRAMEWORK_TEMPLATES.find((t) => t.id === templateId);
+
+    if (moldKind === 'legacy_matrix') {
+      const tmpl = FRAMEWORK_TEMPLATES.find((t) => t.id === templateId);
+      const fw = await createFramework.mutateAsync({
+        name: name.trim(),
+        description: description.trim() || undefined,
+        template_kind: 'legacy_matrix',
+        template: tmpl && tmpl.id !== 'blank'
+          ? { angles: tmpl.angles, formats: tmpl.formats, hooks: tmpl.hooks }
+          : undefined,
+      });
+      setCreateOpen(false);
+      setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('pool');
+      if (fw) navigate(`/ad-frameworks/${fw.id}`);
+      return;
+    }
+
+    const mold = FRAMEWORK_MOLDS.find((m) => m.kind === moldKind);
     const fw = await createFramework.mutateAsync({
       name: name.trim(),
       description: description.trim() || undefined,
-      template: tmpl && tmpl.id !== 'blank'
-        ? { angles: tmpl.angles, formats: tmpl.formats, hooks: tmpl.hooks }
-        : undefined,
+      template_kind: moldKind,
+      mold_dimensions: mold?.defaultDimensions ?? [],
     });
     setCreateOpen(false);
-    setName(''); setDescription(''); setTemplateId('blank');
+    setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('pool');
     if (fw) navigate(`/ad-frameworks/${fw.id}`);
   };
 
@@ -93,33 +112,56 @@ const AdFrameworks = () => {
       </div>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nuevo framework</DialogTitle>
-            <DialogDescription>Elige una plantilla para arrancar más rápido (después puedes editar todo).</DialogDescription>
+            <DialogDescription>Elige el tipo de flujo que mejor representa cómo planificas tus anuncios.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="fw-name">Nombre</Label>
-              <Input id="fw-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Ad Framework v2" autoFocus />
+              <Input id="fw-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej: Lanzamiento Masterclass Q2" autoFocus />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="fw-desc">Descripción (opcional)</Label>
               <Textarea id="fw-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
             </div>
+
             <div className="space-y-2">
-              <Label>Plantilla</Label>
+              <Label>Tipo de framework</Label>
               <div className="grid grid-cols-1 gap-2">
-                {FRAMEWORK_TEMPLATES.map((t) => (
-                  <TemplateOption
-                    key={t.id}
-                    template={t}
-                    selected={templateId === t.id}
-                    onSelect={() => setTemplateId(t.id)}
-                  />
+                {FRAMEWORK_MOLDS.map((m) => (
+                  <MoldOption key={m.kind} mold={m} selected={moldKind === m.kind} onSelect={() => setMoldKind(m.kind)} />
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setMoldKind('legacy_matrix')}
+                  className={cn(
+                    'border rounded-md p-3 text-left transition-all hover:border-primary/50',
+                    moldKind === 'legacy_matrix' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border',
+                  )}
+                >
+                  <p className="font-semibold text-sm">Matriz clásica (Ángulo × Formato × Hook)</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Genera todas las combinaciones automáticamente. Útil para tests amplios.</p>
+                </button>
               </div>
             </div>
+
+            {moldKind === 'legacy_matrix' && (
+              <div className="space-y-2">
+                <Label>Plantilla base</Label>
+                <div className="grid grid-cols-1 gap-2">
+                  {FRAMEWORK_TEMPLATES.map((t) => (
+                    <TemplateOption
+                      key={t.id}
+                      template={t}
+                      selected={templateId === t.id}
+                      onSelect={() => setTemplateId(t.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
@@ -180,6 +222,36 @@ const TemplateOption = ({ template, selected, onSelect }: { template: FrameworkT
             {template.angles.length}×{template.formats.length}×{template.hooks.length} = {total}
           </Badge>
         )}
+      </div>
+    </button>
+  );
+};
+
+const MoldOption = ({ mold, selected, onSelect }: { mold: FrameworkMold; selected: boolean; onSelect: () => void }) => {
+  const Icon = mold.icon;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        'border rounded-md p-3 text-left transition-all hover:border-primary/50',
+        selected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border',
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className="h-9 w-9 rounded-md flex items-center justify-center shrink-0"
+          style={{ backgroundColor: `hsl(${mold.accentColor} / 0.15)`, color: `hsl(${mold.accentColor})` }}
+        >
+          <Icon className="h-4.5 w-4.5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-sm">{mold.name}</p>
+            <Badge variant="secondary" className="text-[10px] shrink-0">{mold.tagline}</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">{mold.description}</p>
+        </div>
       </div>
     </button>
   );
