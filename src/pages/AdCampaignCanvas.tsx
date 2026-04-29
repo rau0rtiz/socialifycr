@@ -6,8 +6,11 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   ArrowLeft, RefreshCw, Paperclip, Image as ImageIcon, Film, GalleryHorizontal,
-  Calendar as CalendarIcon, LayoutGrid, Columns3, Plus, Check, X, Trash2,
+  Calendar as CalendarIcon, LayoutGrid, Columns3, Plus, Check, X, Trash2, Grid3x3,
 } from 'lucide-react';
+import { CampaignProgressHeader } from '@/components/ad-frameworks/CampaignProgressHeader';
+import { AngleSectionBoard } from '@/components/ad-frameworks/AngleSectionBoard';
+import { GalleryView } from '@/components/ad-frameworks/GalleryView';
 import { useAdFramework } from '@/hooks/use-ad-frameworks';
 import { useAdCampaign, useSyncCampaignVariants } from '@/hooks/use-ad-campaigns';
 import {
