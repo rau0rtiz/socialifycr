@@ -70,6 +70,7 @@ export type Database = {
           framework_id: string
           id: string
           label: string
+          metadata: Json
           position: number
           updated_at: string
         }
@@ -81,6 +82,7 @@ export type Database = {
           framework_id: string
           id?: string
           label: string
+          metadata?: Json
           position?: number
           updated_at?: string
         }
@@ -92,6 +94,7 @@ export type Database = {
           framework_id?: string
           id?: string
           label?: string
+          metadata?: Json
           position?: number
           updated_at?: string
         }
@@ -168,6 +171,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          template_kind: string
           updated_at: string
         }
         Insert: {
@@ -176,6 +180,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          template_kind?: string
           updated_at?: string
         }
         Update: {
@@ -184,75 +189,98 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          template_kind?: string
           updated_at?: string
         }
         Relationships: []
       }
       ad_variants: {
         Row: {
-          angle_id: string
+          angle_id: string | null
           assets: Json
           assigned_to: string | null
+          awareness_level_id: string | null
           campaign_id: string
           copy: string | null
+          core_message_id: string | null
           created_at: string
           creative_type: string | null
           cta: string | null
           due_date: string | null
-          format_id: string
+          format_id: string | null
           hook_id: string | null
           hook_text: string | null
           id: string
           notes: string | null
+          phase_id: string | null
+          position: number
           script: string | null
           slides: Json
           status: string
+          title: string | null
           updated_at: string
         }
         Insert: {
-          angle_id: string
+          angle_id?: string | null
           assets?: Json
           assigned_to?: string | null
+          awareness_level_id?: string | null
           campaign_id: string
           copy?: string | null
+          core_message_id?: string | null
           created_at?: string
           creative_type?: string | null
           cta?: string | null
           due_date?: string | null
-          format_id: string
+          format_id?: string | null
           hook_id?: string | null
           hook_text?: string | null
           id?: string
           notes?: string | null
+          phase_id?: string | null
+          position?: number
           script?: string | null
           slides?: Json
           status?: string
+          title?: string | null
           updated_at?: string
         }
         Update: {
-          angle_id?: string
+          angle_id?: string | null
           assets?: Json
           assigned_to?: string | null
+          awareness_level_id?: string | null
           campaign_id?: string
           copy?: string | null
+          core_message_id?: string | null
           created_at?: string
           creative_type?: string | null
           cta?: string | null
           due_date?: string | null
-          format_id?: string
+          format_id?: string | null
           hook_id?: string | null
           hook_text?: string | null
           id?: string
           notes?: string | null
+          phase_id?: string | null
+          position?: number
           script?: string | null
           slides?: Json
           status?: string
+          title?: string | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "ad_variants_angle_id_fkey"
             columns: ["angle_id"]
+            isOneToOne: false
+            referencedRelation: "ad_framework_dimensions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_variants_awareness_level_id_fkey"
+            columns: ["awareness_level_id"]
             isOneToOne: false
             referencedRelation: "ad_framework_dimensions"
             referencedColumns: ["id"]
@@ -265,6 +293,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ad_variants_core_message_id_fkey"
+            columns: ["core_message_id"]
+            isOneToOne: false
+            referencedRelation: "ad_framework_dimensions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ad_variants_format_id_fkey"
             columns: ["format_id"]
             isOneToOne: false
@@ -274,6 +309,13 @@ export type Database = {
           {
             foreignKeyName: "ad_variants_hook_id_fkey"
             columns: ["hook_id"]
+            isOneToOne: false
+            referencedRelation: "ad_framework_dimensions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_variants_phase_id_fkey"
+            columns: ["phase_id"]
             isOneToOne: false
             referencedRelation: "ad_framework_dimensions"
             referencedColumns: ["id"]
