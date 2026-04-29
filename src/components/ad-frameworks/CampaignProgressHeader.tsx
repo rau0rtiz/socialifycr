@@ -95,7 +95,7 @@ export const CampaignProgressHeader = ({ variants, expectedTotal, angles }: Prop
       </div>
 
       {/* Progreso por ángulo */}
-      {byAngle.length > 0 && (
+      {byAngle.length > 1 && (
         <div className="mt-4 pt-4 border-t border-border/60">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
             Progreso por ángulo
