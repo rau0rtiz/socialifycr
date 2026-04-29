@@ -3,12 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-export type DimensionType = 'angle' | 'format' | 'hook';
+export type DimensionType = 'angle' | 'format' | 'hook' | 'phase' | 'awareness_level' | 'core_message' | 'content_type';
+export type TemplateKind = 'pool' | 'awareness' | 'launch' | 'legacy_matrix';
 
 export interface AdFramework {
   id: string;
   name: string;
   description: string | null;
+  template_kind: TemplateKind;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -22,6 +24,7 @@ export interface AdFrameworkDimension {
   description: string | null;
   color: string | null;
   position: number;
+  metadata: Record<string, any>;
 }
 
 export interface AdFrameworkWithDimensions extends AdFramework {
