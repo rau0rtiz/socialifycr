@@ -114,6 +114,25 @@ serve(async (req) => {
 
       await Promise.allSettled(
         batch.map(async (contact) => {
+          // Pre-create sent_emails row so we can embed the tracking pixel BEFORE sending
+          const personalizedSubject = campaign.subject
+            .replace(/\{\{name\}\}/g, contact.full_name || "")
+            .replace(/\{\{email\}\}/g, contact.email);
+
+          let basePersonalizedHtml = campaign.html_content
+            .replace(/\{\{name\}\}/g, contact.full_name || "")
+            .replace(/\{\{email\}\}/g, contact.email);
+
+          const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
+            recipient_email: contact.email,
+            recipient_name: contact.full_name || null,
+            subject: personalizedSubject,
+            source: "campaign",
+            status: "pending",
+            client_id: campaign.client_id,
+            campaign_id,
+          }).select("id").single();
+
           try {
             if (await isEmailSuppressed(supabaseAdmin, contact.email)) {
               await supabaseAdmin.from("email_send_logs").insert({
@@ -122,19 +141,28 @@ serve(async (req) => {
                 status: "skipped",
                 error_message: "suppressed",
               });
+              if (emailRecord?.id) {
+                await supabaseAdmin.from("sent_emails").update({
+                  status: "failed",
+                  error_message: "suppressed",
+                }).eq("id", emailRecord.id);
+              }
               return;
             }
 
-            let personalizedHtml = campaign.html_content
-              .replace(/\{\{name\}\}/g, contact.full_name || "")
-              .replace(/\{\{email\}\}/g, contact.email);
-
-            const personalizedSubject = campaign.subject
-              .replace(/\{\{name\}\}/g, contact.full_name || "")
-              .replace(/\{\{email\}\}/g, contact.email);
-
             const unsubUrl = await generateUnsubscribeUrl(supabaseAdmin, contact.email);
-            personalizedHtml = injectFooter(personalizedHtml, buildUnsubscribeFooter(unsubUrl));
+            let personalizedHtml = injectFooter(basePersonalizedHtml, buildUnsubscribeFooter(unsubUrl));
+
+            // Inject tracking pixel BEFORE sending so opens are tracked
+            if (emailRecord?.id) {
+              const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
+              const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+              if (/<\/body>/i.test(personalizedHtml)) {
+                personalizedHtml = personalizedHtml.replace(/<\/body>/i, `${pixel}</body>`);
+              } else {
+                personalizedHtml = personalizedHtml + pixel;
+              }
+            }
 
             const res = await fetch("https://api.resend.com/emails", {
               method: "POST",
@@ -161,21 +189,12 @@ serve(async (req) => {
               sent_at: new Date().toISOString(),
             });
 
-            const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
-              recipient_email: contact.email,
-              recipient_name: contact.full_name || null,
-              subject: personalizedSubject,
-              html_content: personalizedHtml,
-              source: "campaign",
-              status: "sent",
-              resend_id: resData.id,
-              client_id: campaign.client_id,
-            }).select("id").single();
-
             if (emailRecord?.id) {
-              const pixelUrl = `${SUPABASE_URL}/functions/v1/track-email-open?id=${emailRecord.id}`;
-              const trackedHtml = personalizedHtml + `<img src="${pixelUrl}" width="1" height="1" style="display:none" alt="" />`;
-              await supabaseAdmin.from("sent_emails").update({ html_content: trackedHtml }).eq("id", emailRecord.id);
+              await supabaseAdmin.from("sent_emails").update({
+                status: "sent",
+                resend_id: resData.id,
+                html_content: personalizedHtml,
+              }).eq("id", emailRecord.id);
             }
 
             sentCount++;
@@ -187,15 +206,12 @@ serve(async (req) => {
               error_message: err.message,
             });
 
-            await supabaseAdmin.from("sent_emails").insert({
-              recipient_email: contact.email,
-              recipient_name: contact.full_name || null,
-              subject: campaign.subject,
-              source: "campaign",
-              status: "failed",
-              error_message: err.message,
-              client_id: campaign.client_id,
-            });
+            if (emailRecord?.id) {
+              await supabaseAdmin.from("sent_emails").update({
+                status: "failed",
+                error_message: err.message,
+              }).eq("id", emailRecord.id);
+            }
 
             failedCount++;
           }
