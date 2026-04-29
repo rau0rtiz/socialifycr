@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarClock, Send, CheckCircle2, AlertCircle, Trash2, X, FileText, Users, Plus, Eye } from 'lucide-react';
+import { CalendarClock, Send, CheckCircle2, AlertCircle, Trash2, X, FileText, Users, Plus, Eye, MailOpen } from 'lucide-react';
 import { useEmailCampaigns, useCancelScheduledCampaign, useDeleteCampaign, type EmailCampaign } from '@/hooks/use-email-campaigns';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { SendCampaignDialog } from './SendCampaignDialog';
+import { CampaignOpenersDialog } from './CampaignOpenersDialog';
 
 const statusConfig: Record<EmailCampaign['status'], { label: string; color: string; icon: React.ElementType }> = {
   draft:     { label: 'Borrador',  color: 'bg-muted text-muted-foreground border-border',           icon: FileText },
@@ -35,6 +36,7 @@ const CampaignsContent = () => {
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [previewCampaign, setPreviewCampaign] = useState<EmailCampaign | null>(null);
+  const [openersCampaign, setOpenersCampaign] = useState<EmailCampaign | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
 
   const sorted = campaigns ? (() => {
@@ -128,10 +130,26 @@ const CampaignsContent = () => {
                           {(c.failed_count ?? 0) > 0 && <span className="text-destructive"> · ✕ {c.failed_count}</span>}
                         </span>
                       )}
+                      {c.status === 'sent' && (c.sent_count ?? 0) > 0 && (
+                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                          <MailOpen className="h-3 w-3" />
+                          {Math.round(((c.opened_count ?? 0) / (c.sent_count || 1)) * 100)}% abierto · {c.opened_count ?? 0}/{c.sent_count}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    {c.status === 'sent' && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 text-xs gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
+                        onClick={(e) => { e.stopPropagation(); setOpenersCampaign(c); }}
+                      >
+                        <MailOpen className="h-3.5 w-3.5" /> Aperturas
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="ghost"
@@ -276,6 +294,12 @@ const CampaignsContent = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <CampaignOpenersDialog
+        campaignId={openersCampaign?.id ?? null}
+        campaignName={openersCampaign?.name}
+        onOpenChange={(o) => !o && setOpenersCampaign(null)}
+      />
     </div>
   );
 };

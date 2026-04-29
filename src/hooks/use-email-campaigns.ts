@@ -15,6 +15,7 @@ export interface EmailCampaign {
   total_recipients: number | null;
   sent_count: number | null;
   failed_count: number | null;
+  opened_count: number | null;
   scheduled_for: string | null;
   scheduled_at: string | null;
   sent_at: string | null;
