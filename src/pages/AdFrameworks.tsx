@@ -227,7 +227,35 @@ const TemplateOption = ({ template, selected, onSelect }: { template: FrameworkT
   );
 };
 
-const FrameworkCard = ({ fw, onOpen, onDelete }: { fw: AdFrameworkWithDimensions; onOpen: () => void; onDelete?: () => void }) => {
+const MoldOption = ({ mold, selected, onSelect }: { mold: FrameworkMold; selected: boolean; onSelect: () => void }) => {
+  const Icon = mold.icon;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        'border rounded-md p-3 text-left transition-all hover:border-primary/50',
+        selected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border',
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className="h-9 w-9 rounded-md flex items-center justify-center shrink-0"
+          style={{ backgroundColor: `hsl(${mold.accentColor} / 0.15)`, color: `hsl(${mold.accentColor})` }}
+        >
+          <Icon className="h-4.5 w-4.5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-sm">{mold.name}</p>
+            <Badge variant="secondary" className="text-[10px] shrink-0">{mold.tagline}</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">{mold.description}</p>
+        </div>
+      </div>
+    </button>
+  );
+};
   const angles = fw.dimensions.filter((d) => d.dimension_type === 'angle');
   const formats = fw.dimensions.filter((d) => d.dimension_type === 'format');
   const hooks = fw.dimensions.filter((d) => d.dimension_type === 'hook');
