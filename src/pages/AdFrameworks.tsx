@@ -29,21 +29,38 @@ const AdFrameworks = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [moldKind, setMoldKind] = useState<TemplateKind | 'legacy_matrix'>('pool');
   const [templateId, setTemplateId] = useState<string>('blank');
   const [toDelete, setToDelete] = useState<AdFrameworkWithDimensions | null>(null);
 
   const handleCreate = async () => {
     if (!name.trim()) return;
-    const tmpl = FRAMEWORK_TEMPLATES.find((t) => t.id === templateId);
+
+    if (moldKind === 'legacy_matrix') {
+      const tmpl = FRAMEWORK_TEMPLATES.find((t) => t.id === templateId);
+      const fw = await createFramework.mutateAsync({
+        name: name.trim(),
+        description: description.trim() || undefined,
+        template_kind: 'legacy_matrix',
+        template: tmpl && tmpl.id !== 'blank'
+          ? { angles: tmpl.angles, formats: tmpl.formats, hooks: tmpl.hooks }
+          : undefined,
+      });
+      setCreateOpen(false);
+      setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('pool');
+      if (fw) navigate(`/ad-frameworks/${fw.id}`);
+      return;
+    }
+
+    const mold = FRAMEWORK_MOLDS.find((m) => m.kind === moldKind);
     const fw = await createFramework.mutateAsync({
       name: name.trim(),
       description: description.trim() || undefined,
-      template: tmpl && tmpl.id !== 'blank'
-        ? { angles: tmpl.angles, formats: tmpl.formats, hooks: tmpl.hooks }
-        : undefined,
+      template_kind: moldKind,
+      mold_dimensions: mold?.defaultDimensions ?? [],
     });
     setCreateOpen(false);
-    setName(''); setDescription(''); setTemplateId('blank');
+    setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('pool');
     if (fw) navigate(`/ad-frameworks/${fw.id}`);
   };
 
