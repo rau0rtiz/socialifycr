@@ -294,6 +294,12 @@ const CampaignsContent = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <CampaignOpenersDialog
+        campaignId={openersCampaign?.id ?? null}
+        campaignName={openersCampaign?.name}
+        onOpenChange={(o) => !o && setOpenersCampaign(null)}
+      />
     </div>
   );
 };
