@@ -135,7 +135,7 @@ const AdCampaignCanvas = () => {
               <h1 className="text-2xl font-bold">{campaign.name}</h1>
               {campaign.description && <p className="text-muted-foreground text-sm mt-1">{campaign.description}</p>}
               <p className="text-xs text-muted-foreground mt-2">
-                {angles.length} ángulos × {formats.length} formatos{hasHooks ? ` × ${hooks.length} hooks` : ''}
+                {angles.length > 1 ? `${angles.length} ángulos × ` : ''}{formats.length} formatos{hasHooks ? ` × ${hooks.length} hooks` : ''}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
