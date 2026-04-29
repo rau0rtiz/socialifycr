@@ -256,6 +256,8 @@ const MoldOption = ({ mold, selected, onSelect }: { mold: FrameworkMold; selecte
     </button>
   );
 };
+
+const FrameworkCard = ({ fw, onOpen, onDelete }: { fw: AdFrameworkWithDimensions; onOpen: () => void; onDelete?: () => void }) => {
   const angles = fw.dimensions.filter((d) => d.dimension_type === 'angle');
   const formats = fw.dimensions.filter((d) => d.dimension_type === 'format');
   const hooks = fw.dimensions.filter((d) => d.dimension_type === 'hook');
