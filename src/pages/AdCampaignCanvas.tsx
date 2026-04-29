@@ -52,7 +52,7 @@ const STATUS_META: Record<VariantStatus, { label: string; cls: string; dotCls: s
 
 const STATUS_ORDER: VariantStatus[] = ['draft', 'in_progress', 'ready', 'published'];
 
-type ViewMode = 'matrix' | 'kanban' | 'calendar';
+type ViewMode = 'matrix' | 'gallery' | 'kanban' | 'calendar';
 
 const AdCampaignCanvas = () => {
   const { id, campaignId } = useParams<{ id: string; campaignId: string }>();
