@@ -174,7 +174,14 @@ const AdCampaignCanvas = () => {
           angles={angles}
         />
 
-        {angles.length === 0 || formats.length === 0 ? (
+        {framework.template_kind && framework.template_kind !== 'legacy_matrix' ? (
+          <MoldRouter
+            framework={framework}
+            campaignId={campaignId!}
+            variants={variants ?? []}
+            onOpenVariant={setSelectedVariantId}
+          />
+        ) : angles.length === 0 || formats.length === 0 ? (
           <Card className="p-8 text-center text-sm text-muted-foreground">
             El framework no tiene todas las dimensiones configuradas.
           </Card>
