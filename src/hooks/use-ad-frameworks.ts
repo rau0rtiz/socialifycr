@@ -3,12 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-export type DimensionType = 'angle' | 'format' | 'hook';
+export type DimensionType = 'angle' | 'format' | 'hook' | 'phase' | 'awareness_level' | 'core_message' | 'content_type';
+export type TemplateKind = 'pool' | 'awareness' | 'launch' | 'legacy_matrix';
 
 export interface AdFramework {
   id: string;
   name: string;
   description: string | null;
+  template_kind: TemplateKind;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -22,6 +24,7 @@ export interface AdFrameworkDimension {
   description: string | null;
   color: string | null;
   position: number;
+  metadata: Record<string, any>;
 }
 
 export interface AdFrameworkWithDimensions extends AdFramework {
@@ -110,18 +113,58 @@ export interface CreateFrameworkDimensions {
   hooks?: { label: string; color?: string }[];
 }
 
+export interface CreateMoldDimension {
+  dimension_type: DimensionType;
+  label: string;
+  color?: string;
+  description?: string;
+  metadata?: Record<string, any>;
+}
+
 export const useCreateAdFramework = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (input: { name: string; description?: string; template?: CreateFrameworkDimensions }) => {
+    mutationFn: async (input: {
+      name: string;
+      description?: string;
+      template_kind?: TemplateKind;
+      template?: CreateFrameworkDimensions;
+      // For mold-based creation (pool/awareness/launch), provide a flat list of dimensions:
+      mold_dimensions?: CreateMoldDimension[];
+    }) => {
       const { data, error } = await supabase
         .from('ad_frameworks')
-        .insert({ name: input.name, description: input.description ?? null, created_by: user?.id ?? null })
+        .insert({
+          name: input.name,
+          description: input.description ?? null,
+          template_kind: input.template_kind ?? 'legacy_matrix',
+          created_by: user?.id ?? null,
+        })
         .select()
         .single();
       if (error) throw error;
 
+      // Mold-based dimensions (used for pool, awareness, launch)
+      if (input.mold_dimensions && input.mold_dimensions.length > 0) {
+        const positions: Record<string, number> = {};
+        const rows = input.mold_dimensions.map((d) => {
+          positions[d.dimension_type] = (positions[d.dimension_type] ?? -1) + 1;
+          return {
+            framework_id: data.id,
+            dimension_type: d.dimension_type,
+            label: d.label,
+            color: d.color ?? null,
+            description: d.description ?? null,
+            metadata: d.metadata ?? {},
+            position: positions[d.dimension_type],
+          };
+        });
+        const { error: dErr } = await supabase.from('ad_framework_dimensions').insert(rows);
+        if (dErr) throw dErr;
+      }
+
+      // Legacy matrix template
       const tmpl = input.template;
       if (tmpl) {
         const rows: any[] = [];

@@ -19,6 +19,10 @@ const DIMENSION_LABELS: Record<DimensionType, { title: string; hint: string }> =
   angle: { title: 'Ángulos', hint: 'El enfoque emocional / argumental del mensaje' },
   format: { title: 'Formatos', hint: 'Cómo se presenta visualmente el anuncio' },
   hook: { title: 'Hooks', hint: 'La línea de apertura que captura la atención' },
+  phase: { title: 'Fases', hint: 'Etapas de la secuencia (lanzamiento)' },
+  awareness_level: { title: 'Niveles de Awareness', hint: 'Niveles de consciencia del prospecto' },
+  core_message: { title: 'Mensajes centrales', hint: 'Mensaje principal dentro de un nivel' },
+  content_type: { title: 'Tipos de contenido', hint: 'Catálogo de formatos disponibles' },
 };
 
 interface Props {
