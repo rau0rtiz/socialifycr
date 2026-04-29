@@ -140,13 +140,15 @@ const AdCampaignCanvas = () => {
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              {/* View switcher */}
-              <div className="inline-flex items-center rounded-md border p-0.5 bg-muted/40">
-                <ViewBtn active={view === 'matrix'} onClick={() => setView('matrix')} icon={LayoutGrid} label="Board" />
-                <ViewBtn active={view === 'gallery'} onClick={() => setView('gallery')} icon={Grid3x3} label="Galería" />
-                <ViewBtn active={view === 'kanban'} onClick={() => setView('kanban')} icon={Columns3} label="Kanban" />
-                <ViewBtn active={view === 'calendar'} onClick={() => setView('calendar')} icon={CalendarIcon} label="Calendario" />
-              </div>
+              {/* View switcher — solo para legacy_matrix */}
+              {(!framework.template_kind || framework.template_kind === 'legacy_matrix') && (
+                <div className="inline-flex items-center rounded-md border p-0.5 bg-muted/40">
+                  <ViewBtn active={view === 'matrix'} onClick={() => setView('matrix')} icon={LayoutGrid} label="Board" />
+                  <ViewBtn active={view === 'gallery'} onClick={() => setView('gallery')} icon={Grid3x3} label="Galería" />
+                  <ViewBtn active={view === 'kanban'} onClick={() => setView('kanban')} icon={Columns3} label="Kanban" />
+                  <ViewBtn active={view === 'calendar'} onClick={() => setView('calendar')} icon={CalendarIcon} label="Calendario" />
+                </div>
+              )}
 
               <Button
                 variant={selectMode ? 'default' : 'outline'}
@@ -157,7 +159,7 @@ const AdCampaignCanvas = () => {
                 <Check className="h-3.5 w-3.5" /> {selectMode ? 'Salir de selección' : 'Seleccionar'}
               </Button>
 
-              {needsSync && campaignId && (
+              {needsSync && campaignId && (!framework.template_kind || framework.template_kind === 'legacy_matrix') && (
                 <Button onClick={() => sync.mutate(campaignId)} className="gap-2">
                   <RefreshCw className="h-4 w-4" /> Sincronizar
                   <Badge variant="secondary" className="ml-1 font-mono">+{missingCount}</Badge>
@@ -167,12 +169,14 @@ const AdCampaignCanvas = () => {
           </div>
         </div>
 
-        {/* Progreso global siempre visible */}
-        <CampaignProgressHeader
-          variants={variants ?? []}
-          expectedTotal={expectedTotal}
-          angles={angles}
-        />
+        {/* Progreso global solo para legacy_matrix */}
+        {(!framework.template_kind || framework.template_kind === 'legacy_matrix') && (
+          <CampaignProgressHeader
+            variants={variants ?? []}
+            expectedTotal={expectedTotal}
+            angles={angles}
+          />
+        )}
 
         {framework.template_kind && framework.template_kind !== 'legacy_matrix' ? (
           <MoldRouter
