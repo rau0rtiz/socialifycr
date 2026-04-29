@@ -1,54 +1,83 @@
-## Objetivo
+## Rediseño visual del Canvas de Campañas
 
-Ver, por cada campaña enviada, **quiénes abrieron el correo** y la tasa de apertura, dentro de la pestaña Campañas en `/comunicaciones`.
+El problema no es funcional sino de **percepción visual** y de **navegación**: hoy las pestañas por ángulo en frameworks 3D ocultan el todo, no hay un sentido global de "cuántos ads faltan producir", y la matriz se siente densa pero plana.
 
-## Diagnóstico actual
+### Cambios principales
 
-- `send-campaign` ya escribe a `sent_emails` (con `opened_at` y `source='campaign'`) y existe el endpoint `track-email-open` que actualiza `opened_at` cuando carga el pixel.
-- **Bug crítico**: el pixel se inyecta en el HTML *después* de enviar a Resend → el correo enviado nunca contiene el pixel, por eso nada se está marcando como abierto.
-- `sent_emails` no tiene `campaign_id`, así que hoy no se pueden vincular aperturas con su campaña directamente. Sí comparten `resend_id` con `email_send_logs`, pero filtrar por eso es frágil.
+**1. Header con barra de progreso global (siempre visible)**
+Reemplazar el contador `"X de Y variantes"` por un panel sticky con:
+- Barra de progreso grande (% de variantes en estado `ready` + `published`)
+- Mini-stats en línea: `🟦 12 Pendiente · 🟧 8 En progreso · 🟩 6 Listo · 🟦 4 Subido`
+- Conteo de fechas: `3 vencidas · 2 esta semana`
+- Esto da el "pulse" del proyecto de un vistazo, sin abrir nada.
 
-## Cambios
+**2. Eliminar pestañas en modo 3D — vista "Board" agrupada**
+En lugar de `Tabs` por ángulo, mostrar **todos los ángulos en una sola página apilados verticalmente**, cada ángulo como una "sección colapsable":
 
-### 1. Base de datos (migración)
-- Agregar columna `campaign_id uuid` (nullable, FK a `email_campaigns`) en `sent_emails`, con índice.
-- Agregar columna `opened_count int default 0` en `email_campaigns` para mostrar resumen rápido.
-- Backfill: para campañas ya enviadas, vincular `sent_emails.campaign_id` cruzando por `resend_id` con `email_send_logs`.
+```text
+▼ Ángulo: Dolor económico                    [12/18 listos] ████████░░
+   ┌─────────────────────────────────────────────────────┐
+   │            Hook 1   Hook 2   Hook 3   Hook 4        │
+   │   Reel    [card]   [card]   [card]   [card]         │
+   │   Foto    [card]   [card]   [card]   [card]         │
+   │   Carr.   [card]   [card]   [card]   [card]         │
+   └─────────────────────────────────────────────────────┘
 
-### 2. Edge function `send-campaign`
-- Crear primero el registro en `sent_emails` con `campaign_id` y `status='pending'`.
-- Construir el HTML personalizado **incluyendo el pixel `track-email-open?id=<sent_email_id>`** ANTES del fetch a Resend.
-- Después del envío, actualizar el registro a `sent` (con `resend_id`) o `failed`.
-- Esto deja el tracking funcionando real para nuevas campañas.
+▼ Ángulo: Aspiración                         [4/18 listos] ██░░░░░░░░
+   ...
+```
 
-### 3. UI — pestaña Campañas (`CampaignsContent.tsx`)
-En cada tarjeta de campaña enviada, agregar:
-- Badge con **% de apertura** (ej. `42% abierto · 21/50`).
-- Botón **"Ver aperturas"** que abre un diálogo nuevo.
+- Cada sección tiene su propia barra de progreso por ángulo (mini KPI).
+- Sección colapsable (clic en el header) para enfocarse en uno sin perder contexto.
+- Color del ángulo como banda izquierda de cada card y borde del header.
+- Una sola "Master view": scroll vertical en lugar de saltar entre tabs.
 
-Nuevo componente `CampaignOpenersDialog.tsx`:
-- Tabs: **Abiertos** | **No abiertos** | **Fallidos**.
-- Tabla con: nombre, email, fecha de envío, fecha de primera apertura.
-- Búsqueda por nombre/email.
-- Resumen arriba: enviados, abiertos, tasa de apertura, fallidos.
-- Botón exportar CSV.
+**3. Nueva vista "Galería" (reemplaza el sentir denso de la matriz)**
+Añadir un cuarto modo de vista junto a Matriz / Kanban / Calendario:
+- **Galería**: grid uniforme de cards más grandes (3-4 por fila), con thumbnail prominente del asset si existe (placeholder con ícono del formato si no).
+- Filtros encima: chips para ángulo, formato, estado, hook (multiselect rápido).
+- Es la vista para "ver todos los ads a producir" sin estructura matricial.
 
-### 4. Hook `use-campaign-openers.ts` (nuevo)
-- Query a `sent_emails` filtrada por `campaign_id`, devuelve `{recipient_email, recipient_name, status, opened_at, created_at}`.
-- Agregaciones para los contadores del diálogo.
+**4. Cards rediseñadas (más visuales, menos texto)**
+Cada `VariantCard`:
+- Thumbnail/preview del asset arriba (16:9 o 1:1) — placeholder gradiente con ícono grande del formato (Reel/Foto/Carrusel) cuando vacío.
+- Banda lateral de 3px con el color del ángulo.
+- Badge de estado como punto + texto en la esquina (no fondo completo).
+- Fecha (si existe) abajo en chip pequeño con color rojo/ámbar/normal según urgencia.
+- Hover: leve scale + sombra suave.
 
-## Consideraciones técnicas
+**5. Barra de progreso por dimensión (mini-KPIs)**
+Encima del board, una fila de mini-cards:
+- Una card por ángulo con su barra y `X/Y listos`
+- Permite identificar visualmente qué ángulo está más rezagado
 
-- El pixel solo cuenta una apertura por destinatario (la primera) — el endpoint actual ya lo asegura con `.is('opened_at', null)`.
-- Limitaciones reales del tracking por pixel: clientes que bloquean imágenes (Apple Mail Privacy Protection infla aperturas, Outlook empresarial puede bloquearlas). Lo dejaremos anotado en el diálogo como nota pequeña.
-- No tocar `email_send_logs` (queda como está, es el log interno por contacto).
-- Respetar RLS existente de `sent_emails`.
+### Detalles técnicos
 
-## Archivos
+**Archivos a modificar:**
+- `src/pages/AdCampaignCanvas.tsx`
+  - Extraer el header en un sub-componente `<CampaignHeader>` con la barra global y stats
+  - Reescribir `MatrixView` 3D: sustituir `Tabs` por `<AngleSection>` colapsable con `Collapsible` de shadcn
+  - Añadir `GalleryView` con `Card` grid + filtros multi-chip
+  - Añadir `view: 'gallery'` al `ViewMode` type y nuevo botón en `ViewBtn` switcher
+- `src/components/ad-frameworks/` (nuevos sub-componentes):
+  - `CampaignProgressHeader.tsx` — barra global + chips de stats + alerts
+  - `AngleSectionBoard.tsx` — sección colapsable por ángulo con su mini-tabla hooks×formatos
+  - `VariantCardV2.tsx` — card visual con thumbnail (reemplaza la actual cuando aplique)
+  - `GalleryView.tsx` — grid de cards + filtros
 
-- `supabase/migrations/<ts>_campaign_open_tracking.sql` (nuevo)
-- `supabase/functions/send-campaign/index.ts` (refactor del orden de envío + pixel)
-- `src/hooks/use-campaign-openers.ts` (nuevo)
-- `src/hooks/use-email-campaigns.ts` (añadir `opened_count` al tipo)
-- `src/components/comunicaciones/CampaignOpenersDialog.tsx` (nuevo)
-- `src/components/comunicaciones/CampaignsContent.tsx` (badge + botón "Ver aperturas")
+**Datos derivados (sin cambios DB):**
+- Calcular `progressByAngle` desde `variants` agrupando por `angle_id`
+- Calcular `dueDateStats` (overdue/this week) desde `variants.due_date`
+- Reusar `useAdVariants` existente, sin queries nuevas
+
+**Sin cambios en:**
+- Backend / migraciones / hooks de mutación
+- Vistas Kanban y Calendario (funcionan bien)
+- Vista Matrix 2D (ya es buena para 2 dimensiones según mencionaste)
+
+### Resumen de lo que verás
+
+- **Antes**: pestañas por ángulo → tabla densa → "¿dónde estoy?"
+- **Después**: scroll vertical con cada ángulo como sección visual con su propia barra de progreso → vista global del proyecto siempre arriba → opción de "Galería" para ver todos los ads como tarjetas grandes.
+
+¿Apruebo y procedo?
