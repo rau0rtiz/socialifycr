@@ -121,7 +121,9 @@ requestAnimationFrame(() => {
       window.__lovableRecoveryInProgress = false;
       try {
         sessionStorage.removeItem(MODULE_LOAD_RETRY_KEY);
-      } catch (_) {}
+      } catch (_) {
+        // Ignore browsers that block sessionStorage access.
+      }
     }
   });
 });
