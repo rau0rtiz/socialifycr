@@ -75,7 +75,7 @@ const MindCoachMasterclass = () => {
       mold_dimensions: mold?.defaultDimensions ?? [],
     });
     setCreateOpen(false);
-    setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('launch');
+    setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('pool');
     if (fw) navigate(`/ad-frameworks/${fw.id}`);
   };
 
