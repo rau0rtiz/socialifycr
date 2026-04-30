@@ -135,13 +135,14 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
 };
 
 const PhaseSection = ({
-  phase, phaseIndex, totalPhases, campaignId, variants, contentTypes, onOpenVariant,
+  phase, phaseIndex, totalPhases, campaignId, variants, tasks, contentTypes, onOpenVariant,
 }: {
   phase: AdFrameworkDimension;
   phaseIndex: number;
   totalPhases: number;
   campaignId: string;
   variants: AdVariant[];
+  tasks: import('@/hooks/use-launch-tasks').LaunchPhaseTask[];
   contentTypes: AdFrameworkDimension[];
   onOpenVariant: (id: string) => void;
 }) => {
