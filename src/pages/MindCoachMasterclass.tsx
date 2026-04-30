@@ -40,7 +40,7 @@ const MindCoachMasterclass = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [moldKind, setMoldKind] = useState<TemplateKind | 'legacy_matrix'>('launch');
+  const [moldKind, setMoldKind] = useState<TemplateKind | 'legacy_matrix'>('pool');
   const [templateId, setTemplateId] = useState<string>('blank');
   const [toDelete, setToDelete] = useState<AdFrameworkWithDimensions | null>(null);
 
@@ -61,7 +61,7 @@ const MindCoachMasterclass = () => {
           : undefined,
       });
       setCreateOpen(false);
-      setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('launch');
+      setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('pool');
       if (fw) navigate(`/ad-frameworks/${fw.id}`);
       return;
     }
@@ -75,7 +75,7 @@ const MindCoachMasterclass = () => {
       mold_dimensions: mold?.defaultDimensions ?? [],
     });
     setCreateOpen(false);
-    setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('launch');
+    setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('pool');
     if (fw) navigate(`/ad-frameworks/${fw.id}`);
   };
 
@@ -130,9 +130,7 @@ const MindCoachMasterclass = () => {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nuevo framework</DialogTitle>
-            <DialogDescription>
-              Este framework será exclusivo de {selectedClient?.name ?? 'este cliente'}. Elige el tipo de flujo que mejor representa cómo planificas tus anuncios.
-            </DialogDescription>
+            <DialogDescription>Elige el tipo de flujo que mejor representa cómo planificas tus anuncios.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
