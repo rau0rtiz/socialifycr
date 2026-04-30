@@ -154,7 +154,7 @@ const PhaseSection = ({
   const updateTask = useUpdateLaunchTask();
   const [addingType, setAddingType] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
-  const [sortMode, setSortMode] = useState<'manual' | 'date'>('manual');
+  const [sortMode, setSortMode] = useState<'manual' | 'date'>('date');
 
   const accent = phase.color ?? 'hsl(var(--primary))';
   const meta = (phase.metadata ?? {}) as any;
