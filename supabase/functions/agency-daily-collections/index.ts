@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 const RECIPIENTS = ['ale@socialifycr.com', 'raul@socialifycr.com'];
-const FROM = 'Finanzas Socialify <finanzas@notify.socialifycr.com>';
+const FROM = 'Raúl Ortiz <finanzas@notify.socialifycr.com>';
 
 const fmtMoney = (amount: number, currency: string) => {
   if (currency === 'CRC') return `₡${Math.round(amount).toLocaleString('es-CR')}`;
