@@ -2550,6 +2550,63 @@ export type Database = {
         }
         Relationships: []
       }
+      launch_phase_tasks: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          done: boolean
+          due_date: string | null
+          id: string
+          phase_id: string
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          done?: boolean
+          due_date?: string | null
+          id?: string
+          phase_id: string
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          done?: boolean
+          due_date?: string | null
+          id?: string
+          phase_id?: string
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "launch_phase_tasks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "launch_phase_tasks_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "ad_framework_dimensions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_reservations: {
         Row: {
           client_id: string
