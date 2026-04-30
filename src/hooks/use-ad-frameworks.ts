@@ -11,6 +11,7 @@ export interface AdFramework {
   name: string;
   description: string | null;
   template_kind: TemplateKind;
+  client_id: string | null; // null = agency-owned
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -33,14 +34,31 @@ export interface AdFrameworkWithDimensions extends AdFramework {
   variant_count?: number;
 }
 
-export const useAdFrameworks = () => {
+/**
+ * List frameworks.
+ * - scope='agency'  -> only frameworks where client_id IS NULL
+ * - scope='client'  -> only frameworks for the given clientId
+ * - scope='all' or undefined -> whatever RLS allows (legacy behavior)
+ */
+export const useAdFrameworks = (opts?: { scope?: 'agency' | 'client' | 'all'; clientId?: string | null }) => {
+  const scope = opts?.scope ?? 'all';
+  const clientId = opts?.clientId ?? null;
   return useQuery({
-    queryKey: ['ad-frameworks'],
+    queryKey: ['ad-frameworks', scope, clientId],
+    enabled: scope !== 'client' || !!clientId,
     queryFn: async () => {
-      const { data: frameworks, error } = await supabase
+      let q = supabase
         .from('ad_frameworks')
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (scope === 'agency') {
+        q = q.is('client_id', null);
+      } else if (scope === 'client' && clientId) {
+        q = q.eq('client_id', clientId);
+      }
+
+      const { data: frameworks, error } = await q;
       if (error) throw error;
 
       const ids = (frameworks ?? []).map((f) => f.id);
@@ -54,7 +72,8 @@ export const useAdFrameworks = () => {
           .order('position', { ascending: true }),
         supabase
           .from('ad_campaigns')
-          .select('id, framework_id'),
+          .select('id, framework_id')
+          .in('framework_id', ids),
       ]);
 
       const variantsByCampaign: Record<string, number> = {};
@@ -129,6 +148,7 @@ export const useCreateAdFramework = () => {
       name: string;
       description?: string;
       template_kind?: TemplateKind;
+      client_id?: string | null; // null/undefined = agency-owned
       template?: CreateFrameworkDimensions;
       // For mold-based creation (pool/awareness/launch), provide a flat list of dimensions:
       mold_dimensions?: CreateMoldDimension[];
@@ -139,6 +159,7 @@ export const useCreateAdFramework = () => {
           name: input.name,
           description: input.description ?? null,
           template_kind: input.template_kind ?? 'legacy_matrix',
+          client_id: input.client_id ?? null,
           created_by: user?.id ?? null,
         })
         .select()
