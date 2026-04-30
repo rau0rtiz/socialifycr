@@ -149,7 +149,10 @@ const PhaseSection = ({
 }) => {
   const createVariant = useCreateAdVariant();
   const deleteVariant = useDeleteAdVariant();
+  const createTask = useCreateLaunchTask();
+  const deleteTask = useDeleteLaunchTask();
   const [addingType, setAddingType] = useState(false);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   const accent = phase.color ?? 'hsl(var(--primary))';
   const meta = (phase.metadata ?? {}) as any;
