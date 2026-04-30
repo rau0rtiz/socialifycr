@@ -63,8 +63,8 @@ export const FRAMEWORK_MOLDS: FrameworkMold[] = [
     defaultDimensions: [
       { dimension_type: 'phase', label: 'Calentamiento', color: '#f59e0b',
         metadata: { description: 'Pre-lanzamiento: generar interés y educar' } },
-      { dimension_type: 'phase', label: 'Apertura del carrito', color: '#10b981',
-        metadata: { description: 'Anuncio del lanzamiento y apertura de inscripciones' } },
+      { dimension_type: 'phase', label: 'Crecimiento', color: '#10b981',
+        metadata: { description: 'Anuncio del lanzamiento, crecimiento de comunidad e inscripciones' } },
       { dimension_type: 'phase', label: 'Cierre', color: '#ef4444',
         metadata: { description: 'Urgencia, últimas plazas, cierre del carrito' } },
       { dimension_type: 'content_type', label: 'Historia Puro Texto' },
