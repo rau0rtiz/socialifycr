@@ -56,7 +56,11 @@ const AdFrameworkDetail = () => {
   const angles = framework.dimensions.filter((d) => d.dimension_type === 'angle');
   const formats = framework.dimensions.filter((d) => d.dimension_type === 'format');
   const hooks = framework.dimensions.filter((d) => d.dimension_type === 'hook');
-  const totalVariants = angles.length * formats.length * hooks.length;
+  const isLegacy = framework.template_kind === 'legacy_matrix';
+  const totalVariants = isLegacy
+    ? (hooks.length > 0 ? angles.length * formats.length * hooks.length : angles.length * formats.length)
+    : 0;
+  const canCreateCampaign = canCreateCampaignForFramework(framework);
 
   const handleCreateCampaign = async () => {
     if (!campName.trim() || !id) return;
