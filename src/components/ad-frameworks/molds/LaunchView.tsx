@@ -12,7 +12,7 @@ import { MoldVariantCard } from '../MoldVariantCard';
 import { TaskCard } from './TaskCard';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { useCreateAdVariant, useDeleteAdVariant, type AdVariant } from '@/hooks/use-ad-variants';
-import { useLaunchTasks, useCreateLaunchTask, useDeleteLaunchTask, type LaunchPhaseTask } from '@/hooks/use-launch-tasks';
+import { useLaunchTasks, useCreateLaunchTask, useDeleteLaunchTask, useUpdateLaunchTask, type LaunchPhaseTask } from '@/hooks/use-launch-tasks';
 import type { AdFrameworkDimension, AdFrameworkWithDimensions } from '@/hooks/use-ad-frameworks';
 
 interface Props {
