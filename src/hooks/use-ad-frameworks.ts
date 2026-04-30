@@ -148,6 +148,7 @@ export const useCreateAdFramework = () => {
       name: string;
       description?: string;
       template_kind?: TemplateKind;
+      client_id?: string | null; // null/undefined = agency-owned
       template?: CreateFrameworkDimensions;
       // For mold-based creation (pool/awareness/launch), provide a flat list of dimensions:
       mold_dimensions?: CreateMoldDimension[];
@@ -158,6 +159,7 @@ export const useCreateAdFramework = () => {
           name: input.name,
           description: input.description ?? null,
           template_kind: input.template_kind ?? 'legacy_matrix',
+          client_id: input.client_id ?? null,
           created_by: user?.id ?? null,
         })
         .select()
