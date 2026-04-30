@@ -126,6 +126,7 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
         totalPhases={phases.length}
         campaignId={campaignId}
         variants={variantsByPhase[activePhase.id] ?? []}
+        tasks={tasksByPhase[activePhase.id] ?? []}
         contentTypes={contentTypes}
         onOpenVariant={onOpenVariant}
       />
