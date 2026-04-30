@@ -33,6 +33,17 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
     [framework.dimensions],
   );
 
+  const [activePhaseId, setActivePhaseId] = useState<string | null>(phases[0]?.id ?? null);
+
+  const variantsByPhase = useMemo(() => {
+    const m: Record<string, AdVariant[]> = {};
+    variants.forEach((v) => {
+      if (!v.phase_id) return;
+      (m[v.phase_id] ||= []).push(v);
+    });
+    return m;
+  }, [variants]);
+
   if (phases.length === 0) {
     return (
       <Card className="p-12 text-center space-y-3">
@@ -44,20 +55,62 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
     );
   }
 
+  const activePhase = phases.find((p) => p.id === activePhaseId) ?? phases[0];
+  const activeIdx = phases.findIndex((p) => p.id === activePhase.id);
+
   return (
-    <div className="space-y-5">
-      {phases.map((phase, idx) => (
-        <PhaseSection
-          key={phase.id}
-          phase={phase}
-          phaseIndex={idx}
-          totalPhases={phases.length}
-          campaignId={campaignId}
-          variants={variants.filter((v) => v.phase_id === phase.id)}
-          contentTypes={contentTypes}
-          onOpenVariant={onOpenVariant}
-        />
-      ))}
+    <div className="space-y-4">
+      {/* Tabs row */}
+      <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+        {phases.map((p, i) => {
+          const pVariants = variantsByPhase[p.id] ?? [];
+          const total = pVariants.length;
+          const ready = pVariants.filter((v) => v.status === 'ready' || v.status === 'published').length;
+          const pct = total > 0 ? Math.round((ready / total) * 100) : 0;
+          const isActive = p.id === activePhase.id;
+          const accent = p.color ?? 'hsl(var(--primary))';
+          return (
+            <button
+              key={p.id}
+              onClick={() => setActivePhaseId(p.id)}
+              className={`shrink-0 text-left rounded-lg border px-3 py-2 transition-all min-w-[160px] max-w-[220px] ${
+                isActive ? 'shadow-sm' : 'hover:bg-muted/50 opacity-70 hover:opacity-100'
+              }`}
+              style={{
+                borderColor: isActive ? accent : 'hsl(var(--border))',
+                borderWidth: isActive ? 2 : 1,
+                backgroundColor: isActive ? accent + '15' : undefined,
+              }}
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                <span
+                  className="rounded-full text-[9px] font-bold px-1.5 py-0.5 text-white tracking-wide shrink-0"
+                  style={{ backgroundColor: accent }}
+                >
+                  F{i + 1}
+                </span>
+                <span className="text-[10px] font-mono tabular-nums text-foreground/60 ml-auto">
+                  {ready}/{total}
+                </span>
+              </div>
+              <p className="font-semibold text-xs leading-tight truncate">{p.label}</p>
+              <Progress value={pct} className="h-1 mt-1.5" />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Active phase content */}
+      <PhaseSection
+        key={activePhase.id}
+        phase={activePhase}
+        phaseIndex={activeIdx}
+        totalPhases={phases.length}
+        campaignId={campaignId}
+        variants={variantsByPhase[activePhase.id] ?? []}
+        contentTypes={contentTypes}
+        onOpenVariant={onOpenVariant}
+      />
     </div>
   );
 };
