@@ -130,9 +130,7 @@ const MindCoachMasterclass = () => {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nuevo framework</DialogTitle>
-            <DialogDescription>
-              Este framework será exclusivo de {selectedClient?.name ?? 'este cliente'}. Elige el tipo de flujo que mejor representa cómo planificas tus anuncios.
-            </DialogDescription>
+            <DialogDescription>Elige el tipo de flujo que mejor representa cómo planificas tus anuncios.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
