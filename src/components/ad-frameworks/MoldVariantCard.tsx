@@ -102,7 +102,10 @@ export const MoldVariantCard = ({
         )}
 
         {(v.title || v.hook_text) && (
-          <p className="text-sm font-medium line-clamp-2 leading-snug">
+          <p className={cn(
+            'text-sm font-medium line-clamp-2 leading-snug',
+            isDone && 'line-through text-muted-foreground',
+          )}>
             {v.title || v.hook_text}
           </p>
         )}
@@ -112,7 +115,10 @@ export const MoldVariantCard = ({
         )}
 
         {!v.title && v.copy && !v.hook_text && (
-          <p className="text-xs text-muted-foreground line-clamp-2">{v.copy}</p>
+          <p className={cn(
+            'text-xs text-muted-foreground line-clamp-2',
+            isDone && 'line-through',
+          )}>{v.copy}</p>
         )}
 
         <div className="flex items-center justify-between gap-1.5 pt-1">
