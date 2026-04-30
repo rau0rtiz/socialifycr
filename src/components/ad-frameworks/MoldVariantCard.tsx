@@ -52,6 +52,7 @@ export const MoldVariantCard = ({
         'hover:shadow-md hover:border-primary/40',
         selected && 'ring-2 ring-primary',
         accentColor && 'border-l-[3px]',
+        isDone && 'opacity-70',
       )}
       style={accentColor ? { borderLeftColor: accentColor } : undefined}
     >
