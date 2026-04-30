@@ -42,6 +42,7 @@ export const MoldVariantCard = ({
   const daysToDue = hasDate ? differenceInCalendarDays(parseISO(v.due_date!), today) : null;
   const isOverdue = daysToDue !== null && daysToDue < 0 && v.status !== 'published';
   const isSoon = daysToDue !== null && daysToDue >= 0 && daysToDue <= 2 && v.status !== 'published';
+  const isDone = v.status === 'ready' || v.status === 'published';
 
   return (
     <div
@@ -51,6 +52,7 @@ export const MoldVariantCard = ({
         'hover:shadow-md hover:border-primary/40',
         selected && 'ring-2 ring-primary',
         accentColor && 'border-l-[3px]',
+        isDone && 'opacity-70',
       )}
       style={accentColor ? { borderLeftColor: accentColor } : undefined}
     >
@@ -100,7 +102,10 @@ export const MoldVariantCard = ({
         )}
 
         {(v.title || v.hook_text) && (
-          <p className="text-sm font-medium line-clamp-2 leading-snug">
+          <p className={cn(
+            'text-sm font-medium line-clamp-2 leading-snug',
+            isDone && 'line-through text-muted-foreground',
+          )}>
             {v.title || v.hook_text}
           </p>
         )}
@@ -110,7 +115,10 @@ export const MoldVariantCard = ({
         )}
 
         {!v.title && v.copy && !v.hook_text && (
-          <p className="text-xs text-muted-foreground line-clamp-2">{v.copy}</p>
+          <p className={cn(
+            'text-xs text-muted-foreground line-clamp-2',
+            isDone && 'line-through',
+          )}>{v.copy}</p>
         )}
 
         <div className="flex items-center justify-between gap-1.5 pt-1">
