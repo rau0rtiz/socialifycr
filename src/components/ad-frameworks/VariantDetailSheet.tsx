@@ -12,7 +12,7 @@ import type { AdFrameworkWithDimensions } from '@/hooks/use-ad-frameworks';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, parseISO } from 'date-fns';
+import { format as formatDate, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { VariantReferences } from './VariantReferences';
@@ -210,7 +210,7 @@ export const VariantDetailSheet = ({ variant, framework, open, onOpenChange }: P
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                      {dueDate ? format(parseISO(dueDate), "d 'de' MMM, yyyy", { locale: es }) : <span>Elegir fecha</span>}
+                      {dueDate ? formatDate(parseISO(dueDate), "d 'de' MMM, yyyy", { locale: es }) : <span>Elegir fecha</span>}
                       {dueDate && (
                         <X
                           className="ml-auto h-3.5 w-3.5 opacity-60 hover:opacity-100"
@@ -229,7 +229,7 @@ export const VariantDetailSheet = ({ variant, framework, open, onOpenChange }: P
                       mode="single"
                       selected={dueDate ? parseISO(dueDate) : undefined}
                       onSelect={(d) => {
-                        const iso = d ? format(d, 'yyyy-MM-dd') : '';
+                        const iso = d ? formatDate(d, 'yyyy-MM-dd') : '';
                         setDueDate(iso);
                         update.mutate({ id: variant.id, due_date: iso || null } as any);
                       }}
