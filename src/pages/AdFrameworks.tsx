@@ -22,7 +22,7 @@ import type { TemplateKind } from '@/hooks/use-ad-frameworks';
 
 const AdFrameworks = () => {
   const navigate = useNavigate();
-  const { data: frameworks, isLoading } = useAdFrameworks();
+  const { data: frameworks, isLoading } = useAdFrameworks({ scope: 'agency' });
   const createFramework = useCreateAdFramework();
   const deleteFramework = useDeleteAdFramework();
   const { canManage } = useUserRole();
