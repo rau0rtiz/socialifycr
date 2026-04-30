@@ -42,6 +42,7 @@ export const MoldVariantCard = ({
   const daysToDue = hasDate ? differenceInCalendarDays(parseISO(v.due_date!), today) : null;
   const isOverdue = daysToDue !== null && daysToDue < 0 && v.status !== 'published';
   const isSoon = daysToDue !== null && daysToDue >= 0 && daysToDue <= 2 && v.status !== 'published';
+  const isDone = v.status === 'ready' || v.status === 'published';
 
   return (
     <div
