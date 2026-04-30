@@ -3,7 +3,6 @@ import { Plus, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -19,7 +18,8 @@ interface Props {
 }
 
 /**
- * Launch Sequence mold: horizontal timeline of phases. Each phase shows its content pieces stacked vertically.
+ * Launch Sequence mold: each phase is a full-width vertical section.
+ * Pieces of content render as a responsive grid of cards inside each section.
  */
 export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: Props) => {
   const phases = useMemo(
@@ -43,9 +43,9 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 -mx-1 px-1">
+    <div className="space-y-5">
       {phases.map((phase, idx) => (
-        <PhaseColumn
+        <PhaseSection
           key={phase.id}
           phase={phase}
           phaseIndex={idx}
@@ -60,7 +60,7 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
   );
 };
 
-const PhaseColumn = ({
+const PhaseSection = ({
   phase, phaseIndex, totalPhases, campaignId, variants, contentTypes, onOpenVariant,
 }: {
   phase: AdFrameworkDimension;
@@ -94,7 +94,7 @@ const PhaseColumn = ({
     await createVariant.mutateAsync({
       campaign_id: campaignId,
       phase_id: phase.id,
-      format_id: contentTypeId, // store content_type as format_id (reuses existing column)
+      format_id: contentTypeId,
       position: orderedVariants.length,
     });
   };
@@ -105,93 +105,95 @@ const PhaseColumn = ({
     return m;
   }, [contentTypes]);
 
+  const AddButton = contentTypes.length > 0 ? (
+    <DropdownMenu open={addingType} onOpenChange={setAddingType}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5" disabled={createVariant.isPending}>
+          <Plus className="h-3.5 w-3.5" /> Añadir pieza
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end">
+        {contentTypes.map((ct) => (
+          <DropdownMenuItem key={ct.id} onClick={() => handleAdd(ct.id)}>
+            {ct.label}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuItem onClick={() => handleAdd(null)} className="text-muted-foreground">
+          Sin tipo definido
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ) : (
+    <Button
+      variant="outline" size="sm" className="gap-1.5"
+      onClick={() => handleAdd(null)}
+      disabled={createVariant.isPending}
+    >
+      <Plus className="h-3.5 w-3.5" /> Añadir pieza
+    </Button>
+  );
+
   return (
     <section
-      className="shrink-0 w-[320px] rounded-xl border bg-card flex flex-col max-h-[calc(100vh-260px)] overflow-hidden shadow-sm"
+      className="rounded-xl border bg-card overflow-hidden shadow-sm"
       style={{ borderColor: accent + '40' }}
     >
-      {/* Colored header strip */}
+      {/* Header */}
       <div
-        className="px-4 py-3 border-b"
+        className="px-4 sm:px-5 py-3.5 border-b"
         style={{ backgroundColor: accent + '18', borderBottomColor: accent + '40' }}
       >
-        <div className="flex items-center gap-2 mb-1.5">
-          <span
-            className="rounded-full text-[10px] font-bold px-2 py-0.5 text-white tracking-wide shadow-sm"
-            style={{ backgroundColor: accent }}
-          >
-            FASE {phaseIndex + 1}/{totalPhases}
-          </span>
-          <span className="text-[10px] font-mono tabular-nums text-foreground/60 ml-auto">
-            {stats.ready}/{stats.total}
-          </span>
+        <div className="flex items-start gap-3 flex-wrap">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span
+                className="rounded-full text-[10px] font-bold px-2 py-0.5 text-white tracking-wide shadow-sm"
+                style={{ backgroundColor: accent }}
+              >
+                FASE {phaseIndex + 1}/{totalPhases}
+              </span>
+              <span className="text-[10px] font-mono tabular-nums text-foreground/60">
+                {stats.ready}/{stats.total} listas
+              </span>
+            </div>
+            <h3 className="font-bold text-base sm:text-lg text-foreground leading-tight">{phase.label}</h3>
+            {description && (
+              <p className="text-xs sm:text-sm text-foreground/70 mt-1 leading-snug">{description}</p>
+            )}
+          </div>
+          <div className="shrink-0">
+            {AddButton}
+          </div>
         </div>
-        <h3 className="font-bold text-base text-foreground leading-tight">{phase.label}</h3>
-        {description && (
-          <p className="text-xs text-foreground/70 mt-1 leading-snug">{description}</p>
-        )}
-        <Progress value={stats.pct} className="h-1.5 mt-2.5" />
+        <Progress value={stats.pct} className="h-1.5 mt-3" />
       </div>
 
-      {/* Variants list */}
-      <div className="flex-1 overflow-y-auto p-2.5 space-y-2">
+      {/* Content grid */}
+      <div className="p-3 sm:p-4">
         {orderedVariants.length === 0 ? (
-          <p className="text-xs text-muted-foreground italic text-center py-6">
-            Sin piezas todavía
-          </p>
+          <div className="text-center py-8 border border-dashed rounded-lg">
+            <p className="text-xs text-muted-foreground italic mb-3">Sin piezas en esta fase todavía</p>
+            <div className="inline-block">{AddButton}</div>
+          </div>
         ) : (
-          orderedVariants.map((v, i) => (
-            <div key={v.id} className="relative">
-              <span className="absolute -left-1 top-2 z-10 text-[9px] font-bold bg-background border rounded-full h-4 w-4 flex items-center justify-center text-muted-foreground">
-                {i + 1}
-              </span>
-              <div className="pl-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {orderedVariants.map((v, i) => (
+              <div key={v.id} className="relative">
+                <span className="absolute -top-1.5 -left-1.5 z-10 text-[10px] font-bold bg-background border-2 rounded-full h-5 w-5 flex items-center justify-center text-foreground/70 shadow-sm"
+                  style={{ borderColor: accent }}
+                >
+                  {i + 1}
+                </span>
                 <MoldVariantCard
                   variant={v}
                   contentTypeLabel={v.format_id ? contentTypeMap[v.format_id]?.label : undefined}
                   accentColor={accent}
-                  compact
                   onClick={() => onOpenVariant(v.id)}
                   onDelete={() => deleteVariant.mutate({ id: v.id, campaign_id: campaignId })}
                 />
               </div>
-            </div>
-          ))
-        )}
-
-        {/* Add button */}
-        {contentTypes.length > 0 ? (
-          <DropdownMenu open={addingType} onOpenChange={setAddingType}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full border-dashed gap-1.5 mt-2"
-                disabled={createVariant.isPending}
-              >
-                <Plus className="h-3.5 w-3.5" /> Añadir pieza
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              {contentTypes.map((ct) => (
-                <DropdownMenuItem key={ct.id} onClick={() => handleAdd(ct.id)}>
-                  {ct.label}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuItem onClick={() => handleAdd(null)} className="text-muted-foreground">
-                Sin tipo definido
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <Button
-            variant="outline" size="sm"
-            className="w-full border-dashed gap-1.5 mt-2"
-            onClick={() => handleAdd(null)}
-            disabled={createVariant.isPending}
-          >
-            <Plus className="h-3.5 w-3.5" /> Añadir pieza
-          </Button>
+            ))}
+          </div>
         )}
       </div>
     </section>
