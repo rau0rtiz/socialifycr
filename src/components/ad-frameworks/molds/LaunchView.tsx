@@ -46,6 +46,15 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
     return m;
   }, [variants]);
 
+  const { data: allTasks = [] } = useLaunchTasks(campaignId);
+  const tasksByPhase = useMemo(() => {
+    const m: Record<string, typeof allTasks> = {};
+    allTasks.forEach((t) => {
+      (m[t.phase_id] ||= []).push(t);
+    });
+    return m;
+  }, [allTasks]);
+
   if (phases.length === 0) {
     return (
       <Card className="p-12 text-center space-y-3">
