@@ -142,7 +142,7 @@ serve(async (req) => {
       .replace(/\{\{client_name\}\}/g, client.name);
 
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "Socialify <invitaciones@socialifycr.com>",
+      from: "Raúl Ortiz <invitaciones@socialifycr.com>",
       to: [email],
       subject: emailSubject,
       html: emailHtml,

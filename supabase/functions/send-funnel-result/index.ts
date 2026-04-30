@@ -134,7 +134,7 @@ serve(async (req) => {
     html = injectFooter(html, buildUnsubscribeFooter(unsubUrl));
 
     const emailPayload: any = {
-      from: "Socialify <hola@socialifycr.com>",
+      from: "Raúl Ortiz <hola@socialifycr.com>",
       to: [email],
       subject,
       html,

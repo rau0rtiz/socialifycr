@@ -88,7 +88,7 @@ serve(async (req) => {
     let html = (original.html_content || "").replace(/<img[^>]*track-email-open[^>]*>/gi, "");
 
     const emailPayload: any = {
-      from: "Socialify <hola@socialifycr.com>",
+      from: "Raúl Ortiz <hola@socialifycr.com>",
       to: [targetEmail],
       subject: original.subject,
       html,
