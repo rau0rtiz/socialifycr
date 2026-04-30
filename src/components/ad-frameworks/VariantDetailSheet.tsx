@@ -6,10 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Plus, X, ExternalLink, Save, Image as ImageIcon, Film, GalleryHorizontal, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, X, ExternalLink, Save, Image as ImageIcon, Film, GalleryHorizontal, GripVertical, ArrowUp, ArrowDown, CalendarIcon } from 'lucide-react';
 import { useUpdateAdVariant, type AdVariant, type VariantStatus, type AdVariantAsset, type CreativeType, type CarouselSlide } from '@/hooks/use-ad-variants';
 import type { AdFrameworkWithDimensions } from '@/hooks/use-ad-frameworks';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { VariantReferences } from './VariantReferences';
 
@@ -196,14 +200,44 @@ export const VariantDetailSheet = ({ variant, framework, open, onOpenChange }: P
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Fecha de entrega</Label>
-                <Input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => {
-                    setDueDate(e.target.value);
-                    update.mutate({ id: variant.id, due_date: e.target.value || null } as any);
-                  }}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-full justify-start text-left font-normal h-10',
+                        !dueDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                      {dueDate ? format(parseISO(dueDate), "d 'de' MMM, yyyy", { locale: es }) : <span>Elegir fecha</span>}
+                      {dueDate && (
+                        <X
+                          className="ml-auto h-3.5 w-3.5 opacity-60 hover:opacity-100"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDueDate('');
+                            update.mutate({ id: variant.id, due_date: null } as any);
+                          }}
+                        />
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dueDate ? parseISO(dueDate) : undefined}
+                      onSelect={(d) => {
+                        const iso = d ? format(d, 'yyyy-MM-dd') : '';
+                        setDueDate(iso);
+                        update.mutate({ id: variant.id, due_date: iso || null } as any);
+                      }}
+                      initialFocus
+                      className={cn('p-3 pointer-events-auto')}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </Card>
