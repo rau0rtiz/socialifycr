@@ -201,79 +201,67 @@ const PhaseSection = ({
   );
 
   return (
-    <section
-      className="rounded-xl border bg-card overflow-hidden shadow-sm"
-      style={{ borderColor: accent + '40' }}
-    >
-      {/* Header */}
-      <div
-        className="px-4 sm:px-5 py-3.5 border-b"
-        style={{ backgroundColor: accent + '18', borderBottomColor: accent + '40' }}
-      >
-        <div className="flex items-start gap-3 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span
-                className="rounded-full text-[10px] font-bold px-2 py-0.5 text-white tracking-wide shadow-sm"
-                style={{ backgroundColor: accent }}
-              >
-                FASE {phaseIndex + 1}/{totalPhases}
+    <div className="space-y-4">
+      {/* Phase meta header (no card chrome) */}
+      <div className="flex items-start gap-3 flex-wrap">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+            <span
+              className="rounded-full text-[10px] font-bold px-2 py-0.5 text-white tracking-wide shadow-sm"
+              style={{ backgroundColor: accent }}
+            >
+              FASE {phaseIndex + 1}/{totalPhases}
+            </span>
+            {dateRange && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted border text-[10px] font-medium px-2 py-0.5 text-foreground/80">
+                <CalendarIcon className="h-2.5 w-2.5" /> {dateRange}
               </span>
-              {dateRange && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-background/70 border text-[10px] font-medium px-2 py-0.5 text-foreground/80">
-                  <CalendarIcon className="h-2.5 w-2.5" /> {dateRange}
-                </span>
-              )}
-              <span className="text-[10px] font-mono tabular-nums text-foreground/60 ml-auto">
-                {stats.ready}/{stats.total} listas
-              </span>
+            )}
+            <span className="text-[10px] font-mono tabular-nums text-muted-foreground">
+              {stats.ready}/{stats.total} listas
+            </span>
+          </div>
+          <h3 className="font-bold text-lg text-foreground leading-tight">{phase.label}</h3>
+          {description && (
+            <p className="text-sm text-muted-foreground mt-1 leading-snug">{description}</p>
+          )}
+          {condition && (
+            <div className="mt-2 flex items-start gap-1.5 text-xs text-foreground/75">
+              <Target className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground" />
+              <span><span className="font-semibold">Avanza cuando:</span> {condition}</span>
             </div>
-            <h3 className="font-bold text-base sm:text-lg text-foreground leading-tight">{phase.label}</h3>
-            {description && (
-              <p className="text-xs sm:text-sm text-foreground/70 mt-1 leading-snug">{description}</p>
-            )}
-            {condition && (
-              <div className="mt-2 flex items-start gap-1.5 text-[11px] sm:text-xs text-foreground/75 bg-background/50 border rounded-md px-2 py-1.5">
-                <Target className="h-3 w-3 mt-0.5 shrink-0 text-foreground/50" />
-                <span><span className="font-semibold">Avanza cuando:</span> {condition}</span>
-              </div>
-            )}
-          </div>
-          <div className="shrink-0">
-            {AddButton}
-          </div>
+          )}
         </div>
-        <Progress value={stats.pct} className="h-1.5 mt-3" />
+        <div className="shrink-0">
+          {AddButton}
+        </div>
       </div>
 
       {/* Content grid */}
-      <div className="p-3 sm:p-4">
-        {orderedVariants.length === 0 ? (
-          <div className="text-center py-8 border border-dashed rounded-lg">
-            <p className="text-xs text-muted-foreground italic mb-3">Sin piezas en esta fase todavía</p>
-            <div className="inline-block">{AddButton}</div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {orderedVariants.map((v, i) => (
-              <div key={v.id} className="relative">
-                <span className="absolute -top-1.5 -left-1.5 z-10 text-[10px] font-bold bg-background border-2 rounded-full h-5 w-5 flex items-center justify-center text-foreground/70 shadow-sm"
-                  style={{ borderColor: accent }}
-                >
-                  {i + 1}
-                </span>
-                <MoldVariantCard
-                  variant={v}
-                  contentTypeLabel={v.format_id ? contentTypeMap[v.format_id]?.label : undefined}
-                  accentColor={accent}
-                  onClick={() => onOpenVariant(v.id)}
-                  onDelete={() => deleteVariant.mutate({ id: v.id, campaign_id: campaignId })}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+      {orderedVariants.length === 0 ? (
+        <div className="text-center py-10 border border-dashed rounded-lg">
+          <p className="text-xs text-muted-foreground italic">Sin piezas en esta fase todavía</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {orderedVariants.map((v, i) => (
+            <div key={v.id} className="relative">
+              <span className="absolute -top-1.5 -left-1.5 z-10 text-[10px] font-bold bg-background border-2 rounded-full h-5 w-5 flex items-center justify-center text-foreground/70 shadow-sm"
+                style={{ borderColor: accent }}
+              >
+                {i + 1}
+              </span>
+              <MoldVariantCard
+                variant={v}
+                contentTypeLabel={v.format_id ? contentTypeMap[v.format_id]?.label : undefined}
+                accentColor={accent}
+                onClick={() => onOpenVariant(v.id)}
+                onDelete={() => deleteVariant.mutate({ id: v.id, campaign_id: campaignId })}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
