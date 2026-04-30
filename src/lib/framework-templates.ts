@@ -38,6 +38,7 @@ export const FRAMEWORK_TEMPLATES: FrameworkTemplate[] = [
       { label: 'Foto' },
       { label: 'Reel' },
       { label: 'Carrusel' },
+      { label: 'Instagram Stories' },
     ],
     hooks: [
       { label: 'Pregunta' },
