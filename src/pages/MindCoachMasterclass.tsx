@@ -61,7 +61,7 @@ const MindCoachMasterclass = () => {
           : undefined,
       });
       setCreateOpen(false);
-      setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('launch');
+      setName(''); setDescription(''); setTemplateId('blank'); setMoldKind('pool');
       if (fw) navigate(`/ad-frameworks/${fw.id}`);
       return;
     }
