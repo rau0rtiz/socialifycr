@@ -40,7 +40,7 @@ const MindCoachMasterclass = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [moldKind, setMoldKind] = useState<TemplateKind | 'legacy_matrix'>('launch');
+  const [moldKind, setMoldKind] = useState<TemplateKind | 'legacy_matrix'>('pool');
   const [templateId, setTemplateId] = useState<string>('blank');
   const [toDelete, setToDelete] = useState<AdFrameworkWithDimensions | null>(null);
 
