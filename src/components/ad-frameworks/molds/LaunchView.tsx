@@ -107,28 +107,30 @@ const PhaseColumn = ({
 
   return (
     <section
-      className="shrink-0 w-[320px] rounded-xl border-2 bg-card flex flex-col max-h-[calc(100vh-260px)] relative"
-      style={{ borderColor: accent + '50' }}
+      className="shrink-0 w-[320px] rounded-xl border bg-card flex flex-col max-h-[calc(100vh-260px)] overflow-hidden shadow-sm"
+      style={{ borderColor: accent + '40' }}
     >
-      {/* Phase index badge */}
+      {/* Colored header strip */}
       <div
-        className="absolute -top-3 left-3 rounded-full text-[10px] font-bold px-2 py-0.5 text-white"
-        style={{ backgroundColor: accent }}
+        className="px-4 py-3 border-b"
+        style={{ backgroundColor: accent + '18', borderBottomColor: accent + '40' }}
       >
-        FASE {phaseIndex + 1} DE {totalPhases}
-      </div>
-
-      {/* Header */}
-      <div className="px-4 pt-5 pb-3 border-b" style={{ borderLeftWidth: '4px', borderLeftStyle: 'solid', borderLeftColor: accent }}>
-        <h3 className="font-bold text-base">{phase.label}</h3>
-        {description && <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{description}</p>}
-
-        <div className="mt-3 flex items-center gap-2">
-          <Progress value={stats.pct} className="h-1.5 flex-1" />
-          <span className="text-[11px] tabular-nums text-muted-foreground font-mono">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span
+            className="rounded-full text-[10px] font-bold px-2 py-0.5 text-white tracking-wide shadow-sm"
+            style={{ backgroundColor: accent }}
+          >
+            FASE {phaseIndex + 1}/{totalPhases}
+          </span>
+          <span className="text-[10px] font-mono tabular-nums text-foreground/60 ml-auto">
             {stats.ready}/{stats.total}
           </span>
         </div>
+        <h3 className="font-bold text-base text-foreground leading-tight">{phase.label}</h3>
+        {description && (
+          <p className="text-xs text-foreground/70 mt-1 leading-snug">{description}</p>
+        )}
+        <Progress value={stats.pct} className="h-1.5 mt-2.5" />
       </div>
 
       {/* Variants list */}
