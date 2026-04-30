@@ -9,9 +9,10 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoldVariantCard } from '../MoldVariantCard';
-import { PhaseTasksList } from './PhaseTasksList';
+import { TaskCard } from './TaskCard';
+import { TaskDetailSheet } from './TaskDetailSheet';
 import { useCreateAdVariant, useDeleteAdVariant, type AdVariant } from '@/hooks/use-ad-variants';
-import { useLaunchTasks } from '@/hooks/use-launch-tasks';
+import { useLaunchTasks, useCreateLaunchTask, useDeleteLaunchTask, type LaunchPhaseTask } from '@/hooks/use-launch-tasks';
 import type { AdFrameworkDimension, AdFrameworkWithDimensions } from '@/hooks/use-ad-frameworks';
 
 interface Props {
