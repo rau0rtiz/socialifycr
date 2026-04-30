@@ -11,6 +11,7 @@ export interface AdFramework {
   name: string;
   description: string | null;
   template_kind: TemplateKind;
+  client_id: string | null; // null = agency-owned
   created_by: string | null;
   created_at: string;
   updated_at: string;
