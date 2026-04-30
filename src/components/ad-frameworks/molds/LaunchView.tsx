@@ -196,7 +196,17 @@ const PhaseSection = ({
     return m;
   }, [contentTypes]);
 
-  const AddButton = contentTypes.length > 0 ? (
+  const handleAddTask = async () => {
+    const newTask = await createTask.mutateAsync({
+      campaign_id: campaignId,
+      phase_id: phase.id,
+      title: 'Nueva tarea',
+      position: tasks.length,
+    });
+    setOpenTaskId(newTask.id);
+  };
+
+  const AddPieceButton = contentTypes.length > 0 ? (
     <DropdownMenu open={addingType} onOpenChange={setAddingType}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5" disabled={createVariant.isPending}>
@@ -221,6 +231,18 @@ const PhaseSection = ({
       disabled={createVariant.isPending}
     >
       <Plus className="h-3.5 w-3.5" /> Añadir pieza
+    </Button>
+  );
+
+  const AddTaskButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      className="gap-1.5"
+      onClick={handleAddTask}
+      disabled={createTask.isPending}
+    >
+      <ListTodo className="h-3.5 w-3.5" /> Añadir tarea
     </Button>
   );
 
