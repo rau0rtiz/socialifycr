@@ -91,17 +91,6 @@ export const MoldVariantCard = ({
         </div>
       )}
 
-      {/* Thumbnail */}
-      {!compact && (
-        <div className="aspect-[4/3] bg-muted/40 flex items-center justify-center overflow-hidden">
-          {hasAsset && v.assets[0]?.type !== 'video' ? (
-            <img src={v.assets[0].url} alt="" className="w-full h-full object-cover" loading="lazy" />
-          ) : (
-            <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
-          )}
-        </div>
-      )}
-
       {/* Body */}
       <div className={cn('p-2.5 space-y-1.5', compact && 'p-2')}>
         {contentTypeLabel && (
