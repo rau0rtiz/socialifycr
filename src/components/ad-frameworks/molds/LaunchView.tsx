@@ -315,40 +315,57 @@ const PhaseSection = ({
       </div>
 
       {/* Unified grid: tasks + pieces */}
-      {orderedVariants.length === 0 && tasks.length === 0 ? (
-        <div className="text-center py-10 border border-dashed rounded-lg">
-          <p className="text-xs text-muted-foreground italic">
-            Sin piezas ni tareas en esta fase todavía
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {[...tasks]
-            .sort(
-              (a, b) =>
-                Number(a.done) - Number(b.done) ||
-                a.position - b.position ||
-                a.created_at.localeCompare(b.created_at),
-            )
-            .map((t) => (
+      {(() => {
+        if (orderedVariants.length === 0 && tasks.length === 0) {
+          return (
+            <div className="text-center py-10 border border-dashed rounded-lg">
+              <p className="text-xs text-muted-foreground italic">
+                Sin piezas ni tareas en esta fase todavía
+              </p>
+            </div>
+          );
+        }
+
+        // Variant index map (preserves "Manual" numbering even when sorted by date)
+        const variantIndex: Record<string, number> = {};
+        orderedVariants.forEach((v, i) => { variantIndex[v.id] = i + 1; });
+
+        type Item =
+          | { kind: 'task'; id: string; date: string | null; done: boolean; data: typeof tasks[number] }
+          | { kind: 'variant'; id: string; date: string | null; done: boolean; data: typeof orderedVariants[number] };
+
+        const items: Item[] = [
+          ...tasks.map((t): Item => ({
+            kind: 'task', id: t.id, date: t.due_date, done: t.done, data: t,
+          })),
+          ...orderedVariants.map((v): Item => ({
+            kind: 'variant', id: v.id, date: v.due_date,
+            done: v.status === 'ready' || v.status === 'published', data: v,
+          })),
+        ];
+
+        const renderCard = (item: Item) => {
+          if (item.kind === 'task') {
+            const t = item.data;
+            return (
               <TaskCard
-                key={t.id}
+                key={`t-${t.id}`}
                 task={t}
                 accentColor={accent}
                 onClick={() => setOpenTaskId(t.id)}
-                onToggleDone={(done) =>
-                  updateTask.mutate({ id: t.id, done } as any)
-                }
+                onToggleDone={(done) => updateTask.mutate({ id: t.id, done } as any)}
                 onDelete={() => deleteTask.mutate({ id: t.id, campaign_id: campaignId })}
               />
-            ))}
-          {orderedVariants.map((v, i) => (
-            <div key={v.id} className="relative">
+            );
+          }
+          const v = item.data;
+          return (
+            <div key={`v-${v.id}`} className="relative">
               <span
                 className="absolute -top-1.5 -left-1.5 z-10 text-[10px] font-bold bg-background border-2 rounded-full h-5 w-5 flex items-center justify-center text-foreground/70 shadow-sm"
                 style={{ borderColor: accent }}
               >
-                {i + 1}
+                {variantIndex[v.id]}
               </span>
               <MoldVariantCard
                 variant={v}
@@ -358,9 +375,82 @@ const PhaseSection = ({
                 onDelete={() => deleteVariant.mutate({ id: v.id, campaign_id: campaignId })}
               />
             </div>
-          ))}
-        </div>
-      )}
+          );
+        };
+
+        // Manual mode: tasks first, then variants (existing behavior)
+        if (sortMode === 'manual') {
+          const sortedTasks = [...tasks].sort(
+            (a, b) =>
+              Number(a.done) - Number(b.done) ||
+              a.position - b.position ||
+              a.created_at.localeCompare(b.created_at),
+          );
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {sortedTasks.map((t) =>
+                renderCard({ kind: 'task', id: t.id, date: t.due_date, done: t.done, data: t }),
+              )}
+              {orderedVariants.map((v) =>
+                renderCard({
+                  kind: 'variant', id: v.id, date: v.due_date,
+                  done: v.status === 'ready' || v.status === 'published', data: v,
+                }),
+              )}
+            </div>
+          );
+        }
+
+        // Date mode: bucket by urgency
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const buckets: Record<string, Item[]> = {
+          overdue: [], today: [], soon: [], later: [], tbd: [], done: [],
+        };
+        items.forEach((it) => {
+          if (it.done) { buckets.done.push(it); return; }
+          if (!it.date) { buckets.tbd.push(it); return; }
+          const d = parseISO(it.date);
+          const diff = Math.floor((d.getTime() - today.getTime()) / 86400000);
+          if (diff < 0) buckets.overdue.push(it);
+          else if (diff === 0) buckets.today.push(it);
+          else if (diff <= 7) buckets.soon.push(it);
+          else buckets.later.push(it);
+        });
+        const sortByDateAsc = (a: Item, b: Item) =>
+          (a.date ?? '').localeCompare(b.date ?? '');
+        Object.keys(buckets).forEach((k) => buckets[k].sort(sortByDateAsc));
+
+        const sections: { key: string; label: string; items: Item[]; tone: string }[] = [
+          { key: 'overdue', label: 'Vencidas', items: buckets.overdue, tone: 'text-destructive' },
+          { key: 'today', label: 'Hoy', items: buckets.today, tone: 'text-amber-600 dark:text-amber-400' },
+          { key: 'soon', label: 'Próximos 7 días', items: buckets.soon, tone: 'text-foreground' },
+          { key: 'later', label: 'Más adelante', items: buckets.later, tone: 'text-foreground/70' },
+          { key: 'tbd', label: 'Sin fecha (TBD)', items: buckets.tbd, tone: 'text-muted-foreground' },
+          { key: 'done', label: 'Completadas', items: buckets.done, tone: 'text-muted-foreground' },
+        ].filter((s) => s.items.length > 0);
+
+        return (
+          <div className="space-y-5">
+            {sections.map((s) => (
+              <div key={s.key} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h4 className={`text-[11px] font-bold uppercase tracking-wider ${s.tone}`}>
+                    {s.label}
+                  </h4>
+                  <span className="text-[10px] font-mono tabular-nums text-muted-foreground">
+                    {s.items.length}
+                  </span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {s.items.map(renderCard)}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       <TaskDetailSheet
         task={tasks.find((t) => t.id === openTaskId) ?? null}
