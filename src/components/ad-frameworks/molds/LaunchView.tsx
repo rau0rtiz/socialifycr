@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Plus, Rocket } from 'lucide-react';
+import { Plus, Rocket, Calendar as CalendarIcon, Target } from 'lucide-react';
+import { format as formatDate, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -76,7 +78,19 @@ const PhaseSection = ({
   const [addingType, setAddingType] = useState(false);
 
   const accent = phase.color ?? 'hsl(var(--primary))';
-  const description = (phase.metadata as any)?.description as string | undefined;
+  const meta = (phase.metadata ?? {}) as any;
+  const description = meta.description as string | undefined;
+  const condition = meta.condition as string | undefined;
+  const startDate = meta.start_date as string | undefined;
+  const endDate = meta.end_date as string | undefined;
+
+  const dateRange = useMemo(() => {
+    if (!startDate && !endDate) return null;
+    const fmt = (s?: string) => s ? formatDate(parseISO(s), 'd MMM', { locale: es }) : '?';
+    if (startDate && endDate) return `${fmt(startDate)} → ${fmt(endDate)}`;
+    if (startDate) return `Desde ${fmt(startDate)}`;
+    return `Hasta ${fmt(endDate)}`;
+  }, [startDate, endDate]);
 
   const orderedVariants = useMemo(
     () => [...variants].sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at)),
@@ -145,20 +159,31 @@ const PhaseSection = ({
       >
         <div className="flex items-start gap-3 flex-wrap">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span
                 className="rounded-full text-[10px] font-bold px-2 py-0.5 text-white tracking-wide shadow-sm"
                 style={{ backgroundColor: accent }}
               >
                 FASE {phaseIndex + 1}/{totalPhases}
               </span>
-              <span className="text-[10px] font-mono tabular-nums text-foreground/60">
+              {dateRange && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-background/70 border text-[10px] font-medium px-2 py-0.5 text-foreground/80">
+                  <CalendarIcon className="h-2.5 w-2.5" /> {dateRange}
+                </span>
+              )}
+              <span className="text-[10px] font-mono tabular-nums text-foreground/60 ml-auto">
                 {stats.ready}/{stats.total} listas
               </span>
             </div>
             <h3 className="font-bold text-base sm:text-lg text-foreground leading-tight">{phase.label}</h3>
             {description && (
               <p className="text-xs sm:text-sm text-foreground/70 mt-1 leading-snug">{description}</p>
+            )}
+            {condition && (
+              <div className="mt-2 flex items-start gap-1.5 text-[11px] sm:text-xs text-foreground/75 bg-background/50 border rounded-md px-2 py-1.5">
+                <Target className="h-3 w-3 mt-0.5 shrink-0 text-foreground/50" />
+                <span><span className="font-semibold">Avanza cuando:</span> {condition}</span>
+              </div>
             )}
           </div>
           <div className="shrink-0">
