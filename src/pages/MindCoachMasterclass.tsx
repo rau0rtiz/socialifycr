@@ -213,7 +213,7 @@ const MindCoachFrameworks = () => {
                       moldKind === m.kind ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
                     }`}
                   >
-                    <div className="font-medium text-sm">{m.label}</div>
+                    <div className="font-medium text-sm">{m.name}</div>
                     <div className="text-xs text-muted-foreground line-clamp-2">{m.description}</div>
                   </button>
                 ))}
