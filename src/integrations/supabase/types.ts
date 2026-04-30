@@ -166,6 +166,7 @@ export type Database = {
       }
       ad_frameworks: {
         Row: {
+          client_id: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -175,6 +176,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -184,6 +186,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -192,7 +195,15 @@ export type Database = {
           template_kind?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ad_frameworks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ad_variants: {
         Row: {
