@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
-import { Check, Calendar as CalendarIcon, MoreVertical, Trash2, ListTodo, FileText } from 'lucide-react';
+import { Check, Calendar, MoreVertical, Trash2, ListTodo, FileText } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { format as formatDate, differenceInCalendarDays, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -16,6 +17,11 @@ interface Props {
   onDelete?: () => void;
 }
 
+/**
+ * Task card — same shape/size as MoldVariantCard so it sits naturally in the
+ * unified grid, but uses a distinct violet color identity (dashed border +
+ * tinted surface) to clearly differentiate tasks from creative pieces.
+ */
 export const TaskCard = ({ task, accentColor, onClick, onToggleDone, onDelete }: Props) => {
   const hasDate = !!task.due_date;
   const today = new Date();
@@ -28,12 +34,12 @@ export const TaskCard = ({ task, accentColor, onClick, onToggleDone, onDelete }:
     <div
       onClick={onClick}
       className={cn(
-        'group relative bg-card border rounded-lg overflow-hidden transition-all cursor-pointer',
-        'hover:shadow-md hover:border-primary/40',
-        accentColor && 'border-l-[3px]',
+        'group relative rounded-lg overflow-hidden transition-all cursor-pointer',
+        'border-2 border-dashed border-violet-400/50 dark:border-violet-400/40',
+        'bg-violet-50/60 dark:bg-violet-950/20',
+        'hover:shadow-md hover:border-violet-500 dark:hover:border-violet-300',
         task.done && 'opacity-60',
       )}
-      style={accentColor ? { borderLeftColor: accentColor } : undefined}
     >
       {/* Action menu */}
       {onDelete && (
@@ -45,7 +51,10 @@ export const TaskCard = ({ task, accentColor, onClick, onToggleDone, onDelete }:
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem className="text-destructive" onClick={onDelete}>
+              <DropdownMenuItem
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                className="text-destructive"
+              >
                 <Trash2 className="h-3.5 w-3.5 mr-2" /> Eliminar
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -53,19 +62,17 @@ export const TaskCard = ({ task, accentColor, onClick, onToggleDone, onDelete }:
         </div>
       )}
 
-      {/* Tinted header */}
-      <div
-        className="px-3 py-2 flex items-center gap-2 border-b"
-        style={accentColor ? { backgroundColor: accentColor + '12' } : undefined}
-      >
-        <ListTodo className="h-3 w-3" style={accentColor ? { color: accentColor } : undefined} />
-        <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+      {/* Body — mirrors MoldVariantCard padding */}
+      <div className="p-2.5 space-y-1.5">
+        <Badge
+          variant="outline"
+          className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0 h-4 gap-1 border-violet-400/60 bg-violet-100/70 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+        >
+          <ListTodo className="h-2.5 w-2.5" />
           Tarea
-        </span>
-      </div>
+        </Badge>
 
-      <div className="p-3 space-y-2.5">
-        <div className="flex items-start gap-2">
+        <div className="flex items-start gap-1.5">
           <button
             type="button"
             onClick={(e) => {
@@ -73,17 +80,17 @@ export const TaskCard = ({ task, accentColor, onClick, onToggleDone, onDelete }:
               onToggleDone?.(!task.done);
             }}
             className={cn(
-              'mt-0.5 h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors',
+              'mt-0.5 h-3.5 w-3.5 rounded border-2 flex items-center justify-center shrink-0 transition-colors',
               task.done
-                ? 'bg-primary border-primary text-primary-foreground'
-                : 'border-muted-foreground/40 hover:border-primary',
+                ? 'bg-violet-600 border-violet-600 text-white'
+                : 'border-violet-400/60 hover:border-violet-600 bg-background',
             )}
           >
-            {task.done && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+            {task.done && <Check className="h-2 w-2" strokeWidth={4} />}
           </button>
           <p
             className={cn(
-              'text-sm font-semibold leading-snug flex-1',
+              'text-sm font-medium line-clamp-2 leading-snug flex-1',
               task.done && 'line-through text-muted-foreground',
             )}
           >
@@ -92,32 +99,29 @@ export const TaskCard = ({ task, accentColor, onClick, onToggleDone, onDelete }:
         </div>
 
         {hasNotes && (
-          <p className="text-xs text-muted-foreground line-clamp-2 pl-6 leading-snug">
+          <p className="text-xs text-muted-foreground line-clamp-2 leading-snug pl-5">
             {task.description}
           </p>
         )}
 
-        <div className="flex items-center gap-1.5 flex-wrap pl-6">
+        <div className="flex items-center justify-between gap-1.5 pt-1">
+          <span className="inline-flex items-center gap-1 text-[10px] text-violet-700/80 dark:text-violet-300/80">
+            {hasNotes ? <FileText className="h-2.5 w-2.5" /> : null}
+            {hasNotes ? 'Con notas' : 'Acción'}
+          </span>
+
           {hasDate ? (
-            <span
-              className={cn(
-                'inline-flex items-center gap-1 rounded-full text-[10px] font-medium px-2 py-0.5 border',
-                isOverdue && 'bg-destructive/10 text-destructive border-destructive/30',
-                isSoon && 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
-                !isOverdue && !isSoon && 'bg-muted text-foreground/70',
-              )}
-            >
-              <CalendarIcon className="h-2.5 w-2.5" />
+            <span className={cn(
+              'text-[10px] inline-flex items-center gap-1',
+              isOverdue && 'text-red-600 dark:text-red-400 font-medium',
+              isSoon && 'text-amber-600 dark:text-amber-400',
+              !isOverdue && !isSoon && 'text-muted-foreground',
+            )}>
+              <Calendar className="h-2.5 w-2.5" />
               {formatDate(parseISO(task.due_date!), 'd MMM', { locale: es })}
-              {isOverdue && ' · vencida'}
             </span>
           ) : (
             <span className="text-[10px] text-muted-foreground/60 italic">Sin fecha</span>
-          )}
-          {hasNotes && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/70">
-              <FileText className="h-2.5 w-2.5" /> Notas
-            </span>
           )}
         </div>
       </div>
