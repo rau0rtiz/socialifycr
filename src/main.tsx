@@ -96,10 +96,6 @@ const checkForUpdates = async () => {
 void cleanupAllCaches();
 void checkForUpdates();
 
-try {
-  sessionStorage.removeItem(MODULE_LOAD_RETRY_KEY);
-} catch (_) {}
-
 const url = new URL(window.location.href);
 const redirectPath = url.searchParams.get("__redirect");
 
@@ -123,6 +119,11 @@ requestAnimationFrame(() => {
     if (rootElement.childElementCount > 0 || rootElement.textContent?.trim()) {
       window.__lovableAppBooted = true;
       window.__lovableRecoveryInProgress = false;
+      try {
+        sessionStorage.removeItem(MODULE_LOAD_RETRY_KEY);
+      } catch (_) {
+        // Ignore browsers that block sessionStorage access.
+      }
     }
   });
 });

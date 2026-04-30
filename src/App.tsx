@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -67,6 +67,75 @@ const PageLoader = () => (
   </div>
 );
 
+const MODULE_LOAD_RETRY_KEY = "__lovable_module_retry_count__";
+const MAX_MODULE_RETRIES = 4;
+
+const isModuleLoadError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|module script|Load failed/i.test(message);
+};
+
+const settleTasks = (tasks: Array<Promise<unknown>>) =>
+  Promise.all(tasks.map((task) => Promise.resolve(task).catch(() => undefined)));
+
+const clearRuntimeCaches = async () => {
+  const tasks: Promise<unknown>[] = [];
+
+  if ("serviceWorker" in navigator && navigator.serviceWorker.getRegistrations) {
+    tasks.push(
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) =>
+          settleTasks(registrations.map((registration) => registration.unregister())),
+        ),
+    );
+  }
+
+  if ("caches" in window && window.caches.keys) {
+    tasks.push(
+      window.caches
+        .keys()
+        .then((keys) => settleTasks(keys.map((key) => window.caches.delete(key)))),
+    );
+  }
+
+  await settleTasks(tasks);
+};
+
+const reloadWithCacheBust = () => {
+  const url = new URL(window.location.href);
+  url.searchParams.set("__reload", String(Date.now()));
+  window.location.replace(url.toString());
+};
+
+class ChunkLoadErrorBoundary extends Component<{ children: ReactNode }, { recovering: boolean; failed: boolean }> {
+  state = { recovering: false, failed: false };
+
+  static getDerivedStateFromError(error: unknown) {
+    return isModuleLoadError(error) ? { recovering: true, failed: false } : { recovering: false, failed: true };
+  }
+
+  componentDidCatch(error: unknown, _errorInfo: ErrorInfo) {
+    if (!isModuleLoadError(error)) return;
+
+    const retryCount = Number(sessionStorage.getItem(MODULE_LOAD_RETRY_KEY) || "0");
+    sessionStorage.setItem(MODULE_LOAD_RETRY_KEY, String(retryCount + 1));
+
+    if (retryCount >= MAX_MODULE_RETRIES) {
+      reloadWithCacheBust();
+      return;
+    }
+
+    void clearRuntimeCaches().finally(reloadWithCacheBust);
+  }
+
+  render() {
+    if (this.state.recovering) return <PageLoader />;
+    if (this.state.failed) return <NotFound />;
+    return this.props.children;
+  }
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -77,8 +146,9 @@ const App = () => (
             <BrandProvider>
               <Toaster />
               <Sonner />
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
+              <ChunkLoadErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/accept-invite" element={<AcceptInvite />} />
@@ -195,8 +265,9 @@ const App = () => (
                   <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
                   <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
                   <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
+                  </Routes>
+                </Suspense>
+              </ChunkLoadErrorBoundary>
             </BrandProvider>
           </AuthProvider>
         </BrowserRouter>
