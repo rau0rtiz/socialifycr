@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { FrameworkBuilder } from '@/components/ad-frameworks/FrameworkBuilder';
+import { FrameworkOverview, canCreateCampaignForFramework } from '@/components/ad-frameworks/FrameworkOverview';
 import { Progress } from '@/components/ui/progress';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -55,7 +56,11 @@ const AdFrameworkDetail = () => {
   const angles = framework.dimensions.filter((d) => d.dimension_type === 'angle');
   const formats = framework.dimensions.filter((d) => d.dimension_type === 'format');
   const hooks = framework.dimensions.filter((d) => d.dimension_type === 'hook');
-  const totalVariants = angles.length * formats.length * hooks.length;
+  const isLegacy = framework.template_kind === 'legacy_matrix';
+  const totalVariants = isLegacy
+    ? (hooks.length > 0 ? angles.length * formats.length * hooks.length : angles.length * formats.length)
+    : 0;
+  const canCreateCampaign = canCreateCampaignForFramework(framework);
 
   const handleCreateCampaign = async () => {
     if (!campName.trim() || !id) return;
@@ -92,17 +97,12 @@ const AdFrameworkDetail = () => {
             <div>
               <h1 className="text-2xl font-bold">{framework.name}</h1>
               {framework.description && <p className="text-muted-foreground text-sm mt-1">{framework.description}</p>}
-              <div className="flex items-center gap-2 mt-3">
-                <Badge variant="secondary" className="font-mono text-xs">
-                  {angles.length} × {formats.length} × {hooks.length} = {totalVariants} variantes/campaña
-                </Badge>
-              </div>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" onClick={() => setBuilderOpen(true)} className="gap-2">
-                <Settings className="h-4 w-4" /> Editar dimensiones
+                <Settings className="h-4 w-4" /> Editar framework
               </Button>
-              {canManage && totalVariants > 0 && (
+              {canManage && canCreateCampaign && (
                 <Button onClick={() => setCampaignOpen(true)} className="gap-2">
                   <Plus className="h-4 w-4" /> Nueva campaña
                 </Button>
@@ -111,45 +111,22 @@ const AdFrameworkDetail = () => {
           </div>
         </div>
 
-        {/* Dimensiones overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {[
-            { label: 'Ángulos', items: angles, hint: 'enfoque del mensaje' },
-            { label: 'Formatos', items: formats, hint: 'cómo se presenta' },
-            { label: 'Hooks', items: hooks, hint: 'apertura del anuncio' },
-          ].map((g) => (
-            <Card key={g.label} className="p-4">
-              <div className="flex items-baseline justify-between mb-2">
-                <h3 className="font-semibold text-sm">{g.label}</h3>
-                <span className="text-xs text-muted-foreground">{g.hint}</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {g.items.length === 0 ? (
-                  <span className="text-xs text-muted-foreground italic">Sin {g.label.toLowerCase()}</span>
-                ) : g.items.map((d) => (
-                  <Badge
-                    key={d.id}
-                    variant="outline"
-                    style={d.color ? { borderColor: d.color, color: d.color } : {}}
-                    className="text-xs"
-                  >
-                    {d.label}
-                  </Badge>
-                ))}
-              </div>
-            </Card>
-          ))}
-        </div>
+        {/* Mold-aware overview */}
+        <FrameworkOverview framework={framework} onEdit={() => setBuilderOpen(true)} />
 
         {/* Campañas */}
         <div>
           <h2 className="font-semibold text-lg mb-3">Campañas</h2>
-          {totalVariants === 0 ? (
+          {!canCreateCampaign ? (
             <Card className="p-8 text-center space-y-2">
               <Sparkles className="h-8 w-8 mx-auto text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">Configura al menos un valor en cada dimensión antes de crear una campaña.</p>
+              <p className="text-sm text-muted-foreground">
+                {isLegacy
+                  ? 'Configura al menos un valor en cada dimensión antes de crear una campaña.'
+                  : 'Configura el framework antes de crear una campaña.'}
+              </p>
               <Button variant="outline" onClick={() => setBuilderOpen(true)} className="gap-2 mt-2">
-                <Settings className="h-4 w-4" /> Configurar dimensiones
+                <Settings className="h-4 w-4" /> Configurar framework
               </Button>
             </Card>
           ) : !campaigns || campaigns.length === 0 ? (
@@ -185,7 +162,9 @@ const AdFrameworkDetail = () => {
           <DialogHeader>
             <DialogTitle>Nueva campaña</DialogTitle>
             <DialogDescription>
-              Se crearán automáticamente {totalVariants} variantes ({angles.length} ángulos × {formats.length} formatos × {hooks.length} hooks).
+              {isLegacy
+                ? `Se crearán automáticamente ${totalVariants} variantes (${angles.length} ángulos × ${formats.length} formatos × ${hooks.length} hooks).`
+                : 'Crea una nueva campaña usando este framework. Las variantes se añaden manualmente desde el canvas.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -274,7 +253,8 @@ const CampaignCard = ({
   onDelete?: () => void;
   onDuplicate?: () => void;
 }) => {
-  const completion = totalVariants > 0 ? Math.round((c.ready_count / totalVariants) * 100) : 0;
+  const denom = totalVariants > 0 ? totalVariants : c.variant_count;
+  const completion = denom > 0 ? Math.round((c.ready_count / denom) * 100) : 0;
 
   // Lightweight query for due-date health pills (only the fields needed)
   const { data: dueInfo } = useQuery({

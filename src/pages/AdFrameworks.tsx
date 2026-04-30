@@ -258,17 +258,77 @@ const MoldOption = ({ mold, selected, onSelect }: { mold: FrameworkMold; selecte
 };
 
 const FrameworkCard = ({ fw, onOpen, onDelete }: { fw: AdFrameworkWithDimensions; onOpen: () => void; onDelete?: () => void }) => {
-  const angles = fw.dimensions.filter((d) => d.dimension_type === 'angle');
-  const formats = fw.dimensions.filter((d) => d.dimension_type === 'format');
-  const hooks = fw.dimensions.filter((d) => d.dimension_type === 'hook');
-  const total = angles.length * formats.length * hooks.length;
+  const mold = FRAMEWORK_MOLDS.find((m) => m.kind === fw.template_kind);
+  const Icon = mold?.icon ?? Layers;
+
+  // Mold-specific stat lines
+  const dims = fw.dimensions;
+  const stats: { label: string; value: number }[] = (() => {
+    switch (fw.template_kind) {
+      case 'pool':
+        return [{ label: 'Tipos de contenido', value: dims.filter((d) => d.dimension_type === 'content_type').length }];
+      case 'awareness':
+        return [
+          { label: 'Niveles', value: dims.filter((d) => d.dimension_type === 'awareness_level').length },
+          { label: 'Mensajes centrales', value: dims.filter((d) => d.dimension_type === 'core_message').length },
+          { label: 'Tipos de contenido', value: dims.filter((d) => d.dimension_type === 'content_type').length },
+        ];
+      case 'launch':
+        return [
+          { label: 'Fases', value: dims.filter((d) => d.dimension_type === 'phase').length },
+          { label: 'Tipos de contenido', value: dims.filter((d) => d.dimension_type === 'content_type').length },
+        ];
+      case 'legacy_matrix':
+      default:
+        return [
+          { label: 'Ángulos', value: dims.filter((d) => d.dimension_type === 'angle').length },
+          { label: 'Formatos', value: dims.filter((d) => d.dimension_type === 'format').length },
+          { label: 'Hooks', value: dims.filter((d) => d.dimension_type === 'hook').length },
+        ];
+    }
+  })();
+
+  const summary = (() => {
+    switch (fw.template_kind) {
+      case 'pool': {
+        const t = dims.filter((d) => d.dimension_type === 'content_type').length;
+        return `Pool · ${t} tipo${t === 1 ? '' : 's'}`;
+      }
+      case 'awareness': {
+        const m = dims.filter((d) => d.dimension_type === 'core_message').length;
+        return `Awareness · ${m} mensaje${m === 1 ? '' : 's'}`;
+      }
+      case 'launch': {
+        const p = dims.filter((d) => d.dimension_type === 'phase').length;
+        return `Launch · ${p} fase${p === 1 ? '' : 's'}`;
+      }
+      case 'legacy_matrix':
+      default: {
+        const a = dims.filter((d) => d.dimension_type === 'angle').length;
+        const f = dims.filter((d) => d.dimension_type === 'format').length;
+        const h = dims.filter((d) => d.dimension_type === 'hook').length;
+        const total = h > 0 ? a * f * h : a * f;
+        return h > 0 ? `${a} × ${f} × ${h} = ${total}` : `${a} × ${f} = ${total}`;
+      }
+    }
+  })();
+
+  const accentColor = mold?.accentColor ?? '262 83% 58%';
 
   return (
     <Card className="p-5 hover:shadow-md transition-shadow cursor-pointer group" onClick={onOpen}>
       <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="min-w-0 flex-1">
-          <h3 className="font-semibold truncate">{fw.name}</h3>
-          {fw.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{fw.description}</p>}
+        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+          <div
+            className="h-9 w-9 rounded-md flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `hsl(${accentColor} / 0.15)`, color: `hsl(${accentColor})` }}
+          >
+            <Icon className="h-4.5 w-4.5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold truncate">{fw.name}</h3>
+            {fw.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{fw.description}</p>}
+          </div>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -290,23 +350,17 @@ const FrameworkCard = ({ fw, onOpen, onDelete }: { fw: AdFrameworkWithDimensions
       </div>
 
       <div className="text-sm space-y-1 mb-3">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Ángulos</span>
-          <span className="font-mono">{angles.length}</span>
-        </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Formatos</span>
-          <span className="font-mono">{formats.length}</span>
-        </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Hooks</span>
-          <span className="font-mono">{hooks.length}</span>
-        </div>
+        {stats.map((s) => (
+          <div key={s.label} className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">{s.label}</span>
+            <span className="font-mono">{s.value}</span>
+          </div>
+        ))}
       </div>
 
       <div className="flex items-center justify-between pt-3 border-t">
         <Badge variant="secondary" className="font-mono text-xs">
-          {angles.length} × {formats.length} × {hooks.length} = {total}
+          {summary}
         </Badge>
         <span className="text-xs text-muted-foreground">
           {fw.campaign_count ?? 0} campaña{(fw.campaign_count ?? 0) === 1 ? '' : 's'}

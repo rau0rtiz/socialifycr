@@ -1,187 +1,91 @@
-## Rediseño Ad Frameworks: de matrices a "moldes con flujos"
+## Problema actual
 
-### Problema actual
+Hoy la página de Framework (detalle) y el "FrameworkBuilder" tratan **a todos los moldes igual**: muestran "Ángulos × Formatos × Hooks", el conteo `n × m × k` y un editor genérico de "dimensiones". Esto rompe la lógica de cada molde:
 
-Todo framework está forzado al mismo modelo: **ángulos × formatos × hooks** = matriz cartesiana. Eso obliga a meter en esa caja cosas que no son matrices: una secuencia de lanzamiento, un funnel de awareness, un pool de testing. Por eso visualmente todo se ve "denso pero plano" y los flujos no tienen sentido.
+- **Pool**: no tiene fases ni niveles, sólo un catálogo de tipos de contenido. No debería mostrar "ángulos × formatos × hooks".
+- **Awareness**: tiene 5 niveles fijos + mensajes centrales (anidados a un nivel) + tipos de contenido. Editarlos como una lista plana confunde.
+- **Launch**: tiene fases ordenadas (con descripción y orden) + tipos de contenido. Necesita drag para reordenar fases y un campo de descripción.
+- **Legacy matrix**: el único que sí encaja con "ángulos × formatos × hooks".
 
-### Concepto nuevo: Moldes (Templates de flujo)
+## Objetivo
 
-Al crear un framework, escoges un **molde**. Cada molde:
-- Define su propia estructura de datos (qué dimensiones existen y cómo se relacionan)
-- Tiene su propia UI nativa (no una matriz genérica)
-- Comparte la misma "pieza editable" (la **Variante**: tipo, estado, fecha, copy, hook, referencias)
+Que **la página de detalle del framework** y **el setup (builder)** sean **específicos para cada molde**, mostrando sólo los conceptos que ese molde maneja, con la UI adecuada para configurarlos y un overview que tenga sentido para ese flujo.
 
-Habrá **3 moldes** al inicio:
+## Cambios
 
----
+### 1. Página `AdFrameworkDetail.tsx` — header y overview por molde
 
-### 1. Molde "Pool" (Launchpad)
+Reemplazar el header genérico (`Ángulos × Formatos × Hooks = N variantes/campaña`) y el grid fijo de 3 tarjetas por **un componente por molde** que renderiza:
 
-**Propósito**: pool grande de creatividades para testear con A/B.
+- **Badge del molde** (icono + nombre del molde, color del molde) al lado del título.
+- **Resumen contextual**:
+  - **Pool** → "X tipos de contenido" + lista de chips de tipos.
+  - **Awareness** → 5 columnas mini (una por nivel) con conteo de mensajes centrales por nivel y chips de tipos de contenido aparte.
+  - **Launch** → línea cronológica horizontal con las fases ordenadas (chip por fase con su color y orden) + chips de tipos de contenido.
+  - **Legacy** → mantener el grid actual de Ángulos / Formatos / Hooks.
+- **Botón "Editar"** que abre el builder específico del molde.
 
-**Estructura**:
-- Una sola lista plana de variantes
-- Cada variante tiene: ángulo (tag libre), formato, hook, copy
-- Sin jerarquía: todo es un anuncio para producir y medir
+Eliminar el cálculo `totalVariants = angles*formats*hooks` para moldes nuevos (no aplica). Para moldes nuevos, "Nueva campaña" estará habilitada siempre que el molde esté mínimamente configurado:
+- Pool: al menos 1 tipo de contenido (o ninguno permitido — el usuario puede crear variantes "sin tipo").
+- Awareness: al menos los 5 niveles (ya vienen sembrados).
+- Launch: al menos 1 fase.
 
-**UI**:
-- Vista por defecto: **Galería** (cards 4:5 con thumbnail, hook visible, estado, fecha)
-- Filtros chip: ángulo, formato, estado
-- Botón "Añadir variante" siempre visible (no se "auto-genera" matriz)
-- Vistas alternas: Kanban (por estado), Calendario (por fecha)
+### 2. `FrameworkBuilder.tsx` → router por molde
 
-```text
-┌─────── Filtros: [Dolor] [Reel] [Listo] ───────┐
-│  ┌────┐ ┌────┐ ┌────┐ ┌────┐  + Añadir       │
-│  │card│ │card│ │card│ │card│                 │
-│  └────┘ └────┘ └────┘ └────┘                 │
-│  ┌────┐ ┌────┐ ┌────┐ ┌────┐                 │
-│  │card│ │card│ │card│ │card│                 │
-└────────────────────────────────────────────────┘
-```
+Convertirlo en un router delgado que, según `framework.template_kind`, renderiza uno de:
 
----
+- `LegacyMatrixBuilder` (extraer el contenido actual sin tocar lógica).
+- `PoolBuilder` (nuevo).
+- `AwarenessBuilder` (nuevo).
+- `LaunchBuilder` (nuevo).
 
-### 2. Molde "Awareness Levels" (5 niveles)
+Cada builder vive en `src/components/ad-frameworks/builders/`.
 
-**Propósito**: anuncios mapeados a los niveles de consciencia del prospecto (Eugene Schwartz).
+### 3. Builders específicos
 
-**Estructura jerárquica**:
-- 5 niveles fijos: Inconsciente · Consciente del problema · Consciente de la solución · Consciente del producto · Más consciente
-- Cada nivel tiene **mensajes centrales** (configurables, 1-N por nivel)
-- Cada mensaje central tiene **variantes** (los anuncios concretos con hook + formato)
+**`PoolBuilder.tsx`**
+- Nombre + descripción del framework.
+- Sección única: **"Catálogo de tipos de contenido"** (lista editable de `content_type`: añadir / renombrar / eliminar / color opcional).
+- Sin "ángulos/formatos/hooks", sin conteos de matriz.
 
-**UI**:
-- Vista por defecto: **Columnas verticales** (una por nivel) con scroll vertical interno
-- Dentro de cada columna: mensajes centrales como sub-secciones colapsables, y debajo las variantes
-- Header con barra de progreso por nivel
-- Click en variante → sheet de edición
+**`AwarenessBuilder.tsx`**
+- Nombre + descripción.
+- Sección **"Niveles de awareness"**: lista de 5 (ya sembrados); permite renombrar y cambiar color, **sin** añadir/eliminar (los 5 niveles son fijos por modelo de Schwartz). Con un "Restaurar nombres por defecto".
+- Sección **"Mensajes centrales por nivel"**: acordeón con los 5 niveles; dentro de cada nivel, lista editable de `core_message` (cada mensaje guarda `metadata.level_id` apuntando al nivel — ya está soportado en `AwarenessView`).
+- Sección **"Catálogo de tipos de contenido"** (igual que en Pool).
 
-```text
-┌Inconsciente┐┌Problema ┐┌Solución ┐┌Producto ┐┌Más cons.┐
-│ ████ 60%   ││ ██ 20%  ││ ░░  0%  ││ ██ 30%  ││ ███ 50% │
-├────────────┤├─────────┤├─────────┤├─────────┤├─────────┤
-│▼ Mensaje 1 ││▼ Msg 1  ││▼ Msg 1  ││▼ Msg 1  ││▼ Msg 1  │
-│  ┌──────┐  ││ ┌────┐  ││ ┌────┐  ││ ┌────┐  ││ ┌────┐  │
-│  │ var  │  ││ │ var│  ││ │ var│  ││ │ var│  ││ │ var│  │
-│  └──────┘  ││ └────┘  ││ └────┘  ││ └────┘  ││ └────┘  │
-│  ┌──────┐  ││▼ Msg 2  │└─────────┘└─────────┘└─────────┘
-│  │ var  │  │└─────────┘
-│  └──────┘  │
-│▼ Mensaje 2 │
-│  + Añadir  │
-└────────────┘
-```
+**`LaunchBuilder.tsx`**
+- Nombre + descripción.
+- Sección **"Fases del lanzamiento"**: lista ordenable de fases (label, color, descripción en `metadata.description`, orden por `position`). Botones para añadir/eliminar. Mostrar índice "FASE 1, 2, 3…" igual que en `LaunchView`.
+- Sección **"Catálogo de tipos de contenido"** (catálogo libre — incluye Correos, Historias, Anuncios 20s, etc.).
 
----
+### 4. Encabezado contextual del builder
 
-### 3. Molde "Launch Sequence" (MASTERCLASS)
+Cada builder muestra arriba el icono+nombre del molde (de `getMold(template_kind)`) y una línea explicativa corta de qué se está configurando, en lugar del genérico "Define los valores de cada dimensión".
 
-**Propósito**: secuencia ordenada de fases para una campaña tipo lanzamiento (Pre-launch → Cart open → Cart close).
+### 5. Auto-apertura del builder en onboarding
 
-**Estructura ordenada**:
-- **Fases** secuenciales (configurables: ej. "Calentamiento" → "Apertura del carrito" → "Cierre"), cada una con fechas (rango)
-- Cada fase tiene **piezas de contenido** ordenadas (no es matriz, es lista posicionada)
-- Cada pieza es una variante con tipo (Historia texto, Historia respuesta, Anuncio 20s, Orgánico+CTA, Correo) + hook + copy
+`AdFrameworkDetail` ya abre el builder cuando `dimensions.length === 0`. Mantener este comportamiento pero ahora abrirá el builder específico del molde.
 
-**UI**:
-- Vista por defecto: **Timeline horizontal** con fases en bloques, conectadas
-- Dentro de cada fase: lista vertical de piezas con su orden
-- Indicador visual del "día actual" en la timeline
-- Drag para reordenar piezas dentro de una fase
+### 6. Limpieza
 
-```text
-══════════════════════════════════════════════════════════════
-   CALENTAMIENTO    │  APERTURA CARRITO  │     CIERRE
-   1-7 Mar          │  8-10 Mar          │     11-12 Mar
-   ████████ 80%     │  ███ 30%           │     ░ 0%
-═══════════╪═════════╪══════════╪═════════╪══════════╪═══════
-   ┌──────────┐     │  ┌──────────┐      │   ┌──────────┐
-   │ 1. Hist. │     │  │ 1. Email │      │   │ 1. Hist. │
-   │ texto    │     │  │ apertura │      │   │ urgencia │
-   └──────────┘     │  └──────────┘      │   └──────────┘
-   ┌──────────┐     │  ┌──────────┐      │   ┌──────────┐
-   │ 2. Reel  │     │  │ 2. Hist. │      │   │ 2. Email │
-   │ autorid. │     │  │ FAQ      │      │   │ último   │
-   └──────────┘     │  └──────────┘      │   └──────────┘
-   + Añadir pieza   │  + Añadir pieza    │   + Añadir pieza
-```
+- Quitar referencias a "ángulos × formatos × hooks" del overview cuando el molde no es `legacy_matrix`.
+- En `FrameworkCard` (lista de frameworks en `AdFrameworks.tsx`), mostrar resumen acorde al molde (chip "Pool · 5 tipos", "Awareness · 12 mensajes", "Launch · 3 fases", o el conteo clásico para legacy) en vez de "Ángulos / Formatos / Hooks" para todos.
 
----
+## Archivos
 
-### Pieza compartida: la Variante
+**Nuevos**
+- `src/components/ad-frameworks/builders/PoolBuilder.tsx`
+- `src/components/ad-frameworks/builders/AwarenessBuilder.tsx`
+- `src/components/ad-frameworks/builders/LaunchBuilder.tsx`
+- `src/components/ad-frameworks/builders/LegacyMatrixBuilder.tsx` (extracción del builder actual)
+- `src/components/ad-frameworks/FrameworkOverview.tsx` (componente de overview que se renderiza según el molde)
 
-Independientemente del molde, abrir una variante muestra el mismo **sheet** de edición con:
-- Tipo de contenido (Foto, Reel, Carrusel, Historia texto, Historia respuesta, Anuncio 20s, Orgánico+CTA, Correo, …) — catálogo extensible
-- Estado (Pendiente, En progreso, Listo, Subido)
-- Fecha de publicación
-- Copy
-- Hook
-- Referencias (links + thumbnails — ya existe)
-- Notas
+**Editados**
+- `src/components/ad-frameworks/FrameworkBuilder.tsx` → router por molde.
+- `src/pages/AdFrameworkDetail.tsx` → usa `FrameworkOverview`, ajusta gating de "Nueva campaña" y elimina cálculo `n*m*k` para moldes nuevos.
+- `src/pages/AdFrameworks.tsx` → `FrameworkCard` muestra resumen por molde.
 
----
+## Sin cambios de base de datos
 
-### Cambios técnicos
-
-**Base de datos** (migración):
-- Nueva columna `ad_frameworks.template_kind text` con valores: `pool`, `awareness`, `launch`, `legacy_matrix`
-- Frameworks existentes → `legacy_matrix` (compatibilidad, mantienen su UI actual)
-- Para los nuevos moldes, las dimensiones existentes (`ad_framework_dimensions`) se reutilizan con tipos extra:
-  - `awareness`: `awareness_level` (los 5 niveles), `core_message` (mensajes centrales)
-  - `launch`: `phase` (fases con `start_date`/`end_date` en `description` JSON)
-- `ad_variants`:
-  - `angle_id` y `format_id` pasan a `nullable` (los moldes nuevos no los exigen igual)
-  - Nueva columna `position int` para orden dentro de fase/pool
-  - Nueva columna `awareness_level_id` y `phase_id` y `core_message_id` (todas nullable, FK a dimensions)
-
-**Frontend**:
-- Nuevos archivos:
-  - `src/lib/framework-molds.ts` — definiciones de moldes
-  - `src/components/ad-frameworks/molds/PoolView.tsx`
-  - `src/components/ad-frameworks/molds/AwarenessView.tsx`
-  - `src/components/ad-frameworks/molds/LaunchView.tsx`
-  - `src/components/ad-frameworks/molds/MoldRouter.tsx` — switch sobre `template_kind`
-- Modificar:
-  - `AdFrameworks.tsx` — selector visual de molde al crear (cards con preview de cada flujo)
-  - `AdCampaignCanvas.tsx` — delega render a `MoldRouter` según el molde del framework
-  - `AdFrameworkDetail.tsx` — la sección "Dimensiones overview" cambia según molde
-- Eliminar/archivar: `AngleColumnsBoard`, `AngleSectionBoard`, `MatrixView` quedan SOLO para `legacy_matrix`
-- Conservar: `VariantDetailSheet`, `VariantReferences`, `GalleryView` (se reusa en Pool), `KanbanView`, `CalendarView`
-
-**Migración de datos existentes**:
-- MASTERCLASS (framework actual) → migrar a molde `launch` con fases por defecto: "Calentamiento", "Apertura", "Cierre"
-- Frameworks "Pool"/Launchpad existentes → migrar a `pool`
-- Cualquier otro queda como `legacy_matrix` (la UI actual sigue funcionando para no romper)
-
----
-
-### Flujo de creación nuevo
-
-1. Click "Nuevo framework"
-2. Pantalla de selección de molde con 3 cards visuales grandes:
-   - **Pool** — "Pool de variantes para A/B testing"
-   - **Awareness Levels** — "5 niveles de consciencia × mensajes centrales"
-   - **Launch Sequence** — "Secuencia ordenada de fases (lanzamiento)"
-3. Nombre + descripción
-4. Configuración inicial específica del molde (ej. fases con fechas para Launch)
-5. → Vista nativa del molde
-
----
-
-### Lo que se conserva del sistema actual
-
-- Modelo de Variante editable (mismo sheet)
-- Sistema de referencias (URLs + embeds)
-- Estados, fechas, asignaciones
-- Bulk actions, selección múltiple
-- Realtime sync vía TanStack Query
-
-### Lo que cambia radicalmente
-
-- No más "auto-generación" de matriz al crear campaña
-- No más tabs por ángulo
-- Cada molde tiene su propia UI dedicada y optimizada
-- El usuario añade variantes manualmente donde tienen sentido
-
-¿Apruebas este rediseño? Si sí, implemento empezando por la migración + molde Launch (para arreglar MASTERCLASS) y luego Pool y Awareness en orden.
+Reusamos las columnas existentes (`dimension_type`, `metadata`, `position`, `color`, `description`). Los moldes ya guardan los tipos correctos (`phase`, `awareness_level`, `core_message`, `content_type`).
