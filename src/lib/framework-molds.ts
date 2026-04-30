@@ -49,6 +49,7 @@ export const FRAMEWORK_MOLDS: FrameworkMold[] = [
       { dimension_type: 'content_type', label: 'Reel' },
       { dimension_type: 'content_type', label: 'Foto' },
       { dimension_type: 'content_type', label: 'Carrusel' },
+      { dimension_type: 'content_type', label: 'Instagram Stories' },
     ],
   },
   {
