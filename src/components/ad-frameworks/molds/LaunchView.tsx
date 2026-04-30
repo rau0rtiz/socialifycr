@@ -9,7 +9,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoldVariantCard } from '../MoldVariantCard';
+import { PhaseTasksList } from './PhaseTasksList';
 import { useCreateAdVariant, useDeleteAdVariant, type AdVariant } from '@/hooks/use-ad-variants';
+import { useLaunchTasks } from '@/hooks/use-launch-tasks';
 import type { AdFrameworkDimension, AdFrameworkWithDimensions } from '@/hooks/use-ad-frameworks';
 
 interface Props {
@@ -43,6 +45,15 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
     });
     return m;
   }, [variants]);
+
+  const { data: allTasks = [] } = useLaunchTasks(campaignId);
+  const tasksByPhase = useMemo(() => {
+    const m: Record<string, typeof allTasks> = {};
+    allTasks.forEach((t) => {
+      (m[t.phase_id] ||= []).push(t);
+    });
+    return m;
+  }, [allTasks]);
 
   if (phases.length === 0) {
     return (
@@ -115,6 +126,7 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
         totalPhases={phases.length}
         campaignId={campaignId}
         variants={variantsByPhase[activePhase.id] ?? []}
+        tasks={tasksByPhase[activePhase.id] ?? []}
         contentTypes={contentTypes}
         onOpenVariant={onOpenVariant}
       />
@@ -123,13 +135,14 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
 };
 
 const PhaseSection = ({
-  phase, phaseIndex, totalPhases, campaignId, variants, contentTypes, onOpenVariant,
+  phase, phaseIndex, totalPhases, campaignId, variants, tasks, contentTypes, onOpenVariant,
 }: {
   phase: AdFrameworkDimension;
   phaseIndex: number;
   totalPhases: number;
   campaignId: string;
   variants: AdVariant[];
+  tasks: import('@/hooks/use-launch-tasks').LaunchPhaseTask[];
   contentTypes: AdFrameworkDimension[];
   onOpenVariant: (id: string) => void;
 }) => {
@@ -243,6 +256,14 @@ const PhaseSection = ({
           {AddButton}
         </div>
       </div>
+
+      {/* Tasks / acciones planificables */}
+      <PhaseTasksList
+        campaignId={campaignId}
+        phaseId={phase.id}
+        tasks={tasks}
+        accentColor={accent}
+      />
 
       {/* Content grid */}
       {orderedVariants.length === 0 ? (
