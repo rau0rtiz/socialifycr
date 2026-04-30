@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, Rocket, Calendar as CalendarIcon, Target } from 'lucide-react';
+import { Plus, Rocket, Calendar as CalendarIcon, Target, ListTodo } from 'lucide-react';
 import { format as formatDate, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,10 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoldVariantCard } from '../MoldVariantCard';
-import { PhaseTasksList } from './PhaseTasksList';
+import { TaskCard } from './TaskCard';
+import { TaskDetailSheet } from './TaskDetailSheet';
 import { useCreateAdVariant, useDeleteAdVariant, type AdVariant } from '@/hooks/use-ad-variants';
-import { useLaunchTasks } from '@/hooks/use-launch-tasks';
+import { useLaunchTasks, useCreateLaunchTask, useDeleteLaunchTask, useUpdateLaunchTask, type LaunchPhaseTask } from '@/hooks/use-launch-tasks';
 import type { AdFrameworkDimension, AdFrameworkWithDimensions } from '@/hooks/use-ad-frameworks';
 
 interface Props {
@@ -148,7 +149,11 @@ const PhaseSection = ({
 }) => {
   const createVariant = useCreateAdVariant();
   const deleteVariant = useDeleteAdVariant();
+  const createTask = useCreateLaunchTask();
+  const deleteTask = useDeleteLaunchTask();
+  const updateTask = useUpdateLaunchTask();
   const [addingType, setAddingType] = useState(false);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   const accent = phase.color ?? 'hsl(var(--primary))';
   const meta = (phase.metadata ?? {}) as any;
@@ -192,7 +197,17 @@ const PhaseSection = ({
     return m;
   }, [contentTypes]);
 
-  const AddButton = contentTypes.length > 0 ? (
+  const handleAddTask = async () => {
+    const newTask = await createTask.mutateAsync({
+      campaign_id: campaignId,
+      phase_id: phase.id,
+      title: 'Nueva tarea',
+      position: tasks.length,
+    });
+    setOpenTaskId(newTask.id);
+  };
+
+  const AddPieceButton = contentTypes.length > 0 ? (
     <DropdownMenu open={addingType} onOpenChange={setAddingType}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5" disabled={createVariant.isPending}>
@@ -220,6 +235,18 @@ const PhaseSection = ({
     </Button>
   );
 
+  const AddTaskButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      className="gap-1.5"
+      onClick={handleAddTask}
+      disabled={createTask.isPending}
+    >
+      <ListTodo className="h-3.5 w-3.5" /> Añadir tarea
+    </Button>
+  );
+
   return (
     <div className="space-y-4">
       {/* Phase meta header (no card chrome) */}
@@ -240,6 +267,12 @@ const PhaseSection = ({
             <span className="text-[10px] font-mono tabular-nums text-muted-foreground">
               {stats.ready}/{stats.total} listas
             </span>
+            {tasks.length > 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono tabular-nums text-muted-foreground">
+                <ListTodo className="h-2.5 w-2.5" />
+                {tasks.filter((t) => t.done).length}/{tasks.length} tareas
+              </span>
+            )}
           </div>
           <h3 className="font-bold text-lg text-foreground leading-tight">{phase.label}</h3>
           {description && (
@@ -252,29 +285,44 @@ const PhaseSection = ({
             </div>
           )}
         </div>
-        <div className="shrink-0">
-          {AddButton}
+        <div className="shrink-0 flex items-center gap-2">
+          {AddTaskButton}
+          {AddPieceButton}
         </div>
       </div>
 
-      {/* Tasks / acciones planificables */}
-      <PhaseTasksList
-        campaignId={campaignId}
-        phaseId={phase.id}
-        tasks={tasks}
-        accentColor={accent}
-      />
-
-      {/* Content grid */}
-      {orderedVariants.length === 0 ? (
+      {/* Unified grid: tasks + pieces */}
+      {orderedVariants.length === 0 && tasks.length === 0 ? (
         <div className="text-center py-10 border border-dashed rounded-lg">
-          <p className="text-xs text-muted-foreground italic">Sin piezas en esta fase todavía</p>
+          <p className="text-xs text-muted-foreground italic">
+            Sin piezas ni tareas en esta fase todavía
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {[...tasks]
+            .sort(
+              (a, b) =>
+                Number(a.done) - Number(b.done) ||
+                a.position - b.position ||
+                a.created_at.localeCompare(b.created_at),
+            )
+            .map((t) => (
+              <TaskCard
+                key={t.id}
+                task={t}
+                accentColor={accent}
+                onClick={() => setOpenTaskId(t.id)}
+                onToggleDone={(done) =>
+                  updateTask.mutate({ id: t.id, done } as any)
+                }
+                onDelete={() => deleteTask.mutate({ id: t.id, campaign_id: campaignId })}
+              />
+            ))}
           {orderedVariants.map((v, i) => (
             <div key={v.id} className="relative">
-              <span className="absolute -top-1.5 -left-1.5 z-10 text-[10px] font-bold bg-background border-2 rounded-full h-5 w-5 flex items-center justify-center text-foreground/70 shadow-sm"
+              <span
+                className="absolute -top-1.5 -left-1.5 z-10 text-[10px] font-bold bg-background border-2 rounded-full h-5 w-5 flex items-center justify-center text-foreground/70 shadow-sm"
                 style={{ borderColor: accent }}
               >
                 {i + 1}
@@ -290,6 +338,12 @@ const PhaseSection = ({
           ))}
         </div>
       )}
+
+      <TaskDetailSheet
+        task={tasks.find((t) => t.id === openTaskId) ?? null}
+        open={!!openTaskId}
+        onOpenChange={(o) => !o && setOpenTaskId(null)}
+      />
     </div>
   );
 };
