@@ -287,6 +287,28 @@ const PhaseSection = ({
           )}
         </div>
         <div className="shrink-0 flex items-center gap-2">
+          <div className="inline-flex rounded-md border bg-card p-0.5 text-[11px]">
+            <button
+              type="button"
+              onClick={() => setSortMode('manual')}
+              className={`px-2 py-1 rounded inline-flex items-center gap-1 transition-colors ${
+                sortMode === 'manual' ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+              title="Orden manual (posición)"
+            >
+              <GripVertical className="h-3 w-3" /> Manual
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortMode('date')}
+              className={`px-2 py-1 rounded inline-flex items-center gap-1 transition-colors ${
+                sortMode === 'date' ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+              title="Ordenar por fecha de entrega"
+            >
+              <ArrowUpDown className="h-3 w-3" /> Por fecha
+            </button>
+          </div>
           {AddTaskButton}
           {AddPieceButton}
         </div>
