@@ -72,6 +72,7 @@ export const FRAMEWORK_MOLDS: FrameworkMold[] = [
       { dimension_type: 'content_type', label: 'Anuncio 20s' },
       { dimension_type: 'content_type', label: 'Contenido Orgánico + CTA' },
       { dimension_type: 'content_type', label: 'Correo' },
+      { dimension_type: 'content_type', label: 'Instagram Stories' },
     ],
   },
 ];
