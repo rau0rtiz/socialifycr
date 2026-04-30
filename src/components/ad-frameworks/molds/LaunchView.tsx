@@ -78,7 +78,19 @@ const PhaseSection = ({
   const [addingType, setAddingType] = useState(false);
 
   const accent = phase.color ?? 'hsl(var(--primary))';
-  const description = (phase.metadata as any)?.description as string | undefined;
+  const meta = (phase.metadata ?? {}) as any;
+  const description = meta.description as string | undefined;
+  const condition = meta.condition as string | undefined;
+  const startDate = meta.start_date as string | undefined;
+  const endDate = meta.end_date as string | undefined;
+
+  const dateRange = useMemo(() => {
+    if (!startDate && !endDate) return null;
+    const fmt = (s?: string) => s ? formatDate(parseISO(s), 'd MMM', { locale: es }) : '?';
+    if (startDate && endDate) return `${fmt(startDate)} → ${fmt(endDate)}`;
+    if (startDate) return `Desde ${fmt(startDate)}`;
+    return `Hasta ${fmt(endDate)}`;
+  }, [startDate, endDate]);
 
   const orderedVariants = useMemo(
     () => [...variants].sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at)),
