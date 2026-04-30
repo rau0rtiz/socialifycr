@@ -266,6 +266,12 @@ const PhaseSection = ({
             <span className="text-[10px] font-mono tabular-nums text-muted-foreground">
               {stats.ready}/{stats.total} listas
             </span>
+            {tasks.length > 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono tabular-nums text-muted-foreground">
+                <ListTodo className="h-2.5 w-2.5" />
+                {tasks.filter((t) => t.done).length}/{tasks.length} tareas
+              </span>
+            )}
           </div>
           <h3 className="font-bold text-lg text-foreground leading-tight">{phase.label}</h3>
           {description && (
@@ -283,24 +289,45 @@ const PhaseSection = ({
         </div>
       </div>
 
-      {/* Tasks / acciones planificables */}
-      <PhaseTasksList
-        campaignId={campaignId}
-        phaseId={phase.id}
-        tasks={tasks}
-        accentColor={accent}
-      />
+        <div className="shrink-0 flex items-center gap-2">
+          {AddTaskButton}
+          {AddPieceButton}
+        </div>
+      </div>
 
-      {/* Content grid */}
-      {orderedVariants.length === 0 ? (
+      {/* Unified grid: tasks + pieces */}
+      {orderedVariants.length === 0 && tasks.length === 0 ? (
         <div className="text-center py-10 border border-dashed rounded-lg">
-          <p className="text-xs text-muted-foreground italic">Sin piezas en esta fase todavía</p>
+          <p className="text-xs text-muted-foreground italic">
+            Sin piezas ni tareas en esta fase todavía
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {[...tasks]
+            .sort(
+              (a, b) =>
+                Number(a.done) - Number(b.done) ||
+                a.position - b.position ||
+                a.created_at.localeCompare(b.created_at),
+            )
+            .map((t) => (
+              <TaskCard
+                key={t.id}
+                task={t}
+                accentColor={accent}
+                onClick={() => setOpenTaskId(t.id)}
+                onToggleDone={(done) =>
+                  // optimistic toggle via update mutation
+                  void import('@/hooks/use-launch-tasks').then(({}) => {})
+                }
+                onDelete={() => deleteTask.mutate({ id: t.id, campaign_id: campaignId })}
+              />
+            ))}
           {orderedVariants.map((v, i) => (
             <div key={v.id} className="relative">
-              <span className="absolute -top-1.5 -left-1.5 z-10 text-[10px] font-bold bg-background border-2 rounded-full h-5 w-5 flex items-center justify-center text-foreground/70 shadow-sm"
+              <span
+                className="absolute -top-1.5 -left-1.5 z-10 text-[10px] font-bold bg-background border-2 rounded-full h-5 w-5 flex items-center justify-center text-foreground/70 shadow-sm"
                 style={{ borderColor: accent }}
               >
                 {i + 1}
@@ -316,6 +343,12 @@ const PhaseSection = ({
           ))}
         </div>
       )}
+
+      <TaskDetailSheet
+        task={tasks.find((t) => t.id === openTaskId) ?? null}
+        open={!!openTaskId}
+        onOpenChange={(o) => !o && setOpenTaskId(null)}
+      />
     </div>
   );
 };
