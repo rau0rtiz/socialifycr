@@ -257,6 +257,14 @@ const PhaseSection = ({
         </div>
       </div>
 
+      {/* Tasks / acciones planificables */}
+      <PhaseTasksList
+        campaignId={campaignId}
+        phaseId={phase.id}
+        tasks={tasks}
+        accentColor={accent}
+      />
+
       {/* Content grid */}
       {orderedVariants.length === 0 ? (
         <div className="text-center py-10 border border-dashed rounded-lg">
