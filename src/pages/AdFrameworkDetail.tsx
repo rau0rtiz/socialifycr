@@ -253,7 +253,8 @@ const CampaignCard = ({
   onDelete?: () => void;
   onDuplicate?: () => void;
 }) => {
-  const completion = totalVariants > 0 ? Math.round((c.ready_count / totalVariants) * 100) : 0;
+  const denom = totalVariants > 0 ? totalVariants : c.variant_count;
+  const completion = denom > 0 ? Math.round((c.ready_count / denom) * 100) : 0;
 
   // Lightweight query for due-date health pills (only the fields needed)
   const { data: dueInfo } = useQuery({
