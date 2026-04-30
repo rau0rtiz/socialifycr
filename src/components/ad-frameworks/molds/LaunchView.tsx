@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, Rocket, Calendar as CalendarIcon, Target } from 'lucide-react';
+import { Plus, Rocket, Calendar as CalendarIcon, Target, ListTodo } from 'lucide-react';
 import { format as formatDate, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
