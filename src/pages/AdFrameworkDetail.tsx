@@ -162,7 +162,9 @@ const AdFrameworkDetail = () => {
           <DialogHeader>
             <DialogTitle>Nueva campaña</DialogTitle>
             <DialogDescription>
-              Se crearán automáticamente {totalVariants} variantes ({angles.length} ángulos × {formats.length} formatos × {hooks.length} hooks).
+              {isLegacy
+                ? `Se crearán automáticamente ${totalVariants} variantes (${angles.length} ángulos × ${formats.length} formatos × ${hooks.length} hooks).`
+                : 'Crea una nueva campaña usando este framework. Las variantes se añaden manualmente desde el canvas.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
