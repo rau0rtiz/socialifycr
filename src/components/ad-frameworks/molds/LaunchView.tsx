@@ -285,11 +285,6 @@ const PhaseSection = ({
             </div>
           )}
         </div>
-        <div className="shrink-0">
-          {AddButton}
-        </div>
-      </div>
-
         <div className="shrink-0 flex items-center gap-2">
           {AddTaskButton}
           {AddPieceButton}
