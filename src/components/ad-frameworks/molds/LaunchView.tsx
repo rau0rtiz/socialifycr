@@ -151,6 +151,7 @@ const PhaseSection = ({
   const deleteVariant = useDeleteAdVariant();
   const createTask = useCreateLaunchTask();
   const deleteTask = useDeleteLaunchTask();
+  const updateTask = useUpdateLaunchTask();
   const [addingType, setAddingType] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
@@ -318,8 +319,7 @@ const PhaseSection = ({
                 accentColor={accent}
                 onClick={() => setOpenTaskId(t.id)}
                 onToggleDone={(done) =>
-                  // optimistic toggle via update mutation
-                  void import('@/hooks/use-launch-tasks').then(({}) => {})
+                  updateTask.mutate({ id: t.id, done } as any)
                 }
                 onDelete={() => deleteTask.mutate({ id: t.id, campaign_id: campaignId })}
               />
