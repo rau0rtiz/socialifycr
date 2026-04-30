@@ -159,20 +159,31 @@ const PhaseSection = ({
       >
         <div className="flex items-start gap-3 flex-wrap">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span
                 className="rounded-full text-[10px] font-bold px-2 py-0.5 text-white tracking-wide shadow-sm"
                 style={{ backgroundColor: accent }}
               >
                 FASE {phaseIndex + 1}/{totalPhases}
               </span>
-              <span className="text-[10px] font-mono tabular-nums text-foreground/60">
+              {dateRange && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-background/70 border text-[10px] font-medium px-2 py-0.5 text-foreground/80">
+                  <CalendarIcon className="h-2.5 w-2.5" /> {dateRange}
+                </span>
+              )}
+              <span className="text-[10px] font-mono tabular-nums text-foreground/60 ml-auto">
                 {stats.ready}/{stats.total} listas
               </span>
             </div>
             <h3 className="font-bold text-base sm:text-lg text-foreground leading-tight">{phase.label}</h3>
             {description && (
               <p className="text-xs sm:text-sm text-foreground/70 mt-1 leading-snug">{description}</p>
+            )}
+            {condition && (
+              <div className="mt-2 flex items-start gap-1.5 text-[11px] sm:text-xs text-foreground/75 bg-background/50 border rounded-md px-2 py-1.5">
+                <Target className="h-3 w-3 mt-0.5 shrink-0 text-foreground/50" />
+                <span><span className="font-semibold">Avanza cuando:</span> {condition}</span>
+              </div>
             )}
           </div>
           <div className="shrink-0">
