@@ -175,10 +175,21 @@ export const CollectionsSection = ({ customers }: Props) => {
               Total pendiente: <span className="font-semibold text-foreground">{fmtMoney(totalUsd([...groups.overdue, ...groups.today, ...groups.upcoming, ...groups.future]), 'USD')}</span>
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => sendEmail.mutate({ test_email: 'ale@socialifycr.com' })} disabled={sendEmail.isPending}>
               {sendEmail.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Send className="h-3.5 w-3.5 mr-1" />}
               Test correo
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-purple-500/40 text-purple-600 hover:bg-purple-500/10 dark:text-purple-400"
+              onClick={() => {
+                setUpsellForm({ customer_name: '', amount: '', currency: 'USD', notes: '' });
+                setUpsellOpen(true);
+              }}
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1" /> Registrar upsell
             </Button>
             <Button size="sm" onClick={() => openNew()}>
               <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo cobro
