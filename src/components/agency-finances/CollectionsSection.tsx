@@ -145,7 +145,11 @@ export const CollectionsSection = ({ customers }: Props) => {
             size="sm"
             variant="default"
             className="h-7 px-2 bg-emerald-600 hover:bg-emerald-700"
-            onClick={() => markPaid.mutate({ id: c.id, paid_amount: Number(c.amount) })}
+            onClick={() => {
+              setPayTarget(c);
+              setPayAmount(String(c.amount));
+              setPayNotes(c.notes || '');
+            }}
             disabled={markPaid.isPending}
           >
             <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Cobrado
