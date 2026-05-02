@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarClock, AlertTriangle, CheckCircle2, Plus, Send, Trash2, Loader2 } from 'lucide-react';
+import { CalendarClock, AlertTriangle, CheckCircle2, Plus, Send, Trash2, Loader2, Sparkles } from 'lucide-react';
 import {
   AgencyCollection,
   useAgencyCollections,
