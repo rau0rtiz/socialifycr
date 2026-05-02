@@ -52,6 +52,20 @@ export const CollectionsSection = ({ customers }: Props) => {
   const [editing, setEditing] = useState<AgencyCollection | null>(null);
   const [form, setForm] = useState<Partial<AgencyCollection>>({});
 
+  // Pay dialog (manual amount + upsell support)
+  const [payTarget, setPayTarget] = useState<AgencyCollection | null>(null);
+  const [payAmount, setPayAmount] = useState<string>('');
+  const [payNotes, setPayNotes] = useState<string>('');
+
+  // Quick upsell dialog
+  const [upsellOpen, setUpsellOpen] = useState(false);
+  const [upsellForm, setUpsellForm] = useState<{ customer_name: string; amount: string; currency: 'USD' | 'CRC'; notes: string }>({
+    customer_name: '',
+    amount: '',
+    currency: 'USD',
+    notes: '',
+  });
+
   const today = todayStr();
   const in7days = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
 
