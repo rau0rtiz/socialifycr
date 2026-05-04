@@ -17,6 +17,7 @@ import { useClientTeachers } from '@/hooks/use-client-teachers';
 import { useClassGroups } from '@/hooks/use-class-groups';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { ProductFormDialog } from '@/components/ventas/ProductFormDialog';
+import { TissueProductDialog } from '@/components/inventory/TissueProductDialog';
 import { FREQUENCY_LABELS, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet, CalendarIcon, Banknote, Search, GraduationCap, Clock, UserCheck, Receipt, Percent, Users } from 'lucide-react';
