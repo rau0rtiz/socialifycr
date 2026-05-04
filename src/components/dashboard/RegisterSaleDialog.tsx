@@ -289,17 +289,28 @@ export const RegisterSaleDialog = ({
       setAmount('');
       setCurrency('CRC');
       setSaleDate(new Date().toISOString().split('T')[0]);
-      setSource('');
+      setSource(isTissue ? 'ad' : '');
       setSelectedAd(null);
       setCustomerName('');
       setProduct('');
-      setMessagePlatform('');
+      setMessagePlatform(isTissue ? 'instagram' : '');
       setNotes('');
       setStatus('completed');
       setCloserName('');
       setGarmentSize('');
     }
-  }, [editingSale, prefill, open]);
+  }, [editingSale, prefill, open, isTissue]);
+
+  // Tissue: auto-pick logged-in user as vendor when team loads (only on fresh open, no editing/prefill)
+  useEffect(() => {
+    if (!open || !isTissue || editingSale || prefill || closerName) return;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const me = teamMembers.find(m => m.userId === user.id);
+      if (me) setCloserName(me.fullName);
+    })();
+  }, [open, isTissue, teamMembers, editingSale, prefill, closerName]);
 
   // Full product creation now uses ProductFormDialog (synced with Business Setup)
   const [productDialogOpen, setProductDialogOpen] = useState(false);
