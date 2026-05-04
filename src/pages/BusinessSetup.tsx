@@ -349,6 +349,7 @@ const BusinessSetup = () => {
   const SECTIONS = STATIC_SECTIONS.filter(s => {
     if ((s as any).speakUpOnly && !isSpkUp) return false;
     if ((s as any).tissueOnly && !isTissue) return false;
+    if ((s as any).tissueHidden && isTissue) return false;
     return true;
   });
 
