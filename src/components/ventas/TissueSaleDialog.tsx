@@ -76,7 +76,10 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
   useEffect(() => {
     if (open) {
       setProductId(null); setVariant(null); setAmount(''); setCustomerName(''); setCustomerPhone('');
-      setSource('store'); setCloserName(''); setIgAccount(''); setMode('sale'); setDeposit(''); setNotes('');
+      setSource('ad'); setAdChannel('instagram'); setMode('sale'); setDeposit(''); setNotes('');
+      // Auto-pick logged-in user as vendedor if they belong to the team
+      const me = teamMembers.find(m => m.userId === user?.id);
+      setCloserName(me?.fullName || '');
       setSearchProd('');
     }
   }, [open]);
