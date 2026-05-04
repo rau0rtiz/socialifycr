@@ -60,6 +60,10 @@ export const ProductFormDialog = ({
   const [stockUnit, setStockUnit] = useState('');
   const [category, setCategory] = useState<string>('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatColor, setNewCatColor] = useState('hsl(220, 70%, 50%)');
+  const [savingCat, setSavingCat] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
