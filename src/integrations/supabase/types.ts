@@ -1313,6 +1313,7 @@ export type Database = {
         Row: {
           audience: string | null
           available_schedules: Json | null
+          brand: string | null
           category: string | null
           class_frequency: Json | null
           client_id: string
@@ -1338,6 +1339,7 @@ export type Database = {
         Insert: {
           audience?: string | null
           available_schedules?: Json | null
+          brand?: string | null
           category?: string | null
           class_frequency?: Json | null
           client_id: string
@@ -1363,6 +1365,7 @@ export type Database = {
         Update: {
           audience?: string | null
           available_schedules?: Json | null
+          brand?: string | null
           category?: string | null
           class_frequency?: Json | null
           client_id?: string
