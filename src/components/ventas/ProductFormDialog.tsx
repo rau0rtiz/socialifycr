@@ -184,7 +184,8 @@ export const ProductFormDialog = ({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
-          {/* Type selector */}
+          {/* Type selector — hidden for Tissue (only products) */}
+          {!isTissue && (
           <div>
             <Label className="text-xs">Tipo <span className="text-destructive">*</span></Label>
             <div className="mt-1.5 grid grid-cols-2 gap-2">
@@ -226,6 +227,7 @@ export const ProductFormDialog = ({
               </button>
             </div>
           </div>
+          )}
 
           {/* Photo upload */}
           <div>
