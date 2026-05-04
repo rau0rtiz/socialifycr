@@ -12,7 +12,8 @@ import { useClientProductCategories } from '@/hooks/use-client-product-categorie
 import { useClientProductTags } from '@/hooks/use-client-product-tags';
 import { ProductTagSelector } from './ProductTagSelector';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Camera, Loader2, X, Boxes, Wrench, Clock, Plus, Tag as TagIcon } from 'lucide-react';
+import { useBrand } from '@/contexts/BrandContext';
+import { Package, Camera, Loader2, X, Boxes, Wrench, Clock, Plus, Tag as TagIcon, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
