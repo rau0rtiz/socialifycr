@@ -456,6 +456,8 @@ type SortKey = 'name' | 'price' | 'stock' | 'margin';
 export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const { products, isLoading, deleteProduct } = useClientProducts(clientId);
   const { data: allSchemes } = useClientPaymentSchemes(clientId);
+  const { selectedClient } = useBrand();
+  const isTissue = !!selectedClient?.name?.toLowerCase().includes('tissue');
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ClientProduct | null>(null);
