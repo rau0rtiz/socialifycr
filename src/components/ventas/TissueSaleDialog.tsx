@@ -276,10 +276,10 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
                 <Input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" className="h-9" />
               </div>
               <div>
-                <Label className="text-xs">Vendedora</Label>
+                <Label className="text-xs">Vendedor</Label>
                 <select value={closerName} onChange={(e) => setCloserName(e.target.value)} className="w-full h-9 rounded-md border border-input bg-background text-sm px-2">
                   <option value="">Seleccionar…</option>
-                  {closers.map(c => <option key={c.userId} value={c.fullName}>{c.fullName}</option>)}
+                  {teamMembers.map(m => <option key={m.userId} value={m.fullName}>{m.fullName}</option>)}
                 </select>
               </div>
             </div>
@@ -296,7 +296,7 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
               </div>
             </div>
 
-            {/* Source + IG account */}
+            {/* Source + Channel (only if Publicidad) */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Origen</Label>
@@ -304,10 +304,14 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
                   {SOURCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
-              <div>
-                <Label className="text-xs">Cuenta de Instagram (opcional)</Label>
-                <Input value={igAccount} onChange={(e) => setIgAccount(e.target.value)} placeholder="@tissue_..." className="h-9" />
-              </div>
+              {source === 'ad' && (
+                <div>
+                  <Label className="text-xs">Canal</Label>
+                  <select value={adChannel} onChange={(e) => setAdChannel(e.target.value)} className="w-full h-9 rounded-md border border-input bg-background text-sm px-2">
+                    {AD_CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Apartado fields */}
