@@ -96,6 +96,7 @@ const STATIC_SECTIONS = [
 const BusinessSetup = () => {
   const { selectedClient, clientsLoading } = useBrand();
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
+  const isTissue = selectedClient?.name?.toLowerCase().includes('tissue');
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<Section>(null);
   const { flags: featureFlags, updateFlag, updateChecklistItems } = useClientFeatures(selectedClient?.id || null);
