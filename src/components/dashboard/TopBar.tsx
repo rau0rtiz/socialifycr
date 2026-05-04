@@ -42,9 +42,17 @@ export const TopBar = () => {
 
   return (
     <>
-      <header className="h-14 md:h-16 border-b border-border bg-card px-3 md:px-6 flex items-center justify-between gap-2 md:gap-4">
+      <header
+        className="border-b border-border bg-card px-3 md:px-6 flex items-center justify-between gap-2 md:gap-4 sticky top-0 z-30"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingLeft: 'max(0.75rem, env(safe-area-inset-left))',
+          paddingRight: 'max(0.75rem, env(safe-area-inset-right))',
+          minHeight: 'calc(3.5rem + env(safe-area-inset-top))',
+        }}
+      >
         <div className="flex items-center gap-2 md:gap-4 min-w-0">
-          <SidebarTrigger />
+          <SidebarTrigger className="h-10 w-10 -ml-1 shrink-0" />
           
           <Breadcrumb className="hidden sm:flex">
             <BreadcrumbList>
