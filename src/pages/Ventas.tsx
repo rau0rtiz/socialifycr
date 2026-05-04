@@ -21,6 +21,8 @@ import { StoryStoreSales } from '@/components/ventas/StoryStoreSales';
 import { SalesBySizeChart } from '@/components/ventas/SalesBySizeChart';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
+import { TissueSaleDialog } from '@/components/ventas/TissueSaleDialog';
+import { Plus, ShoppingBag } from 'lucide-react';
 
 
 import { useBrand } from '@/contexts/BrandContext';
