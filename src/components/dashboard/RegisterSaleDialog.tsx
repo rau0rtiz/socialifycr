@@ -769,6 +769,17 @@ export const RegisterSaleDialog = ({
                         </SelectContent>
                       </Select>
                     </div>
+                    {isTissue && source === 'ad' && (
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium">Canal *</Label>
+                        <Select value={messagePlatform} onValueChange={setMessagePlatform}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Canal" /></SelectTrigger>
+                          <SelectContent>
+                            {TISSUE_AD_CHANNELS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
 
                   <div className={cn("grid gap-2", isSilvia ? "grid-cols-1" : "grid-cols-2")}>
