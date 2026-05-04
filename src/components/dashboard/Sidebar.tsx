@@ -109,7 +109,8 @@ export const Sidebar = () => {
     menuItems.push({ title: ventasLabel, url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
   }
 
-  const showAsistencia = effectiveAgency || (flags as any).asistencia_section;
+  const isTissueClient = selectedClient?.name?.toLowerCase().includes('tissue');
+  const showAsistencia = (effectiveAgency || (flags as any).asistencia_section) && !isTissueClient;
   if (showAsistencia) {
     menuItems.push({ title: 'Asistencia', url: '/asistencia', icon: ClipboardCheck });
   }
