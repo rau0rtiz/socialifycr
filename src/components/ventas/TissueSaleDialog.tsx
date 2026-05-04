@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { useProductVariants, ProductVariant } from '@/hooks/use-product-variants';
-import { useClientClosers } from '@/hooks/use-client-closers';
+import { useClientTeamMembers } from '@/hooks/use-client-team-members';
 import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,12 +18,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { TissueProductDialog } from '@/components/inventory/TissueProductDialog';
 
 const SOURCE_OPTIONS = [
-  { value: 'store', label: 'Tienda física' },
   { value: 'ad', label: 'Publicidad' },
-  { value: 'organic', label: 'DM orgánico' },
-  { value: 'story', label: 'Historia' },
-  { value: 'referral', label: 'Referencia' },
-  { value: 'other', label: 'Otro' },
+  { value: 'store', label: 'Tienda física' },
+];
+
+const AD_CHANNELS = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'messenger', label: 'Messenger' },
+  { value: 'tiktok', label: 'TikTok' },
 ];
 
 interface Props {
@@ -36,7 +39,8 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { products } = useClientProducts(clientId);
-  const { data: closers = [] } = useClientClosers(clientId);
+  
+  const { data: teamMembers = [] } = useClientTeamMembers(clientId);
   const { addSale } = useSalesTracking(clientId);
 
   const [productId, setProductId] = useState<string | null>(null);
@@ -45,8 +49,8 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [source, setSource] = useState('store');
+  const [adChannel, setAdChannel] = useState('instagram');
   const [closerName, setCloserName] = useState('');
-  const [igAccount, setIgAccount] = useState('');
   const [mode, setMode] = useState<'sale' | 'apartado'>('sale');
   const [deposit, setDeposit] = useState('');
   const [reservationDate, setReservationDate] = useState(() => {
@@ -72,7 +76,10 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
   useEffect(() => {
     if (open) {
       setProductId(null); setVariant(null); setAmount(''); setCustomerName(''); setCustomerPhone('');
-      setSource('store'); setCloserName(''); setIgAccount(''); setMode('sale'); setDeposit(''); setNotes('');
+      setSource('ad'); setAdChannel('instagram'); setMode('sale'); setDeposit(''); setNotes('');
+      // Auto-pick logged-in user as vendedor if they belong to the team
+      const me = teamMembers.find(m => m.userId === user?.id);
+      setCloserName(me?.fullName || '');
       setSearchProd('');
     }
   }, [open]);
@@ -116,7 +123,7 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
         notes: notes || null,
         status: isApartado ? 'apartado' : 'completed',
         variant_id: variant?.id || null,
-        ig_account: igAccount || null,
+        ig_account: source === 'ad' ? adChannel : null,
         deposit_amount: isApartado && deposit ? Number(deposit) : null,
         reservation_expires_at: isApartado ? reservationDate : null,
       } as any).select('id').single();
@@ -269,10 +276,10 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
                 <Input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" className="h-9" />
               </div>
               <div>
-                <Label className="text-xs">Vendedora</Label>
+                <Label className="text-xs">Vendedor</Label>
                 <select value={closerName} onChange={(e) => setCloserName(e.target.value)} className="w-full h-9 rounded-md border border-input bg-background text-sm px-2">
                   <option value="">Seleccionar…</option>
-                  {closers.map(c => <option key={c.userId} value={c.fullName}>{c.fullName}</option>)}
+                  {teamMembers.map(m => <option key={m.userId} value={m.fullName}>{m.fullName}</option>)}
                 </select>
               </div>
             </div>
@@ -289,7 +296,7 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
               </div>
             </div>
 
-            {/* Source + IG account */}
+            {/* Source + Channel (only if Publicidad) */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Origen</Label>
@@ -297,10 +304,14 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
                   {SOURCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
-              <div>
-                <Label className="text-xs">Cuenta de Instagram (opcional)</Label>
-                <Input value={igAccount} onChange={(e) => setIgAccount(e.target.value)} placeholder="@tissue_..." className="h-9" />
-              </div>
+              {source === 'ad' && (
+                <div>
+                  <Label className="text-xs">Canal</Label>
+                  <select value={adChannel} onChange={(e) => setAdChannel(e.target.value)} className="w-full h-9 rounded-md border border-input bg-background text-sm px-2">
+                    {AD_CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Apartado fields */}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useBrand } from '@/contexts/BrandContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { useClientClosers } from '@/hooks/use-client-closers';
+import { useClientTeamMembers } from '@/hooks/use-client-team-members';
 import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-contacts';
 import { useClientTeachers } from '@/hooks/use-client-teachers';
@@ -61,6 +63,18 @@ const SOURCE_OPTIONS = [
   { value: 'landing_page', label: 'Landing Page' },
   { value: 'organic', label: 'Orgánico' },
   { value: 'other', label: 'Otro' },
+];
+
+const TISSUE_SOURCE_OPTIONS = [
+  { value: 'ad', label: 'Publicidad' },
+  { value: 'store', label: 'Tienda física' },
+];
+
+const TISSUE_AD_CHANNELS = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'messenger', label: 'Messenger' },
+  { value: 'tiktok', label: 'TikTok' },
 ];
 
 const PLATFORM_OPTIONS = [
@@ -138,7 +152,12 @@ export const RegisterSaleDialog = ({
   const [spkPaymentDay, setSpkPaymentDay] = useState('');
   const [spkSelectedGroupId, setSpkSelectedGroupId] = useState<string | null>(null);
   const { products, addProduct } = useClientProducts(clientId || null);
-  const { data: closers = [] } = useClientClosers(clientId || null);
+  const { data: closersBase = [] } = useClientClosers(clientId || null);
+  const { data: teamMembers = [] } = useClientTeamMembers(clientId || null);
+  // For Tissue: vendedor = ANY team member (regardless of role).
+  const closers = isTissue
+    ? teamMembers.map(m => ({ userId: m.userId, fullName: m.fullName, avatarUrl: m.avatarUrl }))
+    : closersBase;
   const { data: allSchemes = [] } = useClientPaymentSchemes(clientId || null);
   const { students, addStudent } = useStudentContacts(clientId || null);
   const { teachers } = useClientTeachers(clientId || null);
@@ -271,17 +290,28 @@ export const RegisterSaleDialog = ({
       setAmount('');
       setCurrency('CRC');
       setSaleDate(new Date().toISOString().split('T')[0]);
-      setSource('');
+      setSource(isTissue ? 'ad' : '');
       setSelectedAd(null);
       setCustomerName('');
       setProduct('');
-      setMessagePlatform('');
+      setMessagePlatform(isTissue ? 'instagram' : '');
       setNotes('');
       setStatus('completed');
       setCloserName('');
       setGarmentSize('');
     }
-  }, [editingSale, prefill, open]);
+  }, [editingSale, prefill, open, isTissue]);
+
+  // Tissue: auto-pick logged-in user as vendor when team loads (only on fresh open, no editing/prefill)
+  useEffect(() => {
+    if (!open || !isTissue || editingSale || prefill || closerName) return;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const me = teamMembers.find(m => m.userId === user.id);
+      if (me) setCloserName(me.fullName);
+    })();
+  }, [open, isTissue, teamMembers, editingSale, prefill, closerName]);
 
   // Full product creation now uses ProductFormDialog (synced with Business Setup)
   const [productDialogOpen, setProductDialogOpen] = useState(false);
@@ -747,10 +777,21 @@ export const RegisterSaleDialog = ({
                       <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
                         <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="¿De dónde?" /></SelectTrigger>
                         <SelectContent>
-                          {SOURCE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          {(isTissue ? TISSUE_SOURCE_OPTIONS : SOURCE_OPTIONS).map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
+                    {isTissue && source === 'ad' && (
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium">Canal *</Label>
+                        <Select value={messagePlatform} onValueChange={setMessagePlatform}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Canal" /></SelectTrigger>
+                          <SelectContent>
+                            {TISSUE_AD_CHANNELS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
 
                   <div className={cn("grid gap-2", isSilvia ? "grid-cols-1" : "grid-cols-2")}>
@@ -1365,7 +1406,7 @@ export const RegisterSaleDialog = ({
                   <Select value={source || 'organic'} onValueChange={v => setSource(v)}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {SOURCE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                      {(isTissue ? TISSUE_SOURCE_OPTIONS : SOURCE_OPTIONS).map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1864,7 +1905,7 @@ export const RegisterSaleDialog = ({
                 <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
                   <SelectContent>
-                    {SOURCE_OPTIONS.map(opt => (
+                    {(isTissue ? TISSUE_SOURCE_OPTIONS : SOURCE_OPTIONS).map(opt => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
                   </SelectContent>
