@@ -50,6 +50,7 @@ export function useProductVariants(clientId: string | null, productId?: string |
   const upsert = useMutation({
     mutationFn: async (variant: VariantInput & { id?: string }) => {
       const payload: any = { ...variant };
+      delete payload.id;
       if (variant.id) {
         const { data, error } = await supabase.from('product_variants').update(payload).eq('id', variant.id).select().single();
         if (error) throw error;
