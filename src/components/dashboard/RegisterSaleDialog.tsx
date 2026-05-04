@@ -11,6 +11,7 @@ import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { useClientClosers } from '@/hooks/use-client-closers';
+import { useClientTeamMembers } from '@/hooks/use-client-team-members';
 import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-contacts';
 import { useClientTeachers } from '@/hooks/use-client-teachers';
