@@ -2703,6 +2703,7 @@ export type Database = {
           garment_size: string | null
           group_id: string | null
           id: string
+          ig_account: string | null
           installment_amount: number | null
           installments_paid: number | null
           message_platform: string | null
@@ -2746,6 +2747,7 @@ export type Database = {
           garment_size?: string | null
           group_id?: string | null
           id?: string
+          ig_account?: string | null
           installment_amount?: number | null
           installments_paid?: number | null
           message_platform?: string | null
@@ -2789,6 +2791,7 @@ export type Database = {
           garment_size?: string | null
           group_id?: string | null
           id?: string
+          ig_account?: string | null
           installment_amount?: number | null
           installments_paid?: number | null
           message_platform?: string | null
