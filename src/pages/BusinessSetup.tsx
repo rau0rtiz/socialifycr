@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ProductsManager } from '@/components/ventas/ProductsManager';
+import { TissueInventoryView } from '@/components/inventory/TissueInventoryView';
 import { TeachersManager } from '@/components/ventas/TeachersManager';
 import { useClientFeatures } from '@/hooks/use-client-features';
 import { ChecklistItemsEditor } from '@/components/business-setup/ChecklistItemsEditor';
@@ -20,7 +21,7 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features' | 'teachers' | 'groups';
+type Section = null | 'brand' | 'products' | 'inventory' | 'team' | 'connections' | 'features' | 'teachers' | 'groups';
 
 const STATIC_SECTIONS = [
   {
@@ -38,6 +39,15 @@ const STATIC_SECTIONS = [
     icon: Package,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
+  },
+  {
+    key: 'inventory' as const,
+    title: 'Inventario',
+    description: 'Variantes (talla/color), stock y catálogos',
+    icon: Package,
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/10',
+    tissueOnly: true,
   },
   {
     key: 'teachers' as const,
@@ -86,6 +96,7 @@ const STATIC_SECTIONS = [
 const BusinessSetup = () => {
   const { selectedClient, clientsLoading } = useBrand();
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
+  const isTissue = selectedClient?.name?.toLowerCase().includes('tissue');
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<Section>(null);
   const { flags: featureFlags, updateFlag, updateChecklistItems } = useClientFeatures(selectedClient?.id || null);
@@ -326,6 +337,7 @@ const BusinessSetup = () => {
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     brand: renderBrand,
     products: renderProducts,
+    inventory: () => <TissueInventoryView clientId={selectedClient.id} />,
     teachers: renderTeachers,
     groups: renderGroups,
     team: renderTeam,
@@ -333,7 +345,11 @@ const BusinessSetup = () => {
     features: renderFeatures,
   };
 
-  const SECTIONS = STATIC_SECTIONS.filter(s => !(s as any).speakUpOnly || isSpkUp);
+  const SECTIONS = STATIC_SECTIONS.filter(s => {
+    if ((s as any).speakUpOnly && !isSpkUp) return false;
+    if ((s as any).tissueOnly && !isTissue) return false;
+    return true;
+  });
 
   return (
     <DashboardLayout>

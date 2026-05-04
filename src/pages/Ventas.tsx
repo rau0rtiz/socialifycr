@@ -21,6 +21,8 @@ import { StoryStoreSales } from '@/components/ventas/StoryStoreSales';
 import { SalesBySizeChart } from '@/components/ventas/SalesBySizeChart';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
+import { TissueSaleDialog } from '@/components/ventas/TissueSaleDialog';
+import { Plus, ShoppingBag } from 'lucide-react';
 
 
 import { useBrand } from '@/contexts/BrandContext';
@@ -106,6 +108,8 @@ const Ventas = () => {
   const isSilvia = selectedClient?.name?.toLowerCase().includes('silvia');
   const isRobertoOlivas = selectedClient?.name?.toLowerCase().includes('roberto olivas');
   const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
+  const isTissue = selectedClient?.name?.toLowerCase().includes('tissue');
+  const [tissueSaleOpen, setTissueSaleOpen] = useState(false);
 
   // Global time range state
   const [globalPeriod, setGlobalPeriod] = useState<GlobalPeriod>('this_month');
@@ -432,6 +436,21 @@ const Ventas = () => {
           />
         )}
 
+        {/* === TISSUE: Quick sale CTA === */}
+        {isTissue && (
+          <Card>
+            <CardContent className="p-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="font-semibold flex items-center gap-2"><ShoppingBag className="h-4 w-4" /> Registrar venta o apartado</div>
+                <div className="text-xs text-muted-foreground">Selecciona producto, talla, color y vendedora.</div>
+              </div>
+              <Button onClick={() => setTissueSaleOpen(true)} className="gap-1.5">
+                <Plus className="h-4 w-4" /> Nueva venta
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* === MIND COACH: Setter Daily Calendar + Products side by side === */}
         {(isMindCoach || isHildaLopez) && (
           <SetterDailyCalendar clientId={selectedClient.id} />
@@ -530,6 +549,9 @@ const Ventas = () => {
           />
         )}
       </div>
+      {isTissue && (
+        <TissueSaleDialog open={tissueSaleOpen} onOpenChange={setTissueSaleOpen} clientId={selectedClient.id} />
+      )}
     </DashboardLayout>
   );
 };
