@@ -1943,7 +1943,24 @@ export const RegisterSaleDialog = ({
       </DialogContent>
 
       {/* Full product creation dialog (synced with Business Setup) */}
-      {clientId && (
+      {clientId && (isTissue ? (
+        <TissueProductDialog
+          open={productDialogOpen}
+          onOpenChange={setProductDialogOpen}
+          clientId={clientId}
+          defaultName={newProductName}
+          onSaved={(p) => {
+            if (!p) return;
+            setProduct(p.name);
+            if (p.price != null) {
+              setAmount(String(p.price));
+              setCurrency(p.currency as 'CRC' | 'USD');
+              setTotalSaleAmount(p.price);
+            }
+            setNewProductName('');
+          }}
+        />
+      ) : (
         <ProductFormDialog
           open={productDialogOpen}
           onOpenChange={setProductDialogOpen}
@@ -1959,7 +1976,7 @@ export const RegisterSaleDialog = ({
             setNewProductName('');
           }}
         />
-      )}
+      ))}
     </Dialog>
   );
 };
