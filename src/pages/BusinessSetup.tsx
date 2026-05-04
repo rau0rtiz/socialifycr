@@ -21,7 +21,7 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Section = null | 'brand' | 'products' | 'team' | 'connections' | 'features' | 'teachers' | 'groups';
+type Section = null | 'brand' | 'products' | 'inventory' | 'team' | 'connections' | 'features' | 'teachers' | 'groups';
 
 const STATIC_SECTIONS = [
   {
