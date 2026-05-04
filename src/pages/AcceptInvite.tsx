@@ -47,31 +47,20 @@ const AcceptInvite = () => {
 
   const validateToken = async () => {
     try {
-      const { data, error } = await supabase
-        .from('client_invitations')
-        .select(`
-          id,
-          email,
-          role,
-          client_id,
-          clients:client_id (name)
-        `)
-        .eq('token', token)
-        .is('accepted_at', null)
-        .gt('expires_at', new Date().toISOString())
-        .single();
+      const { data, error } = await supabase.rpc('get_invitation_by_token', { _token: token as string });
 
-      if (error || !data) {
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row) {
         setError('Esta invitación no es válida o ha expirado.');
         return;
       }
 
       setInvitation({
-        id: data.id,
-        email: data.email,
-        role: data.role,
-        client_id: data.client_id,
-        client_name: (data.clients as any)?.name,
+        id: row.id,
+        email: row.email,
+        role: row.role,
+        client_id: row.client_id,
+        client_name: row.client_name,
       });
     } catch (err) {
       console.error('Error validating token:', err);
