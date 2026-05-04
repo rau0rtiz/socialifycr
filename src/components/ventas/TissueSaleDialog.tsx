@@ -123,16 +123,18 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
 
       if (error) throw error;
 
-      // Upsert customer
+      // Upsert customer (best-effort)
       if (customerName) {
-        await supabase.from('customer_contacts').upsert({
-          client_id: clientId,
-          full_name: customerName,
-          phone: customerPhone || null,
-          garment_sizes: variant?.size ? [variant.size] : [],
-          preferred_brands: (selectedProduct as any).brand ? [(selectedProduct as any).brand] : [],
-          last_purchase_at: new Date().toISOString(),
-        } as any, { onConflict: 'client_id,phone' }).select().maybeSingle().catch(() => null);
+        try {
+          await supabase.from('customer_contacts').upsert({
+            client_id: clientId,
+            full_name: customerName,
+            phone: customerPhone || null,
+            garment_sizes: variant?.size ? [variant.size] : [],
+            preferred_brands: (selectedProduct as any).brand ? [(selectedProduct as any).brand] : [],
+            last_purchase_at: new Date().toISOString(),
+          } as any, { onConflict: 'client_id,phone' });
+        } catch (e) { /* non-blocking */ }
       }
 
       qc.invalidateQueries({ queryKey: ['message-sales', clientId] });
