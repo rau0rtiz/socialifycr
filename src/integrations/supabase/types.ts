@@ -4236,6 +4236,16 @@ export type Database = {
           role: Database["public"]["Enums"]["client_role"]
         }[]
       }
+      get_invitation_by_token: {
+        Args: { _token: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          email: string
+          id: string
+          role: string
+        }[]
+      }
       get_safe_platform_connections: {
         Args: { _client_id: string }
         Returns: {
