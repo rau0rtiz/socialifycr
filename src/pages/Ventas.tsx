@@ -425,7 +425,7 @@ const Ventas = () => {
           </>
         )}
 
-        {/* Sales Goal Bar — for other clients */}
+        {/* Sales Goal Bar — para clientes "estándar" (Tissue incluido) */}
         {!(isMindCoach || isHildaLopez || isAlmaBendita || isSpkUp) && (
           <SalesGoalBar
             clientId={selectedClient.id}
@@ -451,13 +451,18 @@ const Ventas = () => {
           </Card>
         )}
 
-        {/* === MIND COACH: Setter Daily Calendar + Products side by side === */}
+        {/* === TISSUE: Recent sales ticker (visibilidad rápida) === */}
+        {isTissue && (
+          <RecentSalesTicker clientId={selectedClient.id} dateRange={globalRange} />
+        )}
+
+        {/* === MIND COACH: Setter Daily Calendar === */}
         {(isMindCoach || isHildaLopez) && (
           <SetterDailyCalendar clientId={selectedClient.id} />
         )}
 
-        {/* Ad ranking - at top for most clients, hidden for Mind Coach & Speak Up */}
-        {!isMindCoach && !isSpkUp && !isHildaLopez && !isSilvia && !isAlmaBendita && (
+        {/* Ad ranking — hidden para retail (Tissue) y otros sin atribución de anuncios */}
+        {!isMindCoach && !isSpkUp && !isHildaLopez && !isSilvia && !isAlmaBendita && !isTissue && (
           <AdSalesRanking
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
@@ -465,8 +470,8 @@ const Ventas = () => {
           />
         )}
 
-        {/* Setter pipeline (lead → sale flow) — hidden for Speak Up */}
-        {flags.setter_tracker && !isSpkUp && !isSilvia && (
+        {/* Setter pipeline (lead → venta) — Tissue es retail, sin agendas */}
+        {flags.setter_tracker && !isSpkUp && !isSilvia && !isTissue && (
           <SetterTracker
             clientId={selectedClient.id}
             hasAdAccount={hasAdAccount}
@@ -493,10 +498,18 @@ const Ventas = () => {
           />
         </div>
 
-        {/* Collections (pending installments) — hidden for Alma Bendita */}
-        {!isAlmaBendita && <CollectionsWidget clientId={selectedClient.id} />}
+        {/* === TISSUE: Distribución por talla / producto / marca === */}
+        {isTissue && (
+          <>
+            <SalesBySizeChart clientId={selectedClient.id} dateRange={globalRange} />
+            {salesDistributionSection}
+          </>
+        )}
 
-        {/* Reservas — para Mind Coach / Hilda con flag activo */}
+        {/* Collections (cobros a plazos) — Tissue retail no aplica */}
+        {!isAlmaBendita && !isTissue && <CollectionsWidget clientId={selectedClient.id} />}
+
+        {/* Reservas — Mind Coach / Hilda */}
         {(isMindCoach || isHildaLopez) && (flags as any).reservations_widget && (
           <ReservationsWidget clientId={selectedClient.id} />
         )}
@@ -511,10 +524,10 @@ const Ventas = () => {
           />
         )}
 
-        {/* Bottom section: charts side by side */}
-        {!isAlmaBendita && !isSpkUp && !isMindCoach && !isHildaLopez && salesDistributionSection}
+        {/* Bottom section: charts (Tissue ya tiene su sección dedicada arriba) */}
+        {!isAlmaBendita && !isSpkUp && !isMindCoach && !isHildaLopez && !isTissue && salesDistributionSection}
 
-        {/* Mind Coach / Hilda: only product chart, no brand chart */}
+        {/* Mind Coach / Hilda: only product chart */}
         {(isMindCoach || isHildaLopez) && (
           <div className="grid grid-cols-1 gap-6">
             {hasSalesChartData ? (
@@ -525,7 +538,7 @@ const Ventas = () => {
           </div>
         )}
 
-        {/* Speak Up: only product chart, no brand chart */}
+        {/* Speak Up: only product chart */}
         {isSpkUp && (
           <div className="grid grid-cols-1 gap-6">
             {hasSalesChartData ? (
@@ -536,7 +549,8 @@ const Ventas = () => {
           </div>
         )}
 
-        {!isSpkUp && !isSilvia && !isAlmaBendita && (
+        {/* Closure rate — depende de agendas. Tissue retail no aplica */}
+        {!isSpkUp && !isSilvia && !isAlmaBendita && !isTissue && (
           <ClosureRateWidget appointments={appointments} sales={allSales} />
         )}
 
