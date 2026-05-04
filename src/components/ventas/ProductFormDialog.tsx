@@ -70,7 +70,7 @@ export const ProductFormDialog = ({
     if (!open) return;
     if (editing) {
       setName(editing.name);
-      setProductType(editing.product_type || 'product');
+      setProductType(isTissue ? 'product' : (editing.product_type || 'product'));
       setDuration(editing.estimated_duration_min != null ? String(editing.estimated_duration_min) : '');
       setPrice(editing.price != null ? String(editing.price) : '');
       setCost(editing.cost != null ? String(editing.cost) : '');
