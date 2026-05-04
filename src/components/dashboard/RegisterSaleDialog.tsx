@@ -139,7 +139,12 @@ export const RegisterSaleDialog = ({
   const [spkPaymentDay, setSpkPaymentDay] = useState('');
   const [spkSelectedGroupId, setSpkSelectedGroupId] = useState<string | null>(null);
   const { products, addProduct } = useClientProducts(clientId || null);
-  const { data: closers = [] } = useClientClosers(clientId || null);
+  const { data: closersBase = [] } = useClientClosers(clientId || null);
+  const { data: teamMembers = [] } = useClientTeamMembers(clientId || null);
+  // For Tissue: vendedor = ANY team member (regardless of role).
+  const closers = isTissue
+    ? teamMembers.map(m => ({ userId: m.userId, fullName: m.fullName, avatarUrl: m.avatarUrl }))
+    : closersBase;
   const { data: allSchemes = [] } = useClientPaymentSchemes(clientId || null);
   const { students, addStudent } = useStudentContacts(clientId || null);
   const { teachers } = useClientTeachers(clientId || null);
