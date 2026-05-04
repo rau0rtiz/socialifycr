@@ -811,7 +811,7 @@ export const RegisterSaleDialog = ({
                               <SelectItem value="efectivo">Efectivo</SelectItem>
                               <SelectItem value="sinpe">SINPE</SelectItem>
                               <SelectItem value="transferencia_bancaria">Transferencia</SelectItem>
-                              <SelectItem value="stripe">Stripe</SelectItem>
+                              {!isTissue && <SelectItem value="stripe">Stripe</SelectItem>}
                               {paymentMethod && !['efectivo', 'sinpe', 'stripe', 'transferencia_bancaria'].includes(paymentMethod) && <SelectItem value={paymentMethod}>{paymentMethod}</SelectItem>}
                             </SelectContent>
                           </Select>
@@ -1395,7 +1395,7 @@ export const RegisterSaleDialog = ({
                       <SelectItem value="efectivo">Efectivo</SelectItem>
                       <SelectItem value="sinpe">SINPE</SelectItem>
                       <SelectItem value="transferencia_bancaria">Transferencia</SelectItem>
-                      <SelectItem value="stripe">Stripe</SelectItem>
+                      {!isTissue && <SelectItem value="stripe">Stripe</SelectItem>}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1887,7 +1887,7 @@ export const RegisterSaleDialog = ({
                         <SelectItem value="efectivo">Efectivo</SelectItem>
                         <SelectItem value="sinpe">SINPE</SelectItem>
                         <SelectItem value="transferencia_bancaria">Transferencia Bancaria</SelectItem>
-                        <SelectItem value="stripe">Stripe</SelectItem>
+                        {!isTissue && <SelectItem value="stripe">Stripe</SelectItem>}
                         {paymentMethod && !['efectivo', 'sinpe', 'stripe', 'transferencia_bancaria'].includes(paymentMethod) && (
                           <SelectItem value={paymentMethod}>{paymentMethod}</SelectItem>
                         )}
