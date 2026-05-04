@@ -549,6 +549,9 @@ const Ventas = () => {
           />
         )}
       </div>
+      {isTissue && (
+        <TissueSaleDialog open={tissueSaleOpen} onOpenChange={setTissueSaleOpen} clientId={selectedClient.id} />
+      )}
     </DashboardLayout>
   );
 };
