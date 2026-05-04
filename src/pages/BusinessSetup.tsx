@@ -90,6 +90,7 @@ const STATIC_SECTIONS = [
     icon: ToggleRight,
     color: 'text-pink-500',
     bgColor: 'bg-pink-500/10',
+    tissueHidden: true,
   },
 ];
 
