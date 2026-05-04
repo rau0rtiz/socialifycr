@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBrand } from '@/contexts/BrandContext';
 import { ProductFormDialog } from './ProductFormDialog';
+import { TissueProductDialog } from '@/components/inventory/TissueProductDialog';
 
 interface ProductsManagerProps {
   clientId: string;
@@ -455,6 +456,8 @@ type SortKey = 'name' | 'price' | 'stock' | 'margin';
 export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const { products, isLoading, deleteProduct } = useClientProducts(clientId);
   const { data: allSchemes } = useClientPaymentSchemes(clientId);
+  const { selectedClient } = useBrand();
+  const isTissue = !!selectedClient?.name?.toLowerCase().includes('tissue');
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ClientProduct | null>(null);
@@ -741,15 +744,23 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
       </Dialog>
 
       {/* Create/Edit dialog (uses reusable component with stock + type) */}
-      <ProductFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        clientId={clientId}
-        editing={editing}
-        onSaved={(saved) => {
-          if (!editing) setDetailProduct(saved);
-        }}
-      />
+      {isTissue ? (
+        <TissueProductDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          clientId={clientId}
+          editing={editing}
+          onSaved={(saved) => { if (!editing) setDetailProduct(saved); }}
+        />
+      ) : (
+        <ProductFormDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          clientId={clientId}
+          editing={editing}
+          onSaved={(saved) => { if (!editing) setDetailProduct(saved); }}
+        />
+      )}
 
       {/* Delete confirmation */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>

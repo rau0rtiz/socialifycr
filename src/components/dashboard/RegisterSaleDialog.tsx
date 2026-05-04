@@ -17,6 +17,7 @@ import { useClientTeachers } from '@/hooks/use-client-teachers';
 import { useClassGroups } from '@/hooks/use-class-groups';
 import { AdGridSelector } from '@/components/ventas/AdGridSelector';
 import { ProductFormDialog } from '@/components/ventas/ProductFormDialog';
+import { TissueProductDialog } from '@/components/inventory/TissueProductDialog';
 import { FREQUENCY_LABELS, CollectionFrequency } from '@/hooks/use-payment-collections';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Plus, X, Package, User, Tag, Megaphone, CreditCard, Phone, Mail, Wallet, CalendarIcon, Banknote, Search, GraduationCap, Clock, UserCheck, Receipt, Percent, Users } from 'lucide-react';
@@ -82,6 +83,7 @@ export const RegisterSaleDialog = ({
   const { selectedClient } = useBrand();
   const isSilvia = selectedClient?.name?.toLowerCase().includes('silvia');
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
+  const isTissue = !!selectedClient?.name?.toLowerCase().includes('tissue');
   const [step, setStep] = useState(0);
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<'CRC' | 'USD'>('CRC');
@@ -1941,7 +1943,24 @@ export const RegisterSaleDialog = ({
       </DialogContent>
 
       {/* Full product creation dialog (synced with Business Setup) */}
-      {clientId && (
+      {clientId && (isTissue ? (
+        <TissueProductDialog
+          open={productDialogOpen}
+          onOpenChange={setProductDialogOpen}
+          clientId={clientId}
+          defaultName={newProductName}
+          onSaved={(p) => {
+            if (!p) return;
+            setProduct(p.name);
+            if (p.price != null) {
+              setAmount(String(p.price));
+              setCurrency(p.currency as 'CRC' | 'USD');
+              setTotalSaleAmount(p.price);
+            }
+            setNewProductName('');
+          }}
+        />
+      ) : (
         <ProductFormDialog
           open={productDialogOpen}
           onOpenChange={setProductDialogOpen}
@@ -1957,7 +1976,7 @@ export const RegisterSaleDialog = ({
             setNewProductName('');
           }}
         />
-      )}
+      ))}
     </Dialog>
   );
 };
