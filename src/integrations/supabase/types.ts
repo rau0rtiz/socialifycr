@@ -2694,6 +2694,7 @@ export type Database = {
           currency: string
           customer_name: string | null
           customer_phone: string | null
+          deposit_amount: number | null
           discount_amount: number | null
           discount_reason: string | null
           garment_size: string | null
@@ -2708,6 +2709,7 @@ export type Database = {
           payment_method: string | null
           payment_scheme_id: string | null
           product: string | null
+          reservation_expires_at: string | null
           sale_date: string
           source: string
           status: string
@@ -2718,6 +2720,7 @@ export type Database = {
           teacher_id: string | null
           total_sale_amount: number | null
           updated_at: string | null
+          variant_id: string | null
         }
         Insert: {
           ad_campaign_id?: string | null
@@ -2734,6 +2737,7 @@ export type Database = {
           currency?: string
           customer_name?: string | null
           customer_phone?: string | null
+          deposit_amount?: number | null
           discount_amount?: number | null
           discount_reason?: string | null
           garment_size?: string | null
@@ -2748,6 +2752,7 @@ export type Database = {
           payment_method?: string | null
           payment_scheme_id?: string | null
           product?: string | null
+          reservation_expires_at?: string | null
           sale_date?: string
           source: string
           status?: string
@@ -2758,6 +2763,7 @@ export type Database = {
           teacher_id?: string | null
           total_sale_amount?: number | null
           updated_at?: string | null
+          variant_id?: string | null
         }
         Update: {
           ad_campaign_id?: string | null
@@ -2774,6 +2780,7 @@ export type Database = {
           currency?: string
           customer_name?: string | null
           customer_phone?: string | null
+          deposit_amount?: number | null
           discount_amount?: number | null
           discount_reason?: string | null
           garment_size?: string | null
@@ -2788,6 +2795,7 @@ export type Database = {
           payment_method?: string | null
           payment_scheme_id?: string | null
           product?: string | null
+          reservation_expires_at?: string | null
           sale_date?: string
           source?: string
           status?: string
@@ -2798,6 +2806,7 @@ export type Database = {
           teacher_id?: string | null
           total_sale_amount?: number | null
           updated_at?: string | null
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -2833,6 +2842,13 @@ export type Database = {
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "client_teachers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_sales_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -3075,6 +3091,96 @@ export type Database = {
           },
         ]
       }
+      product_brands: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_brands_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_categories_catalog: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_catalog_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_colors: {
+        Row: {
+          client_id: string
+          created_at: string
+          hex_code: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          hex_code?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          hex_code?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_colors_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_payment_schemes: {
         Row: {
           client_id: string
@@ -3189,6 +3295,38 @@ export type Database = {
           },
         ]
       }
+      product_sizes: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_sizes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_stock_movements: {
         Row: {
           client_id: string
@@ -3201,6 +3339,7 @@ export type Database = {
           reason: string | null
           resulting_stock: number
           sale_id: string | null
+          variant_id: string | null
         }
         Insert: {
           client_id: string
@@ -3213,6 +3352,7 @@ export type Database = {
           reason?: string | null
           resulting_stock: number
           sale_id?: string | null
+          variant_id?: string | null
         }
         Update: {
           client_id?: string
@@ -3225,6 +3365,7 @@ export type Database = {
           reason?: string | null
           resulting_stock?: number
           sale_id?: string | null
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -3232,6 +3373,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "client_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_stock_movements_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -3268,6 +3416,69 @@ export type Database = {
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "client_product_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          client_id: string
+          color: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          low_stock_threshold: number
+          photo_url: string | null
+          price: number | null
+          product_id: string
+          size: string | null
+          sku: string | null
+          stock_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          low_stock_threshold?: number
+          photo_url?: string | null
+          price?: number | null
+          product_id: string
+          size?: string | null
+          sku?: string | null
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          low_stock_threshold?: number
+          photo_url?: string | null
+          price?: number | null
+          product_id?: string
+          size?: string | null
+          sku?: string | null
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "client_products"
             referencedColumns: ["id"]
           },
         ]
