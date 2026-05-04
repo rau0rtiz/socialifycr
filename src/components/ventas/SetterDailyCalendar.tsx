@@ -145,8 +145,9 @@ export const SetterDailyCalendar = ({ clientId }: SetterDailyCalendarProps) => {
       await upsertReport.mutateAsync(input);
       toast.success('Reporte guardado');
       setDialogOpen(false);
-    } catch {
-      toast.error('Error guardando reporte');
+    } catch (err: any) {
+      console.error('[SetterDailyCalendar] Error guardando reporte:', err);
+      toast.error(`Error guardando reporte: ${err?.message || 'desconocido'}`);
     }
   };
 
