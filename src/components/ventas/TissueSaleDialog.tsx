@@ -123,7 +123,7 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
         notes: notes || null,
         status: isApartado ? 'apartado' : 'completed',
         variant_id: variant?.id || null,
-        ig_account: igAccount || null,
+        ig_account: source === 'ad' ? adChannel : null,
         deposit_amount: isApartado && deposit ? Number(deposit) : null,
         reservation_expires_at: isApartado ? reservationDate : null,
       } as any).select('id').single();
