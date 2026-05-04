@@ -41,6 +41,15 @@ const STATIC_SECTIONS = [
     bgColor: 'bg-blue-500/10',
   },
   {
+    key: 'inventory' as const,
+    title: 'Inventario',
+    description: 'Variantes (talla/color), stock y catálogos',
+    icon: Package,
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/10',
+    tissueOnly: true,
+  },
+  {
     key: 'teachers' as const,
     title: 'Profesores',
     description: 'Profesores, horarios y asignaciones',
