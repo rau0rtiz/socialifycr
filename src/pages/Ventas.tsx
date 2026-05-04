@@ -436,6 +436,21 @@ const Ventas = () => {
           />
         )}
 
+        {/* === TISSUE: Quick sale CTA === */}
+        {isTissue && (
+          <Card>
+            <CardContent className="p-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="font-semibold flex items-center gap-2"><ShoppingBag className="h-4 w-4" /> Registrar venta o apartado</div>
+                <div className="text-xs text-muted-foreground">Selecciona producto, talla, color y vendedora.</div>
+              </div>
+              <Button onClick={() => setTissueSaleOpen(true)} className="gap-1.5">
+                <Plus className="h-4 w-4" /> Nueva venta
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* === MIND COACH: Setter Daily Calendar + Products side by side === */}
         {(isMindCoach || isHildaLopez) && (
           <SetterDailyCalendar clientId={selectedClient.id} />
