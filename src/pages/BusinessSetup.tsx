@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ProductsManager } from '@/components/ventas/ProductsManager';
+import { TissueInventoryView } from '@/components/inventory/TissueInventoryView';
 import { TeachersManager } from '@/components/ventas/TeachersManager';
 import { useClientFeatures } from '@/hooks/use-client-features';
 import { ChecklistItemsEditor } from '@/components/business-setup/ChecklistItemsEditor';
