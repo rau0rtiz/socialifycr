@@ -40,8 +40,10 @@ export const ProductFormDialog = ({
   onSaved,
 }: ProductFormDialogProps) => {
   const { addProduct, updateProduct } = useClientProducts(clientId);
-  const { categories } = useClientProductCategories(clientId);
+  const { categories, addCategory } = useClientProductCategories(clientId);
   const { getTagsForProduct, setProductTags } = useClientProductTags(clientId);
+  const { selectedClient } = useBrand();
+  const isTissue = !!selectedClient?.name?.toLowerCase().includes('tissue');
 
   const [name, setName] = useState('');
   const [productType, setProductType] = useState<ProductType>('product');
