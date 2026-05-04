@@ -292,24 +292,97 @@ export const ProductFormDialog = ({
               <TagIcon className="h-3 w-3 text-muted-foreground" />
               Categoría
             </Label>
-            {categories.length > 0 ? (
-              <Select value={category || '__none__'} onValueChange={(v) => setCategory(v === '__none__' ? '' : v)}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Sin categoría" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Sin categoría</SelectItem>
-                  {categories.map(c => (
-                    <SelectItem key={c.id} value={c.name}>
-                      <span className="inline-flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }} />
-                        {c.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input value={category} onChange={e => setCategory(e.target.value)} placeholder="Sin categorías creadas" className="mt-1.5" />
-            )}
+            <div className="mt-1.5 space-y-2">
+              {categories.length > 0 && (
+                <Select value={category || '__none__'} onValueChange={(v) => setCategory(v === '__none__' ? '' : v)}>
+                  <SelectTrigger><SelectValue placeholder="Sin categoría" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin categoría</SelectItem>
+                    {categories.map(c => (
+                      <SelectItem key={c.id} value={c.name}>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }} />
+                          {c.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {showNewCat ? (
+                <div className="rounded-lg border border-border/50 bg-muted/20 p-2.5 space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      autoFocus
+                      value={newCatName}
+                      onChange={e => setNewCatName(e.target.value)}
+                      placeholder="Nombre de la categoría"
+                      className="h-8 text-xs flex-1"
+                    />
+                    <input
+                      type="color"
+                      value={(() => {
+                        // best effort: if hsl, fallback to a hex
+                        const m = newCatColor.match(/^#([0-9a-f]{6})$/i);
+                        return m ? newCatColor : '#3b82f6';
+                      })()}
+                      onChange={e => setNewCatColor(e.target.value)}
+                      className="h-8 w-10 rounded border border-border/50 cursor-pointer bg-transparent p-0"
+                      aria-label="Color"
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-[11px]"
+                      onClick={() => { setShowNewCat(false); setNewCatName(''); }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 text-[11px] gap-1"
+                      disabled={!newCatName.trim() || savingCat}
+                      onClick={async () => {
+                        if (!newCatName.trim()) return;
+                        setSavingCat(true);
+                        try {
+                          const created = await addCategory.mutateAsync({
+                            name: newCatName.trim(),
+                            color: newCatColor,
+                            sort_order: categories.length,
+                          });
+                          setCategory(created.name);
+                          setShowNewCat(false);
+                          setNewCatName('');
+                          toast.success('Categoría creada');
+                        } catch (err: any) {
+                          toast.error(err?.message || 'Error al crear categoría');
+                        } finally {
+                          setSavingCat(false);
+                        }
+                      }}
+                    >
+                      <Check className="h-3 w-3" /> Crear
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px] gap-1"
+                  onClick={() => setShowNewCat(true)}
+                >
+                  <Plus className="h-3 w-3" /> Nueva categoría
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Tags */}
