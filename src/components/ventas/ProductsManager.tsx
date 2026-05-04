@@ -744,15 +744,23 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
       </Dialog>
 
       {/* Create/Edit dialog (uses reusable component with stock + type) */}
-      <ProductFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        clientId={clientId}
-        editing={editing}
-        onSaved={(saved) => {
-          if (!editing) setDetailProduct(saved);
-        }}
-      />
+      {isTissue ? (
+        <TissueProductDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          clientId={clientId}
+          editing={editing}
+          onSaved={(saved) => { if (!editing) setDetailProduct(saved); }}
+        />
+      ) : (
+        <ProductFormDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          clientId={clientId}
+          editing={editing}
+          onSaved={(saved) => { if (!editing) setDetailProduct(saved); }}
+        />
+      )}
 
       {/* Delete confirmation */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
