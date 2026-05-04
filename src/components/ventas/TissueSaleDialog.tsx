@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useClientProducts } from '@/hooks/use-client-products';
 import { useProductVariants, ProductVariant } from '@/hooks/use-product-variants';
-import { useClientClosers } from '@/hooks/use-client-closers';
+import { useClientTeamMembers } from '@/hooks/use-client-team-members';
 import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,12 +18,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { TissueProductDialog } from '@/components/inventory/TissueProductDialog';
 
 const SOURCE_OPTIONS = [
-  { value: 'store', label: 'Tienda física' },
   { value: 'ad', label: 'Publicidad' },
-  { value: 'organic', label: 'DM orgánico' },
-  { value: 'story', label: 'Historia' },
-  { value: 'referral', label: 'Referencia' },
-  { value: 'other', label: 'Otro' },
+  { value: 'store', label: 'Tienda física' },
+];
+
+const AD_CHANNELS = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'messenger', label: 'Messenger' },
+  { value: 'tiktok', label: 'TikTok' },
 ];
 
 interface Props {
