@@ -108,6 +108,8 @@ const Ventas = () => {
   const isSilvia = selectedClient?.name?.toLowerCase().includes('silvia');
   const isRobertoOlivas = selectedClient?.name?.toLowerCase().includes('roberto olivas');
   const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
+  const isTissue = selectedClient?.name?.toLowerCase().includes('tissue');
+  const [tissueSaleOpen, setTissueSaleOpen] = useState(false);
 
   // Global time range state
   const [globalPeriod, setGlobalPeriod] = useState<GlobalPeriod>('this_month');
