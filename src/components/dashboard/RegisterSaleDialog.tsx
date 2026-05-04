@@ -765,7 +765,7 @@ export const RegisterSaleDialog = ({
                       <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
                         <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="¿De dónde?" /></SelectTrigger>
                         <SelectContent>
-                          {SOURCE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          {(isTissue ? TISSUE_SOURCE_OPTIONS : SOURCE_OPTIONS).map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1383,7 +1383,7 @@ export const RegisterSaleDialog = ({
                   <Select value={source || 'organic'} onValueChange={v => setSource(v)}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {SOURCE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                      {(isTissue ? TISSUE_SOURCE_OPTIONS : SOURCE_OPTIONS).map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1882,7 +1882,7 @@ export const RegisterSaleDialog = ({
                 <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
                   <SelectContent>
-                    {SOURCE_OPTIONS.map(opt => (
+                    {(isTissue ? TISSUE_SOURCE_OPTIONS : SOURCE_OPTIONS).map(opt => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
                   </SelectContent>
