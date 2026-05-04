@@ -3560,6 +3560,79 @@ export type Database = {
           },
         ]
       }
+      sale_order_items: {
+        Row: {
+          client_id: string
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          product_id: string | null
+          product_name: string
+          quantity: number
+          sale_id: string
+          subtotal: number | null
+          unit_price: number
+          updated_at: string
+          variant_id: string | null
+          variant_label: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          sale_id: string
+          subtotal?: number | null
+          unit_price?: number
+          updated_at?: string
+          variant_id?: string | null
+          variant_label?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          sale_id?: string
+          subtotal?: number | null
+          unit_price?: number
+          updated_at?: string
+          variant_id?: string | null
+          variant_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "client_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_order_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "message_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_goals: {
         Row: {
           client_id: string
