@@ -337,6 +337,7 @@ const BusinessSetup = () => {
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     brand: renderBrand,
     products: renderProducts,
+    inventory: () => <TissueInventoryView clientId={selectedClient.id} />,
     teachers: renderTeachers,
     groups: renderGroups,
     team: renderTeam,
@@ -344,7 +345,11 @@ const BusinessSetup = () => {
     features: renderFeatures,
   };
 
-  const SECTIONS = STATIC_SECTIONS.filter(s => !(s as any).speakUpOnly || isSpkUp);
+  const SECTIONS = STATIC_SECTIONS.filter(s => {
+    if ((s as any).speakUpOnly && !isSpkUp) return false;
+    if ((s as any).tissueOnly && !isTissue) return false;
+    return true;
+  });
 
   return (
     <DashboardLayout>
