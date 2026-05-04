@@ -1,46 +1,31 @@
-## Objetivo
-Tissue es retail (ropa y accesorios). No usa agendas, ni setters, ni cobros a plazos, ni pipeline de leads. Hay que ocultar todos los widgets que asumen ese flujo y dejar solo lo relevante para una tienda.
+## Cambios solicitados
 
-## Qué queda visible para Tissue
-- Header con rango de fechas global.
-- **Sales Goal Bar** (meta del mes).
-- **CTA "Nueva venta o apartado"** (ya existente).
-- **Sales Tracking** (lista de ventas registradas) — limitado a ventas de Tissue.
-- **Ventas por Talla** (`SalesBySizeChart`).
-- **Ventas por Producto** y **Ventas por Marca** (`salesDistributionSection`).
-- **Recent Sales Ticker** (feed de ventas recientes).
+### 1. Categorías inline en creación de producto
+En `ProductFormDialog.tsx`, al lado del Select de Categoría agregar un mini-formulario expandible:
+- Botón "+ Nueva categoría" abajo del Select.
+- Al hacer clic: aparece un input + color picker compacto + botones Guardar/Cancelar.
+- Al guardar: llama `addCategory.mutateAsync` del hook `useClientProductCategories` (ya existe) y selecciona automáticamente la categoría recién creada.
+- Si no hay categorías y se usa el input crudo (línea 302), se reemplaza por el mismo flujo unificado.
 
-## Qué se oculta para Tissue
-- `SetterTracker` (pipeline lead → venta).
-- `SetterDailyCalendar` y reportes diarios de setter.
-- `ClosureRateWidget` (tasa de cierre depende de agendas).
-- `AdSalesRanking` y `CampaignsDrilldown` (no manejan publicidad atribuida tipo agencia).
-- `CollectionsWidget` (cobros a plazos — retail cobra al momento).
-- `ReservationsWidget` (las reservas de Tissue se manejan como "apartado" dentro del flujo de venta).
-- `PipelineSummaryWidget`.
-- Pre-call checklist y configuración de setters.
+### 2. Ocultar "Servicio" para Tissue
+En `ProductFormDialog.tsx`:
+- Importar `useBrand` y derivar `isTissue` desde el cliente seleccionado.
+- Si `isTissue`: no renderizar el selector de tipo (Producto/Servicio); forzar `productType = 'product'`.
+- Esto también oculta toda la lógica de duración, etc.
 
-## Cambios en `Sidebar`
-- Para Tissue ocultar el link **Asistencia** (no aplica).
-- Mantener: Dashboard, Ventas, Client Database, Business Setup.
+En `ProductsManager.tsx`:
+- Si `isTissue`, ocultar también el botón / atajos de "Nuevo servicio" si existen.
 
-## Cambios en `BusinessSetup`
-- Para Tissue ocultar las tarjetas: **Profesores**, **Grupos**, **Funcionalidades → checklist de setter / setter tracker / reservas**.
-- Mantener visibles: Marca, Productos, **Inventario** (ya tissueOnly), Equipo, Conexiones.
-- En el panel de feature flags, para Tissue desactivar/ocultar: `setter_tracker`, `setter_checklist`, `reservations_widget`, `setter_daily`, `asistencia_section`.
+### 3. Eliminar a Dra Silvia como cliente
+- Migración SQL para eliminar el cliente "Dra Silvia" (búsqueda case-insensitive `LOWER(name) LIKE '%silvia%'`).
+- Esto cascada-borrará: team members, ventas, agendas, productos, conexiones, feature flags, invitaciones, etc. (asumiendo FKs con ON DELETE CASCADE — verificar antes).
+- Si hay FKs sin cascade, eliminar primero los hijos en orden (sales → appointments → products → connections → team_members → invitations → client).
 
-## Cambios en `RegisterSaleDialog` (cuando aplica a Tissue)
-- Si `isTissue`, redirigir el botón "Nueva venta" al **TissueSaleDialog** (ya existe) en vez del genérico.
-- Asegurar que `RecentSalesTicker` para Tissue muestre marca/talla/color en el detalle.
+### Archivos a editar
+- `src/components/ventas/ProductFormDialog.tsx` — inline category creation + hide service for Tissue.
+- `src/components/ventas/ProductsManager.tsx` — hide service shortcuts for Tissue.
+- Nueva migración SQL — borrar cliente Silvia y dependencias.
 
-## Archivos a editar
-- `src/pages/Ventas.tsx` — gating de widgets con `!isTissue`.
-- `src/components/dashboard/Sidebar.tsx` — ocultar Asistencia para Tissue.
-- `src/pages/BusinessSetup.tsx` — añadir flag `tissueHidden` a `Profesores`, `Grupos`; filtrar feature flags irrelevantes para Tissue.
-- `src/components/clientes/ClientFeatureFlags.tsx` — opcional: marcar como N/A los flags de setter/reservas para Tissue.
-- `src/components/dashboard/RegisterSaleDialog.tsx` — si Tissue, abrir `TissueSaleDialog`.
-
-## Notas técnicas
-- Toda la lógica usa el flag derivado `isTissue = selectedClient?.name?.toLowerCase().includes('tissue')`, ya en uso.
-- No se borran componentes — solo se condiciona el render. Otros clientes no se ven afectados.
-- No hay migraciones de DB; los flags y datos quedan intactos.
+### Notas
+- `isTissue` se obtiene con `selectedClient?.name?.toLowerCase().includes('tissue')` (patrón ya en uso).
+- La migración es destructiva e irreversible — confirmar con el usuario antes de ejecutarla (aprobará al aceptar el plan).

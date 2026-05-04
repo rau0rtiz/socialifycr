@@ -12,7 +12,8 @@ import { useClientProductCategories } from '@/hooks/use-client-product-categorie
 import { useClientProductTags } from '@/hooks/use-client-product-tags';
 import { ProductTagSelector } from './ProductTagSelector';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Camera, Loader2, X, Boxes, Wrench, Clock, Plus, Tag as TagIcon } from 'lucide-react';
+import { useBrand } from '@/contexts/BrandContext';
+import { Package, Camera, Loader2, X, Boxes, Wrench, Clock, Plus, Tag as TagIcon, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -39,8 +40,10 @@ export const ProductFormDialog = ({
   onSaved,
 }: ProductFormDialogProps) => {
   const { addProduct, updateProduct } = useClientProducts(clientId);
-  const { categories } = useClientProductCategories(clientId);
+  const { categories, addCategory } = useClientProductCategories(clientId);
   const { getTagsForProduct, setProductTags } = useClientProductTags(clientId);
+  const { selectedClient } = useBrand();
+  const isTissue = !!selectedClient?.name?.toLowerCase().includes('tissue');
 
   const [name, setName] = useState('');
   const [productType, setProductType] = useState<ProductType>('product');
@@ -57,13 +60,17 @@ export const ProductFormDialog = ({
   const [stockUnit, setStockUnit] = useState('');
   const [category, setCategory] = useState<string>('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatColor, setNewCatColor] = useState('hsl(220, 70%, 50%)');
+  const [savingCat, setSavingCat] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
     if (editing) {
       setName(editing.name);
-      setProductType(editing.product_type || 'product');
+      setProductType(isTissue ? 'product' : (editing.product_type || 'product'));
       setDuration(editing.estimated_duration_min != null ? String(editing.estimated_duration_min) : '');
       setPrice(editing.price != null ? String(editing.price) : '');
       setCost(editing.cost != null ? String(editing.cost) : '');
@@ -177,7 +184,8 @@ export const ProductFormDialog = ({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
-          {/* Type selector */}
+          {/* Type selector — hidden for Tissue (only products) */}
+          {!isTissue && (
           <div>
             <Label className="text-xs">Tipo <span className="text-destructive">*</span></Label>
             <div className="mt-1.5 grid grid-cols-2 gap-2">
@@ -219,6 +227,7 @@ export const ProductFormDialog = ({
               </button>
             </div>
           </div>
+          )}
 
           {/* Photo upload */}
           <div>
@@ -283,24 +292,97 @@ export const ProductFormDialog = ({
               <TagIcon className="h-3 w-3 text-muted-foreground" />
               Categoría
             </Label>
-            {categories.length > 0 ? (
-              <Select value={category || '__none__'} onValueChange={(v) => setCategory(v === '__none__' ? '' : v)}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Sin categoría" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Sin categoría</SelectItem>
-                  {categories.map(c => (
-                    <SelectItem key={c.id} value={c.name}>
-                      <span className="inline-flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }} />
-                        {c.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input value={category} onChange={e => setCategory(e.target.value)} placeholder="Sin categorías creadas" className="mt-1.5" />
-            )}
+            <div className="mt-1.5 space-y-2">
+              {categories.length > 0 && (
+                <Select value={category || '__none__'} onValueChange={(v) => setCategory(v === '__none__' ? '' : v)}>
+                  <SelectTrigger><SelectValue placeholder="Sin categoría" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin categoría</SelectItem>
+                    {categories.map(c => (
+                      <SelectItem key={c.id} value={c.name}>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }} />
+                          {c.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {showNewCat ? (
+                <div className="rounded-lg border border-border/50 bg-muted/20 p-2.5 space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      autoFocus
+                      value={newCatName}
+                      onChange={e => setNewCatName(e.target.value)}
+                      placeholder="Nombre de la categoría"
+                      className="h-8 text-xs flex-1"
+                    />
+                    <input
+                      type="color"
+                      value={(() => {
+                        // best effort: if hsl, fallback to a hex
+                        const m = newCatColor.match(/^#([0-9a-f]{6})$/i);
+                        return m ? newCatColor : '#3b82f6';
+                      })()}
+                      onChange={e => setNewCatColor(e.target.value)}
+                      className="h-8 w-10 rounded border border-border/50 cursor-pointer bg-transparent p-0"
+                      aria-label="Color"
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-[11px]"
+                      onClick={() => { setShowNewCat(false); setNewCatName(''); }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 text-[11px] gap-1"
+                      disabled={!newCatName.trim() || savingCat}
+                      onClick={async () => {
+                        if (!newCatName.trim()) return;
+                        setSavingCat(true);
+                        try {
+                          const created = await addCategory.mutateAsync({
+                            name: newCatName.trim(),
+                            color: newCatColor,
+                            sort_order: categories.length,
+                          });
+                          setCategory(created.name);
+                          setShowNewCat(false);
+                          setNewCatName('');
+                          toast.success('Categoría creada');
+                        } catch (err: any) {
+                          toast.error(err?.message || 'Error al crear categoría');
+                        } finally {
+                          setSavingCat(false);
+                        }
+                      }}
+                    >
+                      <Check className="h-3 w-3" /> Crear
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px] gap-1"
+                  onClick={() => setShowNewCat(true)}
+                >
+                  <Plus className="h-3 w-3" /> Nueva categoría
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Tags */}
