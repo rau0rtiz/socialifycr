@@ -64,6 +64,18 @@ const SOURCE_OPTIONS = [
   { value: 'other', label: 'Otro' },
 ];
 
+const TISSUE_SOURCE_OPTIONS = [
+  { value: 'ad', label: 'Publicidad' },
+  { value: 'store', label: 'Tienda física' },
+];
+
+const TISSUE_AD_CHANNELS = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'messenger', label: 'Messenger' },
+  { value: 'tiktok', label: 'TikTok' },
+];
+
 const PLATFORM_OPTIONS = [
   { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'instagram_dm', label: 'Instagram DM' },
