@@ -39,7 +39,7 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { products } = useClientProducts(clientId);
-  const { data: closers = [] } = useClientClosers(clientId);
+  
   const { data: teamMembers = [] } = useClientTeamMembers(clientId);
   const { addSale } = useSalesTracking(clientId);
 
