@@ -40,6 +40,7 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
   const qc = useQueryClient();
   const { products } = useClientProducts(clientId);
   const { data: closers = [] } = useClientClosers(clientId);
+  const { data: teamMembers = [] } = useClientTeamMembers(clientId);
   const { addSale } = useSalesTracking(clientId);
 
   const [productId, setProductId] = useState<string | null>(null);
@@ -48,8 +49,8 @@ export const TissueSaleDialog = ({ open, onOpenChange, clientId }: Props) => {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [source, setSource] = useState('store');
+  const [adChannel, setAdChannel] = useState('instagram');
   const [closerName, setCloserName] = useState('');
-  const [igAccount, setIgAccount] = useState('');
   const [mode, setMode] = useState<'sale' | 'apartado'>('sale');
   const [deposit, setDeposit] = useState('');
   const [reservationDate, setReservationDate] = useState(() => {
