@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBrand } from '@/contexts/BrandContext';
 import { ProductFormDialog } from './ProductFormDialog';
+import { TissueProductDialog } from '@/components/inventory/TissueProductDialog';
 
 interface ProductsManagerProps {
   clientId: string;
