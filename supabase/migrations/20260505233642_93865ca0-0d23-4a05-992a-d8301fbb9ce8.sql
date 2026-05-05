@@ -1,0 +1,3 @@
+DELETE FROM public.user_roles WHERE user_id='0c10d8b7-42d0-45bf-a06c-72787e46c1ff' AND role='closer';
+DELETE FROM public.client_team_members WHERE user_id='0c10d8b7-42d0-45bf-a06c-72787e46c1ff' AND client_id='bfac1c16-0e02-4828-9744-1084309a9752';
+INSERT INTO public.client_team_members (client_id, user_id, role) VALUES ('bfac1c16-0e02-4828-9744-1084309a9752','0c10d8b7-42d0-45bf-a06c-72787e46c1ff','account_manager');
