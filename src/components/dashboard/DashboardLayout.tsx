@@ -28,13 +28,13 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
   return (
     <SidebarProvider>
       <div 
-        className="min-h-screen flex w-full bg-background"
+        className="h-[100dvh] flex w-full bg-background overflow-hidden"
         style={combinedStyle}
       >
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 h-full">
           <TopBar />
-           <main className="flex-1 p-3 sm:p-4 lg:p-6 overflow-auto relative dashboard-bg-decor" key="main-content">
+           <main className="flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden relative dashboard-bg-decor overscroll-contain [-webkit-overflow-scrolling:touch]" key="main-content">
              {children}
            </main>
         </div>
