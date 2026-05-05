@@ -125,7 +125,7 @@ export const SocialFollowersSection = ({
           )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           {platforms.map((platform) => {
             const config = platformConfig[platform.platform];
             const Icon = config.icon;
@@ -133,21 +133,21 @@ export const SocialFollowersSection = ({
             return (
               <div 
                 key={platform.platform} 
-                className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors min-w-0"
               >
                 <div
-                  className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${config.bgClass}`}
+                  className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shrink-0 ${config.bgClass}`}
                 >
-                  <Icon className={`h-6 w-6 ${config.textClass}`} />
+                  <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${config.textClass}`} />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
                     {config.label}
                   </p>
-                  <p className="text-xl md:text-2xl font-bold text-foreground leading-tight">
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground leading-tight truncate">
                     {formatNumber(platform.followers)}
                   </p>
-                  <p className="text-xs text-muted-foreground">{config.metric}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{config.metric}</p>
                 </div>
               </div>
             );
