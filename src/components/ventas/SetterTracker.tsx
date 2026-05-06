@@ -68,6 +68,8 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
   // No-sale confirmation state
   const [noSaleTarget, setNoSaleTarget] = useState<SetterAppointment | null>(null);
   const [noSaleReason, setNoSaleReason] = useState('');
+  const [noSaleCloser, setNoSaleCloser] = useState('');
+  const { data: closersList = [] } = useClientClosers(clientId);
 
   const { appointments, isLoading, addAppointment, updateAppointment, deleteAppointment } = useSetterAppointments(clientId, undefined, periodStartIso);
   const { setterNames: existingSetters } = useClientSetters(clientId);
