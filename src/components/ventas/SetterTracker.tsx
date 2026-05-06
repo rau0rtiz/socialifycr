@@ -118,6 +118,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
       a.status !== 'not_sold' as any &&
       a.status !== 'sold' &&
       a.status !== 'no_show' &&
+      !a.sale_id &&
       !reservedLeadIds.has(a.id)
     ),
     [appointments, reservedLeadIds]
