@@ -130,6 +130,10 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
     appointments.filter(a => a.status === 'no_show'), 
     [appointments]
   );
+  const soldAppointments = useMemo(() =>
+    allCompletedLeads.filter(a => a.status === 'sold'),
+    [allCompletedLeads]
+  );
 
   // Stats
   const stats = useMemo(() => {
@@ -340,8 +344,9 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
 
           {/* Tabs: Pipeline / No vendidos / Cierre por vendedor */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="h-8">
+            <TabsList className="h-8 flex-wrap">
               <TabsTrigger value="pipeline" className="text-xs">Agenda ({activeAppointments.length})</TabsTrigger>
+              <TabsTrigger value="sold" className="text-xs">Vendidas ({soldAppointments.length})</TabsTrigger>
               <TabsTrigger value="no_show" className="text-xs">No Show ({noShowAppointments.length})</TabsTrigger>
               <TabsTrigger value="lost" className="text-xs">No vendidos ({lostAppointments.length})</TabsTrigger>
               <TabsTrigger value="completed" className="text-xs">Completadas ({allCompletedLeads.length})</TabsTrigger>
@@ -358,6 +363,18 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">{activeAppointments.map(renderLeadGridCard)}</div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="sold" className="mt-3">
+              {soldAppointments.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <DollarSign className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm font-medium">Sin ventas registradas</p>
+                  <p className="text-xs mt-1">Las agendas convertidas en venta aparecerán aquí.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">{soldAppointments.map(renderLeadGridCard)}</div>
               )}
             </TabsContent>
 
