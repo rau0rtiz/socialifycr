@@ -113,14 +113,37 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
   );
 
   // Split appointments into sections
+  // Build a set of leads that already have a final outcome (sold/not_sold) so we
+  // don't duplicate them in the active Agenda when a follow-up appointment is created.
+  const closedLeadKeys = useMemo(() => {
+    const keys = new Set<string>();
+    allCompletedLeads.forEach(a => {
+      if (a.status === 'sold' || (a.status as string) === 'not_sold') {
+        const phone = (a.lead_phone || '').replace(/\D/g, '');
+        const name = (a.lead_name || '').trim().toLowerCase();
+        if (phone) keys.add(`p:${phone}`);
+        if (name) keys.add(`n:${name}`);
+      }
+    });
+    return keys;
+  }, [allCompletedLeads]);
+
+  const isLeadClosed = (a: SetterAppointment) => {
+    const phone = (a.lead_phone || '').replace(/\D/g, '');
+    const name = (a.lead_name || '').trim().toLowerCase();
+    return (phone && closedLeadKeys.has(`p:${phone}`)) || (name && closedLeadKeys.has(`n:${name}`));
+  };
+
   const activeAppointments = useMemo(() => 
     appointments.filter(a =>
       a.status !== 'not_sold' as any &&
       a.status !== 'sold' &&
       a.status !== 'no_show' &&
-      !reservedLeadIds.has(a.id)
+      !a.sale_id &&
+      !reservedLeadIds.has(a.id) &&
+      !isLeadClosed(a)
     ),
-    [appointments, reservedLeadIds]
+    [appointments, reservedLeadIds, closedLeadKeys]
   );
   const lostAppointments = useMemo(() => 
     appointments.filter(a => (a.status as string) === 'not_sold'), 
