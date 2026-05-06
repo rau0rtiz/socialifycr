@@ -185,6 +185,7 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
     if (newStatus === 'not_sold') {
       setNoSaleTarget(appointment);
       setNoSaleReason('');
+      setNoSaleCloser(appointment.closer_name || '');
       return;
     }
     try {
