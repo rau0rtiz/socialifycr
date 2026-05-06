@@ -172,6 +172,7 @@ export const useSetterAppointments = (clientId: string | null, period?: string, 
       if (input.checklist_whatsapp !== undefined) updateData.checklist_whatsapp = input.checklist_whatsapp;
       if (input.checklist_testimonials !== undefined) updateData.checklist_testimonials = input.checklist_testimonials;
       if ((input as any).not_sold_reason !== undefined) updateData.not_sold_reason = (input as any).not_sold_reason;
+      if ((input as any).closer_name !== undefined) updateData.closer_name = (input as any).closer_name;
 
       const { error } = await supabase
         .from('setter_appointments')
