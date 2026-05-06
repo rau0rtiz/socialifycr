@@ -198,15 +198,21 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
 
   const confirmNoSale = async () => {
     if (!noSaleTarget) return;
+    if (!noSaleCloser.trim()) {
+      toast.error('Selecciona el closer que atendió la llamada');
+      return;
+    }
     try {
       await updateAppointment.mutateAsync({
         id: noSaleTarget.id,
         status: 'not_sold' as any,
         not_sold_reason: noSaleReason || null,
+        closer_name: noSaleCloser.trim(),
       } as any);
       toast.success('Lead marcado como no vendido');
       setNoSaleTarget(null);
       setNoSaleReason('');
+      setNoSaleCloser('');
     } catch {
       toast.error('Error actualizando estado');
     }
