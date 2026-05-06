@@ -185,12 +185,12 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
             {daysLabel}
           </span>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground truncate">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="text-xs text-muted-foreground truncate min-w-0 flex-1">
             {group.product || 'Sin producto'}
           </span>
           {next && (
-            <span className="text-sm font-semibold">
+            <span className="text-sm font-semibold shrink-0">
               {cardSym}{Number(next.amount).toLocaleString()}
             </span>
           )}
