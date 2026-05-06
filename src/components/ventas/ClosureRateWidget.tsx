@@ -34,14 +34,19 @@ export const ClosureRateWidget = ({ appointments, sales = [] }: ClosureRateWidge
 
       let closer = 'Sin asignar';
 
-      // Try to get closer from linked sale
-      if (a.sale_id) {
-        const saleCloser = saleCloserMap.get(a.sale_id);
-        if (saleCloser) closer = saleCloser;
-        if (a.status === 'sold') countedSaleIds.add(a.sale_id);
+      // Priority 1: explicit closer_name on the appointment (set when marking no-sale or sale)
+      if ((a as any).closer_name) {
+        closer = (a as any).closer_name;
       }
 
-      // Fallback: try to extract closer from notes
+      // Priority 2: get closer from linked sale
+      if (closer === 'Sin asignar' && a.sale_id) {
+        const saleCloser = saleCloserMap.get(a.sale_id);
+        if (saleCloser) closer = saleCloser;
+      }
+      if (a.sale_id && a.status === 'sold') countedSaleIds.add(a.sale_id);
+
+      // Priority 3: extract closer from notes
       if (closer === 'Sin asignar' && a.notes) {
         const match = a.notes.match(/[Cc]loser[:\s]+([^\n,]+)/);
         if (match) closer = match[1].trim();
