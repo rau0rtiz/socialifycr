@@ -130,6 +130,10 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
     appointments.filter(a => a.status === 'no_show'), 
     [appointments]
   );
+  const soldAppointments = useMemo(() =>
+    allCompletedLeads.filter(a => a.status === 'sold'),
+    [allCompletedLeads]
+  );
 
   // Stats
   const stats = useMemo(() => {
