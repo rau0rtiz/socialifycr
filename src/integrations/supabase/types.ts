@@ -3816,6 +3816,7 @@ export type Database = {
           checklist_video: boolean
           checklist_whatsapp: boolean
           client_id: string
+          closer_name: string | null
           created_at: string | null
           created_by: string
           currency: string
@@ -3848,6 +3849,7 @@ export type Database = {
           checklist_video?: boolean
           checklist_whatsapp?: boolean
           client_id: string
+          closer_name?: string | null
           created_at?: string | null
           created_by: string
           currency?: string
@@ -3880,6 +3882,7 @@ export type Database = {
           checklist_video?: boolean
           checklist_whatsapp?: boolean
           client_id?: string
+          closer_name?: string | null
           created_at?: string | null
           created_by?: string
           currency?: string
