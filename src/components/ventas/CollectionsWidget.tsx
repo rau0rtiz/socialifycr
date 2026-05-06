@@ -179,18 +179,18 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
           colDef.bgClass,
         )}
       >
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium truncate">{group.customerName}</span>
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="text-sm font-medium truncate min-w-0 flex-1">{group.customerName}</span>
           <span className={cn('text-[10px] font-medium shrink-0', colDef.colorClass)}>
             {daysLabel}
           </span>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground truncate">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="text-xs text-muted-foreground truncate min-w-0 flex-1">
             {group.product || 'Sin producto'}
           </span>
           {next && (
-            <span className="text-sm font-semibold">
+            <span className="text-sm font-semibold shrink-0">
               {cardSym}{Number(next.amount).toLocaleString()}
             </span>
           )}
@@ -356,12 +356,13 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
               <p className="text-sm text-muted-foreground text-center py-6">
                 No hay cobros pendientes
               </p>
-            ) : isMobile ? (
-              renderMobileTabs()
-            ) : (
-              <div className="grid grid-cols-3 gap-3">
-                {COLUMNS.map(col => renderColumn(col))}
-              </div>
+          ) : (
+              <>
+                <div className="lg:hidden">{renderMobileTabs()}</div>
+                <div className="hidden lg:grid grid-cols-3 gap-3">
+                  {COLUMNS.map(col => renderColumn(col))}
+                </div>
+              </>
             )
           ) : completedGroups.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">
