@@ -31,6 +31,7 @@ export interface SetterAppointment {
   checklist_testimonials: boolean;
   checklist_responses: Record<string, boolean>;
   not_sold_reason: string | null;
+  closer_name: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
