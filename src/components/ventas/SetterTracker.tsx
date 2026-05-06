@@ -504,25 +504,40 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
       />
 
       {/* No-sale confirmation dialog */}
-      <AlertDialog open={!!noSaleTarget} onOpenChange={(open) => { if (!open) { setNoSaleTarget(null); setNoSaleReason(''); } }}>
+      <AlertDialog open={!!noSaleTarget} onOpenChange={(open) => { if (!open) { setNoSaleTarget(null); setNoSaleReason(''); setNoSaleCloser(''); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Marcar como no vendido?</AlertDialogTitle>
             <AlertDialogDescription>
-              Estás marcando a <strong>{noSaleTarget?.lead_name}</strong> como no vendido. Por favor indica el motivo.
+              Estás marcando a <strong>{noSaleTarget?.lead_name}</strong> como no vendido. Indica quién atendió la llamada y el motivo.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <Textarea
-            placeholder="¿Por qué no se concretó la venta? (requerido)"
-            value={noSaleReason}
-            onChange={(e) => setNoSaleReason(e.target.value)}
-            className="min-h-[80px]"
-          />
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-foreground">Closer que atendió la llamada *</label>
+              <Select value={noSaleCloser} onValueChange={setNoSaleCloser}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Selecciona el closer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {closersList.map(c => (
+                    <SelectItem key={c.userId} value={c.fullName}>{c.fullName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Textarea
+              placeholder="¿Por qué no se concretó la venta? (requerido)"
+              value={noSaleReason}
+              onChange={(e) => setNoSaleReason(e.target.value)}
+              className="min-h-[80px]"
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmNoSale}
-              disabled={!noSaleReason.trim()}
+              disabled={!noSaleReason.trim() || !noSaleCloser.trim()}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               <ThumbsDown className="h-4 w-4 mr-1" />
