@@ -356,12 +356,13 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
               <p className="text-sm text-muted-foreground text-center py-6">
                 No hay cobros pendientes
               </p>
-            ) : isMobile ? (
-              renderMobileTabs()
-            ) : (
-              <div className="grid grid-cols-3 gap-3">
-                {COLUMNS.map(col => renderColumn(col))}
-              </div>
+          ) : (
+              <>
+                <div className="lg:hidden">{renderMobileTabs()}</div>
+                <div className="hidden lg:grid grid-cols-3 gap-3">
+                  {COLUMNS.map(col => renderColumn(col))}
+                </div>
+              </>
             )
           ) : completedGroups.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">
