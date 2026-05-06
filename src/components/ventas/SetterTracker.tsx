@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useSetterAppointments, SetterAppointment, AppointmentStatus } from '@/hooks/use-setter-appointments';
 import { useLeadReservations } from '@/hooks/use-lead-reservations';
 import { useClientSetters } from '@/hooks/use-client-setters';
+import { useClientClosers } from '@/hooks/use-client-closers';
 import { AppointmentFormDialog } from './AppointmentFormDialog';
 import { LeadDetailDialog } from './LeadDetailDialog';
 import { LeadSourceWidget } from './LeadSourceWidget';
