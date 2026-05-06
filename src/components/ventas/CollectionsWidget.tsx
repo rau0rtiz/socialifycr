@@ -179,8 +179,8 @@ export const CollectionsWidget = ({ clientId }: CollectionsWidgetProps) => {
           colDef.bgClass,
         )}
       >
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-medium truncate">{group.customerName}</span>
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="text-sm font-medium truncate min-w-0 flex-1">{group.customerName}</span>
           <span className={cn('text-[10px] font-medium shrink-0', colDef.colorClass)}>
             {daysLabel}
           </span>
