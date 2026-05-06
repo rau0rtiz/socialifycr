@@ -344,8 +344,9 @@ export const SetterTracker = ({ clientId, hasAdAccount, onConvertToSale, periodS
 
           {/* Tabs: Pipeline / No vendidos / Cierre por vendedor */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="h-8">
+            <TabsList className="h-8 flex-wrap">
               <TabsTrigger value="pipeline" className="text-xs">Agenda ({activeAppointments.length})</TabsTrigger>
+              <TabsTrigger value="sold" className="text-xs">Vendidas ({soldAppointments.length})</TabsTrigger>
               <TabsTrigger value="no_show" className="text-xs">No Show ({noShowAppointments.length})</TabsTrigger>
               <TabsTrigger value="lost" className="text-xs">No vendidos ({lostAppointments.length})</TabsTrigger>
               <TabsTrigger value="completed" className="text-xs">Completadas ({allCompletedLeads.length})</TabsTrigger>
