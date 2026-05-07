@@ -957,8 +957,9 @@ export const RegisterSaleDialog = ({
     const spkCanAdvance = (s: number) => {
       if (s === 0) return !!spkSelectedStudentId || spkCreatingStudent;
       if (s === 1) return !!product;
-      if (s === groupStepIdx) return !!spkSelectedGroupId; // Must select a group
-      if (s === scheduleStepIdx) return true; // Schedule & teacher optional
+      // Group is now optional — can leave as "Por definir"
+      if (s === groupStepIdx) return true;
+      if (s === scheduleStepIdx) return true;
       return true;
     };
 
