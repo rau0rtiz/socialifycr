@@ -403,22 +403,8 @@ const Ventas = () => {
           />
         )}
 
-        {/* === SPEAK UP: Sales Goal + KPI Summary === */}
-        {isSpkUp && (
-          <>
-            <SalesGoalBar
-              clientId={selectedClient.id}
-              currentSalesUSD={summary.totalUSD}
-              currentSalesCRC={summary.totalCRC}
-              primaryColor={selectedClient.primary_color || undefined}
-              accentColor={selectedClient.accent_color || undefined}
-            />
-            <SpeakUpSalesSummary clientId={selectedClient.id} />
-            <RecentSalesTicker clientId={selectedClient.id} dateRange={globalRange} />
-            <SpeakUpAnalytics clientId={selectedClient.id} />
-            
-          </>
-        )}
+        {/* Speak Up: only the sales widget lives here. Goals, KPIs, analytics & charts moved to /reportes */}
+
 
         {/* === DRA SILVIA: Clinic KPI Summary === */}
         {isSilvia && (
