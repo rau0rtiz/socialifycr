@@ -1,64 +1,71 @@
-# Unificar Ventas y Órdenes para clientes retail
+# Arreglar buscador de clientes en OrderWizard
 
-## Decisión
+## Problemas detectados
 
-Para clientes retail (Alma Bendita, Tissue), donde cada orden ya genera su venta automáticamente, **el sidebar solo mostrará "Órdenes"** y se ocultará "Ventas". Para clientes no-retail (Mind Coach, Speak Up, etc.) todo queda igual.
+1. **Filtro parece no funcionar**: el resultado se limita a `.slice(0, 8)` siempre. Si el cliente que buscás es el #20 alfabéticamente y los primeros 8 ya lo contienen como substring débil, no aparece.
+2. **Scroll roto**: el contenedor del paso 1 ya tiene `max-h-[60vh] overflow-y-auto`, y la lista de resultados anida otro `max-h-48 overflow-y-auto`. En touch/trackpad el scroll interno no recibe foco.
+3. **Sin teclado/ARIA**: no se puede navegar con flechas ni Enter.
 
-## Cambios
+## Solución
 
-### 1. Sidebar (`src/components/dashboard/Sidebar.tsx`)
+Reemplazar el `Input + lista manual` por un **Combobox shadcn** (`Popover` + `Command` + `CommandInput` + `CommandList`), patrón ya usado en `StoryStoreSales.tsx` (línea 687).
 
-Cuando el cliente activo sea retail (Alma Bendita o Tissue):
+### Beneficios
+- Filtro nativo de `cmdk`: rápido, fuzzy, sin límite artificial.
+- `CommandList` maneja scroll correctamente con altura `max-h-[300px]` + Radix focus management.
+- Navegación con flechas + Enter incluida.
+- Cierra el popover al seleccionar.
 
-- **Ocultar** la entrada "Ventas".
-- **Mantener** la entrada "Órdenes" (ya existe).
+### Cambios en `src/components/ventas/orders/OrderWizardDialog.tsx`
 
-Para usuarios agencia en modo edición sin preview, mantener ambas visibles para que puedan administrar la configuración. En **preview-mode** y en **clientes reales** retail, solo "Órdenes".
+1. Eliminar estado `contactQuery` y memo `filteredContacts`.
+2. Reemplazar el bloque "Buscar cliente existente" (líneas ~204-238) por:
+   - Botón trigger que muestra el cliente seleccionado o "Buscar cliente existente…"
+   - `Popover` con `Command` adentro:
+     - `CommandInput` con placeholder "Nombre o teléfono…"
+     - `CommandEmpty` "Sin resultados"
+     - `CommandGroup` con todos los `contacts` mapeados a `CommandItem`
+     - Cada item busca por `full_name + phone` (concatenado en `value`)
+     - Al click → `handleSelectContact(c)` y cerrar popover
+3. Mantener inputs de Nombre + Teléfono debajo (para crear nuevo cliente o editar el seleccionado).
 
-### 2. Página `/ordenes` (`src/pages/Ordenes.tsx`)
-
-Convertir la página en el hub completo de revenue retail con tabs internos:
-
-- **Tab "Órdenes"** (default) — la lista actual con filtros por estado.
-- **Tab "Resumen"** — los widgets que hoy viven en `/ventas` y son útiles para retail:
-  - `SalesGoalWidget` (meta mensual)
-  - `RecentSalesTicker` (últimas ventas)
-  - `UnifiedStoryRevenueTracker` (solo Alma Bendita: gráfico semanal volumen vs ingresos)
-- **Tab "Clientes"** — atajo a Client Database filtrado por este cliente (link directo, no duplicar).
-
-### 3. Página `/ventas` (`src/pages/Ventas.tsx`)
-
-Si el cliente activo es retail y el usuario no es agencia:
-
-- Redirigir automáticamente a `/ordenes` con `<Navigate to="/ordenes" replace />`.
-
-Así, links viejos/bookmarks siguen funcionando sin error.
-
-### 4. Memoria de proyecto
-
-Actualizar `mem://features/ventas/orders-system` para reflejar que `/ordenes` es ahora la entrada única para retail y que `/ventas` redirige.
+### Verificación
+- Abrir OrderWizard en Alma Bendita (255 contactos).
+- Escribir "lau" → debe mostrar Laura Gomez y demás.
+- Escribir un teléfono parcial "5068" → debe filtrar.
+- Scroll con mouse y touch en la lista debe funcionar.
+- Seleccionar uno → se rellenan nombre + teléfono y se carga la dirección guardada.
 
 ## Detalles técnicos
 
 ```text
-Sidebar lógica:
-  isRetail = isAlmaBendita || isTissue
-  showVentas = (effectiveAgency && !isPreviewMode && !isRetail) || (!isRetail && flags.ventas_section)
-  showOrdenes = isRetail && (effectiveAgency || flags.ventas_section)
-
-/ordenes:
-  <Tabs defaultValue="ordenes">
-    <Tab "ordenes" /> (lista existente)
-    <Tab "resumen" /> (SalesGoalWidget + StoryRevenueTracker + Ticker)
-    <Tab "clientes" /> (link a /clientes)
-  </Tabs>
+<Popover open={contactPopoverOpen} onOpenChange={setContactPopoverOpen}>
+  <PopoverTrigger asChild>
+    <Button variant="outline" role="combobox" className="w-full justify-between">
+      {contactId ? selectedContact?.full_name : 'Buscar cliente existente…'}
+      <ChevronsUpDown className="h-4 w-4 opacity-50" />
+    </Button>
+  </PopoverTrigger>
+  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+    <Command>
+      <CommandInput placeholder="Nombre o teléfono…" />
+      <CommandList className="max-h-[300px]">
+        <CommandEmpty>Sin resultados</CommandEmpty>
+        <CommandGroup>
+          {contacts.map(c => (
+            <CommandItem
+              key={c.id}
+              value={`${c.full_name} ${c.phone || ''}`}
+              onSelect={() => { handleSelectContact(c); setContactPopoverOpen(false); }}
+            >
+              ...
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  </PopoverContent>
+</Popover>
 ```
 
-No hay cambios de base de datos — todo es UI/navegación.
-
-## Verificación
-
-1. Como cliente Alma Bendita: sidebar muestra solo "Órdenes"; al entrar ve tabs Órdenes/Resumen/Clientes.
-2. Como agencia viendo Alma Bendita en preview: idem (solo Órdenes).
-3. Como cliente Mind Coach: sidebar igual que antes (solo "Ventas").
-4. Visitar `/ventas` directo en Alma Bendita: redirige a `/ordenes`.
+No tocamos otras pantallas en este pase — el plan es que el patrón quede probado aquí y luego se puede aplicar a `TissueSaleDialog`, `ReservationFormDialog`, `RegisterSaleDialog` si presentan el mismo bug.
