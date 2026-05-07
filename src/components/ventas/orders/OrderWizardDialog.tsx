@@ -55,7 +55,9 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const { contacts } = useCustomerContacts(clientId);
   const { products } = useClientProducts(clientId);
-  const { activeStories, archivedStories } = useStories(clientId);
+  const { activeStories, archivedStories, allArchivedStories, isLoadingAllArchived, hasMoreArchived, fetchAllArchived } = useStories(clientId);
+  const [storyQuery, setStoryQuery] = useState('');
+  const [storyShowAll, setStoryShowAll] = useState(false);
   const { items: brandsCatalog } = useProductBrands(clientId);
   const { items: categoriesCatalog } = useProductCategoriesCatalog(clientId);
   const { createOrder } = useOrders(clientId);
