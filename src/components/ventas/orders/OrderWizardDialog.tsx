@@ -83,14 +83,6 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
     }
   }, [open]);
 
-  const filteredContacts = useMemo(() => {
-    const q = contactQuery.trim().toLowerCase();
-    if (!q) return contacts.slice(0, 8);
-    return contacts.filter(c =>
-      c.full_name?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q)
-    ).slice(0, 8);
-  }, [contacts, contactQuery]);
-
   const selectedContact = contacts.find(c => c.id === contactId);
   const savedAddresses = selectedContact?.addresses || [];
 
