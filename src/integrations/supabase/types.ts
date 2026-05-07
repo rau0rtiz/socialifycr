@@ -2925,9 +2925,11 @@ export type Database = {
       }
       order_items: {
         Row: {
+          brand: string | null
           client_id: string
           created_at: string
           garment_size: string | null
+          garment_type: string | null
           id: string
           notes: string | null
           order_id: string
@@ -2940,9 +2942,11 @@ export type Database = {
           variant_id: string | null
         }
         Insert: {
+          brand?: string | null
           client_id: string
           created_at?: string
           garment_size?: string | null
+          garment_type?: string | null
           id?: string
           notes?: string | null
           order_id: string
@@ -2955,9 +2959,11 @@ export type Database = {
           variant_id?: string | null
         }
         Update: {
+          brand?: string | null
           client_id?: string
           created_at?: string
           garment_size?: string | null
+          garment_type?: string | null
           id?: string
           notes?: string | null
           order_id?: string
