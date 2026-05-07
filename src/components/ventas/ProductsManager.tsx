@@ -253,22 +253,24 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
                 {p.estimated_duration_min} min
               </span>
             )}
-            {/* Stock indicator */}
-            {isService ? (
-              <span className="text-[10px] text-muted-foreground/60 italic">Sin inventario</span>
-            ) : p.track_stock ? (
-              <span className={cn(
-                'text-[10px] font-semibold px-1.5 py-0.5 rounded-full inline-flex items-center gap-1',
-                stockOut ? 'bg-red-500/15 text-red-600 ring-1 ring-red-500/30' :
-                stockLow ? 'bg-amber-500/15 text-amber-600 ring-1 ring-amber-500/30' :
-                'bg-emerald-500/10 text-emerald-600',
-              )}>
-                {(stockOut || stockLow) && <AlertTriangle className="h-2.5 w-2.5" />}
-                <Boxes className="h-2.5 w-2.5" />
-                {stockOut ? 'Sin stock' : `${p.stock_quantity}${p.stock_unit ? ` ${p.stock_unit}` : ''}`}
-              </span>
-            ) : (
-              <span className="text-[10px] text-muted-foreground/60">Inventario desactivado</span>
+            {/* Stock indicator (oculto para Speak Up) */}
+            {!isSpeakUpCard && (
+              isService ? (
+                <span className="text-[10px] text-muted-foreground/60 italic">Sin inventario</span>
+              ) : p.track_stock ? (
+                <span className={cn(
+                  'text-[10px] font-semibold px-1.5 py-0.5 rounded-full inline-flex items-center gap-1',
+                  stockOut ? 'bg-red-500/15 text-red-600 ring-1 ring-red-500/30' :
+                  stockLow ? 'bg-amber-500/15 text-amber-600 ring-1 ring-amber-500/30' :
+                  'bg-emerald-500/10 text-emerald-600',
+                )}>
+                  {(stockOut || stockLow) && <AlertTriangle className="h-2.5 w-2.5" />}
+                  <Boxes className="h-2.5 w-2.5" />
+                  {stockOut ? 'Sin stock' : `${p.stock_quantity}${p.stock_unit ? ` ${p.stock_unit}` : ''}`}
+                </span>
+              ) : (
+                <span className="text-[10px] text-muted-foreground/60">Inventario desactivado</span>
+              )
             )}
           </div>
         </div>
@@ -568,29 +570,33 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
-                <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
-                  <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">Todos los tipos</SelectItem>
-                    <SelectItem value="product" className="text-xs">Solo productos</SelectItem>
-                    <SelectItem value="service" className="text-xs">Solo servicios</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={stockFilter} onValueChange={(v) => setStockFilter(v as StockFilter)}>
-                  <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">Todo el stock</SelectItem>
-                    <SelectItem value="ok" className="text-xs">Stock OK</SelectItem>
-                    <SelectItem value="low" className="text-xs">Stock bajo</SelectItem>
-                    <SelectItem value="out" className="text-xs">Sin stock</SelectItem>
-                  </SelectContent>
-                </Select>
+                {!isSpeakUpMain && (
+                  <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
+                    <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="text-xs">Todos los tipos</SelectItem>
+                      <SelectItem value="product" className="text-xs">Solo productos</SelectItem>
+                      <SelectItem value="service" className="text-xs">Solo servicios</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+                {!isSpeakUpMain && (
+                  <Select value={stockFilter} onValueChange={(v) => setStockFilter(v as StockFilter)}>
+                    <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="text-xs">Todo el stock</SelectItem>
+                      <SelectItem value="ok" className="text-xs">Stock OK</SelectItem>
+                      <SelectItem value="low" className="text-xs">Stock bajo</SelectItem>
+                      <SelectItem value="out" className="text-xs">Sin stock</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
                 <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
                   <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="name" className="text-xs">Orden: Nombre</SelectItem>
                     <SelectItem value="price" className="text-xs">Orden: Precio</SelectItem>
-                    <SelectItem value="stock" className="text-xs">Orden: Stock</SelectItem>
+                    {!isSpeakUpMain && <SelectItem value="stock" className="text-xs">Orden: Stock</SelectItem>}
                     <SelectItem value="margin" className="text-xs">Orden: Margen</SelectItem>
                   </SelectContent>
                 </Select>
@@ -726,13 +732,17 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                 <Separator />
 
                 <div className="px-6 py-4 overflow-y-auto space-y-5" style={{ maxHeight: '50vh' }}>
-                  <div>
-                    <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <Boxes className="h-3 w-3" /> Inventario
-                    </div>
-                    <StockSection product={detailProduct} clientId={clientId} />
-                  </div>
-                  <Separator />
+                  {!isSpeakUpMain && (
+                    <>
+                      <div>
+                        <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <Boxes className="h-3 w-3" /> Inventario
+                        </div>
+                        <StockSection product={detailProduct} clientId={clientId} />
+                      </div>
+                      <Separator />
+                    </>
+                  )}
                   <VariantsSection
                     productId={detailProduct.id}
                     clientId={clientId}
