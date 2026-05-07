@@ -33,6 +33,7 @@ export interface StudentContactInput {
   guardian_id_number?: string | null;
   guardian_email?: string | null;
   status?: string;
+  billing_info?: any;
 }
 
 export const useStudentContacts = (clientId: string | null) => {
