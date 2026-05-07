@@ -22,6 +22,7 @@ export const CostaRicaAddressDialog = ({ open, onOpenChange, initial, onSave }: 
   const [distrito, setDistrito] = useState('');
   const [senas, setSenas] = useState('');
   const [postal, setPostal] = useState('');
+  const [postalEdited, setPostalEdited] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -31,8 +32,18 @@ export const CostaRicaAddressDialog = ({ open, onOpenChange, initial, onSave }: 
       setDistrito(initial?.district || '');
       setSenas(initial?.address_line_1 || '');
       setPostal(initial?.post_code || '');
+      setPostalEdited(!!initial?.post_code);
     }
   }, [open, initial]);
+
+  // Auto-fill postal code when province/canton/district change, unless user manually edited it
+  useEffect(() => {
+    if (postalEdited) return;
+    if (provincia && canton && distrito) {
+      const auto = getPostalCode(provincia, canton, distrito);
+      if (auto) setPostal(auto);
+    }
+  }, [provincia, canton, distrito, postalEdited]);
 
   const cantones = provincia ? getCantones(provincia) : [];
   const distritos = provincia && canton ? getDistritos(provincia, canton) : [];
