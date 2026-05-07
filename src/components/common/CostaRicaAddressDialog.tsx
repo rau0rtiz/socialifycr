@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { CR_PROVINCIAS, getCantones, getDistritos } from '@/data/costa-rica-locations';
+import { CR_PROVINCIAS, getCantones, getDistritos, getPostalCode } from '@/data/costa-rica-locations';
 import type { CustomerAddress } from '@/hooks/use-customer-contacts';
 
 interface Props {
