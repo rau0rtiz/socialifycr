@@ -340,30 +340,84 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                 </TabsList>
 
                 <TabsContent value="story" className="space-y-2">
-                  <div className="text-xs text-muted-foreground">
-                    Activas: {activeStories.length} · Archivadas: {archivedStories.length}
-                  </div>
-                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-64 overflow-y-auto">
-                    {[...activeStories, ...archivedStories].slice(0, 60).map(s => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => addItem({
-                          story_id: s.storyId,
-                          story_thumb: s.thumbnailUrl || s.mediaUrl,
-                          product_name: `Historia ${new Date(s.timestamp).toLocaleDateString('es-CR')}`,
-                        })}
-                        className="aspect-[9/16] rounded-md overflow-hidden border bg-muted hover:ring-2 hover:ring-primary relative"
-                      >
-                        {(s.thumbnailUrl || s.mediaUrl) ? (
-                          <img src={s.thumbnailUrl || s.mediaUrl} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center"><ImageIcon className="h-4 w-4 text-muted-foreground" /></div>
-                        )}
-                        {s.isActive && <div className="absolute top-0.5 right-0.5 bg-green-500 text-[8px] text-white px-1 rounded">LIVE</div>}
-                      </button>
-                    ))}
-                  </div>
+                  {(() => {
+                    const archivedSource = storyShowAll && allArchivedStories.length > 0 ? allArchivedStories : archivedStories;
+                    const all = [...activeStories, ...archivedSource];
+                    const q = storyQuery.trim().toLowerCase();
+                    const filtered = q
+                      ? all.filter(s => {
+                          const date = new Date(s.timestamp).toLocaleDateString('es-CR');
+                          const sd = s.scannedData || {};
+                          return date.includes(q)
+                            || (sd.customer_name || '').toLowerCase().includes(q)
+                            || (sd.brand || '').toLowerCase().includes(q)
+                            || (sd.garment_type || '').toLowerCase().includes(q)
+                            || (sd.notes || '').toLowerCase().includes(q);
+                        })
+                      : all;
+                    return (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                            <Input
+                              placeholder="Buscar por fecha, cliente, marca…"
+                              value={storyQuery}
+                              onChange={(e) => setStoryQuery(e.target.value)}
+                              className="pl-7 h-8 text-xs"
+                            />
+                          </div>
+                          {(hasMoreArchived || allArchivedStories.length > 0) && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={storyShowAll ? 'default' : 'outline'}
+                              onClick={() => {
+                                if (!storyShowAll && allArchivedStories.length === 0) fetchAllArchived();
+                                setStoryShowAll(s => !s);
+                              }}
+                              disabled={isLoadingAllArchived}
+                              className="h-8 text-xs whitespace-nowrap"
+                            >
+                              {isLoadingAllArchived ? 'Cargando…' : storyShowAll ? 'Solo recientes' : 'Cargar todas'}
+                            </Button>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Activas: {activeStories.length} · Archivadas: {archivedSource.length}{q && ` · Resultados: ${filtered.length}`}
+                        </div>
+                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-72 overflow-y-auto">
+                          {filtered.slice(0, 200).map(s => (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => addItem({
+                                story_id: s.storyId,
+                                story_thumb: s.thumbnailUrl || s.mediaUrl,
+                                product_name: `Historia ${new Date(s.timestamp).toLocaleDateString('es-CR')}`,
+                                brand: s.scannedData?.brand || undefined,
+                                garment_type: s.scannedData?.garment_type || undefined,
+                              })}
+                              className="aspect-[9/16] rounded-md overflow-hidden border bg-muted hover:ring-2 hover:ring-primary relative"
+                            >
+                              {(s.thumbnailUrl || s.mediaUrl) ? (
+                                <img src={s.thumbnailUrl || s.mediaUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center"><ImageIcon className="h-4 w-4 text-muted-foreground" /></div>
+                              )}
+                              {s.isActive && <div className="absolute top-0.5 right-0.5 bg-green-500 text-[8px] text-white px-1 rounded">LIVE</div>}
+                              <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] px-1 py-0.5 truncate">
+                                {new Date(s.timestamp).toLocaleDateString('es-CR', { day: '2-digit', month: 'short' })}
+                              </div>
+                            </button>
+                          ))}
+                          {filtered.length === 0 && (
+                            <div className="col-span-full text-center text-xs text-muted-foreground py-6">Sin historias</div>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </TabsContent>
 
                 <TabsContent value="product" className="space-y-2">
