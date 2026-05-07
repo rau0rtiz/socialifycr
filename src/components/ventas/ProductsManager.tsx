@@ -248,7 +248,7 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
                 +{formatCurrency(profit, p.currency)} ({margin}%)
               </span>
             )}
-            {p.estimated_duration_min != null && (
+            {p.estimated_duration_min != null && !isSpeakUpCard && (
               <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
                 <Clock className="h-2.5 w-2.5" />
                 {p.estimated_duration_min} min
