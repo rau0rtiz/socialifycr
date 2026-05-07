@@ -103,20 +103,21 @@ export const Sidebar = () => {
     { title: 'Dashboard', url: isPreviewMode ? `/?preview=${searchParams.get('preview')}` : '/', icon: LayoutDashboard },
   ];
 
-  // For agency users (not in preview), always show all sections. Otherwise respect flags.
-  const showVentas = effectiveAgency || flags.ventas_section;
-
-  if (showVentas) {
-    const ventasLabel = 'Ventas';
-    menuItems.push({ title: ventasLabel, url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
-  }
-
-  // Órdenes — solo para negocios retail (Alma Bendita, Tissue)
+  // Detect retail clients — for them "Órdenes" replaces "Ventas" entirely
   const isAlmaBenditaClient = selectedClient?.name?.toLowerCase().includes('alma bendita');
   const isTissueRetail = selectedClient?.name?.toLowerCase().includes('tissue');
   const isRetailClient = isAlmaBenditaClient || isTissueRetail;
+
+  // For agency users (not in preview), always show all sections. Otherwise respect flags.
+  // For retail clients (or agency previewing them), hide "Ventas" — everything lives in /ordenes.
+  const showVentas = (effectiveAgency || flags.ventas_section) && !isRetailClient;
+
+  if (showVentas) {
+    menuItems.push({ title: 'Ventas', url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
+  }
+
   if (isRetailClient && (effectiveAgency || flags.ventas_section)) {
-    menuItems.push({ title: 'Órdenes', url: '/ordenes', icon: Package });
+    menuItems.push({ title: 'Órdenes', url: '/ordenes', icon: Package, dataTour: 'ventas-link' });
   }
 
   const isTissueClient = selectedClient?.name?.toLowerCase().includes('tissue');

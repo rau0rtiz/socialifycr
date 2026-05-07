@@ -23,6 +23,7 @@ import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 import { TissueSaleDialog } from '@/components/ventas/TissueSaleDialog';
 import { AlmaBenditaExportButton } from '@/components/ventas/AlmaBenditaExportButton';
 import { Plus, ShoppingBag } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 
 import { useBrand } from '@/contexts/BrandContext';
@@ -109,6 +110,7 @@ const Ventas = () => {
   const isRobertoOlivas = selectedClient?.name?.toLowerCase().includes('roberto olivas');
   const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
   const isTissue = selectedClient?.name?.toLowerCase().includes('tissue');
+  const isRetailRedirect = (isAlmaBendita || isTissue) && isClient;
   const [tissueSaleOpen, setTissueSaleOpen] = useState(false);
 
   // Global time range state
@@ -220,6 +222,11 @@ const Ventas = () => {
         </div>
       </DashboardLayout>
     );
+  }
+
+  // Retail clients: Ventas is consolidated into Órdenes
+  if (isRetailRedirect) {
+    return <Navigate to="/ordenes" replace />;
   }
 
   if (!selectedClient) {
