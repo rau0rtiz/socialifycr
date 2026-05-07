@@ -24,11 +24,11 @@ export const PendingSchedulesSection = ({ clientId }: Props) => {
   const { data: pending = [] } = useQuery({
     queryKey: ['pending-schedules', clientId],
     queryFn: async (): Promise<PendingSale[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('message_sales')
         .select('id, client_id, customer_name, product, total_sale_amount, amount, currency')
         .eq('client_id', clientId)
-        .eq('payment_schedule_pending' as any, true)
+        .eq('payment_schedule_pending', true)
         .order('sale_date', { ascending: false });
       if (error) throw error;
       return (data as any) || [];
