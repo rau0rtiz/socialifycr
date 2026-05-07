@@ -23,6 +23,7 @@ import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 import { TissueSaleDialog } from '@/components/ventas/TissueSaleDialog';
 import { AlmaBenditaExportButton } from '@/components/ventas/AlmaBenditaExportButton';
 import { Plus, ShoppingBag } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 
 import { useBrand } from '@/contexts/BrandContext';
