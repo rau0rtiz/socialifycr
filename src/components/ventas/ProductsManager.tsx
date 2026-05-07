@@ -692,17 +692,24 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-base font-bold text-foreground">{detailProduct.name}</h3>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            'text-[9px] py-0 px-1.5 h-4 font-medium uppercase tracking-wider',
-                            isService
-                              ? 'bg-purple-500/10 text-purple-600 border-purple-500/30'
-                              : 'bg-blue-500/10 text-blue-600 border-blue-500/30',
-                          )}
-                        >
-                          {isService ? 'Servicio' : 'Producto'}
-                        </Badge>
+                        {(() => {
+                          const lm = isSpeakUpMain ? getSpeakUpLineMeta(detailProduct.category) : null;
+                          return (
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[9px] py-0 px-1.5 h-4 font-medium uppercase tracking-wider',
+                                lm
+                                  ? cn(lm.bg.replace('/5', '/10'), lm.text, lm.border)
+                                  : isService
+                                    ? 'bg-purple-500/10 text-purple-600 border-purple-500/30'
+                                    : 'bg-blue-500/10 text-blue-600 border-blue-500/30',
+                              )}
+                            >
+                              {lm ? lm.singular : (isService ? 'Servicio' : 'Producto')}
+                            </Badge>
+                          );
+                        })()}
                       </div>
                       {detailProduct.description && (
                         <p className="text-xs text-muted-foreground mt-1">{detailProduct.description}</p>
