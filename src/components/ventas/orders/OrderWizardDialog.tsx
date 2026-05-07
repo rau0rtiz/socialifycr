@@ -84,12 +84,18 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
   const [currency, setCurrency] = useState('CRC');
   const [notes, setNotes] = useState('');
 
+  // Deposit / abono (partial payment)
+  const [hasDeposit, setHasDeposit] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [balanceDueDate, setBalanceDueDate] = useState('');
+
   useEffect(() => {
     if (!open) {
       setStep(1); setContactId(null); setCustomerName(''); setCustomerPhone('');
       setContactQuery(''); setShippingAddress(null); setItems([]);
       setOrderDate(new Date().toISOString().split('T')[0]);
       setStatus('pending'); setPaymentMethod('SINPE'); setCurrency('CRC'); setNotes('');
+      setHasDeposit(false); setDepositAmount(''); setBalanceDueDate('');
     }
   }, [open]);
 
@@ -120,6 +126,9 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
     setContactQuery('');
   };
 
+  const depositAmt = parseFloat(depositAmount || '0');
+  const balanceAmt = total - depositAmt;
+
   const handleSubmit = async () => {
     if (items.length === 0) {
       toast.error('Agrega al menos un item');
@@ -129,8 +138,12 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
       toast.error('Nombre del cliente requerido');
       return;
     }
+    if (hasDeposit) {
+      if (depositAmt <= 0) { toast.error('El abono debe ser mayor a 0'); return; }
+      if (depositAmt >= total) { toast.error('El abono debe ser menor al total'); return; }
+      if (!balanceDueDate) { toast.error('Indica la fecha de cobro del saldo'); return; }
+    }
     try {
-      // Upsert customer contact (don't increment purchase here — sales trigger handles it indirectly)
       let finalContactId = contactId;
       if (!finalContactId) {
         finalContactId = await upsertCustomerContact({
@@ -141,7 +154,6 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
           isNewSale: false,
         });
       } else if (shippingAddress) {
-        // Save new address to existing contact if not already saved
         const exists = (selectedContact?.addresses || []).some(a =>
           a.address_line_1 === shippingAddress.address_line_1 &&
           a.district === shippingAddress.district
@@ -153,7 +165,7 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
         }
       }
 
-      await createOrder.mutateAsync({
+      const orderId = await createOrder.mutateAsync({
         customer_contact_id: finalContactId,
         customer_name: customerName,
         customer_phone: customerPhone,
@@ -162,7 +174,9 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
         payment_method: paymentMethod,
         currency,
         order_date: orderDate,
-        notes,
+        notes: hasDeposit
+          ? `${notes ? notes + '\n' : ''}Abono: ${currency} ${depositAmt.toLocaleString()} · Saldo: ${currency} ${balanceAmt.toLocaleString()} (vence ${balanceDueDate})`
+          : notes,
         items: items.map(i => ({
           product_id: i.product_id,
           variant_id: i.variant_id,
@@ -177,7 +191,43 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
           notes: i.notes,
         })),
       });
-      toast.success('Orden creada');
+
+      // Create pending payment_collections for the balance, attached to each generated sale (proportional)
+      if (hasDeposit && orderId && balanceAmt > 0) {
+        const { data: generatedSales } = await supabase
+          .from('message_sales')
+          .select('id, amount')
+          .eq('order_id', orderId);
+
+        if (generatedSales && generatedSales.length > 0) {
+          const ratio = balanceAmt / total;
+          const records = generatedSales.map((s: any) => ({
+            sale_id: s.id,
+            client_id: clientId,
+            installment_number: 2,
+            amount: Math.round(Number(s.amount) * ratio),
+            currency,
+            due_date: balanceDueDate,
+            status: 'pending' as const,
+            payment_frequency: 'custom',
+          }));
+          await supabase.from('payment_collections').insert(records as any);
+
+          // Mark sales as 2-installment with 1 paid (the deposit portion)
+          for (const s of generatedSales) {
+            const depositPart = Number(s.amount) - Math.round(Number(s.amount) * ratio);
+            await supabase.from('message_sales').update({
+              total_sale_amount: Number(s.amount),
+              num_installments: 2,
+              installments_paid: 1,
+              installment_amount: depositPart,
+              amount: depositPart,
+            } as any).eq('id', s.id);
+          }
+        }
+      }
+
+      toast.success(hasDeposit ? 'Orden creada con abono' : 'Orden creada');
       onOpenChange(false);
     } catch (e: any) {
       toast.error('Error: ' + (e.message || 'no se pudo crear la orden'));
@@ -638,6 +688,49 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                 <Label className="text-xs">Notas</Label>
                 <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
               </div>
+
+              {/* Abono / Pago parcial */}
+              <Card className="p-3 space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasDeposit}
+                    onChange={(e) => setHasDeposit(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm font-medium">Cobrar abono (pago parcial)</span>
+                </label>
+                {hasDeposit && (
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <Label className="text-[11px]">Monto del abono ({currency})</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={total}
+                        value={depositAmount}
+                        onChange={(e) => setDepositAmount(e.target.value)}
+                        placeholder="0"
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">Fecha de cobro del saldo</Label>
+                      <Input
+                        type="date"
+                        value={balanceDueDate}
+                        onChange={(e) => setBalanceDueDate(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    {depositAmt > 0 && depositAmt < total && (
+                      <div className="col-span-2 text-xs text-muted-foreground bg-muted/40 rounded p-2">
+                        Abono hoy: <strong>{currency} {depositAmt.toLocaleString()}</strong> · Saldo pendiente: <strong>{currency} {balanceAmt.toLocaleString()}</strong>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Card>
 
               <Card className="p-3 space-y-1.5 text-xs">
                 <div className="font-semibold text-sm">Resumen</div>
