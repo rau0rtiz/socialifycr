@@ -427,8 +427,8 @@ export const ProductFormDialog = ({
             </div>
           )}
 
-          {/* Duration — hidden for Tissue (retail) */}
-          {!isTissue && (
+          {/* Duration — hidden for Tissue (retail) and Speak Up */}
+          {!hideDuration && (
           <div>
             <Label className="text-xs flex items-center gap-1.5">
               <Clock className="h-3 w-3 text-muted-foreground" />
