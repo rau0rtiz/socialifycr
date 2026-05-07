@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
-import { useClientClosers } from '@/hooks/use-client-closers';
+import { useClientClosers, useAddClientCloser } from '@/hooks/use-client-closers';
 import { useClientTeamMembers } from '@/hooks/use-client-team-members';
 import { useClientPaymentSchemes } from '@/hooks/use-payment-schemes';
 import { useStudentContacts, StudentContactInput } from '@/hooks/use-student-contacts';
@@ -128,6 +129,14 @@ export const RegisterSaleDialog = ({
   const [collectionStartDate, setCollectionStartDate] = useState('');
   const [hasDeposit, setHasDeposit] = useState(false);
   const [depositBalanceDueDate, setDepositBalanceDueDate] = useState('');
+  // New checkout state (used in final payment step for non-Speak Up flow)
+  const [applyTax, setApplyTax] = useState(false);
+  const [taxRate] = useState(13); // CR IVA
+  const [hasDiscount, setHasDiscount] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState('');
+  const [discountReason, setDiscountReason] = useState('');
+  const [showNewCloser, setShowNewCloser] = useState(false);
+  const [newCloserName, setNewCloserName] = useState('');
 
   // Speak Up state
   const [spkStudentSearch, setSpkStudentSearch] = useState('');
@@ -153,6 +162,7 @@ export const RegisterSaleDialog = ({
   const [spkSelectedGroupId, setSpkSelectedGroupId] = useState<string | null>(null);
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closersBase = [] } = useClientClosers(clientId || null);
+  const addCloserMutation = useAddClientCloser(clientId || null);
   const { data: teamMembers = [] } = useClientTeamMembers(clientId || null);
   // For Tissue: vendedor = ANY team member (regardless of role).
   const closers = isTissue
@@ -206,6 +216,12 @@ export const RegisterSaleDialog = ({
     setDepositBalanceDueDate('');
     setShowNewPaymentMethod(false);
     setNewPaymentMethodName('');
+    setApplyTax(false);
+    setHasDiscount(false);
+    setDiscountAmount('');
+    setDiscountReason('');
+    setShowNewCloser(false);
+    setNewCloserName('');
     // Reset Speak Up state
     setSpkStudentSearch('');
     setSpkSelectedStudentId(null);
@@ -337,33 +353,39 @@ export const RegisterSaleDialog = ({
     if (step > 0) setStep(s => s - 1);
   };
 
+  // Compute price/tax/discount/total/balance for the new checkout
+  const basePrice = useMemo(() => {
+    if (selectedSchemeId) return totalSaleAmount;
+    const matched = products.find(p => p.name === product);
+    if (matched?.price != null) return Number(matched.price);
+    return totalSaleAmount || parseFloat(amount || '0') || 0;
+  }, [selectedSchemeId, totalSaleAmount, products, product, amount]);
+
+  const discountAmt = parseFloat(discountAmount || '0') || 0;
+  const taxAmt = applyTax ? Math.round(Math.max(basePrice - discountAmt, 0) * (taxRate / 100)) : 0;
+  const computedTotal = Math.max(basePrice - discountAmt, 0) + taxAmt;
+  const depositAmt = parseFloat(amount || '0') || 0;
+  const balanceDue = hasDeposit ? Math.max(computedTotal - depositAmt, 0) : 0;
+
   const handleSubmit = () => {
-    if (!amount) {
-      toast.error('El monto es requerido');
-      return;
-    }
     if (!source) {
       toast.error('La fuente es requerida');
       return;
     }
-
-    // Validate deposit
-    if (hasDeposit && !selectedSchemeId) {
-      if (!totalSaleAmount || totalSaleAmount <= 0) {
-        toast.error('Ingresa el monto total del servicio');
-        return;
-      }
-      if (parseFloat(amount || '0') >= totalSaleAmount) {
-        toast.error('El adelanto debe ser menor al monto total');
-        return;
-      }
-      if (!depositBalanceDueDate) {
-        toast.error('Selecciona la fecha de cobro del saldo');
-        return;
-      }
+    if (!paymentMethod) {
+      toast.error('Selecciona el método de pago');
+      return;
+    }
+    if (hasDiscount && discountAmt > 0 && !discountReason.trim()) {
+      toast.error('Indica la razón del descuento');
+      return;
+    }
+    if (hasDeposit) {
+      if (depositAmt <= 0) { toast.error('Ingresa el monto del abono'); return; }
+      if (depositAmt >= computedTotal) { toast.error('El abono debe ser menor al total'); return; }
     }
 
-    // Validate custom collection dates
+    // Validate custom collection dates (legacy scheme flow)
     const hasRemainingCheck = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
     if (hasRemainingCheck && collectionFrequency === 'custom') {
       const filledDates = customCollectionDates.filter(d => d !== '');
@@ -373,14 +395,12 @@ export const RegisterSaleDialog = ({
       }
     }
 
-    // For deposit flow without scheme, set installments to 2 (deposit + balance)
-    const effectiveNumInstallments = hasDeposit && !selectedSchemeId && totalSaleAmount > parseFloat(amount || '0')
-      ? 2 : numInstallments;
-    const effectiveInstallmentsPaid = hasDeposit && !selectedSchemeId ? 1 : installmentsPaid;
+    // Amount paid today
+    const amountPaid = hasDeposit ? depositAmt : computedTotal;
 
     const sale: any = {
       sale_date: saleDate,
-      amount: parseFloat(amount),
+      amount: amountPaid,
       currency,
       source: source as SaleInput['source'],
       customer_name: customerName || undefined,
@@ -392,11 +412,16 @@ export const RegisterSaleDialog = ({
       status: status as SaleInput['status'],
       closer_name: closerName || undefined,
       payment_scheme_id: selectedSchemeId || undefined,
-      total_sale_amount: totalSaleAmount || parseFloat(amount) || undefined,
-      num_installments: effectiveNumInstallments,
-      installments_paid: effectiveInstallmentsPaid,
-      installment_amount: installmentAmount || undefined,
+      total_sale_amount: computedTotal || parseFloat(amount || '0') || undefined,
+      num_installments: hasDeposit ? null : numInstallments,
+      installments_paid: hasDeposit ? 1 : installmentsPaid,
+      installment_amount: hasDeposit ? amountPaid : (installmentAmount || undefined),
       payment_method: paymentMethod || undefined,
+      tax_amount: taxAmt || undefined,
+      subtotal: basePrice || undefined,
+      discount_amount: discountAmt > 0 ? discountAmt : undefined,
+      discount_reason: discountAmt > 0 ? discountReason.trim() : undefined,
+      payment_schedule_pending: hasDeposit ? true : undefined,
     };
 
     if (source === 'ad' && selectedAd) {
@@ -406,6 +431,7 @@ export const RegisterSaleDialog = ({
       sale.ad_campaign_name = selectedAd.campaignName;
     }
 
+    // Legacy scheme installments (unchanged)
     const hasRemainingInstallments = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
     const collectionMeta = hasRemainingInstallments
       ? {
@@ -417,17 +443,7 @@ export const RegisterSaleDialog = ({
           customDates: collectionFrequency === 'custom' ? customCollectionDates.filter(d => d !== '') : undefined,
           startDate: collectionFrequency !== 'custom' && collectionStartDate ? collectionStartDate : undefined,
         }
-      : hasDeposit && !selectedSchemeId && totalSaleAmount > parseFloat(amount || '0')
-        ? {
-            frequency: 'custom' as string,
-            startInstallment: 2,
-            totalInstallments: 2,
-            installmentAmount: totalSaleAmount - parseFloat(amount || '0'),
-            currency,
-            customDates: depositBalanceDueDate ? [depositBalanceDueDate] : undefined,
-            startDate: undefined,
-          }
-        : undefined;
+      : undefined;
 
     onSubmit(sale, prefill?.appointmentId, collectionMeta);
   };
@@ -1479,7 +1495,7 @@ export const RegisterSaleDialog = ({
   // Multi-step creation flow (unchanged)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className={cn("max-h-[90vh] overflow-hidden p-0", step === notesStepIndex ? "sm:max-w-3xl" : "sm:max-w-md")}>
         {/* Header with dots indicator */}
         <div className="px-6 pt-6 pb-2 space-y-3">
           <DialogHeader className="space-y-0.5">
@@ -1936,25 +1952,147 @@ export const RegisterSaleDialog = ({
 
           {/* Notes step (last step for standard flow) */}
           {step === notesStepIndex && (
-            <div className="space-y-4 py-4">
-              {!isSilvia && (
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">Plataforma del mensaje</Label>
-                  <Select value={messagePlatform} onValueChange={setMessagePlatform}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
-                    <SelectContent>
-                      {PLATFORM_OPTIONS.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <div className="py-4">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-5">
+                {/* LEFT: Información */}
+                <div className="space-y-3">
+                  {/* Vendedor con +nuevo */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">{isSpkUp ? 'Vendedor' : 'Closer / Vendedor'}</Label>
+                    {showNewCloser ? (
+                      <div className="flex gap-2">
+                        <Input autoFocus placeholder="Nombre del vendedor" value={newCloserName} onChange={e => setNewCloserName(e.target.value)} className="h-9 text-sm flex-1" onKeyDown={async e => {
+                          if (e.key === 'Enter' && newCloserName.trim()) {
+                            try { const n = await addCloserMutation.mutateAsync(newCloserName.trim()); setCloserName(n); setShowNewCloser(false); setNewCloserName(''); toast.success('Vendedor agregado'); } catch (err: any) { toast.error(err.message); }
+                          }
+                        }} />
+                        <Button size="sm" className="h-9 text-xs" onClick={async () => {
+                          if (!newCloserName.trim()) return;
+                          try { const n = await addCloserMutation.mutateAsync(newCloserName.trim()); setCloserName(n); setShowNewCloser(false); setNewCloserName(''); toast.success('Vendedor agregado'); } catch (err: any) { toast.error(err.message); }
+                        }}>OK</Button>
+                        <Button variant="ghost" size="sm" className="h-9" onClick={() => { setShowNewCloser(false); setNewCloserName(''); }}><X className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
+                          <SelectTrigger className="h-9 text-sm flex-1"><SelectValue placeholder="¿Quién cerró la venta?" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                            {closerName && !closers.some(c => c.fullName === closerName) && <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>}
+                            {closers.map(c => <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setShowNewCloser(true)}><Plus className="h-3.5 w-3.5 mr-1" /> Nuevo</Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Método de pago */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" /> Método de pago *</Label>
+                    {showNewPaymentMethod ? (
+                      <div className="flex gap-2">
+                        <Input autoFocus placeholder="Nombre del método" value={newPaymentMethodName} onChange={e => setNewPaymentMethodName(e.target.value)} className="h-9 text-sm flex-1" onKeyDown={e => { if (e.key === 'Enter' && newPaymentMethodName.trim()) { setPaymentMethod(newPaymentMethodName.trim()); setShowNewPaymentMethod(false); setNewPaymentMethodName(''); } }} />
+                        <Button size="sm" className="h-9 text-xs" onClick={() => { setPaymentMethod(newPaymentMethodName.trim()); setShowNewPaymentMethod(false); setNewPaymentMethodName(''); }} disabled={!newPaymentMethodName.trim()}>OK</Button>
+                        <Button variant="ghost" size="sm" className="h-9" onClick={() => setShowNewPaymentMethod(false)}><X className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Select value={paymentMethod || '_none'} onValueChange={v => setPaymentMethod(v === '_none' ? '' : v)}>
+                          <SelectTrigger className="h-9 text-sm flex-1"><SelectValue placeholder="Seleccionar método" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none" className="text-xs">Sin especificar</SelectItem>
+                            <SelectItem value="efectivo">Efectivo</SelectItem>
+                            <SelectItem value="sinpe">SINPE</SelectItem>
+                            <SelectItem value="transferencia_bancaria">Transferencia Bancaria</SelectItem>
+                            {!isTissue && <SelectItem value="stripe">Stripe</SelectItem>}
+                            {paymentMethod && !['efectivo', 'sinpe', 'stripe', 'transferencia_bancaria'].includes(paymentMethod) && <SelectItem value={paymentMethod}>{paymentMethod}</SelectItem>}
+                          </SelectContent>
+                        </Select>
+                        <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setShowNewPaymentMethod(true)}><Plus className="h-3.5 w-3.5 mr-1" /> Otro</Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Fuente de la venta */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Fuente de la venta *</Label>
+                    <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
+                      <SelectContent>
+                        {(isTissue ? TISSUE_SOURCE_OPTIONS : SOURCE_OPTIONS).map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Fecha */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Fecha</Label>
+                    <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-9 text-sm" />
+                  </div>
+
+                  {/* IVA toggle */}
+                  <div className="flex items-center justify-between rounded-lg border p-2.5">
+                    <div className="flex items-center gap-2"><Percent className="h-3.5 w-3.5 text-muted-foreground" /><span className="text-xs font-medium">Aplicar IVA ({taxRate}%)</span></div>
+                    <Switch checked={applyTax} onCheckedChange={setApplyTax} />
+                  </div>
+
+                  {/* Descuento */}
+                  <div className="rounded-lg border p-2.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium">Aplicar descuento (en {currency === 'CRC' ? 'colones' : 'dólares'})</span>
+                      <Switch checked={hasDiscount} onCheckedChange={(v) => { setHasDiscount(v); if (!v) { setDiscountAmount(''); setDiscountReason(''); } }} />
+                    </div>
+                    {hasDiscount && (
+                      <div className="space-y-2">
+                        <Input type="number" placeholder="Monto del descuento" value={discountAmount} onChange={(e) => setDiscountAmount(e.target.value)} className="h-9 text-xs" />
+                        <Textarea placeholder="Razón del descuento (obligatorio)" value={discountReason} onChange={(e) => setDiscountReason(e.target.value)} rows={2} className="text-xs" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Abono */}
+                  <div className="rounded-lg border p-2.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium flex items-center gap-1.5"><Banknote className="h-3.5 w-3.5" /> Es un abono (pago parcial)</span>
+                      <Switch checked={hasDeposit} onCheckedChange={(v) => { setHasDeposit(v); if (!v) setAmount(String(computedTotal)); else setAmount(''); }} />
+                    </div>
+                    {hasDeposit && (
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] text-muted-foreground">Monto abonado hoy</Label>
+                        <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-9 text-xs" />
+                        <p className="text-[10px] text-muted-foreground">Las fechas del saldo se definen luego desde la sección de Cobros.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Notas */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Notas adicionales</Label>
+                    <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="text-sm" />
+                  </div>
                 </div>
-              )}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Notas</Label>
-                <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="text-sm" />
+
+                {/* RIGHT: Resumen */}
+                <div className="md:sticky md:top-0 self-start">
+                  <Card className="p-3 space-y-2 bg-muted/30">
+                    <h4 className="text-xs font-semibold flex items-center gap-1.5"><Receipt className="h-3.5 w-3.5" /> Resumen</h4>
+                    <div className="space-y-1 text-xs">
+                      {product && <div className="text-muted-foreground truncate">{product}</div>}
+                      <div className="flex justify-between"><span className="text-muted-foreground">Precio base</span><span>{currency === 'CRC' ? '₡' : '$'}{basePrice.toLocaleString()}</span></div>
+                      {discountAmt > 0 && <div className="flex justify-between text-rose-600 dark:text-rose-400"><span>Descuento</span><span>-{currency === 'CRC' ? '₡' : '$'}{discountAmt.toLocaleString()}</span></div>}
+                      {applyTax && <div className="flex justify-between text-muted-foreground"><span>IVA ({taxRate}%)</span><span>+{currency === 'CRC' ? '₡' : '$'}{taxAmt.toLocaleString()}</span></div>}
+                      <div className="flex justify-between border-t pt-1.5 mt-1.5 text-sm font-semibold"><span>Total</span><span>{currency === 'CRC' ? '₡' : '$'}{computedTotal.toLocaleString()}</span></div>
+                      {hasDeposit && depositAmt > 0 && (
+                        <>
+                          <div className="flex justify-between text-emerald-600 dark:text-emerald-400 pt-1"><span>Abonado hoy</span><span>{currency === 'CRC' ? '₡' : '$'}{depositAmt.toLocaleString()}</span></div>
+                          <div className="flex justify-between text-amber-600 dark:text-amber-400"><span>Saldo pendiente</span><span>{currency === 'CRC' ? '₡' : '$'}{balanceDue.toLocaleString()}</span></div>
+                        </>
+                      )}
+                    </div>
+                  </Card>
+                </div>
               </div>
-              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
             </div>
           )}
         </div>
