@@ -57,7 +57,25 @@ export const SalesByProductChart = ({ sales, products = [], title, variant = 'pr
       .sort((a, b) => b.value - a.value);
   }, [sales]);
 
-  if (data.length === 0) return null;
+  if (data.length === 0) {
+    return (
+      <Card className="border-border/50 shadow-sm h-full">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2.5 text-foreground">
+            <div className={`p-1.5 rounded-lg ${iconBg}`}>
+              <Icon className={`h-4 w-4 ${iconColor}`} />
+            </div>
+            {resolvedTitle}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground py-8 text-center">
+            Aún no hay ventas registradas en este período.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const chartConfig = data.reduce((acc, item) => {
     acc[item.name] = { label: item.name, color: item.fill };
