@@ -403,22 +403,8 @@ const Ventas = () => {
           />
         )}
 
-        {/* === SPEAK UP: Sales Goal + KPI Summary === */}
-        {isSpkUp && (
-          <>
-            <SalesGoalBar
-              clientId={selectedClient.id}
-              currentSalesUSD={summary.totalUSD}
-              currentSalesCRC={summary.totalCRC}
-              primaryColor={selectedClient.primary_color || undefined}
-              accentColor={selectedClient.accent_color || undefined}
-            />
-            <SpeakUpSalesSummary clientId={selectedClient.id} />
-            <RecentSalesTicker clientId={selectedClient.id} dateRange={globalRange} />
-            <SpeakUpAnalytics clientId={selectedClient.id} />
-            
-          </>
-        )}
+        {/* Speak Up: only the sales widget lives here. Goals, KPIs, analytics & charts moved to /reportes */}
+
 
         {/* === DRA SILVIA: Clinic KPI Summary === */}
         {isSilvia && (
@@ -518,7 +504,7 @@ const Ventas = () => {
         )}
 
         {/* Collections (cobros a plazos) — Tissue retail no aplica */}
-        {!isAlmaBendita && !isTissue && <CollectionsWidget clientId={selectedClient.id} />}
+        {!isAlmaBendita && !isTissue && !isSpkUp && <CollectionsWidget clientId={selectedClient.id} />}
 
         {/* Reservas — Mind Coach / Hilda */}
         {(isMindCoach || isHildaLopez) && (flags as any).reservations_widget && (
@@ -549,16 +535,7 @@ const Ventas = () => {
           </div>
         )}
 
-        {/* Speak Up: only product chart */}
-        {isSpkUp && (
-          <div className="grid grid-cols-1 gap-6">
-            {hasSalesChartData ? (
-              <SalesByProductChart sales={chartSales} products={clientProducts} />
-            ) : (
-              renderEmptySalesCard('Ventas por Producto')
-            )}
-          </div>
-        )}
+        {/* Speak Up product chart moved to /reportes */}
 
         {/* Closure rate — depende de agendas. Tissue retail no aplica */}
         {!isSpkUp && !isSilvia && !isAlmaBendita && !isTissue && (

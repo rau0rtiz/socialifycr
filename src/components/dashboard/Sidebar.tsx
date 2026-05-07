@@ -120,6 +120,12 @@ export const Sidebar = () => {
     menuItems.push({ title: 'Órdenes', url: '/ordenes', icon: Package, dataTour: 'ventas-link' });
   }
 
+  // Reportes — exclusive section for Speak Up (sales analytics, charts, collections)
+  const isSpeakUpClient = selectedClient?.name?.toLowerCase().includes('speak up');
+  if (isSpeakUpClient && (effectiveAgency || flags.ventas_section)) {
+    menuItems.push({ title: 'Reportes', url: '/reportes', icon: BarChart3 });
+  }
+
   const isTissueClient = selectedClient?.name?.toLowerCase().includes('tissue');
   const showAsistencia = (effectiveAgency || (flags as any).asistencia_section) && !isTissueClient;
   if (showAsistencia) {
