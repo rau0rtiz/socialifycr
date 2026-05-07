@@ -58,6 +58,8 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
   const { activeStories, archivedStories, allArchivedStories, isLoadingAllArchived, hasMoreArchived, fetchAllArchived } = useStories(clientId);
   const [storyQuery, setStoryQuery] = useState('');
   const [storyShowAll, setStoryShowAll] = useState(false);
+  const [storyDateFrom, setStoryDateFrom] = useState('');
+  const [storyDateTo, setStoryDateTo] = useState('');
   const { items: brandsCatalog } = useProductBrands(clientId);
   const { items: categoriesCatalog } = useProductCategoriesCatalog(clientId);
   const { createOrder } = useOrders(clientId);
@@ -346,17 +348,22 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                     const archivedSource = storyShowAll && allArchivedStories.length > 0 ? allArchivedStories : archivedStories;
                     const all = [...activeStories, ...archivedSource];
                     const q = storyQuery.trim().toLowerCase();
-                    const filtered = q
-                      ? all.filter(s => {
-                          const date = new Date(s.timestamp).toLocaleDateString('es-CR');
-                          const sd = s.scannedData || {};
-                          return date.includes(q)
-                            || (sd.customer_name || '').toLowerCase().includes(q)
-                            || (sd.brand || '').toLowerCase().includes(q)
-                            || (sd.garment_type || '').toLowerCase().includes(q)
-                            || (sd.notes || '').toLowerCase().includes(q);
-                        })
-                      : all;
+                    const fromMs = storyDateFrom ? new Date(storyDateFrom + 'T00:00:00').getTime() : null;
+                    const toMs = storyDateTo ? new Date(storyDateTo + 'T23:59:59').getTime() : null;
+                    const hasDateFilter = fromMs !== null || toMs !== null;
+                    const filtered = all.filter(s => {
+                      const ts = new Date(s.timestamp).getTime();
+                      if (fromMs !== null && ts < fromMs) return false;
+                      if (toMs !== null && ts > toMs) return false;
+                      if (!q) return true;
+                      const date = new Date(s.timestamp).toLocaleDateString('es-CR');
+                      const sd = s.scannedData || {};
+                      return date.includes(q)
+                        || (sd.customer_name || '').toLowerCase().includes(q)
+                        || (sd.brand || '').toLowerCase().includes(q)
+                        || (sd.garment_type || '').toLowerCase().includes(q)
+                        || (sd.notes || '').toLowerCase().includes(q);
+                    });
                     return (
                       <>
                         <div className="flex items-center gap-2">
@@ -385,9 +392,53 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                             </Button>
                           )}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          Activas: {activeStories.length} · Archivadas: {archivedSource.length}{q && ` · Resultados: ${filtered.length}`}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] text-muted-foreground">Desde</span>
+                            <Input
+                              type="date"
+                              value={storyDateFrom}
+                              onChange={(e) => {
+                                setStoryDateFrom(e.target.value);
+                                if (e.target.value && !storyShowAll && allArchivedStories.length === 0) {
+                                  fetchAllArchived();
+                                  setStoryShowAll(true);
+                                }
+                              }}
+                              className="h-7 text-xs w-[140px]"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] text-muted-foreground">Hasta</span>
+                            <Input
+                              type="date"
+                              value={storyDateTo}
+                              onChange={(e) => {
+                                setStoryDateTo(e.target.value);
+                                if (e.target.value && !storyShowAll && allArchivedStories.length === 0) {
+                                  fetchAllArchived();
+                                  setStoryShowAll(true);
+                                }
+                              }}
+                              className="h-7 text-xs w-[140px]"
+                            />
+                          </div>
+                          {hasDateFilter && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => { setStoryDateFrom(''); setStoryDateTo(''); }}
+                              className="h-7 text-xs"
+                            >
+                              Limpiar fechas
+                            </Button>
+                          )}
                         </div>
+                        <div className="text-xs text-muted-foreground">
+                          Activas: {activeStories.length} · Archivadas: {archivedSource.length}{(q || hasDateFilter) && ` · Resultados: ${filtered.length}`}
+                        </div>
+
                         <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-72 overflow-y-auto">
                           {filtered.slice(0, 200).map(s => (
                             <button
