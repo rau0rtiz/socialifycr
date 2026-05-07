@@ -1495,7 +1495,7 @@ export const RegisterSaleDialog = ({
   // Multi-step creation flow (unchanged)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className={cn("max-h-[90vh] overflow-hidden p-0", step === notesStepIndex ? "sm:max-w-3xl" : "sm:max-w-md")}>
         {/* Header with dots indicator */}
         <div className="px-6 pt-6 pb-2 space-y-3">
           <DialogHeader className="space-y-0.5">
