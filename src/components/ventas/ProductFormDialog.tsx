@@ -44,6 +44,8 @@ export const ProductFormDialog = ({
   const { getTagsForProduct, setProductTags } = useClientProductTags(clientId);
   const { selectedClient } = useBrand();
   const isTissue = !!selectedClient?.name?.toLowerCase().includes('tissue');
+  const isSpeakUp = !!selectedClient?.name?.toLowerCase().includes('speak up');
+  const hideDuration = isTissue || isSpeakUp;
 
   const [name, setName] = useState('');
   const [productType, setProductType] = useState<ProductType>('product');
@@ -425,8 +427,8 @@ export const ProductFormDialog = ({
             </div>
           )}
 
-          {/* Duration — hidden for Tissue (retail) */}
-          {!isTissue && (
+          {/* Duration — hidden for Tissue (retail) and Speak Up */}
+          {!hideDuration && (
           <div>
             <Label className="text-xs flex items-center gap-1.5">
               <Clock className="h-3 w-3 text-muted-foreground" />

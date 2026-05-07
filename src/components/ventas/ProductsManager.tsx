@@ -164,6 +164,8 @@ const SPEAK_UP_CATEGORIES: { key: string; label: string; icon: React.ElementType
 
 // ====== Product Card ======
 const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes: any[]; onClick: () => void }) => {
+  const { selectedClient } = useBrand();
+  const isSpeakUpCard = !!selectedClient?.name?.toLowerCase().includes('speak up');
   const productSchemes = allSchemes.filter((s: any) => s.product_id === p.id);
   const variantCount = productSchemes.length;
   const minPrice = variantCount > 0 ? Math.min(...productSchemes.map((s: any) => s.total_price)) : p.price;
@@ -246,7 +248,7 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
                 +{formatCurrency(profit, p.currency)} ({margin}%)
               </span>
             )}
-            {p.estimated_duration_min != null && (
+            {p.estimated_duration_min != null && !isSpeakUpCard && (
               <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
                 <Clock className="h-2.5 w-2.5" />
                 {p.estimated_duration_min} min
@@ -458,6 +460,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const { data: allSchemes } = useClientPaymentSchemes(clientId);
   const { selectedClient } = useBrand();
   const isTissue = !!selectedClient?.name?.toLowerCase().includes('tissue');
+  const isSpeakUpMain = !!selectedClient?.name?.toLowerCase().includes('speak up');
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ClientProduct | null>(null);
@@ -689,7 +692,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                             <span className="text-muted-foreground">costo</span>
                           </div>
                         )}
-                        {detailProduct.estimated_duration_min != null && (
+                        {detailProduct.estimated_duration_min != null && !isSpeakUpMain && (
                           <div className="flex items-center gap-1 text-xs">
                             <Clock className="h-3 w-3 text-muted-foreground" />
                             <span className="font-semibold text-foreground">{detailProduct.estimated_duration_min} min</span>
