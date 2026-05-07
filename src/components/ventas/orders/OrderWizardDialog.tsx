@@ -56,6 +56,8 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
   const { contacts } = useCustomerContacts(clientId);
   const { products } = useClientProducts(clientId);
   const { activeStories, archivedStories } = useStories(clientId);
+  const { items: brandsCatalog } = useProductBrands(clientId);
+  const { items: categoriesCatalog } = useProductCategoriesCatalog(clientId);
   const { createOrder } = useOrders(clientId);
 
   // Customer
