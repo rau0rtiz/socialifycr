@@ -120,15 +120,12 @@ const Ordenes = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
+          <TabsList className="grid grid-cols-2 w-full max-w-xs">
             <TabsTrigger value="ordenes" className="text-xs sm:text-sm">
               <Package className="h-3.5 w-3.5 mr-1.5" />Órdenes
             </TabsTrigger>
             <TabsTrigger value="resumen" className="text-xs sm:text-sm">
               Resumen
-            </TabsTrigger>
-            <TabsTrigger value="clientes" className="text-xs sm:text-sm">
-              <Users className="h-3.5 w-3.5 mr-1.5" />Clientes
             </TabsTrigger>
           </TabsList>
 
