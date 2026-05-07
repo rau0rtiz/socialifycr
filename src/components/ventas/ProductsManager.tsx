@@ -639,8 +639,8 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
               <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
                 <Package className="h-5 w-5 text-muted-foreground/40" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">Sin productos ni servicios</p>
-              <p className="text-xs text-muted-foreground mt-1">Agregá productos o servicios para vincularlos con ventas.</p>
+              <p className="text-sm font-medium text-muted-foreground">{isSpeakUpMain ? 'Sin servicios' : 'Sin productos ni servicios'}</p>
+              <p className="text-xs text-muted-foreground mt-1">{isSpeakUpMain ? 'Agregá servicios para vincularlos con ventas.' : 'Agregá productos o servicios para vincularlos con ventas.'}</p>
               <Button size="sm" variant="outline" onClick={openNew} className="mt-3 h-8 text-xs gap-1.5">
                 <Plus className="h-3.5 w-3.5" /> Crear el primero
               </Button>
