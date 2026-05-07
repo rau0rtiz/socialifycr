@@ -2719,6 +2719,7 @@ export type Database = {
           order_item_id: string | null
           payment_day: number | null
           payment_method: string | null
+          payment_schedule_pending: boolean
           payment_scheme_id: string | null
           product: string | null
           reservation_expires_at: string | null
@@ -2765,6 +2766,7 @@ export type Database = {
           order_item_id?: string | null
           payment_day?: number | null
           payment_method?: string | null
+          payment_schedule_pending?: boolean
           payment_scheme_id?: string | null
           product?: string | null
           reservation_expires_at?: string | null
@@ -2811,6 +2813,7 @@ export type Database = {
           order_item_id?: string | null
           payment_day?: number | null
           payment_method?: string | null
+          payment_schedule_pending?: boolean
           payment_scheme_id?: string | null
           product?: string | null
           reservation_expires_at?: string | null
