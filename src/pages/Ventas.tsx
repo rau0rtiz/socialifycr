@@ -17,13 +17,11 @@ import { SpeakUpSalesSummary } from '@/components/ventas/SpeakUpSalesSummary';
 import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
 import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
-import { StoryStoreSales } from '@/components/ventas/StoryStoreSales';
 import { SalesBySizeChart } from '@/components/ventas/SalesBySizeChart';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 import { TissueSaleDialog } from '@/components/ventas/TissueSaleDialog';
 import { AlmaBenditaExportButton } from '@/components/ventas/AlmaBenditaExportButton';
-import { OrdersWidget } from '@/components/ventas/orders/OrdersWidget';
 import { Plus, ShoppingBag } from 'lucide-react';
 
 
@@ -423,9 +421,7 @@ const Ventas = () => {
         {/* === ALMA BENDITA: Story & Revenue Daily Tracker === */}
         {isAlmaBendita && (
           <>
-            <OrdersWidget clientId={selectedClient.id} />
             <StoryRevenueTracker clientId={selectedClient.id} dateRange={globalRange} />
-            <StoryStoreSales clientId={selectedClient.id} />
             <SalesBySizeChart clientId={selectedClient.id} dateRange={globalRange} />
             {salesDistributionSection}
           </>
@@ -490,19 +486,21 @@ const Ventas = () => {
           />
         )}
 
-        {/* Sales tracking */}
-        <div ref={salesRef}>
-          <SalesTrackingSection
-            clientId={selectedClient.id}
-            campaigns={campaigns}
-            adSpend={totalAdSpend}
-            adCurrency={adCurrency}
-            hasAdAccount={hasAdAccount}
-            salePrefill={salePrefill}
-            showSaleDialog={showSaleFromSetter}
-            onSaleFromSetter={handleSaleRegistered}
-          />
-        </div>
+        {/* Sales tracking — Alma Bendita usa /ordenes en su lugar */}
+        {!isAlmaBendita && (
+          <div ref={salesRef}>
+            <SalesTrackingSection
+              clientId={selectedClient.id}
+              campaigns={campaigns}
+              adSpend={totalAdSpend}
+              adCurrency={adCurrency}
+              hasAdAccount={hasAdAccount}
+              salePrefill={salePrefill}
+              showSaleDialog={showSaleFromSetter}
+              onSaleFromSetter={handleSaleRegistered}
+            />
+          </div>
+        )}
 
         {/* === TISSUE: Distribución por talla / producto / marca === */}
         {isTissue && (

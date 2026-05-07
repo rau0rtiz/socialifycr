@@ -18,6 +18,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const BrandSettings = lazy(() => import("./pages/BrandSettings"));
 const Clientes = lazy(() => import("./pages/Clientes"));
 const Ventas = lazy(() => import("./pages/Ventas"));
+const Ordenes = lazy(() => import("./pages/Ordenes"));
 
 const Historial = lazy(() => import("./pages/Historial"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -241,6 +242,7 @@ const App = () => (
                   <Route path="/imgdb" element={<ImageDBPinGate />} />
                   {/* Shared routes */}
                   <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
+                  <Route path="/ordenes" element={<ProtectedRoute><Ordenes /></ProtectedRoute>} />
                   <Route path="/asistencia" element={<ProtectedRoute><Asistencia /></ProtectedRoute>} />
                   <Route path="/comisiones" element={<ProtectedRoute><Comisiones /></ProtectedRoute>} />
                   <Route path="/actualizar-foto" element={<ProtectedRoute><ActualizarFoto /></ProtectedRoute>} />

@@ -21,6 +21,7 @@ import {
   DollarSign,
   Layers,
   GraduationCap,
+  Package,
 } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -107,6 +108,14 @@ export const Sidebar = () => {
   if (showVentas) {
     const ventasLabel = 'Ventas';
     menuItems.push({ title: ventasLabel, url: '/ventas', icon: ShoppingCart, dataTour: 'ventas-link' });
+  }
+
+  // Órdenes — solo para negocios retail (Alma Bendita, Tissue)
+  const isAlmaBenditaClient = selectedClient?.name?.toLowerCase().includes('alma bendita');
+  const isTissueRetail = selectedClient?.name?.toLowerCase().includes('tissue');
+  const isRetailClient = isAlmaBenditaClient || isTissueRetail;
+  if (isRetailClient && (effectiveAgency || flags.ventas_section)) {
+    menuItems.push({ title: 'Órdenes', url: '/ordenes', icon: Package });
   }
 
   const isTissueClient = selectedClient?.name?.toLowerCase().includes('tissue');
