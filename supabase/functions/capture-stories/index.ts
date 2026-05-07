@@ -19,16 +19,17 @@ async function scanStoryImage(imageUrl: string, apiKey: string): Promise<Record<
         messages: [
           {
             role: "system",
-            content: `You are an OCR assistant that extracts sales-related information from Instagram story images. 
-Extract any visible text that could be: customer name, phone number, brand/product name, price/amount, or any other sale-related info.
-Use the provided tool to return structured data. If a field is not found, set it to null.
-Focus on text overlays, captions, and any written content visible in the image.
-Amounts should be numbers only (no currency symbols). Phone numbers should include only digits and dashes.`
+            content: `You are an OCR assistant that extracts product/sale information from Instagram story images of clothing items.
+Read every visible text overlay, sticker, caption and tag in the image (including handwritten or designed text).
+Extract: product/garment name, brand, garment type (e.g. blusa, pantalón, vestido, falda, jacket, top, conjunto), size (S, M, L, XL, talla 8, etc.), price in Costa Rican colones (CRC, ₡), customer name, phone.
+Prices in Costa Rica use dots as thousands separators (e.g. "11.900" means 11900). Strip currency symbols and dots; return the integer.
+If a tag shows just a number with no label, that number is almost always the PRICE in CRC — return it as amount.
+If a field truly is not visible, set it to null. Do not invent values.`
           },
           {
             role: "user",
             content: [
-              { type: "text", text: "Extract any sales-related text from this Instagram story image:" },
+              { type: "text", text: "Extract product and sale info from this Instagram story image:" },
               { type: "image_url", image_url: { url: imageUrl } }
             ]
           }
@@ -38,17 +39,20 @@ Amounts should be numbers only (no currency symbols). Phone numbers should inclu
             type: "function",
             function: {
               name: "extract_story_data",
-              description: "Extract structured sales data from the story image text",
+              description: "Extract structured product/sale data from the story image text",
               parameters: {
                 type: "object",
                 properties: {
                   customer_name: { type: "string", description: "Customer name if visible", nullable: true },
                   customer_phone: { type: "string", description: "Phone number if visible", nullable: true },
-                  brand: { type: "string", description: "Brand or product name if visible", nullable: true },
-                  amount: { type: "number", description: "Price or amount if visible (number only)", nullable: true },
+                  product_name: { type: "string", description: "Product/garment name as written in the image", nullable: true },
+                  brand: { type: "string", description: "Brand name if visible", nullable: true },
+                  garment_type: { type: "string", description: "Type of garment in Spanish (blusa, pantalón, vestido, falda, top, conjunto, etc.)", nullable: true },
+                  garment_size: { type: "string", description: "Size if visible (S, M, L, XL, talla 8, etc.)", nullable: true },
+                  amount: { type: "number", description: "Price in CRC as integer (parse '11.900' as 11900). Lone numeric tags are prices.", nullable: true },
                   notes: { type: "string", description: "Any other relevant text from the image", nullable: true },
                 },
-                required: ["customer_name", "customer_phone", "brand", "amount", "notes"],
+                required: ["customer_name", "customer_phone", "product_name", "brand", "garment_type", "garment_size", "amount", "notes"],
               }
             }
           }
