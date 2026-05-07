@@ -112,8 +112,17 @@ export const CostaRicaAddressDialog = ({ open, onOpenChange, initial, onSave }: 
           </div>
 
           <div>
-            <Label className="text-xs">Código postal (opcional)</Label>
-            <Input value={postal} onChange={(e) => setPostal(e.target.value)} placeholder="10101" />
+            <Label className="text-xs">
+              Código postal {postalEdited ? '(manual)' : '(automático)'}
+            </Label>
+            <Input
+              value={postal}
+              onChange={(e) => { setPostal(e.target.value); setPostalEdited(true); }}
+              placeholder="10101"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Se rellena automáticamente desde provincia, cantón y distrito. Editalo si tu zona usa otro.
+            </p>
           </div>
         </div>
         <DialogFooter>
