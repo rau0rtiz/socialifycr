@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { StudentDetailDialog } from '@/components/ventas/StudentDetailDialog';
 import { CustomerDetailDialog } from '@/components/clientes/CustomerDetailDialog';
 import { MapPin, Shirt } from 'lucide-react';
+import { BillingInfoSection, BillingInfo, isBillingEmpty } from '@/components/common/BillingInfoSection';
 
 // ── Legacy lead type for non-SpkUp clients ──
 type LeadRecord = {
@@ -104,11 +105,13 @@ const ClientDatabase = () => {
   const [sGuardianPhone, setSGuardianPhone] = useState('');
   const [sGuardianId, setSGuardianId] = useState('');
   const [sGuardianEmail, setSGuardianEmail] = useState('');
+  const [sBilling, setSBilling] = useState<BillingInfo>({});
 
   const resetStudentForm = () => {
     setSName(''); setSPhone(''); setSEmail(''); setSIdNumber('');
     setSAge(''); setSGender(''); setSNotes('');
     setSGuardianName(''); setSGuardianPhone(''); setSGuardianId(''); setSGuardianEmail('');
+    setSBilling({});
     setEditingStudent(null);
   };
 
@@ -120,6 +123,7 @@ const ClientDatabase = () => {
     setSGender(s.gender || ''); setSNotes(s.notes || '');
     setSGuardianName(s.guardian_name || ''); setSGuardianPhone(s.guardian_phone || '');
     setSGuardianId(s.guardian_id_number || ''); setSGuardianEmail(s.guardian_email || '');
+    setSBilling((s.billing_info || {}) as BillingInfo);
     setStudentDialog(true);
   };
 
@@ -135,7 +139,8 @@ const ClientDatabase = () => {
       id_number: sIdNumber || null, age, gender: sGender || null, notes: sNotes || null,
       guardian_name: sGuardianName || null, guardian_phone: sGuardianPhone || null,
       guardian_id_number: sGuardianId || null, guardian_email: sGuardianEmail || null,
-    };
+      ...(isBillingEmpty(sBilling) ? { billing_info: null } : { billing_info: sBilling }),
+    } as any;
     try {
       if (editingStudent) {
         await updateStudent.mutateAsync({ id: editingStudent.id, ...input });
@@ -711,6 +716,10 @@ const ClientDatabase = () => {
                   </div>
                 </div>
               )}
+
+              <div className="pt-2 border-t">
+                <BillingInfoSection value={sBilling} onChange={setSBilling} compact />
+              </div>
             </div>
             <div className="px-6 pb-4 flex justify-end gap-2">
               <Button variant="outline" onClick={() => { setStudentDialog(false); resetStudentForm(); }} size="sm">Cancelar</Button>

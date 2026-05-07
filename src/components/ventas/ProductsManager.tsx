@@ -157,9 +157,8 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
 const SPEAK_UP_CATEGORIES: { key: string; label: string; icon: React.ElementType }[] = [
   { key: 'individual', label: 'Clases Personalizadas', icon: GraduationCap },
   { key: 'group', label: 'Clases Grupales', icon: Users },
-  { key: 'toeic', label: 'TOEIC', icon: BookOpen },
-  { key: 'exam', label: 'Exámenes', icon: BookOpen },
-  { key: 'trial', label: 'Otros', icon: MoreHorizontal },
+  { key: 'course', label: 'Cursos', icon: BookOpen },
+  { key: 'other', label: 'Otros', icon: MoreHorizontal },
 ];
 
 // ====== Product Card ======
@@ -421,7 +420,7 @@ const ProductList = ({ products, allSchemes, onSelect }: { products: ClientProdu
 
   const grouped = SPEAK_UP_CATEGORIES.map(cat => {
     const catProducts = products.filter(p => {
-      if (cat.key === 'trial') return !['individual', 'group', 'toeic', 'exam'].includes(p.category || '');
+      if (cat.key === 'other') return !['individual', 'group', 'course'].includes(p.category || '');
       return p.category === cat.key;
     });
     return { ...cat, products: catProducts };
