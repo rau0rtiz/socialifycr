@@ -1254,11 +1254,13 @@ export const RegisterSaleDialog = ({
                           </div>
                         );
                       })}
-                      <div className="flex justify-between text-xs pt-1.5 border-t">
-                        <span className="text-muted-foreground">Subtotal productos</span>
-                        <span className="font-semibold">
-                          {(primaryProduct?.currency === 'CRC' ? '₡' : '$')}{productsBaseSum.toLocaleString()}
-                        </span>
+                      <div className="pt-1.5 border-t space-y-0.5">
+                        {perCurrency.map(b => (
+                          <div key={b.currency} className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Subtotal {isMultiCurrency ? b.currency : 'productos'}</span>
+                            <span className="font-semibold tabular-nums">{b.symbol}{b.base.toLocaleString()}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
