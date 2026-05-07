@@ -84,12 +84,18 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
   const [currency, setCurrency] = useState('CRC');
   const [notes, setNotes] = useState('');
 
+  // Deposit / abono (partial payment)
+  const [hasDeposit, setHasDeposit] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [balanceDueDate, setBalanceDueDate] = useState('');
+
   useEffect(() => {
     if (!open) {
       setStep(1); setContactId(null); setCustomerName(''); setCustomerPhone('');
       setContactQuery(''); setShippingAddress(null); setItems([]);
       setOrderDate(new Date().toISOString().split('T')[0]);
       setStatus('pending'); setPaymentMethod('SINPE'); setCurrency('CRC'); setNotes('');
+      setHasDeposit(false); setDepositAmount(''); setBalanceDueDate('');
     }
   }, [open]);
 
