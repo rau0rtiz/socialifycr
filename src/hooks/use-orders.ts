@@ -12,6 +12,8 @@ export interface OrderItem {
   story_id: string | null;
   product_name: string | null;
   garment_size: string | null;
+  brand: string | null;
+  garment_type: string | null;
   quantity: number;
   unit_price: number;
   subtotal: number;
