@@ -56,6 +56,9 @@ const Ordenes = () => {
     return { start: startOfMonth(now), end: endOfDay(now) };
   }, []);
 
+  const { sales: monthSales } = useSalesTracking(clientId, summaryRange);
+  const { products: clientProducts } = useClientProducts(clientId);
+
   // Sales totals (CRC) for goal bar — current month, non-cancelled
   const monthSalesCRC = useMemo(() => {
     return orders
