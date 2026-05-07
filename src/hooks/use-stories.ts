@@ -17,6 +17,7 @@ export interface Story {
   mediaType: 'IMAGE' | 'VIDEO';
   mediaUrl?: string;
   thumbnailUrl?: string;
+  persistentThumbnailUrl?: string;
   permalink?: string;
   timestamp: string;
   impressions: number;
@@ -30,7 +31,7 @@ export interface Story {
   scannedData?: StoryScannedData | null;
 }
 
-const ARCHIVED_COLUMNS = 'id, story_id, media_type, media_url, thumbnail_url, permalink, timestamp, impressions, reach, replies, exits, taps_forward, taps_back, captured_at, scanned_data, client_id';
+const ARCHIVED_COLUMNS = 'id, story_id, media_type, media_url, thumbnail_url, persistent_thumbnail_url, permalink, timestamp, impressions, reach, replies, exits, taps_forward, taps_back, captured_at, scanned_data, client_id';
 const RECENT_LIMIT = 100;
 
 const mapArchivedRow = (story: any): Story => ({
@@ -39,6 +40,7 @@ const mapArchivedRow = (story: any): Story => ({
   mediaType: (story.media_type as 'IMAGE' | 'VIDEO') || 'IMAGE',
   mediaUrl: story.media_url || undefined,
   thumbnailUrl: story.thumbnail_url || undefined,
+  persistentThumbnailUrl: story.persistent_thumbnail_url || undefined,
   permalink: story.permalink || undefined,
   timestamp: story.timestamp,
   impressions: story.impressions || 0,
