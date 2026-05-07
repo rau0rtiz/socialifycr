@@ -689,6 +689,49 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                 <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
               </div>
 
+              {/* Abono / Pago parcial */}
+              <Card className="p-3 space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasDeposit}
+                    onChange={(e) => setHasDeposit(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm font-medium">Cobrar abono (pago parcial)</span>
+                </label>
+                {hasDeposit && (
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <Label className="text-[11px]">Monto del abono ({currency})</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={total}
+                        value={depositAmount}
+                        onChange={(e) => setDepositAmount(e.target.value)}
+                        placeholder="0"
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[11px]">Fecha de cobro del saldo</Label>
+                      <Input
+                        type="date"
+                        value={balanceDueDate}
+                        onChange={(e) => setBalanceDueDate(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    {depositAmt > 0 && depositAmt < total && (
+                      <div className="col-span-2 text-xs text-muted-foreground bg-muted/40 rounded p-2">
+                        Abono hoy: <strong>{currency} {depositAmt.toLocaleString()}</strong> · Saldo pendiente: <strong>{currency} {balanceAmt.toLocaleString()}</strong>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Card>
+
               <Card className="p-3 space-y-1.5 text-xs">
                 <div className="font-semibold text-sm">Resumen</div>
                 <div><strong>Cliente:</strong> {customerName} {customerPhone && `· ${customerPhone}`}</div>
