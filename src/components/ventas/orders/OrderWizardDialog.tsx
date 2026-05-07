@@ -312,10 +312,17 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                     <div className="text-muted-foreground">{shippingAddress.address_line_1}</div>
                   </Card>
                 )}
-                <Button variant="outline" size="sm" onClick={() => setAddressDialogOpen(true)} className="w-full">
-                  <MapPin className="h-3.5 w-3.5 mr-1.5" />
-                  {shippingAddress ? 'Cambiar dirección' : 'Agregar dirección'}
-                </Button>
+                {savedAddresses.length > 0 ? (
+                  <Button variant="outline" size="sm" onClick={() => setAddressPickerOpen(true)} className="w-full">
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                    {shippingAddress ? 'Cambiar dirección' : 'Seleccionar dirección'}
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => setAddressDialogOpen(true)} className="w-full">
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                    {shippingAddress ? 'Cambiar dirección' : 'Agregar dirección'}
+                  </Button>
+                )}
               </div>
             </div>
           )}
