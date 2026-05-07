@@ -105,11 +105,13 @@ const ClientDatabase = () => {
   const [sGuardianPhone, setSGuardianPhone] = useState('');
   const [sGuardianId, setSGuardianId] = useState('');
   const [sGuardianEmail, setSGuardianEmail] = useState('');
+  const [sBilling, setSBilling] = useState<BillingInfo>({});
 
   const resetStudentForm = () => {
     setSName(''); setSPhone(''); setSEmail(''); setSIdNumber('');
     setSAge(''); setSGender(''); setSNotes('');
     setSGuardianName(''); setSGuardianPhone(''); setSGuardianId(''); setSGuardianEmail('');
+    setSBilling({});
     setEditingStudent(null);
   };
 
