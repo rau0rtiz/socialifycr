@@ -123,6 +123,7 @@ const ClientDatabase = () => {
     setSGender(s.gender || ''); setSNotes(s.notes || '');
     setSGuardianName(s.guardian_name || ''); setSGuardianPhone(s.guardian_phone || '');
     setSGuardianId(s.guardian_id_number || ''); setSGuardianEmail(s.guardian_email || '');
+    setSBilling((s.billing_info || {}) as BillingInfo);
     setStudentDialog(true);
   };
 
