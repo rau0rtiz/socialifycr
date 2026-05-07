@@ -155,9 +155,9 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
 };
 
 const SPEAK_UP_CATEGORIES: { key: string; label: string; singular: string; icon: React.ElementType; accent: string; bg: string; border: string; text: string; ring: string }[] = [
-  { key: 'individual', label: 'Clases Personalizadas', singular: 'Personalizada', icon: GraduationCap,
+  { key: 'individual', label: 'Individuales', singular: 'Individual', icon: GraduationCap,
     accent: 'bg-violet-500', bg: 'bg-violet-500/5', border: 'border-violet-500/30', text: 'text-violet-600', ring: 'hover:border-violet-500/50' },
-  { key: 'group', label: 'Clases Grupales', singular: 'Grupal', icon: Users,
+  { key: 'group', label: 'Grupos', singular: 'Grupo', icon: Users,
     accent: 'bg-sky-500', bg: 'bg-sky-500/5', border: 'border-sky-500/30', text: 'text-sky-600', ring: 'hover:border-sky-500/50' },
   { key: 'course', label: 'Cursos', singular: 'Curso', icon: BookOpen,
     accent: 'bg-amber-500', bg: 'bg-amber-500/5', border: 'border-amber-500/30', text: 'text-amber-600', ring: 'hover:border-amber-500/50' },
