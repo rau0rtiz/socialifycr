@@ -2709,6 +2709,8 @@ export type Database = {
           message_platform: string | null
           notes: string | null
           num_installments: number | null
+          order_id: string | null
+          order_item_id: string | null
           payment_day: number | null
           payment_method: string | null
           payment_scheme_id: string | null
@@ -2753,6 +2755,8 @@ export type Database = {
           message_platform?: string | null
           notes?: string | null
           num_installments?: number | null
+          order_id?: string | null
+          order_item_id?: string | null
           payment_day?: number | null
           payment_method?: string | null
           payment_scheme_id?: string | null
@@ -2797,6 +2801,8 @@ export type Database = {
           message_platform?: string | null
           notes?: string | null
           num_installments?: number | null
+          order_id?: string | null
+          order_item_id?: string | null
           payment_day?: number | null
           payment_method?: string | null
           payment_scheme_id?: string | null
@@ -2827,6 +2833,20 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "class_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_sales_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_sales_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
             referencedColumns: ["id"]
           },
           {
@@ -2899,6 +2919,145 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          client_id: string
+          created_at: string
+          garment_size: string | null
+          id: string
+          notes: string | null
+          order_id: string
+          product_id: string | null
+          product_name: string | null
+          quantity: number
+          story_id: string | null
+          subtotal: number
+          unit_price: number
+          variant_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          garment_size?: string | null
+          id?: string
+          notes?: string | null
+          order_id: string
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number
+          story_id?: string | null
+          subtotal?: number
+          unit_price?: number
+          variant_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          garment_size?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number
+          story_id?: string | null
+          subtotal?: number
+          unit_price?: number
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "client_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string
+          currency: string
+          customer_contact_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          notes: string | null
+          order_date: string
+          payment_method: string | null
+          shipping_address: Json | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          customer_contact_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          payment_method?: string | null
+          shipping_address?: Json | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          customer_contact_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          payment_method?: string | null
+          shipping_address?: Json | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_customer_contact_id_fkey"
+            columns: ["customer_contact_id"]
+            isOneToOne: false
+            referencedRelation: "customer_contacts"
             referencedColumns: ["id"]
           },
         ]
