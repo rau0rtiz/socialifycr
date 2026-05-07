@@ -162,7 +162,7 @@ const Ordenes = () => {
             <Card>
               <CardContent className="p-3 space-y-3">
                 <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-                  <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
+                  <TabsList className="grid grid-cols-4 w-full h-auto">
                     {STATUSES.map(s => (
                       <TabsTrigger key={s.value} value={s.value} className="text-xs flex flex-col py-1.5">
                         <span>{s.label}</span>
