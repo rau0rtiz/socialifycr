@@ -154,12 +154,19 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
   );
 };
 
-const SPEAK_UP_CATEGORIES: { key: string; label: string; icon: React.ElementType }[] = [
-  { key: 'individual', label: 'Clases Personalizadas', icon: GraduationCap },
-  { key: 'group', label: 'Clases Grupales', icon: Users },
-  { key: 'course', label: 'Cursos', icon: BookOpen },
-  { key: 'other', label: 'Otros', icon: MoreHorizontal },
+const SPEAK_UP_CATEGORIES: { key: string; label: string; singular: string; icon: React.ElementType; accent: string; bg: string; border: string; text: string; ring: string }[] = [
+  { key: 'individual', label: 'Clases Personalizadas', singular: 'Personalizada', icon: GraduationCap,
+    accent: 'bg-violet-500', bg: 'bg-violet-500/5', border: 'border-violet-500/30', text: 'text-violet-600', ring: 'hover:border-violet-500/50' },
+  { key: 'group', label: 'Clases Grupales', singular: 'Grupal', icon: Users,
+    accent: 'bg-sky-500', bg: 'bg-sky-500/5', border: 'border-sky-500/30', text: 'text-sky-600', ring: 'hover:border-sky-500/50' },
+  { key: 'course', label: 'Cursos', singular: 'Curso', icon: BookOpen,
+    accent: 'bg-amber-500', bg: 'bg-amber-500/5', border: 'border-amber-500/30', text: 'text-amber-600', ring: 'hover:border-amber-500/50' },
+  { key: 'other', label: 'Otros', singular: 'Otro', icon: MoreHorizontal,
+    accent: 'bg-slate-400', bg: 'bg-slate-500/5', border: 'border-slate-500/30', text: 'text-slate-600', ring: 'hover:border-slate-500/50' },
 ];
+
+const getSpeakUpLineMeta = (category: string | null | undefined) =>
+  SPEAK_UP_CATEGORIES.find(c => c.key === category) || SPEAK_UP_CATEGORIES[3];
 
 // ====== Product Card ======
 const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes: any[]; onClick: () => void }) => {
@@ -179,20 +186,26 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
   const stockOut = p.track_stock && p.stock_quantity <= 0;
   const stockLow = p.track_stock && !stockOut && p.low_stock_threshold > 0 && p.stock_quantity <= p.low_stock_threshold;
 
+  const lineMeta = isSpeakUpCard ? getSpeakUpLineMeta(p.category) : null;
+  const LineIcon = lineMeta?.icon;
+
   return (
     <div
       className={cn(
         'group relative rounded-xl border bg-card hover:shadow-sm transition-all cursor-pointer p-3.5 overflow-hidden',
-        isService ? 'border-purple-500/20 hover:border-purple-500/40' : 'border-blue-500/20 hover:border-blue-500/40',
-        stockOut && 'border-red-500/40 hover:border-red-500/60',
+        isSpeakUpCard
+          ? cn(lineMeta!.border.replace('/30', '/20'), lineMeta!.ring)
+          : isService ? 'border-purple-500/20 hover:border-purple-500/40' : 'border-blue-500/20 hover:border-blue-500/40',
+        !isSpeakUpCard && stockOut && 'border-red-500/40 hover:border-red-500/60',
       )}
       onClick={onClick}
     >
       {/* Type accent bar */}
       <div className={cn(
         'absolute left-0 top-0 bottom-0 w-1',
+        isSpeakUpCard ? lineMeta!.accent :
         isService ? 'bg-purple-500' : 'bg-blue-500',
-        stockOut && 'bg-red-500',
+        !isSpeakUpCard && stockOut && 'bg-red-500',
       )} />
 
       <div className="flex items-start gap-3 pl-1.5">
@@ -201,9 +214,12 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
         ) : (
           <div className={cn(
             'w-14 h-14 rounded-lg border flex items-center justify-center shrink-0',
+            isSpeakUpCard ? cn(lineMeta!.bg, lineMeta!.border) :
             isService ? 'bg-purple-500/5 border-purple-500/20' : 'bg-blue-500/5 border-blue-500/20',
           )}>
-            {isService
+            {isSpeakUpCard && LineIcon ? (
+              <LineIcon className={cn('h-5 w-5', lineMeta!.text)} />
+            ) : isService
               ? <Wrench className="h-5 w-5 text-purple-500/60" />
               : <Package className="h-5 w-5 text-blue-500/60" />}
           </div>
@@ -215,12 +231,16 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
               variant="outline"
               className={cn(
                 'text-[9px] py-0 px-1.5 h-4 font-medium uppercase tracking-wider',
-                isService
-                  ? 'bg-purple-500/10 text-purple-600 border-purple-500/30'
-                  : 'bg-blue-500/10 text-blue-600 border-blue-500/30',
+                isSpeakUpCard
+                  ? cn(lineMeta!.bg.replace('/5', '/10'), lineMeta!.text, lineMeta!.border)
+                  : isService
+                    ? 'bg-purple-500/10 text-purple-600 border-purple-500/30'
+                    : 'bg-blue-500/10 text-blue-600 border-blue-500/30',
               )}
             >
-              {isService ? <><Wrench className="h-2 w-2 mr-0.5" /> Servicio</> : <><Package className="h-2 w-2 mr-0.5" /> Producto</>}
+              {isSpeakUpCard && LineIcon ? (
+                <><LineIcon className="h-2 w-2 mr-0.5" /> {lineMeta!.singular}</>
+              ) : isService ? <><Wrench className="h-2 w-2 mr-0.5" /> Servicio</> : <><Package className="h-2 w-2 mr-0.5" /> Producto</>}
             </Badge>
             {variantCount > 0 && (
               <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
@@ -237,7 +257,12 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
                 {variantCount > 0 ? 'Desde ' : ''}{formatCurrency(minPrice, minCurrency)}
               </span>
             )}
-            {profit != null && p.price != null && p.cost != null && p.cost > 0 && variantCount === 0 && (
+            {isSpeakUpCard && p.tax_rate != null && p.tax_rate > 0 && (
+              <span className="text-[10px] font-medium text-muted-foreground inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-muted/50">
+                IVA {p.tax_rate}%
+              </span>
+            )}
+            {profit != null && p.price != null && p.cost != null && p.cost > 0 && variantCount === 0 && !isSpeakUpCard && (
               <span className={cn(
                 'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
                 margin != null && margin >= 50 ? 'bg-emerald-500/10 text-emerald-600' :
@@ -435,9 +460,9 @@ const ProductList = ({ products, allSchemes, onSelect }: { products: ClientProdu
         return (
           <div key={group.key}>
             <div className="flex items-center gap-2 mb-2">
-              <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.label}</span>
-              <Badge variant="outline" className="text-[10px] py-0 px-1.5 ml-auto">{group.products.length}</Badge>
+              <Icon className={cn('h-3.5 w-3.5', group.text)} />
+              <span className={cn('text-xs font-semibold uppercase tracking-wider', group.text)}>{group.label}</span>
+              <Badge variant="outline" className={cn('text-[10px] py-0 px-1.5 ml-auto', group.bg.replace('/5', '/10'), group.text, group.border)}>{group.products.length}</Badge>
             </div>
             <div className="space-y-2">
               {group.products.map(p => (
@@ -535,10 +560,10 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-500/10">
                 <Package className="h-4 w-4 text-blue-500" />
               </div>
-              Productos y Servicios
+              {isSpeakUpMain ? 'Servicios' : 'Productos y Servicios'}
               {products.length > 0 && (
                 <span className="text-[10px] font-normal text-muted-foreground ml-1">
-                  · {productCount} prod · {serviceCount} serv
+                  {isSpeakUpMain ? `· ${products.length} servicio${products.length === 1 ? '' : 's'}` : `· ${productCount} prod · ${serviceCount} serv`}
                 </span>
               )}
             </CardTitle>
@@ -614,8 +639,8 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
               <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
                 <Package className="h-5 w-5 text-muted-foreground/40" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">Sin productos ni servicios</p>
-              <p className="text-xs text-muted-foreground mt-1">Agregá productos o servicios para vincularlos con ventas.</p>
+              <p className="text-sm font-medium text-muted-foreground">{isSpeakUpMain ? 'Sin servicios' : 'Sin productos ni servicios'}</p>
+              <p className="text-xs text-muted-foreground mt-1">{isSpeakUpMain ? 'Agregá servicios para vincularlos con ventas.' : 'Agregá productos o servicios para vincularlos con ventas.'}</p>
               <Button size="sm" variant="outline" onClick={openNew} className="mt-3 h-8 text-xs gap-1.5">
                 <Plus className="h-3.5 w-3.5" /> Crear el primero
               </Button>
@@ -667,17 +692,24 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-base font-bold text-foreground">{detailProduct.name}</h3>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            'text-[9px] py-0 px-1.5 h-4 font-medium uppercase tracking-wider',
-                            isService
-                              ? 'bg-purple-500/10 text-purple-600 border-purple-500/30'
-                              : 'bg-blue-500/10 text-blue-600 border-blue-500/30',
-                          )}
-                        >
-                          {isService ? 'Servicio' : 'Producto'}
-                        </Badge>
+                        {(() => {
+                          const lm = isSpeakUpMain ? getSpeakUpLineMeta(detailProduct.category) : null;
+                          return (
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[9px] py-0 px-1.5 h-4 font-medium uppercase tracking-wider',
+                                lm
+                                  ? cn(lm.bg.replace('/5', '/10'), lm.text, lm.border)
+                                  : isService
+                                    ? 'bg-purple-500/10 text-purple-600 border-purple-500/30'
+                                    : 'bg-blue-500/10 text-blue-600 border-blue-500/30',
+                              )}
+                            >
+                              {lm ? lm.singular : (isService ? 'Servicio' : 'Producto')}
+                            </Badge>
+                          );
+                        })()}
                       </div>
                       {detailProduct.description && (
                         <p className="text-xs text-muted-foreground mt-1">{detailProduct.description}</p>
