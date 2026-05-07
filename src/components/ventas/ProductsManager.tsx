@@ -460,9 +460,9 @@ const ProductList = ({ products, allSchemes, onSelect }: { products: ClientProdu
         return (
           <div key={group.key}>
             <div className="flex items-center gap-2 mb-2">
-              <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.label}</span>
-              <Badge variant="outline" className="text-[10px] py-0 px-1.5 ml-auto">{group.products.length}</Badge>
+              <Icon className={cn('h-3.5 w-3.5', group.text)} />
+              <span className={cn('text-xs font-semibold uppercase tracking-wider', group.text)}>{group.label}</span>
+              <Badge variant="outline" className={cn('text-[10px] py-0 px-1.5 ml-auto', group.bg.replace('/5', '/10'), group.text, group.border)}>{group.products.length}</Badge>
             </div>
             <div className="space-y-2">
               {group.products.map(p => (
