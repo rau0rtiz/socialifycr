@@ -198,38 +198,70 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
               <div>
                 <Label className="text-xs">Buscar cliente existente</Label>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Nombre o teléfono..."
-                    value={contactQuery}
-                    onChange={(e) => setContactQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                {(contactQuery || filteredContacts.length > 0) && (
-                  <div className="mt-2 border rounded-lg max-h-48 overflow-y-auto divide-y">
-                    {filteredContacts.length === 0 && (
-                      <div className="p-2 text-xs text-muted-foreground">Sin resultados</div>
-                    )}
-                    {filteredContacts.map(c => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => handleSelectContact(c)}
-                        className={cn(
-                          'w-full text-left p-2 text-sm hover:bg-accent',
-                          contactId === c.id && 'bg-accent'
-                        )}
-                      >
-                        <div className="font-medium">{c.full_name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {c.phone || 'Sin teléfono'} · {c.total_purchases || 0} compras
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <Popover open={contactPopoverOpen} onOpenChange={setContactPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={contactPopoverOpen}
+                      className="w-full justify-between mt-1 font-normal"
+                    >
+                      <span className="flex items-center gap-2 truncate">
+                        <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="truncate">
+                          {selectedContact
+                            ? `${selectedContact.full_name}${selectedContact.phone ? ` · ${selectedContact.phone}` : ''}`
+                            : 'Nombre o teléfono…'}
+                        </span>
+                      </span>
+                      <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                  >
+                    <Command
+                      filter={(value, search) => {
+                        if (!search) return 1;
+                        return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                      }}
+                    >
+                      <CommandInput placeholder="Nombre o teléfono…" />
+                      <CommandList className="max-h-[280px]">
+                        <CommandEmpty>Sin resultados</CommandEmpty>
+                        <CommandGroup>
+                          {contacts.map((c) => (
+                            <CommandItem
+                              key={c.id}
+                              value={`${c.full_name || ''} ${c.phone || ''}`}
+                              onSelect={() => {
+                                handleSelectContact(c);
+                                setContactPopoverOpen(false);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Check
+                                className={cn(
+                                  'mr-2 h-4 w-4',
+                                  contactId === c.id ? 'opacity-100' : 'opacity-0'
+                                )}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-sm truncate">{c.full_name}</div>
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {c.phone || 'Sin teléfono'} · {c.total_purchases || 0} compras
+                                </div>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
