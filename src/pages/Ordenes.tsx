@@ -131,7 +131,7 @@ const Ordenes = () => {
 
           <TabsContent value="ordenes" className="space-y-4 md:space-y-6 mt-4">
             {/* Summary KPIs */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <Card>
                 <CardContent className="p-3">
                   <div className="text-xs text-muted-foreground">Órdenes ({STATUSES.find(s => s.value === statusFilter)?.label})</div>
