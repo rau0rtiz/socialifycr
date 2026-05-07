@@ -214,19 +214,6 @@ serve(async (req) => {
           if (!persistentUrl && imageUrl) {
             persistentUrl = await persistThumbnail(supabase, conn.client_id, story.id, imageUrl);
           }
-
-          // Scan the image with AI if we have an API key and haven't scanned yet
-          let scannedData = existingStory?.scanned_data || null;
-          const imageUrl = story.media_url || story.thumbnail_url;
-          if (lovableApiKey && !scannedData && imageUrl) {
-            console.log(`Scanning story ${story.id} with AI...`);
-            scannedData = await scanStoryImage(imageUrl, lovableApiKey);
-            if (scannedData) {
-              scannedCount++;
-              console.log(`Story ${story.id} scanned:`, scannedData);
-            }
-          }
-
           // Upsert story (update if exists, insert if new)
           const upsertPayload: Record<string, unknown> = {
             client_id: conn.client_id,
@@ -245,9 +232,11 @@ serve(async (req) => {
             captured_at: new Date().toISOString(),
           };
 
-          // Only set scanned_data if we have new data
           if (scannedData) {
             upsertPayload.scanned_data = scannedData;
+          }
+          if (persistentUrl) {
+            upsertPayload.persistent_thumbnail_url = persistentUrl;
           }
 
           const { error: upsertError } = await supabase
