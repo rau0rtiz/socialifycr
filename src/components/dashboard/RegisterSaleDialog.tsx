@@ -1060,9 +1060,9 @@ export const RegisterSaleDialog = ({
       const collectionMeta = hasDeposit
         ? undefined
         : hasRemainingInstallments
-          ? { frequency: collectionFrequency, startInstallment: installmentsPaid + 1, totalInstallments: numInstallments, installmentAmount, currency }
+          ? { frequency: collectionFrequency, startInstallment: installmentsPaid + 1, totalInstallments: numInstallments, installmentAmount, currency: primaryCurrency }
           : selectedProductObj?.is_recurring && spkPaymentDay
-            ? { frequency: 'monthly', startInstallment: 2, totalInstallments: 12, installmentAmount: totalCalc, currency, startDate: saleDate }
+            ? { frequency: 'monthly', startInstallment: 2, totalInstallments: 12, installmentAmount: totalCalc, currency: primaryCurrency, startDate: saleDate }
             : undefined;
 
       onSubmit(sale, undefined, collectionMeta);
