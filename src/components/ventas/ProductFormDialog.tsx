@@ -44,6 +44,8 @@ export const ProductFormDialog = ({
   const { getTagsForProduct, setProductTags } = useClientProductTags(clientId);
   const { selectedClient } = useBrand();
   const isTissue = !!selectedClient?.name?.toLowerCase().includes('tissue');
+  const isSpeakUp = !!selectedClient?.name?.toLowerCase().includes('speak up');
+  const hideDuration = isTissue || isSpeakUp;
 
   const [name, setName] = useState('');
   const [productType, setProductType] = useState<ProductType>('product');
