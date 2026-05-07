@@ -535,16 +535,7 @@ const Ventas = () => {
           </div>
         )}
 
-        {/* Speak Up: only product chart */}
-        {isSpkUp && (
-          <div className="grid grid-cols-1 gap-6">
-            {hasSalesChartData ? (
-              <SalesByProductChart sales={chartSales} products={clientProducts} />
-            ) : (
-              renderEmptySalesCard('Ventas por Producto')
-            )}
-          </div>
-        )}
+        {/* Speak Up product chart moved to /reportes */}
 
         {/* Closure rate — depende de agendas. Tissue retail no aplica */}
         {!isSpkUp && !isSilvia && !isAlmaBendita && !isTissue && (
