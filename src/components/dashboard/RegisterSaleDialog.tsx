@@ -1058,7 +1058,7 @@ export const RegisterSaleDialog = ({
             </div>
           </div>
 
-          <div className="px-6 overflow-y-auto" style={{ minHeight: '200px', maxHeight: '55vh' }}>
+          <div className="px-4 sm:px-6 overflow-y-auto" style={{ minHeight: '200px', maxHeight: step === paymentStepIdx ? '70vh' : '55vh' }}>
             {/* Step 0: Student */}
             {step === 0 && (
               <div className="space-y-3 py-3">
