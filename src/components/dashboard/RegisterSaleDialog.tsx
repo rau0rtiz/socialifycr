@@ -994,11 +994,18 @@ export const RegisterSaleDialog = ({
     const handleSpkSubmit = () => {
       if (!amount || parseFloat(amount) <= 0) { toast.error('El monto es requerido'); return; }
       if (!source) { toast.error('La fuente es requerida'); return; }
+      if (!paymentMethod) { toast.error('Selecciona el método de pago'); return; }
       if (discountAmt > 0 && !spkDiscountReason.trim()) { toast.error('Indica la razón del descuento'); return; }
+      const depositAmt = parseFloat(amount || '0') || 0;
+      if (hasDeposit) {
+        if (depositAmt <= 0) { toast.error('Ingresa el monto del abono'); return; }
+        if (depositAmt >= totalCalc) { toast.error('El abono debe ser menor al total'); return; }
+      }
+      const amountPaidToday = hasDeposit ? depositAmt : totalCalc;
 
       const sale: any = {
         sale_date: saleDate,
-        amount: totalCalc,
+        amount: amountPaidToday,
         currency,
         source: source as SaleInput['source'],
         customer_name: selectedStudent?.full_name || customerName || undefined,
@@ -1009,10 +1016,10 @@ export const RegisterSaleDialog = ({
         closer_name: closerName || undefined,
         payment_method: paymentMethod || undefined,
         payment_scheme_id: selectedSchemeId || undefined,
-        total_sale_amount: totalSaleAmount || totalCalc || undefined,
-        num_installments: numInstallments,
-        installments_paid: installmentsPaid,
-        installment_amount: installmentAmount || undefined,
+        total_sale_amount: totalCalc || totalSaleAmount || undefined,
+        num_installments: hasDeposit ? null : numInstallments,
+        installments_paid: hasDeposit ? 1 : installmentsPaid,
+        installment_amount: hasDeposit ? amountPaidToday : (installmentAmount || undefined),
         student_contact_id: spkSelectedStudentId || undefined,
         teacher_id: selectedGroup?.teacher_id || (spkSelectedTeacherId === '_pending' ? undefined : spkSelectedTeacherId) || undefined,
         assigned_schedule: selectedGroup?.schedules?.length ? selectedGroup.schedules : (spkAssignedSchedule.length > 0 ? spkAssignedSchedule : undefined),
@@ -1022,14 +1029,17 @@ export const RegisterSaleDialog = ({
         subtotal: subtotalCalc || undefined,
         payment_day: spkPaymentDay ? parseInt(spkPaymentDay) : undefined,
         group_id: spkSelectedGroupId || undefined,
+        payment_schedule_pending: hasDeposit ? true : undefined,
       };
 
       const hasRemainingInstallments = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
-      const collectionMeta = hasRemainingInstallments
-        ? { frequency: collectionFrequency, startInstallment: installmentsPaid + 1, totalInstallments: numInstallments, installmentAmount, currency }
-        : selectedProductObj?.is_recurring && spkPaymentDay
-          ? { frequency: 'monthly', startInstallment: 2, totalInstallments: 12, installmentAmount: totalCalc, currency, startDate: saleDate }
-          : undefined;
+      const collectionMeta = hasDeposit
+        ? undefined
+        : hasRemainingInstallments
+          ? { frequency: collectionFrequency, startInstallment: installmentsPaid + 1, totalInstallments: numInstallments, installmentAmount, currency }
+          : selectedProductObj?.is_recurring && spkPaymentDay
+            ? { frequency: 'monthly', startInstallment: 2, totalInstallments: 12, installmentAmount: totalCalc, currency, startDate: saleDate }
+            : undefined;
 
       onSubmit(sale, undefined, collectionMeta);
     };
