@@ -594,7 +594,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                   <SelectContent>
                     <SelectItem value="name" className="text-xs">Orden: Nombre</SelectItem>
                     <SelectItem value="price" className="text-xs">Orden: Precio</SelectItem>
-                    <SelectItem value="stock" className="text-xs">Orden: Stock</SelectItem>
+                    {!isSpeakUpMain && <SelectItem value="stock" className="text-xs">Orden: Stock</SelectItem>}
                     <SelectItem value="margin" className="text-xs">Orden: Margen</SelectItem>
                   </SelectContent>
                 </Select>
