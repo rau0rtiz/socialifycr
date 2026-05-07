@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { StudentDetailDialog } from '@/components/ventas/StudentDetailDialog';
 import { CustomerDetailDialog } from '@/components/clientes/CustomerDetailDialog';
 import { MapPin, Shirt } from 'lucide-react';
+import { BillingInfoSection, BillingInfo, isBillingEmpty } from '@/components/common/BillingInfoSection';
 
 // ── Legacy lead type for non-SpkUp clients ──
 type LeadRecord = {
