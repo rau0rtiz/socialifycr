@@ -1017,7 +1017,7 @@ export const RegisterSaleDialog = ({
         source: source as SaleInput['source'],
         customer_name: selectedStudent?.full_name || customerName || undefined,
         customer_phone: selectedStudent?.phone || customerPhone || undefined,
-        product: product || undefined,
+        product: spkSelectedProducts.map(p => p.name).join(' + ') || product || undefined,
         notes: notes || undefined,
         status: 'completed',
         closer_name: closerName || undefined,
@@ -1028,14 +1028,11 @@ export const RegisterSaleDialog = ({
         installments_paid: hasDeposit ? 1 : installmentsPaid,
         installment_amount: hasDeposit ? amountPaidToday : (installmentAmount || undefined),
         student_contact_id: spkSelectedStudentId || undefined,
-        teacher_id: selectedGroup?.teacher_id || (spkSelectedTeacherId === '_pending' ? undefined : spkSelectedTeacherId) || undefined,
-        assigned_schedule: selectedGroup?.schedules?.length ? selectedGroup.schedules : (spkAssignedSchedule.length > 0 ? spkAssignedSchedule : undefined),
         discount_amount: discountAmt || undefined,
         discount_reason: discountAmt > 0 ? spkDiscountReason.trim() : undefined,
         tax_amount: taxCalc || undefined,
         subtotal: subtotalCalc || undefined,
         payment_day: spkPaymentDay ? parseInt(spkPaymentDay) : undefined,
-        group_id: spkSelectedGroupId || undefined,
         payment_schedule_pending: hasDeposit ? true : undefined,
       };
 
