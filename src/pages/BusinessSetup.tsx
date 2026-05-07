@@ -37,6 +37,8 @@ const STATIC_SECTIONS = [
     key: 'products' as const,
     title: 'Productos',
     description: 'Catálogo de productos y servicios',
+    speakUpTitle: 'Servicios',
+    speakUpDescription: 'Catálogo de servicios por línea (personalizadas, grupales, cursos)',
     icon: Package,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
