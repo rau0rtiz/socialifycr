@@ -1267,12 +1267,12 @@ export const RegisterSaleDialog = ({
             )}
 
             {step === paymentStepIdx && (() => {
-              const symbol = currency === 'CRC' ? '₡' : '$';
-              const productPriceLocked = selectedProductObj?.price != null && !selectedSchemeId;
               const depositAmount = parseFloat(amount || '0') || 0;
               const balance = hasDeposit ? Math.max(totalCalc - depositAmount, 0) : 0;
+              const fmt = (n: number) => Number(n || 0).toLocaleString();
               return (
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4 py-3">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-4 py-3">
+                  {/* LEFT — Form */}
                   <div className="space-y-3 min-w-0">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium flex items-center gap-1.5"><UserCheck className="h-3.5 w-3.5" /> Vendedor</Label>
@@ -1300,60 +1300,37 @@ export const RegisterSaleDialog = ({
                       )}
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" /> Método de pago *</Label>
-                      <Select value={paymentMethod || '_none'} onValueChange={v => setPaymentMethod(v === '_none' ? '' : v)}>
-                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Seleccionar método" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="_none" className="text-xs">Sin especificar</SelectItem>
-                          <SelectItem value="efectivo">Efectivo</SelectItem>
-                          <SelectItem value="sinpe">SINPE</SelectItem>
-                          <SelectItem value="transferencia_bancaria">Transferencia bancaria</SelectItem>
-                          <SelectItem value="stripe">Stripe</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium">Fuente de la venta *</Label>
-                      <Select value={source || ''} onValueChange={v => setSource(v)}>
-                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
-                        <SelectContent>
-                          {SOURCE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-medium">Fecha</Label>
-                        <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="h-9 text-sm" />
+                        <Label className="text-xs font-medium flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" /> Método de pago *</Label>
+                        <Select value={paymentMethod || '_none'} onValueChange={v => setPaymentMethod(v === '_none' ? '' : v)}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none" className="text-xs">Sin especificar</SelectItem>
+                            <SelectItem value="efectivo">Efectivo</SelectItem>
+                            <SelectItem value="sinpe">SINPE</SelectItem>
+                            <SelectItem value="transferencia_bancaria">Transferencia</SelectItem>
+                            <SelectItem value="stripe">Stripe</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-medium">Moneda</Label>
-                        <Select value={currency} onValueChange={v => setCurrency(v as 'CRC' | 'USD')}>
-                          <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <Label className="text-xs font-medium">Fuente *</Label>
+                        <Select value={source || ''} onValueChange={v => setSource(v)}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="CRC">₡ CRC</SelectItem>
-                            <SelectItem value="USD">$ USD</SelectItem>
+                            {SOURCE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium">Monto base</Label>
-                      <Input
-                        type="number"
-                        value={productsBaseSum > 0 ? String(productsBaseSum) : amount}
-                        onChange={e => productsBaseSum === 0 && setAmount(e.target.value)}
-                        readOnly={productsBaseSum > 0}
-                        className={cn("h-9 text-sm", productsBaseSum > 0 && "bg-muted/40 cursor-not-allowed")}
-                      />
-                      {productsBaseSum > 0 && <p className="text-[10px] text-muted-foreground">Suma de los productos seleccionados</p>}
+                      <Label className="text-xs font-medium">Fecha de venta</Label>
+                      <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="h-9 text-sm w-full" />
                     </div>
 
-                    <div className="flex items-center justify-between p-2.5 rounded-lg border">
+                    <div className="flex items-center justify-between p-2.5 rounded-lg border bg-card">
                       <div className="flex items-center gap-2">
                         <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="text-xs font-medium">Aplicar IVA ({taxRate}%)</span>
@@ -1361,7 +1338,7 @@ export const RegisterSaleDialog = ({
                       <Switch checked={spkApplyTax} onCheckedChange={setSpkApplyTax} />
                     </div>
 
-                    <div className="rounded-lg border p-2.5 space-y-2">
+                    <div className="rounded-lg border p-2.5 space-y-2 bg-card">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium flex items-center gap-1.5"><Percent className="h-3.5 w-3.5" /> Descuento</span>
                         <Switch checked={!!spkDiscountAmount && parseFloat(spkDiscountAmount) > 0} onCheckedChange={(v) => { if (!v) { setSpkDiscountAmount(''); setSpkDiscountReason(''); } else { setSpkDiscountAmount('0'); } }} />
@@ -1370,18 +1347,19 @@ export const RegisterSaleDialog = ({
                         <>
                           <Input type="number" placeholder="Monto" min={0} value={spkDiscountAmount} onChange={e => setSpkDiscountAmount(e.target.value)} className="h-9 text-xs" />
                           <Textarea placeholder="Razón del descuento (obligatorio)" value={spkDiscountReason} onChange={e => setSpkDiscountReason(e.target.value)} rows={2} className="text-xs" />
+                          {isMultiCurrency && <p className="text-[10px] text-muted-foreground">El descuento aplica solo a la moneda principal ({primaryCurrency}).</p>}
                         </>
                       )}
                     </div>
 
-                    <div className="rounded-lg border p-2.5 space-y-2">
+                    <div className="rounded-lg border p-2.5 space-y-2 bg-card">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium flex items-center gap-1.5"><Banknote className="h-3.5 w-3.5" /> Es un abono</span>
-                        <Switch checked={hasDeposit} onCheckedChange={(v) => { setHasDeposit(v); if (!v) setAmount(String(selectedProductObj?.price ?? totalCalc)); else setAmount(''); }} />
+                        <Switch checked={hasDeposit} onCheckedChange={(v) => { setHasDeposit(v); if (!v) setAmount(String(totalCalc)); else setAmount(''); }} />
                       </div>
                       {hasDeposit && (
                         <>
-                          <Input type="number" placeholder="Monto abonado hoy" value={amount} onChange={e => setAmount(e.target.value)} className="h-9 text-xs" />
+                          <Input type="number" placeholder={`Monto abonado hoy (${primaryCurrency})`} value={amount} onChange={e => setAmount(e.target.value)} className="h-9 text-xs" />
                           <p className="text-[10px] text-muted-foreground">Las fechas del saldo se programan luego en Cobros.</p>
                         </>
                       )}
@@ -1400,33 +1378,86 @@ export const RegisterSaleDialog = ({
                     </div>
                   </div>
 
+                  {/* RIGHT — Summary */}
                   <div className="md:sticky md:top-0 self-start">
-                    <Card className="p-3 space-y-2 bg-muted/30">
-                      <h4 className="text-xs font-semibold flex items-center gap-1.5"><Receipt className="h-3.5 w-3.5" /> Resumen</h4>
-                      <div className="space-y-1 text-xs">
-                        {selectedStudent && <div className="text-muted-foreground truncate">{selectedStudent.full_name}</div>}
-                        {spkSelectedProducts.length > 0 ? (
-                          <div className="space-y-0.5">
-                            {spkSelectedProducts.map(p => {
-                              const sym = p.currency === 'CRC' ? '₡' : '$';
-                              return (
-                                <div key={p.id} className="flex justify-between gap-2">
-                                  <span className="truncate text-muted-foreground">{p.name}</span>
-                                  <span className="shrink-0">{sym}{Number(p.price || 0).toLocaleString()}</span>
-                                </div>
-                              );
-                            })}
+                    <Card className="overflow-hidden border-2">
+                      <div className="bg-gradient-to-br from-primary/10 to-primary/5 px-3.5 py-2.5 border-b">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
+                          <Receipt className="h-3.5 w-3.5" /> Resumen de venta
+                        </div>
+                        {selectedStudent && <div className="text-xs text-foreground/80 mt-1 truncate font-medium">{selectedStudent.full_name}</div>}
+                      </div>
+
+                      <div className="p-3.5 space-y-3">
+                        {/* Products list */}
+                        {spkSelectedProducts.length > 0 && (
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Productos ({spkSelectedProducts.length})</div>
+                            <div className="space-y-1">
+                              {spkSelectedProducts.map(p => {
+                                const sym = p.currency === 'CRC' ? '₡' : '$';
+                                return (
+                                  <div key={p.id} className="flex justify-between gap-2 text-xs">
+                                    <span className="truncate text-foreground/90">{p.name}</span>
+                                    <span className="shrink-0 tabular-nums font-medium">{sym}{fmt(Number(p.price || 0))}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
-                        ) : product && <div className="text-muted-foreground truncate">{product}</div>}
-                        <div className="flex justify-between border-t pt-1 mt-1"><span className="text-muted-foreground">Subtotal</span><span>{symbol}{baseAmount.toLocaleString()}</span></div>
-                        {discountAmt > 0 && <div className="flex justify-between text-rose-600 dark:text-rose-400"><span>Descuento</span><span>-{symbol}{discountAmt.toLocaleString()}</span></div>}
-                        {spkApplyTax && <div className="flex justify-between text-muted-foreground"><span>IVA ({taxRate}%)</span><span>+{symbol}{taxCalc.toLocaleString()}</span></div>}
-                        <div className="flex justify-between border-t pt-1.5 mt-1.5 text-sm font-semibold"><span>Total</span><span>{symbol}{totalCalc.toLocaleString()}</span></div>
+                        )}
+
+                        {/* Per-currency breakdown */}
+                        {perCurrency.map((bucket, i) => (
+                          <div key={bucket.currency} className={cn("space-y-1.5", i > 0 && "pt-3 border-t border-dashed")}>
+                            {isMultiCurrency && (
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                                {bucket.currency}
+                              </div>
+                            )}
+                            <div className="space-y-1 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Subtotal</span>
+                                <span className="tabular-nums">{bucket.symbol}{fmt(bucket.base)}</span>
+                              </div>
+                              {bucket.discount > 0 && (
+                                <div className="flex justify-between text-rose-600 dark:text-rose-400">
+                                  <span>Descuento</span>
+                                  <span className="tabular-nums">-{bucket.symbol}{fmt(bucket.discount)}</span>
+                                </div>
+                              )}
+                              {spkApplyTax && bucket.tax > 0 && (
+                                <div className="flex justify-between text-muted-foreground">
+                                  <span>IVA ({taxRate}%)</span>
+                                  <span className="tabular-nums">+{bucket.symbol}{fmt(bucket.tax)}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex justify-between items-center pt-1.5 border-t">
+                              <span className="text-xs font-semibold uppercase tracking-wide">Total</span>
+                              <span className="text-lg font-bold tabular-nums text-primary">{bucket.symbol}{fmt(bucket.total)}</span>
+                            </div>
+                          </div>
+                        ))}
+
                         {hasDeposit && depositAmount > 0 && (
-                          <>
-                            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 pt-1"><span>Abono hoy</span><span>{symbol}{depositAmount.toLocaleString()}</span></div>
-                            <div className="flex justify-between text-amber-600 dark:text-amber-400"><span>Saldo</span><span>{symbol}{balance.toLocaleString()}</span></div>
-                          </>
+                          <div className="pt-3 border-t space-y-1.5">
+                            <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Pago hoy ({primaryCurrency})</div>
+                            <div className="flex justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                              <span>Abono</span>
+                              <span className="tabular-nums font-semibold">{primaryBucket?.symbol}{fmt(depositAmount)}</span>
+                            </div>
+                            <div className="flex justify-between text-xs text-amber-600 dark:text-amber-400">
+                              <span>Saldo pendiente</span>
+                              <span className="tabular-nums font-semibold">{primaryBucket?.symbol}{fmt(balance)}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {isMultiCurrency && (
+                          <p className="text-[10px] text-muted-foreground italic pt-2 border-t">
+                            Cada moneda se totaliza por separado.
+                          </p>
                         )}
                       </div>
                     </Card>
