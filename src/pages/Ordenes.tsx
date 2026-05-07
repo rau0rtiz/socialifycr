@@ -40,12 +40,28 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const Ordenes = () => {
+  const navigate = useNavigate();
   const { selectedClient, clientsLoading } = useBrand();
   const clientId = selectedClient?.id || null;
+  const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
   const { orders, isLoading, deleteOrder, updateOrderStatus } = useOrders(clientId);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('ordenes');
+
+  // Range for "Resumen" widgets — current month
+  const summaryRange = useMemo(() => {
+    const now = new Date();
+    return { start: startOfMonth(now), end: endOfDay(now) };
+  }, []);
+
+  // Sales totals (CRC) for goal bar — current month, non-cancelled
+  const monthSalesCRC = useMemo(() => {
+    return orders
+      .filter(o => o.status !== 'cancelled' && new Date(o.order_date) >= summaryRange.start)
+      .reduce((s, o) => s + Number(o.total_amount || 0), 0);
+  }, [orders, summaryRange.start]);
 
   const filtered = useMemo(() => {
     return orders.filter(o => {
