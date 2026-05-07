@@ -62,11 +62,9 @@ const queryClient = new QueryClient({
   },
 });
 
-const PageLoader = () => (
-  <div className="min-h-[200px] flex items-center justify-center">
-    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-  </div>
-);
+// Empty fallback — keeps the previous page visible while the next route's chunk loads.
+// Page-level skeletons handle their own loading states.
+const PageLoader = () => null;
 
 const MODULE_LOAD_RETRY_KEY = "__lovable_module_retry_count__";
 const MAX_MODULE_RETRIES = 4;
