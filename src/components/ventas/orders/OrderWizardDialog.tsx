@@ -385,7 +385,7 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                 </TabsContent>
 
                 <TabsContent value="free">
-                  <Button size="sm" variant="outline" onClick={() => addItem({ product_name: 'Producto sin historia' })}>
+                  <Button size="sm" variant="outline" onClick={() => addItem({ product_name: '' })}>
                     <Plus className="h-3.5 w-3.5 mr-1" />Agregar item libre
                   </Button>
                 </TabsContent>
