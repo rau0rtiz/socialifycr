@@ -1325,12 +1325,12 @@ export const RegisterSaleDialog = ({
                       <Label className="text-xs font-medium">Monto base</Label>
                       <Input
                         type="number"
-                        value={amount}
-                        onChange={e => !productPriceLocked && setAmount(e.target.value)}
-                        readOnly={productPriceLocked}
-                        className={cn("h-9 text-sm", productPriceLocked && "bg-muted/40 cursor-not-allowed")}
+                        value={productsBaseSum > 0 ? String(productsBaseSum) : amount}
+                        onChange={e => productsBaseSum === 0 && setAmount(e.target.value)}
+                        readOnly={productsBaseSum > 0}
+                        className={cn("h-9 text-sm", productsBaseSum > 0 && "bg-muted/40 cursor-not-allowed")}
                       />
-                      {productPriceLocked && <p className="text-[10px] text-muted-foreground">Tomado del producto seleccionado</p>}
+                      {productsBaseSum > 0 && <p className="text-[10px] text-muted-foreground">Suma de los productos seleccionados</p>}
                     </div>
 
                     <div className="flex items-center justify-between p-2.5 rounded-lg border">
