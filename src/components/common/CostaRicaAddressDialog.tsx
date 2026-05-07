@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { CR_PROVINCIAS, getCantones, getDistritos } from '@/data/costa-rica-locations';
+import { CR_PROVINCIAS, getCantones, getDistritos, getPostalCode } from '@/data/costa-rica-locations';
 import type { CustomerAddress } from '@/hooks/use-customer-contacts';
 
 interface Props {
@@ -22,6 +22,7 @@ export const CostaRicaAddressDialog = ({ open, onOpenChange, initial, onSave }: 
   const [distrito, setDistrito] = useState('');
   const [senas, setSenas] = useState('');
   const [postal, setPostal] = useState('');
+  const [postalEdited, setPostalEdited] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -31,8 +32,18 @@ export const CostaRicaAddressDialog = ({ open, onOpenChange, initial, onSave }: 
       setDistrito(initial?.district || '');
       setSenas(initial?.address_line_1 || '');
       setPostal(initial?.post_code || '');
+      setPostalEdited(!!initial?.post_code);
     }
   }, [open, initial]);
+
+  // Auto-fill postal code when province/canton/district change, unless user manually edited it
+  useEffect(() => {
+    if (postalEdited) return;
+    if (provincia && canton && distrito) {
+      const auto = getPostalCode(provincia, canton, distrito);
+      if (auto) setPostal(auto);
+    }
+  }, [provincia, canton, distrito, postalEdited]);
 
   const cantones = provincia ? getCantones(provincia) : [];
   const distritos = provincia && canton ? getDistritos(provincia, canton) : [];
@@ -101,8 +112,17 @@ export const CostaRicaAddressDialog = ({ open, onOpenChange, initial, onSave }: 
           </div>
 
           <div>
-            <Label className="text-xs">Código postal (opcional)</Label>
-            <Input value={postal} onChange={(e) => setPostal(e.target.value)} placeholder="10101" />
+            <Label className="text-xs">
+              Código postal {postalEdited ? '(manual)' : '(automático)'}
+            </Label>
+            <Input
+              value={postal}
+              onChange={(e) => { setPostal(e.target.value); setPostalEdited(true); }}
+              placeholder="10101"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Se rellena automáticamente desde provincia, cantón y distrito. Editalo si tu zona usa otro.
+            </p>
           </div>
         </div>
         <DialogFooter>

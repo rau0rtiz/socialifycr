@@ -678,3 +678,33 @@ export const CR_LOCATIONS: Record<string, Record<string, string[]>> = {
 export const CR_PROVINCIAS = Object.keys(CR_LOCATIONS);
 export const getCantones = (provincia: string): string[] => Object.keys(CR_LOCATIONS[provincia] || {});
 export const getDistritos = (provincia: string, canton: string): string[] => CR_LOCATIONS[provincia]?.[canton] || [];
+
+// Official Correos de Costa Rica province codes (1st digit of postal code)
+const PROVINCE_CODES: Record<string, string> = {
+  'San José': '1',
+  'Alajuela': '2',
+  'Cartago': '3',
+  'Heredia': '4',
+  'Guanacaste': '5',
+  'Puntarenas': '6',
+  'Limón': '7',
+};
+
+/**
+ * Compute a 5-digit Costa Rica postal code from province/canton/district.
+ * Format: P CC DD (province 1 digit, canton 2 digits, district 2 digits).
+ * Canton/district order follows the data file (alphabetical), which is a
+ * close approximation to the official Correos numbering. User can override.
+ */
+export const getPostalCode = (provincia: string, canton: string, distrito: string): string => {
+  const p = PROVINCE_CODES[provincia];
+  if (!p) return '';
+  const cantones = getCantones(provincia);
+  const cIdx = cantones.indexOf(canton);
+  if (cIdx < 0) return '';
+  const distritos = getDistritos(provincia, canton);
+  const dIdx = distritos.indexOf(distrito);
+  if (dIdx < 0) return '';
+  return `${p}${String(cIdx + 1).padStart(2, '0')}${String(dIdx + 1).padStart(2, '0')}`;
+};
+
