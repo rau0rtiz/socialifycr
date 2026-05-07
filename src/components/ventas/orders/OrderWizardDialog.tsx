@@ -60,6 +60,7 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [contactQuery, setContactQuery] = useState('');
+  const [contactPopoverOpen, setContactPopoverOpen] = useState(false);
   const [shippingAddress, setShippingAddress] = useState<CustomerAddress | null>(null);
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
 
