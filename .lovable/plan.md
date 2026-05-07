@@ -1,127 +1,50 @@
+# Fix permisos de Ad Frameworks para clientes
 
-# Plan — Alma Bendita: Export CSV + Revamp a Órdenes
+## Diagnóstico
 
-Dos entregas separadas. La Parte 1 es rápida y sale ya. La Parte 2 es el revamp grande tipo Tissue.
+Verifiqué el caso de Jorge en The Mind Coach:
 
----
+- El framework **"Masterclass: Las Bases de la Comunicación Humana"** sí tiene `client_id` = The Mind Coach → por eso lo ve listado.
+- Pero su única campaña, **"Masterclass MAYO 2026"**, tiene `client_id = NULL`.
+- Las políticas RLS para clientes (no-agencia) en `ad_variants`, `ad_framework_dimensions`, `ad_framework_references` y `launch_phase_tasks` validan acceso **a través de `ad_campaigns.client_id`**. Como la campaña no tiene `client_id`, las consultas devuelven 0 filas y Jorge ve el framework "vacío".
 
-## PARTE 1 — Exportar CSV mensual (rápido)
+Resultado: cualquier cliente con un framework asignado ve el contenedor pero nada adentro hasta que las campañas también tengan `client_id`.
 
-**Dónde:** Botón "Exportar CSV" arriba en `/ventas` cuando el cliente activo es Alma Bendita, junto al título o al lado del selector de mes.
+## Cambios
 
-**UX:** Click abre un pequeño popover/dropdown con dos opciones:
-1. **Ventas por día** → columnas: `Fecha`, `Historias subidas`, `Cantidad de ventas`, `Monto total`
-2. **Reporte de ventas (detalle)** → columnas: `Fecha de venta`, `Nombre de cliente`, `Monto`
+### 1. Migración de base de datos
 
-**Datos:**
-- Mes seleccionado (mismo `period` que ya usa la página)
-- Opción 1: cruzar `daily_story_tracker` (historias subidas/día) + `message_sales` agregadas por día
-- Opción 2: filas planas desde `message_sales` ordenadas por fecha
+**a) Backfill** — copiar `client_id` desde `ad_frameworks` hacia `ad_campaigns` donde la campaña tenga `client_id` nulo y el framework sí lo tenga.
 
-**Salida:** archivo `alma-bendita-ventas-YYYY-MM.csv` o `...-detalle-YYYY-MM.csv`, descarga directa en el navegador (Blob), sin backend.
+**b) Trigger** `BEFORE INSERT OR UPDATE OF framework_id` en `ad_campaigns`: si `NEW.client_id IS NULL`, heredarlo del framework. Garantiza que campañas nuevas no rompan permisos.
 
----
+**c) RLS robustecidas** — ampliar las políticas SELECT/UPDATE para clientes en estas tablas para que también respeten el `client_id` del **framework** directamente, no solo el de la campaña. Así, aunque alguien cree una campaña sin `client_id`, el cliente sigue viendo (y editando) el contenido si tiene acceso al framework:
 
-## PARTE 2 — Revamp: Órdenes multi-producto
+- `ad_framework_dimensions`: SELECT permitido si tiene acceso al framework directo (vía `ad_frameworks.client_id`).
+- `ad_framework_references`: idem.
+- `ad_variants`: SELECT y UPDATE permitidos si tiene acceso al framework de la campaña vinculada.
+- `launch_phase_tasks`: SELECT y UPDATE permitidos si tiene acceso al framework de la campaña vinculada.
 
-Hoy Alma Bendita registra **una venta = un producto** (desde una historia). Queremos pasar a **Órdenes** que pueden tener varios items, vengan o no de una historia, y siempre conecten con Client Database y con el módulo de Ventas.
+**d) Permisos de edición para clientes** — agregar políticas INSERT/DELETE/UPDATE en `ad_variants`, `ad_framework_references` y `launch_phase_tasks` para usuarios con `has_client_access()` al framework correspondiente. Así Jorge puede editar variantes, agregar referencias y marcar tareas, no solo verlas.
 
-### Modelo conceptual
+### 2. Frontend
+
+No requiere cambios. Los hooks ya consultan estas tablas con el client de Supabase, y las nuevas políticas resolverán la visibilidad y edición automáticamente.
+
+## Detalles técnicos
 
 ```text
-Orden
- ├─ Cliente (de customer_contacts) — obligatorio
- ├─ Dirección de envío (de customer_contacts.addresses) — opcional pero recomendado
- ├─ Fecha, método de pago, notas, estado (pendiente / pagada / enviada / entregada / cancelada)
- └─ Items[]
-      ├─ Producto (catálogo o libre)
-      ├─ Variante / talla
-      ├─ Historia origen (opcional — link a stories)
-      ├─ Cantidad, precio unitario, subtotal
-      └─ Notas
- → Total de orden = suma de items
- → Cada item se refleja como una venta en message_sales (para no romper widgets actuales)
+ad_campaigns          ← hereda client_id del framework (trigger + backfill)
+  └─ ad_variants      ← RLS amplía a "acceso al framework"
+launch_phase_tasks    ← RLS amplía a "acceso al framework"
+ad_framework_dimensions    ← RLS ya cubre, pero se simplifica
+ad_framework_references    ← RLS ya cubre, pero se simplifica
 ```
 
-### Wizard "Nueva Orden" — 3 pasos
+Las funciones `has_client_access()` e `is_agency_member()` ya existen y son `SECURITY DEFINER`, así que las políticas no causan recursión.
 
-**Paso 1 — Cliente y dirección**
-- Buscar cliente existente en `customer_contacts` (autocomplete por nombre/teléfono) o crear nuevo inline
-- Seleccionar dirección guardada del cliente, o "Agregar nueva dirección" → abre **popup separado de dirección CR** (ver abajo)
-- Ediciones a cliente/dirección se persisten en `customer_contacts`
+## Verificación post-deploy
 
-**Paso 2 — Items**
-Pestañas internas para no congestionar:
-- **Desde historias activas** (24h) — grid 9:16 con miniaturas, click para agregar
-- **Desde historias archivadas** — grid paginado con buscador por fecha/texto OCR
-- **Sin historia** — selector de producto del catálogo + variante/talla + cantidad + precio
-
-Por cada item agregado: línea editable con producto, variante, qty, precio, subtotal, botón eliminar. Total se actualiza en vivo.
-
-**Paso 3 — Pago y confirmación**
-- Método de pago, fecha, notas, estado
-- Resumen completo (cliente, dirección, items, total)
-- Al confirmar: se crea la orden, se crean N filas en `message_sales` (una por item) ligadas a `order_id`, se descuenta stock de variantes, se actualiza `customer_contacts.total_purchases`.
-
-### Popup de Dirección CR (componente reutilizable)
-
-Diseñado solo para Costa Rica, abre como Dialog separado:
-- **Etiqueta** (Casa, Trabajo, etc.) — opcional
-- **Provincia** (dropdown — 7 opciones fijas)
-- **Cantón** (dropdown — filtrado por provincia seleccionada)
-- **Distrito** (dropdown — filtrado por cantón seleccionado)
-- **Señas exactas** (textarea — 200m sur del…)
-- **Código postal** (auto-rellenado al escoger distrito, editable)
-- **Teléfono de contacto** (opcional, default al del cliente)
-
-Dataset CR (provincia → cantón → distrito) se incluye como JSON estático en `src/data/costa-rica-locations.ts` (~480 distritos). Reutilizable desde el wizard de orden y desde Client Database.
-
-### Integración con módulos existentes
-
-- **Client Database**: nueva pestaña "Órdenes" en el detalle del cliente; sección "Direcciones" con CRUD usando el mismo popup
-- **Ventas (Alma Bendita)**: nuevo widget "Órdenes recientes" arriba del Story Revenue Tracker; el tracker actual sigue funcionando porque cada item sigue siendo una `message_sale`
-- **Historias**: cuando una historia se usa como origen de un item, se marca visualmente como "vendida" en el grid
-
-### Consideraciones
-
-- No rompe el flujo actual: el botón "Registrar venta por historia" sigue existiendo como atajo (crea orden de 1 item internamente)
-- Stock se descuenta solo cuando la orden pasa a estado distinto de "pendiente" (mismo patrón que apartados hoy)
-- Las guías de Correos de CC quedan fuera de scope ahora pero el modelo de dirección ya queda listo
-
----
-
-## Detalles técnicos (referencia)
-
-**Parte 1 — Archivos a tocar:**
-- `src/pages/Ventas.tsx` — botón export en el header cuando `isAlmaBendita`
-- Nuevo `src/components/ventas/AlmaBenditaExportButton.tsx` — popover con dos opciones, genera CSV con Blob + download
-- Reutiliza hooks `useSalesTracking` y `useDailyStoryTracker` ya cargados en la página
-
-**Parte 2 — Cambios de DB (migración):**
-- Tabla `orders` (client_id, customer_contact_id, shipping_address jsonb, status, payment_method, total_amount, currency, notes, created_by)
-- Tabla `order_items` (order_id, product_id, variant_id, story_id, quantity, unit_price, subtotal, garment_size, notes)
-- Columna `order_id` en `message_sales` (nullable, FK a orders)
-- Trigger: al insertar `order_items` → crear `message_sales` linkeada y descontar stock variant
-- RLS por `has_client_access(auth.uid(), client_id)`
-
-**Parte 2 — Archivos nuevos:**
-- `src/data/costa-rica-locations.ts`
-- `src/components/common/CostaRicaAddressDialog.tsx`
-- `src/components/ventas/orders/OrderWizardDialog.tsx` (3 pasos)
-- `src/components/ventas/orders/OrdersWidget.tsx`
-- `src/hooks/use-orders.ts`
-- Update `src/pages/ClientDatabase.tsx` — pestaña Órdenes + sección Direcciones
-- Update `src/components/clientes/CustomerDetailDialog.tsx` — direcciones CRUD
-
----
-
-## Orden sugerido de ejecución
-
-1. Implementar Parte 1 (export CSV) — entrega inmediata, ~1 iteración
-2. Confirmar dataset CR a usar y estados de orden
-3. Migración DB de órdenes
-4. Popup de dirección CR (reutilizable)
-5. Wizard de Nueva Orden (3 pasos)
-6. Integración en Client Database y Ventas
-
-¿Avanzo así o querés que la Parte 1 ya quede aprobada para implementar primero y dejamos la Parte 2 para iterar el diseño antes de tocar DB?
+1. Como Jorge en The Mind Coach: abrir el framework Masterclass → confirmar que se ven dimensions (9), variants (8), referencias y tasks.
+2. Como Jorge: editar un variant (status, copy) → debe persistir.
+3. Como agencia: nada cambia, todo sigue visible.
