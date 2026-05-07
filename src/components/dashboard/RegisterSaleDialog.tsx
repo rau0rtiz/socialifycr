@@ -352,33 +352,39 @@ export const RegisterSaleDialog = ({
     if (step > 0) setStep(s => s - 1);
   };
 
+  // Compute price/tax/discount/total/balance for the new checkout
+  const basePrice = useMemo(() => {
+    if (selectedSchemeId) return totalSaleAmount;
+    const matched = products.find(p => p.name === product);
+    if (matched?.price != null) return Number(matched.price);
+    return totalSaleAmount || parseFloat(amount || '0') || 0;
+  }, [selectedSchemeId, totalSaleAmount, products, product, amount]);
+
+  const discountAmt = parseFloat(discountAmount || '0') || 0;
+  const taxAmt = applyTax ? Math.round(Math.max(basePrice - discountAmt, 0) * (taxRate / 100)) : 0;
+  const computedTotal = Math.max(basePrice - discountAmt, 0) + taxAmt;
+  const depositAmt = parseFloat(amount || '0') || 0;
+  const balanceDue = hasDeposit ? Math.max(computedTotal - depositAmt, 0) : 0;
+
   const handleSubmit = () => {
-    if (!amount) {
-      toast.error('El monto es requerido');
-      return;
-    }
     if (!source) {
       toast.error('La fuente es requerida');
       return;
     }
-
-    // Validate deposit
-    if (hasDeposit && !selectedSchemeId) {
-      if (!totalSaleAmount || totalSaleAmount <= 0) {
-        toast.error('Ingresa el monto total del servicio');
-        return;
-      }
-      if (parseFloat(amount || '0') >= totalSaleAmount) {
-        toast.error('El adelanto debe ser menor al monto total');
-        return;
-      }
-      if (!depositBalanceDueDate) {
-        toast.error('Selecciona la fecha de cobro del saldo');
-        return;
-      }
+    if (!paymentMethod) {
+      toast.error('Selecciona el método de pago');
+      return;
+    }
+    if (hasDiscount && discountAmt > 0 && !discountReason.trim()) {
+      toast.error('Indica la razón del descuento');
+      return;
+    }
+    if (hasDeposit) {
+      if (depositAmt <= 0) { toast.error('Ingresa el monto del abono'); return; }
+      if (depositAmt >= computedTotal) { toast.error('El abono debe ser menor al total'); return; }
     }
 
-    // Validate custom collection dates
+    // Validate custom collection dates (legacy scheme flow)
     const hasRemainingCheck = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
     if (hasRemainingCheck && collectionFrequency === 'custom') {
       const filledDates = customCollectionDates.filter(d => d !== '');
@@ -388,14 +394,12 @@ export const RegisterSaleDialog = ({
       }
     }
 
-    // For deposit flow without scheme, set installments to 2 (deposit + balance)
-    const effectiveNumInstallments = hasDeposit && !selectedSchemeId && totalSaleAmount > parseFloat(amount || '0')
-      ? 2 : numInstallments;
-    const effectiveInstallmentsPaid = hasDeposit && !selectedSchemeId ? 1 : installmentsPaid;
+    // Amount paid today
+    const amountPaid = hasDeposit ? depositAmt : computedTotal;
 
     const sale: any = {
       sale_date: saleDate,
-      amount: parseFloat(amount),
+      amount: amountPaid,
       currency,
       source: source as SaleInput['source'],
       customer_name: customerName || undefined,
@@ -407,11 +411,16 @@ export const RegisterSaleDialog = ({
       status: status as SaleInput['status'],
       closer_name: closerName || undefined,
       payment_scheme_id: selectedSchemeId || undefined,
-      total_sale_amount: totalSaleAmount || parseFloat(amount) || undefined,
-      num_installments: effectiveNumInstallments,
-      installments_paid: effectiveInstallmentsPaid,
-      installment_amount: installmentAmount || undefined,
+      total_sale_amount: computedTotal || parseFloat(amount || '0') || undefined,
+      num_installments: hasDeposit ? null : numInstallments,
+      installments_paid: hasDeposit ? 1 : installmentsPaid,
+      installment_amount: hasDeposit ? amountPaid : (installmentAmount || undefined),
       payment_method: paymentMethod || undefined,
+      tax_amount: taxAmt || undefined,
+      subtotal: basePrice || undefined,
+      discount_amount: discountAmt > 0 ? discountAmt : undefined,
+      discount_reason: discountAmt > 0 ? discountReason.trim() : undefined,
+      payment_schedule_pending: hasDeposit ? true : undefined,
     };
 
     if (source === 'ad' && selectedAd) {
@@ -421,6 +430,7 @@ export const RegisterSaleDialog = ({
       sale.ad_campaign_name = selectedAd.campaignName;
     }
 
+    // Legacy scheme installments (unchanged)
     const hasRemainingInstallments = selectedSchemeId && numInstallments > 1 && installmentsPaid < numInstallments;
     const collectionMeta = hasRemainingInstallments
       ? {
@@ -432,12 +442,7 @@ export const RegisterSaleDialog = ({
           customDates: collectionFrequency === 'custom' ? customCollectionDates.filter(d => d !== '') : undefined,
           startDate: collectionFrequency !== 'custom' && collectionStartDate ? collectionStartDate : undefined,
         }
-      : hasDeposit && !selectedSchemeId && totalSaleAmount > parseFloat(amount || '0')
-        ? {
-            frequency: 'custom' as string,
-            startInstallment: 2,
-            totalInstallments: 2,
-            installmentAmount: totalSaleAmount - parseFloat(amount || '0'),
+      : undefined;
             currency,
             customDates: depositBalanceDueDate ? [depositBalanceDueDate] : undefined,
             startDate: undefined,
