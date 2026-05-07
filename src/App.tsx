@@ -18,6 +18,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const BrandSettings = lazy(() => import("./pages/BrandSettings"));
 const Clientes = lazy(() => import("./pages/Clientes"));
 const Ventas = lazy(() => import("./pages/Ventas"));
+const Ordenes = lazy(() => import("./pages/Ordenes"));
 
 const Historial = lazy(() => import("./pages/Historial"));
 const Auth = lazy(() => import("./pages/Auth"));
