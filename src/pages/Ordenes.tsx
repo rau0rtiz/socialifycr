@@ -281,19 +281,6 @@ const Ordenes = () => {
             <RecentSalesTicker clientId={selectedClient.id} dateRange={summaryRange} />
           </TabsContent>
 
-          <TabsContent value="clientes" className="space-y-4 mt-4">
-            <Card>
-              <CardContent className="p-6 text-center space-y-3">
-                <Users className="h-10 w-10 text-muted-foreground mx-auto" />
-                <div className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Administra la base de datos de clientes — historial de compras, direcciones y contacto.
-                </div>
-                <Button onClick={() => navigate('/clientes')} variant="default">
-                  Abrir Clientes
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
 
