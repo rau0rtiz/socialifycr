@@ -1,0 +1,1 @@
+UPDATE public.client_feature_flags SET social_followers=true, instagram_posts=true, youtube_videos=true, content_grid=true, funnel=true, campaigns=true, dashboard=true, updated_at=now() WHERE client_id='48db302a-e249-4f92-87c3-94b8560d7b8b';
