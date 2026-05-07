@@ -157,9 +157,8 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
 const SPEAK_UP_CATEGORIES: { key: string; label: string; icon: React.ElementType }[] = [
   { key: 'individual', label: 'Clases Personalizadas', icon: GraduationCap },
   { key: 'group', label: 'Clases Grupales', icon: Users },
-  { key: 'toeic', label: 'TOEIC', icon: BookOpen },
-  { key: 'exam', label: 'Exámenes', icon: BookOpen },
-  { key: 'trial', label: 'Otros', icon: MoreHorizontal },
+  { key: 'course', label: 'Cursos', icon: BookOpen },
+  { key: 'other', label: 'Otros', icon: MoreHorizontal },
 ];
 
 // ====== Product Card ======
