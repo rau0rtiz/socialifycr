@@ -443,11 +443,6 @@ export const RegisterSaleDialog = ({
           startDate: collectionFrequency !== 'custom' && collectionStartDate ? collectionStartDate : undefined,
         }
       : undefined;
-            currency,
-            customDates: depositBalanceDueDate ? [depositBalanceDueDate] : undefined,
-            startDate: undefined,
-          }
-        : undefined;
 
     onSubmit(sale, prefill?.appointmentId, collectionMeta);
   };
