@@ -560,10 +560,10 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-500/10">
                 <Package className="h-4 w-4 text-blue-500" />
               </div>
-              Productos y Servicios
+              {isSpeakUpMain ? 'Servicios' : 'Productos y Servicios'}
               {products.length > 0 && (
                 <span className="text-[10px] font-normal text-muted-foreground ml-1">
-                  · {productCount} prod · {serviceCount} serv
+                  {isSpeakUpMain ? `· ${products.length} servicio${products.length === 1 ? '' : 's'}` : `· ${productCount} prod · ${serviceCount} serv`}
                 </span>
               )}
             </CardTitle>
