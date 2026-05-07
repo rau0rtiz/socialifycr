@@ -22,6 +22,7 @@ import { SalesBySizeChart } from '@/components/ventas/SalesBySizeChart';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 import { TissueSaleDialog } from '@/components/ventas/TissueSaleDialog';
+import { AlmaBenditaExportButton } from '@/components/ventas/AlmaBenditaExportButton';
 import { Plus, ShoppingBag } from 'lucide-react';
 
 
@@ -309,6 +310,9 @@ const Ventas = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {isAlmaBendita && clientId && (
+              <AlmaBenditaExportButton clientId={clientId} range={globalRange} />
+            )}
             <Select value={globalPeriod} onValueChange={handlePeriodChange}>
               <SelectTrigger className="h-9 text-xs sm:text-sm w-40 sm:w-48 rounded-lg">
                 <CalendarIcon className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
