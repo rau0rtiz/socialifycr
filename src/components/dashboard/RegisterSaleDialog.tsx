@@ -1951,25 +1951,147 @@ export const RegisterSaleDialog = ({
 
           {/* Notes step (last step for standard flow) */}
           {step === notesStepIndex && (
-            <div className="space-y-4 py-4">
-              {!isSilvia && (
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">Plataforma del mensaje</Label>
-                  <Select value={messagePlatform} onValueChange={setMessagePlatform}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
-                    <SelectContent>
-                      {PLATFORM_OPTIONS.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <div className="py-4">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-5">
+                {/* LEFT: Información */}
+                <div className="space-y-3">
+                  {/* Vendedor con +nuevo */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">{isSpkUp ? 'Vendedor' : 'Closer / Vendedor'}</Label>
+                    {showNewCloser ? (
+                      <div className="flex gap-2">
+                        <Input autoFocus placeholder="Nombre del vendedor" value={newCloserName} onChange={e => setNewCloserName(e.target.value)} className="h-9 text-sm flex-1" onKeyDown={async e => {
+                          if (e.key === 'Enter' && newCloserName.trim()) {
+                            try { const n = await addCloserMutation.mutateAsync(newCloserName.trim()); setCloserName(n); setShowNewCloser(false); setNewCloserName(''); toast.success('Vendedor agregado'); } catch (err: any) { toast.error(err.message); }
+                          }
+                        }} />
+                        <Button size="sm" className="h-9 text-xs" onClick={async () => {
+                          if (!newCloserName.trim()) return;
+                          try { const n = await addCloserMutation.mutateAsync(newCloserName.trim()); setCloserName(n); setShowNewCloser(false); setNewCloserName(''); toast.success('Vendedor agregado'); } catch (err: any) { toast.error(err.message); }
+                        }}>OK</Button>
+                        <Button variant="ghost" size="sm" className="h-9" onClick={() => { setShowNewCloser(false); setNewCloserName(''); }}><X className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
+                          <SelectTrigger className="h-9 text-sm flex-1"><SelectValue placeholder="¿Quién cerró la venta?" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                            {closerName && !closers.some(c => c.fullName === closerName) && <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>}
+                            {closers.map(c => <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setShowNewCloser(true)}><Plus className="h-3.5 w-3.5 mr-1" /> Nuevo</Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Método de pago */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" /> Método de pago *</Label>
+                    {showNewPaymentMethod ? (
+                      <div className="flex gap-2">
+                        <Input autoFocus placeholder="Nombre del método" value={newPaymentMethodName} onChange={e => setNewPaymentMethodName(e.target.value)} className="h-9 text-sm flex-1" onKeyDown={e => { if (e.key === 'Enter' && newPaymentMethodName.trim()) { setPaymentMethod(newPaymentMethodName.trim()); setShowNewPaymentMethod(false); setNewPaymentMethodName(''); } }} />
+                        <Button size="sm" className="h-9 text-xs" onClick={() => { setPaymentMethod(newPaymentMethodName.trim()); setShowNewPaymentMethod(false); setNewPaymentMethodName(''); }} disabled={!newPaymentMethodName.trim()}>OK</Button>
+                        <Button variant="ghost" size="sm" className="h-9" onClick={() => setShowNewPaymentMethod(false)}><X className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Select value={paymentMethod || '_none'} onValueChange={v => setPaymentMethod(v === '_none' ? '' : v)}>
+                          <SelectTrigger className="h-9 text-sm flex-1"><SelectValue placeholder="Seleccionar método" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none" className="text-xs">Sin especificar</SelectItem>
+                            <SelectItem value="efectivo">Efectivo</SelectItem>
+                            <SelectItem value="sinpe">SINPE</SelectItem>
+                            <SelectItem value="transferencia_bancaria">Transferencia Bancaria</SelectItem>
+                            {!isTissue && <SelectItem value="stripe">Stripe</SelectItem>}
+                            {paymentMethod && !['efectivo', 'sinpe', 'stripe', 'transferencia_bancaria'].includes(paymentMethod) && <SelectItem value={paymentMethod}>{paymentMethod}</SelectItem>}
+                          </SelectContent>
+                        </Select>
+                        <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setShowNewPaymentMethod(true)}><Plus className="h-3.5 w-3.5 mr-1" /> Otro</Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Fuente de la venta */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Fuente de la venta *</Label>
+                    <Select value={source} onValueChange={(v) => { setSource(v); setSelectedAd(null); }}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
+                      <SelectContent>
+                        {(isTissue ? TISSUE_SOURCE_OPTIONS : SOURCE_OPTIONS).map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Fecha */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Fecha</Label>
+                    <Input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} className="h-9 text-sm" />
+                  </div>
+
+                  {/* IVA toggle */}
+                  <div className="flex items-center justify-between rounded-lg border p-2.5">
+                    <div className="flex items-center gap-2"><Percent className="h-3.5 w-3.5 text-muted-foreground" /><span className="text-xs font-medium">Aplicar IVA ({taxRate}%)</span></div>
+                    <Switch checked={applyTax} onCheckedChange={setApplyTax} />
+                  </div>
+
+                  {/* Descuento */}
+                  <div className="rounded-lg border p-2.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium">Aplicar descuento (en {currency === 'CRC' ? 'colones' : 'dólares'})</span>
+                      <Switch checked={hasDiscount} onCheckedChange={(v) => { setHasDiscount(v); if (!v) { setDiscountAmount(''); setDiscountReason(''); } }} />
+                    </div>
+                    {hasDiscount && (
+                      <div className="space-y-2">
+                        <Input type="number" placeholder="Monto del descuento" value={discountAmount} onChange={(e) => setDiscountAmount(e.target.value)} className="h-9 text-xs" />
+                        <Textarea placeholder="Razón del descuento (obligatorio)" value={discountReason} onChange={(e) => setDiscountReason(e.target.value)} rows={2} className="text-xs" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Abono */}
+                  <div className="rounded-lg border p-2.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium flex items-center gap-1.5"><Banknote className="h-3.5 w-3.5" /> Es un abono (pago parcial)</span>
+                      <Switch checked={hasDeposit} onCheckedChange={(v) => { setHasDeposit(v); if (!v) setAmount(String(computedTotal)); else setAmount(''); }} />
+                    </div>
+                    {hasDeposit && (
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] text-muted-foreground">Monto abonado hoy</Label>
+                        <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-9 text-xs" />
+                        <p className="text-[10px] text-muted-foreground">Las fechas del saldo se definen luego desde la sección de Cobros.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Notas */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Notas adicionales</Label>
+                    <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="text-sm" />
+                  </div>
                 </div>
-              )}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Notas</Label>
-                <Textarea placeholder="Opcional" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="text-sm" />
+
+                {/* RIGHT: Resumen */}
+                <div className="md:sticky md:top-0 self-start">
+                  <Card className="p-3 space-y-2 bg-muted/30">
+                    <h4 className="text-xs font-semibold flex items-center gap-1.5"><Receipt className="h-3.5 w-3.5" /> Resumen</h4>
+                    <div className="space-y-1 text-xs">
+                      {product && <div className="text-muted-foreground truncate">{product}</div>}
+                      <div className="flex justify-between"><span className="text-muted-foreground">Precio base</span><span>{currency === 'CRC' ? '₡' : '$'}{basePrice.toLocaleString()}</span></div>
+                      {discountAmt > 0 && <div className="flex justify-between text-rose-600 dark:text-rose-400"><span>Descuento</span><span>-{currency === 'CRC' ? '₡' : '$'}{discountAmt.toLocaleString()}</span></div>}
+                      {applyTax && <div className="flex justify-between text-muted-foreground"><span>IVA ({taxRate}%)</span><span>+{currency === 'CRC' ? '₡' : '$'}{taxAmt.toLocaleString()}</span></div>}
+                      <div className="flex justify-between border-t pt-1.5 mt-1.5 text-sm font-semibold"><span>Total</span><span>{currency === 'CRC' ? '₡' : '$'}{computedTotal.toLocaleString()}</span></div>
+                      {hasDeposit && depositAmt > 0 && (
+                        <>
+                          <div className="flex justify-between text-emerald-600 dark:text-emerald-400 pt-1"><span>Abonado hoy</span><span>{currency === 'CRC' ? '₡' : '$'}{depositAmt.toLocaleString()}</span></div>
+                          <div className="flex justify-between text-amber-600 dark:text-amber-400"><span>Saldo pendiente</span><span>{currency === 'CRC' ? '₡' : '$'}{balanceDue.toLocaleString()}</span></div>
+                        </>
+                      )}
+                    </div>
+                  </Card>
+                </div>
               </div>
-              <p className="text-[11px] text-muted-foreground text-center">{getStepDescription()}</p>
             </div>
           )}
         </div>
