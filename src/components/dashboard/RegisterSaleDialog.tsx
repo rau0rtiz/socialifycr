@@ -1467,7 +1467,6 @@ export const RegisterSaleDialog = ({
                 if (!spkCanAdvance(step)) {
                   if (step === 0) toast.error('Selecciona o crea un estudiante');
                   if (step === 1) toast.error('Selecciona un producto');
-                  if (step === groupStepIdx) toast.error('Selecciona un grupo');
                   return;
                 }
                 // Auto-set source and amount defaults when going to payment step
