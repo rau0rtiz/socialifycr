@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { SaleInput, MessageSale } from '@/hooks/use-sales-tracking';
 import { useAllAds, AllAdItem } from '@/hooks/use-ads-data';
 import { useClientProducts } from '@/hooks/use-client-products';
