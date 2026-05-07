@@ -1,50 +1,64 @@
-# Fix permisos de Ad Frameworks para clientes
+# Unificar Ventas y Órdenes para clientes retail
 
-## Diagnóstico
+## Decisión
 
-Verifiqué el caso de Jorge en The Mind Coach:
-
-- El framework **"Masterclass: Las Bases de la Comunicación Humana"** sí tiene `client_id` = The Mind Coach → por eso lo ve listado.
-- Pero su única campaña, **"Masterclass MAYO 2026"**, tiene `client_id = NULL`.
-- Las políticas RLS para clientes (no-agencia) en `ad_variants`, `ad_framework_dimensions`, `ad_framework_references` y `launch_phase_tasks` validan acceso **a través de `ad_campaigns.client_id`**. Como la campaña no tiene `client_id`, las consultas devuelven 0 filas y Jorge ve el framework "vacío".
-
-Resultado: cualquier cliente con un framework asignado ve el contenedor pero nada adentro hasta que las campañas también tengan `client_id`.
+Para clientes retail (Alma Bendita, Tissue), donde cada orden ya genera su venta automáticamente, **el sidebar solo mostrará "Órdenes"** y se ocultará "Ventas". Para clientes no-retail (Mind Coach, Speak Up, etc.) todo queda igual.
 
 ## Cambios
 
-### 1. Migración de base de datos
+### 1. Sidebar (`src/components/dashboard/Sidebar.tsx`)
 
-**a) Backfill** — copiar `client_id` desde `ad_frameworks` hacia `ad_campaigns` donde la campaña tenga `client_id` nulo y el framework sí lo tenga.
+Cuando el cliente activo sea retail (Alma Bendita o Tissue):
 
-**b) Trigger** `BEFORE INSERT OR UPDATE OF framework_id` en `ad_campaigns`: si `NEW.client_id IS NULL`, heredarlo del framework. Garantiza que campañas nuevas no rompan permisos.
+- **Ocultar** la entrada "Ventas".
+- **Mantener** la entrada "Órdenes" (ya existe).
 
-**c) RLS robustecidas** — ampliar las políticas SELECT/UPDATE para clientes en estas tablas para que también respeten el `client_id` del **framework** directamente, no solo el de la campaña. Así, aunque alguien cree una campaña sin `client_id`, el cliente sigue viendo (y editando) el contenido si tiene acceso al framework:
+Para usuarios agencia en modo edición sin preview, mantener ambas visibles para que puedan administrar la configuración. En **preview-mode** y en **clientes reales** retail, solo "Órdenes".
 
-- `ad_framework_dimensions`: SELECT permitido si tiene acceso al framework directo (vía `ad_frameworks.client_id`).
-- `ad_framework_references`: idem.
-- `ad_variants`: SELECT y UPDATE permitidos si tiene acceso al framework de la campaña vinculada.
-- `launch_phase_tasks`: SELECT y UPDATE permitidos si tiene acceso al framework de la campaña vinculada.
+### 2. Página `/ordenes` (`src/pages/Ordenes.tsx`)
 
-**d) Permisos de edición para clientes** — agregar políticas INSERT/DELETE/UPDATE en `ad_variants`, `ad_framework_references` y `launch_phase_tasks` para usuarios con `has_client_access()` al framework correspondiente. Así Jorge puede editar variantes, agregar referencias y marcar tareas, no solo verlas.
+Convertir la página en el hub completo de revenue retail con tabs internos:
 
-### 2. Frontend
+- **Tab "Órdenes"** (default) — la lista actual con filtros por estado.
+- **Tab "Resumen"** — los widgets que hoy viven en `/ventas` y son útiles para retail:
+  - `SalesGoalWidget` (meta mensual)
+  - `RecentSalesTicker` (últimas ventas)
+  - `UnifiedStoryRevenueTracker` (solo Alma Bendita: gráfico semanal volumen vs ingresos)
+- **Tab "Clientes"** — atajo a Client Database filtrado por este cliente (link directo, no duplicar).
 
-No requiere cambios. Los hooks ya consultan estas tablas con el client de Supabase, y las nuevas políticas resolverán la visibilidad y edición automáticamente.
+### 3. Página `/ventas` (`src/pages/Ventas.tsx`)
+
+Si el cliente activo es retail y el usuario no es agencia:
+
+- Redirigir automáticamente a `/ordenes` con `<Navigate to="/ordenes" replace />`.
+
+Así, links viejos/bookmarks siguen funcionando sin error.
+
+### 4. Memoria de proyecto
+
+Actualizar `mem://features/ventas/orders-system` para reflejar que `/ordenes` es ahora la entrada única para retail y que `/ventas` redirige.
 
 ## Detalles técnicos
 
 ```text
-ad_campaigns          ← hereda client_id del framework (trigger + backfill)
-  └─ ad_variants      ← RLS amplía a "acceso al framework"
-launch_phase_tasks    ← RLS amplía a "acceso al framework"
-ad_framework_dimensions    ← RLS ya cubre, pero se simplifica
-ad_framework_references    ← RLS ya cubre, pero se simplifica
+Sidebar lógica:
+  isRetail = isAlmaBendita || isTissue
+  showVentas = (effectiveAgency && !isPreviewMode && !isRetail) || (!isRetail && flags.ventas_section)
+  showOrdenes = isRetail && (effectiveAgency || flags.ventas_section)
+
+/ordenes:
+  <Tabs defaultValue="ordenes">
+    <Tab "ordenes" /> (lista existente)
+    <Tab "resumen" /> (SalesGoalWidget + StoryRevenueTracker + Ticker)
+    <Tab "clientes" /> (link a /clientes)
+  </Tabs>
 ```
 
-Las funciones `has_client_access()` e `is_agency_member()` ya existen y son `SECURITY DEFINER`, así que las políticas no causan recursión.
+No hay cambios de base de datos — todo es UI/navegación.
 
-## Verificación post-deploy
+## Verificación
 
-1. Como Jorge en The Mind Coach: abrir el framework Masterclass → confirmar que se ven dimensions (9), variants (8), referencias y tasks.
-2. Como Jorge: editar un variant (status, copy) → debe persistir.
-3. Como agencia: nada cambia, todo sigue visible.
+1. Como cliente Alma Bendita: sidebar muestra solo "Órdenes"; al entrar ve tabs Órdenes/Resumen/Clientes.
+2. Como agencia viendo Alma Bendita en preview: idem (solo Órdenes).
+3. Como cliente Mind Coach: sidebar igual que antes (solo "Ventas").
+4. Visitar `/ventas` directo en Alma Bendita: redirige a `/ordenes`.
