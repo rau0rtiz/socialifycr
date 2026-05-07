@@ -295,12 +295,14 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                         type="button"
                         onClick={() => setShippingAddress(a)}
                         className={cn(
-                          'w-full text-left p-2 border rounded-lg text-xs hover:bg-accent',
-                          shippingAddress === a && 'border-primary bg-accent'
+                          'w-full text-left p-2 border rounded-lg text-xs bg-white text-neutral-900 transition-colors',
+                          shippingAddress === a
+                            ? 'border-2 border-orange-500'
+                            : 'border border-neutral-200 hover:border-orange-400'
                         )}
                       >
-                        <div className="font-medium">{a.label || `${a.state}, ${a.city}`}</div>
-                        <div className="text-muted-foreground">{a.district} · {a.address_line_1}</div>
+                        <div className="font-medium text-neutral-900">{a.label || `${a.state}, ${a.city}`}</div>
+                        <div className="text-neutral-600">{a.district} · {a.address_line_1}</div>
                       </button>
                     ))}
                   </div>
@@ -648,15 +650,17 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                 type="button"
                 onClick={() => { setShippingAddress(a); setAddressPickerOpen(false); }}
                 className={cn(
-                  'w-full text-left p-3 border rounded-lg text-xs hover:bg-accent transition-colors',
-                  shippingAddress === a && 'border-primary bg-accent'
+                  'w-full text-left p-3 rounded-lg text-xs bg-white text-neutral-900 transition-colors',
+                  shippingAddress === a
+                    ? 'border-2 border-orange-500'
+                    : 'border border-neutral-200 hover:border-orange-400'
                 )}
               >
-                <div className="font-medium text-sm">{a.label || `${a.state}, ${a.city}`}</div>
-                <div className="text-muted-foreground mt-0.5">
+                <div className="font-medium text-sm text-neutral-900">{a.label || `${a.state}, ${a.city}`}</div>
+                <div className="text-neutral-600 mt-0.5">
                   {a.state}, {a.city}, {a.district}
                 </div>
-                <div className="text-muted-foreground">{a.address_line_1}</div>
+                <div className="text-neutral-600">{a.address_line_1}</div>
               </button>
             ))}
           </div>
