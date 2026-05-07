@@ -23,6 +23,7 @@ import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 import { TissueSaleDialog } from '@/components/ventas/TissueSaleDialog';
 import { AlmaBenditaExportButton } from '@/components/ventas/AlmaBenditaExportButton';
+import { OrdersWidget } from '@/components/ventas/orders/OrdersWidget';
 import { Plus, ShoppingBag } from 'lucide-react';
 
 
@@ -422,6 +423,7 @@ const Ventas = () => {
         {/* === ALMA BENDITA: Story & Revenue Daily Tracker === */}
         {isAlmaBendita && (
           <>
+            <OrdersWidget clientId={selectedClient.id} />
             <StoryRevenueTracker clientId={selectedClient.id} dateRange={globalRange} />
             <StoryStoreSales clientId={selectedClient.id} />
             <SalesBySizeChart clientId={selectedClient.id} dateRange={globalRange} />
