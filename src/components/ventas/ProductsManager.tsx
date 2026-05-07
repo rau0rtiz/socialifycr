@@ -578,15 +578,17 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                     <SelectItem value="service" className="text-xs">Solo servicios</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={stockFilter} onValueChange={(v) => setStockFilter(v as StockFilter)}>
-                  <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">Todo el stock</SelectItem>
-                    <SelectItem value="ok" className="text-xs">Stock OK</SelectItem>
-                    <SelectItem value="low" className="text-xs">Stock bajo</SelectItem>
-                    <SelectItem value="out" className="text-xs">Sin stock</SelectItem>
-                  </SelectContent>
-                </Select>
+                {!isSpeakUpMain && (
+                  <Select value={stockFilter} onValueChange={(v) => setStockFilter(v as StockFilter)}>
+                    <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="text-xs">Todo el stock</SelectItem>
+                      <SelectItem value="ok" className="text-xs">Stock OK</SelectItem>
+                      <SelectItem value="low" className="text-xs">Stock bajo</SelectItem>
+                      <SelectItem value="out" className="text-xs">Sin stock</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
                 <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
                   <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
                   <SelectContent>
