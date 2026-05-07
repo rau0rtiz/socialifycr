@@ -15,6 +15,7 @@ import { useCustomerContacts, upsertCustomerContact, type CustomerAddress } from
 import { useClientProducts } from '@/hooks/use-client-products';
 import { useStories } from '@/hooks/use-stories';
 import { useOrders } from '@/hooks/use-orders';
+import { useProductBrands, useProductCategoriesCatalog } from '@/hooks/use-product-catalogs';
 import { CostaRicaAddressDialog } from '@/components/common/CostaRicaAddressDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
