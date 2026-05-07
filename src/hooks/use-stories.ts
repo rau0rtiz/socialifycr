@@ -34,25 +34,29 @@ export interface Story {
 const ARCHIVED_COLUMNS = 'id, story_id, media_type, media_url, thumbnail_url, persistent_thumbnail_url, permalink, timestamp, impressions, reach, replies, exits, taps_forward, taps_back, captured_at, scanned_data, client_id';
 const RECENT_LIMIT = 100;
 
-const mapArchivedRow = (story: any): Story => ({
-  id: story.id,
-  storyId: story.story_id,
-  mediaType: (story.media_type as 'IMAGE' | 'VIDEO') || 'IMAGE',
-  mediaUrl: story.media_url || undefined,
-  thumbnailUrl: story.thumbnail_url || undefined,
-  persistentThumbnailUrl: story.persistent_thumbnail_url || undefined,
-  permalink: story.permalink || undefined,
-  timestamp: story.timestamp,
-  impressions: story.impressions || 0,
-  reach: story.reach || 0,
-  replies: story.replies || 0,
-  exits: story.exits || undefined,
-  tapsForward: story.taps_forward || undefined,
-  tapsBack: story.taps_back || undefined,
-  isActive: false,
-  capturedAt: story.captured_at || undefined,
-  scannedData: story.scanned_data || null,
-});
+const mapArchivedRow = (story: any): Story => {
+  const persistent = story.persistent_thumbnail_url || undefined;
+  return {
+    id: story.id,
+    storyId: story.story_id,
+    mediaType: (story.media_type as 'IMAGE' | 'VIDEO') || 'IMAGE',
+    // Prefer persistent URL so expired Meta CDN links don't break thumbnails
+    mediaUrl: persistent || story.media_url || undefined,
+    thumbnailUrl: persistent || story.thumbnail_url || undefined,
+    persistentThumbnailUrl: persistent,
+    permalink: story.permalink || undefined,
+    timestamp: story.timestamp,
+    impressions: story.impressions || 0,
+    reach: story.reach || 0,
+    replies: story.replies || 0,
+    exits: story.exits || undefined,
+    tapsForward: story.taps_forward || undefined,
+    tapsBack: story.taps_back || undefined,
+    isActive: false,
+    capturedAt: story.captured_at || undefined,
+    scannedData: story.scanned_data || null,
+  };
+};
 
 interface UseStoriesResult {
   activeStories: Story[];
