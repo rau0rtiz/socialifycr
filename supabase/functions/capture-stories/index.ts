@@ -78,6 +78,37 @@ Amounts should be numbers only (no currency symbols). Phone numbers should inclu
   }
 }
 
+async function persistThumbnail(
+  supabase: ReturnType<typeof createClient>,
+  clientId: string,
+  storyId: string,
+  sourceUrl: string,
+): Promise<string | null> {
+  try {
+    const res = await fetch(sourceUrl);
+    if (!res.ok) {
+      console.warn(`Could not fetch thumbnail for ${storyId}: ${res.status}`);
+      return null;
+    }
+    const contentType = res.headers.get("content-type") || "image/jpeg";
+    const ext = contentType.includes("png") ? "png" : "jpg";
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const path = `${clientId}/${storyId}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("story-thumbnails")
+      .upload(path, bytes, { contentType, upsert: true });
+    if (upErr) {
+      console.warn(`Upload failed for ${storyId}:`, upErr.message);
+      return null;
+    }
+    const { data: pub } = supabase.storage.from("story-thumbnails").getPublicUrl(path);
+    return pub.publicUrl;
+  } catch (err) {
+    console.warn(`persistThumbnail error for ${storyId}:`, err);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -158,13 +189,31 @@ serve(async (req) => {
             console.warn(`Could not fetch insights for story ${story.id}:`, insightErr);
           }
 
-          // Check if this story already has scanned_data
+          // Check if this story already has scanned_data and persistent thumbnail
           const { data: existingStory } = await supabase
             .from("archived_stories")
-            .select("id, scanned_data")
+            .select("id, scanned_data, persistent_thumbnail_url")
             .eq("client_id", conn.client_id)
             .eq("story_id", story.id)
             .maybeSingle();
+
+          // Scan the image with AI if we have an API key and haven't scanned yet
+          let scannedData = existingStory?.scanned_data || null;
+          const imageUrl = story.thumbnail_url || story.media_url;
+          if (lovableApiKey && !scannedData && imageUrl) {
+            console.log(`Scanning story ${story.id} with AI...`);
+            scannedData = await scanStoryImage(imageUrl, lovableApiKey);
+            if (scannedData) {
+              scannedCount++;
+              console.log(`Story ${story.id} scanned:`, scannedData);
+            }
+          }
+
+          // Persist thumbnail to storage (only once per story)
+          let persistentUrl: string | null = existingStory?.persistent_thumbnail_url || null;
+          if (!persistentUrl && imageUrl) {
+            persistentUrl = await persistThumbnail(supabase, conn.client_id, story.id, imageUrl);
+          }
 
           // Scan the image with AI if we have an API key and haven't scanned yet
           let scannedData = existingStory?.scanned_data || null;
