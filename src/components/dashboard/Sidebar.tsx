@@ -183,6 +183,9 @@ export const Sidebar = () => {
                     <a 
                       href={item.url}
                       data-tour={item.dataTour}
+                      onMouseEnter={() => prefetchRoute(item.url)}
+                      onFocus={() => prefetchRoute(item.url)}
+                      onTouchStart={() => prefetchRoute(item.url)}
                       onClick={(e) => {
                         e.preventDefault();
                         transitionNavigate(item.url);
