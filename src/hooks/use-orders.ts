@@ -12,6 +12,8 @@ export interface OrderItem {
   story_id: string | null;
   product_name: string | null;
   garment_size: string | null;
+  brand: string | null;
+  garment_type: string | null;
   quantity: number;
   unit_price: number;
   subtotal: number;
@@ -52,6 +54,8 @@ export interface NewOrderInput {
     story_id?: string | null;
     product_name?: string;
     garment_size?: string;
+    brand?: string;
+    garment_type?: string;
     quantity?: number;
     unit_price: number;
     subtotal: number;
@@ -112,6 +116,8 @@ export const useOrders = (clientId: string | null) => {
           story_id: it.story_id || null,
           product_name: it.product_name || null,
           garment_size: it.garment_size || null,
+          brand: it.brand || null,
+          garment_type: it.garment_type || null,
           quantity: it.quantity ?? 1,
           unit_price: it.unit_price,
           subtotal: it.subtotal,

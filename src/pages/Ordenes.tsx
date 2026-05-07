@@ -13,6 +13,11 @@ import { OrderWizardDialog } from '@/components/ventas/orders/OrderWizardDialog'
 import { SalesGoalBar } from '@/components/ventas/SalesGoalBar';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
+import { SalesByBrandChart } from '@/components/ventas/SalesByBrandChart';
+import { SalesBySizeChart } from '@/components/ventas/SalesBySizeChart';
+import { SalesByProductChart } from '@/components/ventas/SalesByProductChart';
+import { useSalesTracking } from '@/hooks/use-sales-tracking';
+import { useClientProducts } from '@/hooks/use-client-products';
 import { startOfMonth, endOfDay, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -50,6 +55,9 @@ const Ordenes = () => {
     const now = new Date();
     return { start: startOfMonth(now), end: endOfDay(now) };
   }, []);
+
+  const { sales: monthSales } = useSalesTracking(clientId, summaryRange);
+  const { products: clientProducts } = useClientProducts(clientId);
 
   // Sales totals (CRC) for goal bar — current month, non-cancelled
   const monthSalesCRC = useMemo(() => {
@@ -275,7 +283,14 @@ const Ordenes = () => {
               accentColor={selectedClient.accent_color || undefined}
             />
             {isAlmaBendita && (
-              <StoryRevenueTracker clientId={selectedClient.id} dateRange={summaryRange} />
+              <>
+                <StoryRevenueTracker clientId={selectedClient.id} dateRange={summaryRange} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <SalesByBrandChart sales={monthSales} />
+                  <SalesByProductChart sales={monthSales} products={clientProducts} variant="garment" />
+                </div>
+                <SalesBySizeChart clientId={selectedClient.id} dateRange={summaryRange} />
+              </>
             )}
             <RecentSalesTicker clientId={selectedClient.id} dateRange={summaryRange} />
           </TabsContent>
