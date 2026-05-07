@@ -406,33 +406,61 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                       ) : (
                         <div className="w-12 h-16 rounded bg-muted flex items-center justify-center"><Package className="h-4 w-4 text-muted-foreground" /></div>
                       )}
-                      <div className="flex-1 grid grid-cols-12 gap-2">
+                      <div className="flex-1 space-y-2">
                         <Input
-                          placeholder="Nombre"
+                          placeholder="Nombre del producto"
                           value={it.product_name}
                           onChange={(e) => updateItem(it.key, { product_name: e.target.value })}
-                          className="col-span-5 h-8 text-xs"
+                          className="h-8 text-xs"
                         />
-                        <Input
-                          placeholder="Talla"
-                          value={it.garment_size || ''}
-                          onChange={(e) => updateItem(it.key, { garment_size: e.target.value })}
-                          className="col-span-2 h-8 text-xs"
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Qty"
-                          value={it.quantity}
-                          onChange={(e) => updateItem(it.key, { quantity: Number(e.target.value) || 1 })}
-                          className="col-span-2 h-8 text-xs"
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Precio"
-                          value={it.unit_price}
-                          onChange={(e) => updateItem(it.key, { unit_price: Number(e.target.value) || 0 })}
-                          className="col-span-3 h-8 text-xs"
-                        />
+                        <div className="grid grid-cols-3 gap-2">
+                          <Select
+                            value={it.brand || '__none__'}
+                            onValueChange={(v) => updateItem(it.key, { brand: v === '__none__' ? undefined : v })}
+                          >
+                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Marca" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__" className="text-xs">— Sin marca —</SelectItem>
+                              {brandsCatalog.map(b => (
+                                <SelectItem key={b.id} value={b.name} className="text-xs">{b.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={it.garment_type || '__none__'}
+                            onValueChange={(v) => updateItem(it.key, { garment_type: v === '__none__' ? undefined : v })}
+                          >
+                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Tipo de prenda" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__" className="text-xs">— Sin tipo —</SelectItem>
+                              {categoriesCatalog.map(c => (
+                                <SelectItem key={c.id} value={c.name} className="text-xs">{c.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            placeholder="Talla"
+                            value={it.garment_size || ''}
+                            onChange={(e) => updateItem(it.key, { garment_size: e.target.value })}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Cantidad"
+                            value={it.quantity}
+                            onChange={(e) => updateItem(it.key, { quantity: Number(e.target.value) || 1 })}
+                            className="h-8 text-xs"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="Precio unit."
+                            value={it.unit_price}
+                            onChange={(e) => updateItem(it.key, { unit_price: Number(e.target.value) || 0 })}
+                            className="h-8 text-xs"
+                          />
+                        </div>
                       </div>
                       <Button size="icon" variant="ghost" onClick={() => removeItem(it.key)} className="h-8 w-8">
                         <Trash2 className="h-3.5 w-3.5" />
