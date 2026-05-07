@@ -68,6 +68,7 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
   const [contactPopoverOpen, setContactPopoverOpen] = useState(false);
   const [shippingAddress, setShippingAddress] = useState<CustomerAddress | null>(null);
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
+  const [addressPickerOpen, setAddressPickerOpen] = useState(false);
 
   // Items
   const [items, setItems] = useState<DraftItem[]>([]);
@@ -311,10 +312,17 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                     <div className="text-muted-foreground">{shippingAddress.address_line_1}</div>
                   </Card>
                 )}
-                <Button variant="outline" size="sm" onClick={() => setAddressDialogOpen(true)} className="w-full">
-                  <MapPin className="h-3.5 w-3.5 mr-1.5" />
-                  {shippingAddress ? 'Cambiar dirección' : 'Agregar dirección'}
-                </Button>
+                {savedAddresses.length > 0 ? (
+                  <Button variant="outline" size="sm" onClick={() => setAddressPickerOpen(true)} className="w-full">
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                    {shippingAddress ? 'Cambiar dirección' : 'Seleccionar dirección'}
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => setAddressDialogOpen(true)} className="w-full">
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" />
+                    {shippingAddress ? 'Cambiar dirección' : 'Agregar dirección'}
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -571,6 +579,39 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
         initial={shippingAddress}
         onSave={setShippingAddress}
       />
+
+      <Dialog open={addressPickerOpen} onOpenChange={setAddressPickerOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Seleccionar dirección</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {savedAddresses.map((a, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => { setShippingAddress(a); setAddressPickerOpen(false); }}
+                className={cn(
+                  'w-full text-left p-3 border rounded-lg text-xs hover:bg-accent transition-colors',
+                  shippingAddress === a && 'border-primary bg-accent'
+                )}
+              >
+                <div className="font-medium text-sm">{a.label || `${a.state}, ${a.city}`}</div>
+                <div className="text-muted-foreground mt-0.5">
+                  {a.state}, {a.city}, {a.district}
+                </div>
+                <div className="text-muted-foreground">{a.address_line_1}</div>
+              </button>
+            ))}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setAddressPickerOpen(false)}>Cancelar</Button>
+            <Button onClick={() => { setAddressPickerOpen(false); setAddressDialogOpen(true); }}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" />Crear nueva dirección
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
