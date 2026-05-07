@@ -186,20 +186,26 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
   const stockOut = p.track_stock && p.stock_quantity <= 0;
   const stockLow = p.track_stock && !stockOut && p.low_stock_threshold > 0 && p.stock_quantity <= p.low_stock_threshold;
 
+  const lineMeta = isSpeakUpCard ? getSpeakUpLineMeta(p.category) : null;
+  const LineIcon = lineMeta?.icon;
+
   return (
     <div
       className={cn(
         'group relative rounded-xl border bg-card hover:shadow-sm transition-all cursor-pointer p-3.5 overflow-hidden',
-        isService ? 'border-purple-500/20 hover:border-purple-500/40' : 'border-blue-500/20 hover:border-blue-500/40',
-        stockOut && 'border-red-500/40 hover:border-red-500/60',
+        isSpeakUpCard
+          ? cn(lineMeta!.border.replace('/30', '/20'), lineMeta!.ring)
+          : isService ? 'border-purple-500/20 hover:border-purple-500/40' : 'border-blue-500/20 hover:border-blue-500/40',
+        !isSpeakUpCard && stockOut && 'border-red-500/40 hover:border-red-500/60',
       )}
       onClick={onClick}
     >
       {/* Type accent bar */}
       <div className={cn(
         'absolute left-0 top-0 bottom-0 w-1',
+        isSpeakUpCard ? lineMeta!.accent :
         isService ? 'bg-purple-500' : 'bg-blue-500',
-        stockOut && 'bg-red-500',
+        !isSpeakUpCard && stockOut && 'bg-red-500',
       )} />
 
       <div className="flex items-start gap-3 pl-1.5">
@@ -208,9 +214,12 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
         ) : (
           <div className={cn(
             'w-14 h-14 rounded-lg border flex items-center justify-center shrink-0',
+            isSpeakUpCard ? cn(lineMeta!.bg, lineMeta!.border) :
             isService ? 'bg-purple-500/5 border-purple-500/20' : 'bg-blue-500/5 border-blue-500/20',
           )}>
-            {isService
+            {isSpeakUpCard && LineIcon ? (
+              <LineIcon className={cn('h-5 w-5', lineMeta!.text)} />
+            ) : isService
               ? <Wrench className="h-5 w-5 text-purple-500/60" />
               : <Package className="h-5 w-5 text-blue-500/60" />}
           </div>
@@ -222,12 +231,16 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
               variant="outline"
               className={cn(
                 'text-[9px] py-0 px-1.5 h-4 font-medium uppercase tracking-wider',
-                isService
-                  ? 'bg-purple-500/10 text-purple-600 border-purple-500/30'
-                  : 'bg-blue-500/10 text-blue-600 border-blue-500/30',
+                isSpeakUpCard
+                  ? cn(lineMeta!.bg.replace('/5', '/10'), lineMeta!.text, lineMeta!.border)
+                  : isService
+                    ? 'bg-purple-500/10 text-purple-600 border-purple-500/30'
+                    : 'bg-blue-500/10 text-blue-600 border-blue-500/30',
               )}
             >
-              {isService ? <><Wrench className="h-2 w-2 mr-0.5" /> Servicio</> : <><Package className="h-2 w-2 mr-0.5" /> Producto</>}
+              {isSpeakUpCard && LineIcon ? (
+                <><LineIcon className="h-2 w-2 mr-0.5" /> {lineMeta!.singular}</>
+              ) : isService ? <><Wrench className="h-2 w-2 mr-0.5" /> Servicio</> : <><Package className="h-2 w-2 mr-0.5" /> Producto</>}
             </Badge>
             {variantCount > 0 && (
               <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
@@ -244,7 +257,12 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
                 {variantCount > 0 ? 'Desde ' : ''}{formatCurrency(minPrice, minCurrency)}
               </span>
             )}
-            {profit != null && p.price != null && p.cost != null && p.cost > 0 && variantCount === 0 && (
+            {isSpeakUpCard && p.tax_rate != null && p.tax_rate > 0 && (
+              <span className="text-[10px] font-medium text-muted-foreground inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-muted/50">
+                IVA {p.tax_rate}%
+              </span>
+            )}
+            {profit != null && p.price != null && p.cost != null && p.cost > 0 && variantCount === 0 && !isSpeakUpCard && (
               <span className={cn(
                 'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
                 margin != null && margin >= 50 ? 'bg-emerald-500/10 text-emerald-600' :
