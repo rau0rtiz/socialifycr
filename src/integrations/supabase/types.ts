@@ -2059,6 +2059,7 @@ export type Database = {
       customer_contacts: {
         Row: {
           addresses: Json
+          billing_info: Json | null
           client_id: string
           created_at: string
           email: string | null
@@ -2076,6 +2077,7 @@ export type Database = {
         }
         Insert: {
           addresses?: Json
+          billing_info?: Json | null
           client_id: string
           created_at?: string
           email?: string | null
@@ -2093,6 +2095,7 @@ export type Database = {
         }
         Update: {
           addresses?: Json
+          billing_info?: Json | null
           client_id?: string
           created_at?: string
           email?: string | null
@@ -4137,6 +4140,7 @@ export type Database = {
       student_contacts: {
         Row: {
           age: number | null
+          billing_info: Json | null
           client_id: string
           created_at: string
           email: string | null
@@ -4155,6 +4159,7 @@ export type Database = {
         }
         Insert: {
           age?: number | null
+          billing_info?: Json | null
           client_id: string
           created_at?: string
           email?: string | null
@@ -4173,6 +4178,7 @@ export type Database = {
         }
         Update: {
           age?: number | null
+          billing_info?: Json | null
           client_id?: string
           created_at?: string
           email?: string | null
