@@ -253,22 +253,24 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
                 {p.estimated_duration_min} min
               </span>
             )}
-            {/* Stock indicator */}
-            {isService ? (
-              <span className="text-[10px] text-muted-foreground/60 italic">Sin inventario</span>
-            ) : p.track_stock ? (
-              <span className={cn(
-                'text-[10px] font-semibold px-1.5 py-0.5 rounded-full inline-flex items-center gap-1',
-                stockOut ? 'bg-red-500/15 text-red-600 ring-1 ring-red-500/30' :
-                stockLow ? 'bg-amber-500/15 text-amber-600 ring-1 ring-amber-500/30' :
-                'bg-emerald-500/10 text-emerald-600',
-              )}>
-                {(stockOut || stockLow) && <AlertTriangle className="h-2.5 w-2.5" />}
-                <Boxes className="h-2.5 w-2.5" />
-                {stockOut ? 'Sin stock' : `${p.stock_quantity}${p.stock_unit ? ` ${p.stock_unit}` : ''}`}
-              </span>
-            ) : (
-              <span className="text-[10px] text-muted-foreground/60">Inventario desactivado</span>
+            {/* Stock indicator (oculto para Speak Up) */}
+            {!isSpeakUpCard && (
+              isService ? (
+                <span className="text-[10px] text-muted-foreground/60 italic">Sin inventario</span>
+              ) : p.track_stock ? (
+                <span className={cn(
+                  'text-[10px] font-semibold px-1.5 py-0.5 rounded-full inline-flex items-center gap-1',
+                  stockOut ? 'bg-red-500/15 text-red-600 ring-1 ring-red-500/30' :
+                  stockLow ? 'bg-amber-500/15 text-amber-600 ring-1 ring-amber-500/30' :
+                  'bg-emerald-500/10 text-emerald-600',
+                )}>
+                  {(stockOut || stockLow) && <AlertTriangle className="h-2.5 w-2.5" />}
+                  <Boxes className="h-2.5 w-2.5" />
+                  {stockOut ? 'Sin stock' : `${p.stock_quantity}${p.stock_unit ? ` ${p.stock_unit}` : ''}`}
+                </span>
+              ) : (
+                <span className="text-[10px] text-muted-foreground/60">Inventario desactivado</span>
+              )
             )}
           </div>
         </div>
