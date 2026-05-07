@@ -570,14 +570,16 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
-                <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
-                  <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">Todos los tipos</SelectItem>
-                    <SelectItem value="product" className="text-xs">Solo productos</SelectItem>
-                    <SelectItem value="service" className="text-xs">Solo servicios</SelectItem>
-                  </SelectContent>
-                </Select>
+                {!isSpeakUpMain && (
+                  <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
+                    <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="text-xs">Todos los tipos</SelectItem>
+                      <SelectItem value="product" className="text-xs">Solo productos</SelectItem>
+                      <SelectItem value="service" className="text-xs">Solo servicios</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
                 {!isSpeakUpMain && (
                   <Select value={stockFilter} onValueChange={(v) => setStockFilter(v as StockFilter)}>
                     <SelectTrigger className="h-7 text-[11px] w-auto gap-1.5"><SelectValue /></SelectTrigger>
