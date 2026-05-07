@@ -215,6 +215,12 @@ export const RegisterSaleDialog = ({
     setDepositBalanceDueDate('');
     setShowNewPaymentMethod(false);
     setNewPaymentMethodName('');
+    setApplyTax(false);
+    setHasDiscount(false);
+    setDiscountAmount('');
+    setDiscountReason('');
+    setShowNewCloser(false);
+    setNewCloserName('');
     // Reset Speak Up state
     setSpkStudentSearch('');
     setSpkSelectedStudentId(null);
