@@ -716,6 +716,10 @@ const ClientDatabase = () => {
                   </div>
                 </div>
               )}
+
+              <div className="pt-2 border-t">
+                <BillingInfoSection value={sBilling} onChange={setSBilling} compact />
+              </div>
             </div>
             <div className="px-6 pb-4 flex justify-end gap-2">
               <Button variant="outline" onClick={() => { setStudentDialog(false); resetStudentForm(); }} size="sm">Cancelar</Button>
