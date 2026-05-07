@@ -160,6 +160,10 @@ export const RegisterSaleDialog = ({
   const [spkDiscountReason, setSpkDiscountReason] = useState('');
   const [spkPaymentDay, setSpkPaymentDay] = useState('');
   const [spkSelectedGroupId, setSpkSelectedGroupId] = useState<string | null>(null);
+  // Multi-product selection (Speak Up)
+  const [spkSelectedProductIds, setSpkSelectedProductIds] = useState<string[]>([]);
+  const [spkLineFilter, setSpkLineFilter] = useState<string>('_all');
+  const [spkPickProductId, setSpkPickProductId] = useState<string>('');
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closersBase = [] } = useClientClosers(clientId || null);
   const addCloserMutation = useAddClientCloser(clientId || null);
@@ -239,6 +243,9 @@ export const RegisterSaleDialog = ({
     setSpkGuardianEmail('');
     setSpkSelectedTeacherId(null);
     setSpkAssignedSchedule([]);
+    setSpkSelectedProductIds([]);
+    setSpkLineFilter('_all');
+    setSpkPickProductId('');
     setSpkApplyTax(false);
     setSpkDiscountAmount('');
     setSpkDiscountReason('');
@@ -904,63 +911,66 @@ export const RegisterSaleDialog = ({
     );
   }
 
-  // ═══════ SPEAK UP: 4-step sales flow ═══════
+  // ═══════ SPEAK UP: 3-step sales flow (Estudiante → Producto → Pago) ═══════
   if (isSpkUp && !isEditing) {
-    const selectedProductObj = products.find(p => p.name === product);
-    const isGroupProduct = selectedProductObj?.category === 'group';
-    const spkStepNames = isGroupProduct
-      ? ['Estudiante', 'Producto', 'Grupo', 'Horario', 'Pago']
-      : ['Estudiante', 'Producto', 'Horario', 'Pago'];
+    const spkStepNames = ['Estudiante', 'Producto', 'Pago'];
     const spkTotalSteps = spkStepNames.length;
     const spkLastStep = spkTotalSteps - 1;
+    const paymentStepIdx = 2;
 
     const selectedStudent = students.find(s => s.id === spkSelectedStudentId);
-    const productAudience = selectedProductObj?.audience || 'all';
     const isMinor = spkStudentAge ? parseInt(spkStudentAge) < 18 : false;
 
-    // Groups for this product
-    const productGroups = isGroupProduct && selectedProductObj
-      ? groups.filter(g => g.product_id === selectedProductObj.id && g.status === 'active')
-      : [];
-    const selectedGroup = productGroups.find(g => g.id === spkSelectedGroupId);
+    // Multi-product selection
+    const spkSelectedProducts = spkSelectedProductIds
+      .map(id => products.find(p => p.id === id))
+      .filter(Boolean) as typeof products;
+    const primaryProduct = spkSelectedProducts[0];
+    const selectedProductObj = primaryProduct;
+
+    // Lines (categories)
+    const productLines = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
+    const filteredProductsForPick = spkLineFilter === '_all'
+      ? products
+      : products.filter(p => p.category === spkLineFilter);
 
     // Filter students by search
     const filteredStudents = spkStudentSearch.trim()
       ? students.filter(s => s.full_name.toLowerCase().includes(spkStudentSearch.toLowerCase()) || s.phone?.includes(spkStudentSearch) || s.email?.toLowerCase().includes(spkStudentSearch.toLowerCase()))
       : students.slice(0, 10);
 
-    // Filter teachers by product and audience compatibility
-    const compatibleTeachers = selectedProductObj
-      ? teachers.filter(t => {
-          if (t.status !== 'active') return false;
-          const canTeachProduct = t.product_ids.length === 0 || t.product_ids.includes(selectedProductObj.id);
-          const audienceMatch = t.audience_types.length === 0 ||
-            t.audience_types.includes(productAudience) ||
-            productAudience === 'all';
-          return canTeachProduct && audienceMatch;
-        })
-      : [];
-
-    // Calculate amounts
-    const baseAmount = parseFloat(amount || '0');
+    // Calculate amounts (sum of selected products)
+    const productsBaseSum = spkSelectedProducts.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
+    const baseAmount = productsBaseSum > 0 ? productsBaseSum : (parseFloat(amount || '0') || 0);
     const discountAmt = parseFloat(spkDiscountAmount || '0');
-    const taxRate = selectedProductObj?.tax_rate || 13;
+    const taxRate = primaryProduct?.tax_rate ?? 13;
     const subtotalCalc = baseAmount - discountAmt;
     const taxCalc = spkApplyTax ? Math.round(subtotalCalc * (taxRate / 100)) : 0;
     const totalCalc = subtotalCalc + taxCalc;
 
-    // Step index mapping
-    const groupStepIdx = isGroupProduct ? 2 : -1;
-    const scheduleStepIdx = isGroupProduct ? 3 : 2;
-    const paymentStepIdx = isGroupProduct ? 4 : 3;
-
     const spkCanAdvance = (s: number) => {
       if (s === 0) return !!spkSelectedStudentId || spkCreatingStudent;
-      if (s === 1) return !!product;
-      // Group is now optional — can leave as "Por definir"
-      if (s === groupStepIdx) return true;
-      if (s === scheduleStepIdx) return true;
+      if (s === 1) return spkSelectedProductIds.length > 0;
       return true;
+    };
+
+    const addSpkProduct = (id: string) => {
+      if (!id || id === '_none') return;
+      if (spkSelectedProductIds.includes(id)) { toast.info('Ya está agregado'); return; }
+      setSpkSelectedProductIds(prev => [...prev, id]);
+      setSpkPickProductId('');
+      const p = products.find(x => x.id === id);
+      if (p && spkSelectedProductIds.length === 0) {
+        setProduct(p.name);
+        if (p.currency) setCurrency(p.currency as 'CRC' | 'USD');
+      }
+    };
+
+    const removeSpkProduct = (id: string) => {
+      const next = spkSelectedProductIds.filter(x => x !== id);
+      setSpkSelectedProductIds(next);
+      const first = next.map(i => products.find(p => p.id === i)).filter(Boolean)[0] as any;
+      setProduct(first?.name || '');
     };
 
     const handleSpkCreateStudent = async () => {
@@ -1010,7 +1020,7 @@ export const RegisterSaleDialog = ({
         source: source as SaleInput['source'],
         customer_name: selectedStudent?.full_name || customerName || undefined,
         customer_phone: selectedStudent?.phone || customerPhone || undefined,
-        product: product || undefined,
+        product: spkSelectedProducts.map(p => p.name).join(' + ') || product || undefined,
         notes: notes || undefined,
         status: 'completed',
         closer_name: closerName || undefined,
@@ -1021,14 +1031,11 @@ export const RegisterSaleDialog = ({
         installments_paid: hasDeposit ? 1 : installmentsPaid,
         installment_amount: hasDeposit ? amountPaidToday : (installmentAmount || undefined),
         student_contact_id: spkSelectedStudentId || undefined,
-        teacher_id: selectedGroup?.teacher_id || (spkSelectedTeacherId === '_pending' ? undefined : spkSelectedTeacherId) || undefined,
-        assigned_schedule: selectedGroup?.schedules?.length ? selectedGroup.schedules : (spkAssignedSchedule.length > 0 ? spkAssignedSchedule : undefined),
         discount_amount: discountAmt || undefined,
         discount_reason: discountAmt > 0 ? spkDiscountReason.trim() : undefined,
         tax_amount: taxCalc || undefined,
         subtotal: subtotalCalc || undefined,
         payment_day: spkPaymentDay ? parseInt(spkPaymentDay) : undefined,
-        group_id: spkSelectedGroupId || undefined,
         payment_schedule_pending: hasDeposit ? true : undefined,
       };
 
@@ -1161,203 +1168,87 @@ export const RegisterSaleDialog = ({
               </div>
             )}
 
-            {/* Step 1: Product */}
+            {/* Step 1: Producto/Servicio (Línea → Producto, multi) */}
             {step === 1 && (
               <div className="space-y-4 py-3">
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label className="text-xs font-medium flex items-center gap-1.5">
-                    <Package className="h-3.5 w-3.5" /> Producto / Servicio
+                    <Package className="h-3.5 w-3.5" /> Línea de producto
                   </Label>
-                  <Select value={product || '_none'} onValueChange={handleProductChange}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Seleccionar producto" /></SelectTrigger>
-                    <SelectContent className="max-w-[320px]">
-                      <SelectItem value="_none">Sin producto</SelectItem>
-                      {products.map(p => (
-                        <SelectItem key={p.name} value={p.name}>
-                          <div className="flex items-center gap-2 max-w-[280px]">
-                            <span className="truncate">{p.name}</span>
-                            {p.category && <Badge variant="outline" className="text-[9px] py-0 shrink-0">{p.category}</Badge>}
-                            {p.price != null && <span className="text-muted-foreground text-[10px] shrink-0">{p.currency === 'CRC' ? '₡' : '$'}{p.price.toLocaleString()}</span>}
-                          </div>
-                        </SelectItem>
+                  <Select value={spkLineFilter} onValueChange={(v) => { setSpkLineFilter(v); setSpkPickProductId(''); }}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Todas" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_all">Todas las líneas</SelectItem>
+                      {productLines.map(line => (
+                        <SelectItem key={line} value={line}>{line}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {selectedProductObj && (
-                  <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-border/50">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {selectedProductObj.category && <Badge variant="secondary" className="text-[10px]">{selectedProductObj.category}</Badge>}
-                      {selectedProductObj.audience && selectedProductObj.audience !== 'all' && <Badge variant="outline" className="text-[10px]">{selectedProductObj.audience === 'children' ? 'Niños' : selectedProductObj.audience === 'adults' ? 'Adultos' : selectedProductObj.audience}</Badge>}
-                      {selectedProductObj.is_recurring && <Badge className="text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">Mensual</Badge>}
-                    </div>
-                    {selectedProductObj.class_frequency && (
-                      <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {(selectedProductObj.class_frequency as any).sessions_per_week}x/semana · {(selectedProductObj.class_frequency as any).hours_per_session}h/sesión
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Variant/scheme selector */}
-                {product && productSchemes.length > 0 && (
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium flex items-center gap-1.5"><CreditCard className="h-3.5 w-3.5" /> Variante</Label>
-                    <Select value={selectedSchemeId || '_none'} onValueChange={handleSchemeChange}>
-                      <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Seleccionar variante" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none">Pago directo</SelectItem>
-                        {productSchemes.map(s => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {s.name} — {s.currency === 'CRC' ? '₡' : '$'}{s.total_price.toLocaleString()}
-                            {s.num_installments > 1 && ` (${s.num_installments}x)`}
-                          </SelectItem>
-                        ))}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Producto</Label>
+                  <div className="flex gap-2">
+                    <Select value={spkPickProductId || ''} onValueChange={addSpkProduct}>
+                      <SelectTrigger className="h-10 text-sm flex-1 min-w-0"><SelectValue placeholder="Agregar producto" /></SelectTrigger>
+                      <SelectContent className="max-w-[320px]">
+                        {filteredProductsForPick.length === 0 && (
+                          <SelectItem value="_none" disabled>Sin productos en esta línea</SelectItem>
+                        )}
+                        {filteredProductsForPick.map(p => {
+                          const sym = p.currency === 'CRC' ? '₡' : '$';
+                          const already = spkSelectedProductIds.includes(p.id);
+                          return (
+                            <SelectItem key={p.id} value={p.id} disabled={already}>
+                              <div className="flex flex-col items-start gap-0.5 max-w-[280px]">
+                                <span className="truncate text-sm">{p.name}{already && ' ✓'}</span>
+                                <span className="text-muted-foreground text-[10px]">
+                                  {p.price != null ? `${sym}${Number(p.price).toLocaleString()}` : 'Sin precio'}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Group step (only for group products) */}
-            {step === groupStepIdx && isGroupProduct && (
-              <div className="space-y-3 py-3">
-                <Label className="text-xs font-medium flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5" /> Seleccionar Grupo
-                </Label>
-                <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
-                  {/* "Por definir" option */}
-                  <button
-                    className={cn(
-                      'w-full text-left p-3 rounded-lg border text-xs transition-colors',
-                      spkSelectedGroupId === null
-                        ? 'bg-primary/10 border-primary/30'
-                        : 'hover:bg-muted/50 border-dashed border-border/50'
-                    )}
-                    onClick={() => {
-                      setSpkSelectedGroupId(null);
-                      setSpkAssignedSchedule([]);
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">Sin grupo (por definir)</span>
-                      <Badge variant="outline" className="text-[9px]">Asignar luego</Badge>
-                    </div>
-                    <p className="text-muted-foreground mt-0.5 text-[10px]">Asigna el grupo más adelante</p>
-                  </button>
-
-                  {productGroups.length === 0 ? (
-                    <p className="text-[11px] text-muted-foreground py-2 text-center">No hay grupos activos para este producto.</p>
-                  ) : (
-                    productGroups.map(g => {
-                      const occ = getGroupOccupancy(g.id);
-                      const isFull = occ >= g.capacity;
-                      const isSelected = spkSelectedGroupId === g.id;
-                      return (
-                        <button
-                          key={g.id}
-                          disabled={isFull}
-                          className={cn(
-                            'w-full text-left p-3 rounded-lg border text-xs transition-colors',
-                            isSelected ? 'bg-primary/10 border-primary/30' : isFull ? 'opacity-50 cursor-not-allowed border-border/30' : 'hover:bg-muted/50 border-border/50'
-                          )}
-                          onClick={() => {
-                            setSpkSelectedGroupId(g.id);
-                            if (g.teacher_id) setSpkSelectedTeacherId(g.teacher_id);
-                            if (g.schedules?.length) setSpkAssignedSchedule(g.schedules);
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{g.name}</span>
-                            <Badge variant={isFull ? 'destructive' : 'secondary'} className="text-[9px]">{occ}/{g.capacity}</Badge>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-muted-foreground flex-wrap">
-                            {g.english_level && <span>{g.english_level}</span>}
-                            {g.age_range_min != null && g.age_range_max != null && <span>{g.age_range_min}-{g.age_range_max} años</span>}
-                            {g.classroom && <span>Aula: {g.classroom}</span>}
-                          </div>
-                          {g.schedules?.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {g.schedules.map((s: any, i: number) => (
-                                <span key={i} className="text-[9px] text-muted-foreground capitalize">{s.day} {s.start}-{s.end}</span>
-                              ))}
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })
-                  )}
                 </div>
-              </div>
-            )}
 
-            {/* Schedule + Teacher step */}
-            {step === scheduleStepIdx && (
-              <div className="space-y-4 py-3">
-                {/* Schedule selection based on product available_schedules */}
-                {selectedProductObj?.available_schedules && (selectedProductObj.available_schedules as any[]).length > 0 && (
+                {/* Selected products list */}
+                {spkSelectedProducts.length > 0 && (
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" /> Horarios del servicio
+                    <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Productos seleccionados ({spkSelectedProducts.length})
                     </Label>
-                    <div className="space-y-1.5 max-h-[150px] overflow-y-auto">
-                      {(selectedProductObj.available_schedules as any[]).map((block: any, idx: number) => {
-                        const isSelected = spkAssignedSchedule.some(s => s.day === block.day && s.start === block.start && s.end === block.end);
+                    <div className="space-y-1.5">
+                      {spkSelectedProducts.map(p => {
+                        const sym = p.currency === 'CRC' ? '₡' : '$';
                         return (
-                          <button
-                            key={idx}
-                            className={cn(
-                              'w-full text-left p-2 rounded-lg border text-xs transition-colors',
-                              isSelected ? 'bg-primary/10 border-primary/30 text-primary' : 'hover:bg-muted/50 border-border/50'
-                            )}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSpkAssignedSchedule(prev => prev.filter(s => !(s.day === block.day && s.start === block.start && s.end === block.end)));
-                              } else {
-                                setSpkAssignedSchedule(prev => [...prev, block]);
-                              }
-                            }}
-                          >
-                            <span className="font-medium capitalize">{block.day}</span>
-                            <span className="text-muted-foreground ml-2">{block.start} – {block.end}</span>
-                          </button>
+                          <div key={p.id} className="flex items-center gap-2 p-2.5 rounded-lg border bg-muted/30">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{p.name}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {p.category || '—'} · {p.price != null ? `${sym}${Number(p.price).toLocaleString()}` : 'Sin precio'}
+                              </p>
+                            </div>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0" onClick={() => removeSpkProduct(p.id)}>
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         );
                       })}
+                      <div className="flex justify-between text-xs pt-1.5 border-t">
+                        <span className="text-muted-foreground">Subtotal productos</span>
+                        <span className="font-semibold">
+                          {(primaryProduct?.currency === 'CRC' ? '₡' : '$')}{productsBaseSum.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium flex items-center gap-1.5">
-                    <UserCheck className="h-3.5 w-3.5" /> Profesor
-                  </Label>
-                  <Select value={spkSelectedTeacherId || '_pending'} onValueChange={v => setSpkSelectedTeacherId(v)}>
-                    <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Seleccionar profesor" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_pending">Por definir</SelectItem>
-                      {compatibleTeachers.map(t => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name}
-                        </SelectItem>
-                      ))}
-                      {compatibleTeachers.length === 0 && teachers.length > 0 && (
-                        <SelectItem value="_none" disabled className="text-muted-foreground text-xs">
-                          No hay profesores compatibles con este producto
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {compatibleTeachers.length === 0 && teachers.length > 0 && (
-                    <p className="text-[10px] text-amber-600">Ningún profesor configurado puede impartir este producto. Puedes asignar "Por definir".</p>
-                  )}
-                </div>
               </div>
             )}
 
-            {/* Payment step */}
             {step === paymentStepIdx && (() => {
               const symbol = currency === 'CRC' ? '₡' : '$';
               const productPriceLocked = selectedProductObj?.price != null && !selectedSchemeId;
@@ -1437,12 +1328,12 @@ export const RegisterSaleDialog = ({
                       <Label className="text-xs font-medium">Monto base</Label>
                       <Input
                         type="number"
-                        value={amount}
-                        onChange={e => !productPriceLocked && setAmount(e.target.value)}
-                        readOnly={productPriceLocked}
-                        className={cn("h-9 text-sm", productPriceLocked && "bg-muted/40 cursor-not-allowed")}
+                        value={productsBaseSum > 0 ? String(productsBaseSum) : amount}
+                        onChange={e => productsBaseSum === 0 && setAmount(e.target.value)}
+                        readOnly={productsBaseSum > 0}
+                        className={cn("h-9 text-sm", productsBaseSum > 0 && "bg-muted/40 cursor-not-allowed")}
                       />
-                      {productPriceLocked && <p className="text-[10px] text-muted-foreground">Tomado del producto seleccionado</p>}
+                      {productsBaseSum > 0 && <p className="text-[10px] text-muted-foreground">Suma de los productos seleccionados</p>}
                     </div>
 
                     <div className="flex items-center justify-between p-2.5 rounded-lg border">
@@ -1497,8 +1388,20 @@ export const RegisterSaleDialog = ({
                       <h4 className="text-xs font-semibold flex items-center gap-1.5"><Receipt className="h-3.5 w-3.5" /> Resumen</h4>
                       <div className="space-y-1 text-xs">
                         {selectedStudent && <div className="text-muted-foreground truncate">{selectedStudent.full_name}</div>}
-                        {product && <div className="text-muted-foreground truncate">{product}</div>}
-                        <div className="flex justify-between"><span className="text-muted-foreground">Precio base</span><span>{symbol}{baseAmount.toLocaleString()}</span></div>
+                        {spkSelectedProducts.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {spkSelectedProducts.map(p => {
+                              const sym = p.currency === 'CRC' ? '₡' : '$';
+                              return (
+                                <div key={p.id} className="flex justify-between gap-2">
+                                  <span className="truncate text-muted-foreground">{p.name}</span>
+                                  <span className="shrink-0">{sym}{Number(p.price || 0).toLocaleString()}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : product && <div className="text-muted-foreground truncate">{product}</div>}
+                        <div className="flex justify-between border-t pt-1 mt-1"><span className="text-muted-foreground">Subtotal</span><span>{symbol}{baseAmount.toLocaleString()}</span></div>
                         {discountAmt > 0 && <div className="flex justify-between text-rose-600 dark:text-rose-400"><span>Descuento</span><span>-{symbol}{discountAmt.toLocaleString()}</span></div>}
                         {spkApplyTax && <div className="flex justify-between text-muted-foreground"><span>IVA ({taxRate}%)</span><span>+{symbol}{taxCalc.toLocaleString()}</span></div>}
                         <div className="flex justify-between border-t pt-1.5 mt-1.5 text-sm font-semibold"><span>Total</span><span>{symbol}{totalCalc.toLocaleString()}</span></div>
