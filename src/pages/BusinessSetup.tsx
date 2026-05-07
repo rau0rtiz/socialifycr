@@ -355,11 +355,13 @@ const BusinessSetup = () => {
     team: renderTeam,
     connections: renderConnections,
     features: renderFeatures,
+    stories: () => <StoriesArchiveBrowser clientId={selectedClient.id} />,
   };
 
   const SECTIONS = STATIC_SECTIONS.filter(s => {
     if ((s as any).speakUpOnly && !isSpkUp) return false;
     if ((s as any).tissueOnly && !isTissue) return false;
+    if ((s as any).almaBenditaOnly && !isAlmaBendita) return false;
     if ((s as any).tissueHidden && isTissue) return false;
     return true;
   });
