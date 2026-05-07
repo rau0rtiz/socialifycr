@@ -116,6 +116,8 @@ export const useOrders = (clientId: string | null) => {
           story_id: it.story_id || null,
           product_name: it.product_name || null,
           garment_size: it.garment_size || null,
+          brand: it.brand || null,
+          garment_type: it.garment_type || null,
           quantity: it.quantity ?? 1,
           unit_price: it.unit_price,
           subtotal: it.subtotal,
