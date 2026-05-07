@@ -6,8 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Package, MapPin, Search, Trash2, Building2, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Plus, Package, MapPin, Search, Trash2, Building2 } from 'lucide-react';
 import { useBrand } from '@/contexts/BrandContext';
 import { useOrders } from '@/hooks/use-orders';
 import { OrderWizardDialog } from '@/components/ventas/orders/OrderWizardDialog';
@@ -20,27 +19,23 @@ import { toast } from 'sonner';
 
 const STATUSES = [
   { value: 'all', label: 'Todas' },
-  { value: 'pending', label: 'Pendiente' },
   { value: 'paid', label: 'Pagada' },
   { value: 'shipped', label: 'Enviada' },
-  { value: 'delivered', label: 'Entregada' },
   { value: 'cancelled', label: 'Cancelada' },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
   paid: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
   shipped: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
-  delivered: 'bg-green-500/10 text-green-600 border-green-500/20',
   cancelled: 'bg-red-500/10 text-red-600 border-red-500/20',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pendiente', paid: 'Pagada', shipped: 'Enviada', delivered: 'Entregada', cancelled: 'Cancelada',
+  paid: 'Pagada', shipped: 'Enviada', cancelled: 'Cancelada',
 };
 
 const Ordenes = () => {
-  const navigate = useNavigate();
+  
   const { selectedClient, clientsLoading } = useBrand();
   const clientId = selectedClient?.id || null;
   const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
@@ -124,15 +119,12 @@ const Ordenes = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
+          <TabsList className="grid grid-cols-2 w-full max-w-xs">
             <TabsTrigger value="ordenes" className="text-xs sm:text-sm">
               <Package className="h-3.5 w-3.5 mr-1.5" />Órdenes
             </TabsTrigger>
             <TabsTrigger value="resumen" className="text-xs sm:text-sm">
               Resumen
-            </TabsTrigger>
-            <TabsTrigger value="clientes" className="text-xs sm:text-sm">
-              <Users className="h-3.5 w-3.5 mr-1.5" />Clientes
             </TabsTrigger>
           </TabsList>
 
@@ -153,14 +145,14 @@ const Ordenes = () => {
               </Card>
               <Card>
                 <CardContent className="p-3">
-                  <div className="text-xs text-muted-foreground">Pendientes</div>
-                  <div className="text-2xl font-bold text-yellow-600">{counts.pending || 0}</div>
+                  <div className="text-xs text-muted-foreground">Pagadas</div>
+                  <div className="text-2xl font-bold text-blue-600">{counts.paid || 0}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-3">
-                  <div className="text-xs text-muted-foreground">Por enviar (pagadas)</div>
-                  <div className="text-2xl font-bold text-blue-600">{counts.paid || 0}</div>
+                  <div className="text-xs text-muted-foreground">Enviadas</div>
+                  <div className="text-2xl font-bold text-purple-600">{counts.shipped || 0}</div>
                 </CardContent>
               </Card>
             </div>
@@ -169,7 +161,7 @@ const Ordenes = () => {
             <Card>
               <CardContent className="p-3 space-y-3">
                 <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-                  <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
+                  <TabsList className="grid grid-cols-4 w-full h-auto">
                     {STATUSES.map(s => (
                       <TabsTrigger key={s.value} value={s.value} className="text-xs flex flex-col py-1.5">
                         <span>{s.label}</span>
@@ -288,19 +280,6 @@ const Ordenes = () => {
             <RecentSalesTicker clientId={selectedClient.id} dateRange={summaryRange} />
           </TabsContent>
 
-          <TabsContent value="clientes" className="space-y-4 mt-4">
-            <Card>
-              <CardContent className="p-6 text-center space-y-3">
-                <Users className="h-10 w-10 text-muted-foreground mx-auto" />
-                <div className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Administra la base de datos de clientes — historial de compras, direcciones y contacto.
-                </div>
-                <Button onClick={() => navigate('/clientes')} variant="default">
-                  Abrir Clientes
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
 
