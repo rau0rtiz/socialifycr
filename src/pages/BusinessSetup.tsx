@@ -13,15 +13,16 @@ import { TissueInventoryView } from '@/components/inventory/TissueInventoryView'
 import { TeachersManager } from '@/components/ventas/TeachersManager';
 import { useClientFeatures } from '@/hooks/use-client-features';
 import { ChecklistItemsEditor } from '@/components/business-setup/ChecklistItemsEditor';
+import { StoriesArchiveBrowser } from '@/components/business-setup/StoriesArchiveBrowser';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
-import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, ToggleRight, GraduationCap, UsersRound } from 'lucide-react';
+import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, ToggleRight, GraduationCap, UsersRound, Archive } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Section = null | 'brand' | 'products' | 'inventory' | 'team' | 'connections' | 'features' | 'teachers' | 'groups';
+type Section = null | 'brand' | 'products' | 'inventory' | 'team' | 'connections' | 'features' | 'teachers' | 'groups' | 'stories';
 
 const STATIC_SECTIONS = [
   {
@@ -92,12 +93,22 @@ const STATIC_SECTIONS = [
     bgColor: 'bg-pink-500/10',
     tissueHidden: true,
   },
+  {
+    key: 'stories' as const,
+    title: 'Base de Historias',
+    description: 'Archivo permanente de historias con thumbnails',
+    icon: Archive,
+    color: 'text-rose-500',
+    bgColor: 'bg-rose-500/10',
+    almaBenditaOnly: true,
+  },
 ];
 
 const BusinessSetup = () => {
   const { selectedClient, clientsLoading } = useBrand();
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const isTissue = selectedClient?.name?.toLowerCase().includes('tissue');
+  const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<Section>(null);
   const { flags: featureFlags, updateFlag, updateChecklistItems } = useClientFeatures(selectedClient?.id || null);
