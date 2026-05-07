@@ -1036,8 +1036,8 @@ export const RegisterSaleDialog = ({
 
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden p-0">
-          <div className="px-6 pt-6 pb-2 space-y-3">
+        <DialogContent className={cn("max-h-[95vh] sm:max-h-[90vh] overflow-hidden p-0 w-[calc(100vw-1rem)]", step === paymentStepIdx ? "sm:max-w-3xl" : "sm:max-w-md")}>
+          <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-2 space-y-3">
             <DialogHeader className="space-y-0.5">
               <DialogTitle className="text-base text-center">Registrar Venta</DialogTitle>
               <DialogDescription className="text-center text-xs">
