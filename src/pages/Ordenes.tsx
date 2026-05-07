@@ -13,6 +13,11 @@ import { OrderWizardDialog } from '@/components/ventas/orders/OrderWizardDialog'
 import { SalesGoalBar } from '@/components/ventas/SalesGoalBar';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
+import { SalesByBrandChart } from '@/components/ventas/SalesByBrandChart';
+import { SalesBySizeChart } from '@/components/ventas/SalesBySizeChart';
+import { SalesByProductChart } from '@/components/ventas/SalesByProductChart';
+import { useSalesTracking } from '@/hooks/use-sales-tracking';
+import { useClientProducts } from '@/hooks/use-client-products';
 import { startOfMonth, endOfDay, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
