@@ -318,16 +318,20 @@ export const ProductFormDialog = ({
               </Select>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-1">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Precio de venta <span className="text-destructive">*</span></Label>
+                <Input type="number" min={0} value={price} onChange={e => setPrice(e.target.value)} placeholder="0" className="mt-1.5" />
+              </div>
+              <div>
                 <Label className="text-xs">Costo base</Label>
                 <Input type="number" min={0} value={cost} onChange={e => setCost(e.target.value)} placeholder="0" className="mt-1.5" />
               </div>
-              <div className="col-span-1">
+              <div>
                 <Label className="text-xs">Impuesto (%)</Label>
                 <Input type="number" min={0} step="0.01" value={taxRate} onChange={e => setTaxRate(e.target.value)} placeholder="2" className="mt-1.5" />
               </div>
-              <div className="col-span-1">
+              <div>
                 <Label className="text-xs">Moneda</Label>
                 <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
@@ -338,6 +342,13 @@ export const ProductFormDialog = ({
                 </Select>
               </div>
             </div>
+
+            {price && cost && parseFloat(cost) > 0 && parseFloat(price) > 0 && (
+              <div className="text-[11px] text-muted-foreground flex gap-3 px-1">
+                <span>Margen: <span className="font-semibold text-emerald-600">{Math.round(((parseFloat(price) - parseFloat(cost)) / parseFloat(price)) * 100)}%</span></span>
+                <span>Ganancia: <span className="font-semibold text-foreground">{formatCurrency(parseFloat(price) - parseFloat(cost), currency)}</span></span>
+              </div>
+            )}
 
             {editing && (
               <>
