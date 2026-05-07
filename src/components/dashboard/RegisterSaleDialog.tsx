@@ -160,6 +160,10 @@ export const RegisterSaleDialog = ({
   const [spkDiscountReason, setSpkDiscountReason] = useState('');
   const [spkPaymentDay, setSpkPaymentDay] = useState('');
   const [spkSelectedGroupId, setSpkSelectedGroupId] = useState<string | null>(null);
+  // Multi-product selection (Speak Up)
+  const [spkSelectedProductIds, setSpkSelectedProductIds] = useState<string[]>([]);
+  const [spkLineFilter, setSpkLineFilter] = useState<string>('_all');
+  const [spkPickProductId, setSpkPickProductId] = useState<string>('');
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closersBase = [] } = useClientClosers(clientId || null);
   const addCloserMutation = useAddClientCloser(clientId || null);
