@@ -239,6 +239,9 @@ export const Sidebar = () => {
                     <SidebarMenuButton asChild isActive={active}>
                       <a 
                         href={item.url}
+                        onMouseEnter={() => prefetchRoute(item.url)}
+                        onFocus={() => prefetchRoute(item.url)}
+                        onTouchStart={() => prefetchRoute(item.url)}
                         onClick={(e) => {
                           e.preventDefault();
                           transitionNavigate(item.url);
