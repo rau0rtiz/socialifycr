@@ -123,141 +123,185 @@ const Ordenes = () => {
           </Button>
         </div>
 
-        {/* Summary KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card>
-            <CardContent className="p-3">
-              <div className="text-xs text-muted-foreground">Órdenes ({STATUSES.find(s => s.value === statusFilter)?.label})</div>
-              <div className="text-2xl font-bold">{filtered.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="text-xs text-muted-foreground">Ingresos (sin canceladas)</div>
-              <div className="text-2xl font-bold">₡{totalRevenue.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="text-xs text-muted-foreground">Pendientes</div>
-              <div className="text-2xl font-bold text-yellow-600">{counts.pending || 0}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="text-xs text-muted-foreground">Por enviar (pagadas)</div>
-              <div className="text-2xl font-bold text-blue-600">{counts.paid || 0}</div>
-            </CardContent>
-          </Card>
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsTrigger value="ordenes" className="text-xs sm:text-sm">
+              <Package className="h-3.5 w-3.5 mr-1.5" />Órdenes
+            </TabsTrigger>
+            <TabsTrigger value="resumen" className="text-xs sm:text-sm">
+              Resumen
+            </TabsTrigger>
+            <TabsTrigger value="clientes" className="text-xs sm:text-sm">
+              <Users className="h-3.5 w-3.5 mr-1.5" />Clientes
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Filters */}
-        <Card>
-          <CardContent className="p-3 space-y-3">
-            <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-              <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
-                {STATUSES.map(s => (
-                  <TabsTrigger key={s.value} value={s.value} className="text-xs flex flex-col py-1.5">
-                    <span>{s.label}</span>
-                    <span className="text-[10px] text-muted-foreground">({counts[s.value] || 0})</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nombre o teléfono..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
+          <TabsContent value="ordenes" className="space-y-4 md:space-y-6 mt-4">
+            {/* Summary KPIs */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Card>
+                <CardContent className="p-3">
+                  <div className="text-xs text-muted-foreground">Órdenes ({STATUSES.find(s => s.value === statusFilter)?.label})</div>
+                  <div className="text-2xl font-bold">{filtered.length}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-3">
+                  <div className="text-xs text-muted-foreground">Ingresos (sin canceladas)</div>
+                  <div className="text-2xl font-bold">₡{totalRevenue.toLocaleString()}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-3">
+                  <div className="text-xs text-muted-foreground">Pendientes</div>
+                  <div className="text-2xl font-bold text-yellow-600">{counts.pending || 0}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-3">
+                  <div className="text-xs text-muted-foreground">Por enviar (pagadas)</div>
+                  <div className="text-2xl font-bold text-blue-600">{counts.paid || 0}</div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Orders list */}
-        <Card>
-          <CardContent className="p-3">
-            {isLoading ? (
-              <div className="text-center text-sm text-muted-foreground py-10">Cargando órdenes...</div>
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                <Package className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
-                <div className="text-sm text-muted-foreground">No hay órdenes en este filtro.</div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filtered.map(o => (
-                  <div key={o.id} className="border rounded-lg p-3 hover:bg-accent/40 transition-colors">
-                    <div className="flex items-start justify-between gap-3 flex-wrap">
-                      <div className="flex-1 min-w-[200px]">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm">{o.customer_name || 'Sin nombre'}</span>
-                          {o.customer_phone && (
-                            <span className="text-xs text-muted-foreground">{o.customer_phone}</span>
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            · {format(new Date(o.order_date), 'dd MMM yyyy', { locale: es })}
-                          </span>
-                        </div>
-                        {o.shipping_address && (
-                          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                            <MapPin className="h-3 w-3" />
-                            {o.shipping_address.state}, {o.shipping_address.city}, {o.shipping_address.district}
-                            {o.shipping_address.address_line_1 && ` — ${o.shipping_address.address_line_1}`}
-                          </div>
-                        )}
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {(o.items?.length || 0)} item(s) · {o.payment_method || '—'}
-                          {o.items && o.items.length > 0 && (
-                            <span className="ml-1">
-                              · {o.items.slice(0, 3).map(i => i.product_name).filter(Boolean).join(', ')}
-                              {o.items.length > 3 && '…'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
-                          <div className="font-bold">{o.currency} {Number(o.total_amount).toLocaleString()}</div>
-                        </div>
-                        <Select
-                          value={o.status}
-                          onValueChange={(v) => {
-                            updateOrderStatus.mutate({ orderId: o.id, status: v });
-                            toast.success(`Estado: ${STATUS_LABELS[v]}`);
-                          }}
-                        >
-                          <SelectTrigger className={`h-8 w-32 text-xs ${STATUS_COLORS[o.status] || ''}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STATUSES.filter(s => s.value !== 'all').map(s => (
-                              <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            if (confirm('¿Eliminar esta orden y sus ventas asociadas?')) {
-                              deleteOrder.mutate(o.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
+            {/* Filters */}
+            <Card>
+              <CardContent className="p-3 space-y-3">
+                <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+                  <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
+                    {STATUSES.map(s => (
+                      <TabsTrigger key={s.value} value={s.value} className="text-xs flex flex-col py-1.5">
+                        <span>{s.label}</span>
+                        <span className="text-[10px] text-muted-foreground">({counts[s.value] || 0})</span>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nombre o teléfono..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Orders list */}
+            <Card>
+              <CardContent className="p-3">
+                {isLoading ? (
+                  <div className="text-center text-sm text-muted-foreground py-10">Cargando órdenes...</div>
+                ) : filtered.length === 0 ? (
+                  <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                    <Package className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+                    <div className="text-sm text-muted-foreground">No hay órdenes en este filtro.</div>
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filtered.map(o => (
+                      <div key={o.id} className="border rounded-lg p-3 hover:bg-accent/40 transition-colors">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="flex-1 min-w-[200px]">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-sm">{o.customer_name || 'Sin nombre'}</span>
+                              {o.customer_phone && (
+                                <span className="text-xs text-muted-foreground">{o.customer_phone}</span>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                · {format(new Date(o.order_date), 'dd MMM yyyy', { locale: es })}
+                              </span>
+                            </div>
+                            {o.shipping_address && (
+                              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                <MapPin className="h-3 w-3" />
+                                {o.shipping_address.state}, {o.shipping_address.city}, {o.shipping_address.district}
+                                {o.shipping_address.address_line_1 && ` — ${o.shipping_address.address_line_1}`}
+                              </div>
+                            )}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {(o.items?.length || 0)} item(s) · {o.payment_method || '—'}
+                              {o.items && o.items.length > 0 && (
+                                <span className="ml-1">
+                                  · {o.items.slice(0, 3).map(i => i.product_name).filter(Boolean).join(', ')}
+                                  {o.items.length > 3 && '…'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right">
+                              <div className="font-bold">{o.currency} {Number(o.total_amount).toLocaleString()}</div>
+                            </div>
+                            <Select
+                              value={o.status}
+                              onValueChange={(v) => {
+                                updateOrderStatus.mutate({ orderId: o.id, status: v });
+                                toast.success(`Estado: ${STATUS_LABELS[v]}`);
+                              }}
+                            >
+                              <SelectTrigger className={`h-8 w-32 text-xs ${STATUS_COLORS[o.status] || ''}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {STATUSES.filter(s => s.value !== 'all').map(s => (
+                                  <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                if (confirm('¿Eliminar esta orden y sus ventas asociadas?')) {
+                                  deleteOrder.mutate(o.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="resumen" className="space-y-4 md:space-y-6 mt-4">
+            <SalesGoalBar
+              clientId={selectedClient.id}
+              currentSalesUSD={0}
+              currentSalesCRC={monthSalesCRC}
+              primaryColor={selectedClient.primary_color || undefined}
+              accentColor={selectedClient.accent_color || undefined}
+            />
+            {isAlmaBendita && (
+              <StoryRevenueTracker clientId={selectedClient.id} dateRange={summaryRange} />
             )}
-          </CardContent>
-        </Card>
+            <RecentSalesTicker clientId={selectedClient.id} dateRange={summaryRange} />
+          </TabsContent>
+
+          <TabsContent value="clientes" className="space-y-4 mt-4">
+            <Card>
+              <CardContent className="p-6 text-center space-y-3">
+                <Users className="h-10 w-10 text-muted-foreground mx-auto" />
+                <div className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Administra la base de datos de clientes — historial de compras, direcciones y contacto.
+                </div>
+                <Button onClick={() => navigate('/clientes')} variant="default">
+                  Abrir Clientes
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       <OrderWizardDialog open={wizardOpen} onOpenChange={setWizardOpen} clientId={selectedClient.id} />
