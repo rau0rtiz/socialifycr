@@ -20,21 +20,19 @@ import { toast } from 'sonner';
 
 const STATUSES = [
   { value: 'all', label: 'Todas' },
-  { value: 'reserved', label: 'Apartada' },
   { value: 'paid', label: 'Pagada' },
   { value: 'shipped', label: 'Enviada' },
   { value: 'cancelled', label: 'Cancelada' },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  reserved: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
   paid: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
   shipped: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
   cancelled: 'bg-red-500/10 text-red-600 border-red-500/20',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  reserved: 'Apartada', paid: 'Pagada', shipped: 'Enviada', cancelled: 'Cancelada',
+  paid: 'Pagada', shipped: 'Enviada', cancelled: 'Cancelada',
 };
 
 const Ordenes = () => {
