@@ -460,6 +460,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
   const { data: allSchemes } = useClientPaymentSchemes(clientId);
   const { selectedClient } = useBrand();
   const isTissue = !!selectedClient?.name?.toLowerCase().includes('tissue');
+  const isSpeakUpMain = !!selectedClient?.name?.toLowerCase().includes('speak up');
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ClientProduct | null>(null);
