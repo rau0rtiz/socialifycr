@@ -146,14 +146,14 @@ const Ordenes = () => {
               </Card>
               <Card>
                 <CardContent className="p-3">
-                  <div className="text-xs text-muted-foreground">Pendientes</div>
-                  <div className="text-2xl font-bold text-yellow-600">{counts.pending || 0}</div>
+                  <div className="text-xs text-muted-foreground">Pagadas</div>
+                  <div className="text-2xl font-bold text-blue-600">{counts.paid || 0}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-3">
-                  <div className="text-xs text-muted-foreground">Por enviar (pagadas)</div>
-                  <div className="text-2xl font-bold text-blue-600">{counts.paid || 0}</div>
+                  <div className="text-xs text-muted-foreground">Enviadas</div>
+                  <div className="text-2xl font-bold text-purple-600">{counts.shipped || 0}</div>
                 </CardContent>
               </Card>
             </div>
