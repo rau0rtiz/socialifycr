@@ -68,6 +68,7 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
   const [contactPopoverOpen, setContactPopoverOpen] = useState(false);
   const [shippingAddress, setShippingAddress] = useState<CustomerAddress | null>(null);
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
+  const [addressPickerOpen, setAddressPickerOpen] = useState(false);
 
   // Items
   const [items, setItems] = useState<DraftItem[]>([]);
