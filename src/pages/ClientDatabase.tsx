@@ -139,7 +139,8 @@ const ClientDatabase = () => {
       id_number: sIdNumber || null, age, gender: sGender || null, notes: sNotes || null,
       guardian_name: sGuardianName || null, guardian_phone: sGuardianPhone || null,
       guardian_id_number: sGuardianId || null, guardian_email: sGuardianEmail || null,
-    };
+      ...(isBillingEmpty(sBilling) ? { billing_info: null } : { billing_info: sBilling }),
+    } as any;
     try {
       if (editingStudent) {
         await updateStudent.mutateAsync({ id: editingStudent.id, ...input });
