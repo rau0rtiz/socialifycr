@@ -692,7 +692,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                             <span className="text-muted-foreground">costo</span>
                           </div>
                         )}
-                        {detailProduct.estimated_duration_min != null && (
+                        {detailProduct.estimated_duration_min != null && !isSpeakUpMain && (
                           <div className="flex items-center gap-1 text-xs">
                             <Clock className="h-3 w-3 text-muted-foreground" />
                             <span className="font-semibold text-foreground">{detailProduct.estimated_duration_min} min</span>
