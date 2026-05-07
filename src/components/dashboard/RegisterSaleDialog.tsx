@@ -243,6 +243,9 @@ export const RegisterSaleDialog = ({
     setSpkGuardianEmail('');
     setSpkSelectedTeacherId(null);
     setSpkAssignedSchedule([]);
+    setSpkSelectedProductIds([]);
+    setSpkLineFilter('_all');
+    setSpkPickProductId('');
     setSpkApplyTax(false);
     setSpkDiscountAmount('');
     setSpkDiscountReason('');
