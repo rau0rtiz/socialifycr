@@ -33,6 +33,8 @@ interface DraftItem {
   story_thumb?: string | null;
   product_name: string;
   garment_size?: string;
+  brand?: string;
+  garment_type?: string;
   quantity: number;
   unit_price: number;
   notes?: string;
