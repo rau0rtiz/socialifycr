@@ -1348,129 +1348,162 @@ export const RegisterSaleDialog = ({
             )}
 
             {/* Payment step */}
-            {step === paymentStepIdx && (
-              <div className="space-y-3 py-3">
-                {/* Amount */}
-                <div className="flex gap-2">
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs font-medium">Monto base *</Label>
-                    <Input type="number" placeholder="0" value={amount} onChange={e => setAmount(e.target.value)} className="h-10 text-sm" autoFocus />
+            {step === paymentStepIdx && (() => {
+              const symbol = currency === 'CRC' ? '₡' : '$';
+              const productPriceLocked = selectedProductObj?.price != null && !selectedSchemeId;
+              const depositAmount = parseFloat(amount || '0') || 0;
+              const balance = hasDeposit ? Math.max(totalCalc - depositAmount, 0) : 0;
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4 py-3">
+                  <div className="space-y-3 min-w-0">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium flex items-center gap-1.5"><UserCheck className="h-3.5 w-3.5" /> Vendedor</Label>
+                      {showNewCloser ? (
+                        <div className="flex gap-2">
+                          <Input autoFocus placeholder="Nombre" value={newCloserName} onChange={e => setNewCloserName(e.target.value)} className="h-9 text-sm flex-1 min-w-0" />
+                          <Button size="sm" className="h-9 text-xs shrink-0" onClick={async () => {
+                            if (!newCloserName.trim()) return;
+                            try { const n = await addCloserMutation.mutateAsync(newCloserName.trim()); setCloserName(n); setShowNewCloser(false); setNewCloserName(''); toast.success('Vendedor agregado'); } catch (err: any) { toast.error(err.message); }
+                          }}>OK</Button>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => { setShowNewCloser(false); setNewCloserName(''); }}><X className="h-3.5 w-3.5" /></Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
+                            <SelectTrigger className="h-9 text-sm flex-1 min-w-0"><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="_none" className="text-xs">Sin asignar</SelectItem>
+                              {closerName && !closers.some(c => c.fullName === closerName) && <SelectItem value={closerName} className="text-xs">{closerName}</SelectItem>}
+                              {closers.map(c => <SelectItem key={c.userId} value={c.fullName} className="text-xs">{c.fullName}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Button variant="outline" size="sm" className="h-9 text-xs shrink-0" onClick={() => setShowNewCloser(true)}><Plus className="h-3.5 w-3.5 mr-1" /> Nuevo</Button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" /> Método de pago *</Label>
+                      <Select value={paymentMethod || '_none'} onValueChange={v => setPaymentMethod(v === '_none' ? '' : v)}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Seleccionar método" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none" className="text-xs">Sin especificar</SelectItem>
+                          <SelectItem value="efectivo">Efectivo</SelectItem>
+                          <SelectItem value="sinpe">SINPE</SelectItem>
+                          <SelectItem value="transferencia_bancaria">Transferencia bancaria</SelectItem>
+                          <SelectItem value="stripe">Stripe</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Fuente de la venta *</Label>
+                      <Select value={source || ''} onValueChange={v => setSource(v)}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="¿De dónde vino?" /></SelectTrigger>
+                        <SelectContent>
+                          {SOURCE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">Fecha</Label>
+                        <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">Moneda</Label>
+                        <Select value={currency} onValueChange={v => setCurrency(v as 'CRC' | 'USD')}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="CRC">₡ CRC</SelectItem>
+                            <SelectItem value="USD">$ USD</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Monto base</Label>
+                      <Input
+                        type="number"
+                        value={amount}
+                        onChange={e => !productPriceLocked && setAmount(e.target.value)}
+                        readOnly={productPriceLocked}
+                        className={cn("h-9 text-sm", productPriceLocked && "bg-muted/40 cursor-not-allowed")}
+                      />
+                      {productPriceLocked && <p className="text-[10px] text-muted-foreground">Tomado del producto seleccionado</p>}
+                    </div>
+
+                    <div className="flex items-center justify-between p-2.5 rounded-lg border">
+                      <div className="flex items-center gap-2">
+                        <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-xs font-medium">Aplicar IVA ({taxRate}%)</span>
+                      </div>
+                      <Switch checked={spkApplyTax} onCheckedChange={setSpkApplyTax} />
+                    </div>
+
+                    <div className="rounded-lg border p-2.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium flex items-center gap-1.5"><Percent className="h-3.5 w-3.5" /> Descuento</span>
+                        <Switch checked={!!spkDiscountAmount && parseFloat(spkDiscountAmount) > 0} onCheckedChange={(v) => { if (!v) { setSpkDiscountAmount(''); setSpkDiscountReason(''); } else { setSpkDiscountAmount('0'); } }} />
+                      </div>
+                      {!!spkDiscountAmount && (
+                        <>
+                          <Input type="number" placeholder="Monto" min={0} value={spkDiscountAmount} onChange={e => setSpkDiscountAmount(e.target.value)} className="h-9 text-xs" />
+                          <Textarea placeholder="Razón del descuento (obligatorio)" value={spkDiscountReason} onChange={e => setSpkDiscountReason(e.target.value)} rows={2} className="text-xs" />
+                        </>
+                      )}
+                    </div>
+
+                    <div className="rounded-lg border p-2.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium flex items-center gap-1.5"><Banknote className="h-3.5 w-3.5" /> Es un abono</span>
+                        <Switch checked={hasDeposit} onCheckedChange={(v) => { setHasDeposit(v); if (!v) setAmount(String(selectedProductObj?.price ?? totalCalc)); else setAmount(''); }} />
+                      </div>
+                      {hasDeposit && (
+                        <>
+                          <Input type="number" placeholder="Monto abonado hoy" value={amount} onChange={e => setAmount(e.target.value)} className="h-9 text-xs" />
+                          <p className="text-[10px] text-muted-foreground">Las fechas del saldo se programan luego en Cobros.</p>
+                        </>
+                      )}
+                    </div>
+
+                    {selectedProductObj?.is_recurring && !hasDeposit && (
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium">Día de pago mensual</Label>
+                        <Input type="number" min={1} max={31} placeholder="Ej: 15" value={spkPaymentDay} onChange={e => setSpkPaymentDay(e.target.value)} className="h-9 text-sm" />
+                      </div>
+                    )}
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Notas adicionales</Label>
+                      <Textarea placeholder="Opcional" value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="text-sm" />
+                    </div>
                   </div>
-                  <div className="w-24 space-y-1">
-                    <Label className="text-xs font-medium">Moneda</Label>
-                    <Select value={currency} onValueChange={v => setCurrency(v as 'CRC' | 'USD')}>
-                      <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="CRC">₡ CRC</SelectItem>
-                        <SelectItem value="USD">$ USD</SelectItem>
-                      </SelectContent>
-                    </Select>
+
+                  <div className="md:sticky md:top-0 self-start">
+                    <Card className="p-3 space-y-2 bg-muted/30">
+                      <h4 className="text-xs font-semibold flex items-center gap-1.5"><Receipt className="h-3.5 w-3.5" /> Resumen</h4>
+                      <div className="space-y-1 text-xs">
+                        {selectedStudent && <div className="text-muted-foreground truncate">{selectedStudent.full_name}</div>}
+                        {product && <div className="text-muted-foreground truncate">{product}</div>}
+                        <div className="flex justify-between"><span className="text-muted-foreground">Precio base</span><span>{symbol}{baseAmount.toLocaleString()}</span></div>
+                        {discountAmt > 0 && <div className="flex justify-between text-rose-600 dark:text-rose-400"><span>Descuento</span><span>-{symbol}{discountAmt.toLocaleString()}</span></div>}
+                        {spkApplyTax && <div className="flex justify-between text-muted-foreground"><span>IVA ({taxRate}%)</span><span>+{symbol}{taxCalc.toLocaleString()}</span></div>}
+                        <div className="flex justify-between border-t pt-1.5 mt-1.5 text-sm font-semibold"><span>Total</span><span>{symbol}{totalCalc.toLocaleString()}</span></div>
+                        {hasDeposit && depositAmount > 0 && (
+                          <>
+                            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 pt-1"><span>Abono hoy</span><span>{symbol}{depositAmount.toLocaleString()}</span></div>
+                            <div className="flex justify-between text-amber-600 dark:text-amber-400"><span>Saldo</span><span>{symbol}{balance.toLocaleString()}</span></div>
+                          </>
+                        )}
+                      </div>
+                    </Card>
                   </div>
                 </div>
-
-                {/* IVA */}
-                <div className="flex items-center justify-between p-2.5 rounded-lg border border-border/50">
-                  <div className="flex items-center gap-2">
-                    <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs font-medium">Aplicar IVA ({taxRate}%)</span>
-                  </div>
-                  <Switch checked={spkApplyTax} onCheckedChange={setSpkApplyTax} />
-                </div>
-
-                {/* Discount */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium flex items-center gap-1.5">
-                    <Percent className="h-3.5 w-3.5" /> Descuento ({currency === 'CRC' ? 'colones' : 'dólares'})
-                  </Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input type="number" placeholder="0" min={0} value={spkDiscountAmount} onChange={e => setSpkDiscountAmount(e.target.value)} className="h-9 text-sm" />
-                    <Input placeholder="Razón del descuento" value={spkDiscountReason} onChange={e => setSpkDiscountReason(e.target.value)} className="h-9 text-sm" disabled={!spkDiscountAmount || parseFloat(spkDiscountAmount) <= 0} />
-                  </div>
-                </div>
-
-                {/* Amount summary */}
-                {baseAmount > 0 && (
-                  <div className="p-3 rounded-lg bg-muted/30 border border-border/50 space-y-1">
-                    <div className="flex justify-between text-xs"><span>Subtotal</span><span>{currency === 'CRC' ? '₡' : '$'}{subtotalCalc.toLocaleString()}</span></div>
-                    {spkApplyTax && <div className="flex justify-between text-xs text-muted-foreground"><span>IVA ({taxRate}%)</span><span>+{currency === 'CRC' ? '₡' : '$'}{taxCalc.toLocaleString()}</span></div>}
-                    {discountAmt > 0 && <div className="flex justify-between text-xs text-red-500"><span>Descuento</span><span>-{currency === 'CRC' ? '₡' : '$'}{discountAmt.toLocaleString()}</span></div>}
-                    <div className="flex justify-between text-sm font-bold border-t pt-1 mt-1"><span>Total</span><span>{currency === 'CRC' ? '₡' : '$'}{totalCalc.toLocaleString()}</span></div>
-                  </div>
-                )}
-
-                {/* Payment day for recurring */}
-                {selectedProductObj?.is_recurring && (
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Día de pago mensual</Label>
-                    <Input type="number" min={1} max={31} placeholder="Ej: 15" value={spkPaymentDay} onChange={e => setSpkPaymentDay(e.target.value)} className="h-9 text-sm" />
-                    <p className="text-[10px] text-muted-foreground">Se generarán cobros recurrentes mensuales</p>
-                  </div>
-                )}
-
-                {/* Installments for scheme */}
-                {selectedSchemeId && numInstallments > 1 && (
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px]">Cuotas pagadas</Label>
-                    <Select value={String(installmentsPaid)} onValueChange={v => { setInstallmentsPaid(parseInt(v)); }}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: numInstallments }, (_, i) => (
-                          <SelectItem key={i + 1} value={String(i + 1)}>{i + 1} de {numInstallments}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Payment method */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Método de pago</Label>
-                  <Select value={paymentMethod || '_none'} onValueChange={v => setPaymentMethod(v === '_none' ? '' : v)}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Sin especificar" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Sin especificar</SelectItem>
-                      <SelectItem value="efectivo">Efectivo</SelectItem>
-                      <SelectItem value="sinpe">SINPE</SelectItem>
-                      <SelectItem value="transferencia_bancaria">Transferencia</SelectItem>
-                      {!isTissue && <SelectItem value="stripe">Stripe</SelectItem>}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Source */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Fuente *</Label>
-                  <Select value={source || 'organic'} onValueChange={v => setSource(v)}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {(isTissue ? TISSUE_SOURCE_OPTIONS : SOURCE_OPTIONS).map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Date & Notes */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Fecha</Label>
-                    <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="h-9 text-sm" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Vendedor</Label>
-                    <Select value={closerName || '_none'} onValueChange={v => setCloserName(v === '_none' ? '' : v)}>
-                      <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Opcional" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none">Sin asignar</SelectItem>
-                        {closers.map(c => <SelectItem key={c.userId} value={c.fullName}>{c.fullName}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Notas</Label>
-                  <Textarea placeholder="Opcional" value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="text-sm" />
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
 
           {/* Footer */}
