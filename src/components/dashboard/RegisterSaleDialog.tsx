@@ -161,6 +161,7 @@ export const RegisterSaleDialog = ({
   const [spkSelectedGroupId, setSpkSelectedGroupId] = useState<string | null>(null);
   const { products, addProduct } = useClientProducts(clientId || null);
   const { data: closersBase = [] } = useClientClosers(clientId || null);
+  const addCloserMutation = useAddClientCloser(clientId || null);
   const { data: teamMembers = [] } = useClientTeamMembers(clientId || null);
   // For Tissue: vendedor = ANY team member (regardless of role).
   const closers = isTissue
