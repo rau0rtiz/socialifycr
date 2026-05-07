@@ -620,6 +620,7 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           permalink: string | null
+          persistent_thumbnail_url: string | null
           reach: number | null
           replies: number | null
           scanned_data: Json | null
@@ -639,6 +640,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           permalink?: string | null
+          persistent_thumbnail_url?: string | null
           reach?: number | null
           replies?: number | null
           scanned_data?: Json | null
@@ -658,6 +660,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           permalink?: string | null
+          persistent_thumbnail_url?: string | null
           reach?: number | null
           replies?: number | null
           scanned_data?: Json | null
