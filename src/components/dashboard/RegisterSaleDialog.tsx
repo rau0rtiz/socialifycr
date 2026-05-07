@@ -1343,7 +1343,7 @@ export const RegisterSaleDialog = ({
                 {/* Discount */}
                 <div className="space-y-2">
                   <Label className="text-xs font-medium flex items-center gap-1.5">
-                    <Percent className="h-3.5 w-3.5" /> Descuento
+                    <Percent className="h-3.5 w-3.5" /> Descuento ({currency === 'CRC' ? 'colones' : 'dólares'})
                   </Label>
                   <div className="grid grid-cols-2 gap-2">
                     <Input type="number" placeholder="0" min={0} value={spkDiscountAmount} onChange={e => setSpkDiscountAmount(e.target.value)} className="h-9 text-sm" />
