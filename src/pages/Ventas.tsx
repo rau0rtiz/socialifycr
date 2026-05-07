@@ -423,9 +423,7 @@ const Ventas = () => {
         {/* === ALMA BENDITA: Story & Revenue Daily Tracker === */}
         {isAlmaBendita && (
           <>
-            <OrdersWidget clientId={selectedClient.id} />
             <StoryRevenueTracker clientId={selectedClient.id} dateRange={globalRange} />
-            <StoryStoreSales clientId={selectedClient.id} />
             <SalesBySizeChart clientId={selectedClient.id} dateRange={globalRange} />
             {salesDistributionSection}
           </>
