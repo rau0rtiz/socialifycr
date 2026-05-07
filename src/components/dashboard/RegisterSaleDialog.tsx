@@ -939,14 +939,31 @@ export const RegisterSaleDialog = ({
       ? students.filter(s => s.full_name.toLowerCase().includes(spkStudentSearch.toLowerCase()) || s.phone?.includes(spkStudentSearch) || s.email?.toLowerCase().includes(spkStudentSearch.toLowerCase()))
       : students.slice(0, 10);
 
-    // Calculate amounts (sum of selected products)
-    const productsBaseSum = spkSelectedProducts.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
-    const baseAmount = productsBaseSum > 0 ? productsBaseSum : (parseFloat(amount || '0') || 0);
-    const discountAmt = parseFloat(spkDiscountAmount || '0');
+    // Calculate amounts grouped by currency (multi-currency support)
     const taxRate = primaryProduct?.tax_rate ?? 13;
-    const subtotalCalc = baseAmount - discountAmt;
-    const taxCalc = spkApplyTax ? Math.round(subtotalCalc * (taxRate / 100)) : 0;
-    const totalCalc = subtotalCalc + taxCalc;
+    const discountAmt = parseFloat(spkDiscountAmount || '0');
+    const currenciesUsed = Array.from(new Set(spkSelectedProducts.map(p => p.currency))) as ('CRC' | 'USD')[];
+    const isMultiCurrency = currenciesUsed.length > 1;
+    // Per-currency breakdown
+    const perCurrency = (currenciesUsed.length > 0 ? currenciesUsed : [currency]).map(curr => {
+      const items = spkSelectedProducts.filter(p => p.currency === curr);
+      const base = items.reduce((s, p) => s + (Number(p.price) || 0), 0);
+      // Discount only applies to the primary currency when single; on multi, applies to that primary currency only
+      const appliesDiscount = !isMultiCurrency || curr === primaryProduct?.currency;
+      const disc = appliesDiscount ? Math.min(discountAmt, base) : 0;
+      const sub = Math.max(base - disc, 0);
+      const tax = spkApplyTax ? Math.round(sub * (taxRate / 100)) : 0;
+      const total = sub + tax;
+      return { currency: curr, items, base, discount: disc, subtotal: sub, tax, total, symbol: curr === 'CRC' ? '₡' : '$' };
+    });
+    const productsBaseSum = perCurrency.reduce((s, p) => s + p.base, 0); // legacy aggregate
+    // Primary currency for the sale record (first product or selected currency)
+    const primaryCurrency: 'CRC' | 'USD' = (primaryProduct?.currency as 'CRC' | 'USD') || currency;
+    const primaryBucket = perCurrency.find(p => p.currency === primaryCurrency) || perCurrency[0];
+    const baseAmount = primaryBucket?.base ?? (parseFloat(amount || '0') || 0);
+    const subtotalCalc = primaryBucket?.subtotal ?? 0;
+    const taxCalc = primaryBucket?.tax ?? 0;
+    const totalCalc = primaryBucket?.total ?? 0;
 
     const spkCanAdvance = (s: number) => {
       if (s === 0) return !!spkSelectedStudentId || spkCreatingStudent;
