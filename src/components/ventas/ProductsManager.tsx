@@ -164,6 +164,8 @@ const SPEAK_UP_CATEGORIES: { key: string; label: string; icon: React.ElementType
 
 // ====== Product Card ======
 const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes: any[]; onClick: () => void }) => {
+  const { selectedClient } = useBrand();
+  const isSpeakUpCard = !!selectedClient?.name?.toLowerCase().includes('speak up');
   const productSchemes = allSchemes.filter((s: any) => s.product_id === p.id);
   const variantCount = productSchemes.length;
   const minPrice = variantCount > 0 ? Math.min(...productSchemes.map((s: any) => s.total_price)) : p.price;
