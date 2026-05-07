@@ -224,6 +224,11 @@ const Ventas = () => {
     );
   }
 
+  // Retail clients: Ventas is consolidated into Órdenes
+  if (isRetailRedirect) {
+    return <Navigate to="/ordenes" replace />;
+  }
+
   if (!selectedClient) {
     return (
       <DashboardLayout>
