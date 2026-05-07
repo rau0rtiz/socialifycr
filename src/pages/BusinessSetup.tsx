@@ -386,12 +386,18 @@ const BusinessSetup = () => {
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
               {activeSection
-                ? SECTIONS.find(s => s.key === activeSection)?.title
+                ? (() => {
+                    const s = SECTIONS.find(s => s.key === activeSection) as any;
+                    return (isSpkUp && s?.speakUpTitle) || s?.title;
+                  })()
                 : 'Business Setup'}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               {activeSection
-                ? SECTIONS.find(s => s.key === activeSection)?.description
+                ? (() => {
+                    const s = SECTIONS.find(s => s.key === activeSection) as any;
+                    return (isSpkUp && s?.speakUpDescription) || s?.description;
+                  })()
                 : `Configuración integral de ${selectedClient.name}`}
             </p>
           </div>
@@ -410,10 +416,10 @@ const BusinessSetup = () => {
                   <section.icon className={`h-5 w-5 ${section.color}`} />
                 </div>
                 <h3 className="font-semibold text-foreground text-sm md:text-base">
-                  {section.title}
+                  {(isSpkUp && (section as any).speakUpTitle) || section.title}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                  {section.description}
+                  {(isSpkUp && (section as any).speakUpDescription) || section.description}
                 </p>
               </button>
             ))}
