@@ -126,6 +126,9 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
     setContactQuery('');
   };
 
+  const depositAmt = parseFloat(depositAmount || '0');
+  const balanceAmt = total - depositAmt;
+
   const handleSubmit = async () => {
     if (items.length === 0) {
       toast.error('Agrega al menos un item');
@@ -135,8 +138,12 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
       toast.error('Nombre del cliente requerido');
       return;
     }
+    if (hasDeposit) {
+      if (depositAmt <= 0) { toast.error('El abono debe ser mayor a 0'); return; }
+      if (depositAmt >= total) { toast.error('El abono debe ser menor al total'); return; }
+      if (!balanceDueDate) { toast.error('Indica la fecha de cobro del saldo'); return; }
+    }
     try {
-      // Upsert customer contact (don't increment purchase here — sales trigger handles it indirectly)
       let finalContactId = contactId;
       if (!finalContactId) {
         finalContactId = await upsertCustomerContact({
@@ -147,7 +154,6 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
           isNewSale: false,
         });
       } else if (shippingAddress) {
-        // Save new address to existing contact if not already saved
         const exists = (selectedContact?.addresses || []).some(a =>
           a.address_line_1 === shippingAddress.address_line_1 &&
           a.district === shippingAddress.district
@@ -159,7 +165,7 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
         }
       }
 
-      await createOrder.mutateAsync({
+      const orderId = await createOrder.mutateAsync({
         customer_contact_id: finalContactId,
         customer_name: customerName,
         customer_phone: customerPhone,
@@ -168,7 +174,9 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
         payment_method: paymentMethod,
         currency,
         order_date: orderDate,
-        notes,
+        notes: hasDeposit
+          ? `${notes ? notes + '\n' : ''}Abono: ${currency} ${depositAmt.toLocaleString()} · Saldo: ${currency} ${balanceAmt.toLocaleString()} (vence ${balanceDueDate})`
+          : notes,
         items: items.map(i => ({
           product_id: i.product_id,
           variant_id: i.variant_id,
@@ -183,7 +191,43 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
           notes: i.notes,
         })),
       });
-      toast.success('Orden creada');
+
+      // Create pending payment_collections for the balance, attached to each generated sale (proportional)
+      if (hasDeposit && orderId && balanceAmt > 0) {
+        const { data: generatedSales } = await supabase
+          .from('message_sales')
+          .select('id, amount')
+          .eq('order_id', orderId);
+
+        if (generatedSales && generatedSales.length > 0) {
+          const ratio = balanceAmt / total;
+          const records = generatedSales.map((s: any) => ({
+            sale_id: s.id,
+            client_id: clientId,
+            installment_number: 2,
+            amount: Math.round(Number(s.amount) * ratio),
+            currency,
+            due_date: balanceDueDate,
+            status: 'pending' as const,
+            payment_frequency: 'custom',
+          }));
+          await supabase.from('payment_collections').insert(records as any);
+
+          // Mark sales as 2-installment with 1 paid (the deposit portion)
+          for (const s of generatedSales) {
+            const depositPart = Number(s.amount) - Math.round(Number(s.amount) * ratio);
+            await supabase.from('message_sales').update({
+              total_sale_amount: Number(s.amount),
+              num_installments: 2,
+              installments_paid: 1,
+              installment_amount: depositPart,
+              amount: depositPart,
+            } as any).eq('id', s.id);
+          }
+        }
+      }
+
+      toast.success(hasDeposit ? 'Orden creada con abono' : 'Orden creada');
       onOpenChange(false);
     } catch (e: any) {
       toast.error('Error: ' + (e.message || 'no se pudo crear la orden'));
