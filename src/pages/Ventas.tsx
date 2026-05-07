@@ -488,19 +488,21 @@ const Ventas = () => {
           />
         )}
 
-        {/* Sales tracking */}
-        <div ref={salesRef}>
-          <SalesTrackingSection
-            clientId={selectedClient.id}
-            campaigns={campaigns}
-            adSpend={totalAdSpend}
-            adCurrency={adCurrency}
-            hasAdAccount={hasAdAccount}
-            salePrefill={salePrefill}
-            showSaleDialog={showSaleFromSetter}
-            onSaleFromSetter={handleSaleRegistered}
-          />
-        </div>
+        {/* Sales tracking — Alma Bendita usa /ordenes en su lugar */}
+        {!isAlmaBendita && (
+          <div ref={salesRef}>
+            <SalesTrackingSection
+              clientId={selectedClient.id}
+              campaigns={campaigns}
+              adSpend={totalAdSpend}
+              adCurrency={adCurrency}
+              hasAdAccount={hasAdAccount}
+              salePrefill={salePrefill}
+              showSaleDialog={showSaleFromSetter}
+              onSaleFromSetter={handleSaleRegistered}
+            />
+          </div>
+        )}
 
         {/* === TISSUE: Distribución por talla / producto / marca === */}
         {isTissue && (
