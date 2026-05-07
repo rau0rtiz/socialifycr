@@ -164,6 +164,8 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
           story_id: i.story_id,
           product_name: i.product_name,
           garment_size: i.garment_size,
+          brand: i.brand,
+          garment_type: i.garment_type,
           quantity: i.quantity,
           unit_price: i.unit_price,
           subtotal: i.unit_price * i.quantity,
