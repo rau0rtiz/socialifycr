@@ -1214,15 +1214,35 @@ export const RegisterSaleDialog = ({
 
             {/* Group step (only for group products) */}
             {step === groupStepIdx && isGroupProduct && (
-              <div className="space-y-4 py-3">
+              <div className="space-y-3 py-3">
                 <Label className="text-xs font-medium flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5" /> Seleccionar Grupo
                 </Label>
-                {productGroups.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-4 text-center">No hay grupos activos para este producto. Crea uno en Business Setup → Grupos.</p>
-                ) : (
-                  <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
-                    {productGroups.map(g => {
+                <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+                  {/* "Por definir" option */}
+                  <button
+                    className={cn(
+                      'w-full text-left p-3 rounded-lg border text-xs transition-colors',
+                      spkSelectedGroupId === null
+                        ? 'bg-primary/10 border-primary/30'
+                        : 'hover:bg-muted/50 border-dashed border-border/50'
+                    )}
+                    onClick={() => {
+                      setSpkSelectedGroupId(null);
+                      setSpkAssignedSchedule([]);
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">Sin grupo (por definir)</span>
+                      <Badge variant="outline" className="text-[9px]">Asignar luego</Badge>
+                    </div>
+                    <p className="text-muted-foreground mt-0.5 text-[10px]">Asigna el grupo más adelante</p>
+                  </button>
+
+                  {productGroups.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground py-2 text-center">No hay grupos activos para este producto.</p>
+                  ) : (
+                    productGroups.map(g => {
                       const occ = getGroupOccupancy(g.id);
                       const isFull = occ >= g.capacity;
                       const isSelected = spkSelectedGroupId === g.id;
@@ -1258,9 +1278,9 @@ export const RegisterSaleDialog = ({
                           )}
                         </button>
                       );
-                    })}
-                  </div>
-                )}
+                    })
+                  )}
+                </div>
               </div>
             )}
 
