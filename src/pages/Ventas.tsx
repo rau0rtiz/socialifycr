@@ -17,13 +17,11 @@ import { SpeakUpSalesSummary } from '@/components/ventas/SpeakUpSalesSummary';
 import { SpeakUpAnalytics } from '@/components/ventas/SpeakUpAnalytics';
 import { ClinicSalesSummary } from '@/components/ventas/ClinicSalesSummary';
 import { StoryRevenueTracker } from '@/components/ventas/StoryRevenueTracker';
-import { StoryStoreSales } from '@/components/ventas/StoryStoreSales';
 import { SalesBySizeChart } from '@/components/ventas/SalesBySizeChart';
 import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { RecentSalesTicker } from '@/components/ventas/RecentSalesTicker';
 import { TissueSaleDialog } from '@/components/ventas/TissueSaleDialog';
 import { AlmaBenditaExportButton } from '@/components/ventas/AlmaBenditaExportButton';
-import { OrdersWidget } from '@/components/ventas/orders/OrdersWidget';
 import { Plus, ShoppingBag } from 'lucide-react';
 
 
