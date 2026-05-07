@@ -504,7 +504,12 @@ const Ventas = () => {
         )}
 
         {/* Collections (cobros a plazos) — Tissue retail no aplica */}
-        {!isAlmaBendita && !isTissue && !isSpkUp && <CollectionsWidget clientId={selectedClient.id} />}
+        {!isAlmaBendita && !isTissue && !isSpkUp && (
+          <div className="space-y-3">
+            <PendingSchedulesSection clientId={selectedClient.id} />
+            <CollectionsWidget clientId={selectedClient.id} />
+          </div>
+        )}
 
         {/* Reservas — Mind Coach / Hilda */}
         {(isMindCoach || isHildaLopez) && (flags as any).reservations_widget && (
