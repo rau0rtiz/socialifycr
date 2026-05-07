@@ -420,7 +420,7 @@ const ProductList = ({ products, allSchemes, onSelect }: { products: ClientProdu
 
   const grouped = SPEAK_UP_CATEGORIES.map(cat => {
     const catProducts = products.filter(p => {
-      if (cat.key === 'trial') return !['individual', 'group', 'toeic', 'exam'].includes(p.category || '');
+      if (cat.key === 'other') return !['individual', 'group', 'course'].includes(p.category || '');
       return p.category === cat.key;
     });
     return { ...cat, products: catProducts };
