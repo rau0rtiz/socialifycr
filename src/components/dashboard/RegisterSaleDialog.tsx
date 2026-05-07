@@ -1033,7 +1033,7 @@ export const RegisterSaleDialog = ({
       const sale: any = {
         sale_date: saleDate,
         amount: amountPaidToday,
-        currency,
+        currency: primaryCurrency,
         source: source as SaleInput['source'],
         customer_name: selectedStudent?.full_name || customerName || undefined,
         customer_phone: selectedStudent?.phone || customerPhone || undefined,
