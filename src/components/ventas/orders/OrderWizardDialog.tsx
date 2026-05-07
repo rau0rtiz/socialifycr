@@ -58,6 +58,8 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
   const { activeStories, archivedStories, allArchivedStories, isLoadingAllArchived, hasMoreArchived, fetchAllArchived } = useStories(clientId);
   const [storyQuery, setStoryQuery] = useState('');
   const [storyShowAll, setStoryShowAll] = useState(false);
+  const [storyDateFrom, setStoryDateFrom] = useState('');
+  const [storyDateTo, setStoryDateTo] = useState('');
   const { items: brandsCatalog } = useProductBrands(clientId);
   const { items: categoriesCatalog } = useProductCategoriesCatalog(clientId);
   const { createOrder } = useOrders(clientId);
