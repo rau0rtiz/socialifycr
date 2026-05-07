@@ -283,7 +283,14 @@ const Ordenes = () => {
               accentColor={selectedClient.accent_color || undefined}
             />
             {isAlmaBendita && (
-              <StoryRevenueTracker clientId={selectedClient.id} dateRange={summaryRange} />
+              <>
+                <StoryRevenueTracker clientId={selectedClient.id} dateRange={summaryRange} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <SalesByBrandChart sales={monthSales} />
+                  <SalesByProductChart sales={monthSales} products={clientProducts} variant="garment" />
+                </div>
+                <SalesBySizeChart clientId={selectedClient.id} dateRange={summaryRange} />
+              </>
             )}
             <RecentSalesTicker clientId={selectedClient.id} dateRange={summaryRange} />
           </TabsContent>
