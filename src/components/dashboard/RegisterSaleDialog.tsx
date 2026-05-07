@@ -1385,8 +1385,20 @@ export const RegisterSaleDialog = ({
                       <h4 className="text-xs font-semibold flex items-center gap-1.5"><Receipt className="h-3.5 w-3.5" /> Resumen</h4>
                       <div className="space-y-1 text-xs">
                         {selectedStudent && <div className="text-muted-foreground truncate">{selectedStudent.full_name}</div>}
-                        {product && <div className="text-muted-foreground truncate">{product}</div>}
-                        <div className="flex justify-between"><span className="text-muted-foreground">Precio base</span><span>{symbol}{baseAmount.toLocaleString()}</span></div>
+                        {spkSelectedProducts.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {spkSelectedProducts.map(p => {
+                              const sym = p.currency === 'CRC' ? '₡' : '$';
+                              return (
+                                <div key={p.id} className="flex justify-between gap-2">
+                                  <span className="truncate text-muted-foreground">{p.name}</span>
+                                  <span className="shrink-0">{sym}{Number(p.price || 0).toLocaleString()}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : product && <div className="text-muted-foreground truncate">{product}</div>}
+                        <div className="flex justify-between border-t pt-1 mt-1"><span className="text-muted-foreground">Subtotal</span><span>{symbol}{baseAmount.toLocaleString()}</span></div>
                         {discountAmt > 0 && <div className="flex justify-between text-rose-600 dark:text-rose-400"><span>Descuento</span><span>-{symbol}{discountAmt.toLocaleString()}</span></div>}
                         {spkApplyTax && <div className="flex justify-between text-muted-foreground"><span>IVA ({taxRate}%)</span><span>+{symbol}{taxCalc.toLocaleString()}</span></div>}
                         <div className="flex justify-between border-t pt-1.5 mt-1.5 text-sm font-semibold"><span>Total</span><span>{symbol}{totalCalc.toLocaleString()}</span></div>
