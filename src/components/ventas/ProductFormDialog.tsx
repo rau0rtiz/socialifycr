@@ -10,10 +10,11 @@ import { Switch } from '@/components/ui/switch';
 import { useClientProducts, ClientProduct, ProductInput, ProductType } from '@/hooks/use-client-products';
 import { useClientProductCategories } from '@/hooks/use-client-product-categories';
 import { useClientProductTags } from '@/hooks/use-client-product-tags';
+import { usePaymentSchemes, PaymentSchemeInput } from '@/hooks/use-payment-schemes';
 import { ProductTagSelector } from './ProductTagSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useBrand } from '@/contexts/BrandContext';
-import { Package, Camera, Loader2, X, Boxes, Wrench, Clock, Plus, Tag as TagIcon, Check } from 'lucide-react';
+import { Package, Camera, Loader2, X, Boxes, Wrench, Clock, Plus, Tag as TagIcon, Check, CreditCard, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -29,6 +30,106 @@ interface ProductFormDialogProps {
 const formatCurrency = (amount: number, currency: string) => {
   if (currency === 'CRC') return `₡${amount.toLocaleString('es-CR')}`;
   return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
+};
+
+const SPEAK_UP_LINES = [
+  { value: 'individual', label: 'Clase Personalizada' },
+  { value: 'group', label: 'Clase Grupal' },
+  { value: 'course', label: 'Curso' },
+];
+
+// ─────────── Inline Variants editor (used in Speak Up flow at create-time too) ───────────
+const InlinePaymentSchemes = ({ productId, clientId, currency }: { productId: string; clientId: string; currency: string }) => {
+  const { schemes, addScheme, updateScheme, deleteScheme } = usePaymentSchemes(productId, clientId);
+  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [total, setTotal] = useState('');
+  const [installments, setInstallments] = useState('1');
+
+  const reset = () => { setAdding(false); setEditing(null); setName(''); setTotal(''); setInstallments('1'); };
+
+  const installmentAmount = total && parseInt(installments) > 0 ? parseFloat(total) / parseInt(installments) : 0;
+
+  const handleSave = async () => {
+    if (!name.trim() || !total) { toast.error('Nombre y precio son obligatorios'); return; }
+    const input: PaymentSchemeInput = {
+      name: name.trim(),
+      total_price: parseFloat(total),
+      num_installments: parseInt(installments) || 1,
+      installment_amount: Math.round(installmentAmount * 100) / 100,
+      currency,
+      sort_order: schemes.length,
+    };
+    try {
+      if (editing) await updateScheme.mutateAsync({ id: editing, ...input });
+      else await addScheme.mutateAsync(input);
+      reset();
+    } catch { toast.error('Error al guardar'); }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs flex items-center gap-1.5">
+          <CreditCard className="h-3 w-3 text-muted-foreground" />
+          Facilidades de pago
+        </Label>
+        {!adding && (
+          <Button type="button" size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => setAdding(true)}>
+            <Plus className="h-3 w-3" /> Agregar
+          </Button>
+        )}
+      </div>
+
+      {schemes.length > 0 && (
+        <div className="space-y-1.5">
+          {schemes.map(s => (
+            <div key={s.id} className="group flex items-center gap-2 p-2 rounded-md bg-muted/40 border border-border/40 text-xs">
+              <div className="flex-1 min-w-0">
+                <span className="font-medium">{s.name}</span>
+                <span className="text-muted-foreground ml-1.5">{formatCurrency(s.total_price, s.currency)}</span>
+                {s.num_installments > 1 && (
+                  <span className="text-muted-foreground ml-1.5">· {s.num_installments}× {formatCurrency(s.installment_amount, s.currency)}</span>
+                )}
+              </div>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                onClick={() => { setEditing(s.id); setName(s.name); setTotal(String(s.total_price)); setInstallments(String(s.num_installments)); setAdding(true); }}>
+                <Pencil className="h-3 w-3" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+                onClick={async () => { try { await deleteScheme.mutateAsync(s.id); } catch { toast.error('Error'); } }}>
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {adding && (
+        <div className="rounded-md border border-border/50 p-2 space-y-2 bg-muted/20">
+          <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Plan completo, 2 cuotas" className="h-8 text-xs" />
+          <div className="grid grid-cols-2 gap-2">
+            <Input type="number" value={total} onChange={e => setTotal(e.target.value)} placeholder="Precio total" className="h-8 text-xs" />
+            <Input type="number" min={1} value={installments} onChange={e => setInstallments(e.target.value)} placeholder="Cuotas" className="h-8 text-xs" />
+          </div>
+          {parseInt(installments) > 1 && installmentAmount > 0 && (
+            <p className="text-[10px] text-muted-foreground">
+              Cuota: <span className="font-semibold text-foreground">{formatCurrency(Math.round(installmentAmount * 100) / 100, currency)}</span> × {installments}
+            </p>
+          )}
+          <div className="flex gap-2 justify-end">
+            <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px]" onClick={reset}>Cancelar</Button>
+            <Button type="button" size="sm" className="h-7 text-[10px]" onClick={handleSave}>{editing ? 'Actualizar' : 'Agregar'}</Button>
+          </div>
+        </div>
+      )}
+
+      {schemes.length === 0 && !adding && (
+        <p className="text-[11px] text-muted-foreground py-2">Sin facilidades de pago todavía. Agregá variantes con diferentes esquemas.</p>
+      )}
+    </div>
+  );
 };
 
 export const ProductFormDialog = ({
@@ -52,6 +153,8 @@ export const ProductFormDialog = ({
   const [duration, setDuration] = useState('');
   const [price, setPrice] = useState('');
   const [cost, setCost] = useState('');
+  const [taxRate, setTaxRate] = useState<string>('2');
+  const [productLine, setProductLine] = useState<string>('individual');
   const [currency, setCurrency] = useState('CRC');
   const [description, setDescription] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -72,10 +175,12 @@ export const ProductFormDialog = ({
     if (!open) return;
     if (editing) {
       setName(editing.name);
-      setProductType(isTissue ? 'product' : (editing.product_type || 'product'));
+      setProductType(isTissue ? 'product' : isSpeakUp ? 'service' : (editing.product_type || 'product'));
       setDuration(editing.estimated_duration_min != null ? String(editing.estimated_duration_min) : '');
       setPrice(editing.price != null ? String(editing.price) : '');
       setCost(editing.cost != null ? String(editing.cost) : '');
+      setTaxRate(editing.tax_rate != null ? String(editing.tax_rate) : (isSpeakUp ? '2' : '0'));
+      setProductLine(editing.category || (isSpeakUp ? 'individual' : ''));
       setCurrency(editing.currency || 'CRC');
       setDescription(editing.description || '');
       setPhotoUrl(editing.photo_url || null);
@@ -87,10 +192,12 @@ export const ProductFormDialog = ({
       setSelectedTagIds(getTagsForProduct(editing.id));
     } else {
       setName(defaultName);
-      setProductType('product');
+      setProductType(isSpeakUp ? 'service' : 'product');
       setDuration('');
       setPrice('');
       setCost('');
+      setTaxRate(isSpeakUp ? '2' : '0');
+      setProductLine(isSpeakUp ? 'individual' : '');
       setCurrency('CRC');
       setDescription('');
       setPhotoUrl(null);
@@ -129,17 +236,19 @@ export const ProductFormDialog = ({
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('El nombre es obligatorio'); return; }
-    const isService = productType === 'service';
+    const isService = productType === 'service' || isSpeakUp;
     const input: ProductInput = {
       name: name.trim(),
-      product_type: productType,
+      product_type: isSpeakUp ? 'service' : productType,
       estimated_duration_min: duration ? parseInt(duration) : null,
       price: price ? parseFloat(price) : null,
       cost: cost ? parseFloat(cost) : null,
       currency,
       description: description.trim(),
       photo_url: photoUrl,
-      category: category.trim() || null,
+      category: isSpeakUp ? productLine : (category.trim() || null),
+      tax_rate: taxRate ? parseFloat(taxRate) : 0,
+      tax_applicable: !!taxRate && parseFloat(taxRate) > 0,
       track_stock: isService ? false : trackStock,
       stock_quantity: !isService && trackStock && stockQty ? parseFloat(stockQty) : 0,
       low_stock_threshold: !isService && trackStock && lowThreshold ? parseFloat(lowThreshold) : 0,
@@ -152,28 +261,111 @@ export const ProductFormDialog = ({
         await updateProduct.mutateAsync({ id: editing.id, ...input });
         savedId = editing.id;
         saved = { ...editing, ...input } as ClientProduct;
-        toast.success(isService ? 'Servicio actualizado' : 'Producto actualizado');
+        toast.success(isSpeakUp ? 'Servicio actualizado' : isService ? 'Servicio actualizado' : 'Producto actualizado');
       } else {
         saved = await addProduct.mutateAsync(input);
         savedId = saved.id;
-        toast.success(isService ? 'Servicio creado' : 'Producto creado');
+        toast.success(isSpeakUp ? 'Servicio creado' : isService ? 'Servicio creado' : 'Producto creado');
       }
-      // Persist tags
-      try {
-        await setProductTags.mutateAsync({ productId: savedId, tagIds: selectedTagIds });
-      } catch (e) {
-        console.warn('Error guardando etiquetas', e);
+      // Persist tags (skip for Speak Up since we don't show them)
+      if (!isSpeakUp) {
+        try {
+          await setProductTags.mutateAsync({ productId: savedId, tagIds: selectedTagIds });
+        } catch (e) {
+          console.warn('Error guardando etiquetas', e);
+        }
       }
       onSaved?.(saved);
-      onOpenChange(false);
+      // For Speak Up, keep the dialog open if creating so user can add payment schemes inline
+      if (isSpeakUp && !editing) {
+        // Convert to "edit mode" by passing the saved product
+        // The simplest: close and rely on parent to reopen detail
+        onOpenChange(false);
+      } else {
+        onOpenChange(false);
+      }
     } catch {
       toast.error('Error al guardar');
     }
   };
 
   const isPending = addProduct.isPending || updateProduct.isPending;
-  const isService = productType === 'service';
+  const isService = productType === 'service' || isSpeakUp;
 
+  // ════════════════════════════════════════════════════
+  // SPEAK UP — Simple form
+  // ════════════════════════════════════════════════════
+  if (isSpeakUp) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Editar Servicio' : 'Nuevo Servicio'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label className="text-xs">Nombre del servicio <span className="text-destructive">*</span></Label>
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Inglés Conversacional A2" className="mt-1.5" autoFocus />
+            </div>
+
+            <div>
+              <Label className="text-xs">Línea de producto <span className="text-destructive">*</span></Label>
+              <Select value={productLine} onValueChange={setProductLine}>
+                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SPEAK_UP_LINES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-1">
+                <Label className="text-xs">Costo base</Label>
+                <Input type="number" min={0} value={cost} onChange={e => setCost(e.target.value)} placeholder="0" className="mt-1.5" />
+              </div>
+              <div className="col-span-1">
+                <Label className="text-xs">Impuesto (%)</Label>
+                <Input type="number" min={0} step="0.01" value={taxRate} onChange={e => setTaxRate(e.target.value)} placeholder="2" className="mt-1.5" />
+              </div>
+              <div className="col-span-1">
+                <Label className="text-xs">Moneda</Label>
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CRC">₡ CRC</SelectItem>
+                    <SelectItem value="USD">$ USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {editing && (
+              <>
+                <Separator />
+                <InlinePaymentSchemes productId={editing.id} clientId={clientId} currency={currency} />
+              </>
+            )}
+
+            {!editing && (
+              <p className="text-[11px] text-muted-foreground bg-muted/30 p-2.5 rounded-lg">
+                Después de guardar, podrás agregar facilidades de pago (variantes con esquemas de cuotas).
+              </p>
+            )}
+          </div>
+          <DialogFooter className="pt-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} size="sm">Cancelar</Button>
+            <Button onClick={handleSave} disabled={isPending || uploading} size="sm">
+              {isPending ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // ════════════════════════════════════════════════════
+  // Default form (other clients)
+  // ════════════════════════════════════════════════════
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
@@ -186,7 +378,6 @@ export const ProductFormDialog = ({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
-          {/* Type selector — hidden for Tissue (only products) */}
           {!isTissue && (
           <div>
             <Label className="text-xs">Tipo <span className="text-destructive">*</span></Label>
@@ -231,7 +422,6 @@ export const ProductFormDialog = ({
           </div>
           )}
 
-          {/* Photo upload */}
           <div>
             <Label className="text-xs">Foto</Label>
             <div className="mt-1.5 flex items-center gap-3">
@@ -288,7 +478,6 @@ export const ProductFormDialog = ({
             />
           </div>
 
-          {/* Category */}
           <div>
             <Label className="text-xs flex items-center gap-1.5">
               <TagIcon className="h-3 w-3 text-muted-foreground" />
@@ -325,7 +514,6 @@ export const ProductFormDialog = ({
                     <input
                       type="color"
                       value={(() => {
-                        // best effort: if hsl, fallback to a hex
                         const m = newCatColor.match(/^#([0-9a-f]{6})$/i);
                         return m ? newCatColor : '#3b82f6';
                       })()}
@@ -335,19 +523,11 @@ export const ProductFormDialog = ({
                     />
                   </div>
                   <div className="flex gap-2 justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-[11px]"
-                      onClick={() => { setShowNewCat(false); setNewCatName(''); }}
-                    >
+                    <Button type="button" variant="ghost" size="sm" className="h-7 text-[11px]"
+                      onClick={() => { setShowNewCat(false); setNewCatName(''); }}>
                       Cancelar
                     </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="h-7 text-[11px] gap-1"
+                    <Button type="button" size="sm" className="h-7 text-[11px] gap-1"
                       disabled={!newCatName.trim() || savingCat}
                       onClick={async () => {
                         if (!newCatName.trim()) return;
@@ -374,20 +554,13 @@ export const ProductFormDialog = ({
                   </div>
                 </div>
               ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-[11px] gap-1"
-                  onClick={() => setShowNewCat(true)}
-                >
+                <Button type="button" variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => setShowNewCat(true)}>
                   <Plus className="h-3 w-3" /> Nueva categoría
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Tags */}
           <ProductTagSelector
             clientId={clientId}
             selectedTagIds={selectedTagIds}
@@ -427,7 +600,6 @@ export const ProductFormDialog = ({
             </div>
           )}
 
-          {/* Duration — hidden for Tissue (retail) and Speak Up */}
           {!hideDuration && (
           <div>
             <Label className="text-xs flex items-center gap-1.5">
@@ -452,7 +624,6 @@ export const ProductFormDialog = ({
 
           <Separator />
 
-          {/* Stock tracking — only for products */}
           {isService ? (
             <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-3 text-center">
               <Wrench className="h-5 w-5 text-purple-500/60 mx-auto mb-1.5" />
