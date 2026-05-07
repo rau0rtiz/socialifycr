@@ -38,6 +38,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { prefetchRoute } from '@/lib/route-prefetch';
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/use-user-role';
