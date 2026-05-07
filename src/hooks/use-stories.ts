@@ -5,8 +5,10 @@ import { useCallback } from 'react';
 export interface StoryScannedData {
   customer_name?: string | null;
   customer_phone?: string | null;
+  product_name?: string | null;
   brand?: string | null;
   garment_type?: string | null;
+  garment_size?: string | null;
   amount?: number | null;
   notes?: string | null;
 }

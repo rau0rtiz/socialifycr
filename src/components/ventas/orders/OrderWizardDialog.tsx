@@ -444,13 +444,24 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                             <button
                               key={s.id}
                               type="button"
-                              onClick={() => addItem({
-                                story_id: s.storyId,
-                                story_thumb: s.thumbnailUrl || s.mediaUrl,
-                                product_name: `Historia ${new Date(s.timestamp).toLocaleDateString('es-CR')}`,
-                                brand: s.scannedData?.brand || undefined,
-                                garment_type: s.scannedData?.garment_type || undefined,
-                              })}
+                              onClick={() => {
+                                const sd = s.scannedData || {};
+                                const dateLabel = new Date(s.timestamp).toLocaleDateString('es-CR');
+                                addItem({
+                                  story_id: s.storyId,
+                                  story_thumb: s.thumbnailUrl || s.mediaUrl,
+                                  product_name: sd.product_name || sd.brand || `Historia ${dateLabel}`,
+                                  brand: sd.brand || undefined,
+                                  garment_type: sd.garment_type || undefined,
+                                  garment_size: sd.garment_size || undefined,
+                                  unit_price: sd.amount && sd.amount > 0 ? Number(sd.amount) : 0,
+                                });
+                                // Auto-switch currency to CRC since story prices are in colones
+                                if (sd.amount && sd.amount > 0) setCurrency('CRC');
+                                // Prefill customer if empty
+                                if (!customerName && sd.customer_name) setCustomerName(sd.customer_name);
+                                if (!customerPhone && sd.customer_phone) setCustomerPhone(sd.customer_phone);
+                              }}
                               className="aspect-[9/16] rounded-md overflow-hidden border bg-muted hover:ring-2 hover:ring-primary relative"
                             >
                               {(s.thumbnailUrl || s.mediaUrl) ? (
@@ -531,30 +542,18 @@ export const OrderWizardDialog = ({ open, onOpenChange, clientId }: Props) => {
                           className="h-8 text-xs"
                         />
                         <div className="grid grid-cols-3 gap-2">
-                          <Select
-                            value={it.brand || '__none__'}
-                            onValueChange={(v) => updateItem(it.key, { brand: v === '__none__' ? undefined : v })}
-                          >
-                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Marca" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__" className="text-xs">— Sin marca —</SelectItem>
-                              {brandsCatalog.map(b => (
-                                <SelectItem key={b.id} value={b.name} className="text-xs">{b.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Select
-                            value={it.garment_type || '__none__'}
-                            onValueChange={(v) => updateItem(it.key, { garment_type: v === '__none__' ? undefined : v })}
-                          >
-                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Tipo de prenda" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__" className="text-xs">— Sin tipo —</SelectItem>
-                              {categoriesCatalog.map(c => (
-                                <SelectItem key={c.id} value={c.name} className="text-xs">{c.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Input
+                            placeholder="Marca"
+                            value={it.brand || ''}
+                            onChange={(e) => updateItem(it.key, { brand: e.target.value || undefined })}
+                            className="h-8 text-xs"
+                          />
+                          <Input
+                            placeholder="Tipo de prenda"
+                            value={it.garment_type || ''}
+                            onChange={(e) => updateItem(it.key, { garment_type: e.target.value || undefined })}
+                            className="h-8 text-xs"
+                          />
                           <Input
                             placeholder="Talla"
                             value={it.garment_size || ''}
