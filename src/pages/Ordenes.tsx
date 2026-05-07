@@ -35,7 +35,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const Ordenes = () => {
-  const navigate = useNavigate();
+  
   const { selectedClient, clientsLoading } = useBrand();
   const clientId = selectedClient?.id || null;
   const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
