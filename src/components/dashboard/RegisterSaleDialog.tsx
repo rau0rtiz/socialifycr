@@ -128,6 +128,14 @@ export const RegisterSaleDialog = ({
   const [collectionStartDate, setCollectionStartDate] = useState('');
   const [hasDeposit, setHasDeposit] = useState(false);
   const [depositBalanceDueDate, setDepositBalanceDueDate] = useState('');
+  // New checkout state (used in final payment step for non-Speak Up flow)
+  const [applyTax, setApplyTax] = useState(false);
+  const [taxRate] = useState(13); // CR IVA
+  const [hasDiscount, setHasDiscount] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState('');
+  const [discountReason, setDiscountReason] = useState('');
+  const [showNewCloser, setShowNewCloser] = useState(false);
+  const [newCloserName, setNewCloserName] = useState('');
 
   // Speak Up state
   const [spkStudentSearch, setSpkStudentSearch] = useState('');
