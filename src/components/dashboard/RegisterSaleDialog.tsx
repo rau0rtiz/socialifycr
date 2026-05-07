@@ -908,63 +908,66 @@ export const RegisterSaleDialog = ({
     );
   }
 
-  // ═══════ SPEAK UP: 4-step sales flow ═══════
+  // ═══════ SPEAK UP: 3-step sales flow (Estudiante → Producto → Pago) ═══════
   if (isSpkUp && !isEditing) {
-    const selectedProductObj = products.find(p => p.name === product);
-    const isGroupProduct = selectedProductObj?.category === 'group';
-    const spkStepNames = isGroupProduct
-      ? ['Estudiante', 'Producto', 'Grupo', 'Horario', 'Pago']
-      : ['Estudiante', 'Producto', 'Horario', 'Pago'];
+    const spkStepNames = ['Estudiante', 'Producto', 'Pago'];
     const spkTotalSteps = spkStepNames.length;
     const spkLastStep = spkTotalSteps - 1;
+    const paymentStepIdx = 2;
 
     const selectedStudent = students.find(s => s.id === spkSelectedStudentId);
-    const productAudience = selectedProductObj?.audience || 'all';
     const isMinor = spkStudentAge ? parseInt(spkStudentAge) < 18 : false;
 
-    // Groups for this product
-    const productGroups = isGroupProduct && selectedProductObj
-      ? groups.filter(g => g.product_id === selectedProductObj.id && g.status === 'active')
-      : [];
-    const selectedGroup = productGroups.find(g => g.id === spkSelectedGroupId);
+    // Multi-product selection
+    const spkSelectedProducts = spkSelectedProductIds
+      .map(id => products.find(p => p.id === id))
+      .filter(Boolean) as typeof products;
+    const primaryProduct = spkSelectedProducts[0];
+    const selectedProductObj = primaryProduct;
+
+    // Lines (categories)
+    const productLines = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
+    const filteredProductsForPick = spkLineFilter === '_all'
+      ? products
+      : products.filter(p => p.category === spkLineFilter);
 
     // Filter students by search
     const filteredStudents = spkStudentSearch.trim()
       ? students.filter(s => s.full_name.toLowerCase().includes(spkStudentSearch.toLowerCase()) || s.phone?.includes(spkStudentSearch) || s.email?.toLowerCase().includes(spkStudentSearch.toLowerCase()))
       : students.slice(0, 10);
 
-    // Filter teachers by product and audience compatibility
-    const compatibleTeachers = selectedProductObj
-      ? teachers.filter(t => {
-          if (t.status !== 'active') return false;
-          const canTeachProduct = t.product_ids.length === 0 || t.product_ids.includes(selectedProductObj.id);
-          const audienceMatch = t.audience_types.length === 0 ||
-            t.audience_types.includes(productAudience) ||
-            productAudience === 'all';
-          return canTeachProduct && audienceMatch;
-        })
-      : [];
-
-    // Calculate amounts
-    const baseAmount = parseFloat(amount || '0');
+    // Calculate amounts (sum of selected products)
+    const productsBaseSum = spkSelectedProducts.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
+    const baseAmount = productsBaseSum > 0 ? productsBaseSum : (parseFloat(amount || '0') || 0);
     const discountAmt = parseFloat(spkDiscountAmount || '0');
-    const taxRate = selectedProductObj?.tax_rate || 13;
+    const taxRate = primaryProduct?.tax_rate ?? 13;
     const subtotalCalc = baseAmount - discountAmt;
     const taxCalc = spkApplyTax ? Math.round(subtotalCalc * (taxRate / 100)) : 0;
     const totalCalc = subtotalCalc + taxCalc;
 
-    // Step index mapping
-    const groupStepIdx = isGroupProduct ? 2 : -1;
-    const scheduleStepIdx = isGroupProduct ? 3 : 2;
-    const paymentStepIdx = isGroupProduct ? 4 : 3;
-
     const spkCanAdvance = (s: number) => {
       if (s === 0) return !!spkSelectedStudentId || spkCreatingStudent;
-      if (s === 1) return !!product;
-      // Group is now optional — can leave as "Por definir"
-      if (s === groupStepIdx) return true;
-      if (s === scheduleStepIdx) return true;
+      if (s === 1) return spkSelectedProductIds.length > 0;
       return true;
+    };
+
+    const addSpkProduct = (id: string) => {
+      if (!id || id === '_none') return;
+      if (spkSelectedProductIds.includes(id)) { toast.info('Ya está agregado'); return; }
+      setSpkSelectedProductIds(prev => [...prev, id]);
+      setSpkPickProductId('');
+      const p = products.find(x => x.id === id);
+      if (p && spkSelectedProductIds.length === 0) {
+        setProduct(p.name);
+        if (p.currency) setCurrency(p.currency as 'CRC' | 'USD');
+      }
+    };
+
+    const removeSpkProduct = (id: string) => {
+      const next = spkSelectedProductIds.filter(x => x !== id);
+      setSpkSelectedProductIds(next);
+      const first = next.map(i => products.find(p => p.id === i)).filter(Boolean)[0] as any;
+      setProduct(first?.name || '');
     };
 
     const handleSpkCreateStudent = async () => {
