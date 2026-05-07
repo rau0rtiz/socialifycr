@@ -154,12 +154,19 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
   );
 };
 
-const SPEAK_UP_CATEGORIES: { key: string; label: string; icon: React.ElementType }[] = [
-  { key: 'individual', label: 'Clases Personalizadas', icon: GraduationCap },
-  { key: 'group', label: 'Clases Grupales', icon: Users },
-  { key: 'course', label: 'Cursos', icon: BookOpen },
-  { key: 'other', label: 'Otros', icon: MoreHorizontal },
+const SPEAK_UP_CATEGORIES: { key: string; label: string; singular: string; icon: React.ElementType; accent: string; bg: string; border: string; text: string; ring: string }[] = [
+  { key: 'individual', label: 'Clases Personalizadas', singular: 'Personalizada', icon: GraduationCap,
+    accent: 'bg-violet-500', bg: 'bg-violet-500/5', border: 'border-violet-500/30', text: 'text-violet-600', ring: 'hover:border-violet-500/50' },
+  { key: 'group', label: 'Clases Grupales', singular: 'Grupal', icon: Users,
+    accent: 'bg-sky-500', bg: 'bg-sky-500/5', border: 'border-sky-500/30', text: 'text-sky-600', ring: 'hover:border-sky-500/50' },
+  { key: 'course', label: 'Cursos', singular: 'Curso', icon: BookOpen,
+    accent: 'bg-amber-500', bg: 'bg-amber-500/5', border: 'border-amber-500/30', text: 'text-amber-600', ring: 'hover:border-amber-500/50' },
+  { key: 'other', label: 'Otros', singular: 'Otro', icon: MoreHorizontal,
+    accent: 'bg-slate-400', bg: 'bg-slate-500/5', border: 'border-slate-500/30', text: 'text-slate-600', ring: 'hover:border-slate-500/50' },
 ];
+
+const getSpeakUpLineMeta = (category: string | null | undefined) =>
+  SPEAK_UP_CATEGORIES.find(c => c.key === category) || SPEAK_UP_CATEGORIES[3];
 
 // ====== Product Card ======
 const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes: any[]; onClick: () => void }) => {
