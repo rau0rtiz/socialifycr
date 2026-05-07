@@ -1,66 +1,127 @@
-## Objetivo
-1. En **TODOS los flujos de Tissue** (catálogo en BusinessSetup, atajo de venta, inventario), usar `TissueProductDialog` y permitir crear **variantes con foto en el mismo momento** que se crea el producto (sin doble paso).
-2. Cada variante puede tener su propia **foto**.
-3. **Mega-optimización móvil / PWA** del flujo de creación.
-4. **Eliminar el drag lateral** (swipe horizontal / pull-to-refresh / overscroll) en todo el PWA.
+
+# Plan — Alma Bendita: Export CSV + Revamp a Órdenes
+
+Dos entregas separadas. La Parte 1 es rápida y sale ya. La Parte 2 es el revamp grande tipo Tissue.
 
 ---
 
-## 1. Rediseñar `TissueProductDialog.tsx` — variantes en draft
+## PARTE 1 — Exportar CSV mensual (rápido)
 
-Hoy obliga a guardar primero el producto para luego crear variantes (necesita `productId`). Cambio:
+**Dónde:** Botón "Exportar CSV" arriba en `/ventas` cuando el cliente activo es Alma Bendita, junto al título o al lado del selector de mes.
 
-- Estado local `draftVariants: DraftVariant[]` con `{ tempId, size, color, price, stock, photoUrl }`.
-- Componente nuevo `DraftVariantList` (inline, no usa `useProductVariants` para drafts):
-  - Una fila por variante con: foto (PhotoCapture sm), talla (select), color (select), precio, stock, eliminar.
-  - Botón flotante "+ Variante" abajo, mobile-first (full-width, h-11, sticky).
-- Atajos rápidos: chips "Generar tallas: XS S M L XL" → crea 5 variantes en blanco con esa talla.
-- En modo edición carga las variantes reales como drafts (`useProductVariants`) y al guardar hace upsert/diff.
-- `handleSave`:
-  1. Crea/actualiza producto base (1 query).
-  2. Por cada variante draft: si tiene `tempId` → insert; si tiene `id` real → update; los reales que se quitaron → delete.
-  3. Las fotos ya están subidas (PhotoCapture sube on-pick).
+**UX:** Click abre un pequeño popover/dropdown con dos opciones:
+1. **Ventas por día** → columnas: `Fecha`, `Historias subidas`, `Cantidad de ventas`, `Monto total`
+2. **Reporte de ventas (detalle)** → columnas: `Fecha de venta`, `Nombre de cliente`, `Monto`
 
-## 2. Foto por variante
-Ya soportado en schema (`product_variants.photo_url`) y `PhotoCapture` lo permite con `folder="tissue/variants/draft-{tempId}"`. En la fila draft se muestra como avatar 56x56 con cámara/galería.
+**Datos:**
+- Mes seleccionado (mismo `period` que ya usa la página)
+- Opción 1: cruzar `daily_story_tracker` (historias subidas/día) + `message_sales` agregadas por día
+- Opción 2: filas planas desde `message_sales` ordenadas por fecha
 
-## 3. Optimización móvil / PWA del dialog
-- `DialogContent`: `max-w-lg`, `h-[100dvh] sm:h-auto sm:max-h-[90vh]`, full-screen en mobile (`sm:rounded-xl rounded-none`), header sticky, footer sticky con CTA grande.
-- Inputs `h-11` (44px touch target), labels compactos.
-- Selects nativos (ya están) — funcionan mejor en mobile que Radix Select.
-- Foto principal y de variantes priorizando `capture="environment"` (cámara directa).
-- Grid 2 cols en variantes para que entren en celular.
-- Botón principal "Guardar producto" sticky abajo, ancho completo, h-12.
+**Salida:** archivo `alma-bendita-ventas-YYYY-MM.csv` o `...-detalle-YYYY-MM.csv`, descarga directa en el navegador (Blob), sin backend.
 
-## 4. Usar `TissueProductDialog` en todos los flujos
-- **`ProductsManager.tsx`** (Catálogo en Business Setup): cuando `isTissue`, abrir `TissueProductDialog` en vez de `ProductFormDialog`.
-- **`RegisterSaleDialog.tsx`** (registro de venta general): cuando `isTissue`, atajo de "Crear producto" abre `TissueProductDialog`.
-- **`TissueInventoryView.tsx`**: ya usa `TissueProductDialog` (queda igual, hereda mejoras).
-- **`TissueSaleDialog.tsx`**: ya usa `TissueProductDialog` (queda igual).
+---
 
-## 5. Quitar drag lateral en PWA (global)
-En `src/index.css`:
-```css
-html, body {
-  overflow-x: hidden;
-  overscroll-behavior: none; /* bloquea pull-to-refresh y swipe lateral */
-  touch-action: pan-y;       /* solo permite scroll vertical */
-}
-@media (display-mode: standalone) {
-  html, body { overscroll-behavior: contain; }
-  body { -webkit-user-select: none; user-select: none; }
-}
+## PARTE 2 — Revamp: Órdenes multi-producto
+
+Hoy Alma Bendita registra **una venta = un producto** (desde una historia). Queremos pasar a **Órdenes** que pueden tener varios items, vengan o no de una historia, y siempre conecten con Client Database y con el módulo de Ventas.
+
+### Modelo conceptual
+
+```text
+Orden
+ ├─ Cliente (de customer_contacts) — obligatorio
+ ├─ Dirección de envío (de customer_contacts.addresses) — opcional pero recomendado
+ ├─ Fecha, método de pago, notas, estado (pendiente / pagada / enviada / entregada / cancelada)
+ └─ Items[]
+      ├─ Producto (catálogo o libre)
+      ├─ Variante / talla
+      ├─ Historia origen (opcional — link a stories)
+      ├─ Cantidad, precio unitario, subtotal
+      └─ Notas
+ → Total de orden = suma de items
+ → Cada item se refleja como una venta en message_sales (para no romper widgets actuales)
 ```
-También en `index.html` agregar meta `viewport-fit=cover` si no está, y `apple-mobile-web-app-capable=yes` (verificar — probable que ya esté).
+
+### Wizard "Nueva Orden" — 3 pasos
+
+**Paso 1 — Cliente y dirección**
+- Buscar cliente existente en `customer_contacts` (autocomplete por nombre/teléfono) o crear nuevo inline
+- Seleccionar dirección guardada del cliente, o "Agregar nueva dirección" → abre **popup separado de dirección CR** (ver abajo)
+- Ediciones a cliente/dirección se persisten en `customer_contacts`
+
+**Paso 2 — Items**
+Pestañas internas para no congestionar:
+- **Desde historias activas** (24h) — grid 9:16 con miniaturas, click para agregar
+- **Desde historias archivadas** — grid paginado con buscador por fecha/texto OCR
+- **Sin historia** — selector de producto del catálogo + variante/talla + cantidad + precio
+
+Por cada item agregado: línea editable con producto, variante, qty, precio, subtotal, botón eliminar. Total se actualiza en vivo.
+
+**Paso 3 — Pago y confirmación**
+- Método de pago, fecha, notas, estado
+- Resumen completo (cliente, dirección, items, total)
+- Al confirmar: se crea la orden, se crean N filas en `message_sales` (una por item) ligadas a `order_id`, se descuenta stock de variantes, se actualiza `customer_contacts.total_purchases`.
+
+### Popup de Dirección CR (componente reutilizable)
+
+Diseñado solo para Costa Rica, abre como Dialog separado:
+- **Etiqueta** (Casa, Trabajo, etc.) — opcional
+- **Provincia** (dropdown — 7 opciones fijas)
+- **Cantón** (dropdown — filtrado por provincia seleccionada)
+- **Distrito** (dropdown — filtrado por cantón seleccionado)
+- **Señas exactas** (textarea — 200m sur del…)
+- **Código postal** (auto-rellenado al escoger distrito, editable)
+- **Teléfono de contacto** (opcional, default al del cliente)
+
+Dataset CR (provincia → cantón → distrito) se incluye como JSON estático en `src/data/costa-rica-locations.ts` (~480 distritos). Reutilizable desde el wizard de orden y desde Client Database.
+
+### Integración con módulos existentes
+
+- **Client Database**: nueva pestaña "Órdenes" en el detalle del cliente; sección "Direcciones" con CRUD usando el mismo popup
+- **Ventas (Alma Bendita)**: nuevo widget "Órdenes recientes" arriba del Story Revenue Tracker; el tracker actual sigue funcionando porque cada item sigue siendo una `message_sale`
+- **Historias**: cuando una historia se usa como origen de un item, se marca visualmente como "vendida" en el grid
+
+### Consideraciones
+
+- No rompe el flujo actual: el botón "Registrar venta por historia" sigue existiendo como atajo (crea orden de 1 item internamente)
+- Stock se descuenta solo cuando la orden pasa a estado distinto de "pendiente" (mismo patrón que apartados hoy)
+- Las guías de Correos de CC quedan fuera de scope ahora pero el modelo de dirección ya queda listo
 
 ---
 
-## Archivos editados
-- `src/components/inventory/TissueProductDialog.tsx` — rediseño con drafts + foto por variante + mobile-first.
-- `src/components/ventas/ProductsManager.tsx` — gating `isTissue` para abrir `TissueProductDialog`.
-- `src/components/dashboard/RegisterSaleDialog.tsx` — gating `isTissue` para abrir `TissueProductDialog`.
-- `src/index.css` — bloquear gestos horizontales / overscroll.
+## Detalles técnicos (referencia)
 
-## Notas
-- No tocar `VariantEditor.tsx` (sigue siendo el editor "live" para edición ya guardada en Inventory si se sigue usando, pero el nuevo dialog lo reemplaza para creación).
-- Schema sin cambios.
+**Parte 1 — Archivos a tocar:**
+- `src/pages/Ventas.tsx` — botón export en el header cuando `isAlmaBendita`
+- Nuevo `src/components/ventas/AlmaBenditaExportButton.tsx` — popover con dos opciones, genera CSV con Blob + download
+- Reutiliza hooks `useSalesTracking` y `useDailyStoryTracker` ya cargados en la página
+
+**Parte 2 — Cambios de DB (migración):**
+- Tabla `orders` (client_id, customer_contact_id, shipping_address jsonb, status, payment_method, total_amount, currency, notes, created_by)
+- Tabla `order_items` (order_id, product_id, variant_id, story_id, quantity, unit_price, subtotal, garment_size, notes)
+- Columna `order_id` en `message_sales` (nullable, FK a orders)
+- Trigger: al insertar `order_items` → crear `message_sales` linkeada y descontar stock variant
+- RLS por `has_client_access(auth.uid(), client_id)`
+
+**Parte 2 — Archivos nuevos:**
+- `src/data/costa-rica-locations.ts`
+- `src/components/common/CostaRicaAddressDialog.tsx`
+- `src/components/ventas/orders/OrderWizardDialog.tsx` (3 pasos)
+- `src/components/ventas/orders/OrdersWidget.tsx`
+- `src/hooks/use-orders.ts`
+- Update `src/pages/ClientDatabase.tsx` — pestaña Órdenes + sección Direcciones
+- Update `src/components/clientes/CustomerDetailDialog.tsx` — direcciones CRUD
+
+---
+
+## Orden sugerido de ejecución
+
+1. Implementar Parte 1 (export CSV) — entrega inmediata, ~1 iteración
+2. Confirmar dataset CR a usar y estados de orden
+3. Migración DB de órdenes
+4. Popup de dirección CR (reutilizable)
+5. Wizard de Nueva Orden (3 pasos)
+6. Integración en Client Database y Ventas
+
+¿Avanzo así o querés que la Parte 1 ya quede aprobada para implementar primero y dejamos la Parte 2 para iterar el diseño antes de tocar DB?
