@@ -110,6 +110,7 @@ const Ventas = () => {
   const isRobertoOlivas = selectedClient?.name?.toLowerCase().includes('roberto olivas');
   const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
   const isTissue = selectedClient?.name?.toLowerCase().includes('tissue');
+  const isRetailRedirect = (isAlmaBendita || isTissue) && isClient;
   const [tissueSaleOpen, setTissueSaleOpen] = useState(false);
 
   // Global time range state
