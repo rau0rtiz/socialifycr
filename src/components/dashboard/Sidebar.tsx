@@ -38,6 +38,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { prefetchRoute } from '@/lib/route-prefetch';
 import { useBrand } from '@/contexts/BrandContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/use-user-role';
@@ -182,6 +183,9 @@ export const Sidebar = () => {
                     <a 
                       href={item.url}
                       data-tour={item.dataTour}
+                      onMouseEnter={() => prefetchRoute(item.url)}
+                      onFocus={() => prefetchRoute(item.url)}
+                      onTouchStart={() => prefetchRoute(item.url)}
                       onClick={(e) => {
                         e.preventDefault();
                         transitionNavigate(item.url);
@@ -235,6 +239,9 @@ export const Sidebar = () => {
                     <SidebarMenuButton asChild isActive={active}>
                       <a 
                         href={item.url}
+                        onMouseEnter={() => prefetchRoute(item.url)}
+                        onFocus={() => prefetchRoute(item.url)}
+                        onTouchStart={() => prefetchRoute(item.url)}
                         onClick={(e) => {
                           e.preventDefault();
                           transitionNavigate(item.url);

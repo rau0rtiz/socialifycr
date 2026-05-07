@@ -139,13 +139,9 @@ const Dashboard = () => {
   const showCampaigns = !shouldRespectFlags || flags.campaigns;
 
   if (clientsLoading || roleLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-muted-foreground">Cargando...</div>
-        </div>
-      </DashboardLayout>
-    );
+    // Render empty layout shell — no spinner — to avoid flash of loading text.
+    // Widgets below have their own skeletons.
+    return <DashboardLayout><div className="min-h-[60vh]" /></DashboardLayout>;
   }
 
   if (clients.length === 0 || !selectedClient) {
