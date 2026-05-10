@@ -1,51 +1,40 @@
-## Crear nueva clienta: Dra. Clara Valdez
+## Problema
 
-Crear el registro de la clienta y habilitar las secciones/widgets relevantes para una práctica dental enfocada en servicios (consultas, tratamientos, ortodoncia, etc.).
+En `/ordenes` la "Meta Mensual" no refleja correctamente las ventas porque está calculando el total a mano sumando solo la tabla `orders` del mes:
 
-### 1. Crear cliente en la base de datos
-- Insertar en `clients`:
-  - `name`: "Dra. Clara Valdez"
-  - `industry`: "Salud / Odontología"
-  - `preferred_region`: "CR"
-  - Colores por defecto (se pueden ajustar luego en Ajustes del Dashboard)
+```ts
+const monthSalesCRC = orders
+  .filter(o => o.status !== 'cancelled' && new Date(o.order_date) >= summaryRange.start)
+  .reduce((s, o) => s + Number(o.total_amount || 0), 0);
+```
 
-### 2. Habilitar feature flags relevantes
-Crear fila en `client_feature_flags` con estos widgets/secciones activos:
+Esto deja fuera dos fuentes que **sí** suman a la meta en `/ventas` (Alma Bendita):
 
-**Ventas (enfocado en servicios)**
-- `ventas_section`, `sales_tracking`, `sales_goal`, `pipeline_summary`, `closure_rate`
-- `sales_by_product` (para ver ventas por tipo de servicio)
-- `collections` (cobros / pagos a plazos de tratamientos)
-- `lead_source`, `setter_daily`, `setter_tracker`, `setter_checklist`
-- `reservations_widget` (apartado de citas)
+1. **`message_sales`** que no provienen de órdenes (ventas registradas manualmente, ventas viejas, ventas de historias generadas por el `StoryRevenueTracker`, etc.). El `useSalesTracking` ya las consolida.
+2. **`override_revenue`** del `daily_story_tracker` (ajustes manuales del tracker de historias) — la regla [Alma Bendita Goals] exige que se sumen a la meta.
 
-**Contenido y redes**
-- `contenido_section`, `content_grid`, `content_calendar`
-- `social_followers`, `instagram_posts`, `youtube_videos`
-- `stories_section`, `publication_goals`
-- `reach_chart`, `social_performance`, `ai_insights`, `video_ideas`
-- `competitors`
+Resultado: la barra de meta en `/ordenes` se queda corta vs. la de `/ventas`, y al registrar una venta nueva (vía Wizard de orden) la meta no salta como debería si la suma del mes ya incluye otras fuentes.
 
-**Marketing y campañas**
-- `funnel`, `campaigns`, `ad_sales_ranking`, `generador_pauta`
+## Cambio propuesto
 
-**Comunicación**
-- `whatsapp_conversations`
-- `email_marketing_section`
+Reutilizar exactamente la misma lógica que `/ventas` para alimentar la barra de meta en `/ordenes`.
 
-**Reportes**
-- `reportes_section`, `monthly_sales_report`, `ai_report_generator`, `social_performance_report`
+### Archivo: `src/pages/Ordenes.tsx`
 
-**Ya activos por defecto:** `dashboard`, `business_setup_section`, `asistencia_section`
-
-**Excluidos** (no aplican a una clínica dental):
-- `story_store`, `story_revenue_tracker`, `sales_by_brand` (son para retail / Alma Bendita)
-- `giveaway` (exclusivo Petshop2go)
-
-### 3. Notas
-- No se invitan miembros de equipo aún — eso se hará después desde la sección Clientes → Dra. Clara Valdez → Equipo.
-- No se conectan plataformas (Meta, Instagram, etc.) todavía.
-- Productos/servicios se cargan después en Business Setup.
+1. Eliminar el cálculo manual `monthSalesCRC` basado en `orders`.
+2. Usar el `summary` que ya devuelve `useSalesTracking(clientId)` (sin rango → mes actual, igual que en Ventas.tsx).
+3. Para Alma Bendita, agregar el `storyOverrideCRC` del hook `useDailyStoryTracker` (solo `override_revenue`, los auto ya están en `summary.totalCRC`).
+4. Pasar a `<SalesGoalBar />`:
+   - `currentSalesUSD={summary.totalUSD}`
+   - `currentSalesCRC={summary.totalCRC + (isAlmaBendita ? storyOverrideCRC : 0)}`
 
 ### Detalles técnicos
-- Usar `supabase--insert` con dos `INSERT` (uno a `clients`, otro a `client_feature_flags` referenciando el id devuelto, en una sola transacción con CTE `WITH new_client AS (INSERT ... RETURNING id)`).
+
+- Importar `useDailyStoryTracker` desde `@/hooks/use-daily-story-tracker` (mismo hook que ya usa Ventas).
+- Llamar `useSalesTracking(clientId)` **sin rango** para obtener el `summary` mensual estándar (mantener el `useSalesTracking(clientId, summaryRange)` existente para los charts del tab "Resumen" si se sigue usando, o reutilizar el mismo según sea más limpio).
+- No tocar `SalesGoalBar.tsx` ni la lógica del tab "Órdenes" (KPIs internos siguen usando `orders`).
+- No cambiar nada en `/ventas`.
+
+## Resultado esperado
+
+La barra de meta en `/ordenes` queda sincronizada 1:1 con la de `/ventas` para Alma Bendita (y demás clientes), incluyendo ventas manuales y ajustes del story tracker. Al crear una orden nueva, el trigger `create_sale_from_order_item` inserta en `message_sales` → `useSalesTracking` la captura → la meta sube en tiempo real.
