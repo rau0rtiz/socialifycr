@@ -18,6 +18,7 @@ import { SalesBySizeChart } from '@/components/ventas/SalesBySizeChart';
 import { SalesByProductChart } from '@/components/ventas/SalesByProductChart';
 import { useSalesTracking } from '@/hooks/use-sales-tracking';
 import { useClientProducts } from '@/hooks/use-client-products';
+import { useDailyStoryTracker } from '@/hooks/use-daily-story-tracker';
 import { startOfMonth, endOfDay, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
