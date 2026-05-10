@@ -57,15 +57,17 @@ const Ordenes = () => {
     return { start: startOfMonth(now), end: endOfDay(now) };
   }, []);
 
-  const { sales: monthSales } = useSalesTracking(clientId, summaryRange);
+  const { sales: monthSales, summary } = useSalesTracking(clientId, summaryRange);
   const { products: clientProducts } = useClientProducts(clientId);
 
-  // Sales totals (CRC) for goal bar — current month, non-cancelled
-  const monthSalesCRC = useMemo(() => {
-    return orders
-      .filter(o => o.status !== 'cancelled' && new Date(o.order_date) >= summaryRange.start)
-      .reduce((s, o) => s + Number(o.total_amount || 0), 0);
-  }, [orders, summaryRange.start]);
+  // Story tracker overrides — only Alma Bendita adds manual adjustments to goal
+  const { entries: storyEntries } = useDailyStoryTracker(isAlmaBendita ? clientId : null);
+  const storyOverrideCRC = useMemo(
+    () => storyEntries.reduce((s, e) => s + (e.override_revenue || 0), 0),
+    [storyEntries]
+  );
+
+  const goalSalesCRC = summary.totalCRC + (isAlmaBendita ? storyOverrideCRC : 0);
 
   const filtered = useMemo(() => {
     return orders.filter(o => {
