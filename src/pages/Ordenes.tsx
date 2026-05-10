@@ -280,8 +280,8 @@ const Ordenes = () => {
           <TabsContent value="resumen" className="space-y-4 md:space-y-6 mt-4">
             <SalesGoalBar
               clientId={selectedClient.id}
-              currentSalesUSD={0}
-              currentSalesCRC={monthSalesCRC}
+              currentSalesUSD={summary.totalUSD}
+              currentSalesCRC={goalSalesCRC}
               primaryColor={selectedClient.primary_color || undefined}
               accentColor={selectedClient.accent_color || undefined}
             />
