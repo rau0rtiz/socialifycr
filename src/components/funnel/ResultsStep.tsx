@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Lock, Loader2, Mail, CheckCircle2, Instagram, Sparkles, ExternalLink } from 'lucide-react';
+import { ArrowRight, Lock, Loader2, Mail, CheckCircle2, Instagram, Sparkles, ExternalLink, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ResultsStepProps {
   level: number;
   revenueRange?: string;
   triedAdsAndQuit?: boolean;
-  onSubmitContact: (name: string, email: string, businessHandle?: string) => Promise<boolean>;
+  onSubmitContact: (name: string, email: string, phone: string, businessHandle?: string) => Promise<boolean>;
   onCalendlyClick: () => void;
 }
 
@@ -59,17 +59,22 @@ export const ResultsStep = ({ level, revenueRange, triedAdsAndQuit, onSubmitCont
   const [revealed, setRevealed] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [businessHandle, setBusinessHandle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const current = levelData[level - 1];
   const qualifiesForSession = level >= 4 || (level === 3 && revenueRange === '5k15k');
   const isExploratory = level === 6;
-  const canSubmit = name.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const phoneDigits = phone.replace(/\D/g, '');
+  const canSubmit =
+    name.trim().length > 0 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
+    phoneDigits.length >= 7;
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    const ok = await onSubmitContact(name, email, businessHandle.trim() || undefined);
+    const ok = await onSubmitContact(name, email, phone.trim(), businessHandle.trim() || undefined);
     setIsSubmitting(false);
     if (ok) {
       setRevealed(true);
