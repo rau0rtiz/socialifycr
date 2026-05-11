@@ -208,6 +208,23 @@ export const ResultsStep = ({ level, revenueRange, triedAdsAndQuit, onSubmitCont
               />
             </div>
             <div className="space-y-1">
+              <Label htmlFor="phone" className="font-semibold text-[#212121] text-xs md:text-sm flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5" />
+                Teléfono / WhatsApp *
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+506 8888 8888"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                maxLength={30}
+                className="h-10 md:h-12 rounded-xl border-2 border-gray-200 focus:border-[#FF6B35] text-sm px-4 bg-white text-black placeholder:text-gray-400 funnel-autofill"
+              />
+            </div>
+            <div className="space-y-1">
               <Label htmlFor="businessHandle" className="font-semibold text-[#212121] text-xs md:text-sm flex items-center gap-1.5">
                 <Instagram className="h-3.5 w-3.5" />
                 Instagram o nombre del negocio
