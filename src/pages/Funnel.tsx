@@ -164,7 +164,7 @@ const Funnel = () => {
     advanceTimerRef.current = setTimeout(() => goTo(7), AUTO_ADVANCE_DELAY);
   }, [goTo]);
 
-  const handleSubmitContact = async (name: string, email: string, businessHandle?: string) => {
+  const handleSubmitContact = async (name: string, email: string, phone: string, businessHandle?: string) => {
     const id = crypto.randomUUID();
     try {
       const resolvedFunnelId = await resolveFunnelId();
@@ -196,6 +196,7 @@ const Funnel = () => {
         id,
         name: name.trim().slice(0, 100),
         email: email.trim().toLowerCase().slice(0, 255),
+        phone: phone ? phone.trim().slice(0, 30) : null,
         business_level: businessLevel,
         industry: answers.industry,
         revenue_range: answers.ingresos,
