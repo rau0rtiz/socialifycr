@@ -1,0 +1,1 @@
+UPDATE public.email_campaigns SET status='scheduled', scheduled_for=now() - interval '1 minute', sent_count=0, failed_count=0 WHERE id='b5638016-cbf5-4557-b694-b6aaed44e7a8';
