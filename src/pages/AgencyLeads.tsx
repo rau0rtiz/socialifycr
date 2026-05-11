@@ -17,6 +17,79 @@ const levelColors: Record<number, string> = {
   1: '#94a3b8', 2: '#3b82f6', 3: '#22c55e', 4: '#FF6B35', 5: '#8b5cf6', 6: '#ef4444',
 };
 
+// Maps for human-readable answer labels
+const answerLabels: Record<string, Record<string, string>> = {
+  presencia: {
+    nada: 'No tengo presencia todavía',
+    perfil_inactivo: 'Tengo perfil pero no publico',
+    poco: 'Publico 1 a 2 veces/semana',
+    consistente: 'Publico 3 a 5 veces/semana',
+    diario: 'Publico todos los días',
+  },
+  pauta: {
+    nada: 'No invierte en pauta',
+    intente: 'Intentó y lo dejó',
+    menos200: 'Menos de $200/mes',
+    '200_500': '$200 – $500/mes',
+    '500_1000': '$500 – $1,000/mes',
+    '1000_2000': '$1,000 – $2,000/mes',
+    mas2000: 'Más de $2,000/mes',
+  },
+  pautaIntento: {
+    menos50: 'Menos de $50 en total',
+    '50_200': '$50 – $200',
+    '200_500': '$200 – $500',
+    '500_1500': '$500 – $1,500',
+    mas1500: 'Más de $1,500',
+    no_recuerdo: 'No recuerda',
+  },
+  pautaRazon: {
+    sin_resultados: 'No vio resultados',
+    caro: 'Le pareció muy caro',
+    no_entendi: 'No entendió cómo configurarlo',
+    mal_asesor: 'Mala experiencia con asesor',
+    sin_tiempo: 'No tuvo tiempo',
+    cuenta_bloqueada: 'Cuenta bloqueada/restringida',
+    otro: 'Otro motivo',
+  },
+  canalVentas: {
+    local: 'En persona / local físico',
+    mensajes: 'WhatsApp / Instagram / Facebook',
+    web: 'Página web / tienda en línea',
+    outbound: 'Contacto frío / outbound',
+    marketplace: 'Marketplace',
+    puntos_venta: 'Puntos de venta externos',
+    otro: 'Otro',
+  },
+  objetivo: {
+    awareness: 'Que más gente conozca el producto',
+    nuevos_clientes: 'Conseguir más clientes nuevos',
+    retencion: 'Venderle más a clientes actuales',
+    lanzamiento: 'Lanzar un nuevo producto',
+    marca: 'Construir marca a largo plazo',
+  },
+};
+
+const answerKeyLabels: Record<string, string> = {
+  presencia: 'Presencia en redes',
+  pauta: 'Inversión en pauta',
+  pautaIntento: 'Cuánto invirtió antes',
+  pautaRazon: 'Por qué dejó la pauta',
+  canalVentas: 'Canal de ventas',
+  objetivo: 'Objetivo principal',
+  businessHandle: 'Instagram / Negocio',
+  utm_source: 'UTM Source',
+  utm_medium: 'UTM Medium',
+  utm_campaign: 'UTM Campaign',
+  utm_content: 'UTM Content',
+  utm_term: 'UTM Term',
+};
+
+const formatAnswer = (key: string, value: string) =>
+  answerLabels[key]?.[value] ?? value;
+const formatAnswerKey = (key: string) =>
+  answerKeyLabels[key] ?? key.charAt(0).toUpperCase() + key.slice(1);
+
 const AgencyLeads = () => {
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
