@@ -250,12 +250,12 @@ const AgencyLeads = () => {
               </div>
               {selectedLead.answers && Object.keys(selectedLead.answers).length > 0 && (
                 <div>
-                  <span className="text-muted-foreground">Respuestas:</span>
-                  <div className="mt-1 rounded-lg bg-muted p-3 space-y-1">
+                  <span className="text-muted-foreground">Respuestas del funnel:</span>
+                  <div className="mt-1 rounded-lg bg-muted p-3 space-y-1.5">
                     {Object.entries(selectedLead.answers as Record<string, string>).map(([k, v]) => (
-                      <div key={k} className="flex justify-between">
-                        <span className="text-muted-foreground capitalize">{k}:</span>
-                        <span className="font-medium">{v}</span>
+                      <div key={k} className="flex justify-between gap-3">
+                        <span className="text-muted-foreground text-xs">{formatAnswerKey(k)}:</span>
+                        <span className="font-medium text-right text-xs">{formatAnswer(k, v)}</span>
                       </div>
                     ))}
                   </div>
