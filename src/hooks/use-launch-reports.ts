@@ -92,7 +92,7 @@ export function useLaunchCampaigns(clientId: string | null, connectionId: string
     queryFn: async () => {
       if (!clientId || !connectionId) return [] as MetaCampaignOption[];
       const { data, error } = await supabase.functions.invoke('meta-api', {
-        body: { clientId, endpoint: 'campaigns', connectionId, includeAllStatuses: true },
+        body: { clientId, endpoint: 'campaigns', connectionId, params: { includeAllStatuses: true } },
       });
       if (error || data?.error) {
         console.error('useLaunchCampaigns error', error || data?.error);
@@ -123,9 +123,11 @@ export function useCampaignDayInsights(
           clientId,
           endpoint: 'campaign-insights',
           connectionId,
-          campaignId,
-          since: dateStr,
-          until: dateStr,
+          params: {
+            campaignId,
+            since: dateStr,
+            until: dateStr,
+          },
         },
       });
       if (error || data?.error) {
