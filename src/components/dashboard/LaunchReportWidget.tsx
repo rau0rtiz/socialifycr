@@ -45,12 +45,22 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
 
   const { data: metaConnections } = useMetaConnections(clientId);
   const eligibleConnections = (metaConnections || []).filter((c) => !!c.ad_account_id);
-  const [connectionId, setConnectionId] = useState<string | null>(null);
+  const connectionStorageKey = `launch-report:connection:${clientId}`;
+  const [connectionId, setConnectionId] = useState<string | null>(() => {
+    try { return localStorage.getItem(connectionStorageKey) || null; } catch { return null; }
+  });
   useEffect(() => {
-    if (!connectionId && eligibleConnections.length > 0) {
+    const connectionStillAvailable = eligibleConnections.some((c) => c.id === connectionId);
+    if ((!connectionId || !connectionStillAvailable) && eligibleConnections.length > 0) {
       setConnectionId(eligibleConnections[0].id);
     }
   }, [eligibleConnections, connectionId]);
+
+  useEffect(() => {
+    try {
+      if (connectionId) localStorage.setItem(connectionStorageKey, connectionId);
+    } catch { /* ignore */ }
+  }, [connectionId, connectionStorageKey]);
 
   const { data: campaigns = [], isLoading: campaignsLoading } = useLaunchCampaigns(clientId, connectionId);
   const { data: allReports = [] } = useLaunchReports(clientId);
@@ -103,9 +113,10 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
     date,
   );
 
-  const spend = insights?.spend ?? existing?.spend_snapshot ?? 0;
-  const conversations = insights?.conversations ?? existing?.conversations_snapshot ?? 0;
-  const currency = insights?.currency ?? existing?.currency ?? 'USD';
+  const existingMatchesCampaign = !!existing && (!campaignId || existing.campaign_id === campaignId);
+  const spend = insights?.spend ?? (existingMatchesCampaign ? existing?.spend_snapshot : 0) ?? 0;
+  const conversations = insights?.conversations ?? (existingMatchesCampaign ? existing?.conversations_snapshot : 0) ?? 0;
+  const currency = insights?.currency ?? (existingMatchesCampaign ? existing?.currency : undefined) ?? 'USD';
 
   const signupsNum = parseInt(groupSignups) || 0;
   const ctrNum = parseFloat(manychatCtr) || 0;
