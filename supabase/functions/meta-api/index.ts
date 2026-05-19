@@ -198,6 +198,51 @@ serve(async (req) => {
         break;
       }
 
+      case 'campaign-insights': {
+        if (!adAccountId) {
+          return new Response(JSON.stringify({ error: 'No Ad account connected' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        const cid = params.campaignId;
+        if (!cid) {
+          return new Response(JSON.stringify({ error: 'Missing campaignId parameter' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        let timeRangeParam = '';
+        if (params.since && params.until) {
+          timeRangeParam = `&time_range={"since":"${params.since}","until":"${params.until}"}`;
+        } else {
+          timeRangeParam = `&date_preset=${params.datePreset || 'yesterday'}`;
+        }
+        let currency = 'USD';
+        try {
+          const accountResponse = await fetch(
+            `https://graph.facebook.com/v21.0/${adAccountId}?fields=currency&access_token=${userAccessToken}`
+          );
+          const accountData = await accountResponse.json();
+          if (accountData.currency) currency = accountData.currency;
+        } catch (err) {
+          console.log('Could not fetch ad account currency:', err);
+        }
+        const insightsResp = await fetch(
+          `https://graph.facebook.com/v21.0/${cid}/insights?` +
+          `fields=spend,impressions,reach,clicks,actions,cost_per_action_type` +
+          `${timeRangeParam}&access_token=${userAccessToken}`
+        );
+        const insightsData = await insightsResp.json();
+        const campaignMetaResp = await fetch(
+          `https://graph.facebook.com/v21.0/${cid}?fields=id,name,objective,effective_status&access_token=${userAccessToken}`
+        );
+        const campaignMeta = await campaignMetaResp.json();
+        console.log(`campaign-insights ${cid} ${params.since}..${params.until}:`, JSON.stringify(insightsData?.data?.[0] || {}));
+        result = { data: insightsData?.data || [], campaign: campaignMeta, currency };
+        break;
+      }
+
       case 'campaigns': {
         if (!adAccountId) {
           return new Response(JSON.stringify({ error: 'No Ad account connected' }), {
@@ -229,12 +274,15 @@ serve(async (req) => {
           console.log('Could not fetch ad account currency:', err);
         }
 
-        // Get campaigns first
+        // Get campaigns first — optionally include all statuses for selectors needing history
+        const statusFilter = params.includeAllStatuses
+          ? ''
+          : `&filtering=[{"field":"effective_status","operator":"IN","value":["ACTIVE"]}]`;
         const campaignsResponse = await fetch(
           `https://graph.facebook.com/v21.0/${adAccountId}/campaigns?` +
           `fields=id,name,status,effective_status,objective,daily_budget,lifetime_budget,start_time,stop_time` +
-          `&filtering=[{"field":"effective_status","operator":"IN","value":["ACTIVE"]}]` +
-          `&limit=50&access_token=${userAccessToken}`
+          `${statusFilter}` +
+          `&limit=100&access_token=${userAccessToken}`
         );
         const campaignsData = await campaignsResponse.json();
 
