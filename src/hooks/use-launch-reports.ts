@@ -85,14 +85,14 @@ export interface CampaignInsightsForDay {
   currency: string;
 }
 
-/** Fetch active campaigns (no insights time-bound) for the connection — used for selector. */
+/** Fetch all campaigns (including paused/completed) for the selector. */
 export function useLaunchCampaigns(clientId: string | null, connectionId: string | null) {
   return useQuery({
     queryKey: ['launch-campaigns', clientId, connectionId],
     queryFn: async () => {
       if (!clientId || !connectionId) return [] as MetaCampaignOption[];
       const { data, error } = await supabase.functions.invoke('meta-api', {
-        body: { clientId, endpoint: 'campaigns', connectionId },
+        body: { clientId, endpoint: 'campaigns', connectionId, includeAllStatuses: true },
       });
       if (error || data?.error) {
         console.error('useLaunchCampaigns error', error || data?.error);
@@ -106,7 +106,7 @@ export function useLaunchCampaigns(clientId: string | null, connectionId: string
   });
 }
 
-/** Fetch insights for a single campaign on a specific date. */
+/** Fetch insights for a single campaign on a specific date — uses dedicated endpoint. */
 export function useCampaignDayInsights(
   clientId: string | null,
   connectionId: string | null,
@@ -119,16 +119,22 @@ export function useCampaignDayInsights(
       if (!clientId || !connectionId || !campaignId || !date) return null;
       const dateStr = toDateStr(date);
       const { data, error } = await supabase.functions.invoke('meta-api', {
-        body: { clientId, endpoint: 'campaigns', connectionId, since: dateStr, until: dateStr },
+        body: {
+          clientId,
+          endpoint: 'campaign-insights',
+          connectionId,
+          campaignId,
+          since: dateStr,
+          until: dateStr,
+        },
       });
       if (error || data?.error) {
         console.error('useCampaignDayInsights error', error || data?.error);
         return null;
       }
-      const list = (data?.data || data?.campaigns || []) as any[];
-      const campaign = list.find((c) => c.id === campaignId);
-      if (!campaign) return { spend: 0, conversations: 0, currency: data?.currency || 'USD' };
-      const insights = campaign.insights?.data?.[0];
+      const insights = (data?.data || [])[0];
+      const currency = data?.currency || 'USD';
+      if (!insights) return { spend: 0, conversations: 0, currency };
       const spend = parseFloat(insights?.spend || '0') || 0;
       const convAction = (insights?.actions || []).find((a: any) =>
         a.action_type === 'onsite_conversion.messaging_conversation_started_7d' ||
@@ -136,9 +142,10 @@ export function useCampaignDayInsights(
         a.action_type === 'onsite_conversion.total_messaging_connection',
       );
       const conversations = convAction ? parseInt(convAction.value) : 0;
-      return { spend, conversations, currency: data?.currency || 'USD' };
+      return { spend, conversations, currency };
     },
     enabled: !!clientId && !!connectionId && !!campaignId && !!date,
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchOnMount: 'always',
   });
 }
