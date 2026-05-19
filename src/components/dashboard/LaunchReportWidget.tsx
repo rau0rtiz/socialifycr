@@ -63,22 +63,36 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
   const prevDayStr = format(subDays(date, 1), 'yyyy-MM-dd');
   const prevReport = useMemo(() => allReports.find((r) => r.report_date === prevDayStr), [allReports, prevDayStr]);
 
-  // Form state — initialize from existing or defaults
-  const [campaignId, setCampaignId] = useState<string>('');
+  // Form state — campaign persists across date changes (sticky in localStorage),
+  // manual inputs reload from the existing report for the selected date.
+  const campaignStorageKey = `launch-report:campaign:${clientId}`;
+  const [campaignId, setCampaignId] = useState<string>(() => {
+    try { return localStorage.getItem(campaignStorageKey) || ''; } catch { return ''; }
+  });
   const [groupSignups, setGroupSignups] = useState<string>('0');
   const [manychatCtr, setManychatCtr] = useState<string>('0');
 
+  // Persist campaign selection whenever the user changes it
+  useEffect(() => {
+    try {
+      if (campaignId) localStorage.setItem(campaignStorageKey, campaignId);
+    } catch { /* ignore */ }
+  }, [campaignId, campaignStorageKey]);
+
+  // When date changes, refill manual inputs from existing report.
+  // Only seed campaignId if none is currently chosen (sticky behavior).
   useEffect(() => {
     if (existing) {
-      setCampaignId(existing.campaign_id || '');
       setGroupSignups(String(existing.group_signups || 0));
       setManychatCtr(String(existing.manychat_ctr || 0));
+      if (!campaignId && existing.campaign_id) setCampaignId(existing.campaign_id);
     } else {
-      // Default campaign = last used
-      const lastUsed = [...allReports].reverse().find((r) => r.campaign_id)?.campaign_id;
-      setCampaignId(lastUsed || '');
       setGroupSignups('0');
       setManychatCtr('0');
+      if (!campaignId) {
+        const lastUsed = [...allReports].reverse().find((r) => r.campaign_id)?.campaign_id;
+        if (lastUsed) setCampaignId(lastUsed);
+      }
     }
   }, [existing, dateStr]); // eslint-disable-line react-hooks/exhaustive-deps
 
