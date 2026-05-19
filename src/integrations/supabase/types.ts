@@ -1061,6 +1061,7 @@ export type Database = {
           giveaway: boolean
           id: string
           instagram_posts: boolean
+          launch_report: boolean
           lead_source: boolean
           monthly_sales_report: boolean
           pipeline_summary: boolean
@@ -1110,6 +1111,7 @@ export type Database = {
           giveaway?: boolean
           id?: string
           instagram_posts?: boolean
+          launch_report?: boolean
           lead_source?: boolean
           monthly_sales_report?: boolean
           pipeline_summary?: boolean
@@ -1159,6 +1161,7 @@ export type Database = {
           giveaway?: boolean
           id?: string
           instagram_posts?: boolean
+          launch_report?: boolean
           lead_source?: boolean
           monthly_sales_report?: boolean
           pipeline_summary?: boolean
@@ -2558,6 +2561,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      launch_daily_reports: {
+        Row: {
+          campaign_id: string | null
+          campaign_name: string | null
+          client_id: string
+          conversations_snapshot: number | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          group_signups: number | null
+          id: string
+          manychat_ctr: number | null
+          notes: string | null
+          report_date: string
+          spend_snapshot: number | null
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          campaign_name?: string | null
+          client_id: string
+          conversations_snapshot?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          group_signups?: number | null
+          id?: string
+          manychat_ctr?: number | null
+          notes?: string | null
+          report_date: string
+          spend_snapshot?: number | null
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          campaign_name?: string | null
+          client_id?: string
+          conversations_snapshot?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          group_signups?: number | null
+          id?: string
+          manychat_ctr?: number | null
+          notes?: string | null
+          report_date?: string
+          spend_snapshot?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "launch_daily_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       launch_phase_tasks: {
         Row: {
