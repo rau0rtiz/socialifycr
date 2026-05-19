@@ -72,7 +72,7 @@ const BOOLEAN_FLAG_KEYS: (keyof Omit<ClientFeatureFlags, 'id' | 'client_id' | 'c
   'dashboard', 'ventas_section', 'contenido_section', 'reportes_section', 'email_marketing_section',
   'business_setup_section', 'asistencia_section',
   'social_followers', 'instagram_posts', 'youtube_videos', 'funnel', 'campaigns',
-  'reach_chart', 'social_performance', 'stories_section', 'publication_goals', 'ai_insights', 'competitors',
+  'reach_chart', 'social_performance', 'stories_section', 'publication_goals', 'ai_insights', 'competitors', 'launch_report',
   'sales_tracking', 'setter_tracker', 'setter_checklist', 'setter_daily',
   'pipeline_summary', 'sales_goal', 'closure_rate', 'ad_sales_ranking', 'lead_source',
   'whatsapp_conversations', 'story_store', 'story_revenue_tracker', 'sales_by_product', 'sales_by_brand', 'collections', 'reservations_widget',
