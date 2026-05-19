@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const CampaignsDrilldown = lazy(() => import('@/components/dashboard/CampaignsDrilldown').then(m => ({ default: m.CampaignsDrilldown })));
 const AdvancedFunnelModule = lazy(() => import('@/components/dashboard/AdvancedFunnelModule').then(m => ({ default: m.AdvancedFunnelModule })));
 const ContentGrid = lazy(() => import('@/components/dashboard/ContentGrid').then(m => ({ default: m.ContentGrid })));
+const LaunchReportWidget = lazy(() => import('@/components/dashboard/LaunchReportWidget').then(m => ({ default: m.LaunchReportWidget })));
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
@@ -137,6 +138,8 @@ const Dashboard = () => {
 
   const showFunnel = !shouldRespectFlags || flags.funnel;
   const showCampaigns = !shouldRespectFlags || flags.campaigns;
+  const isRobertoOlivas = !!selectedClient?.name?.toLowerCase().includes('roberto olivas');
+  const showLaunchReport = isRobertoOlivas && (!shouldRespectFlags || flags.launch_report);
 
   if (clientsLoading || roleLoading) {
     // Render empty layout shell — no spinner — to avoid flash of loading text.
@@ -331,6 +334,15 @@ const Dashboard = () => {
               onRemoveCrosspostLink={removeCrosspostLink}
               getLinkedPosts={getLinkedPosts}
             />
+          </Suspense>
+        </div>
+      )}
+
+      {/* Launch Report (Roberto Olivas only) */}
+      {showLaunchReport && (
+        <div className="mb-3 md:mb-6">
+          <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+            <LaunchReportWidget clientId={selectedClient.id} />
           </Suspense>
         </div>
       )}

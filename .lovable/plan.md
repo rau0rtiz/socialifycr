@@ -1,40 +1,103 @@
-## Problema
+# Widget de Lanzamiento Diario — Roberto Olivas
 
-En `/ordenes` la "Meta Mensual" no refleja correctamente las ventas porque está calculando el total a mano sumando solo la tabla `orders` del mes:
+Nuevo widget en el Dashboard principal (solo visible para Roberto Olivas) que combina datos automáticos de Meta con inputs manuales, **guarda cada reporte diario**, genera el mensaje copiable con un click y muestra **gráficos histórico día a día** para visualizar el resultado del lanzamiento.
 
-```ts
-const monthSalesCRC = orders
-  .filter(o => o.status !== 'cancelled' && new Date(o.order_date) >= summaryRange.start)
-  .reduce((s, o) => s + Number(o.total_amount || 0), 0);
+## UI del widget
+
+Una tarjeta con tres secciones:
+
+### 1. Reporte del día (editor)
+- **Selector de fecha** (default: hoy, zona Costa Rica)
+- **Selector de campaña** (dropdown de campañas activas de Meta — la campaña de lanzamiento)
+- **Datos automáticos de Meta** (según fecha + campaña seleccionada):
+  - Inversión del día (spend)
+  - Conversaciones (`messaging_conversations_started`)
+  - Costo por conversación
+- **Inputs manuales**:
+  - Ingresos al grupo (#)
+  - CTR Manychat (%)
+- **Calculado**: Costo por ingreso = inversión / ingresos, con badge ✅ "bajó" o ⚠️ "subió" vs día anterior
+- **Botón "Guardar"** → upsert en BD
+- **Botón "Copiar reporte"** → copia al portapapeles:
+
+```text
+📊 Reporte Lunes 18 de Mayo
+
+Ingresos al grupo: 52 personas
+
+💰 Inversión del día: $865.08
+Costo por conversación: $5.12 (169 conversaciones)
+Costo por ingreso: $16.63 ✅ (bajó vs domingo)
+📲 CTR Manychat: 44.5%
 ```
 
-Esto deja fuera dos fuentes que **sí** suman a la meta en `/ventas` (Alma Bendita):
+### 2. Visualización histórica del lanzamiento
+Gráficos día a día (Recharts) con todos los reportes guardados ordenados por fecha:
 
-1. **`message_sales`** que no provienen de órdenes (ventas registradas manualmente, ventas viejas, ventas de historias generadas por el `StoryRevenueTracker`, etc.). El `useSalesTracking` ya las consolida.
-2. **`override_revenue`** del `daily_story_tracker` (ajustes manuales del tracker de historias) — la regla [Alma Bendita Goals] exige que se sumen a la meta.
+- **Gráfico combinado** (barras + línea):
+  - Barras: Ingresos al grupo por día
+  - Línea: Costo por ingreso por día
+- **Gráfico de área**: Inversión diaria acumulada
+- **Gráfico de línea**: CTR Manychat y Costo por conversación (eje doble)
+- **Selector de rango**: últimos 7 días / 14 / 30 / todo el lanzamiento
+- **KPIs totales arriba de los gráficos**: Inversión total, Ingresos totales, Costo por ingreso promedio, Mejor día (menor costo por ingreso)
 
-Resultado: la barra de meta en `/ordenes` se queda corta vs. la de `/ventas`, y al registrar una venta nueva (vía Wizard de orden) la meta no salta como debería si la suma del mes ya incluye otras fuentes.
+### 3. Tabla histórica (colapsable)
+Lista de todos los reportes con: fecha, campaña, inversión, conversaciones, ingresos, costo/ingreso, CTR. Botón editar por fila (carga ese reporte en el editor de arriba).
 
-## Cambio propuesto
+## Persistencia
 
-Reutilizar exactamente la misma lógica que `/ventas` para alimentar la barra de meta en `/ordenes`.
+Nueva tabla `launch_daily_reports`:
+- `id`, `client_id`, `report_date` (date)
+- UNIQUE (`client_id`, `report_date`) → upsert por fecha
+- `campaign_id` (text, Meta campaign id)
+- `campaign_name` (text, snapshot)
+- `manychat_ctr` (numeric, %)
+- `group_signups` (int)
+- Snapshot al guardar: `spend_snapshot` (numeric), `conversations_snapshot` (int), `currency` (text)
+- `notes` (text, opcional)
+- `created_by`, `created_at`, `updated_at`
+- RLS: SELECT/INSERT/UPDATE/DELETE vía `has_client_access(auth.uid(), client_id)`
+- Trigger `updated_at`
+- Índice en (`client_id`, `report_date` DESC)
 
-### Archivo: `src/pages/Ordenes.tsx`
+Guardar snapshots de spend/conversaciones permite que el histórico siga siendo fiel aunque Meta deje de devolver insights viejos o cambie la campaña.
 
-1. Eliminar el cálculo manual `monthSalesCRC` basado en `orders`.
-2. Usar el `summary` que ya devuelve `useSalesTracking(clientId)` (sin rango → mes actual, igual que en Ventas.tsx).
-3. Para Alma Bendita, agregar el `storyOverrideCRC` del hook `useDailyStoryTracker` (solo `override_revenue`, los auto ya están en `summary.totalCRC`).
-4. Pasar a `<SalesGoalBar />`:
-   - `currentSalesUSD={summary.totalUSD}`
-   - `currentSalesCRC={summary.totalCRC + (isAlmaBendita ? storyOverrideCRC : 0)}`
+## Visibilidad
 
-### Detalles técnicos
+- Render condicionado a `selectedClient.name` que contenga "roberto olivas" (patrón ya usado en `Ventas.tsx`).
+- Feature flag `launch_report` (default `true`) en `client_feature_flags`.
 
-- Importar `useDailyStoryTracker` desde `@/hooks/use-daily-story-tracker` (mismo hook que ya usa Ventas).
-- Llamar `useSalesTracking(clientId)` **sin rango** para obtener el `summary` mensual estándar (mantener el `useSalesTracking(clientId, summaryRange)` existente para los charts del tab "Resumen" si se sigue usando, o reutilizar el mismo según sea más limpio).
-- No tocar `SalesGoalBar.tsx` ni la lógica del tab "Órdenes" (KPIs internos siguen usando `orders`).
-- No cambiar nada en `/ventas`.
+## Detalles técnicos
 
-## Resultado esperado
+**Backend**
+- Migración: tabla `launch_daily_reports` con RLS + trigger `updated_at`, y columna `launch_report boolean default true` en `client_feature_flags`.
 
-La barra de meta en `/ordenes` queda sincronizada 1:1 con la de `/ventas` para Alma Bendita (y demás clientes), incluyendo ventas manuales y ajustes del story tracker. Al crear una orden nueva, el trigger `create_sale_from_order_item` inserta en `message_sales` → `useSalesTracking` la captura → la meta sube en tiempo real.
+**Meta**
+- Reutilizar endpoint `campaigns` de `meta-api` con `params.since`/`params.until` = la fecha seleccionada (rango de un día — ya soportado).
+- Extraer del primer `insights.data[0]`:
+  - `spend` → inversión
+  - `actions.find(a => a.action_type === 'onsite_conversion.messaging_conversation_started_7d' || a.action_type === 'messaging_conversation_started_7d')` → conversaciones
+  - `currency` de la respuesta.
+
+**Frontend**
+- `src/hooks/use-launch-reports.ts`:
+  - `useLaunchReports(clientId)` → lista completa para gráficos/tabla.
+  - `useLaunchReportByDate(clientId, date)` → reporte de una fecha (para el editor).
+  - `useLaunchCampaignInsights(clientId, connectionId, campaignId, date)` → trae spend/conversations de Meta.
+  - `useUpsertLaunchReport()` → mutación upsert por (`client_id`, `report_date`).
+- `src/lib/format-launch-report.ts` → helper puro que arma el string del mensaje (con `date-fns` locale `es`).
+- `src/components/dashboard/LaunchReportWidget.tsx` → editor + KPIs + tabla.
+- `src/components/dashboard/LaunchReportCharts.tsx` → gráficos Recharts.
+- `src/pages/Dashboard.tsx`: render condicional `{isRobertoOlivas && flags.launch_report && <LaunchReportWidget clientId={...} />}`.
+- `src/hooks/use-client-features.ts`: agregar `launch_report` a `BOOLEAN_FLAG_KEYS` y a `DASHBOARD_WIDGET_LABELS`.
+
+## Archivos a crear / editar
+
+- `supabase/migrations/<timestamp>_launch_daily_reports.sql` (nuevo)
+- `src/hooks/use-launch-reports.ts` (nuevo)
+- `src/lib/format-launch-report.ts` (nuevo)
+- `src/components/dashboard/LaunchReportWidget.tsx` (nuevo)
+- `src/components/dashboard/LaunchReportCharts.tsx` (nuevo)
+- `src/pages/Dashboard.tsx` (renderizar widget)
+- `src/hooks/use-client-features.ts` (registrar flag `launch_report`)
