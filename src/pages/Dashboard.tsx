@@ -338,6 +338,15 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Launch Report (Roberto Olivas only) */}
+      {showLaunchReport && (
+        <div className="mb-3 md:mb-6">
+          <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+            <LaunchReportWidget clientId={selectedClient.id} />
+          </Suspense>
+        </div>
+      )}
+
       {/* Advanced Funnel Analytics */}
       {showFunnel && (
         <div className="mb-3 md:mb-6">
