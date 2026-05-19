@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const CampaignsDrilldown = lazy(() => import('@/components/dashboard/CampaignsDrilldown').then(m => ({ default: m.CampaignsDrilldown })));
 const AdvancedFunnelModule = lazy(() => import('@/components/dashboard/AdvancedFunnelModule').then(m => ({ default: m.AdvancedFunnelModule })));
 const ContentGrid = lazy(() => import('@/components/dashboard/ContentGrid').then(m => ({ default: m.ContentGrid })));
+const LaunchReportWidget = lazy(() => import('@/components/dashboard/LaunchReportWidget').then(m => ({ default: m.LaunchReportWidget })));
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
