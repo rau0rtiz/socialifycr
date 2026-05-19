@@ -138,6 +138,8 @@ const Dashboard = () => {
 
   const showFunnel = !shouldRespectFlags || flags.funnel;
   const showCampaigns = !shouldRespectFlags || flags.campaigns;
+  const isRobertoOlivas = !!selectedClient?.name?.toLowerCase().includes('roberto olivas');
+  const showLaunchReport = isRobertoOlivas && (!shouldRespectFlags || flags.launch_report);
 
   if (clientsLoading || roleLoading) {
     // Render empty layout shell — no spinner — to avoid flash of loading text.
