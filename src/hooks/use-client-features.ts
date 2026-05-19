@@ -101,6 +101,7 @@ export const DASHBOARD_WIDGET_LABELS: Record<string, string> = {
   content_grid: 'Grid de Contenido',
   funnel: 'Embudo (Funnel)',
   campaigns: 'Campañas',
+  launch_report: 'Reporte de Lanzamiento Diario',
 };
 
 export const VENTAS_WIDGET_LABELS: Record<string, string> = {
