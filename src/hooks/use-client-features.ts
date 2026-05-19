@@ -36,6 +36,7 @@ export interface ClientFeatureFlags {
   publication_goals: boolean;
   ai_insights: boolean;
   competitors: boolean;
+  launch_report: boolean;
   // Ventas widgets
   sales_tracking: boolean;
   setter_tracker: boolean;
