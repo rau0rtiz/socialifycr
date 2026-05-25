@@ -1,43 +1,31 @@
-# Capturar UTMs en el formulario de contacto del sitio
+## Diagnóstico
 
-El sitio `socialifycr.com` vive en el otro proyecto Lovable **WEBSITE AGENCIA**. Ya inserta leads en `funnel_leads` del dashboard vía `submitContactLead`, pero no captura los parámetros UTM del URL. Voy a agregar esa captura, persistirla durante la navegación, y pasarla al `answers` JSON para que se vean tanto en el email como en el panel de Leads.
+Es culpa nuestra (del dashboard), no del formulario. Verifiqué un lead real en la base: el formulario **sí está guardando todo** en `answers`:
 
-## Cambios en WEBSITE AGENCIA
+```
+{ source: 'website-contact-form', kind: 'contacto', brand: 'kjn kja',
+  tried: 'lkhbolblo', challenge: 'kjnojnl.jbl.jb',
+  utm_source, utm_medium, utm_campaign }
+```
 
-### 1. Nuevo hook `src/hooks/use-utms.ts`
-- Al montar, lee `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term` del `window.location.search`.
-- Si hay alguno, lo guarda en `sessionStorage` con clave `socialify_utms` (sobrescribe los previos).
-- Siempre retorna el objeto leído desde `sessionStorage` (así sobreviven al scroll a `#contacto`, cambios de página, etc.).
-- Helper exportado `getStoredUtms()` para uso fuera de React.
+El dialog de detalle en `AgencyLeadsContent.tsx` (rama `isWebContact`) solo pinta:
+- Email, Teléfono, Asunto (industry), Mensaje (challenge), y un campo `ans.social_network` que **no existe** en lo que envía el form.
 
-### 2. Actualizar `src/components/ContactForm.tsx`
-- Usar `useUtms()` y mandar el resultado a `submitContactLead({ ..., utms })`.
-- También pasar los UTMs al `fetch("/api/public/contact-notify", ...)` por si esa función los usa.
+Por eso se ven UTMs pero faltan `kind`, `brand` y `tried`.
 
-### 3. Actualizar `src/integrations/dashboard-supabase.ts`
-- Agregar `utms?: Record<string, string>` al `ContactLeadInput`.
-- En el `insert`, expandir los utms dentro de `answers` (junto a `source`, `kind`, `brand`, etc.):
-  ```ts
-  answers: { source, kind, brand, challenge, tried, ...(input.utms ?? {}) }
-  ```
+## Fix
 
-### 4. Inicialización temprana en `src/main.tsx` (o `App.tsx`)
-- Llamar `getStoredUtms()` (que dispara la lectura+persist) lo antes posible para capturar UTMs aunque el usuario nunca abra el form en la primera visita pero rellene en otra.
+En `src/components/comunicaciones/AgencyLeadsContent.tsx`, dentro del `isWebContact === true` del diálogo (~líneas 555-561):
 
-## Cambios en el dashboard (este proyecto)
+1. Quitar el bloque de `ans.social_network` (clave fantasma).
+2. Agregar tres filas nuevas en el grid cuando existan:
+   - **Tipo de consulta** → `ans.kind` (mapear `contacto`→"Contacto general", `demo`→"Solicita demo", etc. — usar el valor crudo capitalizado si no hay match).
+   - **Negocio / Marca** → `ans.brand`.
+   - **Qué han intentado** → `ans.tried` (en una caja `bg-muted` aparte si es largo, mismo estilo que el bloque Mensaje).
+3. Mantener el bloque Mensaje (`selectedLead.challenge || ans.challenge`) tal cual.
 
-Ya está todo listo del lado del dashboard:
-- El dialog de Leads en `AgencyLeadsContent.tsx` muestra el bloque "Atribución (UTMs)" cuando vienen en `answers`.
-- El edge function `notify-website-contact` agrega un bloque morado con UTMs al email.
-
-No requiere cambios.
-
-## Fuera de alcance
-- No tocar el diseño visual del formulario.
-- No agregar nuevos campos UTM (solo los 5 estándar).
-- No modificar lógica de `/api/public/contact-notify` más allá de pasarle utms.
+No tocar la rama del quiz ni el bloque UTM (ya funciona).
 
 ## Verificación
-Una vez aplicado, probar con: `https://socialifycr.com/?utm_source=instagram&utm_medium=bio&utm_campaign=mayo`. Llenar el formulario y confirmar que:
-1. El correo a raul@socialifycr.com llega con el bloque morado de UTMs.
-2. El lead en el dashboard (sección Comunicaciones → Leads → funnel "Página Web — Contacto") muestra el bloque morado al abrir el detalle.
+
+Abrir un lead de "Formulario de contacto web" en `/comunicaciones` → Leads y confirmar que se ven Tipo, Negocio, Qué intentaron, Mensaje y UTMs.
