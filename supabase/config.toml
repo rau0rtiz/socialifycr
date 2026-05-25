@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.send-campaign]
 verify_jwt = false
+
+[functions.notify-website-contact]
+verify_jwt = false
