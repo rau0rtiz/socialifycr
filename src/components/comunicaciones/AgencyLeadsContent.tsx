@@ -643,7 +643,9 @@ const AgencyLeadsContent = () => {
                 </Button>
               </div>
             </div>
-          )}
+            );
+          })()}
+
         </DialogContent>
       </Dialog>
 
