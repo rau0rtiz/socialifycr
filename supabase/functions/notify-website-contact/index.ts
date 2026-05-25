@@ -31,10 +31,24 @@ serve(async (req) => {
     const email = lead?.email ?? "—";
     const phone = lead?.phone ?? "—";
     const subject = lead?.industry ?? "—";
-    const message = lead?.challenge ?? "—";
+    const message = lead?.challenge ?? answers?.looking_for ?? "—";
+
+    const utmKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
+    const utms = utmKeys
+      .map((k) => ({ key: k, value: answers?.[k] }))
+      .filter((u) => u.value);
 
     const esc = (s: string) => String(s).replace(/[&<>"']/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+
+    const utmHtml = utms.length
+      ? `<div style="margin-top:20px;padding:14px;background:#f3e8ff;border-radius:8px;">
+          <div style="font-size:12px;color:#7c3aed;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Atribución (UTMs)</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            ${utms.map(u => `<tr><td style="padding:4px 0;color:#666;width:100px;text-transform:capitalize;">${u.key.replace("utm_","")}</td><td style="padding:4px 0;font-weight:600;">${esc(String(u.value))}</td></tr>`).join("")}
+          </table>
+        </div>`
+      : "";
 
     const html = `
       <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1a1a1a;">
@@ -49,6 +63,7 @@ serve(async (req) => {
           <div style="font-size:12px;color:#666;margin-bottom:6px;">Mensaje</div>
           <div style="font-size:14px;line-height:1.5;white-space:pre-wrap;">${esc(message)}</div>
         </div>
+        ${utmHtml}
         <p style="margin-top:24px;font-size:12px;color:#999;">Lead registrado el ${new Date(lead?.created_at ?? Date.now()).toLocaleString("es-CR", { timeZone: "America/Costa_Rica" })}</p>
       </div>
     `;
