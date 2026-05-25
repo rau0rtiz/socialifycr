@@ -157,22 +157,14 @@ export const Sidebar = () => {
     <SidebarComponent collapsible="icon" className="border-r border-border">
       <SidebarHeader className="p-4" data-tour="sidebar-nav">
         <div className="flex items-center gap-3">
-          {platformBrand.logoUrl ? (
-            <img 
-              src={platformBrand.logoUrl} 
-              alt={platformBrand.name} 
-              className="w-8 h-8 rounded-lg object-contain"
-              loading="eager"
-              decoding="async"
-            />
-          ) : (
-            <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-primary-foreground font-bold text-sm overflow-hidden"
-              style={{ backgroundColor: `hsl(${platformBrand.primaryColor})` }}
-            >
-              {platformBrand.name.charAt(0)}
-            </div>
-          )}
+          <img
+            src={platformBrand.logoUrl || 'https://chqhyqylnbtwyzhjkxlu.supabase.co/storage/v1/object/public/content-images/imgdb/general/1779672705393-favicon.png'}
+            alt={platformBrand.name}
+            className="w-8 h-8 rounded-lg object-contain"
+            loading="eager"
+            decoding="async"
+          />
+
           {!collapsed && (
             <span className="font-wordmark uppercase text-foreground text-xl tracking-tight">{platformBrand.name}</span>
           )}

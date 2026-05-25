@@ -104,9 +104,15 @@ const Auth = () => {
       {/* Card */}
       <Card className="w-full max-w-md relative z-10 mx-4 border-border/50 shadow-2xl bg-card/95 backdrop-blur-md">
         <CardHeader className="text-center pb-2">
-          <CardTitle className="font-wordmark text-4xl uppercase text-foreground">SOCIALIFY</CardTitle>
-          <CardDescription className="text-base">Dashboard</CardDescription>
+          <img
+            src="https://chqhyqylnbtwyzhjkxlu.supabase.co/storage/v1/object/public/content-images/imgdb/general/1779672210058-logo___SLOGAN.png"
+            alt="Socialify"
+            className="mx-auto h-24 w-auto object-contain"
+            loading="eager"
+            decoding="async"
+          />
         </CardHeader>
+
         <CardContent>
           {mode === 'login' ? (
             <form onSubmit={handleSignIn} className="space-y-4">
