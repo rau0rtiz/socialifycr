@@ -44,6 +44,7 @@ const AdFrameworks = lazy(() => import("./pages/AdFrameworks"));
 const AdFrameworkDetail = lazy(() => import("./pages/AdFrameworkDetail"));
 const AdCampaignCanvas = lazy(() => import("./pages/AdCampaignCanvas"));
 const AgencyFinances = lazy(() => import("./pages/AgencyFinances"));
+const AgencyCRM = lazy(() => import("./pages/AgencyCRM"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -196,6 +197,13 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <AgencyFinances />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/crm" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyCRM />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
