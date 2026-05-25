@@ -490,6 +490,42 @@ export type Database = {
           },
         ]
       }
+      agency_crm_leads: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          status: Database["public"]["Enums"]["agency_crm_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["agency_crm_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["agency_crm_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agency_invoices: {
         Row: {
           client_id: string | null
@@ -4643,6 +4679,13 @@ export type Database = {
       }
     }
     Enums: {
+      agency_crm_status:
+        | "nuevo"
+        | "contactado"
+        | "en_conversacion"
+        | "agendado"
+        | "cliente"
+        | "perdido"
       client_role:
         | "account_manager"
         | "editor"
@@ -4808,6 +4851,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agency_crm_status: [
+        "nuevo",
+        "contactado",
+        "en_conversacion",
+        "agendado",
+        "cliente",
+        "perdido",
+      ],
       client_role: [
         "account_manager",
         "editor",

@@ -1,31 +1,42 @@
-## Diagnóstico
+## CRM interno para Lucía
 
-Es culpa nuestra (del dashboard), no del formulario. Verifiqué un lead real en la base: el formulario **sí está guardando todo** en `answers`:
+Una sección nueva dentro de la agencia para registrar y dar seguimiento manual a leads (separado de `funnel_leads` que es del quiz público y `agency_leads` de formularios web).
 
-```
-{ source: 'website-contact-form', kind: 'contacto', brand: 'kjn kja',
-  tried: 'lkhbolblo', challenge: 'kjnojnl.jbl.jb',
-  utm_source, utm_medium, utm_campaign }
-```
+### Acceso
+- Ruta: `/agencia/crm`
+- Visible solo para roles internos (`owner`, `admin`, `manager`). Lucía entra como `manager`.
+- Entrada en el sidebar bajo "Agencia".
 
-El dialog de detalle en `AgencyLeadsContent.tsx` (rama `isWebContact`) solo pinta:
-- Email, Teléfono, Asunto (industry), Mensaje (challenge), y un campo `ans.social_network` que **no existe** en lo que envía el form.
+### Datos por lead
+- Nombre *
+- Correo
+- Teléfono
+- Estado de contacto (badge con color):
+  - Nuevo
+  - Contactado
+  - En conversación
+  - Agendado
+  - Cliente
+  - Perdido
+- Información adicional (texto libre largo)
+- Fecha de creación / última actualización
+- Creado por (usuario)
 
-Por eso se ven UTMs pero faltan `kind`, `brand` y `tried`.
+### UI
+1. **Lista principal** — tabla con buscador (nombre/correo/teléfono), filtro por estado, y conteo por estado arriba.
+2. **Botón "Nuevo lead"** → diálogo con formulario.
+3. **Click en fila** → diálogo de detalle/edición con todos los campos + botón eliminar.
+4. **Cambio rápido de estado** desde un dropdown en la fila (sin abrir el diálogo).
 
-## Fix
+### Backend
+Tabla nueva `agency_crm_leads`:
+- `id`, `name`, `email`, `phone`, `status` (enum), `notes`, `created_by`, `created_at`, `updated_at`
+- RLS: solo roles internos de agencia (`is_agency_member`) pueden ver/crear/editar/borrar.
 
-En `src/components/comunicaciones/AgencyLeadsContent.tsx`, dentro del `isWebContact === true` del diálogo (~líneas 555-561):
+### Detalles técnicos
+- Hook `use-agency-crm-leads.ts` con TanStack Query (list, create, update, delete).
+- Validación con zod (email opcional pero válido, teléfono ≤ 30, notas ≤ 2000).
+- Página `src/pages/AgencyCRM.tsx` + componentes en `src/components/agency-crm/`.
+- Ruta agregada en `App.tsx` protegida con `RoleProtectedRoute`.
 
-1. Quitar el bloque de `ans.social_network` (clave fantasma).
-2. Agregar tres filas nuevas en el grid cuando existan:
-   - **Tipo de consulta** → `ans.kind` (mapear `contacto`→"Contacto general", `demo`→"Solicita demo", etc. — usar el valor crudo capitalizado si no hay match).
-   - **Negocio / Marca** → `ans.brand`.
-   - **Qué han intentado** → `ans.tried` (en una caja `bg-muted` aparte si es largo, mismo estilo que el bloque Mensaje).
-3. Mantener el bloque Mensaje (`selectedLead.challenge || ans.challenge`) tal cual.
-
-No tocar la rama del quiz ni el bloque UTM (ya funciona).
-
-## Verificación
-
-Abrir un lead de "Formulario de contacto web" en `/comunicaciones` → Leads y confirmar que se ven Tipo, Negocio, Qué intentaron, Mensaje y UTMs.
+¿Le damos? Si querés ajustar los estados o agregar algún campo (ej: fuente del lead, etiquetas, fecha de seguimiento), decime antes de implementar.
