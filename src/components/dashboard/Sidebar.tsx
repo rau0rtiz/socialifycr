@@ -53,6 +53,7 @@ const managementMenuItems = [
   
   { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },
   { title: 'Finanzas Agencia', url: '/agencia/finanzas', icon: DollarSign },
+  { title: 'CRM Agencia', url: '/agencia/crm', icon: UserPlus },
   { title: 'Historial', url: '/historial', icon: History },
   { title: 'Archivos', url: '/archivos', icon: FolderOpen },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
