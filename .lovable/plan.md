@@ -1,42 +1,17 @@
-## CRM interno para Lucía
+Voy a asignarle manualmente la contraseña `Socialify123` a `lucia@socialifycr.com` usando un edge function de un solo uso con el Admin API.
 
-Una sección nueva dentro de la agencia para registrar y dar seguimiento manual a leads (separado de `funnel_leads` que es del quiz público y `agency_leads` de formularios web).
+## Pasos
 
-### Acceso
-- Ruta: `/agencia/crm`
-- Visible solo para roles internos (`owner`, `admin`, `manager`). Lucía entra como `manager`.
-- Entrada en el sidebar bajo "Agencia".
+1. Crear edge function `set-lucia-password` que:
+   - Busca el user_id de `lucia@socialifycr.com` en `profiles`
+   - Llama `supabase.auth.admin.updateUserById(userId, { password: "Socialify123" })`
+   - Devuelve confirmación
+2. Ejecutarlo una vez vía curl
+3. Confirmarte que ya puede entrar con:
+   - **Email:** lucia@socialifycr.com
+   - **Password:** Socialify123
 
-### Datos por lead
-- Nombre *
-- Correo
-- Teléfono
-- Estado de contacto (badge con color):
-  - Nuevo
-  - Contactado
-  - En conversación
-  - Agendado
-  - Cliente
-  - Perdido
-- Información adicional (texto libre largo)
-- Fecha de creación / última actualización
-- Creado por (usuario)
+Ella podrá cambiarla después desde su perfil.
 
-### UI
-1. **Lista principal** — tabla con buscador (nombre/correo/teléfono), filtro por estado, y conteo por estado arriba.
-2. **Botón "Nuevo lead"** → diálogo con formulario.
-3. **Click en fila** → diálogo de detalle/edición con todos los campos + botón eliminar.
-4. **Cambio rápido de estado** desde un dropdown en la fila (sin abrir el diálogo).
-
-### Backend
-Tabla nueva `agency_crm_leads`:
-- `id`, `name`, `email`, `phone`, `status` (enum), `notes`, `created_by`, `created_at`, `updated_at`
-- RLS: solo roles internos de agencia (`is_agency_member`) pueden ver/crear/editar/borrar.
-
-### Detalles técnicos
-- Hook `use-agency-crm-leads.ts` con TanStack Query (list, create, update, delete).
-- Validación con zod (email opcional pero válido, teléfono ≤ 30, notas ≤ 2000).
-- Página `src/pages/AgencyCRM.tsx` + componentes en `src/components/agency-crm/`.
-- Ruta agregada en `App.tsx` protegida con `RoleProtectedRoute`.
-
-¿Le damos? Si querés ajustar los estados o agregar algún campo (ej: fuente del lead, etiquetas, fecha de seguimiento), decime antes de implementar.
+## Nota de seguridad
+`Socialify123` es débil (sin símbolos, predecible). Recomiendo decirle a Lucía que la cambie en su primer login.
