@@ -555,8 +555,11 @@ const AgencyLeadsContent = () => {
                 {isWebContact ? (
                   <>
                     <div className="col-span-2"><span className="text-muted-foreground">Asunto:</span><p className="font-medium">{selectedLead.industry || '—'}</p></div>
-                    {ans.social_network && (
-                      <div className="col-span-2"><span className="text-muted-foreground">Red social / Negocio:</span><p className="font-medium">{ans.social_network}</p></div>
+                    {ans.kind && (
+                      <div><span className="text-muted-foreground">Tipo de consulta:</span><p className="font-medium capitalize">{({ contacto: 'Contacto general', demo: 'Solicita demo', soporte: 'Soporte', ventas: 'Ventas' } as Record<string, string>)[ans.kind] || ans.kind}</p></div>
+                    )}
+                    {ans.brand && (
+                      <div><span className="text-muted-foreground">Negocio / Marca:</span><p className="font-medium">{ans.brand}</p></div>
                     )}
                   </>
                 ) : (
