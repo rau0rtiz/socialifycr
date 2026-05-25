@@ -539,31 +539,60 @@ const AgencyLeadsContent = () => {
       <Dialog open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{selectedLead?.name}</DialogTitle></DialogHeader>
-          {selectedLead && (
+          {selectedLead && (() => {
+            const ans = (selectedLead.answers as Record<string, any>) || {};
+            const isWebContact = ans.source === 'website-contact-form';
+            return (
             <div className="space-y-4 text-sm">
+              {isWebContact && (
+                <Badge variant="outline" className="text-[10px] border-orange-400/40 text-orange-500 w-fit">
+                  Formulario de contacto web
+                </Badge>
+              )}
               <div className="grid grid-cols-2 gap-3">
-                <div><span className="text-muted-foreground">Email:</span><p className="font-medium">{selectedLead.email}</p></div>
+                <div><span className="text-muted-foreground">Email:</span><p className="font-medium break-all">{selectedLead.email}</p></div>
                 <div><span className="text-muted-foreground">Teléfono:</span><p className="font-medium">{selectedLead.phone || '—'}</p></div>
-                <div>
-                  <span className="text-muted-foreground">Nivel:</span>
-                  <p className="font-medium" style={{ color: levelColors[selectedLead.business_level] }}>
-                    {selectedLead.business_level} · {levelNames[selectedLead.business_level]}
-                  </p>
-                </div>
-                <div><span className="text-muted-foreground">Industria:</span><p className="font-medium capitalize">{selectedLead.industry || '—'}</p></div>
-                <div><span className="text-muted-foreground">Ingresos:</span><p className="font-medium">{selectedLead.revenue_range || '—'}</p></div>
-                <div>
-                  <span className="text-muted-foreground">Calendly:</span>
-                  <p className="font-medium">{selectedLead.calendly_clicked ? '✅ Sí' : '❌ No'}</p>
-                </div>
-                {(selectedLead.answers as any)?.businessHandle && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">Negocio:</span>
-                    <p className="font-medium">{(selectedLead.answers as any).businessHandle}</p>
-                  </div>
+                {isWebContact ? (
+                  <>
+                    <div className="col-span-2"><span className="text-muted-foreground">Asunto:</span><p className="font-medium">{selectedLead.industry || '—'}</p></div>
+                    {ans.social_network && (
+                      <div className="col-span-2"><span className="text-muted-foreground">Red social / Negocio:</span><p className="font-medium">{ans.social_network}</p></div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <span className="text-muted-foreground">Nivel:</span>
+                      <p className="font-medium" style={{ color: levelColors[selectedLead.business_level] }}>
+                        {selectedLead.business_level} · {levelNames[selectedLead.business_level]}
+                      </p>
+                    </div>
+                    <div><span className="text-muted-foreground">Industria:</span><p className="font-medium capitalize">{selectedLead.industry || '—'}</p></div>
+                    <div><span className="text-muted-foreground">Ingresos:</span><p className="font-medium">{selectedLead.revenue_range || '—'}</p></div>
+                    <div>
+                      <span className="text-muted-foreground">Calendly:</span>
+                      <p className="font-medium">{selectedLead.calendly_clicked ? '✅ Sí' : '❌ No'}</p>
+                    </div>
+                    {ans.businessHandle && (
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Negocio:</span>
+                        <p className="font-medium">{ans.businessHandle}</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
-              {selectedLead.answers && Object.keys(selectedLead.answers).length > 0 && (
+
+              {isWebContact && (selectedLead.challenge || ans.looking_for) && (
+                <div>
+                  <span className="text-muted-foreground font-medium">Mensaje:</span>
+                  <div className="mt-2 rounded-lg bg-muted p-3 whitespace-pre-wrap text-sm">
+                    {selectedLead.challenge || ans.looking_for}
+                  </div>
+                </div>
+              )}
+
+              {!isWebContact && selectedLead.answers && Object.keys(selectedLead.answers).length > 0 && (
                 <div>
                   <span className="text-muted-foreground font-medium">Respuestas del quiz:</span>
                   <div className="mt-2 space-y-3">
@@ -614,7 +643,9 @@ const AgencyLeadsContent = () => {
                 </Button>
               </div>
             </div>
-          )}
+            );
+          })()}
+
         </DialogContent>
       </Dialog>
 
