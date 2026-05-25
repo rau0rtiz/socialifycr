@@ -586,14 +586,25 @@ const AgencyLeadsContent = () => {
                 )}
               </div>
 
-              {isWebContact && (selectedLead.challenge || ans.looking_for) && (
+              {isWebContact && (selectedLead.challenge || ans.looking_for || ans.challenge) && (
                 <div>
                   <span className="text-muted-foreground font-medium">Mensaje:</span>
                   <div className="mt-2 rounded-lg bg-muted p-3 whitespace-pre-wrap text-sm">
-                    {selectedLead.challenge || ans.looking_for}
+                    {selectedLead.challenge || ans.looking_for || ans.challenge}
                   </div>
                 </div>
               )}
+
+              {isWebContact && ans.tried && (
+                <div>
+                  <span className="text-muted-foreground font-medium">Qué han intentado:</span>
+                  <div className="mt-2 rounded-lg bg-muted p-3 whitespace-pre-wrap text-sm">
+                    {ans.tried}
+                  </div>
+                </div>
+              )}
+
+
 
               {!isWebContact && selectedLead.answers && Object.keys(selectedLead.answers).length > 0 && (
                 <div>
