@@ -22,6 +22,7 @@ import {
   Layers,
   GraduationCap,
   Package,
+  UserPlus,
 } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
