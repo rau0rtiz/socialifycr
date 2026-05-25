@@ -76,7 +76,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Socialify <notificaciones@socialifycr.com>",
-        to: [RECIPIENT],
+        to: RECIPIENTS,
         reply_to: email,
         subject: `Nuevo contacto web: ${name} — ${subject}`,
         html,
