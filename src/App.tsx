@@ -200,6 +200,13 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
+                  <Route path="/agencia/crm" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyCRM />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/ad-frameworks" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
