@@ -367,6 +367,22 @@ export const SellerCommissionsView = () => {
                       Mes {sm} · {rate}%
                     </Badge>
                   </div>
+                  {c.lead_source && (() => {
+                    const src = LEAD_SOURCES.find((s) => s.value === c.lead_source);
+                    if (!src) return null;
+                    return (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant="outline" className={cn('text-[10px]', src.color)}>
+                          {src.label}
+                        </Badge>
+                        {c.lead_source_detail && (
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            · {c.lead_source_detail}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div className="text-xs space-y-0.5">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Paquete</span>
