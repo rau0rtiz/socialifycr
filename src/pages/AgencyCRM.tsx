@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, UserPlus, Mail, Phone, Loader2, Wallet, KanbanSquare } from 'lucide-react';
+import { Plus, Search, UserPlus, Mail, Phone, Loader2, Wallet, KanbanSquare, Users } from 'lucide-react';
 import {
   AgencyCrmLead,
   CRM_STATUS_OPTIONS,
@@ -21,6 +21,7 @@ import {
 } from '@/hooks/use-agency-crm-leads';
 import { CrmLeadDialog } from '@/components/agency-crm/CrmLeadDialog';
 import { SellerCommissionsView } from '@/components/agency-crm/SellerCommissionsView';
+import { ClientsView } from '@/components/agency-crm/ClientsView';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -88,20 +89,26 @@ const AgencyCRM = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="comisiones" className="space-y-6">
+        <Tabs defaultValue="pipeline" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="comisiones">
-              <Wallet className="h-4 w-4 mr-1" /> Comisiones
-            </TabsTrigger>
             <TabsTrigger value="pipeline">
               <KanbanSquare className="h-4 w-4 mr-1" /> Prospección
             </TabsTrigger>
+            <TabsTrigger value="clientes">
+              <Users className="h-4 w-4 mr-1" /> Clientes
+            </TabsTrigger>
+            <TabsTrigger value="comisiones">
+              <Wallet className="h-4 w-4 mr-1" /> Comisiones
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="clientes">
+            <ClientsView />
+          </TabsContent>
 
           <TabsContent value="comisiones">
             <SellerCommissionsView />
           </TabsContent>
-
           <TabsContent value="pipeline" className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-muted-foreground">
