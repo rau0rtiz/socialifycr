@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { Trash2, CheckCircle2, XCircle, Upload, FileText, X, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import {
   AgencyCrmLead,
   CRM_STATUS_OPTIONS,
@@ -14,9 +15,12 @@ import {
   CURRENCY_OPTIONS,
   LOST_REASON_OPTIONS,
   LostReason,
+  PAYMENT_METHOD_OPTIONS,
   PAYMENT_SCHEME_OPTIONS,
+  SaleReceipt,
   useAgencyCrmLeads,
 } from '@/hooks/use-agency-crm-leads';
+
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
