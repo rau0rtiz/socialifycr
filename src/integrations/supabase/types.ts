@@ -496,9 +496,18 @@ export type Database = {
           created_by: string | null
           email: string | null
           id: string
+          lost_at: string | null
+          lost_objection: string | null
+          lost_reason: string | null
           name: string
           notes: string | null
           phone: string | null
+          sale_amount: number | null
+          sale_closed_at: string | null
+          sale_currency: string | null
+          sale_includes: string | null
+          sale_package: string | null
+          sale_payment_scheme: string | null
           status: Database["public"]["Enums"]["agency_crm_status"]
           updated_at: string
         }
@@ -507,9 +516,18 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           id?: string
+          lost_at?: string | null
+          lost_objection?: string | null
+          lost_reason?: string | null
           name: string
           notes?: string | null
           phone?: string | null
+          sale_amount?: number | null
+          sale_closed_at?: string | null
+          sale_currency?: string | null
+          sale_includes?: string | null
+          sale_package?: string | null
+          sale_payment_scheme?: string | null
           status?: Database["public"]["Enums"]["agency_crm_status"]
           updated_at?: string
         }
@@ -518,9 +536,18 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           id?: string
+          lost_at?: string | null
+          lost_objection?: string | null
+          lost_reason?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
+          sale_amount?: number | null
+          sale_closed_at?: string | null
+          sale_currency?: string | null
+          sale_includes?: string | null
+          sale_package?: string | null
+          sale_payment_scheme?: string | null
           status?: Database["public"]["Enums"]["agency_crm_status"]
           updated_at?: string
         }
