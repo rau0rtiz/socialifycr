@@ -365,6 +365,9 @@ export type Database = {
           amount: number
           client_id: string | null
           collection_type: string
+          commission_amount: number | null
+          commission_rate: number | null
+          contract_id: string | null
           created_at: string
           created_by: string | null
           currency: string
@@ -374,6 +377,8 @@ export type Database = {
           notes: string | null
           paid_amount: number | null
           paid_at: string | null
+          seller_name: string | null
+          service_month: number | null
           status: string
           updated_at: string
         }
@@ -381,6 +386,9 @@ export type Database = {
           amount?: number
           client_id?: string | null
           collection_type?: string
+          commission_amount?: number | null
+          commission_rate?: number | null
+          contract_id?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -390,6 +398,8 @@ export type Database = {
           notes?: string | null
           paid_amount?: number | null
           paid_at?: string | null
+          seller_name?: string | null
+          service_month?: number | null
           status?: string
           updated_at?: string
         }
@@ -397,6 +407,9 @@ export type Database = {
           amount?: number
           client_id?: string | null
           collection_type?: string
+          commission_amount?: number | null
+          commission_rate?: number | null
+          contract_id?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -406,6 +419,8 @@ export type Database = {
           notes?: string | null
           paid_amount?: number | null
           paid_at?: string | null
+          seller_name?: string | null
+          service_month?: number | null
           status?: string
           updated_at?: string
         }
@@ -417,7 +432,56 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agency_collections_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "agency_contracts"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      agency_commission_payouts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          notes: string | null
+          paid_at: string
+          period_end: string
+          period_start: string
+          seller_name: string
+          total_commission: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          period_end: string
+          period_start: string
+          seller_name: string
+          total_commission: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          period_end?: string
+          period_start?: string
+          seller_name?: string
+          total_commission?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       agency_contracts: {
         Row: {
@@ -425,7 +489,11 @@ export type Database = {
           billing_frequency: string
           churn_reason: string | null
           client_id: string | null
+          commission_initial_months: number | null
+          commission_rate_initial: number | null
+          commission_rate_perpetual: number | null
           created_at: string
+          crm_lead_id: string | null
           currency: string
           customer_name: string | null
           discontinued_at: string | null
@@ -435,6 +503,7 @@ export type Database = {
           monthly_amount: number
           notes: string | null
           posts_per_month: number
+          seller_name: string | null
           services: Json
           start_date: string
           status: string
@@ -445,7 +514,11 @@ export type Database = {
           billing_frequency?: string
           churn_reason?: string | null
           client_id?: string | null
+          commission_initial_months?: number | null
+          commission_rate_initial?: number | null
+          commission_rate_perpetual?: number | null
           created_at?: string
+          crm_lead_id?: string | null
           currency?: string
           customer_name?: string | null
           discontinued_at?: string | null
@@ -455,6 +528,7 @@ export type Database = {
           monthly_amount?: number
           notes?: string | null
           posts_per_month?: number
+          seller_name?: string | null
           services?: Json
           start_date?: string
           status?: string
@@ -465,7 +539,11 @@ export type Database = {
           billing_frequency?: string
           churn_reason?: string | null
           client_id?: string | null
+          commission_initial_months?: number | null
+          commission_rate_initial?: number | null
+          commission_rate_perpetual?: number | null
           created_at?: string
+          crm_lead_id?: string | null
           currency?: string
           customer_name?: string | null
           discontinued_at?: string | null
@@ -475,6 +553,7 @@ export type Database = {
           monthly_amount?: number
           notes?: string | null
           posts_per_month?: number
+          seller_name?: string | null
           services?: Json
           start_date?: string
           status?: string
@@ -486,6 +565,13 @@ export type Database = {
             columns: ["billing_account_id"]
             isOneToOne: false
             referencedRelation: "agency_billing_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_contracts_crm_lead_id_fkey"
+            columns: ["crm_lead_id"]
+            isOneToOne: false
+            referencedRelation: "agency_crm_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -680,6 +766,47 @@ export type Database = {
           user_name?: string | null
         }
         Relationships: []
+      }
+      agency_payment_schedules: {
+        Row: {
+          amount_per_payment: number
+          contract_id: string
+          created_at: string
+          currency: string
+          id: string
+          payment_days: number[]
+          payments_per_month: number
+          updated_at: string
+        }
+        Insert: {
+          amount_per_payment: number
+          contract_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_days?: number[]
+          payments_per_month?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_per_payment?: number
+          contract_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_days?: number[]
+          payments_per_month?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_payment_schedules_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "agency_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       archived_stories: {
         Row: {
