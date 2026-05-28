@@ -500,6 +500,8 @@ export type Database = {
           discontinued_reason: string | null
           end_date: string | null
           id: string
+          lead_source: string | null
+          lead_source_detail: string | null
           monthly_amount: number
           notes: string | null
           posts_per_month: number
@@ -525,6 +527,8 @@ export type Database = {
           discontinued_reason?: string | null
           end_date?: string | null
           id?: string
+          lead_source?: string | null
+          lead_source_detail?: string | null
           monthly_amount?: number
           notes?: string | null
           posts_per_month?: number
@@ -550,6 +554,8 @@ export type Database = {
           discontinued_reason?: string | null
           end_date?: string | null
           id?: string
+          lead_source?: string | null
+          lead_source_detail?: string | null
           monthly_amount?: number
           notes?: string | null
           posts_per_month?: number
