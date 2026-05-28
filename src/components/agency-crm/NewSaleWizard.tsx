@@ -13,6 +13,7 @@ import {
   DEFAULT_RATE_INITIAL,
   DEFAULT_RATE_PERPETUAL,
   DEFAULT_SELLER,
+  LEAD_SOURCES,
   useCreateSale,
 } from '@/hooks/use-seller-commissions';
 
@@ -43,6 +44,8 @@ export const NewSaleWizard = ({ open, onOpenChange, defaults }: Props) => {
     currency: 'USD' as 'USD' | 'CRC',
     notes: '',
     crm_lead_id: null as string | null,
+    lead_source: '' as string,
+    lead_source_detail: '',
     services: [] as string[],
     // schedule
     payments_per_month: 1,
@@ -80,7 +83,7 @@ export const NewSaleWizard = ({ open, onOpenChange, defaults }: Props) => {
       return { ...f, payment_days: next, payments_per_month: Math.max(1, next.length) };
     });
   };
-
+    if (step === 1) return form.customer_name.trim().length > 0 && form.monthly_amount > 0 && form.start_date && !!form.lead_source;
   const canNext = useMemo(() => {
     if (step === 1) return form.customer_name.trim().length > 0 && form.monthly_amount > 0 && form.start_date;
     if (step === 2) return form.payment_days.length > 0 && amountPerPayment > 0;
@@ -97,6 +100,8 @@ export const NewSaleWizard = ({ open, onOpenChange, defaults }: Props) => {
       services: form.services,
       notes: form.notes,
       crm_lead_id: form.crm_lead_id,
+      lead_source: form.lead_source || null,
+      lead_source_detail: form.lead_source_detail.trim() || null,
       commission_rate_initial: form.commission_rate_initial,
       commission_rate_perpetual: form.commission_rate_perpetual,
       commission_initial_months: form.commission_initial_months,
@@ -203,6 +208,32 @@ export const NewSaleWizard = ({ open, onOpenChange, defaults }: Props) => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>¿De dónde vino este lead? *</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {LEAD_SOURCES.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => setForm({ ...form, lead_source: s.value })}
+                    className={cn(
+                      'px-3 py-1.5 rounded-full text-xs border transition',
+                      form.lead_source === s.value
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-muted/40 border-border hover:bg-muted',
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              <Input
+                value={form.lead_source_detail}
+                onChange={(e) => setForm({ ...form, lead_source_detail: e.target.value })}
+                placeholder="Detalle (campaña, referido por, evento, etc.)"
+                className="mt-2"
+              />
             </div>
             <div className="space-y-2">
               <Label>Notas (opcional)</Label>

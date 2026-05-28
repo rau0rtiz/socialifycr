@@ -24,9 +24,23 @@ export interface SellerContract {
   commission_rate_perpetual: number | null;
   commission_initial_months: number | null;
   crm_lead_id: string | null;
+  lead_source: string | null;
+  lead_source_detail: string | null;
   notes: string | null;
   created_at: string;
 }
+
+export const LEAD_SOURCES = [
+  { value: 'outbound', label: 'Outbound', color: 'border-purple-500/40 text-purple-300 bg-purple-500/10' },
+  { value: 'ads', label: 'Publicidad', color: 'border-pink-500/40 text-pink-300 bg-pink-500/10' },
+  { value: 'inbound', label: 'Inbound', color: 'border-cyan-500/40 text-cyan-300 bg-cyan-500/10' },
+  { value: 'referral', label: 'Referido', color: 'border-green-500/40 text-green-300 bg-green-500/10' },
+  { value: 'event', label: 'Evento', color: 'border-amber-500/40 text-amber-300 bg-amber-500/10' },
+  { value: 'partner', label: 'Partner', color: 'border-blue-500/40 text-blue-300 bg-blue-500/10' },
+  { value: 'other', label: 'Otro', color: 'border-muted-foreground/40 text-muted-foreground bg-muted/30' },
+] as const;
+export type LeadSource = typeof LEAD_SOURCES[number]['value'];
+
 
 export interface SellerPaymentSchedule {
   id: string;
@@ -77,6 +91,8 @@ export interface NewSaleInput {
   services?: string[];
   notes?: string;
   crm_lead_id?: string | null;
+  lead_source?: string | null;
+  lead_source_detail?: string | null;
   commission_rate_initial: number;
   commission_rate_perpetual: number;
   commission_initial_months: number;
@@ -217,6 +233,8 @@ export const useCreateSale = () => {
         status: 'active',
         notes: input.notes || null,
         crm_lead_id: input.crm_lead_id || null,
+        lead_source: input.lead_source || null,
+        lead_source_detail: input.lead_source_detail || null,
         commission_rate_initial: input.commission_rate_initial,
         commission_rate_perpetual: input.commission_rate_perpetual,
         commission_initial_months: input.commission_initial_months,

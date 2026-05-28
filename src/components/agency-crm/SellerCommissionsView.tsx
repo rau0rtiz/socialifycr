@@ -30,6 +30,7 @@ import {
   computeContractRateNow,
   computeServiceMonth,
   DEFAULT_SELLER,
+  LEAD_SOURCES,
   SellerCollection,
   SellerContract,
   useChurnContract,
@@ -96,6 +97,24 @@ export const SellerCommissionsView = () => {
   const inInitialWindow = activeContracts.filter(
     (c) => computeServiceMonth(c.start_date) <= (c.commission_initial_months ?? 3),
   );
+
+  // Breakdown de leads por origen (todos los contratos)
+  const sourceBreakdown = useMemo(() => {
+    const counts: Record<string, { active: number; total: number; mrr: number }> = {};
+    for (const c of contracts) {
+      const key = c.lead_source || 'other';
+      if (!counts[key]) counts[key] = { active: 0, total: 0, mrr: 0 };
+      counts[key].total += 1;
+      if (c.status === 'active') {
+        counts[key].active += 1;
+        counts[key].mrr += Number(c.monthly_amount || 0);
+      }
+    }
+    return LEAD_SOURCES
+      .map((s) => ({ ...s, ...(counts[s.value] || { active: 0, total: 0, mrr: 0 }) }))
+      .filter((s) => s.total > 0);
+  }, [contracts]);
+
 
   // Próximo cobro por contrato
   const nextDueByContract = useMemo(() => {
@@ -182,6 +201,38 @@ export const SellerCommissionsView = () => {
           )}
         />
       </div>
+
+      {/* Crecimiento por origen de leads */}
+      {sourceBreakdown.length > 0 && (
+        <Card className="overflow-hidden">
+          <div className="px-4 py-3 border-b border-border">
+            <h3 className="font-semibold text-sm">Crecimiento por origen</h3>
+            <p className="text-xs text-muted-foreground">
+              De dónde están viniendo los clientes que generan comisión
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 p-3">
+            {sourceBreakdown.map((s) => (
+              <div
+                key={s.value}
+                className="rounded-lg border border-border bg-background/50 p-3 space-y-1"
+              >
+                <Badge variant="outline" className={cn('text-[10px]', s.color)}>
+                  {s.label}
+                </Badge>
+                <div className="text-lg font-bold">
+                  {s.active}
+                  <span className="text-xs font-normal text-muted-foreground"> / {s.total}</span>
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  MRR activo: {fmtMoney(s.mrr, displayCurrency)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
 
       {/* Cobros del período */}
       <Card className="overflow-hidden">
@@ -348,6 +399,22 @@ export const SellerCommissionsView = () => {
                       Mes {sm} · {rate}%
                     </Badge>
                   </div>
+                  {c.lead_source && (() => {
+                    const src = LEAD_SOURCES.find((s) => s.value === c.lead_source);
+                    if (!src) return null;
+                    return (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant="outline" className={cn('text-[10px]', src.color)}>
+                          {src.label}
+                        </Badge>
+                        {c.lead_source_detail && (
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            · {c.lead_source_detail}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div className="text-xs space-y-0.5">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Paquete</span>
