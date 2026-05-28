@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { Trash2, CheckCircle2, XCircle, Upload, FileText, X, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import {
   AgencyCrmLead,
   CRM_STATUS_OPTIONS,
@@ -14,9 +15,12 @@ import {
   CURRENCY_OPTIONS,
   LOST_REASON_OPTIONS,
   LostReason,
+  PAYMENT_METHOD_OPTIONS,
   PAYMENT_SCHEME_OPTIONS,
+  SaleReceipt,
   useAgencyCrmLeads,
 } from '@/hooks/use-agency-crm-leads';
+
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -52,6 +56,8 @@ interface Props {
 export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
   const { createLead, updateLead, deleteLead } = useAgencyCrmLeads();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<CrmLeadInput>({
     name: '',
     email: '',
@@ -63,6 +69,9 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
     sale_amount: null,
     sale_currency: 'USD',
     sale_payment_scheme: '',
+    sale_payment_date: '',
+    sale_payment_method: '',
+    sale_payment_receipts: [],
     lost_reason: null,
     lost_objection: '',
   });
@@ -80,11 +89,49 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
         sale_amount: lead?.sale_amount ?? null,
         sale_currency: lead?.sale_currency || 'USD',
         sale_payment_scheme: lead?.sale_payment_scheme || '',
+        sale_payment_date: lead?.sale_payment_date || '',
+        sale_payment_method: lead?.sale_payment_method || '',
+        sale_payment_receipts: Array.isArray(lead?.sale_payment_receipts) ? lead!.sale_payment_receipts : [],
         lost_reason: (lead?.lost_reason as LostReason) || null,
         lost_objection: lead?.lost_objection || '',
       });
     }
   }, [open, lead]);
+
+  const handleUploadReceipts = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const uploaded: SaleReceipt[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.split('.').pop() || 'bin';
+        const path = `agency-crm/receipts/${lead?.id || 'tmp'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error } = await supabase.storage.from('content-images').upload(path, file, {
+          contentType: file.type || undefined,
+          upsert: false,
+        });
+        if (error) throw error;
+        const { data: pub } = supabase.storage.from('content-images').getPublicUrl(path);
+        uploaded.push({ url: pub.publicUrl, name: file.name, uploaded_at: new Date().toISOString() });
+      }
+      setForm((f) => ({ ...f, sale_payment_receipts: [...(f.sale_payment_receipts || []), ...uploaded] }));
+      toast({ title: 'Comprobantes subidos', description: `${uploaded.length} archivo(s)` });
+    } catch (e: any) {
+      toast({ title: 'Error al subir', description: e.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const removeReceipt = (idx: number) => {
+    setForm((f) => ({
+      ...f,
+      sale_payment_receipts: (f.sale_payment_receipts || []).filter((_, i) => i !== idx),
+    }));
+  };
+
+
 
   const handleSave = async () => {
     const parsed = baseSchema.safeParse(form);
@@ -232,24 +279,102 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Esquema de pago</Label>
-                <Select
-                  value={form.sale_payment_scheme || ''}
-                  onValueChange={(v) => setForm({ ...form, sale_payment_scheme: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_SCHEME_OPTIONS.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Esquema de pago</Label>
+                  <Select
+                    value={form.sale_payment_scheme || ''}
+                    onValueChange={(v) => setForm({ ...form, sale_payment_scheme: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_SCHEME_OPTIONS.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Método de pago</Label>
+                  <Select
+                    value={form.sale_payment_method || ''}
+                    onValueChange={(v) => setForm({ ...form, sale_payment_method: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHOD_OPTIONS.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              <div className="space-y-2">
+                <Label>Fecha de pago</Label>
+                <Input
+                  type="date"
+                  value={form.sale_payment_date || ''}
+                  onChange={(e) => setForm({ ...form, sale_payment_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Comprobantes de pago</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,application/pdf"
+                  className="hidden"
+                  onChange={(e) => handleUploadReceipts(e.target.files)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full"
+                >
+                  {uploading ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Subiendo...</>
+                  ) : (
+                    <><Upload className="h-4 w-4 mr-2" /> Subir comprobante(s)</>
+                  )}
+                </Button>
+                {(form.sale_payment_receipts || []).length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    {(form.sale_payment_receipts || []).map((r, i) => (
+                      <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-background/40 px-2 py-1.5 text-xs">
+                        <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <a
+                          href={r.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 truncate hover:underline"
+                        >
+                          {r.name}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => removeReceipt(i)}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
 
