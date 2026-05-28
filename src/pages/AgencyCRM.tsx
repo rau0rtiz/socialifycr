@@ -15,6 +15,7 @@ import { Plus, Search, UserPlus, Mail, Phone, Loader2 } from 'lucide-react';
 import {
   AgencyCrmLead,
   CRM_STATUS_OPTIONS,
+  getLostReasonLabel,
   getStatusMeta,
   useAgencyCrmLeads,
 } from '@/hooks/use-agency-crm-leads';
