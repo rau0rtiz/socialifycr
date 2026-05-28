@@ -10,6 +10,14 @@ export type AgencyCrmStatus =
   | 'cliente'
   | 'perdido';
 
+export type LostReason =
+  | 'precio'
+  | 'timing'
+  | 'competencia'
+  | 'sin_presupuesto'
+  | 'no_calificado'
+  | 'otro';
+
 export interface AgencyCrmLead {
   id: string;
   name: string;
@@ -20,6 +28,17 @@ export interface AgencyCrmLead {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  // Venta
+  sale_package: string | null;
+  sale_includes: string | null;
+  sale_amount: number | null;
+  sale_currency: string | null;
+  sale_payment_scheme: string | null;
+  sale_closed_at: string | null;
+  // Pérdida
+  lost_reason: LostReason | null;
+  lost_objection: string | null;
+  lost_at: string | null;
 }
 
 export interface CrmLeadInput {
@@ -28,6 +47,13 @@ export interface CrmLeadInput {
   phone?: string | null;
   status?: AgencyCrmStatus;
   notes?: string | null;
+  sale_package?: string | null;
+  sale_includes?: string | null;
+  sale_amount?: number | null;
+  sale_currency?: string | null;
+  sale_payment_scheme?: string | null;
+  lost_reason?: LostReason | null;
+  lost_objection?: string | null;
 }
 
 export const CRM_STATUS_OPTIONS: { value: AgencyCrmStatus; label: string; color: string }[] = [
@@ -39,8 +65,49 @@ export const CRM_STATUS_OPTIONS: { value: AgencyCrmStatus; label: string; color:
   { value: 'perdido', label: 'Perdido', color: 'bg-red-500/15 text-red-400 border-red-500/30' },
 ];
 
+export const LOST_REASON_OPTIONS: { value: LostReason; label: string }[] = [
+  { value: 'precio', label: 'Precio' },
+  { value: 'timing', label: 'Timing / no es el momento' },
+  { value: 'competencia', label: 'Eligió competencia' },
+  { value: 'sin_presupuesto', label: 'Sin presupuesto' },
+  { value: 'no_calificado', label: 'No calificado' },
+  { value: 'otro', label: 'Otro' },
+];
+
+export const PAYMENT_SCHEME_OPTIONS = [
+  'Contado',
+  'Mensual',
+  'Trimestral',
+  'Anual',
+  'Setup + Mensualidad',
+];
+
+export const CURRENCY_OPTIONS = ['USD', 'CRC'];
+
 export const getStatusMeta = (status: AgencyCrmStatus) =>
   CRM_STATUS_OPTIONS.find((s) => s.value === status) ?? CRM_STATUS_OPTIONS[0];
+
+export const getLostReasonLabel = (reason: LostReason | null | undefined) =>
+  LOST_REASON_OPTIONS.find((r) => r.value === reason)?.label ?? null;
+
+const buildPayload = (input: Partial<CrmLeadInput>, opts: { setSaleClosedAt?: boolean; setLostAt?: boolean } = {}) => {
+  const payload: any = {};
+  if (input.name !== undefined) payload.name = input.name.trim();
+  if (input.email !== undefined) payload.email = input.email?.trim() || null;
+  if (input.phone !== undefined) payload.phone = input.phone?.trim() || null;
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.notes !== undefined) payload.notes = input.notes?.trim() || null;
+  if (input.sale_package !== undefined) payload.sale_package = input.sale_package?.trim() || null;
+  if (input.sale_includes !== undefined) payload.sale_includes = input.sale_includes?.trim() || null;
+  if (input.sale_amount !== undefined) payload.sale_amount = input.sale_amount ?? null;
+  if (input.sale_currency !== undefined) payload.sale_currency = input.sale_currency || null;
+  if (input.sale_payment_scheme !== undefined) payload.sale_payment_scheme = input.sale_payment_scheme?.trim() || null;
+  if (input.lost_reason !== undefined) payload.lost_reason = input.lost_reason || null;
+  if (input.lost_objection !== undefined) payload.lost_objection = input.lost_objection?.trim() || null;
+  if (opts.setSaleClosedAt) payload.sale_closed_at = new Date().toISOString().slice(0, 10);
+  if (opts.setLostAt) payload.lost_at = new Date().toISOString().slice(0, 10);
+  return payload;
+};
 
 export const useAgencyCrmLeads = () => {
   const qc = useQueryClient();
@@ -62,16 +129,15 @@ export const useAgencyCrmLeads = () => {
   const createLead = useMutation({
     mutationFn: async (input: CrmLeadInput) => {
       if (!user?.id) throw new Error('No autenticado');
+      const payload = buildPayload(input, {
+        setSaleClosedAt: input.status === 'cliente',
+        setLostAt: input.status === 'perdido',
+      });
+      payload.created_by = user.id;
+      if (!payload.status) payload.status = 'nuevo';
       const { data, error } = await supabase
         .from('agency_crm_leads' as any)
-        .insert({
-          name: input.name.trim(),
-          email: input.email?.trim() || null,
-          phone: input.phone?.trim() || null,
-          status: input.status || 'nuevo',
-          notes: input.notes?.trim() || null,
-          created_by: user.id,
-        } as any)
+        .insert(payload)
         .select()
         .single();
       if (error) throw error;
@@ -81,13 +147,19 @@ export const useAgencyCrmLeads = () => {
   });
 
   const updateLead = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<CrmLeadInput> }) => {
-      const payload: any = {};
-      if (patch.name !== undefined) payload.name = patch.name.trim();
-      if (patch.email !== undefined) payload.email = patch.email?.trim() || null;
-      if (patch.phone !== undefined) payload.phone = patch.phone?.trim() || null;
-      if (patch.status !== undefined) payload.status = patch.status;
-      if (patch.notes !== undefined) payload.notes = patch.notes?.trim() || null;
+    mutationFn: async ({
+      id,
+      patch,
+      prevStatus,
+    }: {
+      id: string;
+      patch: Partial<CrmLeadInput>;
+      prevStatus?: AgencyCrmStatus;
+    }) => {
+      const payload = buildPayload(patch, {
+        setSaleClosedAt: patch.status === 'cliente' && prevStatus !== 'cliente',
+        setLostAt: patch.status === 'perdido' && prevStatus !== 'perdido',
+      });
       const { error } = await supabase
         .from('agency_crm_leads' as any)
         .update(payload)
