@@ -98,6 +98,24 @@ export const SellerCommissionsView = () => {
     (c) => computeServiceMonth(c.start_date) <= (c.commission_initial_months ?? 3),
   );
 
+  // Breakdown de leads por origen (todos los contratos)
+  const sourceBreakdown = useMemo(() => {
+    const counts: Record<string, { active: number; total: number; mrr: number }> = {};
+    for (const c of contracts) {
+      const key = c.lead_source || 'other';
+      if (!counts[key]) counts[key] = { active: 0, total: 0, mrr: 0 };
+      counts[key].total += 1;
+      if (c.status === 'active') {
+        counts[key].active += 1;
+        counts[key].mrr += Number(c.monthly_amount || 0);
+      }
+    }
+    return LEAD_SOURCES
+      .map((s) => ({ ...s, ...(counts[s.value] || { active: 0, total: 0, mrr: 0 }) }))
+      .filter((s) => s.total > 0);
+  }, [contracts]);
+
+
   // Próximo cobro por contrato
   const nextDueByContract = useMemo(() => {
     const map = new Map<string, SellerCollection>();
