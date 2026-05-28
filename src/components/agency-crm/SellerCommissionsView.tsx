@@ -38,10 +38,13 @@ import {
   useSellerCollections,
   useSellerContracts,
   useUnmarkCollectionPaid,
+  useMarkCommissionPaid,
+  useUnmarkCommissionPaid,
 } from '@/hooks/use-seller-commissions';
 import { NewSaleWizard } from './NewSaleWizard';
 import { MarkPaidDialog } from './MarkPaidDialog';
 import { PayCommissionDialog } from './PayCommissionDialog';
+
 
 const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 const fmtMoney = (amount: number, currency: string) =>
