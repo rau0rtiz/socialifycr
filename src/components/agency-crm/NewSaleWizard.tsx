@@ -13,6 +13,7 @@ import {
   DEFAULT_RATE_INITIAL,
   DEFAULT_RATE_PERPETUAL,
   DEFAULT_SELLER,
+  LEAD_SOURCES,
   useCreateSale,
 } from '@/hooks/use-seller-commissions';
 
@@ -43,6 +44,8 @@ export const NewSaleWizard = ({ open, onOpenChange, defaults }: Props) => {
     currency: 'USD' as 'USD' | 'CRC',
     notes: '',
     crm_lead_id: null as string | null,
+    lead_source: '' as string,
+    lead_source_detail: '',
     services: [] as string[],
     // schedule
     payments_per_month: 1,
@@ -97,8 +100,9 @@ export const NewSaleWizard = ({ open, onOpenChange, defaults }: Props) => {
       services: form.services,
       notes: form.notes,
       crm_lead_id: form.crm_lead_id,
+      lead_source: form.lead_source || null,
+      lead_source_detail: form.lead_source_detail.trim() || null,
       commission_rate_initial: form.commission_rate_initial,
-      commission_rate_perpetual: form.commission_rate_perpetual,
       commission_initial_months: form.commission_initial_months,
       payments_per_month: form.payment_days.length,
       payment_days: form.payment_days,
