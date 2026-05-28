@@ -185,14 +185,13 @@ export const SellerCommissionsView = () => {
           </Button>
         </div>
       </div>
-
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         <KpiCard
           icon={<TrendingUp className="h-4 w-4" />}
           label="Cobrado en el mes"
           value={fmtMoney(totalCollected, displayCurrency)}
-          sub={`${paidThisMonth.length} cobro(s) confirmado(s)`}
+          sub={`${paidThisMonth.length} cobro(s)`}
         />
         <KpiCard
           icon={<DollarSign className="h-4 w-4 text-primary" />}
@@ -202,20 +201,25 @@ export const SellerCommissionsView = () => {
           highlight
         />
         <KpiCard
+          icon={<CheckCircle2 className="h-4 w-4 text-green-500" />}
+          label="Comisión pagada"
+          value={fmtMoney(commissionPaidAmount, displayCurrency)}
+          sub={`${commissionPaidRows.length} cobro(s) liquidado(s)`}
+        />
+        <KpiCard
+          icon={<CalendarClock className="h-4 w-4 text-amber-500" />}
+          label="Por pagar a vendedor"
+          value={fmtMoney(commissionPendingAmount, displayCurrency)}
+          sub="Comisión devengada sin liquidar"
+        />
+        <KpiCard
           icon={<Users className="h-4 w-4" />}
           label="Clientes activos"
           value={String(activeContracts.length)}
           sub={`${inInitialWindow.length} en ventana 15%`}
         />
-        <KpiCard
-          icon={<CalendarClock className="h-4 w-4" />}
-          label="Pendientes del mes"
-          value={String(monthCollections.filter((c) => c.status === 'pending').length)}
-          sub={fmtMoney(
-            monthCollections.filter((c) => c.status === 'pending').reduce((s, c) => s + Number(c.amount), 0),
-            displayCurrency,
-          )}
-        />
+      </div>
+
       </div>
 
       {/* Crecimiento por origen de leads */}
