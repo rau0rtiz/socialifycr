@@ -202,6 +202,38 @@ export const SellerCommissionsView = () => {
         />
       </div>
 
+      {/* Crecimiento por origen de leads */}
+      {sourceBreakdown.length > 0 && (
+        <Card className="overflow-hidden">
+          <div className="px-4 py-3 border-b border-border">
+            <h3 className="font-semibold text-sm">Crecimiento por origen</h3>
+            <p className="text-xs text-muted-foreground">
+              De dónde están viniendo los clientes que generan comisión
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 p-3">
+            {sourceBreakdown.map((s) => (
+              <div
+                key={s.value}
+                className="rounded-lg border border-border bg-background/50 p-3 space-y-1"
+              >
+                <Badge variant="outline" className={cn('text-[10px]', s.color)}>
+                  {s.label}
+                </Badge>
+                <div className="text-lg font-bold">
+                  {s.active}
+                  <span className="text-xs font-normal text-muted-foreground"> / {s.total}</span>
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  MRR activo: {fmtMoney(s.mrr, displayCurrency)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+
       {/* Cobros del período */}
       <Card className="overflow-hidden">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
