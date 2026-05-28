@@ -145,7 +145,7 @@ export const SellerCommissionsView = () => {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-primary" /> Comisiones de {seller}
+            <Wallet className="h-5 w-5 text-primary" /> Comisiones
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
             15% los primeros 3 meses de cada cliente, 8% perpetuo después.
