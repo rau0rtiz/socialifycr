@@ -507,6 +507,9 @@ export type Database = {
           sale_currency: string | null
           sale_includes: string | null
           sale_package: string | null
+          sale_payment_date: string | null
+          sale_payment_method: string | null
+          sale_payment_receipts: Json
           sale_payment_scheme: string | null
           status: Database["public"]["Enums"]["agency_crm_status"]
           updated_at: string
@@ -527,6 +530,9 @@ export type Database = {
           sale_currency?: string | null
           sale_includes?: string | null
           sale_package?: string | null
+          sale_payment_date?: string | null
+          sale_payment_method?: string | null
+          sale_payment_receipts?: Json
           sale_payment_scheme?: string | null
           status?: Database["public"]["Enums"]["agency_crm_status"]
           updated_at?: string
@@ -547,6 +553,9 @@ export type Database = {
           sale_currency?: string | null
           sale_includes?: string | null
           sale_package?: string | null
+          sale_payment_date?: string | null
+          sale_payment_method?: string | null
+          sale_payment_receipts?: Json
           sale_payment_scheme?: string | null
           status?: Database["public"]["Enums"]["agency_crm_status"]
           updated_at?: string
