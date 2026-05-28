@@ -279,24 +279,102 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Esquema de pago</Label>
-                <Select
-                  value={form.sale_payment_scheme || ''}
-                  onValueChange={(v) => setForm({ ...form, sale_payment_scheme: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_SCHEME_OPTIONS.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Esquema de pago</Label>
+                  <Select
+                    value={form.sale_payment_scheme || ''}
+                    onValueChange={(v) => setForm({ ...form, sale_payment_scheme: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_SCHEME_OPTIONS.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Método de pago</Label>
+                  <Select
+                    value={form.sale_payment_method || ''}
+                    onValueChange={(v) => setForm({ ...form, sale_payment_method: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHOD_OPTIONS.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              <div className="space-y-2">
+                <Label>Fecha de pago</Label>
+                <Input
+                  type="date"
+                  value={form.sale_payment_date || ''}
+                  onChange={(e) => setForm({ ...form, sale_payment_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Comprobantes de pago</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,application/pdf"
+                  className="hidden"
+                  onChange={(e) => handleUploadReceipts(e.target.files)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full"
+                >
+                  {uploading ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Subiendo...</>
+                  ) : (
+                    <><Upload className="h-4 w-4 mr-2" /> Subir comprobante(s)</>
+                  )}
+                </Button>
+                {(form.sale_payment_receipts || []).length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    {(form.sale_payment_receipts || []).map((r, i) => (
+                      <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-background/40 px-2 py-1.5 text-xs">
+                        <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <a
+                          href={r.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 truncate hover:underline"
+                        >
+                          {r.name}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => removeReceipt(i)}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
 
