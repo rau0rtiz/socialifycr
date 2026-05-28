@@ -235,6 +235,7 @@ export const useCreateSale = () => {
         crm_lead_id: input.crm_lead_id || null,
         lead_source: input.lead_source || null,
         lead_source_detail: input.lead_source_detail || null,
+        commission_rate_initial: input.commission_rate_initial,
         commission_rate_perpetual: input.commission_rate_perpetual,
         commission_initial_months: input.commission_initial_months,
       };
