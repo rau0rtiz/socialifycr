@@ -412,8 +412,9 @@ export const SellerCommissionsView = () => {
                     {fmtMoney(commissionPaidAmount, displayCurrency)} pagada
                   </td>
                   <td />
-
+                </tr>
               </tfoot>
+
             </table>
           </div>
         )}
