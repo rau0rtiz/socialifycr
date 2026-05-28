@@ -210,6 +210,32 @@ export const NewSaleWizard = ({ open, onOpenChange, defaults }: Props) => {
               </div>
             </div>
             <div className="space-y-2">
+              <Label>¿De dónde vino este lead? *</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {LEAD_SOURCES.map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => setForm({ ...form, lead_source: s.value })}
+                    className={cn(
+                      'px-3 py-1.5 rounded-full text-xs border transition',
+                      form.lead_source === s.value
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-muted/40 border-border hover:bg-muted',
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              <Input
+                value={form.lead_source_detail}
+                onChange={(e) => setForm({ ...form, lead_source_detail: e.target.value })}
+                placeholder="Detalle (campaña, referido por, evento, etc.)"
+                className="mt-2"
+              />
+            </div>
+            <div className="space-y-2">
               <Label>Notas (opcional)</Label>
               <Textarea
                 rows={3}
