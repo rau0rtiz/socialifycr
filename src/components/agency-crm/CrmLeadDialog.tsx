@@ -56,6 +56,8 @@ interface Props {
 export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
   const { createLead, updateLead, deleteLead } = useAgencyCrmLeads();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<CrmLeadInput>({
     name: '',
     email: '',
@@ -67,6 +69,9 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
     sale_amount: null,
     sale_currency: 'USD',
     sale_payment_scheme: '',
+    sale_payment_date: '',
+    sale_payment_method: '',
+    sale_payment_receipts: [],
     lost_reason: null,
     lost_objection: '',
   });
@@ -84,11 +89,49 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
         sale_amount: lead?.sale_amount ?? null,
         sale_currency: lead?.sale_currency || 'USD',
         sale_payment_scheme: lead?.sale_payment_scheme || '',
+        sale_payment_date: lead?.sale_payment_date || '',
+        sale_payment_method: lead?.sale_payment_method || '',
+        sale_payment_receipts: Array.isArray(lead?.sale_payment_receipts) ? lead!.sale_payment_receipts : [],
         lost_reason: (lead?.lost_reason as LostReason) || null,
         lost_objection: lead?.lost_objection || '',
       });
     }
   }, [open, lead]);
+
+  const handleUploadReceipts = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const uploaded: SaleReceipt[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.split('.').pop() || 'bin';
+        const path = `agency-crm/receipts/${lead?.id || 'tmp'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error } = await supabase.storage.from('content-images').upload(path, file, {
+          contentType: file.type || undefined,
+          upsert: false,
+        });
+        if (error) throw error;
+        const { data: pub } = supabase.storage.from('content-images').getPublicUrl(path);
+        uploaded.push({ url: pub.publicUrl, name: file.name, uploaded_at: new Date().toISOString() });
+      }
+      setForm((f) => ({ ...f, sale_payment_receipts: [...(f.sale_payment_receipts || []), ...uploaded] }));
+      toast({ title: 'Comprobantes subidos', description: `${uploaded.length} archivo(s)` });
+    } catch (e: any) {
+      toast({ title: 'Error al subir', description: e.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const removeReceipt = (idx: number) => {
+    setForm((f) => ({
+      ...f,
+      sale_payment_receipts: (f.sale_payment_receipts || []).filter((_, i) => i !== idx),
+    }));
+  };
+
+
 
   const handleSave = async () => {
     const parsed = baseSchema.safeParse(form);
