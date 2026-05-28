@@ -1,0 +1,11 @@
+
+ALTER TABLE public.agency_crm_leads
+  ADD COLUMN IF NOT EXISTS sale_package TEXT,
+  ADD COLUMN IF NOT EXISTS sale_includes TEXT,
+  ADD COLUMN IF NOT EXISTS sale_amount NUMERIC(12,2),
+  ADD COLUMN IF NOT EXISTS sale_currency TEXT DEFAULT 'USD',
+  ADD COLUMN IF NOT EXISTS sale_payment_scheme TEXT,
+  ADD COLUMN IF NOT EXISTS sale_closed_at DATE,
+  ADD COLUMN IF NOT EXISTS lost_reason TEXT,
+  ADD COLUMN IF NOT EXISTS lost_objection TEXT,
+  ADD COLUMN IF NOT EXISTS lost_at DATE;
