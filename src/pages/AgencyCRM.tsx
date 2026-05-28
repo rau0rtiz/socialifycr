@@ -68,7 +68,7 @@ const AgencyCRM = () => {
   const quickChangeStatus = async (lead: AgencyCrmLead, status: string) => {
     if (status === lead.status) return;
     try {
-      await updateLead.mutateAsync({ id: lead.id, patch: { status: status as any } });
+      await updateLead.mutateAsync({ id: lead.id, patch: { status: status as any }, prevStatus: lead.status });
       toast({ title: 'Estado actualizado' });
     } catch (e: any) {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
