@@ -83,7 +83,7 @@ export const NewSaleWizard = ({ open, onOpenChange, defaults }: Props) => {
       return { ...f, payment_days: next, payments_per_month: Math.max(1, next.length) };
     });
   };
-
+    if (step === 1) return form.customer_name.trim().length > 0 && form.monthly_amount > 0 && form.start_date && !!form.lead_source;
   const canNext = useMemo(() => {
     if (step === 1) return form.customer_name.trim().length > 0 && form.monthly_amount > 0 && form.start_date;
     if (step === 2) return form.payment_days.length > 0 && amountPerPayment > 0;

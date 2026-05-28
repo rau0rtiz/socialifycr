@@ -30,6 +30,7 @@ import {
   computeContractRateNow,
   computeServiceMonth,
   DEFAULT_SELLER,
+  LEAD_SOURCES,
   SellerCollection,
   SellerContract,
   useChurnContract,
@@ -38,7 +39,6 @@ import {
   useSellerContracts,
   useUnmarkCollectionPaid,
 } from '@/hooks/use-seller-commissions';
-import { NewSaleWizard } from './NewSaleWizard';
 import { MarkPaidDialog } from './MarkPaidDialog';
 import { PayCommissionDialog } from './PayCommissionDialog';
 
