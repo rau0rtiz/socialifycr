@@ -366,6 +366,9 @@ export type Database = {
           client_id: string | null
           collection_type: string
           commission_amount: number | null
+          commission_paid_amount: number | null
+          commission_paid_at: string | null
+          commission_paid_notes: string | null
           commission_rate: number | null
           contract_id: string | null
           created_at: string
@@ -387,6 +390,9 @@ export type Database = {
           client_id?: string | null
           collection_type?: string
           commission_amount?: number | null
+          commission_paid_amount?: number | null
+          commission_paid_at?: string | null
+          commission_paid_notes?: string | null
           commission_rate?: number | null
           contract_id?: string | null
           created_at?: string
@@ -408,6 +414,9 @@ export type Database = {
           client_id?: string | null
           collection_type?: string
           commission_amount?: number | null
+          commission_paid_amount?: number | null
+          commission_paid_at?: string | null
+          commission_paid_notes?: string | null
           commission_rate?: number | null
           contract_id?: string | null
           created_at?: string

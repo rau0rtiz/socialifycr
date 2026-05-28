@@ -38,10 +38,13 @@ import {
   useSellerCollections,
   useSellerContracts,
   useUnmarkCollectionPaid,
+  useMarkCommissionPaid,
+  useUnmarkCommissionPaid,
 } from '@/hooks/use-seller-commissions';
 import { NewSaleWizard } from './NewSaleWizard';
 import { MarkPaidDialog } from './MarkPaidDialog';
 import { PayCommissionDialog } from './PayCommissionDialog';
+
 
 const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 const fmtMoney = (amount: number, currency: string) =>
@@ -53,7 +56,11 @@ export const SellerCommissionsView = () => {
   const { data: collections = [], isLoading: loadingCols } = useSellerCollections(seller);
   const { data: payouts = [] } = useCommissionPayouts(seller);
   const unmark = useUnmarkCollectionPaid();
+  const markCommissionPaid = useMarkCommissionPaid();
+  const unmarkCommissionPaid = useUnmarkCommissionPaid();
   const churn = useChurnContract();
+
+
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [markPaid, setMarkPaid] = useState<{ col: SellerCollection; contract: SellerContract | null } | null>(null);
@@ -90,8 +97,17 @@ export const SellerCommissionsView = () => {
   const paidThisMonth = monthCollections.filter((c) => c.status === 'paid');
   const totalCollected = paidThisMonth.reduce((s, c) => s + Number(c.paid_amount || 0), 0);
   const totalCommission = paidThisMonth.reduce((s, c) => s + Number(c.commission_amount || 0), 0);
+  const commissionPaidRows = paidThisMonth.filter((c) => c.commission_paid_at);
+  const commissionPaidAmount = commissionPaidRows.reduce(
+    (s, c) => s + Number(c.commission_paid_amount || c.commission_amount || 0),
+    0,
+  );
+  const commissionPendingAmount = paidThisMonth
+    .filter((c) => !c.commission_paid_at)
+    .reduce((s, c) => s + Number(c.commission_amount || 0), 0);
   const currencyMix = new Set(paidThisMonth.map((c) => c.currency));
-  const displayCurrency = currencyMix.size === 1 ? Array.from(currencyMix)[0] : 'USD';
+  const displayCurrency: string = currencyMix.size === 1 ? (Array.from(currencyMix)[0] as string) : 'USD';
+
 
   const activeContracts = contracts.filter((c) => c.status === 'active');
   const inInitialWindow = activeContracts.filter(
@@ -169,14 +185,13 @@ export const SellerCommissionsView = () => {
           </Button>
         </div>
       </div>
-
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         <KpiCard
           icon={<TrendingUp className="h-4 w-4" />}
           label="Cobrado en el mes"
           value={fmtMoney(totalCollected, displayCurrency)}
-          sub={`${paidThisMonth.length} cobro(s) confirmado(s)`}
+          sub={`${paidThisMonth.length} cobro(s)`}
         />
         <KpiCard
           icon={<DollarSign className="h-4 w-4 text-primary" />}
@@ -186,21 +201,26 @@ export const SellerCommissionsView = () => {
           highlight
         />
         <KpiCard
+          icon={<CheckCircle2 className="h-4 w-4 text-green-500" />}
+          label="Comisión pagada"
+          value={fmtMoney(commissionPaidAmount, displayCurrency)}
+          sub={`${commissionPaidRows.length} cobro(s) liquidado(s)`}
+        />
+        <KpiCard
+          icon={<CalendarClock className="h-4 w-4 text-amber-500" />}
+          label="Por pagar a vendedor"
+          value={fmtMoney(commissionPendingAmount, displayCurrency)}
+          sub="Comisión devengada sin liquidar"
+        />
+        <KpiCard
           icon={<Users className="h-4 w-4" />}
           label="Clientes activos"
           value={String(activeContracts.length)}
           sub={`${inInitialWindow.length} en ventana 15%`}
         />
-        <KpiCard
-          icon={<CalendarClock className="h-4 w-4" />}
-          label="Pendientes del mes"
-          value={String(monthCollections.filter((c) => c.status === 'pending').length)}
-          sub={fmtMoney(
-            monthCollections.filter((c) => c.status === 'pending').reduce((s, c) => s + Number(c.amount), 0),
-            displayCurrency,
-          )}
-        />
       </div>
+
+
 
       {/* Crecimiento por origen de leads */}
       {sourceBreakdown.length > 0 && (
@@ -272,6 +292,7 @@ export const SellerCommissionsView = () => {
                   <th className="text-center px-4 py-2">Mes serv.</th>
                   <th className="text-center px-4 py-2">Tasa</th>
                   <th className="text-right px-4 py-2">Comisión</th>
+                  <th className="text-center px-4 py-2">Comisión pagada</th>
                   <th className="text-right px-4 py-2"></th>
                 </tr>
               </thead>
@@ -281,6 +302,7 @@ export const SellerCommissionsView = () => {
                   .map((c) => {
                     const contract = c.contract_id ? contractById.get(c.contract_id) : null;
                     const isPaid = c.status === 'paid';
+                    const commPaid = !!c.commission_paid_at;
                     return (
                       <tr key={c.id} className="border-t border-border/50">
                         <td className="px-4 py-2 font-medium">{c.customer_name}</td>
@@ -316,6 +338,44 @@ export const SellerCommissionsView = () => {
                             ? fmtMoney(Number(c.commission_amount), c.currency)
                             : '—'}
                         </td>
+                        <td className="px-4 py-2 text-center">
+                          {!isPaid ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : commPaid ? (
+                            <button
+                              type="button"
+                              onClick={() => unmarkCommissionPaid.mutate(c.id)}
+                              className="inline-flex flex-col items-center gap-0.5 group"
+                              title="Click para revertir"
+                            >
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] border-green-500/40 text-green-400 bg-green-500/10 group-hover:bg-green-500/20"
+                              >
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Pagada
+                              </Badge>
+                              <span className="text-[10px] text-muted-foreground">
+                                {format(parseISO(c.commission_paid_at!), "d MMM", { locale: es })}
+                              </span>
+                            </button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 text-[11px] px-2"
+                              onClick={() =>
+                                markCommissionPaid.mutate({
+                                  id: c.id,
+                                  paid_amount: Number(c.commission_amount || 0),
+                                })
+                              }
+                              disabled={!c.commission_amount}
+                            >
+                              <DollarSign className="h-3 w-3 mr-1" /> Marcar
+                            </Button>
+                          )}
+                        </td>
                         <td className="px-4 py-2 text-right">
                           {isPaid ? (
                             <Button
@@ -348,9 +408,13 @@ export const SellerCommissionsView = () => {
                   <td className="px-4 py-2 text-right font-bold text-primary">
                     {fmtMoney(totalCommission, displayCurrency)}
                   </td>
+                  <td className="px-4 py-2 text-center text-[11px] text-muted-foreground">
+                    {fmtMoney(commissionPaidAmount, displayCurrency)} pagada
+                  </td>
                   <td />
                 </tr>
               </tfoot>
+
             </table>
           </div>
         )}

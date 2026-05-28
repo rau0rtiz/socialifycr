@@ -65,9 +65,13 @@ export interface SellerCollection {
   service_month: number | null;
   commission_rate: number | null;
   commission_amount: number | null;
+  commission_paid_at: string | null;
+  commission_paid_amount: number | null;
+  commission_paid_notes: string | null;
   seller_name: string | null;
   notes: string | null;
 }
+
 
 export interface CommissionPayout {
   id: string;
@@ -323,7 +327,7 @@ export const useUnmarkCollectionPaid = () => {
     mutationFn: async (id: string) => {
       const { error } = await (supabase as any)
         .from('agency_collections')
-        .update({ status: 'pending', paid_at: null, paid_amount: null })
+        .update({ status: 'pending', paid_at: null, paid_amount: null, commission_paid_at: null, commission_paid_amount: null })
         .eq('id', id);
       if (error) throw error;
     },
@@ -331,6 +335,55 @@ export const useUnmarkCollectionPaid = () => {
     onError: (e: any) => toast.error(e.message),
   });
 };
+
+export const useMarkCommissionPaid = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      paid_amount,
+      notes,
+    }: {
+      id: string;
+      paid_amount: number;
+      notes?: string;
+    }) => {
+      const { error } = await (supabase as any)
+        .from('agency_collections')
+        .update({
+          commission_paid_at: new Date().toISOString(),
+          commission_paid_amount: paid_amount,
+          commission_paid_notes: notes || null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['seller-collections'] });
+      toast.success('Comisión marcada como pagada');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+};
+
+export const useUnmarkCommissionPaid = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any)
+        .from('agency_collections')
+        .update({ commission_paid_at: null, commission_paid_amount: null, commission_paid_notes: null })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['seller-collections'] });
+      toast.success('Comisión revertida a pendiente');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+};
+
 
 export const useChurnContract = () => {
   const qc = useQueryClient();
