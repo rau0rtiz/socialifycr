@@ -65,9 +65,13 @@ export interface SellerCollection {
   service_month: number | null;
   commission_rate: number | null;
   commission_amount: number | null;
+  commission_paid_at: string | null;
+  commission_paid_amount: number | null;
+  commission_paid_notes: string | null;
   seller_name: string | null;
   notes: string | null;
 }
+
 
 export interface CommissionPayout {
   id: string;
