@@ -18,6 +18,12 @@ export type LostReason =
   | 'no_calificado'
   | 'otro';
 
+export interface SaleReceipt {
+  url: string;
+  name: string;
+  uploaded_at: string;
+}
+
 export interface AgencyCrmLead {
   id: string;
   name: string;
@@ -34,6 +40,9 @@ export interface AgencyCrmLead {
   sale_amount: number | null;
   sale_currency: string | null;
   sale_payment_scheme: string | null;
+  sale_payment_date: string | null;
+  sale_payment_method: string | null;
+  sale_payment_receipts: SaleReceipt[];
   sale_closed_at: string | null;
   // Pérdida
   lost_reason: LostReason | null;
@@ -52,6 +61,9 @@ export interface CrmLeadInput {
   sale_amount?: number | null;
   sale_currency?: string | null;
   sale_payment_scheme?: string | null;
+  sale_payment_date?: string | null;
+  sale_payment_method?: string | null;
+  sale_payment_receipts?: SaleReceipt[];
   lost_reason?: LostReason | null;
   lost_objection?: string | null;
 }
@@ -75,11 +87,22 @@ export const LOST_REASON_OPTIONS: { value: LostReason; label: string }[] = [
 ];
 
 export const PAYMENT_SCHEME_OPTIONS = [
-  'Contado',
+  'Pago completo',
+  '2 pagos',
   'Mensual',
   'Trimestral',
   'Anual',
   'Setup + Mensualidad',
+];
+
+export const PAYMENT_METHOD_OPTIONS = [
+  'Transferencia',
+  'SINPE',
+  'Tarjeta',
+  'Stripe',
+  'PayPal',
+  'Efectivo',
+  'Otro',
 ];
 
 export const CURRENCY_OPTIONS = ['USD', 'CRC'];
@@ -102,12 +125,16 @@ const buildPayload = (input: Partial<CrmLeadInput>, opts: { setSaleClosedAt?: bo
   if (input.sale_amount !== undefined) payload.sale_amount = input.sale_amount ?? null;
   if (input.sale_currency !== undefined) payload.sale_currency = input.sale_currency || null;
   if (input.sale_payment_scheme !== undefined) payload.sale_payment_scheme = input.sale_payment_scheme?.trim() || null;
+  if (input.sale_payment_date !== undefined) payload.sale_payment_date = input.sale_payment_date || null;
+  if (input.sale_payment_method !== undefined) payload.sale_payment_method = input.sale_payment_method?.trim() || null;
+  if (input.sale_payment_receipts !== undefined) payload.sale_payment_receipts = input.sale_payment_receipts ?? [];
   if (input.lost_reason !== undefined) payload.lost_reason = input.lost_reason || null;
   if (input.lost_objection !== undefined) payload.lost_objection = input.lost_objection?.trim() || null;
   if (opts.setSaleClosedAt) payload.sale_closed_at = new Date().toISOString().slice(0, 10);
   if (opts.setLostAt) payload.lost_at = new Date().toISOString().slice(0, 10);
   return payload;
 };
+
 
 export const useAgencyCrmLeads = () => {
   const qc = useQueryClient();
