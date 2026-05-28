@@ -220,7 +220,7 @@ export const SellerCommissionsView = () => {
         />
       </div>
 
-      </div>
+
 
       {/* Crecimiento por origen de leads */}
       {sourceBreakdown.length > 0 && (
