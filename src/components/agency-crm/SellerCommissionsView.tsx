@@ -39,6 +39,7 @@ import {
   useSellerContracts,
   useUnmarkCollectionPaid,
 } from '@/hooks/use-seller-commissions';
+import { NewSaleWizard } from './NewSaleWizard';
 import { MarkPaidDialog } from './MarkPaidDialog';
 import { PayCommissionDialog } from './PayCommissionDialog';
 
