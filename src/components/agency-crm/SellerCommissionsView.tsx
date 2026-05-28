@@ -97,8 +97,17 @@ export const SellerCommissionsView = () => {
   const paidThisMonth = monthCollections.filter((c) => c.status === 'paid');
   const totalCollected = paidThisMonth.reduce((s, c) => s + Number(c.paid_amount || 0), 0);
   const totalCommission = paidThisMonth.reduce((s, c) => s + Number(c.commission_amount || 0), 0);
+  const commissionPaidRows = paidThisMonth.filter((c) => c.commission_paid_at);
+  const commissionPaidAmount = commissionPaidRows.reduce(
+    (s, c) => s + Number(c.commission_paid_amount || c.commission_amount || 0),
+    0,
+  );
+  const commissionPendingAmount = paidThisMonth
+    .filter((c) => !c.commission_paid_at)
+    .reduce((s, c) => s + Number(c.commission_amount || 0), 0);
   const currencyMix = new Set(paidThisMonth.map((c) => c.currency));
-  const displayCurrency = currencyMix.size === 1 ? Array.from(currencyMix)[0] : 'USD';
+  const displayCurrency: string = currencyMix.size === 1 ? (Array.from(currencyMix)[0] as string) : 'USD';
+
 
   const activeContracts = contracts.filter((c) => c.status === 'active');
   const inInitialWindow = activeContracts.filter(
