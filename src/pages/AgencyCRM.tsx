@@ -196,8 +196,21 @@ const AgencyCRM = () => {
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="px-4 py-3 hidden md:table-cell text-xs text-muted-foreground max-w-[280px] truncate">
-                          {lead.notes || '—'}
+                        <td className="px-4 py-3 hidden md:table-cell text-xs text-muted-foreground max-w-[280px]">
+                          <div className="flex flex-col gap-1">
+                            {lead.status === 'cliente' && (lead.sale_package || lead.sale_amount) && (
+                              <span className="inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-full text-[11px] bg-green-500/15 text-green-400 border border-green-500/30">
+                                {lead.sale_package || 'Venta'}
+                                {lead.sale_amount ? ` · ${lead.sale_currency === 'CRC' ? '₡' : '$'}${Number(lead.sale_amount).toLocaleString('en-US')}` : ''}
+                              </span>
+                            )}
+                            {lead.status === 'perdido' && lead.lost_reason && (
+                              <span className="inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-full text-[11px] bg-red-500/15 text-red-400 border border-red-500/30">
+                                {getLostReasonLabel(lead.lost_reason)}
+                              </span>
+                            )}
+                            <span className="truncate">{lead.notes || (lead.status === 'cliente' || lead.status === 'perdido' ? '' : '—')}</span>
+                          </div>
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell text-xs text-muted-foreground">
                           {format(parseISO(lead.created_at), "d MMM yyyy", { locale: es })}
