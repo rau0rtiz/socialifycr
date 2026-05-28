@@ -52,11 +52,12 @@ const fmtMoney = (amount: number, currency: string) =>
 
 export const SellerCommissionsView = () => {
   const seller = DEFAULT_SELLER;
-  const { data: contracts = [], isLoading: loadingC } = useSellerContracts(seller);
-  const { data: collections = [], isLoading: loadingCols } = useSellerCollections(seller);
   const { data: payouts = [] } = useCommissionPayouts(seller);
   const unmark = useUnmarkCollectionPaid();
+  const markCommissionPaid = useMarkCommissionPaid();
+  const unmarkCommissionPaid = useUnmarkCommissionPaid();
   const churn = useChurnContract();
+
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [markPaid, setMarkPaid] = useState<{ col: SellerCollection; contract: SellerContract | null } | null>(null);
