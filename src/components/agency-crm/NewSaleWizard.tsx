@@ -103,6 +103,7 @@ export const NewSaleWizard = ({ open, onOpenChange, defaults }: Props) => {
       lead_source: form.lead_source || null,
       lead_source_detail: form.lead_source_detail.trim() || null,
       commission_rate_initial: form.commission_rate_initial,
+      commission_rate_perpetual: form.commission_rate_perpetual,
       commission_initial_months: form.commission_initial_months,
       payments_per_month: form.payment_days.length,
       payment_days: form.payment_days,
