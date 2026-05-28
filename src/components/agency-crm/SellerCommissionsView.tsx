@@ -292,6 +292,7 @@ export const SellerCommissionsView = () => {
                   <th className="text-center px-4 py-2">Mes serv.</th>
                   <th className="text-center px-4 py-2">Tasa</th>
                   <th className="text-right px-4 py-2">Comisión</th>
+                  <th className="text-center px-4 py-2">Comisión pagada</th>
                   <th className="text-right px-4 py-2"></th>
                 </tr>
               </thead>
@@ -301,6 +302,7 @@ export const SellerCommissionsView = () => {
                   .map((c) => {
                     const contract = c.contract_id ? contractById.get(c.contract_id) : null;
                     const isPaid = c.status === 'paid';
+                    const commPaid = !!c.commission_paid_at;
                     return (
                       <tr key={c.id} className="border-t border-border/50">
                         <td className="px-4 py-2 font-medium">{c.customer_name}</td>
@@ -336,6 +338,44 @@ export const SellerCommissionsView = () => {
                             ? fmtMoney(Number(c.commission_amount), c.currency)
                             : '—'}
                         </td>
+                        <td className="px-4 py-2 text-center">
+                          {!isPaid ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : commPaid ? (
+                            <button
+                              type="button"
+                              onClick={() => unmarkCommissionPaid.mutate(c.id)}
+                              className="inline-flex flex-col items-center gap-0.5 group"
+                              title="Click para revertir"
+                            >
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] border-green-500/40 text-green-400 bg-green-500/10 group-hover:bg-green-500/20"
+                              >
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Pagada
+                              </Badge>
+                              <span className="text-[10px] text-muted-foreground">
+                                {format(parseISO(c.commission_paid_at!), "d MMM", { locale: es })}
+                              </span>
+                            </button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 text-[11px] px-2"
+                              onClick={() =>
+                                markCommissionPaid.mutate({
+                                  id: c.id,
+                                  paid_amount: Number(c.commission_amount || 0),
+                                })
+                              }
+                              disabled={!c.commission_amount}
+                            >
+                              <DollarSign className="h-3 w-3 mr-1" /> Marcar
+                            </Button>
+                          )}
+                        </td>
                         <td className="px-4 py-2 text-right">
                           {isPaid ? (
                             <Button
@@ -368,8 +408,11 @@ export const SellerCommissionsView = () => {
                   <td className="px-4 py-2 text-right font-bold text-primary">
                     {fmtMoney(totalCommission, displayCurrency)}
                   </td>
+                  <td className="px-4 py-2 text-center text-[11px] text-muted-foreground">
+                    {fmtMoney(commissionPaidAmount, displayCurrency)} pagada
+                  </td>
                   <td />
-                </tr>
+
               </tfoot>
             </table>
           </div>
