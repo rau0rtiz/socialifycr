@@ -43,7 +43,6 @@ const Comisiones = lazy(() => import("./pages/Comisiones"));
 const AdFrameworks = lazy(() => import("./pages/AdFrameworks"));
 const AdFrameworkDetail = lazy(() => import("./pages/AdFrameworkDetail"));
 const AdCampaignCanvas = lazy(() => import("./pages/AdCampaignCanvas"));
-const AgencyFinances = lazy(() => import("./pages/AgencyFinances"));
 const AgencyCRM = lazy(() => import("./pages/AgencyCRM"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
@@ -190,13 +189,6 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <WidgetCatalogPage />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/agencia/finanzas" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <AgencyFinances />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />

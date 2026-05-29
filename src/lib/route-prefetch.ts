@@ -20,7 +20,6 @@ const ROUTE_LOADERS: Record<string, Loader> = {
   '/accesos': () => import('@/pages/Accesos'),
   '/ad-frameworks': () => import('@/pages/AdFrameworks'),
   '/widget-catalog': () => import('@/pages/WidgetCatalog'),
-  '/agencia/finanzas': () => import('@/pages/AgencyFinances'),
   '/historial': () => import('@/pages/Historial'),
   '/archivos': () => import('@/pages/Archivos'),
   '/brand-settings': () => import('@/pages/BrandSettings'),
