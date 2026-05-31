@@ -36,6 +36,7 @@ import {
   useChurnContract,
   useCommissionPayouts,
   useSellerCollections,
+  useAllSellerCollections,
   useSellerContracts,
   useUnmarkCollectionPaid,
   useMarkCommissionPaid,
