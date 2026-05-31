@@ -488,7 +488,7 @@ export const SellerCommissionsView = () => {
               </tbody>
               <tfoot className="bg-muted/30 border-t border-border">
                 <tr>
-                  <td colSpan={6} className="px-4 py-2 text-right text-xs uppercase text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-2 text-right text-xs uppercase text-muted-foreground">
                     Total comisión del mes
                   </td>
                   <td className="px-4 py-2 text-right font-bold text-primary">
