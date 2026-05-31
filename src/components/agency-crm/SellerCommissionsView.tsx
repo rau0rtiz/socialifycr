@@ -370,6 +370,7 @@ export const SellerCommissionsView = () => {
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="text-left px-4 py-2">Cliente</th>
+                  <th className="text-left px-4 py-2">Vendedor</th>
                   <th className="text-left px-4 py-2">Vence</th>
                   <th className="text-left px-4 py-2">Cobrado</th>
                   <th className="text-right px-4 py-2">Monto</th>
