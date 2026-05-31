@@ -89,12 +89,13 @@ export const SellerCommissionsView = () => {
 
   const monthCollections = useMemo(
     () =>
-      collections.filter((c) => {
+      allCollections.filter((c) => {
         const ref = c.paid_at ? new Date(c.paid_at) : new Date(c.due_date + 'T12:00:00');
         return ref >= monthStart && ref <= monthEnd;
       }),
-    [collections, monthStart, monthEnd],
+    [allCollections, monthStart, monthEnd],
   );
+
 
   const paidThisMonth = monthCollections.filter((c) => c.status === 'paid');
   const totalCollected = paidThisMonth.reduce((s, c) => s + Number(c.paid_amount || 0), 0);
@@ -369,6 +370,7 @@ export const SellerCommissionsView = () => {
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="text-left px-4 py-2">Cliente</th>
+                  <th className="text-left px-4 py-2">Vendedor</th>
                   <th className="text-left px-4 py-2">Vence</th>
                   <th className="text-left px-4 py-2">Cobrado</th>
                   <th className="text-right px-4 py-2">Monto</th>
@@ -389,6 +391,7 @@ export const SellerCommissionsView = () => {
                     return (
                       <tr key={c.id} className="border-t border-border/50">
                         <td className="px-4 py-2 font-medium">{c.customer_name}</td>
+                        <td className="px-4 py-2 text-xs text-muted-foreground">{c.seller_name || '—'}</td>
                         <td className="px-4 py-2 text-xs text-muted-foreground">
                           {format(parseISO(c.due_date), "d MMM", { locale: es })}
                         </td>
@@ -485,7 +488,7 @@ export const SellerCommissionsView = () => {
               </tbody>
               <tfoot className="bg-muted/30 border-t border-border">
                 <tr>
-                  <td colSpan={6} className="px-4 py-2 text-right text-xs uppercase text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-2 text-right text-xs uppercase text-muted-foreground">
                     Total comisión del mes
                   </td>
                   <td className="px-4 py-2 text-right font-bold text-primary">
