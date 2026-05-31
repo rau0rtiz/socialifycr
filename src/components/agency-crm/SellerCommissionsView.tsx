@@ -89,12 +89,13 @@ export const SellerCommissionsView = () => {
 
   const monthCollections = useMemo(
     () =>
-      collections.filter((c) => {
+      allCollections.filter((c) => {
         const ref = c.paid_at ? new Date(c.paid_at) : new Date(c.due_date + 'T12:00:00');
         return ref >= monthStart && ref <= monthEnd;
       }),
-    [collections, monthStart, monthEnd],
+    [allCollections, monthStart, monthEnd],
   );
+
 
   const paidThisMonth = monthCollections.filter((c) => c.status === 'paid');
   const totalCollected = paidThisMonth.reduce((s, c) => s + Number(c.paid_amount || 0), 0);
