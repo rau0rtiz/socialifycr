@@ -141,6 +141,22 @@ export const useSellerCollections = (sellerName: string = DEFAULT_SELLER) => {
   });
 };
 
+export const useAllSellerCollections = () => {
+  return useQuery({
+    queryKey: ['seller-collections', 'all'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('agency_collections')
+        .select('*')
+        .not('seller_name', 'is', null)
+        .order('due_date', { ascending: false });
+      if (error) throw error;
+      return (data || []) as SellerCollection[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 export const usePaymentSchedules = (contractIds: string[]) => {
   return useQuery({
     queryKey: ['payment-schedules', contractIds.sort().join(',')],
