@@ -257,6 +257,52 @@ export const SellerCommissionsView = () => {
         />
       </div>
 
+      {/* Comisión por vendedor */}
+      {sellerBreakdown.length > 0 && (
+        <Card className="overflow-hidden">
+          <div className="px-4 py-3 border-b border-border">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" /> Comisión por vendedor
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Devengado en {format(monthStart, "MMMM yyyy", { locale: es })} sobre cobros reales
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-3">
+            {sellerBreakdown.map((s) => (
+              <div
+                key={`${s.seller}-${s.currency}`}
+                className={cn(
+                  'rounded-lg border bg-background/50 p-3 space-y-2',
+                  s.pending > 0 ? 'border-amber-500/40' : 'border-border',
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-sm">{s.seller}</div>
+                  <Badge variant="outline" className="text-[10px]">
+                    {s.count} cobro(s) · {s.currency}
+                  </Badge>
+                </div>
+                <div className="text-2xl font-bold text-primary tabular-nums">
+                  {fmtMoney(s.commission, s.currency)}
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-green-500 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Pagada: {fmtMoney(s.paid, s.currency)}
+                  </span>
+                  <span className={cn('flex items-center gap-1', s.pending > 0 ? 'text-amber-500' : 'text-muted-foreground')}>
+                    <CalendarClock className="h-3 w-3" /> Por pagar: {fmtMoney(s.pending, s.currency)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+
+
+
 
 
       {/* Crecimiento por origen de leads */}
