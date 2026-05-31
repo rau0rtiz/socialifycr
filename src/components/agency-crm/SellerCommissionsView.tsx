@@ -55,6 +55,7 @@ export const SellerCommissionsView = () => {
   const seller = DEFAULT_SELLER;
   const { data: contracts = [], isLoading: loadingC } = useSellerContracts(seller);
   const { data: collections = [], isLoading: loadingCols } = useSellerCollections(seller);
+  const { data: allCollections = [] } = useAllSellerCollections();
   const { data: payouts = [] } = useCommissionPayouts(seller);
   const unmark = useUnmarkCollectionPaid();
   const markCommissionPaid = useMarkCommissionPaid();
