@@ -391,6 +391,7 @@ export const SellerCommissionsView = () => {
                     return (
                       <tr key={c.id} className="border-t border-border/50">
                         <td className="px-4 py-2 font-medium">{c.customer_name}</td>
+                        <td className="px-4 py-2 text-xs text-muted-foreground">{c.seller_name || '—'}</td>
                         <td className="px-4 py-2 text-xs text-muted-foreground">
                           {format(parseISO(c.due_date), "d MMM", { locale: es })}
                         </td>
