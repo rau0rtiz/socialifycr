@@ -110,6 +110,41 @@ export const SellerCommissionsView = () => {
   const currencyMix = new Set(paidThisMonth.map((c) => c.currency));
   const displayCurrency: string = currencyMix.size === 1 ? (Array.from(currencyMix)[0] as string) : 'USD';
 
+  // Desglose por vendedor (todos los vendedores) en el mes seleccionado
+  const sellerBreakdown = useMemo(() => {
+    const inMonth = allCollections.filter((c) => {
+      if (c.status !== 'paid') return false;
+      const ref = c.paid_at ? new Date(c.paid_at) : new Date(c.due_date + 'T12:00:00');
+      return ref >= monthStart && ref <= monthEnd;
+    });
+    const map = new Map<
+      string,
+      { seller: string; currency: string; commission: number; paid: number; pending: number; count: number }
+    >();
+    for (const c of inMonth) {
+      const key = `${c.seller_name}__${c.currency}`;
+      const cur = map.get(key) || {
+        seller: c.seller_name || '—',
+        currency: c.currency,
+        commission: 0,
+        paid: 0,
+        pending: 0,
+        count: 0,
+      };
+      const comm = Number(c.commission_amount || 0);
+      cur.commission += comm;
+      cur.count += 1;
+      if (c.commission_paid_at) {
+        cur.paid += Number(c.commission_paid_amount || comm);
+      } else {
+        cur.pending += comm;
+      }
+      map.set(key, cur);
+    }
+    return Array.from(map.values()).sort((a, b) => b.commission - a.commission);
+  }, [allCollections, monthStart, monthEnd]);
+
+
 
   const activeContracts = contracts.filter((c) => c.status === 'active');
   const inInitialWindow = activeContracts.filter(
