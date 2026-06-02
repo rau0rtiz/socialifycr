@@ -221,7 +221,7 @@ const AgencyCRM = () => {
 
             {/* Table */}
             <Card className="overflow-hidden">
-              {isLoading ? (
+              {isLoading || loadingContracts ? (
                 <div className="p-10 flex items-center justify-center text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin mr-2" /> Cargando...
                 </div>
