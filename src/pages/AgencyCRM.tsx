@@ -242,15 +242,60 @@ const AgencyCRM = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filtered.map((lead) => {
+                      {filtered.map((row) => {
+                        if (row.kind === 'contract') {
+                          const c = row.client;
+                          return (
+                            <tr
+                              key={`contract-${c.name}`}
+                              className="border-t border-border/50 hover:bg-muted/30"
+                            >
+                              <td className="px-4 py-3 font-medium">
+                                <div className="flex items-center gap-2">
+                                  {c.name}
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-green-500/15 text-green-400 border border-green-500/30">
+                                    <CheckCircle2 className="h-3 w-3" /> Ya es cliente
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                <span className="text-xs opacity-60">—</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={cn('inline-flex h-7 items-center px-3 rounded-md border text-xs', 'bg-green-500/15 text-green-400 border-green-500/30')}>
+                                  Cliente
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 hidden md:table-cell text-xs text-muted-foreground max-w-[280px]">
+                                <span className="opacity-70">
+                                  {c.seller_name ? `Vendedor: ${c.seller_name}` : 'Contrato activo en Clientes'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 hidden md:table-cell text-xs text-muted-foreground">
+                                {c.start_date ? format(parseISO(c.start_date), 'd MMM yyyy', { locale: es }) : '—'}
+                              </td>
+                            </tr>
+                          );
+                        }
+                        const lead = row.lead;
                         const meta = getStatusMeta(lead.status);
+                        const isClient = lead.status === 'cliente';
                         return (
                           <tr
                             key={lead.id}
                             className="border-t border-border/50 hover:bg-muted/30 cursor-pointer"
                             onClick={() => openEdit(lead)}
                           >
-                            <td className="px-4 py-3 font-medium">{lead.name}</td>
+                            <td className="px-4 py-3 font-medium">
+                              <div className="flex items-center gap-2">
+                                {lead.name}
+                                {isClient && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-green-500/15 text-green-400 border border-green-500/30">
+                                    <CheckCircle2 className="h-3 w-3" /> Ya es cliente
+                                  </span>
+                                )}
+                              </div>
+                            </td>
                             <td className="px-4 py-3 text-muted-foreground">
                               <div className="flex flex-col gap-0.5">
                                 {lead.email && (
