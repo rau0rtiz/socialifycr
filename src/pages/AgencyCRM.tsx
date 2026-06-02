@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, UserPlus, Mail, Phone, Loader2, Wallet, KanbanSquare, Users } from 'lucide-react';
+import { Plus, Search, UserPlus, Mail, Phone, Loader2, Wallet, KanbanSquare, Users, CheckCircle2 } from 'lucide-react';
 import {
   AgencyCrmLead,
   CRM_STATUS_OPTIONS,
@@ -26,6 +28,36 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+
+interface ContractClient {
+  name: string;
+  seller_name: string | null;
+  start_date: string | null;
+}
+
+const useContractClients = () => {
+  return useQuery({
+    queryKey: ['agency-contract-clients'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('agency_contracts')
+        .select('customer_name, seller_name, start_date')
+        .order('start_date', { ascending: false });
+      if (error) throw error;
+      const map = new Map<string, ContractClient>();
+      for (const row of (data || []) as any[]) {
+        const name = (row.customer_name || '').trim();
+        if (!name) continue;
+        const key = name.toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, { name, seller_name: row.seller_name, start_date: row.start_date });
+        }
+      }
+      return Array.from(map.values());
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
 
 const AgencyCRM = () => {
   const { leads, isLoading, updateLead } = useAgencyCrmLeads();
