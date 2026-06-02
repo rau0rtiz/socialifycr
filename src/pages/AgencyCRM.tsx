@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, UserPlus, Mail, Phone, Loader2, Wallet, KanbanSquare, Users } from 'lucide-react';
+import { Plus, Search, UserPlus, Mail, Phone, Loader2, Wallet, KanbanSquare, Users, CheckCircle2 } from 'lucide-react';
 import {
   AgencyCrmLead,
   CRM_STATUS_OPTIONS,
@@ -27,35 +29,93 @@ import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
+interface ContractClient {
+  name: string;
+  seller_name: string | null;
+  start_date: string | null;
+}
+
+const useContractClients = () => {
+  return useQuery({
+    queryKey: ['agency-contract-clients'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('agency_contracts')
+        .select('customer_name, seller_name, start_date')
+        .order('start_date', { ascending: false });
+      if (error) throw error;
+      const map = new Map<string, ContractClient>();
+      for (const row of (data || []) as any[]) {
+        const name = (row.customer_name || '').trim();
+        if (!name) continue;
+        const key = name.toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, { name, seller_name: row.seller_name, start_date: row.start_date });
+        }
+      }
+      return Array.from(map.values());
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+type LeadRow = { kind: 'lead'; lead: AgencyCrmLead };
+type ContractRow = { kind: 'contract'; client: ContractClient };
+type Row = LeadRow | ContractRow;
+
 const AgencyCRM = () => {
   const { leads, isLoading, updateLead } = useAgencyCrmLeads();
+  const { data: contractClients = [], isLoading: loadingContracts } = useContractClients();
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AgencyCrmLead | null>(null);
 
+  // Synthetic rows for contract clients that aren't already in agency_crm_leads
+  const syntheticContractRows = useMemo<ContractRow[]>(() => {
+    const leadNames = new Set(leads.map((l) => l.name.trim().toLowerCase()));
+    return contractClients
+      .filter((c) => !leadNames.has(c.name.toLowerCase()))
+      .map((c) => ({ kind: 'contract' as const, client: c }));
+  }, [leads, contractClients]);
+
+  const allRows = useMemo<Row[]>(
+    () => [
+      ...leads.map<LeadRow>((l) => ({ kind: 'lead', lead: l })),
+      ...syntheticContractRows,
+    ],
+    [leads, syntheticContractRows],
+  );
+
   const counts = useMemo(() => {
-    const map: Record<string, number> = { all: leads.length };
+    const map: Record<string, number> = { all: allRows.length };
     CRM_STATUS_OPTIONS.forEach((s) => (map[s.value] = 0));
-    leads.forEach((l) => {
-      map[l.status] = (map[l.status] || 0) + 1;
+    allRows.forEach((r) => {
+      const status = r.kind === 'lead' ? r.lead.status : 'cliente';
+      map[status] = (map[status] || 0) + 1;
     });
     return map;
-  }, [leads]);
+  }, [allRows]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return leads.filter((l) => {
-      if (statusFilter !== 'all' && l.status !== statusFilter) return false;
+    return allRows.filter((r) => {
+      const status = r.kind === 'lead' ? r.lead.status : 'cliente';
+      if (statusFilter !== 'all' && status !== statusFilter) return false;
       if (!q) return true;
-      return (
-        l.name.toLowerCase().includes(q) ||
-        (l.email || '').toLowerCase().includes(q) ||
-        (l.phone || '').toLowerCase().includes(q)
-      );
+      if (r.kind === 'lead') {
+        const l = r.lead;
+        return (
+          l.name.toLowerCase().includes(q) ||
+          (l.email || '').toLowerCase().includes(q) ||
+          (l.phone || '').toLowerCase().includes(q)
+        );
+      }
+      return r.client.name.toLowerCase().includes(q);
     });
-  }, [leads, search, statusFilter]);
+  }, [allRows, search, statusFilter]);
+
 
   const openNew = () => {
     setEditing(null);
@@ -161,7 +221,7 @@ const AgencyCRM = () => {
 
             {/* Table */}
             <Card className="overflow-hidden">
-              {isLoading ? (
+              {isLoading || loadingContracts ? (
                 <div className="p-10 flex items-center justify-center text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin mr-2" /> Cargando...
                 </div>
@@ -182,15 +242,60 @@ const AgencyCRM = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filtered.map((lead) => {
+                      {filtered.map((row) => {
+                        if (row.kind === 'contract') {
+                          const c = row.client;
+                          return (
+                            <tr
+                              key={`contract-${c.name}`}
+                              className="border-t border-border/50 hover:bg-muted/30"
+                            >
+                              <td className="px-4 py-3 font-medium">
+                                <div className="flex items-center gap-2">
+                                  {c.name}
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-green-500/15 text-green-400 border border-green-500/30">
+                                    <CheckCircle2 className="h-3 w-3" /> Ya es cliente
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                <span className="text-xs opacity-60">—</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={cn('inline-flex h-7 items-center px-3 rounded-md border text-xs', 'bg-green-500/15 text-green-400 border-green-500/30')}>
+                                  Cliente
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 hidden md:table-cell text-xs text-muted-foreground max-w-[280px]">
+                                <span className="opacity-70">
+                                  {c.seller_name ? `Vendedor: ${c.seller_name}` : 'Contrato activo en Clientes'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 hidden md:table-cell text-xs text-muted-foreground">
+                                {c.start_date ? format(parseISO(c.start_date), 'd MMM yyyy', { locale: es }) : '—'}
+                              </td>
+                            </tr>
+                          );
+                        }
+                        const lead = row.lead;
                         const meta = getStatusMeta(lead.status);
+                        const isClient = lead.status === 'cliente';
                         return (
                           <tr
                             key={lead.id}
                             className="border-t border-border/50 hover:bg-muted/30 cursor-pointer"
                             onClick={() => openEdit(lead)}
                           >
-                            <td className="px-4 py-3 font-medium">{lead.name}</td>
+                            <td className="px-4 py-3 font-medium">
+                              <div className="flex items-center gap-2">
+                                {lead.name}
+                                {isClient && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-green-500/15 text-green-400 border border-green-500/30">
+                                    <CheckCircle2 className="h-3 w-3" /> Ya es cliente
+                                  </span>
+                                )}
+                              </div>
+                            </td>
                             <td className="px-4 py-3 text-muted-foreground">
                               <div className="flex flex-col gap-0.5">
                                 {lead.email && (
