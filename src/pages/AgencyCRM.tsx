@@ -59,35 +59,63 @@ const useContractClients = () => {
   });
 };
 
+type LeadRow = { kind: 'lead'; lead: AgencyCrmLead };
+type ContractRow = { kind: 'contract'; client: ContractClient };
+type Row = LeadRow | ContractRow;
+
 const AgencyCRM = () => {
   const { leads, isLoading, updateLead } = useAgencyCrmLeads();
+  const { data: contractClients = [], isLoading: loadingContracts } = useContractClients();
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AgencyCrmLead | null>(null);
 
+  // Synthetic rows for contract clients that aren't already in agency_crm_leads
+  const syntheticContractRows = useMemo<ContractRow[]>(() => {
+    const leadNames = new Set(leads.map((l) => l.name.trim().toLowerCase()));
+    return contractClients
+      .filter((c) => !leadNames.has(c.name.toLowerCase()))
+      .map((c) => ({ kind: 'contract' as const, client: c }));
+  }, [leads, contractClients]);
+
+  const allRows = useMemo<Row[]>(
+    () => [
+      ...leads.map<LeadRow>((l) => ({ kind: 'lead', lead: l })),
+      ...syntheticContractRows,
+    ],
+    [leads, syntheticContractRows],
+  );
+
   const counts = useMemo(() => {
-    const map: Record<string, number> = { all: leads.length };
+    const map: Record<string, number> = { all: allRows.length };
     CRM_STATUS_OPTIONS.forEach((s) => (map[s.value] = 0));
-    leads.forEach((l) => {
-      map[l.status] = (map[l.status] || 0) + 1;
+    allRows.forEach((r) => {
+      const status = r.kind === 'lead' ? r.lead.status : 'cliente';
+      map[status] = (map[status] || 0) + 1;
     });
     return map;
-  }, [leads]);
+  }, [allRows]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return leads.filter((l) => {
-      if (statusFilter !== 'all' && l.status !== statusFilter) return false;
+    return allRows.filter((r) => {
+      const status = r.kind === 'lead' ? r.lead.status : 'cliente';
+      if (statusFilter !== 'all' && status !== statusFilter) return false;
       if (!q) return true;
-      return (
-        l.name.toLowerCase().includes(q) ||
-        (l.email || '').toLowerCase().includes(q) ||
-        (l.phone || '').toLowerCase().includes(q)
-      );
+      if (r.kind === 'lead') {
+        const l = r.lead;
+        return (
+          l.name.toLowerCase().includes(q) ||
+          (l.email || '').toLowerCase().includes(q) ||
+          (l.phone || '').toLowerCase().includes(q)
+        );
+      }
+      return r.client.name.toLowerCase().includes(q);
     });
-  }, [leads, search, statusFilter]);
+  }, [allRows, search, statusFilter]);
+
 
   const openNew = () => {
     setEditing(null);
