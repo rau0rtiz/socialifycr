@@ -85,7 +85,7 @@ serve(async (req) => {
         from: "Socialify <notificaciones@socialifycr.com>",
         to: RECIPIENTS,
         reply_to: email,
-        subject: `Nuevo contacto web: ${name} — ${subject}`,
+        subject: `Nuevo contacto web: ${name} — ${brand}`,
         html,
       }),
     });
