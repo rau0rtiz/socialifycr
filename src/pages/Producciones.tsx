@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Plus, Folder, Search, Trash2, Send, Check, FileText, Film,
-  Calendar, MapPin, Clock, User as UserIcon, GripVertical,
+  Calendar, MapPin, Clock, User as UserIcon, GripVertical, Settings, ExternalLink, Loader2,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -29,6 +29,7 @@ import {
   useDeleteSheet, useUpsertChild, useDeleteChild,
   type SheetStatus, type ProductionSheet,
 } from '@/hooks/use-production-sheets';
+import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
   draft: 'Borrador',
@@ -62,6 +63,7 @@ export default function Producciones() {
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [configClient, setConfigClient] = useState<{ id: string; name: string } | null>(null);
 
   const { data: sheets = [], isLoading } = useProductionSheets();
   const { data: clients = [] } = useClients();
@@ -136,10 +138,21 @@ export default function Producciones() {
               />
             </div>
             {clientFilter && (
-              <Button variant="outline" onClick={() => setClientFilter(null)}>
-                <ArrowLeft className="h-4 w-4 mr-1.5" />
-                Todas las carpetas
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const c = clients.find(x => x.id === clientFilter);
+                    if (c) setConfigClient(c);
+                  }}
+                >
+                  <Settings className="h-4 w-4 mr-1.5" /> ClickUp
+                </Button>
+                <Button variant="outline" onClick={() => setClientFilter(null)}>
+                  <ArrowLeft className="h-4 w-4 mr-1.5" />
+                  Todas las carpetas
+                </Button>
+              </>
             )}
           </div>
 
@@ -151,22 +164,33 @@ export default function Producciones() {
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
                   return (
-                    <button
+                    <div
                       key={c.id}
-                      onClick={() => setClientFilter(c.id)}
-                      className="group text-left bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent transition-all hover:shadow-md"
+                      className="group relative bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent transition-all hover:shadow-md"
                     >
-                      <div className="flex items-start justify-between">
-                        <Folder className="h-8 w-8 text-noeval-accent" />
-                        <Badge variant="outline" className="border-noeval-line text-noeval-muted">
-                          {count}
-                        </Badge>
-                      </div>
-                      <div className="mt-3 font-medium text-noeval-ink truncate">{c.name}</div>
-                      <div className="text-xs text-noeval-muted mt-1">
-                        {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
-                      </div>
-                    </button>
+                      <button
+                        onClick={() => setClientFilter(c.id)}
+                        className="text-left w-full"
+                      >
+                        <div className="flex items-start justify-between">
+                          <Folder className="h-8 w-8 text-noeval-accent" />
+                          <Badge variant="outline" className="border-noeval-line text-noeval-muted">
+                            {count}
+                          </Badge>
+                        </div>
+                        <div className="mt-3 font-medium text-noeval-ink truncate pr-6">{c.name}</div>
+                        <div className="text-xs text-noeval-muted mt-1">
+                          {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfigClient(c); }}
+                        title="Configurar ClickUp"
+                        className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-noeval-taupe/40"
+                      >
+                        <Settings className="h-3.5 w-3.5 text-noeval-muted" />
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -247,6 +271,15 @@ export default function Producciones() {
           sheetId={editingId}
           clientName={clientMap[sheets.find(s => s.id === editingId)?.client_id || ''] || ''}
           onClose={() => setEditingId(null)}
+        />
+      )}
+
+      {configClient && (
+        <ClickUpConfigDialog
+          clientId={configClient.id}
+          clientName={configClient.name}
+          open
+          onClose={() => setConfigClient(null)}
         />
       )}
     </DashboardLayout>
@@ -339,10 +372,24 @@ function SheetEditor({ sheetId, clientName, onClose }: { sheetId: string; client
     onClose();
   };
 
-  const handleSendClickUp = () => {
-    toast.info('Configura ClickUp primero', {
-      description: 'La integración con ClickUp se habilita después de añadir tu API token.',
-    });
+  const [sending, setSending] = useState(false);
+  const handleSendClickUp = async () => {
+    if (!data?.sheet) return;
+    setSending(true);
+    try {
+      const { data: resp, error } = await supabase.functions.invoke('clickup-create-tasks', {
+        body: { sheet_id: sheetId },
+      });
+      if (error) throw new Error(error.message);
+      if (resp?.error) throw new Error(resp.error);
+      toast.success(`Enviado a ClickUp · ${resp.subtasks_created} subtasks creadas${resp.subtasks_failed ? ` (${resp.subtasks_failed} fallaron)` : ''}`, {
+        action: resp.url ? { label: 'Abrir', onClick: () => window.open(resp.url, '_blank') } : undefined,
+      });
+    } catch (e: any) {
+      toast.error(e.message || 'Error enviando a ClickUp');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -504,13 +551,23 @@ function SheetEditor({ sheetId, clientName, onClose }: { sheetId: string; client
                 <Trash2 className="h-3.5 w-3.5 mr-1" /> Eliminar
               </Button>
               <div className="flex gap-2">
+                {local.clickup_url && (
+                  <Button variant="outline" asChild>
+                    <a href={local.clickup_url} target="_blank" rel="noreferrer">
+                      <ExternalLink className="h-3.5 w-3.5 mr-1" /> Ver en ClickUp
+                    </a>
+                  </Button>
+                )}
                 <Button variant="outline" onClick={onClose}>Cerrar</Button>
                 <Button
                   onClick={handleSendClickUp}
+                  disabled={sending}
                   className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90"
-                  title="Configura ClickUp para habilitar"
                 >
-                  <Send className="h-4 w-4 mr-1.5" /> Enviar a ClickUp
+                  {sending
+                    ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    : <Send className="h-4 w-4 mr-1.5" />}
+                  {local.clickup_task_id ? 'Reenviar a ClickUp' : 'Enviar a ClickUp'}
                 </Button>
               </div>
             </div>
