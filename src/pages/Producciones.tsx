@@ -260,11 +260,88 @@ export default function Producciones() {
             </div>
           )}
 
+          {/* Breadcrumb + folder actions (inside a client) */}
+          {clientFilter && !search && (
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5 text-sm flex-wrap">
+                <button
+                  onClick={() => setFolderPath([])}
+                  className="font-serif text-xl text-noeval-ink hover:text-noeval-accent transition"
+                >
+                  {clientMap[clientFilter]}
+                </button>
+                {folderPath.map((f, i) => (
+                  <span key={f.id} className="flex items-center gap-1.5">
+                    <span className="text-noeval-muted">/</span>
+                    <button
+                      onClick={() => setFolderPath(folderPath.slice(0, i + 1))}
+                      className="font-serif text-xl text-noeval-ink hover:text-noeval-accent transition"
+                    >
+                      {f.name}
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Button size="sm" variant="outline" onClick={handleCreateFolder}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Nueva carpeta
+              </Button>
+            </div>
+          )}
+
+          {/* Sub-folders (inside a client, not searching) */}
+          {clientFilter && !search && subFolders.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {subFolders.map((f) => {
+                const count = folderSheetCount[f.id] || 0;
+                return (
+                  <div
+                    key={f.id}
+                    className="group relative bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent transition-all hover:shadow-md"
+                  >
+                    <button
+                      onClick={() => setFolderPath([...folderPath, { id: f.id, name: f.name }])}
+                      className="text-left w-full"
+                    >
+                      <div className="flex items-start justify-between">
+                        <Folder className="h-7 w-7 text-noeval-accent" />
+                        <Badge variant="outline" className="border-noeval-line text-noeval-muted text-[10px]">
+                          {count}
+                        </Badge>
+                      </div>
+                      <div className="mt-3 font-medium text-noeval-ink truncate pr-12">{f.name}</div>
+                    </button>
+                    <div className="absolute bottom-3 right-3 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRenameFolder(f.id, f.name); }}
+                        title="Renombrar"
+                        className="p-1 rounded hover:bg-noeval-taupe/40"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-noeval-muted" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteFolder(f.id, f.name); }}
+                        title="Eliminar carpeta"
+                        className="p-1 rounded hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Sheets list */}
           <div>
-            <h2 className="font-serif text-2xl text-noeval-ink mb-3">
-              {clientFilter ? clientMap[clientFilter] : search ? 'Resultados' : 'Sheets recientes'}
-            </h2>
+            {!clientFilter && (
+              <h2 className="font-serif text-2xl text-noeval-ink mb-3">
+                {search ? 'Resultados' : 'Sheets recientes'}
+              </h2>
+            )}
+            {clientFilter && !search && (
+              <h3 className="font-serif text-lg text-noeval-muted mb-3">Sheets</h3>
+            )}
             {isLoading ? (
               <div className="text-noeval-muted text-sm">Cargando…</div>
             ) : filteredSheets.length === 0 ? (
@@ -319,6 +396,7 @@ export default function Producciones() {
           </div>
         </div>
       </div>
+
 
       {creating && (
         <CreateSheetDialog
