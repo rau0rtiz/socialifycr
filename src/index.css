@@ -239,3 +239,37 @@
 .noeval-scope .border-noeval-line { border-color: var(--noeval-line); }
 .noeval-scope .border-noeval-accent { border-color: var(--noeval-accent); }
 
+
+/* ===== Producciones: stamp "GRABADO" ===== */
+.noeval-scope .grabado-stamp {
+  position: absolute;
+  top: 14px;
+  right: -28px;
+  transform: rotate(14deg);
+  border: 3px solid var(--noeval-accent);
+  color: var(--noeval-accent);
+  font-family: "Nunito", system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  font-size: 11px;
+  padding: 4px 32px;
+  background: rgba(255,255,255,.65);
+  pointer-events: none;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 1px rgba(255,92,38,.15) inset;
+  opacity: .9;
+}
+.noeval-scope .shot-card { transition: border-color .18s ease, box-shadow .18s ease, background-color .25s ease; }
+.noeval-scope .shot-card:hover { border-color: var(--noeval-accent); box-shadow: 0 8px 24px -16px rgba(33,33,33,.35); }
+.noeval-scope .shot-card.done { background: rgba(229,229,229,.55); }
+.noeval-scope .shot-card.done .shot-card-body { opacity: .55; }
+.noeval-scope .progress-track { background: rgba(229,229,229,.6); border-radius: 999px; overflow: hidden; }
+.noeval-scope .progress-fill { background: linear-gradient(90deg, var(--noeval-accent), #ff8a5c); height: 100%; transition: width .35s ease; }
+
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; inset: 0; padding: 24px; background: white; }
+  .no-print { display: none !important; }
+  .grabado-stamp { opacity: 1; }
+}
