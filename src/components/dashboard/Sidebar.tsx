@@ -23,6 +23,7 @@ import {
   GraduationCap,
   Package,
   UserPlus,
+  Clapperboard,
 } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
