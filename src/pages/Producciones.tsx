@@ -402,6 +402,7 @@ export default function Producciones() {
         <CreateSheetDialog
           clients={clients}
           defaultClientId={clientFilter}
+          defaultFolderId={currentFolderId}
           onClose={() => setCreating(false)}
           onCreated={(id) => { setCreating(false); setEditingId(id); }}
         />
