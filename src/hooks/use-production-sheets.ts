@@ -7,6 +7,7 @@ export type SheetStatus = 'draft' | 'in_production' | 'done' | 'sent_to_clickup'
 export interface ProductionSheet {
   id: string;
   client_id: string;
+  folder_id: string | null;
   title: string;
   shoot_date: string | null;
   location: string | null;
@@ -89,12 +90,13 @@ export const useProductionSheet = (id: string | null) =>
 export const useCreateSheet = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { client_id: string; title?: string }) => {
+    mutationFn: async (input: { client_id: string; title?: string; folder_id?: string | null }) => {
       const { data: user } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('production_sheets')
         .insert({
           client_id: input.client_id,
+          folder_id: input.folder_id ?? null,
           title: input.title || 'Nueva producción',
           created_by: user.user?.id,
         })

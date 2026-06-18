@@ -3983,6 +3983,51 @@ export type Database = {
           },
         ]
       }
+      production_folders: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_folders_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "production_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       production_sheet_shots: {
         Row: {
           created_at: string
@@ -4115,6 +4160,7 @@ export type Database = {
           client_id: string
           created_at: string
           created_by: string | null
+          folder_id: string | null
           id: string
           location: string | null
           notes: string | null
@@ -4133,6 +4179,7 @@ export type Database = {
           client_id: string
           created_at?: string
           created_by?: string | null
+          folder_id?: string | null
           id?: string
           location?: string | null
           notes?: string | null
@@ -4151,6 +4198,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           created_by?: string | null
+          folder_id?: string | null
           id?: string
           location?: string | null
           notes?: string | null
@@ -4167,6 +4215,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_sheets_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "production_folders"
             referencedColumns: ["id"]
           },
         ]

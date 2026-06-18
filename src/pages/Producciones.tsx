@@ -30,6 +30,10 @@ import {
   type SheetStatus, type ProductionSheet,
 } from '@/hooks/use-production-sheets';
 import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
+import {
+  useProductionFolders, useCreateFolder, useDeleteFolder, useRenameFolder, useMoveSheet,
+  type ProductionFolder,
+} from '@/hooks/use-production-folders';
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
   draft: 'Borrador',
@@ -60,6 +64,8 @@ const useClients = () =>
 
 export default function Producciones() {
   const [clientFilter, setClientFilter] = useState<string | null>(null);
+  const [folderPath, setFolderPath] = useState<{ id: string; name: string }[]>([]);
+  const currentFolderId = folderPath.length ? folderPath[folderPath.length - 1].id : null;
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -67,32 +73,89 @@ export default function Producciones() {
 
   const { data: sheets = [], isLoading } = useProductionSheets();
   const { data: clients = [] } = useClients();
+  const { data: folders = [] } = useProductionFolders(clientFilter);
+  const createFolder = useCreateFolder();
+  const deleteFolder = useDeleteFolder();
+  const renameFolder = useRenameFolder();
 
   const clientMap = useMemo(
     () => Object.fromEntries(clients.map(c => [c.id, c.name])),
     [clients],
   );
 
-  // sheet counts per client
   const sheetsByClient = useMemo(() => {
     const map: Record<string, ProductionSheet[]> = {};
-    for (const s of sheets) {
-      (map[s.client_id] ||= []).push(s);
-    }
+    for (const s of sheets) (map[s.client_id] ||= []).push(s);
     return map;
   }, [sheets]);
+
+  // sub-folders at current folder level
+  const subFolders = useMemo(
+    () => folders.filter(f => (f.parent_id || null) === currentFolderId),
+    [folders, currentFolderId],
+  );
+
+  // count sheets per folder (recursive)
+  const folderSheetCount = useMemo(() => {
+    const childrenMap: Record<string, string[]> = {};
+    for (const f of folders) (childrenMap[f.parent_id || 'root'] ||= []).push(f.id);
+    const count = (folderId: string): number => {
+      const direct = sheets.filter(s => s.folder_id === folderId).length;
+      const children = childrenMap[folderId] || [];
+      return direct + children.reduce((acc, id) => acc + count(id), 0);
+    };
+    const result: Record<string, number> = {};
+    for (const f of folders) result[f.id] = count(f.id);
+    return result;
+  }, [folders, sheets]);
 
   const filteredSheets = useMemo(() => {
     const q = search.toLowerCase();
     return sheets
       .filter(s => !clientFilter || s.client_id === clientFilter)
+      .filter(s => {
+        if (!clientFilter) return true;
+        if (search) return true; // when searching, show across folders inside client
+        return (s.folder_id || null) === currentFolderId;
+      })
       .filter(s =>
         !q ||
         s.title.toLowerCase().includes(q) ||
         (s.location || '').toLowerCase().includes(q) ||
         (s.producer_name || '').toLowerCase().includes(q),
       );
-  }, [sheets, clientFilter, search]);
+  }, [sheets, clientFilter, currentFolderId, search]);
+
+  // reset folder path when leaving client
+  useEffect(() => { setFolderPath([]); }, [clientFilter]);
+
+  const handleCreateFolder = async () => {
+    if (!clientFilter) return;
+    const name = window.prompt('Nombre de la nueva carpeta:');
+    if (!name?.trim()) return;
+    await createFolder.mutateAsync({
+      client_id: clientFilter,
+      parent_id: currentFolderId,
+      name: name.trim(),
+    });
+  };
+
+  const handleDeleteFolder = async (folderId: string, name: string) => {
+    if (!clientFilter) return;
+    const count = folderSheetCount[folderId] || 0;
+    if (!confirm(
+      count > 0
+        ? `Eliminar "${name}" y sus ${count} sheet(s) quedarán sin carpeta. ¿Continuar?`
+        : `¿Eliminar la carpeta "${name}"?`
+    )) return;
+    await deleteFolder.mutateAsync({ id: folderId, client_id: clientFilter });
+  };
+
+  const handleRenameFolder = async (folderId: string, current: string) => {
+    const name = window.prompt('Nuevo nombre:', current);
+    if (!name?.trim() || name.trim() === current) return;
+    await renameFolder.mutateAsync({ id: folderId, name: name.trim() });
+  };
 
   return (
     <DashboardLayout>
@@ -197,11 +260,88 @@ export default function Producciones() {
             </div>
           )}
 
+          {/* Breadcrumb + folder actions (inside a client) */}
+          {clientFilter && !search && (
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5 text-sm flex-wrap">
+                <button
+                  onClick={() => setFolderPath([])}
+                  className="font-serif text-xl text-noeval-ink hover:text-noeval-accent transition"
+                >
+                  {clientMap[clientFilter]}
+                </button>
+                {folderPath.map((f, i) => (
+                  <span key={f.id} className="flex items-center gap-1.5">
+                    <span className="text-noeval-muted">/</span>
+                    <button
+                      onClick={() => setFolderPath(folderPath.slice(0, i + 1))}
+                      className="font-serif text-xl text-noeval-ink hover:text-noeval-accent transition"
+                    >
+                      {f.name}
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Button size="sm" variant="outline" onClick={handleCreateFolder}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Nueva carpeta
+              </Button>
+            </div>
+          )}
+
+          {/* Sub-folders (inside a client, not searching) */}
+          {clientFilter && !search && subFolders.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {subFolders.map((f) => {
+                const count = folderSheetCount[f.id] || 0;
+                return (
+                  <div
+                    key={f.id}
+                    className="group relative bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent transition-all hover:shadow-md"
+                  >
+                    <button
+                      onClick={() => setFolderPath([...folderPath, { id: f.id, name: f.name }])}
+                      className="text-left w-full"
+                    >
+                      <div className="flex items-start justify-between">
+                        <Folder className="h-7 w-7 text-noeval-accent" />
+                        <Badge variant="outline" className="border-noeval-line text-noeval-muted text-[10px]">
+                          {count}
+                        </Badge>
+                      </div>
+                      <div className="mt-3 font-medium text-noeval-ink truncate pr-12">{f.name}</div>
+                    </button>
+                    <div className="absolute bottom-3 right-3 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRenameFolder(f.id, f.name); }}
+                        title="Renombrar"
+                        className="p-1 rounded hover:bg-noeval-taupe/40"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-noeval-muted" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteFolder(f.id, f.name); }}
+                        title="Eliminar carpeta"
+                        className="p-1 rounded hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Sheets list */}
           <div>
-            <h2 className="font-serif text-2xl text-noeval-ink mb-3">
-              {clientFilter ? clientMap[clientFilter] : search ? 'Resultados' : 'Sheets recientes'}
-            </h2>
+            {!clientFilter && (
+              <h2 className="font-serif text-2xl text-noeval-ink mb-3">
+                {search ? 'Resultados' : 'Sheets recientes'}
+              </h2>
+            )}
+            {clientFilter && !search && (
+              <h3 className="font-serif text-lg text-noeval-muted mb-3">Sheets</h3>
+            )}
             {isLoading ? (
               <div className="text-noeval-muted text-sm">Cargando…</div>
             ) : filteredSheets.length === 0 ? (
@@ -257,10 +397,12 @@ export default function Producciones() {
         </div>
       </div>
 
+
       {creating && (
         <CreateSheetDialog
           clients={clients}
           defaultClientId={clientFilter}
+          defaultFolderId={currentFolderId}
           onClose={() => setCreating(false)}
           onCreated={(id) => { setCreating(false); setEditingId(id); }}
         />
@@ -288,10 +430,11 @@ export default function Producciones() {
 
 // ---------- Create dialog ----------
 function CreateSheetDialog({
-  clients, defaultClientId, onClose, onCreated,
+  clients, defaultClientId, defaultFolderId, onClose, onCreated,
 }: {
   clients: { id: string; name: string }[];
   defaultClientId: string | null;
+  defaultFolderId: string | null;
   onClose: () => void;
   onCreated: (id: string) => void;
 }) {
@@ -301,7 +444,11 @@ function CreateSheetDialog({
 
   const handleCreate = async () => {
     if (!clientId) return toast.error('Selecciona un cliente');
-    const sheet = await create.mutateAsync({ client_id: clientId, title: title.trim() || undefined });
+    const sheet = await create.mutateAsync({
+      client_id: clientId,
+      title: title.trim() || undefined,
+      folder_id: clientId === defaultClientId ? defaultFolderId : null,
+    });
     onCreated(sheet.id);
   };
 
