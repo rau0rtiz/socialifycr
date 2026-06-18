@@ -7,6 +7,7 @@ export type SheetStatus = 'draft' | 'in_production' | 'done' | 'sent_to_clickup'
 export interface ProductionSheet {
   id: string;
   client_id: string;
+  folder_id: string | null;
   title: string;
   shoot_date: string | null;
   location: string | null;
