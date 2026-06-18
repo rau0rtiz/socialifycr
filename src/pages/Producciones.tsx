@@ -63,6 +63,7 @@ export default function Producciones() {
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [configClient, setConfigClient] = useState<{ id: string; name: string } | null>(null);
 
   const { data: sheets = [], isLoading } = useProductionSheets();
   const { data: clients = [] } = useClients();
