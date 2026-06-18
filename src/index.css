@@ -203,3 +203,37 @@
   caret-color: #212121 !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* ===== NOEVAL Production Sheets scope ===== */
+.noeval-scope {
+  --noeval-paper: #E2DACE;
+  --noeval-ink: #2B2620;
+  --noeval-surface: #FBF7F1;
+  --noeval-accent: #8C5A33;
+  --noeval-taupe: #AB9C8B;
+  --noeval-cream: #F4EEE4;
+  --noeval-muted: #7C7163;
+  --noeval-line: rgba(43,38,32,.14);
+  background-color: var(--noeval-paper);
+  background-image:
+    radial-gradient(circle at 18% -5%, rgba(255,255,255,.45), transparent 42%),
+    radial-gradient(circle at 100% 100%, rgba(43,38,32,.05), transparent 52%);
+  font-family: "Jost", system-ui, sans-serif;
+  color: var(--noeval-ink);
+}
+.noeval-scope .font-serif { font-family: "Cormorant Garamond", serif; letter-spacing: .02em; }
+.noeval-scope .font-script { font-family: "Pinyon Script", cursive; }
+.noeval-scope .noeval-slate { background: var(--noeval-ink); color: var(--noeval-cream); box-shadow: 0 1px 0 rgba(43,38,32,.04), 0 14px 30px -20px rgba(43,38,32,.55); }
+.noeval-scope .noeval-stripe { background: repeating-linear-gradient(115deg, var(--noeval-cream) 0 22px, var(--noeval-ink) 22px 44px); opacity: .85; }
+.noeval-scope .text-noeval-ink { color: var(--noeval-ink); }
+.noeval-scope .text-noeval-cream { color: var(--noeval-cream); }
+.noeval-scope .text-noeval-taupe { color: var(--noeval-taupe); }
+.noeval-scope .text-noeval-accent { color: var(--noeval-accent); }
+.noeval-scope .text-noeval-muted { color: var(--noeval-muted); }
+.noeval-scope .bg-noeval-surface { background-color: var(--noeval-surface); }
+.noeval-scope .bg-noeval-ink { background-color: var(--noeval-ink); }
+.noeval-scope .bg-noeval-cream { background-color: var(--noeval-cream); }
+.noeval-scope .bg-noeval-accent { background-color: var(--noeval-accent); }
+.noeval-scope .bg-noeval-taupe\/30 { background-color: rgba(171,156,139,.3); }
+.noeval-scope .border-noeval-line { border-color: var(--noeval-line); }
+.noeval-scope .border-noeval-accent { border-color: var(--noeval-accent); }
