@@ -273,6 +273,15 @@ export default function Producciones() {
           onClose={() => setEditingId(null)}
         />
       )}
+
+      {configClient && (
+        <ClickUpConfigDialog
+          clientId={configClient.id}
+          clientName={configClient.name}
+          open
+          onClose={() => setConfigClient(null)}
+        />
+      )}
     </DashboardLayout>
   );
 }
