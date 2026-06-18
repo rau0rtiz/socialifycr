@@ -430,10 +430,11 @@ export default function Producciones() {
 
 // ---------- Create dialog ----------
 function CreateSheetDialog({
-  clients, defaultClientId, onClose, onCreated,
+  clients, defaultClientId, defaultFolderId, onClose, onCreated,
 }: {
   clients: { id: string; name: string }[];
   defaultClientId: string | null;
+  defaultFolderId: string | null;
   onClose: () => void;
   onCreated: (id: string) => void;
 }) {
@@ -443,7 +444,11 @@ function CreateSheetDialog({
 
   const handleCreate = async () => {
     if (!clientId) return toast.error('Selecciona un cliente');
-    const sheet = await create.mutateAsync({ client_id: clientId, title: title.trim() || undefined });
+    const sheet = await create.mutateAsync({
+      client_id: clientId,
+      title: title.trim() || undefined,
+      folder_id: clientId === defaultClientId ? defaultFolderId : null,
+    });
     onCreated(sheet.id);
   };
 
