@@ -551,13 +551,23 @@ function SheetEditor({ sheetId, clientName, onClose }: { sheetId: string; client
                 <Trash2 className="h-3.5 w-3.5 mr-1" /> Eliminar
               </Button>
               <div className="flex gap-2">
+                {local.clickup_url && (
+                  <Button variant="outline" asChild>
+                    <a href={local.clickup_url} target="_blank" rel="noreferrer">
+                      <ExternalLink className="h-3.5 w-3.5 mr-1" /> Ver en ClickUp
+                    </a>
+                  </Button>
+                )}
                 <Button variant="outline" onClick={onClose}>Cerrar</Button>
                 <Button
                   onClick={handleSendClickUp}
+                  disabled={sending}
                   className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90"
-                  title="Configura ClickUp para habilitar"
                 >
-                  <Send className="h-4 w-4 mr-1.5" /> Enviar a ClickUp
+                  {sending
+                    ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    : <Send className="h-4 w-4 mr-1.5" />}
+                  {local.clickup_task_id ? 'Reenviar a ClickUp' : 'Enviar a ClickUp'}
                 </Button>
               </div>
             </div>
