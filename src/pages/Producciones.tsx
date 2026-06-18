@@ -223,7 +223,12 @@ export default function Producciones() {
           {/* Folders (clients) */}
           {!clientFilter && !search && (
             <div>
-              <h2 className="font-serif text-2xl text-noeval-ink mb-3">Carpetas de clientes</h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-serif text-2xl text-noeval-ink">Carpetas de clientes</h2>
+                <Button size="sm" variant="outline" onClick={() => setCreatingClient(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo cliente
+                </Button>
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
@@ -257,11 +262,17 @@ export default function Producciones() {
                     </div>
                   );
                 })}
+                <button
+                  onClick={() => setCreatingClient(true)}
+                  className="bg-noeval-surface/50 border-2 border-dashed border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:bg-noeval-surface transition-all flex flex-col items-center justify-center min-h-[120px] text-noeval-muted hover:text-noeval-accent"
+                >
+                  <Plus className="h-8 w-8 mb-1.5" />
+                  <span className="text-sm font-medium">Nuevo cliente</span>
+                </button>
               </div>
             </div>
           )}
 
-          {/* Breadcrumb + folder actions (inside a client) */}
           {clientFilter && !search && (
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-1.5 text-sm flex-wrap">
