@@ -69,10 +69,11 @@ export default function Producciones() {
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [creatingClient, setCreatingClient] = useState(false);
   const [configClient, setConfigClient] = useState<{ id: string; name: string } | null>(null);
 
   const { data: sheets = [], isLoading } = useProductionSheets();
-  const { data: clients = [] } = useClients();
+  const { data: clients = [], refetch: refetchClients } = useClients();
   const { data: folders = [] } = useProductionFolders(clientFilter);
   const createFolder = useCreateFolder();
   const deleteFolder = useDeleteFolder();
@@ -222,7 +223,12 @@ export default function Producciones() {
           {/* Folders (clients) */}
           {!clientFilter && !search && (
             <div>
-              <h2 className="font-serif text-2xl text-noeval-ink mb-3">Carpetas de clientes</h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-serif text-2xl text-noeval-ink">Carpetas de clientes</h2>
+                <Button size="sm" variant="outline" onClick={() => setCreatingClient(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo cliente
+                </Button>
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
@@ -256,11 +262,17 @@ export default function Producciones() {
                     </div>
                   );
                 })}
+                <button
+                  onClick={() => setCreatingClient(true)}
+                  className="bg-noeval-surface/50 border-2 border-dashed border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:bg-noeval-surface transition-all flex flex-col items-center justify-center min-h-[120px] text-noeval-muted hover:text-noeval-accent"
+                >
+                  <Plus className="h-8 w-8 mb-1.5" />
+                  <span className="text-sm font-medium">Nuevo cliente</span>
+                </button>
               </div>
             </div>
           )}
 
-          {/* Breadcrumb + folder actions (inside a client) */}
           {clientFilter && !search && (
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-1.5 text-sm flex-wrap">
@@ -424,11 +436,97 @@ export default function Producciones() {
           onClose={() => setConfigClient(null)}
         />
       )}
+
+      {creatingClient && (
+        <CreateClientDialog
+          onClose={() => setCreatingClient(false)}
+          onCreated={async (id) => {
+            setCreatingClient(false);
+            await refetchClients();
+            setClientFilter(id);
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 }
 
-// ---------- Create dialog ----------
+// ---------- Create client dialog ----------
+function CreateClientDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
+  const [name, setName] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleCreate = async () => {
+    if (!name.trim()) return toast.error('Nombre requerido');
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('clients')
+      .insert({
+        name: name.trim(),
+        industry: industry.trim() || null,
+        primary_color: '24 100% 57%',
+        accent_color: '24 100% 57%',
+      })
+      .select('id')
+      .single();
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success('Cliente creado');
+    onCreated(data.id);
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="noeval-scope max-w-md p-0 overflow-hidden border-noeval-line">
+        <div className="noeval-slate relative p-6">
+          <div className="noeval-stripe absolute inset-x-0 top-0 h-2" />
+          <div className="text-noeval-taupe text-[10px] tracking-[0.42em] uppercase font-medium mt-3">
+            Nuevo cliente
+          </div>
+          <h2 className="font-serif text-3xl text-noeval-cream uppercase tracking-[0.06em] mt-1">
+            Carpeta
+            <span className="font-script normal-case text-noeval-accent text-[0.55em] ml-2">nueva</span>
+          </h2>
+        </div>
+        <div className="p-6 space-y-4 bg-noeval-cream">
+          <div>
+            <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Nombre</Label>
+            <Input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ej: Petshop2go"
+              className="mt-1 bg-white border-noeval-line text-noeval-ink"
+            />
+          </div>
+          <div>
+            <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Industria</Label>
+            <Input
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+              placeholder="Opcional"
+              className="mt-1 bg-white border-noeval-line text-noeval-ink"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={loading}
+              className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90"
+            >
+              {loading && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+              Crear cliente
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------- Create sheet dialog ----------
 function CreateSheetDialog({
   clients, defaultClientId, defaultFolderId, onClose, onCreated,
 }: {
@@ -440,7 +538,10 @@ function CreateSheetDialog({
 }) {
   const [title, setTitle] = useState('');
   const [clientId, setClientId] = useState(defaultClientId || '');
+  const [shootDate, setShootDate] = useState('');
+  const [location, setLocation] = useState('');
   const create = useCreateSheet();
+  const update = useUpdateSheet();
 
   const handleCreate = async () => {
     if (!clientId) return toast.error('Selecciona un cliente');
@@ -449,38 +550,96 @@ function CreateSheetDialog({
       title: title.trim() || undefined,
       folder_id: clientId === defaultClientId ? defaultFolderId : null,
     });
+    if (shootDate || location) {
+      await update.mutateAsync({
+        id: sheet.id,
+        shoot_date: shootDate || null,
+        location: location || null,
+      } as any);
+    }
     onCreated(sheet.id);
   };
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Nuevo production sheet</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
+      <DialogContent className="noeval-scope max-w-lg p-0 overflow-hidden border-noeval-line">
+        {/* Claqueta header */}
+        <div className="noeval-slate relative p-6">
+          <div className="noeval-stripe absolute inset-x-0 top-0 h-2" />
+          <div className="flex items-center gap-2 text-noeval-taupe text-[10px] tracking-[0.42em] uppercase font-medium mt-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent animate-pulse" />
+            Scene · Take · Roll
+          </div>
+          <h2 className="font-serif text-4xl text-noeval-cream uppercase tracking-[0.06em] mt-2 leading-none">
+            Nueva producción
+            <span className="block font-script normal-case text-noeval-accent text-[0.4em] mt-1 tracking-normal">
+              claqueta inicial
+            </span>
+          </h2>
+        </div>
+
+        {/* Body */}
+        <div className="bg-noeval-cream p-6 space-y-4">
           <div>
-            <Label>Cliente</Label>
+            <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Cliente</Label>
             <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger><SelectValue placeholder="Selecciona cliente" /></SelectTrigger>
+              <SelectTrigger className="mt-1 bg-white border-noeval-line text-noeval-ink">
+                <SelectValue placeholder="Selecciona cliente" />
+              </SelectTrigger>
               <SelectContent>
                 {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
+
           <div>
-            <Label>Título</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Campaña Diciembre" />
+            <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Título / Proyecto</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ej: Campaña Diciembre — Día 1"
+              className="mt-1 bg-white border-noeval-line text-noeval-ink font-serif text-lg"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Fecha</Label>
+              <Input
+                type="date"
+                value={shootDate}
+                onChange={(e) => setShootDate(e.target.value)}
+                className="mt-1 bg-white border-noeval-line text-noeval-ink"
+              />
+            </div>
+            <div>
+              <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Locación</Label>
+              <Input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Ej: Estudio SJO"
+                className="mt-1 bg-white border-noeval-line text-noeval-ink"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-noeval-line">
+            <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={create.isPending}
+              className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90"
+            >
+              {create.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+              Marcar claqueta
+            </Button>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleCreate} disabled={create.isPending}>Crear</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
 
 // ---------- Editor ----------
 function SheetEditor({ sheetId, clientName, onClose }: { sheetId: string; clientName: string; onClose: () => void }) {
