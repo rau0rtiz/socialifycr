@@ -164,22 +164,33 @@ export default function Producciones() {
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
                   return (
-                    <button
+                    <div
                       key={c.id}
-                      onClick={() => setClientFilter(c.id)}
-                      className="group text-left bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent transition-all hover:shadow-md"
+                      className="group relative bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent transition-all hover:shadow-md"
                     >
-                      <div className="flex items-start justify-between">
-                        <Folder className="h-8 w-8 text-noeval-accent" />
-                        <Badge variant="outline" className="border-noeval-line text-noeval-muted">
-                          {count}
-                        </Badge>
-                      </div>
-                      <div className="mt-3 font-medium text-noeval-ink truncate">{c.name}</div>
-                      <div className="text-xs text-noeval-muted mt-1">
-                        {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
-                      </div>
-                    </button>
+                      <button
+                        onClick={() => setClientFilter(c.id)}
+                        className="text-left w-full"
+                      >
+                        <div className="flex items-start justify-between">
+                          <Folder className="h-8 w-8 text-noeval-accent" />
+                          <Badge variant="outline" className="border-noeval-line text-noeval-muted">
+                            {count}
+                          </Badge>
+                        </div>
+                        <div className="mt-3 font-medium text-noeval-ink truncate pr-6">{c.name}</div>
+                        <div className="text-xs text-noeval-muted mt-1">
+                          {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfigClient(c); }}
+                        title="Configurar ClickUp"
+                        className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-noeval-taupe/40"
+                      >
+                        <Settings className="h-3.5 w-3.5 text-noeval-muted" />
+                      </button>
+                    </div>
                   );
                 })}
               </div>
