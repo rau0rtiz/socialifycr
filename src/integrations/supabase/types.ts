@@ -1175,6 +1175,50 @@ export type Database = {
           },
         ]
       }
+      client_clickup_config: {
+        Row: {
+          client_id: string
+          default_assignee_emails: string[]
+          list_id: string | null
+          list_name: string | null
+          space_id: string | null
+          space_name: string | null
+          updated_at: string
+          workspace_id: string | null
+          workspace_name: string | null
+        }
+        Insert: {
+          client_id: string
+          default_assignee_emails?: string[]
+          list_id?: string | null
+          list_name?: string | null
+          space_id?: string | null
+          space_name?: string | null
+          updated_at?: string
+          workspace_id?: string | null
+          workspace_name?: string | null
+        }
+        Update: {
+          client_id?: string
+          default_assignee_emails?: string[]
+          list_id?: string | null
+          list_name?: string | null
+          space_id?: string | null
+          space_name?: string | null
+          updated_at?: string
+          workspace_id?: string | null
+          workspace_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_clickup_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_closers: {
         Row: {
           client_id: string
@@ -3939,6 +3983,194 @@ export type Database = {
           },
         ]
       }
+      production_sheet_shots: {
+        Row: {
+          created_at: string
+          description: string
+          done: boolean
+          duration_estimate: string | null
+          id: string
+          notes: string | null
+          scene_label: string | null
+          sheet_id: string
+          shot_number: string | null
+          shot_type: string | null
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          done?: boolean
+          duration_estimate?: string | null
+          id?: string
+          notes?: string | null
+          scene_label?: string | null
+          sheet_id: string
+          shot_number?: string | null
+          shot_type?: string | null
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          done?: boolean
+          duration_estimate?: string | null
+          id?: string
+          notes?: string | null
+          scene_label?: string | null
+          sheet_id?: string
+          shot_number?: string | null
+          shot_type?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_sheet_shots_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "production_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_sheet_team: {
+        Row: {
+          clickup_user_email: string | null
+          created_at: string
+          id: string
+          name: string
+          role: string
+          sheet_id: string
+          sort_order: number
+        }
+        Insert: {
+          clickup_user_email?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string
+          sheet_id: string
+          sort_order?: number
+        }
+        Update: {
+          clickup_user_email?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string
+          sheet_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_sheet_team_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "production_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_sheet_wardrobe: {
+        Row: {
+          created_at: string
+          done: boolean
+          id: string
+          item: string
+          sheet_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          done?: boolean
+          id?: string
+          item?: string
+          sheet_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          done?: boolean
+          id?: string
+          item?: string
+          sheet_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_sheet_wardrobe_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "production_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_sheets: {
+        Row: {
+          call_time: string | null
+          clickup_list_id: string | null
+          clickup_task_id: string | null
+          clickup_url: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          producer_name: string | null
+          sent_to_clickup_at: string | null
+          shoot_date: string | null
+          status: Database["public"]["Enums"]["production_sheet_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          call_time?: string | null
+          clickup_list_id?: string | null
+          clickup_task_id?: string | null
+          clickup_url?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          producer_name?: string | null
+          sent_to_clickup_at?: string | null
+          shoot_date?: string | null
+          status?: Database["public"]["Enums"]["production_sheet_status"]
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          call_time?: string | null
+          clickup_list_id?: string | null
+          clickup_task_id?: string | null
+          clickup_url?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          producer_name?: string | null
+          sent_to_clickup_at?: string | null
+          shoot_date?: string | null
+          status?: Database["public"]["Enums"]["production_sheet_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_sheets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -4887,6 +5119,11 @@ export type Database = {
         | "twitter"
         | "google"
         | "youtube"
+      production_sheet_status:
+        | "draft"
+        | "in_production"
+        | "done"
+        | "sent_to_clickup"
       subscription_status:
         | "active"
         | "past_due"
@@ -5062,6 +5299,12 @@ export const Constants = {
         "twitter",
         "google",
         "youtube",
+      ],
+      production_sheet_status: [
+        "draft",
+        "in_production",
+        "done",
+        "sent_to_clickup",
       ],
       subscription_status: [
         "active",

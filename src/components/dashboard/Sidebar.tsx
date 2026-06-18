@@ -23,6 +23,7 @@ import {
   GraduationCap,
   Package,
   UserPlus,
+  Clapperboard,
 } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -53,6 +54,7 @@ const managementMenuItems = [
   
   { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },
   { title: 'CRM Agencia', url: '/agencia/crm', icon: UserPlus },
+  { title: 'Producciones', url: '/agencia/producciones', icon: Clapperboard },
   { title: 'Historial', url: '/historial', icon: History },
   { title: 'Archivos', url: '/archivos', icon: FolderOpen },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
