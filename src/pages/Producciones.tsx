@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Plus, Folder, Search, Trash2, Send, Check, FileText, Film,
-  Calendar, MapPin, Clock, User as UserIcon, GripVertical,
+  Calendar, MapPin, Clock, User as UserIcon, GripVertical, Settings, ExternalLink, Loader2,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -29,6 +29,7 @@ import {
   useDeleteSheet, useUpsertChild, useDeleteChild,
   type SheetStatus, type ProductionSheet,
 } from '@/hooks/use-production-sheets';
+import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
   draft: 'Borrador',
