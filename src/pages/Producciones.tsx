@@ -60,6 +60,8 @@ const useClients = () =>
 
 export default function Producciones() {
   const [clientFilter, setClientFilter] = useState<string | null>(null);
+  const [folderPath, setFolderPath] = useState<{ id: string; name: string }[]>([]);
+  const currentFolderId = folderPath.length ? folderPath[folderPath.length - 1].id : null;
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -67,32 +69,89 @@ export default function Producciones() {
 
   const { data: sheets = [], isLoading } = useProductionSheets();
   const { data: clients = [] } = useClients();
+  const { data: folders = [] } = useProductionFolders(clientFilter);
+  const createFolder = useCreateFolder();
+  const deleteFolder = useDeleteFolder();
+  const renameFolder = useRenameFolder();
 
   const clientMap = useMemo(
     () => Object.fromEntries(clients.map(c => [c.id, c.name])),
     [clients],
   );
 
-  // sheet counts per client
   const sheetsByClient = useMemo(() => {
     const map: Record<string, ProductionSheet[]> = {};
-    for (const s of sheets) {
-      (map[s.client_id] ||= []).push(s);
-    }
+    for (const s of sheets) (map[s.client_id] ||= []).push(s);
     return map;
   }, [sheets]);
+
+  // sub-folders at current folder level
+  const subFolders = useMemo(
+    () => folders.filter(f => (f.parent_id || null) === currentFolderId),
+    [folders, currentFolderId],
+  );
+
+  // count sheets per folder (recursive)
+  const folderSheetCount = useMemo(() => {
+    const childrenMap: Record<string, string[]> = {};
+    for (const f of folders) (childrenMap[f.parent_id || 'root'] ||= []).push(f.id);
+    const count = (folderId: string): number => {
+      const direct = sheets.filter(s => s.folder_id === folderId).length;
+      const children = childrenMap[folderId] || [];
+      return direct + children.reduce((acc, id) => acc + count(id), 0);
+    };
+    const result: Record<string, number> = {};
+    for (const f of folders) result[f.id] = count(f.id);
+    return result;
+  }, [folders, sheets]);
 
   const filteredSheets = useMemo(() => {
     const q = search.toLowerCase();
     return sheets
       .filter(s => !clientFilter || s.client_id === clientFilter)
+      .filter(s => {
+        if (!clientFilter) return true;
+        if (search) return true; // when searching, show across folders inside client
+        return (s.folder_id || null) === currentFolderId;
+      })
       .filter(s =>
         !q ||
         s.title.toLowerCase().includes(q) ||
         (s.location || '').toLowerCase().includes(q) ||
         (s.producer_name || '').toLowerCase().includes(q),
       );
-  }, [sheets, clientFilter, search]);
+  }, [sheets, clientFilter, currentFolderId, search]);
+
+  // reset folder path when leaving client
+  useEffect(() => { setFolderPath([]); }, [clientFilter]);
+
+  const handleCreateFolder = async () => {
+    if (!clientFilter) return;
+    const name = window.prompt('Nombre de la nueva carpeta:');
+    if (!name?.trim()) return;
+    await createFolder.mutateAsync({
+      client_id: clientFilter,
+      parent_id: currentFolderId,
+      name: name.trim(),
+    });
+  };
+
+  const handleDeleteFolder = async (folderId: string, name: string) => {
+    if (!clientFilter) return;
+    const count = folderSheetCount[folderId] || 0;
+    if (!confirm(
+      count > 0
+        ? `Eliminar "${name}" y sus ${count} sheet(s) quedarán sin carpeta. ¿Continuar?`
+        : `¿Eliminar la carpeta "${name}"?`
+    )) return;
+    await deleteFolder.mutateAsync({ id: folderId, client_id: clientFilter });
+  };
+
+  const handleRenameFolder = async (folderId: string, current: string) => {
+    const name = window.prompt('Nuevo nombre:', current);
+    if (!name?.trim() || name.trim() === current) return;
+    await renameFolder.mutateAsync({ id: folderId, name: name.trim() });
+  };
 
   return (
     <DashboardLayout>
