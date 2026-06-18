@@ -372,10 +372,24 @@ function SheetEditor({ sheetId, clientName, onClose }: { sheetId: string; client
     onClose();
   };
 
-  const handleSendClickUp = () => {
-    toast.info('Configura ClickUp primero', {
-      description: 'La integración con ClickUp se habilita después de añadir tu API token.',
-    });
+  const [sending, setSending] = useState(false);
+  const handleSendClickUp = async () => {
+    if (!data?.sheet) return;
+    setSending(true);
+    try {
+      const { data: resp, error } = await supabase.functions.invoke('clickup-create-tasks', {
+        body: { sheet_id: sheetId },
+      });
+      if (error) throw new Error(error.message);
+      if (resp?.error) throw new Error(resp.error);
+      toast.success(`Enviado a ClickUp · ${resp.subtasks_created} subtasks creadas${resp.subtasks_failed ? ` (${resp.subtasks_failed} fallaron)` : ''}`, {
+        action: resp.url ? { label: 'Abrir', onClick: () => window.open(resp.url, '_blank') } : undefined,
+      });
+    } catch (e: any) {
+      toast.error(e.message || 'Error enviando a ClickUp');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
