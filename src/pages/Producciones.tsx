@@ -30,6 +30,10 @@ import {
   type SheetStatus, type ProductionSheet,
 } from '@/hooks/use-production-sheets';
 import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
+import {
+  useProductionFolders, useCreateFolder, useDeleteFolder, useRenameFolder, useMoveSheet,
+  type ProductionFolder,
+} from '@/hooks/use-production-folders';
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
   draft: 'Borrador',
