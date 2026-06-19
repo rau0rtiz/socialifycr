@@ -740,14 +740,6 @@ function PieceCard({
     <div className={`relative bg-noeval-surface border-2 rounded-xl p-3 sm:p-5 transition ${
       shot.done ? 'border-noeval-accent/40 bg-noeval-accent/5' : 'border-noeval-line hover:border-noeval-ink/30'
     }`}>
-      {shot.done && (
-        <div className="grabado-stamp hidden sm:block">
-          <span className="grabado-stamp-dot">
-            <span className="grabado-stamp-ping" />
-          </span>
-          Grabado
-        </div>
-      )}
 
       {/* Header */}
       <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
