@@ -52,6 +52,7 @@ const useClients = () =>
       const { data, error } = await supabase
         .from('clients')
         .select('id, name, logo_url')
+        .eq('producciones_hidden', false)
         .order('name');
       if (error) throw error;
       return data as { id: string; name: string; logo_url: string | null }[];
