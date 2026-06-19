@@ -29,6 +29,7 @@ import {
 import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
 import {
   useProductionFolders, useCreateFolder, useDeleteFolder, useRenameFolder,
+  useMoveSheet, useMoveFolder,
 } from '@/hooks/use-production-folders';
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
@@ -75,6 +76,39 @@ export default function Producciones() {
   const createFolder = useCreateFolder();
   const deleteFolder = useDeleteFolder();
   const renameFolder = useRenameFolder();
+  const moveSheet = useMoveSheet();
+  const moveFolder = useMoveFolder();
+
+  // Drag state: { kind: 'sheet'|'folder', id }
+  const [dragging, setDragging] = useState<{ kind: 'sheet' | 'folder'; id: string } | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null); // folder id or 'root'
+
+  const isDescendant = (folderId: string, maybeAncestorId: string): boolean => {
+    let cur = folders.find(f => f.id === folderId);
+    while (cur?.parent_id) {
+      if (cur.parent_id === maybeAncestorId) return true;
+      cur = folders.find(f => f.id === cur!.parent_id);
+    }
+    return false;
+  };
+
+  const handleDropOnFolder = async (targetFolderId: string | null) => {
+    if (!dragging || !clientFilter) return;
+    if (dragging.kind === 'sheet') {
+      await moveSheet.mutateAsync({ id: dragging.id, folder_id: targetFolderId });
+      toast.success('Sheet movido');
+    } else {
+      if (dragging.id === targetFolderId) return;
+      if (targetFolderId && isDescendant(targetFolderId, dragging.id)) {
+        toast.error('No se puede mover una carpeta dentro de sí misma');
+        return;
+      }
+      await moveFolder.mutateAsync({ id: dragging.id, parent_id: targetFolderId, client_id: clientFilter });
+      toast.success('Carpeta movida');
+    }
+    setDragging(null);
+    setDropTarget(null);
+  };
 
   const clientMap = useMemo(
     () => Object.fromEntries(clients.map(c => [c.id, c.name])),
@@ -266,7 +300,10 @@ export default function Producciones() {
               <div className="flex items-center gap-1.5 text-sm flex-wrap">
                 <button
                   onClick={() => setFolderPath([])}
-                  className="font-serif text-xl text-noeval-ink hover:text-noeval-accent transition"
+                  onDragOver={(e) => { if (dragging) { e.preventDefault(); setDropTarget('root'); } }}
+                  onDragLeave={() => setDropTarget(prev => prev === 'root' ? null : prev)}
+                  onDrop={(e) => { e.preventDefault(); handleDropOnFolder(null); }}
+                  className={`font-serif text-xl text-noeval-ink hover:text-noeval-accent transition px-2 py-0.5 rounded ${dropTarget === 'root' ? 'bg-noeval-accent/20 ring-2 ring-noeval-accent' : ''}`}
                 >
                   {clientMap[clientFilter]}
                 </button>
@@ -275,7 +312,10 @@ export default function Producciones() {
                     <span className="text-noeval-muted">/</span>
                     <button
                       onClick={() => setFolderPath(folderPath.slice(0, i + 1))}
-                      className="font-serif text-xl text-noeval-ink hover:text-noeval-accent transition"
+                      onDragOver={(e) => { if (dragging) { e.preventDefault(); setDropTarget(f.id); } }}
+                      onDragLeave={() => setDropTarget(prev => prev === f.id ? null : prev)}
+                      onDrop={(e) => { e.preventDefault(); handleDropOnFolder(f.id); }}
+                      className={`font-serif text-xl text-noeval-ink hover:text-noeval-accent transition px-2 py-0.5 rounded ${dropTarget === f.id ? 'bg-noeval-accent/20 ring-2 ring-noeval-accent' : ''}`}
                     >
                       {f.name}
                     </button>
@@ -296,7 +336,13 @@ export default function Producciones() {
                 return (
                   <div
                     key={f.id}
-                    className="group relative bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent transition-all hover:shadow-md"
+                    draggable
+                    onDragStart={(e) => { setDragging({ kind: 'folder', id: f.id }); e.dataTransfer.effectAllowed = 'move'; }}
+                    onDragEnd={() => { setDragging(null); setDropTarget(null); }}
+                    onDragOver={(e) => { if (dragging && dragging.id !== f.id) { e.preventDefault(); setDropTarget(f.id); } }}
+                    onDragLeave={() => setDropTarget(prev => prev === f.id ? null : prev)}
+                    onDrop={(e) => { e.preventDefault(); handleDropOnFolder(f.id); }}
+                    className={`group relative bg-noeval-surface border rounded-xl p-4 transition-all hover:shadow-md cursor-grab active:cursor-grabbing ${dropTarget === f.id ? 'border-noeval-accent ring-2 ring-noeval-accent bg-noeval-accent/5' : 'border-noeval-line hover:border-noeval-accent'} ${dragging?.id === f.id ? 'opacity-50' : ''}`}
                   >
                     <button
                       onClick={() => setFolderPath([...folderPath, { id: f.id, name: f.name }])}
@@ -357,7 +403,10 @@ export default function Producciones() {
                   <button
                     key={s.id}
                     onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
-                    className="text-left bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all"
+                    draggable={!!clientFilter}
+                    onDragStart={(e) => { setDragging({ kind: 'sheet', id: s.id }); e.dataTransfer.effectAllowed = 'move'; }}
+                    onDragEnd={() => { setDragging(null); setDropTarget(null); }}
+                    className={`text-left bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all ${clientFilter ? 'cursor-grab active:cursor-grabbing' : ''} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <FileText className="h-5 w-5 text-noeval-accent shrink-0 mt-0.5" />
