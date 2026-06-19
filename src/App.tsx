@@ -47,6 +47,7 @@ const AdCampaignCanvas = lazy(() => import("./pages/AdCampaignCanvas"));
 const AgencyCRM = lazy(() => import("./pages/AgencyCRM"));
 const Producciones = lazy(() => import("./pages/Producciones"));
 const ProduccionSheet = lazy(() => import("./pages/ProduccionSheet"));
+const ProduccionPublica = lazy(() => import("./pages/ProduccionPublica"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -161,6 +162,7 @@ const App = () => (
                     <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
                     <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
                     <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
+                    <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
                     <Route path="/" element={<Navigate to="/producciones" replace />} />
                     <Route path="/producciones" element={
                       <ProtectedRoute>
@@ -187,6 +189,7 @@ const App = () => (
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/invitacion/:token" element={<Invitacion />} />
+                  <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
                   <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                   {/* Agency-only routes */}
                   <Route path="/brand-settings" element={

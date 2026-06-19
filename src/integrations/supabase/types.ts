@@ -4201,6 +4201,8 @@ export type Database = {
           location: string | null
           notes: string | null
           producer_name: string | null
+          public_share_enabled: boolean
+          public_share_token: string | null
           sent_to_clickup_at: string | null
           shoot_date: string | null
           status: Database["public"]["Enums"]["production_sheet_status"]
@@ -4220,6 +4222,8 @@ export type Database = {
           location?: string | null
           notes?: string | null
           producer_name?: string | null
+          public_share_enabled?: boolean
+          public_share_token?: string | null
           sent_to_clickup_at?: string | null
           shoot_date?: string | null
           status?: Database["public"]["Enums"]["production_sheet_status"]
@@ -4239,6 +4243,8 @@ export type Database = {
           location?: string | null
           notes?: string | null
           producer_name?: string | null
+          public_share_enabled?: boolean
+          public_share_token?: string | null
           sent_to_clickup_at?: string | null
           shoot_date?: string | null
           status?: Database["public"]["Enums"]["production_sheet_status"]
@@ -5098,6 +5104,7 @@ export type Database = {
           role: string
         }[]
       }
+      get_public_production_sheet: { Args: { _token: string }; Returns: Json }
       get_safe_platform_connections: {
         Args: { _client_id: string }
         Returns: {

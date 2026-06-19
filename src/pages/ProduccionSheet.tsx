@@ -12,8 +12,12 @@ import {
 } from '@/components/ui/select';
 import {
   ArrowLeft, Plus, Trash2, Send, Check, Film, Printer, ExternalLink, Loader2,
-  ChevronDown, ChevronUp, Copy, Sparkles,
+  ChevronDown, ChevronUp, Copy, Sparkles, Share2, Link2, Globe,
 } from 'lucide-react';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -60,6 +64,45 @@ export default function ProduccionSheet() {
   const [clientName, setClientName] = useState<string>('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'recorded'>('all');
   const [sending, setSending] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const shareToken = data?.sheet?.public_share_token || null;
+  const shareEnabled = !!data?.sheet?.public_share_enabled;
+  const shareUrl = shareToken
+    ? `${window.location.origin}/produccion-publica/${shareToken}`
+    : '';
+
+  const handleToggleShare = async (enabled: boolean) => {
+    const patch: any = { id: sheetId, public_share_enabled: enabled };
+    if (enabled && !shareToken) {
+      patch.public_share_token = (globalThis.crypto?.randomUUID?.() ||
+        // Fallback (very old browsers)
+        `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`);
+    }
+    await update.mutateAsync(patch);
+    toast.success(enabled ? 'Link público activado' : 'Link público desactivado');
+  };
+
+  const handleCopyShareUrl = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1800);
+      toast.success('Link copiado');
+    } catch {
+      toast.error('No pude copiar — copialo manualmente');
+    }
+  };
+
+  const handleRegenerateToken = async () => {
+    if (!confirm('Regenerar el link invalidará el actual. ¿Continuar?')) return;
+    const newToken = globalThis.crypto?.randomUUID?.() ||
+      `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+    await update.mutateAsync({ id: sheetId, public_share_token: newToken, public_share_enabled: true } as any);
+    toast.success('Nuevo link generado');
+  };
 
   useEffect(() => { if (data?.sheet) setLocal(data.sheet); }, [data?.sheet]);
 
@@ -170,10 +213,82 @@ export default function ProduccionSheet() {
                 >
                   <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Volver a Producciones</span><span className="sm:hidden">Volver</span>
                 </button>
-                <div className="text-xs text-noeval-muted truncate hidden sm:block">
-                  Producciones › {clientName || '—'} › <span className="text-noeval-ink">{local.title || 'Sin título'}</span>
+                <div className="flex items-center gap-3">
+                  <div className="text-xs text-noeval-muted truncate hidden md:block">
+                    Producciones › {clientName || '—'} › <span className="text-noeval-ink">{local.title || 'Sin título'}</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShareOpen(true)}
+                    className={`gap-1.5 ${shareEnabled ? 'border-noeval-accent text-noeval-accent hover:bg-noeval-accent/10' : ''}`}
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Compartir</span>
+                    {shareEnabled && <span className="h-1.5 w-1.5 rounded-full bg-noeval-accent" />}
+                  </Button>
                 </div>
               </div>
+
+              {/* SHARE DIALOG */}
+              <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Globe className="h-4 w-4" /> Compartir con clientes
+                    </DialogTitle>
+                    <DialogDescription>
+                      Activá el link público para que cualquier persona con el enlace pueda ver esta hoja en modo lectura — sin necesidad de cuenta.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <div>
+                      <div className="text-sm font-medium">Link público</div>
+                      <div className="text-xs text-muted-foreground">
+                        {shareEnabled ? 'Activo — cualquiera con el link puede ver la hoja' : 'Desactivado'}
+                      </div>
+                    </div>
+                    <Switch
+                      checked={shareEnabled}
+                      onCheckedChange={handleToggleShare}
+                      disabled={update.isPending}
+                    />
+                  </div>
+
+                  {shareEnabled && shareUrl && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">URL para compartir</Label>
+                      <div className="flex items-center gap-2">
+                        <Input value={shareUrl} readOnly className="text-xs font-mono" onFocus={(e) => e.currentTarget.select()} />
+                        <Button size="sm" onClick={handleCopyShareUrl} className="shrink-0">
+                          {shareCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <a
+                          href={shareUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-noeval-muted hover:text-noeval-ink inline-flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-3 w-3" /> Abrir vista pública
+                        </a>
+                        <button
+                          onClick={handleRegenerateToken}
+                          className="text-xs text-muted-foreground hover:text-destructive transition"
+                        >
+                          Regenerar link
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed pt-1">
+                        Quien tenga el link ve título, fecha, locación, equipo, piezas, vestuario y notas. No puede editar nada. Desactivá el switch para revocar el acceso al instante.
+                      </p>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+
 
               {/* CLAQUETA HEADER */}
               <div className="noeval-slate relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-9">
