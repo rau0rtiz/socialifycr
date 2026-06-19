@@ -208,6 +208,13 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
+                  <Route path="/agencia/producciones/:sheetId" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <ProduccionSheet />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/ad-frameworks" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
