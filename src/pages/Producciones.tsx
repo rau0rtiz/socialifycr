@@ -237,6 +237,16 @@ export default function Producciones() {
                       onOpen={() => setClientFilter(c.id)}
                       onConfigure={() => setConfigClient(c)}
                       onLogoUpdated={() => refetchClients()}
+                      onDelete={async () => {
+                        if (!confirm(`¿Quitar la carpeta de "${c.name}" de Producciones?\n\nNo elimina al cliente, solo lo oculta de esta vista.`)) return;
+                        const { error } = await supabase
+                          .from('clients')
+                          .update({ producciones_hidden: true } as any)
+                          .eq('id', c.id);
+                        if (error) return toast.error(error.message);
+                        toast.success('Carpeta ocultada');
+                        refetchClients();
+                      }}
                     />
                   );
                 })}
