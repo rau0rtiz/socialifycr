@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Plus, Folder, Search, Trash2, FileText, Film,
-  Calendar, MapPin, User as UserIcon, Settings, Loader2,
+  Calendar, MapPin, User as UserIcon, Settings, Loader2, ImagePlus,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
