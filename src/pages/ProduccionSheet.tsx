@@ -553,17 +553,17 @@ function PieceCard({
 
   // EXPANDED CARD
   return (
-    <div className={`relative bg-noeval-surface border-2 rounded-xl p-5 transition ${
+    <div className={`relative bg-noeval-surface border-2 rounded-xl p-3 sm:p-5 transition ${
       shot.done ? 'border-noeval-accent/40 bg-noeval-accent/5' : 'border-noeval-line hover:border-noeval-ink/30'
     }`}>
-      {shot.done && <div className="grabado-stamp">Grabado</div>}
+      {shot.done && <div className="grabado-stamp hidden sm:block">Grabado</div>}
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-serif text-2xl text-noeval-muted">{String(index + 1).padStart(2, '0')}</span>
+      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
+          <span className="font-serif text-xl sm:text-2xl text-noeval-muted">{String(index + 1).padStart(2, '0')}</span>
           <Select value={shot.content_type || 'reel'} onValueChange={(v) => onChange({ content_type: v })}>
-            <SelectTrigger className="w-auto h-8 bg-noeval-ink text-noeval-cream border-0 rounded-full text-[11px] tracking-[0.2em] uppercase font-semibold px-3">
+            <SelectTrigger className="w-auto h-8 bg-noeval-ink text-noeval-cream border-0 rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -573,7 +573,7 @@ function PieceCard({
             </SelectContent>
           </Select>
           <Select value={shot.platform || 'instagram'} onValueChange={(v) => onChange({ platform: v })}>
-            <SelectTrigger className="w-auto h-8 bg-transparent border-noeval-line rounded-full text-[11px] tracking-[0.2em] uppercase font-semibold px-3">
+            <SelectTrigger className="w-auto h-8 bg-transparent border-noeval-line rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -584,11 +584,11 @@ function PieceCard({
           </Select>
           {recordedTime && (
             <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent">
-              ✓ Grabado {recordedTime}
+              ✓ {recordedTime}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 no-print">
+        <div className="flex items-center gap-0.5 sm:gap-1 no-print shrink-0">
           {shot.done && (
             <button
               onClick={() => setExpanded(false)}
@@ -616,18 +616,18 @@ function PieceCard({
       </div>
 
       {/* Concepto / Título */}
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
         <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">Concepto · idea</Label>
         <input
           value={local.concept}
           onChange={(e) => setLocal({ ...local, concept: e.target.value })}
-          placeholder="¿De qué trata esta pieza? Una frase corta…"
-          className="w-full bg-transparent font-serif text-2xl text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-2 placeholder:text-noeval-muted/50"
+          placeholder="¿De qué trata esta pieza?"
+          className="w-full bg-transparent font-serif text-xl sm:text-2xl text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-2 placeholder:text-noeval-muted/50"
         />
       </div>
 
       {/* Guion */}
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
         <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1.5 flex items-center gap-1.5">
           <Sparkles className="h-3 w-3 text-noeval-accent" /> Guion / Copy
         </Label>
@@ -635,60 +635,67 @@ function PieceCard({
           value={local.script}
           onChange={(e) => setLocal({ ...local, script: e.target.value })}
           placeholder="Escribe el guion completo, copy del post o estructura del story…"
-          rows={5}
-          className="bg-noeval-cream border-noeval-line text-sm resize-y leading-relaxed"
+          rows={4}
+          className="bg-noeval-cream border-noeval-line text-sm resize-y leading-relaxed sm:min-h-[120px]"
         />
       </div>
 
-      {/* Hook + CTA */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-        <div>
-          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">⚡ Hook (gancho)</Label>
-          <Input
-            value={local.hook}
-            onChange={(e) => setLocal({ ...local, hook: e.target.value })}
-            placeholder="Primera frase que detiene el scroll"
-            className="bg-noeval-cream border-noeval-line text-sm"
-          />
-        </div>
-        <div>
-          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎯 CTA (llamada a la acción)</Label>
-          <Input
-            value={local.cta}
-            onChange={(e) => setLocal({ ...local, cta: e.target.value })}
-            placeholder="Qué pedimos hacer al final"
-            className="bg-noeval-cream border-noeval-line text-sm"
-          />
-        </div>
-      </div>
+      {/* Detalles avanzados: colapsable en móvil, siempre abierto en sm+ */}
+      <details className="mb-3 sm:mb-4 details-responsive">
+        <summary className="sm:hidden cursor-pointer text-[10px] tracking-[0.3em] uppercase text-noeval-muted font-semibold list-none flex items-center gap-1.5 py-2 select-none">
+          <ChevronDown className="h-3.5 w-3.5 details-chevron transition-transform" />
+          Hook · CTA · Notas técnicas
+        </summary>
+        <div className="details-content space-y-3 sm:space-y-4 mt-2 sm:mt-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">⚡ Hook (gancho)</Label>
+              <Input
+                value={local.hook}
+                onChange={(e) => setLocal({ ...local, hook: e.target.value })}
+                placeholder="Primera frase que detiene el scroll"
+                className="bg-noeval-cream border-noeval-line text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎯 CTA (llamada a la acción)</Label>
+              <Input
+                value={local.cta}
+                onChange={(e) => setLocal({ ...local, cta: e.target.value })}
+                placeholder="Qué pedimos hacer al final"
+                className="bg-noeval-cream border-noeval-line text-sm"
+              />
+            </div>
+          </div>
 
-      {/* Notas técnicas */}
-      <div className="mb-4">
-        <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎥 Notas técnicas</Label>
-        <Textarea
-          value={local.tech_notes}
-          onChange={(e) => setLocal({ ...local, tech_notes: e.target.value })}
-          placeholder="Cámara, ángulos, wardrobe, props, locación específica…"
-          rows={2}
-          className="bg-noeval-cream border-noeval-line text-sm resize-none"
-        />
-      </div>
+          <div>
+            <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎥 Notas técnicas</Label>
+            <Textarea
+              value={local.tech_notes}
+              onChange={(e) => setLocal({ ...local, tech_notes: e.target.value })}
+              placeholder="Cámara, ángulos, wardrobe, props, locación específica…"
+              rows={2}
+              className="bg-noeval-cream border-noeval-line text-sm resize-none"
+            />
+          </div>
+        </div>
+      </details>
 
       {/* Action */}
-      <div className="flex items-center justify-between gap-3 pt-2 no-print">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 pt-2 no-print">
         {shot.clickup_url ? (
           <a
             href={shot.clickup_url}
             target="_blank"
             rel="noreferrer"
-            className="text-xs text-noeval-accent hover:underline inline-flex items-center gap-1"
+            className="text-xs text-noeval-accent hover:underline inline-flex items-center gap-1 self-start"
           >
             Ver en ClickUp <ExternalLink className="h-3 w-3" />
           </a>
-        ) : <span />}
+        ) : <span className="hidden sm:block" />}
         <button
-          onClick={onToggleRecorded}
-          className={`inline-flex items-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-5 py-2.5 transition
+          onClick={() => { const wasDone = shot.done; onToggleRecorded(); setExpanded(wasDone); }}
+          className={`inline-flex items-center justify-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-5 py-3 sm:py-2.5 transition w-full sm:w-auto
             ${shot.done
               ? 'bg-noeval-accent text-white shadow-sm hover:bg-noeval-accent/90'
               : 'border-2 border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream'}`}
