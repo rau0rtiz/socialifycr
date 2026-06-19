@@ -158,7 +158,7 @@ export default function ProduccionSheet() {
           <div className="py-24 text-center text-noeval-muted">Cargando…</div>
         ) : (
           <div className="print-area">
-            <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-6">
+            <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6 pb-24 md:pb-6">
 
               {/* Top bar (no print) */}
               <div className="no-print flex items-center justify-between gap-3">
@@ -166,35 +166,35 @@ export default function ProduccionSheet() {
                   onClick={() => navigate('/agencia/producciones')}
                   className="inline-flex items-center gap-1.5 text-sm text-noeval-muted hover:text-noeval-ink transition"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Volver a Producciones
+                  <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Volver a Producciones</span><span className="sm:hidden">Volver</span>
                 </button>
-                <div className="text-xs text-noeval-muted truncate">
+                <div className="text-xs text-noeval-muted truncate hidden sm:block">
                   Producciones › {clientName || '—'} › <span className="text-noeval-ink">{local.title || 'Sin título'}</span>
                 </div>
               </div>
 
               {/* CLAQUETA HEADER */}
-              <div className="noeval-slate relative overflow-hidden rounded-2xl p-6 md:p-9">
+              <div className="noeval-slate relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-9">
                 <div className="noeval-stripe absolute inset-x-0 top-0 h-2.5" />
                 <div className="mt-3 flex items-center gap-2 text-noeval-taupe text-[10px] tracking-[0.42em] uppercase font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent animate-pulse" />
-                  Hoja de producción · {clientName}
+                  <span className="truncate">Hoja · {clientName}</span>
                 </div>
 
                 <input
                   value={local.title || ''}
                   onChange={(e) => setLocal({ ...local, title: e.target.value })}
                   placeholder="Título de la producción"
-                  className="mt-2 w-full bg-transparent font-serif text-3xl md:text-5xl uppercase tracking-[0.04em] text-noeval-cream placeholder:text-noeval-taupe/40 outline-none border-0"
+                  className="mt-2 w-full bg-transparent font-serif text-2xl sm:text-3xl md:text-5xl uppercase tracking-[0.04em] text-noeval-cream placeholder:text-noeval-taupe/40 outline-none border-0"
                 />
 
-                <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <InlineField label="Fecha">
                     <input
                       type="date"
                       value={local.shoot_date || ''}
                       onChange={(e) => setLocal({ ...local, shoot_date: e.target.value || null })}
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm"
+                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto"
                     />
                   </InlineField>
                   <InlineField label="Locación">
@@ -202,7 +202,7 @@ export default function ProduccionSheet() {
                       value={local.location || ''}
                       onChange={(e) => setLocal({ ...local, location: e.target.value })}
                       placeholder="—"
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm placeholder:text-noeval-taupe/40"
+                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto placeholder:text-noeval-taupe/40"
                     />
                   </InlineField>
                   <InlineField label="Responsable">
@@ -210,7 +210,7 @@ export default function ProduccionSheet() {
                       value={local.producer_name || ''}
                       onChange={(e) => setLocal({ ...local, producer_name: e.target.value })}
                       placeholder="—"
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm placeholder:text-noeval-taupe/40"
+                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto placeholder:text-noeval-taupe/40"
                     />
                   </InlineField>
                 </div>
@@ -219,7 +219,7 @@ export default function ProduccionSheet() {
                 <div className="mt-6 flex flex-col md:flex-row md:items-end gap-4">
                   <div>
                     <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-taupe">Grabadas</div>
-                    <div className="font-serif text-4xl md:text-5xl text-noeval-cream leading-none mt-1">
+                    <div className="font-serif text-3xl sm:text-4xl md:text-5xl text-noeval-cream leading-none mt-1">
                       <span className="text-noeval-accent">{recorded}</span>
                       <span className="text-noeval-taupe/60"> / {total}</span>
                     </div>
@@ -235,39 +235,41 @@ export default function ProduccionSheet() {
                 </div>
               </div>
 
+
               {/* TABLERO DE PIEZAS */}
               <section>
-                <div className="flex items-center justify-between gap-3 mb-4 flex-wrap no-print">
-                  <div>
+                <div className="flex items-start justify-between gap-3 mb-4 flex-wrap no-print">
+                  <div className="min-w-0">
                     <span className="inline-block text-[10px] tracking-[0.4em] uppercase border border-noeval-accent text-noeval-accent rounded-full px-3 py-1">
                       Piezas
                     </span>
-                    <h2 className="font-serif text-3xl md:text-4xl text-noeval-ink mt-2">Contenido a grabar</h2>
-                    <p className="text-sm text-noeval-muted max-w-xl mt-1">
-                      Cada tarjeta es un reel, story o post a producir. Define guion, hook y CTA. Marca como grabado cuando esté listo.
+                    <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-noeval-ink mt-2">Contenido a grabar</h2>
+                    <p className="text-sm text-noeval-muted max-w-xl mt-1 hidden sm:block">
+                      Cada tarjeta es un reel, story o post a producir. Marca como grabado y se minimiza solo.
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="inline-flex rounded-full border border-noeval-line p-0.5 bg-noeval-surface">
+                  <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
+                    <div className="inline-flex rounded-full border border-noeval-line p-0.5 bg-noeval-surface shrink-0">
                       {(['all', 'pending', 'recorded'] as const).map((f) => (
                         <button
                           key={f}
                           onClick={() => setFilter(f)}
-                          className={`text-[11px] tracking-[0.2em] uppercase font-semibold rounded-full px-3 py-1.5 transition ${
+                          className={`text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold rounded-full px-2.5 sm:px-3 py-1.5 transition whitespace-nowrap ${
                             filter === f
                               ? 'bg-noeval-ink text-noeval-cream'
                               : 'text-noeval-muted hover:text-noeval-ink'
                           }`}
                         >
-                          {f === 'all' ? `Todas (${total})` : f === 'pending' ? `Pendientes (${total - recorded})` : `Grabadas (${recorded})`}
+                          {f === 'all' ? `Todas (${total})` : f === 'pending' ? `Pend (${total - recorded})` : `Grab (${recorded})`}
                         </button>
                       ))}
                     </div>
-                    <Button onClick={handleAddPiece} className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90">
+                    <Button onClick={handleAddPiece} className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90 shrink-0 hidden sm:inline-flex">
                       <Plus className="h-4 w-4 mr-1.5" /> Nueva pieza
                     </Button>
                   </div>
                 </div>
+
 
                 {filteredShots.length === 0 ? (
                   <Card className="p-10 text-center bg-noeval-surface border-noeval-line border-dashed">
@@ -310,7 +312,7 @@ export default function ProduccionSheet() {
               </section>
 
               {/* HOJA DEL DÍA (resumen autogenerado) */}
-              <section className="bg-noeval-cream border border-noeval-line rounded-2xl p-6 md:p-9 daily-sheet">
+              <section className="bg-noeval-cream border border-noeval-line rounded-2xl p-4 sm:p-6 md:p-9 daily-sheet">
                 <div className="flex items-center justify-between gap-3 flex-wrap mb-5 no-print">
                   <div>
                     <span className="inline-block text-[10px] tracking-[0.4em] uppercase border border-noeval-ink text-noeval-ink rounded-full px-3 py-1">
@@ -333,7 +335,7 @@ export default function ProduccionSheet() {
                   <div className="text-sm text-noeval-muted mt-1">{clientName}</div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 mb-5 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-5 text-sm">
                   <div>
                     <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Fecha</div>
                     <input
@@ -412,11 +414,11 @@ export default function ProduccionSheet() {
               </section>
 
               {/* FOOTER ACTIONS */}
-              <div className="no-print flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-noeval-line">
-                <Button variant="ghost" size="sm" onClick={handleDelete} className="text-destructive hover:text-destructive">
+              <div className="no-print flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-4 border-t border-noeval-line">
+                <Button variant="ghost" size="sm" onClick={handleDelete} className="text-destructive hover:text-destructive self-start">
                   <Trash2 className="h-3.5 w-3.5 mr-1" /> Eliminar sheet
                 </Button>
-                <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                   {alreadySent > 0 && (
                     <span className="text-xs text-noeval-muted">
                       {alreadySent} ya enviada{alreadySent !== 1 ? 's' : ''} a ClickUp
@@ -425,7 +427,7 @@ export default function ProduccionSheet() {
                   <Button
                     onClick={handleSendClickUp}
                     disabled={sending || recordedShots.length === 0}
-                    className="bg-noeval-accent text-white hover:bg-noeval-accent/90 disabled:opacity-50"
+                    className="bg-noeval-accent text-white hover:bg-noeval-accent/90 disabled:opacity-50 w-full sm:w-auto"
                   >
                     {sending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Send className="h-4 w-4 mr-1.5" />}
                     Enviar {pendingToSend > 0 ? `${pendingToSend} pieza${pendingToSend !== 1 ? 's' : ''}` : 'grabadas'} a ClickUp
@@ -433,12 +435,22 @@ export default function ProduccionSheet() {
                 </div>
               </div>
             </div>
+
+            {/* MOBILE FAB · Nueva pieza */}
+            <button
+              onClick={handleAddPiece}
+              className="no-print sm:hidden fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full bg-noeval-accent text-white shadow-lg shadow-noeval-accent/40 flex items-center justify-center active:scale-95 transition"
+              aria-label="Nueva pieza"
+            >
+              <Plus className="h-6 w-6" strokeWidth={2.5} />
+            </button>
           </div>
         )}
       </div>
     </DashboardLayout>
   );
 }
+
 
 // ---------- Piece Card ----------
 function PieceCard({
@@ -498,17 +510,17 @@ function PieceCard({
   if (shot.done && !expanded) {
     // COLLAPSED RECORDED CARD
     return (
-      <div className="relative bg-noeval-surface border border-noeval-line/60 rounded-xl p-4 opacity-90 hover:opacity-100 transition group">
-        <div className="grabado-stamp">Grabado</div>
-        <div className="flex items-center gap-3 pr-32">
-          <span className="font-serif text-xl text-noeval-muted w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
-          <span className="inline-flex items-center gap-1.5 text-[10px] tracking-[0.25em] uppercase bg-noeval-ink text-noeval-cream rounded-full px-2.5 py-1">
-            {meta.icon} {meta.label}
+      <div className="relative bg-noeval-surface border border-noeval-line/60 rounded-xl p-3 sm:p-4 opacity-90 hover:opacity-100 transition group">
+        <div className="grabado-stamp hidden sm:block">Grabado</div>
+        <div className="flex items-center gap-2 sm:gap-3 sm:pr-32">
+          <span className="font-serif text-lg sm:text-xl text-noeval-muted w-7 sm:w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
+          <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.25em] uppercase bg-noeval-ink text-noeval-cream rounded-full px-2 sm:px-2.5 py-1 shrink-0">
+            {meta.icon} <span className="hidden xs:inline">{meta.label}</span>
           </span>
           {platformLabel && (
-            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-muted">{platformLabel}</span>
+            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-muted hidden md:inline">{platformLabel}</span>
           )}
-          <div className="font-serif text-lg text-noeval-ink truncate flex-1">
+          <div className="font-serif text-base sm:text-lg text-noeval-ink truncate flex-1 min-w-0">
             {local.concept || '(sin concepto)'}
           </div>
           {recordedTime && (
@@ -518,12 +530,13 @@ function PieceCard({
           )}
           <button
             onClick={() => setExpanded(true)}
-            className="no-print text-noeval-muted hover:text-noeval-ink p-1"
+            className="no-print text-noeval-muted hover:text-noeval-ink p-1 shrink-0"
             title="Expandir"
           >
             <ChevronDown className="h-4 w-4" />
           </button>
         </div>
+
         {shot.clickup_url && (
           <a
             href={shot.clickup_url}
@@ -540,17 +553,17 @@ function PieceCard({
 
   // EXPANDED CARD
   return (
-    <div className={`relative bg-noeval-surface border-2 rounded-xl p-5 transition ${
+    <div className={`relative bg-noeval-surface border-2 rounded-xl p-3 sm:p-5 transition ${
       shot.done ? 'border-noeval-accent/40 bg-noeval-accent/5' : 'border-noeval-line hover:border-noeval-ink/30'
     }`}>
-      {shot.done && <div className="grabado-stamp">Grabado</div>}
+      {shot.done && <div className="grabado-stamp hidden sm:block">Grabado</div>}
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-serif text-2xl text-noeval-muted">{String(index + 1).padStart(2, '0')}</span>
+      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
+          <span className="font-serif text-xl sm:text-2xl text-noeval-muted">{String(index + 1).padStart(2, '0')}</span>
           <Select value={shot.content_type || 'reel'} onValueChange={(v) => onChange({ content_type: v })}>
-            <SelectTrigger className="w-auto h-8 bg-noeval-ink text-noeval-cream border-0 rounded-full text-[11px] tracking-[0.2em] uppercase font-semibold px-3">
+            <SelectTrigger className="w-auto h-8 bg-noeval-ink text-noeval-cream border-0 rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -560,7 +573,7 @@ function PieceCard({
             </SelectContent>
           </Select>
           <Select value={shot.platform || 'instagram'} onValueChange={(v) => onChange({ platform: v })}>
-            <SelectTrigger className="w-auto h-8 bg-transparent border-noeval-line rounded-full text-[11px] tracking-[0.2em] uppercase font-semibold px-3">
+            <SelectTrigger className="w-auto h-8 bg-transparent border-noeval-line rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -571,11 +584,11 @@ function PieceCard({
           </Select>
           {recordedTime && (
             <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent">
-              ✓ Grabado {recordedTime}
+              ✓ {recordedTime}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 no-print">
+        <div className="flex items-center gap-0.5 sm:gap-1 no-print shrink-0">
           {shot.done && (
             <button
               onClick={() => setExpanded(false)}
@@ -603,18 +616,18 @@ function PieceCard({
       </div>
 
       {/* Concepto / Título */}
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
         <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">Concepto · idea</Label>
         <input
           value={local.concept}
           onChange={(e) => setLocal({ ...local, concept: e.target.value })}
-          placeholder="¿De qué trata esta pieza? Una frase corta…"
-          className="w-full bg-transparent font-serif text-2xl text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-2 placeholder:text-noeval-muted/50"
+          placeholder="¿De qué trata esta pieza?"
+          className="w-full bg-transparent font-serif text-xl sm:text-2xl text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-2 placeholder:text-noeval-muted/50"
         />
       </div>
 
       {/* Guion */}
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
         <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1.5 flex items-center gap-1.5">
           <Sparkles className="h-3 w-3 text-noeval-accent" /> Guion / Copy
         </Label>
@@ -622,60 +635,67 @@ function PieceCard({
           value={local.script}
           onChange={(e) => setLocal({ ...local, script: e.target.value })}
           placeholder="Escribe el guion completo, copy del post o estructura del story…"
-          rows={5}
-          className="bg-noeval-cream border-noeval-line text-sm resize-y leading-relaxed"
+          rows={4}
+          className="bg-noeval-cream border-noeval-line text-sm resize-y leading-relaxed sm:min-h-[120px]"
         />
       </div>
 
-      {/* Hook + CTA */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-        <div>
-          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">⚡ Hook (gancho)</Label>
-          <Input
-            value={local.hook}
-            onChange={(e) => setLocal({ ...local, hook: e.target.value })}
-            placeholder="Primera frase que detiene el scroll"
-            className="bg-noeval-cream border-noeval-line text-sm"
-          />
-        </div>
-        <div>
-          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎯 CTA (llamada a la acción)</Label>
-          <Input
-            value={local.cta}
-            onChange={(e) => setLocal({ ...local, cta: e.target.value })}
-            placeholder="Qué pedimos hacer al final"
-            className="bg-noeval-cream border-noeval-line text-sm"
-          />
-        </div>
-      </div>
+      {/* Detalles avanzados: colapsable en móvil, siempre abierto en sm+ */}
+      <details className="mb-3 sm:mb-4 details-responsive">
+        <summary className="sm:hidden cursor-pointer text-[10px] tracking-[0.3em] uppercase text-noeval-muted font-semibold list-none flex items-center gap-1.5 py-2 select-none">
+          <ChevronDown className="h-3.5 w-3.5 details-chevron transition-transform" />
+          Hook · CTA · Notas técnicas
+        </summary>
+        <div className="details-content space-y-3 sm:space-y-4 mt-2 sm:mt-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">⚡ Hook (gancho)</Label>
+              <Input
+                value={local.hook}
+                onChange={(e) => setLocal({ ...local, hook: e.target.value })}
+                placeholder="Primera frase que detiene el scroll"
+                className="bg-noeval-cream border-noeval-line text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎯 CTA (llamada a la acción)</Label>
+              <Input
+                value={local.cta}
+                onChange={(e) => setLocal({ ...local, cta: e.target.value })}
+                placeholder="Qué pedimos hacer al final"
+                className="bg-noeval-cream border-noeval-line text-sm"
+              />
+            </div>
+          </div>
 
-      {/* Notas técnicas */}
-      <div className="mb-4">
-        <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎥 Notas técnicas</Label>
-        <Textarea
-          value={local.tech_notes}
-          onChange={(e) => setLocal({ ...local, tech_notes: e.target.value })}
-          placeholder="Cámara, ángulos, wardrobe, props, locación específica…"
-          rows={2}
-          className="bg-noeval-cream border-noeval-line text-sm resize-none"
-        />
-      </div>
+          <div>
+            <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎥 Notas técnicas</Label>
+            <Textarea
+              value={local.tech_notes}
+              onChange={(e) => setLocal({ ...local, tech_notes: e.target.value })}
+              placeholder="Cámara, ángulos, wardrobe, props, locación específica…"
+              rows={2}
+              className="bg-noeval-cream border-noeval-line text-sm resize-none"
+            />
+          </div>
+        </div>
+      </details>
 
       {/* Action */}
-      <div className="flex items-center justify-between gap-3 pt-2 no-print">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 pt-2 no-print">
         {shot.clickup_url ? (
           <a
             href={shot.clickup_url}
             target="_blank"
             rel="noreferrer"
-            className="text-xs text-noeval-accent hover:underline inline-flex items-center gap-1"
+            className="text-xs text-noeval-accent hover:underline inline-flex items-center gap-1 self-start"
           >
             Ver en ClickUp <ExternalLink className="h-3 w-3" />
           </a>
-        ) : <span />}
+        ) : <span className="hidden sm:block" />}
         <button
-          onClick={onToggleRecorded}
-          className={`inline-flex items-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-5 py-2.5 transition
+          onClick={() => { const wasDone = shot.done; onToggleRecorded(); setExpanded(wasDone); }}
+          className={`inline-flex items-center justify-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-5 py-3 sm:py-2.5 transition w-full sm:w-auto
             ${shot.done
               ? 'bg-noeval-accent text-white shadow-sm hover:bg-noeval-accent/90'
               : 'border-2 border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream'}`}
