@@ -76,6 +76,39 @@ export default function Producciones() {
   const createFolder = useCreateFolder();
   const deleteFolder = useDeleteFolder();
   const renameFolder = useRenameFolder();
+  const moveSheet = useMoveSheet();
+  const moveFolder = useMoveFolder();
+
+  // Drag state: { kind: 'sheet'|'folder', id }
+  const [dragging, setDragging] = useState<{ kind: 'sheet' | 'folder'; id: string } | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null); // folder id or 'root'
+
+  const isDescendant = (folderId: string, maybeAncestorId: string): boolean => {
+    let cur = folders.find(f => f.id === folderId);
+    while (cur?.parent_id) {
+      if (cur.parent_id === maybeAncestorId) return true;
+      cur = folders.find(f => f.id === cur!.parent_id);
+    }
+    return false;
+  };
+
+  const handleDropOnFolder = async (targetFolderId: string | null) => {
+    if (!dragging || !clientFilter) return;
+    if (dragging.kind === 'sheet') {
+      await moveSheet.mutateAsync({ id: dragging.id, folder_id: targetFolderId });
+      toast.success('Sheet movido');
+    } else {
+      if (dragging.id === targetFolderId) return;
+      if (targetFolderId && isDescendant(targetFolderId, dragging.id)) {
+        toast.error('No se puede mover una carpeta dentro de sí misma');
+        return;
+      }
+      await moveFolder.mutateAsync({ id: dragging.id, parent_id: targetFolderId, client_id: clientFilter });
+      toast.success('Carpeta movida');
+    }
+    setDragging(null);
+    setDropTarget(null);
+  };
 
   const clientMap = useMemo(
     () => Object.fromEntries(clients.map(c => [c.id, c.name])),
