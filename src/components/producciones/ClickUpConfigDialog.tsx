@@ -68,9 +68,20 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
     enabled: open,
     queryFn: async () => {
       const d = await callMeta('workspaces');
-      return (d.teams || []).map((t: any) => ({ id: t.id, name: t.name }));
+      const all = (d.teams || []).map((t: any) => ({ id: t.id, name: t.name }));
+      // Solo SOCIALIFY como workspace por defecto
+      const socialify = all.filter((t: Option) => /socialify/i.test(t.name));
+      return socialify.length ? socialify : all;
     },
   });
+
+  // Auto-seleccionar SOCIALIFY al cargar
+  useEffect(() => {
+    if (!workspaceId && workspaces.data && workspaces.data.length > 0) {
+      const sf = workspaces.data.find(w => /socialify/i.test(w.name)) || workspaces.data[0];
+      setWorkspaceId(sf.id);
+    }
+  }, [workspaces.data, workspaceId]);
 
   const spaces = useQuery<Option[]>({
     queryKey: ['cu-spaces', workspaceId],
@@ -147,12 +158,10 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
 
         <div className="space-y-3">
           <Field label="Workspace" loading={workspaces.isLoading}>
-            <Select value={workspaceId} onValueChange={(v) => { setWorkspaceId(v); setSpaceId(''); setFolderId(''); setListId(''); }}>
-              <SelectTrigger><SelectValue placeholder="Selecciona workspace" /></SelectTrigger>
-              <SelectContent>
-                {(workspaces.data || []).map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="h-10 px-3 rounded-md border bg-muted/40 flex items-center text-sm">
+              {workspaces.data?.find(w => w.id === workspaceId)?.name || 'SOCIALIFY'}
+              <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">Fijo</span>
+            </div>
           </Field>
 
           <Field label="Space" loading={spaces.isFetching} disabled={!workspaceId}>
