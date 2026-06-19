@@ -1,0 +1,1 @@
+UPDATE public.clients SET logo_url = '/__l5e/assets-v1/826fa2d7-b5f6-49bf-9f66-422a440ca3fb/mawi-logo.png' WHERE id = '79d5706d-f619-4b5d-b5e2-4f36e14872ca';
