@@ -228,38 +228,19 @@ export default function Producciones() {
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
                   return (
-                    <div
+                    <ClientFolderCard
                       key={c.id}
-                      className="group relative bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent transition-all hover:shadow-md"
-                    >
-                      <button
-                        onClick={() => setClientFilter(c.id)}
-                        className="text-left w-full"
-                      >
-                        <div className="flex items-start justify-between">
-                          <Folder className="h-8 w-8 text-noeval-accent" />
-                          <Badge variant="outline" className="border-noeval-line text-noeval-muted">
-                            {count}
-                          </Badge>
-                        </div>
-                        <div className="mt-3 font-medium text-noeval-ink truncate pr-6">{c.name}</div>
-                        <div className="text-xs text-noeval-muted mt-1">
-                          {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
-                        </div>
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfigClient(c); }}
-                        title="Configurar ClickUp"
-                        className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-noeval-taupe/40"
-                      >
-                        <Settings className="h-3.5 w-3.5 text-noeval-muted" />
-                      </button>
-                    </div>
+                      client={c}
+                      count={count}
+                      onOpen={() => setClientFilter(c.id)}
+                      onConfigure={() => setConfigClient(c)}
+                      onLogoUpdated={() => refetchClients()}
+                    />
                   );
                 })}
                 <button
                   onClick={() => setCreatingClient(true)}
-                  className="bg-noeval-surface/50 border-2 border-dashed border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:bg-noeval-surface transition-all flex flex-col items-center justify-center min-h-[120px] text-noeval-muted hover:text-noeval-accent"
+                  className="bg-noeval-surface/50 border-2 border-dashed border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:bg-noeval-surface transition-all flex flex-col items-center justify-center min-h-[160px] text-noeval-muted hover:text-noeval-accent"
                 >
                   <Plus className="h-8 w-8 mb-1.5" />
                   <span className="text-sm font-medium">Nuevo cliente</span>
