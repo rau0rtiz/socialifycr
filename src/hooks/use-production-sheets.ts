@@ -21,6 +21,8 @@ export interface ProductionSheet {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  public_share_token: string | null;
+  public_share_enabled: boolean;
 }
 
 export interface SheetTeamMember {
