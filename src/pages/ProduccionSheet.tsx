@@ -398,6 +398,12 @@ export default function ProduccionSheet() {
                             <div className="font-serif text-lg text-noeval-ink mt-1">{s.concept || s.description || '(sin concepto)'}</div>
                             {s.hook && <div className="text-sm text-noeval-muted mt-1"><strong className="text-noeval-ink">Hook:</strong> {s.hook}</div>}
                             {s.cta && <div className="text-sm text-noeval-muted"><strong className="text-noeval-ink">CTA:</strong> {s.cta}</div>}
+                            {s.tech_notes && (
+                              <div className="mt-2 pt-2 border-t border-noeval-line/60">
+                                <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-muted mb-0.5">🎥 Notas técnicas</div>
+                                <div className="text-sm text-noeval-ink whitespace-pre-wrap">{s.tech_notes}</div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -536,6 +542,13 @@ function PieceCard({
             <ChevronDown className="h-4 w-4" />
           </button>
         </div>
+
+        {local.tech_notes && (
+          <div className="mt-2.5 pt-2.5 border-t border-noeval-line/40">
+            <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-muted mb-1">🎥 Notas técnicas</div>
+            <div className="text-sm text-noeval-ink whitespace-pre-wrap font-serif leading-snug">{local.tech_notes}</div>
+          </div>
+        )}
 
         {shot.clickup_url && (
           <a
