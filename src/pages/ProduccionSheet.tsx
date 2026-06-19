@@ -186,18 +186,8 @@ export default function ProduccionSheet() {
     });
   };
 
-  const handleSendClickUp = async () => {
-    setSending(true);
-    try {
-      const { data: resp, error } = await supabase.functions.invoke('clickup-create-tasks', { body: { sheet_id: sheetId } });
-      if (error) throw new Error(error.message);
-      if (resp?.error) throw new Error(resp.error);
-      toast.success(`${resp.tasks_created || 0} pieza(s) enviada(s) a ClickUp`);
-    } catch (e: any) {
-      toast.error(e.message || 'Error enviando a ClickUp');
-    } finally {
-      setSending(false);
-    }
+  const handleSendClickUp = () => {
+    setClickupOpen(true);
   };
 
   const handleDelete = async () => {
