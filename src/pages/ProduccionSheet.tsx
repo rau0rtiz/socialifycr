@@ -64,7 +64,7 @@ export default function ProduccionSheet() {
   const [local, setLocal] = useState<Partial<ProductionSheet>>({});
   const [clientName, setClientName] = useState<string>('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'recorded'>('all');
-  const [sending, setSending] = useState(false);
+  const [, setSending] = useState(false); void setSending;
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [clickupOpen, setClickupOpen] = useState(false);
