@@ -1,0 +1,676 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import {
+  ArrowLeft, Plus, Trash2, Send, Check, Film, Printer, ExternalLink, Loader2,
+  ChevronDown, ChevronUp, Copy, Sparkles,
+} from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  useProductionSheet, useUpdateSheet, useDeleteSheet,
+  useUpsertChild, useDeleteChild,
+  type ProductionSheet, type SheetShot,
+} from '@/hooks/use-production-sheets';
+
+const CONTENT_TYPES = [
+  { value: 'reel', label: 'Reel', icon: '🎬' },
+  { value: 'story', label: 'Story', icon: '📱' },
+  { value: 'post', label: 'Post', icon: '🖼️' },
+  { value: 'tiktok', label: 'TikTok', icon: '🎵' },
+  { value: 'short', label: 'Short', icon: '▶️' },
+  { value: 'otro', label: 'Otro', icon: '🎞️' },
+];
+
+const PLATFORMS = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'multi', label: 'Multi-plataforma' },
+];
+
+function typeMeta(t?: string | null) {
+  return CONTENT_TYPES.find(x => x.value === t) || { value: 'otro', label: 'Pieza', icon: '🎞️' };
+}
+
+export default function ProduccionSheet() {
+  const { sheetId = '' } = useParams();
+  const navigate = useNavigate();
+
+  const { data, isLoading } = useProductionSheet(sheetId);
+  const update = useUpdateSheet();
+  const del = useDeleteSheet();
+  const upsertShot = useUpsertChild('production_sheet_shots');
+  const delShot = useDeleteChild('production_sheet_shots');
+
+  const [local, setLocal] = useState<Partial<ProductionSheet>>({});
+  const [clientName, setClientName] = useState<string>('');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'recorded'>('all');
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => { if (data?.sheet) setLocal(data.sheet); }, [data?.sheet]);
+
+  // Load client name
+  useEffect(() => {
+    if (!data?.sheet?.client_id) return;
+    supabase.from('clients').select('name').eq('id', data.sheet.client_id).maybeSingle()
+      .then(({ data: c }) => setClientName(c?.name || ''));
+  }, [data?.sheet?.client_id]);
+
+  // Auto-save header fields
+  useEffect(() => {
+    if (!data?.sheet) return;
+    const t = setTimeout(() => {
+      const patch: any = {};
+      (['title', 'shoot_date', 'location', 'producer_name', 'notes'] as const).forEach((k) => {
+        if (local[k] !== data.sheet[k]) patch[k] = local[k];
+      });
+      if (Object.keys(patch).length) update.mutate({ id: sheetId, ...patch });
+    }, 700);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [local]);
+
+  const shots = data?.shots || [];
+  const total = shots.length;
+  const recorded = shots.filter(s => s.done).length;
+  const pct = total ? Math.round((recorded / total) * 100) : 0;
+
+  const filteredShots = useMemo(() => {
+    if (filter === 'pending') return shots.filter(s => !s.done);
+    if (filter === 'recorded') return shots.filter(s => s.done);
+    return shots;
+  }, [shots, filter]);
+
+  const handleAddPiece = () => {
+    upsertShot.mutate({
+      sheet_id: sheetId,
+      concept: '',
+      description: '',
+      content_type: 'reel',
+      platform: 'instagram',
+      done: false,
+      sort_order: shots.length,
+    });
+  };
+
+  const handleDuplicate = (shot: SheetShot) => {
+    const { id, ...rest } = shot;
+    upsertShot.mutate({
+      ...rest,
+      done: false,
+      recorded_at: null,
+      clickup_task_id: null,
+      clickup_url: null,
+      sent_to_clickup_at: null,
+      sort_order: shots.length,
+      concept: (shot.concept || shot.description) + ' (copia)',
+    });
+  };
+
+  const handleToggleRecorded = (shot: SheetShot) => {
+    upsertShot.mutate({
+      ...shot,
+      done: !shot.done,
+      recorded_at: shot.done ? null : new Date().toISOString(),
+    });
+  };
+
+  const handleSendClickUp = async () => {
+    setSending(true);
+    try {
+      const { data: resp, error } = await supabase.functions.invoke('clickup-create-tasks', { body: { sheet_id: sheetId } });
+      if (error) throw new Error(error.message);
+      if (resp?.error) throw new Error(resp.error);
+      toast.success(`${resp.tasks_created || 0} pieza(s) enviada(s) a ClickUp`);
+    } catch (e: any) {
+      toast.error(e.message || 'Error enviando a ClickUp');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('¿Eliminar este sheet? Esta acción no se puede deshacer.')) return;
+    await del.mutateAsync(sheetId);
+    navigate('/agencia/producciones');
+  };
+
+  const recordedShots = shots.filter(s => s.done);
+  const pendingToSend = recordedShots.filter(s => !s.clickup_task_id).length;
+  const alreadySent = recordedShots.filter(s => s.clickup_task_id).length;
+
+  return (
+    <DashboardLayout>
+      <div className="noeval-scope min-h-screen">
+        {isLoading || !data ? (
+          <div className="py-24 text-center text-noeval-muted">Cargando…</div>
+        ) : (
+          <div className="print-area">
+            <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-6">
+
+              {/* Top bar (no print) */}
+              <div className="no-print flex items-center justify-between gap-3">
+                <button
+                  onClick={() => navigate('/agencia/producciones')}
+                  className="inline-flex items-center gap-1.5 text-sm text-noeval-muted hover:text-noeval-ink transition"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Volver a Producciones
+                </button>
+                <div className="text-xs text-noeval-muted truncate">
+                  Producciones › {clientName || '—'} › <span className="text-noeval-ink">{local.title || 'Sin título'}</span>
+                </div>
+              </div>
+
+              {/* CLAQUETA HEADER */}
+              <div className="noeval-slate relative overflow-hidden rounded-2xl p-6 md:p-9">
+                <div className="noeval-stripe absolute inset-x-0 top-0 h-2.5" />
+                <div className="mt-3 flex items-center gap-2 text-noeval-taupe text-[10px] tracking-[0.42em] uppercase font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent animate-pulse" />
+                  Hoja de producción · {clientName}
+                </div>
+
+                <input
+                  value={local.title || ''}
+                  onChange={(e) => setLocal({ ...local, title: e.target.value })}
+                  placeholder="Título de la producción"
+                  className="mt-2 w-full bg-transparent font-serif text-3xl md:text-5xl uppercase tracking-[0.04em] text-noeval-cream placeholder:text-noeval-taupe/40 outline-none border-0"
+                />
+
+                <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <InlineField label="Fecha">
+                    <input
+                      type="date"
+                      value={local.shoot_date || ''}
+                      onChange={(e) => setLocal({ ...local, shoot_date: e.target.value || null })}
+                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm"
+                    />
+                  </InlineField>
+                  <InlineField label="Locación">
+                    <input
+                      value={local.location || ''}
+                      onChange={(e) => setLocal({ ...local, location: e.target.value })}
+                      placeholder="—"
+                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm placeholder:text-noeval-taupe/40"
+                    />
+                  </InlineField>
+                  <InlineField label="Responsable">
+                    <input
+                      value={local.producer_name || ''}
+                      onChange={(e) => setLocal({ ...local, producer_name: e.target.value })}
+                      placeholder="—"
+                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm placeholder:text-noeval-taupe/40"
+                    />
+                  </InlineField>
+                </div>
+
+                {/* Progress */}
+                <div className="mt-6 flex flex-col md:flex-row md:items-end gap-4">
+                  <div>
+                    <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-taupe">Grabadas</div>
+                    <div className="font-serif text-4xl md:text-5xl text-noeval-cream leading-none mt-1">
+                      <span className="text-noeval-accent">{recorded}</span>
+                      <span className="text-noeval-taupe/60"> / {total}</span>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="progress-track h-2.5">
+                      <div className="progress-fill" style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-taupe mt-1.5">
+                      {pct}% completado
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* TABLERO DE PIEZAS */}
+              <section>
+                <div className="flex items-center justify-between gap-3 mb-4 flex-wrap no-print">
+                  <div>
+                    <span className="inline-block text-[10px] tracking-[0.4em] uppercase border border-noeval-accent text-noeval-accent rounded-full px-3 py-1">
+                      Piezas
+                    </span>
+                    <h2 className="font-serif text-3xl md:text-4xl text-noeval-ink mt-2">Contenido a grabar</h2>
+                    <p className="text-sm text-noeval-muted max-w-xl mt-1">
+                      Cada tarjeta es un reel, story o post a producir. Define guion, hook y CTA. Marca como grabado cuando esté listo.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex rounded-full border border-noeval-line p-0.5 bg-noeval-surface">
+                      {(['all', 'pending', 'recorded'] as const).map((f) => (
+                        <button
+                          key={f}
+                          onClick={() => setFilter(f)}
+                          className={`text-[11px] tracking-[0.2em] uppercase font-semibold rounded-full px-3 py-1.5 transition ${
+                            filter === f
+                              ? 'bg-noeval-ink text-noeval-cream'
+                              : 'text-noeval-muted hover:text-noeval-ink'
+                          }`}
+                        >
+                          {f === 'all' ? `Todas (${total})` : f === 'pending' ? `Pendientes (${total - recorded})` : `Grabadas (${recorded})`}
+                        </button>
+                      ))}
+                    </div>
+                    <Button onClick={handleAddPiece} className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90">
+                      <Plus className="h-4 w-4 mr-1.5" /> Nueva pieza
+                    </Button>
+                  </div>
+                </div>
+
+                {filteredShots.length === 0 ? (
+                  <Card className="p-10 text-center bg-noeval-surface border-noeval-line border-dashed">
+                    <Film className="h-10 w-10 mx-auto text-noeval-muted mb-2" />
+                    <p className="text-noeval-muted text-sm">
+                      {total === 0 ? 'Sin piezas aún. Crea la primera idea.' : 'Sin piezas con este filtro.'}
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredShots.map((shot, idx) => (
+                      <PieceCard
+                        key={shot.id}
+                        shot={shot}
+                        index={shots.indexOf(shot)}
+                        onChange={(patch) => upsertShot.mutate({ ...shot, ...patch })}
+                        onToggleRecorded={() => handleToggleRecorded(shot)}
+                        onDuplicate={() => handleDuplicate(shot)}
+                        onDelete={() => delShot.mutate({ id: shot.id, sheet_id: sheetId })}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* NOTAS GENERALES (editable, no se imprime) */}
+              <section className="noeval-slate rounded-2xl p-6 md:p-8 relative overflow-hidden no-print">
+                <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-taupe flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent" />
+                  Notas generales
+                </div>
+                <h3 className="font-serif text-2xl text-noeval-cream mt-1 mb-3">Apuntes del día</h3>
+                <Textarea
+                  value={local.notes || ''}
+                  onChange={(e) => setLocal({ ...local, notes: e.target.value })}
+                  placeholder="Tratamiento, referencias, instrucciones especiales, ajustes de último minuto…"
+                  rows={5}
+                  className="bg-white/5 border-noeval-taupe/30 text-noeval-cream placeholder:text-noeval-taupe/40 resize-none"
+                />
+              </section>
+
+              {/* HOJA DEL DÍA (resumen autogenerado) */}
+              <section className="bg-noeval-cream border border-noeval-line rounded-2xl p-6 md:p-9 daily-sheet">
+                <div className="flex items-center justify-between gap-3 flex-wrap mb-5 no-print">
+                  <div>
+                    <span className="inline-block text-[10px] tracking-[0.4em] uppercase border border-noeval-ink text-noeval-ink rounded-full px-3 py-1">
+                      Registro
+                    </span>
+                    <h2 className="font-serif text-3xl md:text-4xl text-noeval-ink mt-2">Hoja del día</h2>
+                    <p className="text-sm text-noeval-muted mt-1">
+                      Resumen de lo grabado hoy. Listo para imprimir o exportar.
+                    </p>
+                  </div>
+                  <Button variant="outline" onClick={() => window.print()} className="border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream">
+                    <Printer className="h-4 w-4 mr-1.5" /> Imprimir / PDF
+                  </Button>
+                </div>
+
+                {/* Print header */}
+                <div className="hidden print:block mb-6 pb-4 border-b-2 border-noeval-ink">
+                  <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-muted">Hoja de producción</div>
+                  <h1 className="font-serif text-4xl text-noeval-ink mt-1">{local.title || 'Sin título'}</h1>
+                  <div className="text-sm text-noeval-muted mt-1">{clientName}</div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-5 text-sm">
+                  <SummaryField label="Fecha" value={local.shoot_date ? format(parseISO(local.shoot_date), "d 'de' MMMM, yyyy", { locale: es }) : '—'} />
+                  <SummaryField label="Locación" value={local.location || '—'} />
+                  <SummaryField label="Responsable" value={local.producer_name || '—'} />
+                </div>
+
+                {recordedShots.length === 0 ? (
+                  <div className="text-center py-8 text-noeval-muted text-sm border-2 border-dashed border-noeval-line rounded-xl">
+                    Aún no hay piezas grabadas. Marca tarjetas como grabadas arriba.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-muted">
+                      {recordedShots.length} pieza{recordedShots.length !== 1 ? 's' : ''} grabada{recordedShots.length !== 1 ? 's' : ''}
+                    </div>
+                    {recordedShots.map((s, i) => {
+                      const meta = typeMeta(s.content_type);
+                      return (
+                        <div key={s.id} className="flex gap-3 items-start border-l-4 border-noeval-accent bg-white px-4 py-3 rounded-r-lg">
+                          <div className="font-serif text-xl text-noeval-muted shrink-0 w-10">{String(i + 1).padStart(2, '0')}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap text-[11px] tracking-[0.2em] uppercase">
+                              <span className="bg-noeval-ink text-noeval-cream rounded-full px-2 py-0.5">{meta.icon} {meta.label}</span>
+                              {s.platform && <span className="text-noeval-muted">· {PLATFORMS.find(p => p.value === s.platform)?.label || s.platform}</span>}
+                              {s.recorded_at && (
+                                <span className="text-noeval-muted ml-auto">
+                                  {format(parseISO(s.recorded_at), 'HH:mm')}
+                                </span>
+                              )}
+                            </div>
+                            <div className="font-serif text-lg text-noeval-ink mt-1">{s.concept || s.description || '(sin concepto)'}</div>
+                            {s.hook && <div className="text-sm text-noeval-muted mt-1"><strong className="text-noeval-ink">Hook:</strong> {s.hook}</div>}
+                            {s.cta && <div className="text-sm text-noeval-muted"><strong className="text-noeval-ink">CTA:</strong> {s.cta}</div>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {local.notes && (
+                  <div className="mt-6 pt-4 border-t border-noeval-line">
+                    <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-muted mb-2">Notas del día</div>
+                    <div className="text-sm text-noeval-ink whitespace-pre-wrap">{local.notes}</div>
+                  </div>
+                )}
+              </section>
+
+              {/* FOOTER ACTIONS */}
+              <div className="no-print flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-noeval-line">
+                <Button variant="ghost" size="sm" onClick={handleDelete} className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Eliminar sheet
+                </Button>
+                <div className="flex flex-wrap gap-2 items-center">
+                  {alreadySent > 0 && (
+                    <span className="text-xs text-noeval-muted">
+                      {alreadySent} ya enviada{alreadySent !== 1 ? 's' : ''} a ClickUp
+                    </span>
+                  )}
+                  <Button
+                    onClick={handleSendClickUp}
+                    disabled={sending || recordedShots.length === 0}
+                    className="bg-noeval-accent text-white hover:bg-noeval-accent/90 disabled:opacity-50"
+                  >
+                    {sending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Send className="h-4 w-4 mr-1.5" />}
+                    Enviar {pendingToSend > 0 ? `${pendingToSend} pieza${pendingToSend !== 1 ? 's' : ''}` : 'grabadas'} a ClickUp
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  );
+}
+
+// ---------- Piece Card ----------
+function PieceCard({
+  shot, index, onChange, onToggleRecorded, onDuplicate, onDelete,
+}: {
+  shot: SheetShot;
+  index: number;
+  onChange: (patch: Partial<SheetShot>) => void;
+  onToggleRecorded: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  const [expanded, setExpanded] = useState(!shot.done);
+  const meta = typeMeta(shot.content_type);
+  const platformLabel = PLATFORMS.find(p => p.value === shot.platform)?.label;
+
+  // Local field state for debounced text inputs
+  const [local, setLocal] = useState({
+    concept: shot.concept || shot.description || '',
+    script: shot.script || '',
+    hook: shot.hook || '',
+    cta: shot.cta || '',
+    tech_notes: shot.tech_notes || '',
+  });
+
+  useEffect(() => {
+    setLocal({
+      concept: shot.concept || shot.description || '',
+      script: shot.script || '',
+      hook: shot.hook || '',
+      cta: shot.cta || '',
+      tech_notes: shot.tech_notes || '',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shot.id]);
+
+  // Debounced save
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const patch: any = {};
+      if (local.concept !== (shot.concept || shot.description || '')) {
+        patch.concept = local.concept;
+        patch.description = local.concept; // mantener compat
+      }
+      if (local.script !== (shot.script || '')) patch.script = local.script;
+      if (local.hook !== (shot.hook || '')) patch.hook = local.hook;
+      if (local.cta !== (shot.cta || '')) patch.cta = local.cta;
+      if (local.tech_notes !== (shot.tech_notes || '')) patch.tech_notes = local.tech_notes;
+      if (Object.keys(patch).length) onChange(patch);
+    }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [local]);
+
+  const recordedTime = shot.recorded_at ? format(parseISO(shot.recorded_at), 'HH:mm') : null;
+
+  if (shot.done && !expanded) {
+    // COLLAPSED RECORDED CARD
+    return (
+      <div className="relative bg-noeval-surface border border-noeval-line/60 rounded-xl p-4 opacity-90 hover:opacity-100 transition group">
+        <div className="grabado-stamp">Grabado</div>
+        <div className="flex items-center gap-3 pr-32">
+          <span className="font-serif text-xl text-noeval-muted w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] tracking-[0.25em] uppercase bg-noeval-ink text-noeval-cream rounded-full px-2.5 py-1">
+            {meta.icon} {meta.label}
+          </span>
+          {platformLabel && (
+            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-muted">{platformLabel}</span>
+          )}
+          <div className="font-serif text-lg text-noeval-ink truncate flex-1">
+            {local.concept || '(sin concepto)'}
+          </div>
+          {recordedTime && (
+            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent shrink-0">
+              ✓ {recordedTime}
+            </span>
+          )}
+          <button
+            onClick={() => setExpanded(true)}
+            className="no-print text-noeval-muted hover:text-noeval-ink p-1"
+            title="Expandir"
+          >
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </div>
+        {shot.clickup_url && (
+          <a
+            href={shot.clickup_url}
+            target="_blank"
+            rel="noreferrer"
+            className="no-print absolute top-3 right-3 text-[10px] tracking-[0.2em] uppercase text-noeval-accent hover:underline inline-flex items-center gap-1"
+          >
+            ClickUp <ExternalLink className="h-3 w-3" />
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  // EXPANDED CARD
+  return (
+    <div className={`relative bg-noeval-surface border-2 rounded-xl p-5 transition ${
+      shot.done ? 'border-noeval-accent/40 bg-noeval-accent/5' : 'border-noeval-line hover:border-noeval-ink/30'
+    }`}>
+      {shot.done && <div className="grabado-stamp">Grabado</div>}
+
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-serif text-2xl text-noeval-muted">{String(index + 1).padStart(2, '0')}</span>
+          <Select value={shot.content_type || 'reel'} onValueChange={(v) => onChange({ content_type: v })}>
+            <SelectTrigger className="w-auto h-8 bg-noeval-ink text-noeval-cream border-0 rounded-full text-[11px] tracking-[0.2em] uppercase font-semibold px-3">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CONTENT_TYPES.map(t => (
+                <SelectItem key={t.value} value={t.value}>{t.icon} {t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={shot.platform || 'instagram'} onValueChange={(v) => onChange({ platform: v })}>
+            <SelectTrigger className="w-auto h-8 bg-transparent border-noeval-line rounded-full text-[11px] tracking-[0.2em] uppercase font-semibold px-3">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PLATFORMS.map(p => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {recordedTime && (
+            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent">
+              ✓ Grabado {recordedTime}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1 no-print">
+          {shot.done && (
+            <button
+              onClick={() => setExpanded(false)}
+              className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded hover:bg-noeval-line/30"
+              title="Colapsar"
+            >
+              <ChevronUp className="h-4 w-4" />
+            </button>
+          )}
+          <button
+            onClick={onDuplicate}
+            className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded hover:bg-noeval-line/30"
+            title="Duplicar"
+          >
+            <Copy className="h-4 w-4" />
+          </button>
+          <button
+            onClick={onDelete}
+            className="text-noeval-muted hover:text-destructive p-1.5 rounded hover:bg-destructive/10"
+            title="Eliminar"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Concepto / Título */}
+      <div className="mb-4">
+        <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">Concepto · idea</Label>
+        <input
+          value={local.concept}
+          onChange={(e) => setLocal({ ...local, concept: e.target.value })}
+          placeholder="¿De qué trata esta pieza? Una frase corta…"
+          className="w-full bg-transparent font-serif text-2xl text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-2 placeholder:text-noeval-muted/50"
+        />
+      </div>
+
+      {/* Guion */}
+      <div className="mb-4">
+        <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1.5 flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3 text-noeval-accent" /> Guion / Copy
+        </Label>
+        <Textarea
+          value={local.script}
+          onChange={(e) => setLocal({ ...local, script: e.target.value })}
+          placeholder="Escribe el guion completo, copy del post o estructura del story…"
+          rows={5}
+          className="bg-noeval-cream border-noeval-line text-sm resize-y leading-relaxed"
+        />
+      </div>
+
+      {/* Hook + CTA */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div>
+          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">⚡ Hook (gancho)</Label>
+          <Input
+            value={local.hook}
+            onChange={(e) => setLocal({ ...local, hook: e.target.value })}
+            placeholder="Primera frase que detiene el scroll"
+            className="bg-noeval-cream border-noeval-line text-sm"
+          />
+        </div>
+        <div>
+          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎯 CTA (llamada a la acción)</Label>
+          <Input
+            value={local.cta}
+            onChange={(e) => setLocal({ ...local, cta: e.target.value })}
+            placeholder="Qué pedimos hacer al final"
+            className="bg-noeval-cream border-noeval-line text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Notas técnicas */}
+      <div className="mb-4">
+        <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎥 Notas técnicas</Label>
+        <Textarea
+          value={local.tech_notes}
+          onChange={(e) => setLocal({ ...local, tech_notes: e.target.value })}
+          placeholder="Cámara, ángulos, wardrobe, props, locación específica…"
+          rows={2}
+          className="bg-noeval-cream border-noeval-line text-sm resize-none"
+        />
+      </div>
+
+      {/* Action */}
+      <div className="flex items-center justify-between gap-3 pt-2 no-print">
+        {shot.clickup_url ? (
+          <a
+            href={shot.clickup_url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs text-noeval-accent hover:underline inline-flex items-center gap-1"
+          >
+            Ver en ClickUp <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : <span />}
+        <button
+          onClick={onToggleRecorded}
+          className={`inline-flex items-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-5 py-2.5 transition
+            ${shot.done
+              ? 'bg-noeval-accent text-white shadow-sm hover:bg-noeval-accent/90'
+              : 'border-2 border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream'}`}
+        >
+          {shot.done ? <><Check className="h-3.5 w-3.5" strokeWidth={3} /> Grabado · desmarcar</> : <><Check className="h-3.5 w-3.5" strokeWidth={3} /> Marcar grabado</>}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InlineField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-[10px] tracking-[0.32em] uppercase text-noeval-taupe mb-1">{label}</div>
+      {children}
+    </div>
+  );
+}
+
+function SummaryField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">{label}</div>
+      <div className="font-serif text-lg text-noeval-ink mt-0.5">{value}</div>
+    </div>
+  );
+}
