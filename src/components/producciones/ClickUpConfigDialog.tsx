@@ -158,12 +158,10 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
 
         <div className="space-y-3">
           <Field label="Workspace" loading={workspaces.isLoading}>
-            <Select value={workspaceId} onValueChange={(v) => { setWorkspaceId(v); setSpaceId(''); setFolderId(''); setListId(''); }}>
-              <SelectTrigger><SelectValue placeholder="Selecciona workspace" /></SelectTrigger>
-              <SelectContent>
-                {(workspaces.data || []).map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="h-10 px-3 rounded-md border bg-muted/40 flex items-center text-sm">
+              {workspaces.data?.find(w => w.id === workspaceId)?.name || 'SOCIALIFY'}
+              <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">Fijo</span>
+            </div>
           </Field>
 
           <Field label="Space" loading={spaces.isFetching} disabled={!workspaceId}>
