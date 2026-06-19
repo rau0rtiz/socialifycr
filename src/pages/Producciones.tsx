@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { produccionesBasePath } from '@/lib/host-mode';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -344,7 +345,7 @@ export default function Producciones() {
                 {filteredSheets.map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => navigate(`/agencia/producciones/${s.id}`)}
+                    onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
                     className="text-left bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all"
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -392,7 +393,7 @@ export default function Producciones() {
           defaultClientId={clientFilter}
           defaultFolderId={currentFolderId}
           onClose={() => setCreating(false)}
-          onCreated={(id) => { setCreating(false); navigate(`/agencia/producciones/${id}`); }}
+          onCreated={(id) => { setCreating(false); navigate(`${produccionesBasePath()}/${id}`); }}
         />
       )}
 

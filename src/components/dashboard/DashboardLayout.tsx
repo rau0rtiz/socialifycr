@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
 import { useBrand } from '@/contexts/BrandContext';
+import { isProduccionesHost } from '@/lib/host-mode';
 
 
 export interface DashboardLayoutProps {
@@ -24,6 +25,21 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
     '--platform-accent': platformBrand.accentColor,
     ...style,
   } as CSSProperties;
+
+  // On the produ.* subdomain we render a chrome-less layout so the
+  // Producciones module looks like a standalone app.
+  if (isProduccionesHost()) {
+    return (
+      <div
+        className="h-[100dvh] w-full bg-background overflow-y-auto overflow-x-hidden overscroll-contain [-webkit-overflow-scrolling:touch] dashboard-bg-decor"
+        style={combinedStyle}
+      >
+        <main className="p-3 sm:p-4 lg:p-6">
+          {children}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>

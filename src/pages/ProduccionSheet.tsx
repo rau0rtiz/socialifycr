@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { produccionesBasePath } from '@/lib/host-mode';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -144,7 +145,7 @@ export default function ProduccionSheet() {
   const handleDelete = async () => {
     if (!confirm('¿Eliminar este sheet? Esta acción no se puede deshacer.')) return;
     await del.mutateAsync(sheetId);
-    navigate('/agencia/producciones');
+    navigate(produccionesBasePath());
   };
 
   const recordedShots = shots.filter(s => s.done);
@@ -163,7 +164,7 @@ export default function ProduccionSheet() {
               {/* Top bar (no print) */}
               <div className="no-print flex items-center justify-between gap-3">
                 <button
-                  onClick={() => navigate('/agencia/producciones')}
+                  onClick={() => navigate(produccionesBasePath())}
                   className="inline-flex items-center gap-1.5 text-sm text-noeval-muted hover:text-noeval-ink transition"
                 >
                   <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Volver a Producciones</span><span className="sm:hidden">Volver</span>
