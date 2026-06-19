@@ -312,7 +312,7 @@ export default function ProduccionSheet() {
               </section>
 
               {/* HOJA DEL DÍA (resumen autogenerado) */}
-              <section className="bg-noeval-cream border border-noeval-line rounded-2xl p-6 md:p-9 daily-sheet">
+              <section className="bg-noeval-cream border border-noeval-line rounded-2xl p-4 sm:p-6 md:p-9 daily-sheet">
                 <div className="flex items-center justify-between gap-3 flex-wrap mb-5 no-print">
                   <div>
                     <span className="inline-block text-[10px] tracking-[0.4em] uppercase border border-noeval-ink text-noeval-ink rounded-full px-3 py-1">
