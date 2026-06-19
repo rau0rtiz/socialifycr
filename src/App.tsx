@@ -140,7 +140,7 @@ class ChunkLoadErrorBoundary extends Component<{ children: ReactNode }, { recove
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" forcedTheme="light">
       <TooltipProvider>
         <BrowserRouter>
           <ScrollToTop />

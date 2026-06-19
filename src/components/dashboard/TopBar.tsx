@@ -6,7 +6,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { ClientSelector } from './ClientSelector';
 import { TeamPresenceBar } from './TeamPresenceBar';
 import { MetaAccountFilter } from './MetaAccountFilter';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+
 import { useBrand } from '@/contexts/BrandContext';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
@@ -78,7 +78,7 @@ export const TopBar = () => {
 
           <TeamPresenceBar />
 
-          <ThemeToggle />
+          
 
           <NotificationsPanel />
 
