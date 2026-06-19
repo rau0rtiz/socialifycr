@@ -145,7 +145,7 @@ export default function ProduccionSheet() {
   const handleDelete = async () => {
     if (!confirm('¿Eliminar este sheet? Esta acción no se puede deshacer.')) return;
     await del.mutateAsync(sheetId);
-    navigate('/agencia/producciones');
+    navigate(produccionesBasePath());
   };
 
   const recordedShots = shots.filter(s => s.done);
