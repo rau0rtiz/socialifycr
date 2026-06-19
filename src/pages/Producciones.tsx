@@ -336,7 +336,13 @@ export default function Producciones() {
                 return (
                   <div
                     key={f.id}
-                    className="group relative bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent transition-all hover:shadow-md"
+                    draggable
+                    onDragStart={(e) => { setDragging({ kind: 'folder', id: f.id }); e.dataTransfer.effectAllowed = 'move'; }}
+                    onDragEnd={() => { setDragging(null); setDropTarget(null); }}
+                    onDragOver={(e) => { if (dragging && dragging.id !== f.id) { e.preventDefault(); setDropTarget(f.id); } }}
+                    onDragLeave={() => setDropTarget(prev => prev === f.id ? null : prev)}
+                    onDrop={(e) => { e.preventDefault(); handleDropOnFolder(f.id); }}
+                    className={`group relative bg-noeval-surface border rounded-xl p-4 transition-all hover:shadow-md cursor-grab active:cursor-grabbing ${dropTarget === f.id ? 'border-noeval-accent ring-2 ring-noeval-accent bg-noeval-accent/5' : 'border-noeval-line hover:border-noeval-accent'} ${dragging?.id === f.id ? 'opacity-50' : ''}`}
                   >
                     <button
                       onClick={() => setFolderPath([...folderPath, { id: f.id, name: f.name }])}
