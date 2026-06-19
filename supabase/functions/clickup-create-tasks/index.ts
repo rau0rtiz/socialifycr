@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
           updated.push({ id: shot.id, task_id: shot.clickup_task_id });
         } else {
           // Create
-          const task = await cuFetch(`/list/${cfg.list_id}/task`, {
+          const task = await cuFetch(`/list/${listId}/task`, {
             method: 'POST',
             body: JSON.stringify({
               name: title,
