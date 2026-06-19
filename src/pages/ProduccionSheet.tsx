@@ -64,6 +64,45 @@ export default function ProduccionSheet() {
   const [clientName, setClientName] = useState<string>('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'recorded'>('all');
   const [sending, setSending] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const shareToken = data?.sheet?.public_share_token || null;
+  const shareEnabled = !!data?.sheet?.public_share_enabled;
+  const shareUrl = shareToken
+    ? `${window.location.origin}/produccion-publica/${shareToken}`
+    : '';
+
+  const handleToggleShare = async (enabled: boolean) => {
+    const patch: any = { id: sheetId, public_share_enabled: enabled };
+    if (enabled && !shareToken) {
+      patch.public_share_token = (globalThis.crypto?.randomUUID?.() ||
+        // Fallback (very old browsers)
+        `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`);
+    }
+    await update.mutateAsync(patch);
+    toast.success(enabled ? 'Link público activado' : 'Link público desactivado');
+  };
+
+  const handleCopyShareUrl = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1800);
+      toast.success('Link copiado');
+    } catch {
+      toast.error('No pude copiar — copialo manualmente');
+    }
+  };
+
+  const handleRegenerateToken = async () => {
+    if (!confirm('Regenerar el link invalidará el actual. ¿Continuar?')) return;
+    const newToken = globalThis.crypto?.randomUUID?.() ||
+      `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+    await update.mutateAsync({ id: sheetId, public_share_token: newToken, public_share_enabled: true } as any);
+    toast.success('Nuevo link generado');
+  };
 
   useEffect(() => { if (data?.sheet) setLocal(data.sheet); }, [data?.sheet]);
 
