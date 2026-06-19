@@ -1859,6 +1859,7 @@ export type Database = {
           name: string
           preferred_region: string | null
           primary_color: string | null
+          producciones_hidden: boolean
           updated_at: string | null
         }
         Insert: {
@@ -1873,6 +1874,7 @@ export type Database = {
           name: string
           preferred_region?: string | null
           primary_color?: string | null
+          producciones_hidden?: boolean
           updated_at?: string | null
         }
         Update: {
@@ -1887,6 +1889,7 @@ export type Database = {
           name?: string
           preferred_region?: string | null
           primary_color?: string | null
+          producciones_hidden?: boolean
           updated_at?: string | null
         }
         Relationships: []

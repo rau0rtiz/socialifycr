@@ -1,0 +1,1 @@
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS producciones_hidden boolean NOT NULL DEFAULT false;
