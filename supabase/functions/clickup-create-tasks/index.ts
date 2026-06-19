@@ -51,6 +51,18 @@ function buildDescription(shot: any, sheet: any): string {
   return lines.join('\n');
 }
 
+function parseClickUpDueDate(value: unknown): number | undefined {
+  if (!value || typeof value !== 'string') return undefined;
+
+  const trimmed = value.trim();
+  const dateOnly = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const timestamp = dateOnly
+    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]), 12).getTime()
+    : new Date(trimmed).getTime();
+
+  return Number.isFinite(timestamp) && timestamp > 0 ? timestamp : undefined;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -182,14 +194,17 @@ Deno.serve(async (req) => {
           updated.push({ id: shot.id, task_id: shot.clickup_task_id });
         } else {
           // Create
+          const dueDate = parseClickUpDueDate(sheet.shoot_date);
+          const payload: Record<string, unknown> = {
+            name: title,
+            description,
+            assignees,
+          };
+          if (dueDate) payload.due_date = dueDate;
+
           const task = await cuFetch(`/list/${listId}/task`, {
             method: 'POST',
-            body: JSON.stringify({
-              name: title,
-              description,
-              assignees,
-              due_date: sheet.shoot_date ? new Date(sheet.shoot_date).getTime() : undefined,
-            }),
+            body: JSON.stringify(payload),
           });
           await admin.from('production_sheet_shots').update({
             clickup_task_id: task.id,
