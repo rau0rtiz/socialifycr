@@ -608,3 +608,113 @@ function CreateSheetDialog({
   );
 }
 
+// ---------- Client folder card with logo upload ----------
+function ClientFolderCard({
+  client, count, onOpen, onConfigure, onLogoUpdated,
+}: {
+  client: { id: string; name: string; logo_url: string | null };
+  count: number;
+  onOpen: () => void;
+  onConfigure: () => void;
+  onLogoUpdated: () => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file: File | null | undefined) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return toast.error('Máx 5MB');
+    setUploading(true);
+    try {
+      const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+      const path = `producciones/client-logos/${client.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('content-images')
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from('content-images').getPublicUrl(path);
+      const { error: updErr } = await supabase
+        .from('clients')
+        .update({ logo_url: data.publicUrl })
+        .eq('id', client.id);
+      if (updErr) throw updErr;
+      toast.success('Logo actualizado');
+      onLogoUpdated();
+    } catch (e: any) {
+      toast.error(e.message || 'Error al subir logo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="group relative bg-noeval-surface border border-noeval-line rounded-xl overflow-hidden hover:border-noeval-accent transition-all hover:shadow-md min-h-[160px] flex flex-col">
+      <button onClick={onOpen} className="text-left w-full flex-1 flex flex-col">
+        {client.logo_url ? (
+          <div className="relative flex-1 bg-white flex items-center justify-center p-4">
+            <img
+              src={client.logo_url}
+              alt={client.name}
+              className="max-h-[110px] max-w-full object-contain"
+              loading="lazy"
+            />
+            <Badge variant="outline" className="absolute top-2 right-2 bg-white/90 border-noeval-line text-noeval-muted text-[10px]">
+              {count}
+            </Badge>
+          </div>
+        ) : (
+          <div className="relative flex-1 p-4 flex flex-col">
+            <div className="flex items-start justify-between">
+              <Folder className="h-10 w-10 text-noeval-accent" />
+              <Badge variant="outline" className="border-noeval-line text-noeval-muted">
+                {count}
+              </Badge>
+            </div>
+            <div className="mt-auto pt-3 font-serif text-xl text-noeval-ink truncate">
+              {client.name}
+            </div>
+          </div>
+        )}
+        {client.logo_url && (
+          <div className="px-3 py-2 border-t border-noeval-line bg-noeval-surface flex items-center justify-between gap-2">
+            <span className="font-medium text-sm text-noeval-ink truncate">{client.name}</span>
+            <span className="text-[10px] text-noeval-muted shrink-0">
+              {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
+            </span>
+          </div>
+        )}
+      </button>
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ''; }}
+      />
+
+      <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
+          title={client.logo_url ? 'Cambiar logo' : 'Subir logo'}
+          disabled={uploading}
+          className="h-7 w-7 rounded-md bg-white/95 border border-noeval-line flex items-center justify-center hover:bg-white shadow-sm"
+        >
+          {uploading
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin text-noeval-muted" />
+            : <ImagePlus className="h-3.5 w-3.5 text-noeval-ink" />}
+        </button>
+      </div>
+
+      <button
+        onClick={(e) => { e.stopPropagation(); onConfigure(); }}
+        title="Configurar ClickUp"
+        className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-white"
+      >
+        <Settings className="h-3.5 w-3.5 text-noeval-muted" />
+      </button>
+    </div>
+  );
+}
+
+
