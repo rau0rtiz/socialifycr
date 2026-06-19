@@ -330,7 +330,7 @@ export default function Producciones() {
 
           {/* Sub-folders (inside a client, not searching) */}
           {clientFilter && !search && subFolders.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               {subFolders.map((f) => {
                 const count = folderSheetCount[f.id] || 0;
                 return (
