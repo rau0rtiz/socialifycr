@@ -622,13 +622,14 @@ function CreateSheetDialog({
 
 // ---------- Client folder card with logo upload ----------
 function ClientFolderCard({
-  client, count, onOpen, onConfigure, onLogoUpdated,
+  client, count, onOpen, onConfigure, onLogoUpdated, onDelete,
 }: {
   client: { id: string; name: string; logo_url: string | null };
   count: number;
   onOpen: () => void;
   onConfigure: () => void;
   onLogoUpdated: () => void;
+  onDelete: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
