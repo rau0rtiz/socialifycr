@@ -213,10 +213,82 @@ export default function ProduccionSheet() {
                 >
                   <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Volver a Producciones</span><span className="sm:hidden">Volver</span>
                 </button>
-                <div className="text-xs text-noeval-muted truncate hidden sm:block">
-                  Producciones › {clientName || '—'} › <span className="text-noeval-ink">{local.title || 'Sin título'}</span>
+                <div className="flex items-center gap-3">
+                  <div className="text-xs text-noeval-muted truncate hidden md:block">
+                    Producciones › {clientName || '—'} › <span className="text-noeval-ink">{local.title || 'Sin título'}</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShareOpen(true)}
+                    className={`gap-1.5 ${shareEnabled ? 'border-noeval-accent text-noeval-accent hover:bg-noeval-accent/10' : ''}`}
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Compartir</span>
+                    {shareEnabled && <span className="h-1.5 w-1.5 rounded-full bg-noeval-accent" />}
+                  </Button>
                 </div>
               </div>
+
+              {/* SHARE DIALOG */}
+              <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Globe className="h-4 w-4" /> Compartir con clientes
+                    </DialogTitle>
+                    <DialogDescription>
+                      Activá el link público para que cualquier persona con el enlace pueda ver esta hoja en modo lectura — sin necesidad de cuenta.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <div>
+                      <div className="text-sm font-medium">Link público</div>
+                      <div className="text-xs text-muted-foreground">
+                        {shareEnabled ? 'Activo — cualquiera con el link puede ver la hoja' : 'Desactivado'}
+                      </div>
+                    </div>
+                    <Switch
+                      checked={shareEnabled}
+                      onCheckedChange={handleToggleShare}
+                      disabled={update.isPending}
+                    />
+                  </div>
+
+                  {shareEnabled && shareUrl && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">URL para compartir</Label>
+                      <div className="flex items-center gap-2">
+                        <Input value={shareUrl} readOnly className="text-xs font-mono" onFocus={(e) => e.currentTarget.select()} />
+                        <Button size="sm" onClick={handleCopyShareUrl} className="shrink-0">
+                          {shareCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <a
+                          href={shareUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-noeval-muted hover:text-noeval-ink inline-flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-3 w-3" /> Abrir vista pública
+                        </a>
+                        <button
+                          onClick={handleRegenerateToken}
+                          className="text-xs text-muted-foreground hover:text-destructive transition"
+                        >
+                          Regenerar link
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed pt-1">
+                        Quien tenga el link ve título, fecha, locación, equipo, piezas, vestuario y notas. No puede editar nada. Desactivá el switch para revocar el acceso al instante.
+                      </p>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+
 
               {/* CLAQUETA HEADER */}
               <div className="noeval-slate relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-9">
