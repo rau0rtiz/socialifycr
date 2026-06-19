@@ -292,10 +292,10 @@
   border-radius: 50%;
   background: #fff;
   opacity: 0.75;
-  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  animation: grabado-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
-@keyframes ping {
+@keyframes grabado-ping {
   75%, 100% { transform: scale(2); opacity: 0; }
 }
 .noeval-scope .shot-card { transition: border-color .18s ease, box-shadow .18s ease, background-color .25s ease; }
