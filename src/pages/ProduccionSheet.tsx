@@ -28,6 +28,7 @@ const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
   { value: 'story', label: 'Story', icon: '📱' },
   { value: 'post', label: 'Post', icon: '🖼️' },
+  { value: 'foto', label: 'Foto', icon: '📷' },
   { value: 'tiktok', label: 'TikTok', icon: '🎵' },
   { value: 'short', label: 'Short', icon: '▶️' },
   { value: 'otro', label: 'Otro', icon: '🎞️' },
