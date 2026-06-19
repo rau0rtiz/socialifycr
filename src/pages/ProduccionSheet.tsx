@@ -510,17 +510,17 @@ function PieceCard({
   if (shot.done && !expanded) {
     // COLLAPSED RECORDED CARD
     return (
-      <div className="relative bg-noeval-surface border border-noeval-line/60 rounded-xl p-4 opacity-90 hover:opacity-100 transition group">
-        <div className="grabado-stamp">Grabado</div>
-        <div className="flex items-center gap-3 pr-32">
-          <span className="font-serif text-xl text-noeval-muted w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
-          <span className="inline-flex items-center gap-1.5 text-[10px] tracking-[0.25em] uppercase bg-noeval-ink text-noeval-cream rounded-full px-2.5 py-1">
-            {meta.icon} {meta.label}
+      <div className="relative bg-noeval-surface border border-noeval-line/60 rounded-xl p-3 sm:p-4 opacity-90 hover:opacity-100 transition group">
+        <div className="grabado-stamp hidden sm:block">Grabado</div>
+        <div className="flex items-center gap-2 sm:gap-3 sm:pr-32">
+          <span className="font-serif text-lg sm:text-xl text-noeval-muted w-7 sm:w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
+          <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.25em] uppercase bg-noeval-ink text-noeval-cream rounded-full px-2 sm:px-2.5 py-1 shrink-0">
+            {meta.icon} <span className="hidden xs:inline">{meta.label}</span>
           </span>
           {platformLabel && (
-            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-muted">{platformLabel}</span>
+            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-muted hidden md:inline">{platformLabel}</span>
           )}
-          <div className="font-serif text-lg text-noeval-ink truncate flex-1">
+          <div className="font-serif text-base sm:text-lg text-noeval-ink truncate flex-1 min-w-0">
             {local.concept || '(sin concepto)'}
           </div>
           {recordedTime && (
@@ -530,12 +530,13 @@ function PieceCard({
           )}
           <button
             onClick={() => setExpanded(true)}
-            className="no-print text-noeval-muted hover:text-noeval-ink p-1"
+            className="no-print text-noeval-muted hover:text-noeval-ink p-1 shrink-0"
             title="Expandir"
           >
             <ChevronDown className="h-4 w-4" />
           </button>
         </div>
+
         {shot.clickup_url && (
           <a
             href={shot.clickup_url}
