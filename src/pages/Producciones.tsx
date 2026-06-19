@@ -649,10 +649,10 @@ function ClientFolderCard({
   };
 
   return (
-    <div className="group relative bg-noeval-surface border border-noeval-line rounded-xl overflow-hidden hover:border-noeval-accent transition-all hover:shadow-md min-h-[160px] flex flex-col">
+    <div className="group relative bg-noeval-surface border border-noeval-line rounded-xl overflow-hidden hover:border-noeval-accent transition-all hover:shadow-md flex flex-col">
       <button onClick={onOpen} className="text-left w-full flex-1 flex flex-col">
         {client.logo_url ? (
-          <div className="relative flex-1 bg-white overflow-hidden">
+          <div className="relative aspect-square w-full bg-white overflow-hidden">
             <img
               src={client.logo_url}
               alt={client.name}
@@ -664,7 +664,7 @@ function ClientFolderCard({
             </Badge>
           </div>
         ) : (
-          <div className="relative flex-1 p-4 flex flex-col">
+          <div className="relative aspect-square w-full p-4 flex flex-col">
             <div className="flex items-start justify-between">
               <Folder className="h-10 w-10 text-noeval-accent" />
               <Badge variant="outline" className="border-noeval-line text-noeval-muted">
