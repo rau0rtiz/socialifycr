@@ -158,7 +158,7 @@ export default function ProduccionSheet() {
           <div className="py-24 text-center text-noeval-muted">Cargando…</div>
         ) : (
           <div className="print-area">
-            <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-6">
+            <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6 pb-24 md:pb-6">
 
               {/* Top bar (no print) */}
               <div className="no-print flex items-center justify-between gap-3">
@@ -166,35 +166,35 @@ export default function ProduccionSheet() {
                   onClick={() => navigate('/agencia/producciones')}
                   className="inline-flex items-center gap-1.5 text-sm text-noeval-muted hover:text-noeval-ink transition"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Volver a Producciones
+                  <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Volver a Producciones</span><span className="sm:hidden">Volver</span>
                 </button>
-                <div className="text-xs text-noeval-muted truncate">
+                <div className="text-xs text-noeval-muted truncate hidden sm:block">
                   Producciones › {clientName || '—'} › <span className="text-noeval-ink">{local.title || 'Sin título'}</span>
                 </div>
               </div>
 
               {/* CLAQUETA HEADER */}
-              <div className="noeval-slate relative overflow-hidden rounded-2xl p-6 md:p-9">
+              <div className="noeval-slate relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-9">
                 <div className="noeval-stripe absolute inset-x-0 top-0 h-2.5" />
                 <div className="mt-3 flex items-center gap-2 text-noeval-taupe text-[10px] tracking-[0.42em] uppercase font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent animate-pulse" />
-                  Hoja de producción · {clientName}
+                  <span className="truncate">Hoja · {clientName}</span>
                 </div>
 
                 <input
                   value={local.title || ''}
                   onChange={(e) => setLocal({ ...local, title: e.target.value })}
                   placeholder="Título de la producción"
-                  className="mt-2 w-full bg-transparent font-serif text-3xl md:text-5xl uppercase tracking-[0.04em] text-noeval-cream placeholder:text-noeval-taupe/40 outline-none border-0"
+                  className="mt-2 w-full bg-transparent font-serif text-2xl sm:text-3xl md:text-5xl uppercase tracking-[0.04em] text-noeval-cream placeholder:text-noeval-taupe/40 outline-none border-0"
                 />
 
-                <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <InlineField label="Fecha">
                     <input
                       type="date"
                       value={local.shoot_date || ''}
                       onChange={(e) => setLocal({ ...local, shoot_date: e.target.value || null })}
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm"
+                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto"
                     />
                   </InlineField>
                   <InlineField label="Locación">
@@ -202,7 +202,7 @@ export default function ProduccionSheet() {
                       value={local.location || ''}
                       onChange={(e) => setLocal({ ...local, location: e.target.value })}
                       placeholder="—"
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm placeholder:text-noeval-taupe/40"
+                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto placeholder:text-noeval-taupe/40"
                     />
                   </InlineField>
                   <InlineField label="Responsable">
@@ -210,7 +210,7 @@ export default function ProduccionSheet() {
                       value={local.producer_name || ''}
                       onChange={(e) => setLocal({ ...local, producer_name: e.target.value })}
                       placeholder="—"
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm placeholder:text-noeval-taupe/40"
+                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto placeholder:text-noeval-taupe/40"
                     />
                   </InlineField>
                 </div>
@@ -219,7 +219,7 @@ export default function ProduccionSheet() {
                 <div className="mt-6 flex flex-col md:flex-row md:items-end gap-4">
                   <div>
                     <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-taupe">Grabadas</div>
-                    <div className="font-serif text-4xl md:text-5xl text-noeval-cream leading-none mt-1">
+                    <div className="font-serif text-3xl sm:text-4xl md:text-5xl text-noeval-cream leading-none mt-1">
                       <span className="text-noeval-accent">{recorded}</span>
                       <span className="text-noeval-taupe/60"> / {total}</span>
                     </div>
@@ -234,6 +234,7 @@ export default function ProduccionSheet() {
                   </div>
                 </div>
               </div>
+
 
               {/* TABLERO DE PIEZAS */}
               <section>
