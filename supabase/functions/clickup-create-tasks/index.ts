@@ -80,22 +80,40 @@ Deno.serve(async (req) => {
     }
 
     const reqBody = await req.json();
-    const { sheet_id, list_id: overrideListId, list_name: overrideListName, space_id: overrideSpaceId, space_name: overrideSpaceName } = reqBody || {};
+    const {
+      sheet_id,
+      list_id: overrideListId,
+      list_name: overrideListName,
+      space_id: overrideSpaceId,
+      space_name: overrideSpaceName,
+      shot_ids,
+      assignee_id,
+    } = reqBody || {};
     if (!sheet_id || typeof sheet_id !== 'string') {
       throw new Error('sheet_id requerido');
     }
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const [sheetRes, shotsRes] = await Promise.all([
-      admin.from('production_sheets').select('*').eq('id', sheet_id).maybeSingle(),
-      admin.from('production_sheet_shots').select('*').eq('sheet_id', sheet_id).eq('done', true).order('sort_order'),
-    ]);
+    const sheetRes = await admin.from('production_sheets').select('*').eq('id', sheet_id).maybeSingle();
     if (sheetRes.error || !sheetRes.data) throw new Error('Sheet no encontrada');
     const sheet = sheetRes.data;
+
+    // If client passed explicit shot_ids, honor exactly that subset; otherwise fall back to done=true.
+    let shotsQuery = admin
+      .from('production_sheet_shots')
+      .select('*')
+      .eq('sheet_id', sheet_id)
+      .order('sort_order');
+    if (Array.isArray(shot_ids) && shot_ids.length > 0) {
+      shotsQuery = shotsQuery.in('id', shot_ids);
+    } else {
+      shotsQuery = shotsQuery.eq('done', true);
+    }
+    const shotsRes = await shotsQuery;
     const recordedShots = shotsRes.data || [];
 
     if (recordedShots.length === 0) {
-      throw new Error('No hay piezas grabadas para enviar. Marca tarjetas como grabadas primero.');
+      throw new Error('No hay piezas para enviar.');
     }
 
     // Prefer explicit override (from per-sheet picker), fall back to the sheet's stored list, then client-level config.
@@ -127,16 +145,20 @@ Deno.serve(async (req) => {
       }).eq('id', sheet_id);
     }
 
-    // Resolve assignees from the chosen list
-    const membersRes = await cuFetch(`/list/${listId}/member`);
-    const emailToId = new Map<string, number>();
-    for (const m of (membersRes.members || [])) {
-      if (m.email) emailToId.set(m.email.toLowerCase(), m.id);
-    }
-    const defaultAssignees: number[] = [];
-    for (const e of defaultAssigneeEmails) {
-      const id = emailToId.get(String(e).toLowerCase());
-      if (id) defaultAssignees.push(id);
+    // Resolve assignees: explicit picker selection wins; otherwise fall back to client default emails.
+    let assignees: number[] = [];
+    if (typeof assignee_id === 'number' && Number.isFinite(assignee_id)) {
+      assignees = [assignee_id];
+    } else {
+      const membersRes = await cuFetch(`/list/${listId}/member`);
+      const emailToId = new Map<string, number>();
+      for (const m of (membersRes.members || [])) {
+        if (m.email) emailToId.set(m.email.toLowerCase(), m.id);
+      }
+      for (const e of defaultAssigneeEmails) {
+        const id = emailToId.get(String(e).toLowerCase());
+        if (id) assignees.push(id);
+      }
     }
 
     const created: any[] = [];
@@ -165,7 +187,7 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               name: title,
               description,
-              assignees: defaultAssignees,
+              assignees,
               due_date: sheet.shoot_date ? new Date(sheet.shoot_date).getTime() : undefined,
             }),
           });
