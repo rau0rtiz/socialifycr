@@ -104,12 +104,16 @@ export default function ProduccionPublica() {
 
   return (
     <div
-      className="noeval-scope min-h-[100dvh] w-full overflow-x-hidden"
+      className="noeval-scope fixed inset-0 w-full overflow-y-auto overflow-x-hidden"
       style={{
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
+        touchAction: 'pan-y',
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
+
       {/* HEADER */}
       <header className="bg-noeval-ink text-noeval-cream relative">
         <div className="h-1 bg-noeval-accent" />
