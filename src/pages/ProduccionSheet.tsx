@@ -414,11 +414,11 @@ export default function ProduccionSheet() {
               </section>
 
               {/* FOOTER ACTIONS */}
-              <div className="no-print flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-noeval-line">
-                <Button variant="ghost" size="sm" onClick={handleDelete} className="text-destructive hover:text-destructive">
+              <div className="no-print flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-4 border-t border-noeval-line">
+                <Button variant="ghost" size="sm" onClick={handleDelete} className="text-destructive hover:text-destructive self-start">
                   <Trash2 className="h-3.5 w-3.5 mr-1" /> Eliminar sheet
                 </Button>
-                <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                   {alreadySent > 0 && (
                     <span className="text-xs text-noeval-muted">
                       {alreadySent} ya enviada{alreadySent !== 1 ? 's' : ''} a ClickUp
@@ -427,7 +427,7 @@ export default function ProduccionSheet() {
                   <Button
                     onClick={handleSendClickUp}
                     disabled={sending || recordedShots.length === 0}
-                    className="bg-noeval-accent text-white hover:bg-noeval-accent/90 disabled:opacity-50"
+                    className="bg-noeval-accent text-white hover:bg-noeval-accent/90 disabled:opacity-50 w-full sm:w-auto"
                   >
                     {sending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Send className="h-4 w-4 mr-1.5" />}
                     Enviar {pendingToSend > 0 ? `${pendingToSend} pieza${pendingToSend !== 1 ? 's' : ''}` : 'grabadas'} a ClickUp
@@ -435,12 +435,22 @@ export default function ProduccionSheet() {
                 </div>
               </div>
             </div>
+
+            {/* MOBILE FAB · Nueva pieza */}
+            <button
+              onClick={handleAddPiece}
+              className="no-print sm:hidden fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full bg-noeval-accent text-white shadow-lg shadow-noeval-accent/40 flex items-center justify-center active:scale-95 transition"
+              aria-label="Nueva pieza"
+            >
+              <Plus className="h-6 w-6" strokeWidth={2.5} />
+            </button>
           </div>
         )}
       </div>
     </DashboardLayout>
   );
 }
+
 
 // ---------- Piece Card ----------
 function PieceCard({
