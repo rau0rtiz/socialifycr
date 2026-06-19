@@ -50,10 +50,10 @@ const useClients = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name')
+        .select('id, name, logo_url')
         .order('name');
       if (error) throw error;
-      return data as { id: string; name: string }[];
+      return data as { id: string; name: string; logo_url: string | null }[];
     },
   });
 
