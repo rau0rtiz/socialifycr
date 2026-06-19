@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Plus, Folder, Search, Trash2, FileText, Film,
-  Calendar, MapPin, User as UserIcon, Settings, Loader2,
+  Calendar, MapPin, User as UserIcon, Settings, Loader2, ImagePlus,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -50,10 +50,10 @@ const useClients = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name')
+        .select('id, name, logo_url')
         .order('name');
       if (error) throw error;
-      return data as { id: string; name: string }[];
+      return data as { id: string; name: string; logo_url: string | null }[];
     },
   });
 
@@ -228,38 +228,19 @@ export default function Producciones() {
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
                   return (
-                    <div
+                    <ClientFolderCard
                       key={c.id}
-                      className="group relative bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent transition-all hover:shadow-md"
-                    >
-                      <button
-                        onClick={() => setClientFilter(c.id)}
-                        className="text-left w-full"
-                      >
-                        <div className="flex items-start justify-between">
-                          <Folder className="h-8 w-8 text-noeval-accent" />
-                          <Badge variant="outline" className="border-noeval-line text-noeval-muted">
-                            {count}
-                          </Badge>
-                        </div>
-                        <div className="mt-3 font-medium text-noeval-ink truncate pr-6">{c.name}</div>
-                        <div className="text-xs text-noeval-muted mt-1">
-                          {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
-                        </div>
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfigClient(c); }}
-                        title="Configurar ClickUp"
-                        className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-noeval-taupe/40"
-                      >
-                        <Settings className="h-3.5 w-3.5 text-noeval-muted" />
-                      </button>
-                    </div>
+                      client={c}
+                      count={count}
+                      onOpen={() => setClientFilter(c.id)}
+                      onConfigure={() => setConfigClient(c)}
+                      onLogoUpdated={() => refetchClients()}
+                    />
                   );
                 })}
                 <button
                   onClick={() => setCreatingClient(true)}
-                  className="bg-noeval-surface/50 border-2 border-dashed border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:bg-noeval-surface transition-all flex flex-col items-center justify-center min-h-[120px] text-noeval-muted hover:text-noeval-accent"
+                  className="bg-noeval-surface/50 border-2 border-dashed border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:bg-noeval-surface transition-all flex flex-col items-center justify-center min-h-[160px] text-noeval-muted hover:text-noeval-accent"
                 >
                   <Plus className="h-8 w-8 mb-1.5" />
                   <span className="text-sm font-medium">Nuevo cliente</span>
@@ -626,4 +607,114 @@ function CreateSheetDialog({
     </Dialog>
   );
 }
+
+// ---------- Client folder card with logo upload ----------
+function ClientFolderCard({
+  client, count, onOpen, onConfigure, onLogoUpdated,
+}: {
+  client: { id: string; name: string; logo_url: string | null };
+  count: number;
+  onOpen: () => void;
+  onConfigure: () => void;
+  onLogoUpdated: () => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file: File | null | undefined) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return toast.error('Máx 5MB');
+    setUploading(true);
+    try {
+      const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+      const path = `producciones/client-logos/${client.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('content-images')
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from('content-images').getPublicUrl(path);
+      const { error: updErr } = await supabase
+        .from('clients')
+        .update({ logo_url: data.publicUrl })
+        .eq('id', client.id);
+      if (updErr) throw updErr;
+      toast.success('Logo actualizado');
+      onLogoUpdated();
+    } catch (e: any) {
+      toast.error(e.message || 'Error al subir logo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="group relative bg-noeval-surface border border-noeval-line rounded-xl overflow-hidden hover:border-noeval-accent transition-all hover:shadow-md min-h-[160px] flex flex-col">
+      <button onClick={onOpen} className="text-left w-full flex-1 flex flex-col">
+        {client.logo_url ? (
+          <div className="relative flex-1 bg-white flex items-center justify-center p-4">
+            <img
+              src={client.logo_url}
+              alt={client.name}
+              className="max-h-[110px] max-w-full object-contain"
+              loading="lazy"
+            />
+            <Badge variant="outline" className="absolute top-2 right-2 bg-white/90 border-noeval-line text-noeval-muted text-[10px]">
+              {count}
+            </Badge>
+          </div>
+        ) : (
+          <div className="relative flex-1 p-4 flex flex-col">
+            <div className="flex items-start justify-between">
+              <Folder className="h-10 w-10 text-noeval-accent" />
+              <Badge variant="outline" className="border-noeval-line text-noeval-muted">
+                {count}
+              </Badge>
+            </div>
+            <div className="mt-auto pt-3 font-serif text-xl text-noeval-ink truncate">
+              {client.name}
+            </div>
+          </div>
+        )}
+        {client.logo_url && (
+          <div className="px-3 py-2 border-t border-noeval-line bg-noeval-surface flex items-center justify-between gap-2">
+            <span className="font-medium text-sm text-noeval-ink truncate">{client.name}</span>
+            <span className="text-[10px] text-noeval-muted shrink-0">
+              {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
+            </span>
+          </div>
+        )}
+      </button>
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ''; }}
+      />
+
+      <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
+          title={client.logo_url ? 'Cambiar logo' : 'Subir logo'}
+          disabled={uploading}
+          className="h-7 w-7 rounded-md bg-white/95 border border-noeval-line flex items-center justify-center hover:bg-white shadow-sm"
+        >
+          {uploading
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin text-noeval-muted" />
+            : <ImagePlus className="h-3.5 w-3.5 text-noeval-ink" />}
+        </button>
+      </div>
+
+      <button
+        onClick={(e) => { e.stopPropagation(); onConfigure(); }}
+        title="Configurar ClickUp"
+        className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-white"
+      >
+        <Settings className="h-3.5 w-3.5 text-noeval-muted" />
+      </button>
+    </div>
+  );
+}
+
 
