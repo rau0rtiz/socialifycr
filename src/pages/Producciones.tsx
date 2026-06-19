@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -12,27 +12,22 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle,
-} from '@/components/ui/sheet';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent,
 } from '@/components/ui/dialog';
 import {
-  ArrowLeft, Plus, Folder, Search, Trash2, Send, Check, FileText, Film,
-  Calendar, MapPin, Clock, User as UserIcon, GripVertical, Settings, ExternalLink, Loader2,
+  ArrowLeft, Plus, Folder, Search, Trash2, FileText, Film,
+  Calendar, MapPin, User as UserIcon, Settings, Loader2,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import {
-  useProductionSheets, useProductionSheet, useCreateSheet, useUpdateSheet,
-  useDeleteSheet, useUpsertChild, useDeleteChild,
+  useProductionSheets, useCreateSheet, useUpdateSheet,
   type SheetStatus, type ProductionSheet,
 } from '@/hooks/use-production-sheets';
 import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
 import {
-  useProductionFolders, useCreateFolder, useDeleteFolder, useRenameFolder, useMoveSheet,
-  type ProductionFolder,
+  useProductionFolders, useCreateFolder, useDeleteFolder, useRenameFolder,
 } from '@/hooks/use-production-folders';
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
