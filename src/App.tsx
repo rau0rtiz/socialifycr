@@ -151,6 +151,37 @@ const App = () => (
               <Sonner />
               <ChunkLoadErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
+                  {getHostMode() === 'producciones' ? (
+                  <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/accept-invite" element={<AcceptInvite />} />
+                    <Route path="/invitacion/:token" element={<Invitacion />} />
+                    <Route path="/oauth/meta/callback" element={<MetaOAuthCallback />} />
+                    <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
+                    <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
+                    <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
+                    <Route path="/" element={<Navigate to="/producciones" replace />} />
+                    <Route path="/producciones" element={
+                      <ProtectedRoute>
+                        <RoleProtectedRoute requireAgency>
+                          <Producciones />
+                        </RoleProtectedRoute>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/producciones/:sheetId" element={
+                      <ProtectedRoute>
+                        <RoleProtectedRoute requireAgency>
+                          <ProduccionSheet />
+                        </RoleProtectedRoute>
+                      </ProtectedRoute>
+                    } />
+                    {/* Legacy paths from main host also work here */}
+                    <Route path="/agencia/producciones" element={<Navigate to="/producciones" replace />} />
+                    <Route path="/agencia/producciones/:sheetId" element={<Navigate to="/producciones" replace />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                  ) : (
                   <Routes>
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
@@ -285,6 +316,7 @@ const App = () => (
                   <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
                   <Route path="*" element={<NotFound />} />
                   </Routes>
+                  )}
                 </Suspense>
               </ChunkLoadErrorBoundary>
             </BrandProvider>
