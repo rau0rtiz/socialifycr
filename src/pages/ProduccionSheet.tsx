@@ -471,6 +471,7 @@ function PieceCard({
   onDelete: () => void;
 }) {
   const [expanded, setExpanded] = useState(!shot.done);
+  const [detailsOpen, setDetailsOpen] = useState(true);
   const meta = typeMeta(shot.content_type);
   const platformLabel = PLATFORMS.find(p => p.value === shot.platform)?.label;
 
