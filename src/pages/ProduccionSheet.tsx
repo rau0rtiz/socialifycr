@@ -656,8 +656,11 @@ function PieceCard({
       </div>
 
       {/* Detalles avanzados: colapsable en móvil, siempre abierto en sm+ */}
-      <details className="mb-3 sm:mb-4 details-responsive">
-        <summary className="sm:hidden cursor-pointer text-[10px] tracking-[0.3em] uppercase text-noeval-muted font-semibold list-none flex items-center gap-1.5 py-2 select-none">
+      <details className="mb-3 sm:mb-4 details-responsive" open={detailsOpen}>
+        <summary
+          className="sm:hidden cursor-pointer text-[10px] tracking-[0.3em] uppercase text-noeval-muted font-semibold list-none flex items-center gap-1.5 py-2 select-none"
+          onClick={(e) => { e.preventDefault(); setDetailsOpen(!detailsOpen); }}
+        >
           <ChevronDown className="h-3.5 w-3.5 details-chevron transition-transform" />
           Hook · CTA · Notas técnicas
         </summary>
