@@ -162,6 +162,7 @@ const App = () => (
                     <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
                     <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
                     <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
+                    <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
                     <Route path="/" element={<Navigate to="/producciones" replace />} />
                     <Route path="/producciones" element={
                       <ProtectedRoute>
