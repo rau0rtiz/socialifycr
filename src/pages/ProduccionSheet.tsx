@@ -683,14 +683,14 @@ function PieceCard({
     // COLLAPSED RECORDED CARD
     return (
       <div className="relative bg-noeval-surface border border-noeval-line/60 rounded-xl p-3 sm:p-4 opacity-90 hover:opacity-100 transition group">
-        <div className="grabado-stamp hidden sm:block">
-          <span className="grabado-stamp-dot">
-            <span className="grabado-stamp-ping" />
-          </span>
-          Grabado
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3 sm:pr-28">
+        <div className="flex items-center gap-2 sm:gap-3">
           <span className="font-serif text-lg sm:text-xl text-noeval-muted w-7 sm:w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
+          <div className="grabado-stamp hidden sm:inline-flex">
+            <span className="grabado-stamp-dot">
+              <span className="grabado-stamp-ping" />
+            </span>
+            Grabado
+          </div>
           <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.25em] uppercase bg-noeval-ink text-noeval-cream rounded-full px-2 sm:px-2.5 py-1 shrink-0">
             {meta.icon} <span className="hidden xs:inline">{meta.label}</span>
           </span>
@@ -726,7 +726,7 @@ function PieceCard({
             href={shot.clickup_url}
             target="_blank"
             rel="noreferrer"
-            className="no-print absolute top-3 left-3 text-[10px] tracking-[0.2em] uppercase text-noeval-accent hover:underline inline-flex items-center gap-1"
+            className="no-print absolute top-3 right-3 text-[10px] tracking-[0.2em] uppercase text-noeval-accent hover:underline inline-flex items-center gap-1"
           >
             ClickUp <ExternalLink className="h-3 w-3" />
           </a>
@@ -740,14 +740,6 @@ function PieceCard({
     <div className={`relative bg-noeval-surface border-2 rounded-xl p-3 sm:p-5 transition ${
       shot.done ? 'border-noeval-accent/40 bg-noeval-accent/5' : 'border-noeval-line hover:border-noeval-ink/30'
     }`}>
-      {shot.done && (
-        <div className="grabado-stamp hidden sm:block">
-          <span className="grabado-stamp-dot">
-            <span className="grabado-stamp-ping" />
-          </span>
-          Grabado
-        </div>
-      )}
 
       {/* Header */}
       <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
@@ -777,6 +769,14 @@ function PieceCard({
             <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent">
               ✓ {recordedTime}
             </span>
+          )}
+          {shot.done && (
+            <div className="grabado-stamp">
+              <span className="grabado-stamp-dot">
+                <span className="grabado-stamp-ping" />
+              </span>
+              Grabado
+            </div>
           )}
         </div>
         <div className="flex items-center gap-0.5 sm:gap-1 no-print shrink-0">
