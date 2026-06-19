@@ -45,6 +45,7 @@ const AdFrameworkDetail = lazy(() => import("./pages/AdFrameworkDetail"));
 const AdCampaignCanvas = lazy(() => import("./pages/AdCampaignCanvas"));
 const AgencyCRM = lazy(() => import("./pages/AgencyCRM"));
 const Producciones = lazy(() => import("./pages/Producciones"));
+const ProduccionSheet = lazy(() => import("./pages/ProduccionSheet"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
