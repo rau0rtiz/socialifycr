@@ -58,11 +58,11 @@ const useClients = () =>
   });
 
 export default function Producciones() {
+  const navigate = useNavigate();
   const [clientFilter, setClientFilter] = useState<string | null>(null);
   const [folderPath, setFolderPath] = useState<{ id: string; name: string }[]>([]);
   const currentFolderId = folderPath.length ? folderPath[folderPath.length - 1].id : null;
   const [search, setSearch] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [creatingClient, setCreatingClient] = useState(false);
   const [configClient, setConfigClient] = useState<{ id: string; name: string } | null>(null);
