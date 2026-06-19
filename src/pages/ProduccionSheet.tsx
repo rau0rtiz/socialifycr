@@ -544,12 +544,16 @@ function PieceCard({
           </button>
         </div>
 
-        {local.tech_notes && (
-          <div className="mt-2.5 pt-2.5 border-t border-noeval-line/40">
-            <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-muted mb-1">🎥 Notas técnicas</div>
-            <div className="text-sm text-noeval-ink whitespace-pre-wrap font-serif leading-snug">{local.tech_notes}</div>
-          </div>
-        )}
+        <div className="mt-2.5 pt-2.5 border-t border-noeval-line/40">
+          <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-muted mb-1">🎥 Notas técnicas</div>
+          <Textarea
+            value={local.tech_notes}
+            onChange={(e) => setLocal({ ...local, tech_notes: e.target.value })}
+            placeholder="Cámara, ángulos, wardrobe, props, locación específica…"
+            rows={2}
+            className="bg-noeval-cream/50 border-noeval-line/60 text-sm resize-y min-h-[60px]"
+          />
+        </div>
 
         {shot.clickup_url && (
           <a
