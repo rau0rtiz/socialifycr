@@ -574,6 +574,21 @@ export default function ProduccionSheet() {
           </div>
         )}
       </div>
+
+      {data?.sheet && (
+        <SendToClickUpDialog
+          sheetId={sheetId}
+          sheetTitle={data.sheet.title || ''}
+          defaults={{
+            spaceId: data.sheet.clickup_space_id,
+            spaceName: data.sheet.clickup_space_name,
+            listId: data.sheet.clickup_list_id,
+            listName: data.sheet.clickup_list_name,
+          }}
+          open={clickupOpen}
+          onClose={() => setClickupOpen(false)}
+        />
+      )}
     </DashboardLayout>
   );
 }
