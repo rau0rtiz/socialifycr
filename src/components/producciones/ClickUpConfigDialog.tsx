@@ -68,9 +68,20 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
     enabled: open,
     queryFn: async () => {
       const d = await callMeta('workspaces');
-      return (d.teams || []).map((t: any) => ({ id: t.id, name: t.name }));
+      const all = (d.teams || []).map((t: any) => ({ id: t.id, name: t.name }));
+      // Solo SOCIALIFY como workspace por defecto
+      const socialify = all.filter((t: Option) => /socialify/i.test(t.name));
+      return socialify.length ? socialify : all;
     },
   });
+
+  // Auto-seleccionar SOCIALIFY al cargar
+  useEffect(() => {
+    if (!workspaceId && workspaces.data && workspaces.data.length > 0) {
+      const sf = workspaces.data.find(w => /socialify/i.test(w.name)) || workspaces.data[0];
+      setWorkspaceId(sf.id);
+    }
+  }, [workspaces.data, workspaceId]);
 
   const spaces = useQuery<Option[]>({
     queryKey: ['cu-spaces', workspaceId],
