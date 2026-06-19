@@ -363,7 +363,7 @@ export default function Producciones() {
                 {filteredSheets.map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => setEditingId(s.id)}
+                    onClick={() => navigate(`/agencia/producciones/${s.id}`)}
                     className="text-left bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all"
                   >
                     <div className="flex items-start justify-between gap-2">
