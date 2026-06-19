@@ -27,6 +27,7 @@ import {
   useUpsertChild, useDeleteChild,
   type ProductionSheet, type SheetShot,
 } from '@/hooks/use-production-sheets';
+import { SendToClickUpDialog } from '@/components/producciones/SendToClickUpDialog';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
