@@ -164,7 +164,7 @@ export default function ProduccionSheet() {
               {/* Top bar (no print) */}
               <div className="no-print flex items-center justify-between gap-3">
                 <button
-                  onClick={() => navigate('/agencia/producciones')}
+                  onClick={() => navigate(produccionesBasePath())}
                   className="inline-flex items-center gap-1.5 text-sm text-noeval-muted hover:text-noeval-ink transition"
                 >
                   <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Volver a Producciones</span><span className="sm:hidden">Volver</span>
