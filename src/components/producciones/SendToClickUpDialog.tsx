@@ -163,6 +163,15 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
     },
   });
 
+  useEffect(() => {
+    if (!open || !listId || !lists.data) return;
+    const exists = lists.data.some((l) => l.id === listId);
+    if (!exists) {
+      setListId('');
+      toast.error('La lista guardada ya no existe en ClickUp. Selecciona o crea otra lista.');
+    }
+  }, [open, listId, lists.data]);
+
   // Load assignable members of the chosen list
   const members = useQuery<Member[]>({
     queryKey: ['cu-list-members', listId],
@@ -240,6 +249,8 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
       if (f > 0) {
         const firstErr = resp?.failed?.[0]?.error || 'error desconocido';
         toast.error(`${f} fallaron · ${c} creadas · ${u} actualizadas. Detalle: ${firstErr}`, { duration: 12000 });
+      } else if (c === 0 && u === 0) {
+        toast.error('No se creó ninguna task. Revisá que las piezas seleccionadas no hayan sido enviadas antes.');
       } else {
         toast.success(`${c} creada(s) · ${u} actualizada(s)`);
       }
