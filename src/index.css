@@ -243,21 +243,60 @@
 /* ===== Producciones: stamp "GRABADO" ===== */
 .noeval-scope .grabado-stamp {
   position: absolute;
-  top: 14px;
-  right: -28px;
-  transform: rotate(14deg);
-  border: 3px solid var(--noeval-accent);
-  color: var(--noeval-accent);
-  font-family: "Nunito", system-ui, sans-serif;
-  font-weight: 900;
-  letter-spacing: 0.22em;
-  font-size: 11px;
-  padding: 4px 32px;
-  background: rgba(255,255,255,.65);
-  pointer-events: none;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 24px rgba(220, 38, 38, 0.35);
+  color: #fff;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  box-shadow: 0 0 0 1px rgba(255,92,38,.15) inset;
-  opacity: .9;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.noeval-scope .grabado-stamp-dot {
+  position: relative;
+  display: inline-flex;
+  width: 7px;
+  height: 7px;
+}
+
+.noeval-scope .grabado-stamp-dot::before {
+  content: '';
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+}
+
+.noeval-scope .grabado-stamp-ping {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.75;
+  animation: grabado-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes grabado-ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
 }
 .noeval-scope .shot-card { transition: border-color .18s ease, box-shadow .18s ease, background-color .25s ease; }
 .noeval-scope .shot-card:hover { border-color: var(--noeval-accent); box-shadow: 0 8px 24px -16px rgba(33,33,33,.35); }
