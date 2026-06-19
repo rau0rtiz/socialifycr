@@ -403,7 +403,10 @@ export default function Producciones() {
                   <button
                     key={s.id}
                     onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
-                    className="text-left bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all"
+                    draggable={!!clientFilter}
+                    onDragStart={(e) => { setDragging({ kind: 'sheet', id: s.id }); e.dataTransfer.effectAllowed = 'move'; }}
+                    onDragEnd={() => { setDragging(null); setDropTarget(null); }}
+                    className={`text-left bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all ${clientFilter ? 'cursor-grab active:cursor-grabbing' : ''} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <FileText className="h-5 w-5 text-noeval-accent shrink-0 mt-0.5" />
