@@ -393,7 +393,7 @@ export default function Producciones() {
           defaultClientId={clientFilter}
           defaultFolderId={currentFolderId}
           onClose={() => setCreating(false)}
-          onCreated={(id) => { setCreating(false); navigate(`/agencia/producciones/${id}`); }}
+          onCreated={(id) => { setCreating(false); navigate(`${produccionesBasePath()}/${id}`); }}
         />
       )}
 
