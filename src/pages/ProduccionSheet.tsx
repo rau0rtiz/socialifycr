@@ -238,37 +238,38 @@ export default function ProduccionSheet() {
 
               {/* TABLERO DE PIEZAS */}
               <section>
-                <div className="flex items-center justify-between gap-3 mb-4 flex-wrap no-print">
-                  <div>
+                <div className="flex items-start justify-between gap-3 mb-4 flex-wrap no-print">
+                  <div className="min-w-0">
                     <span className="inline-block text-[10px] tracking-[0.4em] uppercase border border-noeval-accent text-noeval-accent rounded-full px-3 py-1">
                       Piezas
                     </span>
-                    <h2 className="font-serif text-3xl md:text-4xl text-noeval-ink mt-2">Contenido a grabar</h2>
-                    <p className="text-sm text-noeval-muted max-w-xl mt-1">
-                      Cada tarjeta es un reel, story o post a producir. Define guion, hook y CTA. Marca como grabado cuando esté listo.
+                    <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-noeval-ink mt-2">Contenido a grabar</h2>
+                    <p className="text-sm text-noeval-muted max-w-xl mt-1 hidden sm:block">
+                      Cada tarjeta es un reel, story o post a producir. Marca como grabado y se minimiza solo.
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="inline-flex rounded-full border border-noeval-line p-0.5 bg-noeval-surface">
+                  <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
+                    <div className="inline-flex rounded-full border border-noeval-line p-0.5 bg-noeval-surface shrink-0">
                       {(['all', 'pending', 'recorded'] as const).map((f) => (
                         <button
                           key={f}
                           onClick={() => setFilter(f)}
-                          className={`text-[11px] tracking-[0.2em] uppercase font-semibold rounded-full px-3 py-1.5 transition ${
+                          className={`text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold rounded-full px-2.5 sm:px-3 py-1.5 transition whitespace-nowrap ${
                             filter === f
                               ? 'bg-noeval-ink text-noeval-cream'
                               : 'text-noeval-muted hover:text-noeval-ink'
                           }`}
                         >
-                          {f === 'all' ? `Todas (${total})` : f === 'pending' ? `Pendientes (${total - recorded})` : `Grabadas (${recorded})`}
+                          {f === 'all' ? `Todas (${total})` : f === 'pending' ? `Pend (${total - recorded})` : `Grab (${recorded})`}
                         </button>
                       ))}
                     </div>
-                    <Button onClick={handleAddPiece} className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90">
+                    <Button onClick={handleAddPiece} className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90 shrink-0 hidden sm:inline-flex">
                       <Plus className="h-4 w-4 mr-1.5" /> Nueva pieza
                     </Button>
                   </div>
                 </div>
+
 
                 {filteredShots.length === 0 ? (
                   <Card className="p-10 text-center bg-noeval-surface border-noeval-line border-dashed">
