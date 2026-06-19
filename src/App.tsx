@@ -189,6 +189,7 @@ const App = () => (
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/invitacion/:token" element={<Invitacion />} />
+                  <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
                   <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                   {/* Agency-only routes */}
                   <Route path="/brand-settings" element={
