@@ -4030,43 +4030,76 @@ export type Database = {
       }
       production_sheet_shots: {
         Row: {
+          clickup_task_id: string | null
+          clickup_url: string | null
+          concept: string | null
+          content_type: string | null
           created_at: string
+          cta: string | null
           description: string
           done: boolean
           duration_estimate: string | null
+          hook: string | null
           id: string
           notes: string | null
+          platform: string | null
+          recorded_at: string | null
           scene_label: string | null
+          script: string | null
+          sent_to_clickup_at: string | null
           sheet_id: string
           shot_number: string | null
           shot_type: string | null
           sort_order: number
+          tech_notes: string | null
         }
         Insert: {
+          clickup_task_id?: string | null
+          clickup_url?: string | null
+          concept?: string | null
+          content_type?: string | null
           created_at?: string
+          cta?: string | null
           description?: string
           done?: boolean
           duration_estimate?: string | null
+          hook?: string | null
           id?: string
           notes?: string | null
+          platform?: string | null
+          recorded_at?: string | null
           scene_label?: string | null
+          script?: string | null
+          sent_to_clickup_at?: string | null
           sheet_id: string
           shot_number?: string | null
           shot_type?: string | null
           sort_order?: number
+          tech_notes?: string | null
         }
         Update: {
+          clickup_task_id?: string | null
+          clickup_url?: string | null
+          concept?: string | null
+          content_type?: string | null
           created_at?: string
+          cta?: string | null
           description?: string
           done?: boolean
           duration_estimate?: string | null
+          hook?: string | null
           id?: string
           notes?: string | null
+          platform?: string | null
+          recorded_at?: string | null
           scene_label?: string | null
+          script?: string | null
+          sent_to_clickup_at?: string | null
           sheet_id?: string
           shot_number?: string | null
           shot_type?: string | null
           sort_order?: number
+          tech_notes?: string | null
         }
         Relationships: [
           {

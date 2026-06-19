@@ -1,5 +1,5 @@
-// ClickUp create-tasks: builds parent task + subtasks for a production sheet.
-// Auth: requires Supabase JWT (agency members only).
+// ClickUp create-tasks: crea una task por pieza grabada (production_sheet_shots con done=true).
+// Si la pieza ya tiene clickup_task_id, hace PUT para actualizarla.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
@@ -12,6 +12,14 @@ const CLICKUP_TOKEN = Deno.env.get('CLICKUP_API_TOKEN');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+const TYPE_LABEL: Record<string, string> = {
+  reel: 'REEL', story: 'STORY', post: 'POST',
+  tiktok: 'TIKTOK', short: 'SHORT', otro: 'CONTENIDO',
+};
+const PLATFORM_LABEL: Record<string, string> = {
+  instagram: 'IG', tiktok: 'TT', youtube: 'YT', linkedin: 'LI', multi: 'MULTI',
+};
 
 async function cuFetch(path: string, init?: RequestInit) {
   const res = await fetch(`https://api.clickup.com/api/v2${path}`, {
@@ -29,11 +37,25 @@ async function cuFetch(path: string, init?: RequestInit) {
   return res.json();
 }
 
+function buildDescription(shot: any, sheet: any): string {
+  const lines: string[] = [];
+  if (shot.hook) lines.push(`**⚡ Hook:** ${shot.hook}`, '');
+  if (shot.script) lines.push('**📝 Guion / Copy:**', shot.script, '');
+  if (shot.cta) lines.push(`**🎯 CTA:** ${shot.cta}`);
+  if (shot.tech_notes) lines.push('', '**🎥 Notas técnicas:**', shot.tech_notes);
+  lines.push('', '---');
+  if (sheet.shoot_date) lines.push(`📅 Grabado: ${sheet.shoot_date}`);
+  if (sheet.location) lines.push(`📍 Locación: ${sheet.location}`);
+  if (sheet.producer_name) lines.push(`🎬 Responsable: ${sheet.producer_name}`);
+  if (shot.recorded_at) lines.push(`⏰ Hora: ${new Date(shot.recorded_at).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' })}`);
+  return lines.join('\n');
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    if (!CLICKUP_TOKEN) throw new Error('CLICKUP_API_TOKEN not configured');
+    if (!CLICKUP_TOKEN) throw new Error('CLICKUP_API_TOKEN no configurado');
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -59,22 +81,21 @@ Deno.serve(async (req) => {
 
     const { sheet_id } = await req.json();
     if (!sheet_id || typeof sheet_id !== 'string') {
-      throw new Error('sheet_id required');
+      throw new Error('sheet_id requerido');
     }
 
-    // Use service-role to safely read all relations (RLS already gated above)
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const [sheetRes, teamRes, shotsRes, wardrobeRes] = await Promise.all([
+    const [sheetRes, shotsRes] = await Promise.all([
       admin.from('production_sheets').select('*').eq('id', sheet_id).maybeSingle(),
-      admin.from('production_sheet_team').select('*').eq('sheet_id', sheet_id).order('sort_order'),
-      admin.from('production_sheet_shots').select('*').eq('sheet_id', sheet_id).order('sort_order'),
-      admin.from('production_sheet_wardrobe').select('*').eq('sheet_id', sheet_id).order('sort_order'),
+      admin.from('production_sheet_shots').select('*').eq('sheet_id', sheet_id).eq('done', true).order('sort_order'),
     ]);
-    if (sheetRes.error || !sheetRes.data) throw new Error('Sheet not found');
+    if (sheetRes.error || !sheetRes.data) throw new Error('Sheet no encontrada');
     const sheet = sheetRes.data;
-    const team = teamRes.data || [];
-    const shots = shotsRes.data || [];
-    const wardrobe = wardrobeRes.data || [];
+    const recordedShots = shotsRes.data || [];
+
+    if (recordedShots.length === 0) {
+      throw new Error('No hay piezas grabadas para enviar. Marca tarjetas como grabadas primero.');
+    }
 
     const { data: cfg, error: cfgErr } = await admin
       .from('client_clickup_config')
@@ -84,108 +105,76 @@ Deno.serve(async (req) => {
     if (cfgErr) throw cfgErr;
     if (!cfg?.list_id) throw new Error('ClickUp no está configurado para este cliente. Configúralo desde la carpeta del cliente.');
 
-    // Get list members → map email → id
+    // Resolve assignees once
     const membersRes = await cuFetch(`/list/${cfg.list_id}/member`);
     const emailToId = new Map<string, number>();
     for (const m of (membersRes.members || [])) {
       if (m.email) emailToId.set(m.email.toLowerCase(), m.id);
     }
-    const resolveAssignees = (emails: string[]): number[] => {
-      const ids = new Set<number>();
-      for (const e of emails) {
-        const id = emailToId.get(e.toLowerCase());
-        if (id) ids.add(id);
-      }
-      return [...ids];
-    };
-
-    const defaultAssignees = resolveAssignees(cfg.default_assignee_emails || []);
-
-    // ---- Build parent description ----
-    const lines: string[] = [];
-    if (sheet.shoot_date) lines.push(`📅 Fecha: ${sheet.shoot_date}`);
-    if (sheet.call_time) lines.push(`⏰ Llamado: ${sheet.call_time}`);
-    if (sheet.location) lines.push(`📍 Locación: ${sheet.location}`);
-    if (sheet.producer_name) lines.push(`🎬 Producción: ${sheet.producer_name}`);
-    if (team.length) {
-      lines.push('', '**Equipo:**');
-      for (const t of team) lines.push(`- ${t.role || '—'}: ${t.name || '—'}${t.clickup_user_email ? ` (${t.clickup_user_email})` : ''}`);
-    }
-    if (sheet.notes) lines.push('', '**Notas:**', sheet.notes);
-
-    let parentId: string | undefined = sheet.clickup_task_id || undefined;
-    let parentUrl: string | undefined = sheet.clickup_url || undefined;
-
-    if (parentId) {
-      // Update existing task
-      await cuFetch(`/task/${parentId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          name: sheet.title,
-          description: lines.join('\n'),
-        }),
-      });
-    } else {
-      const created = await cuFetch(`/list/${cfg.list_id}/task`, {
-        method: 'POST',
-        body: JSON.stringify({
-          name: sheet.title,
-          description: lines.join('\n'),
-          assignees: defaultAssignees,
-          due_date: sheet.shoot_date ? new Date(sheet.shoot_date).getTime() : undefined,
-        }),
-      });
-      parentId = created.id;
-      parentUrl = created.url;
+    const defaultAssignees: number[] = [];
+    for (const e of (cfg.default_assignee_emails || [])) {
+      const id = emailToId.get(String(e).toLowerCase());
+      if (id) defaultAssignees.push(id);
     }
 
-    // ---- Subtasks: shots + wardrobe + team ----
     const created: any[] = [];
+    const updated: any[] = [];
     const failed: any[] = [];
 
-    const createSub = async (name: string, description: string, assignees: number[]) => {
+    for (const shot of recordedShots) {
+      const typeTag = TYPE_LABEL[shot.content_type || 'otro'] || 'CONTENIDO';
+      const platTag = PLATFORM_LABEL[shot.platform || ''] || '';
+      const concept = shot.concept || shot.description || 'Pieza sin título';
+      const title = `[${typeTag}${platTag ? ' · ' + platTag : ''}] ${concept}`;
+      const description = buildDescription(shot, sheet);
+
       try {
-        const sub = await cuFetch(`/list/${cfg.list_id}/task`, {
-          method: 'POST',
-          body: JSON.stringify({
-            name, description, assignees,
-            parent: parentId,
-          }),
-        });
-        created.push({ id: sub.id, name: sub.name });
+        if (shot.clickup_task_id) {
+          // Update
+          await cuFetch(`/task/${shot.clickup_task_id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ name: title, description }),
+          });
+          updated.push({ id: shot.id, task_id: shot.clickup_task_id });
+        } else {
+          // Create
+          const task = await cuFetch(`/list/${cfg.list_id}/task`, {
+            method: 'POST',
+            body: JSON.stringify({
+              name: title,
+              description,
+              assignees: defaultAssignees,
+              due_date: sheet.shoot_date ? new Date(sheet.shoot_date).getTime() : undefined,
+            }),
+          });
+          await admin.from('production_sheet_shots').update({
+            clickup_task_id: task.id,
+            clickup_url: task.url,
+            sent_to_clickup_at: new Date().toISOString(),
+          }).eq('id', shot.id);
+          created.push({ id: shot.id, task_id: task.id, url: task.url });
+        }
       } catch (e) {
-        failed.push({ name, error: (e as Error).message });
+        failed.push({ id: shot.id, concept, error: (e as Error).message });
       }
-    };
-
-    for (const s of shots.filter((x) => !x.done)) {
-      const title = `🎬 ${s.scene_label ? `Esc ${s.scene_label} · ` : ''}${s.shot_number ? `#${s.shot_number} ` : ''}${s.description || 'Toma'}`;
-      const desc = [s.shot_type && `Tipo: ${s.shot_type}`, s.duration_estimate && `Duración: ${s.duration_estimate}`, s.notes].filter(Boolean).join('\n');
-      await createSub(title, desc, defaultAssignees);
-    }
-    for (const w of wardrobe.filter((x) => !x.done)) {
-      await createSub(`👕 ${w.item}`, '', defaultAssignees);
-    }
-    for (const t of team) {
-      const ass = t.clickup_user_email ? resolveAssignees([t.clickup_user_email]) : [];
-      await createSub(`👥 ${t.role || 'Rol'}: ${t.name || '—'}`, '', ass);
     }
 
-    // Update DB
-    await admin.from('production_sheets').update({
-      clickup_task_id: parentId,
-      clickup_url: parentUrl,
-      clickup_list_id: cfg.list_id,
-      sent_to_clickup_at: new Date().toISOString(),
-      status: 'sent_to_clickup',
-    }).eq('id', sheet_id);
+    // Update sheet status if all recorded were sent successfully
+    const allSent = failed.length === 0 && recordedShots.length > 0;
+    if (allSent) {
+      await admin.from('production_sheets').update({
+        status: 'sent_to_clickup',
+        sent_to_clickup_at: new Date().toISOString(),
+      }).eq('id', sheet_id);
+    }
 
     return new Response(JSON.stringify({
       success: true,
-      task_id: parentId,
-      url: parentUrl,
-      subtasks_created: created.length,
-      subtasks_failed: failed.length,
+      tasks_created: created.length,
+      tasks_updated: updated.length,
+      tasks_failed: failed.length,
+      created,
+      updated,
       failed,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -12,27 +12,22 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle,
-} from '@/components/ui/sheet';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent,
 } from '@/components/ui/dialog';
 import {
-  ArrowLeft, Plus, Folder, Search, Trash2, Send, Check, FileText, Film,
-  Calendar, MapPin, Clock, User as UserIcon, GripVertical, Settings, ExternalLink, Loader2,
+  ArrowLeft, Plus, Folder, Search, Trash2, FileText, Film,
+  Calendar, MapPin, User as UserIcon, Settings, Loader2,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import {
-  useProductionSheets, useProductionSheet, useCreateSheet, useUpdateSheet,
-  useDeleteSheet, useUpsertChild, useDeleteChild,
+  useProductionSheets, useCreateSheet, useUpdateSheet,
   type SheetStatus, type ProductionSheet,
 } from '@/hooks/use-production-sheets';
 import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
 import {
-  useProductionFolders, useCreateFolder, useDeleteFolder, useRenameFolder, useMoveSheet,
-  type ProductionFolder,
+  useProductionFolders, useCreateFolder, useDeleteFolder, useRenameFolder,
 } from '@/hooks/use-production-folders';
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
@@ -63,11 +58,11 @@ const useClients = () =>
   });
 
 export default function Producciones() {
+  const navigate = useNavigate();
   const [clientFilter, setClientFilter] = useState<string | null>(null);
   const [folderPath, setFolderPath] = useState<{ id: string; name: string }[]>([]);
   const currentFolderId = folderPath.length ? folderPath[folderPath.length - 1].id : null;
   const [search, setSearch] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [creatingClient, setCreatingClient] = useState(false);
   const [configClient, setConfigClient] = useState<{ id: string; name: string } | null>(null);
@@ -368,7 +363,7 @@ export default function Producciones() {
                 {filteredSheets.map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => setEditingId(s.id)}
+                    onClick={() => navigate(`/agencia/producciones/${s.id}`)}
                     className="text-left bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all"
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -416,15 +411,7 @@ export default function Producciones() {
           defaultClientId={clientFilter}
           defaultFolderId={currentFolderId}
           onClose={() => setCreating(false)}
-          onCreated={(id) => { setCreating(false); setEditingId(id); }}
-        />
-      )}
-
-      {editingId && (
-        <SheetEditor
-          sheetId={editingId}
-          clientName={clientMap[sheets.find(s => s.id === editingId)?.client_id || ''] || ''}
-          onClose={() => setEditingId(null)}
+          onCreated={(id) => { setCreating(false); navigate(`/agencia/producciones/${id}`); }}
         />
       )}
 
@@ -637,298 +624,6 @@ function CreateSheetDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-
-// ---------- Editor (Tablero de producción / shot list) ----------
-function SheetEditor({ sheetId, clientName, onClose }: { sheetId: string; clientName: string; onClose: () => void }) {
-  const { data, isLoading } = useProductionSheet(sheetId);
-  const update = useUpdateSheet();
-  const del = useDeleteSheet();
-  const upsertShot = useUpsertChild('production_sheet_shots');
-  const delShot = useDeleteChild('production_sheet_shots');
-
-  const [local, setLocal] = useState<Partial<ProductionSheet>>({});
-  useEffect(() => { if (data?.sheet) setLocal(data.sheet); }, [data?.sheet]);
-
-  // Debounced auto-save
-  useEffect(() => {
-    if (!data?.sheet) return;
-    const t = setTimeout(() => {
-      const patch: any = {};
-      (['title', 'shoot_date', 'location', 'producer_name', 'notes'] as const).forEach((k) => {
-        if (local[k] !== data.sheet[k]) patch[k] = local[k];
-      });
-      if (Object.keys(patch).length) update.mutate({ id: sheetId, ...patch });
-    }, 700);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [local]);
-
-  const shots = data?.shots || [];
-  const total = shots.length;
-  const done = shots.filter(s => s.done).length;
-  const pct = total ? Math.round((done / total) * 100) : 0;
-
-  const [sending, setSending] = useState(false);
-  const handleSendClickUp = async () => {
-    setSending(true);
-    try {
-      const { data: resp, error } = await supabase.functions.invoke('clickup-create-tasks', { body: { sheet_id: sheetId } });
-      if (error) throw new Error(error.message);
-      if (resp?.error) throw new Error(resp.error);
-      toast.success(`Enviado a ClickUp · ${resp.subtasks_created} subtasks`, {
-        action: resp.url ? { label: 'Abrir', onClick: () => window.open(resp.url, '_blank') } : undefined,
-      });
-    } catch (e: any) { toast.error(e.message || 'Error enviando a ClickUp'); }
-    finally { setSending(false); }
-  };
-
-  const handleAddCard = () => {
-    const title = window.prompt('Título de la nueva idea / toma:');
-    if (!title?.trim()) return;
-    upsertShot.mutate({
-      sheet_id: sheetId,
-      description: title.trim(),
-      done: false,
-      sort_order: shots.length,
-    });
-  };
-
-  const handleReset = async () => {
-    if (!confirm('Reiniciar todas las marcas y notas de las tarjetas?')) return;
-    await Promise.all(shots.map(s => upsertShot.mutateAsync({ ...s, done: false, notes: null })));
-    toast.success('Marcas reiniciadas');
-  };
-
-  const handleDelete = async () => {
-    if (!confirm('¿Eliminar este sheet? Esta acción no se puede deshacer.')) return;
-    await del.mutateAsync(sheetId); onClose();
-  };
-
-  const code = (i: number) => `T-${String(i + 1).padStart(2, '0')}`;
-
-  return (
-    <Sheet open onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:max-w-4xl overflow-y-auto noeval-scope p-0">
-        {isLoading || !data ? (
-          <div className="py-16 text-center text-noeval-muted">Cargando…</div>
-        ) : (
-          <div className="print-area">
-            <div className="max-w-[940px] mx-auto p-5 md:p-8 space-y-6">
-
-              {/* HEADER --ink */}
-              <div className="noeval-slate relative overflow-hidden rounded-2xl p-6 md:p-8">
-                <div className="noeval-stripe absolute inset-x-0 top-0 h-2" />
-                <div className="mt-3 flex items-center gap-2 text-noeval-taupe text-[10px] tracking-[0.42em] uppercase font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent animate-pulse" />
-                  Plan de producción · {clientName}
-                </div>
-
-                <input
-                  value={local.title || ''}
-                  onChange={(e) => setLocal({ ...local, title: e.target.value })}
-                  placeholder="Título de la producción"
-                  className="mt-2 w-full bg-transparent font-serif text-3xl md:text-5xl uppercase tracking-[0.04em] text-noeval-cream placeholder:text-noeval-taupe/40 outline-none border-0"
-                />
-
-                {/* Editable inline fields */}
-                <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <InlineField label="Fecha">
-                    <input
-                      type="date"
-                      value={local.shoot_date || ''}
-                      onChange={(e) => setLocal({ ...local, shoot_date: e.target.value || null })}
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm"
-                    />
-                  </InlineField>
-                  <InlineField label="Locación">
-                    <input
-                      value={local.location || ''}
-                      onChange={(e) => setLocal({ ...local, location: e.target.value })}
-                      placeholder="—"
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm placeholder:text-noeval-taupe/40"
-                    />
-                  </InlineField>
-                  <InlineField label="Responsable">
-                    <input
-                      value={local.producer_name || ''}
-                      onChange={(e) => setLocal({ ...local, producer_name: e.target.value })}
-                      placeholder="—"
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm placeholder:text-noeval-taupe/40"
-                    />
-                  </InlineField>
-                </div>
-
-                {/* Progress */}
-                <div className="mt-6 flex flex-col md:flex-row md:items-end gap-4">
-                  <div>
-                    <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-taupe">Progreso</div>
-                    <div className="font-serif text-4xl md:text-5xl text-noeval-cream leading-none mt-1">
-                      <span className="text-noeval-accent">{done}</span>
-                      <span className="text-noeval-taupe/60"> / {total}</span>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="progress-track h-2.5">
-                      <div className="progress-fill" style={{ width: `${pct}%` }} />
-                    </div>
-                    <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-taupe mt-1.5">
-                      {pct}% grabado
-                    </div>
-                  </div>
-                </div>
-
-                {/* Header actions */}
-                <div className="no-print mt-5 flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => window.print()} className="bg-transparent border-noeval-taupe/40 text-noeval-cream hover:bg-white/10">
-                    Imprimir / PDF
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={handleReset} className="bg-transparent border-noeval-taupe/40 text-noeval-cream hover:bg-white/10">
-                    Reiniciar marcas
-                  </Button>
-                </div>
-              </div>
-
-              {/* SHOT LIST BLOCK */}
-              <section>
-                <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-                  <div>
-                    <span className="inline-block text-[10px] tracking-[0.4em] uppercase border border-noeval-accent text-noeval-accent rounded-full px-3 py-1">
-                      Tomas
-                    </span>
-                    <h2 className="font-serif text-3xl md:text-4xl text-noeval-ink mt-2">Shot list</h2>
-                    <p className="text-sm text-noeval-muted max-w-xl mt-1">
-                      Tarjetas con cada idea o toma. Marca cada una como <strong>grabada</strong> y suma al contador.
-                    </p>
-                  </div>
-                  <Button onClick={handleAddCard} className="no-print bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90">
-                    <Plus className="h-4 w-4 mr-1.5" /> Agregar idea
-                  </Button>
-                </div>
-
-                {shots.length === 0 ? (
-                  <Card className="p-10 text-center bg-noeval-surface border-noeval-line border-dashed">
-                    <Film className="h-10 w-10 mx-auto text-noeval-muted mb-2" />
-                    <p className="text-noeval-muted text-sm">Sin tarjetas aún. Crea la primera idea.</p>
-                  </Card>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {shots.map((shot, idx) => (
-                      <div
-                        key={shot.id}
-                        className={`shot-card relative overflow-hidden bg-noeval-surface border border-noeval-line rounded-xl p-4 ${shot.done ? 'done' : ''}`}
-                      >
-                        {shot.done && <div className="grabado-stamp">Grabado</div>}
-                        <div className="shot-card-body space-y-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="inline-block text-[10px] tracking-[0.3em] uppercase font-bold bg-noeval-accent text-white rounded-full px-2.5 py-1">
-                              {shot.shot_number || code(idx)}
-                            </span>
-                            <button
-                              onClick={() => delShot.mutate({ id: shot.id, sheet_id: sheetId })}
-                              className="no-print text-noeval-muted hover:text-destructive transition p-1"
-                              title="Eliminar tarjeta"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-
-                          <input
-                            defaultValue={shot.description}
-                            onBlur={(e) => e.target.value !== shot.description && upsertShot.mutate({ ...shot, description: e.target.value })}
-                            placeholder="Título de la toma"
-                            className="w-full bg-transparent font-serif text-xl text-noeval-ink outline-none border-0 p-0"
-                          />
-
-                          <input
-                            defaultValue={shot.shot_type || ''}
-                            onBlur={(e) => e.target.value !== (shot.shot_type || '') && upsertShot.mutate({ ...shot, shot_type: e.target.value || null })}
-                            placeholder="Objetivo de la toma…"
-                            className="w-full bg-transparent text-sm text-noeval-muted outline-none border-0 p-0 italic"
-                          />
-
-                          <Textarea
-                            defaultValue={shot.notes || ''}
-                            onBlur={(e) => e.target.value !== (shot.notes || '') && upsertShot.mutate({ ...shot, notes: e.target.value || null })}
-                            placeholder="Notas, ángulos, referencias…"
-                            rows={3}
-                            className="bg-noeval-cream border-noeval-line text-sm resize-none"
-                          />
-                        </div>
-
-                        <div className="no-print mt-3 flex justify-end">
-                          <button
-                            onClick={() => upsertShot.mutate({ ...shot, done: !shot.done })}
-                            className={`inline-flex items-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-4 py-2 transition
-                              ${shot.done
-                                ? 'bg-noeval-accent text-white shadow-sm'
-                                : 'border border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream'}`}
-                          >
-                            {shot.done ? <><Check className="h-3.5 w-3.5" strokeWidth={3} /> Grabado</> : 'Marcar'}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* NOTAS GENERALES --ink */}
-              <section className="noeval-slate rounded-2xl p-6 md:p-8 relative overflow-hidden">
-                <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-taupe flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent" />
-                  Notas generales
-                </div>
-                <h3 className="font-serif text-2xl text-noeval-cream mt-1 mb-3">Apuntes del día</h3>
-                <Textarea
-                  value={local.notes || ''}
-                  onChange={(e) => setLocal({ ...local, notes: e.target.value })}
-                  placeholder="Tratamiento, referencias, instrucciones especiales, ajustes de último minuto…"
-                  rows={6}
-                  className="bg-white/5 border-noeval-taupe/30 text-noeval-cream placeholder:text-noeval-taupe/40 resize-none"
-                />
-              </section>
-
-              {/* Footer actions */}
-              <div className="no-print flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-noeval-line">
-                <Button variant="ghost" size="sm" onClick={handleDelete} className="text-destructive">
-                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Eliminar sheet
-                </Button>
-                <div className="flex gap-2">
-                  {local.clickup_url && (
-                    <Button variant="outline" asChild>
-                      <a href={local.clickup_url} target="_blank" rel="noreferrer">
-                        <ExternalLink className="h-3.5 w-3.5 mr-1" /> Ver en ClickUp
-                      </a>
-                    </Button>
-                  )}
-                  <Button variant="outline" onClick={onClose}>Cerrar</Button>
-                  <Button
-                    onClick={handleSendClickUp}
-                    disabled={sending}
-                    className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90"
-                  >
-                    {sending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Send className="h-4 w-4 mr-1.5" />}
-                    {local.clickup_task_id ? 'Reenviar a ClickUp' : 'Enviar a ClickUp'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function InlineField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="text-[10px] tracking-[0.32em] uppercase text-noeval-taupe mb-1">{label}</div>
-      {children}
-    </div>
   );
 }
 
