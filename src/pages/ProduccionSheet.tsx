@@ -778,6 +778,14 @@ function PieceCard({
               ✓ {recordedTime}
             </span>
           )}
+          {shot.done && (
+            <div className="grabado-stamp">
+              <span className="grabado-stamp-dot">
+                <span className="grabado-stamp-ping" />
+              </span>
+              Grabado
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-0.5 sm:gap-1 no-print shrink-0">
           {shot.done && (
