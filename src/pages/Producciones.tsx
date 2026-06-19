@@ -652,11 +652,11 @@ function ClientFolderCard({
     <div className="group relative bg-noeval-surface border border-noeval-line rounded-xl overflow-hidden hover:border-noeval-accent transition-all hover:shadow-md min-h-[160px] flex flex-col">
       <button onClick={onOpen} className="text-left w-full flex-1 flex flex-col">
         {client.logo_url ? (
-          <div className="relative flex-1 bg-white flex items-center justify-center p-4">
+          <div className="relative flex-1 bg-white overflow-hidden">
             <img
               src={client.logo_url}
               alt={client.name}
-              className="max-h-[110px] max-w-full object-contain"
+              className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
             />
             <Badge variant="outline" className="absolute top-2 right-2 bg-white/90 border-noeval-line text-noeval-muted text-[10px]">
