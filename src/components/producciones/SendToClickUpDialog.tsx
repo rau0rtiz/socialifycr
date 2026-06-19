@@ -234,7 +234,15 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
       });
       if (error) throw new Error(error.message);
       if (resp?.error) throw new Error(resp.error);
-      toast.success(`${resp.tasks_created || 0} creada(s) · ${resp.tasks_updated || 0} actualizada(s)`);
+      const c = resp?.tasks_created || 0;
+      const u = resp?.tasks_updated || 0;
+      const f = resp?.tasks_failed || 0;
+      if (f > 0) {
+        const firstErr = resp?.failed?.[0]?.error || 'error desconocido';
+        toast.error(`${f} fallaron · ${c} creadas · ${u} actualizadas. Detalle: ${firstErr}`, { duration: 12000 });
+      } else {
+        toast.success(`${c} creada(s) · ${u} actualizada(s)`);
+      }
       onSent?.();
       onClose();
     } catch (e: any) {
