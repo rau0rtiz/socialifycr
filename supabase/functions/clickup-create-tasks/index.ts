@@ -199,7 +199,9 @@ Deno.serve(async (req) => {
           created.push({ id: shot.id, task_id: task.id, url: task.url });
         }
       } catch (e) {
-        failed.push({ id: shot.id, concept, error: (e as Error).message });
+        const msg = (e as Error).message;
+        console.error(`[clickup-create-tasks] FAIL shot=${shot.id} concept="${concept}" → ${msg}`);
+        failed.push({ id: shot.id, concept, error: msg });
       }
     }
 
