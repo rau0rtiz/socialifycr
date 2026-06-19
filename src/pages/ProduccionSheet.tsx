@@ -67,6 +67,7 @@ export default function ProduccionSheet() {
   const [sending, setSending] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [clickupOpen, setClickupOpen] = useState(false);
 
   const shareToken = data?.sheet?.public_share_token || null;
   const shareEnabled = !!data?.sheet?.public_share_enabled;
