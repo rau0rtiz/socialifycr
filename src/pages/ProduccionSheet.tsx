@@ -334,10 +334,40 @@ export default function ProduccionSheet() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mb-5 text-sm">
-                  <SummaryField label="Fecha" value={local.shoot_date ? format(parseISO(local.shoot_date), "d 'de' MMMM, yyyy", { locale: es }) : '—'} />
-                  <SummaryField label="Locación" value={local.location || '—'} />
-                  <SummaryField label="Responsable" value={local.producer_name || '—'} />
+                  <div>
+                    <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Fecha</div>
+                    <input
+                      type="date"
+                      value={local.shoot_date || ''}
+                      onChange={(e) => setLocal({ ...local, shoot_date: e.target.value || null })}
+                      className="no-print mt-0.5 w-full bg-transparent font-serif text-lg text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-1"
+                    />
+                    <div className="hidden print:block font-serif text-lg text-noeval-ink mt-0.5">
+                      {local.shoot_date ? format(parseISO(local.shoot_date), "d 'de' MMMM, yyyy", { locale: es }) : '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Locación</div>
+                    <input
+                      value={local.location || ''}
+                      onChange={(e) => setLocal({ ...local, location: e.target.value })}
+                      placeholder="—"
+                      className="no-print mt-0.5 w-full bg-transparent font-serif text-lg text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-1 placeholder:text-noeval-muted/50"
+                    />
+                    <div className="hidden print:block font-serif text-lg text-noeval-ink mt-0.5">{local.location || '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Responsable</div>
+                    <input
+                      value={local.producer_name || ''}
+                      onChange={(e) => setLocal({ ...local, producer_name: e.target.value })}
+                      placeholder="—"
+                      className="no-print mt-0.5 w-full bg-transparent font-serif text-lg text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-1 placeholder:text-noeval-muted/50"
+                    />
+                    <div className="hidden print:block font-serif text-lg text-noeval-ink mt-0.5">{local.producer_name || '—'}</div>
+                  </div>
                 </div>
+
 
                 {recordedShots.length === 0 ? (
                   <div className="text-center py-8 text-noeval-muted text-sm border-2 border-dashed border-noeval-line rounded-xl">
