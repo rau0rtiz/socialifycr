@@ -719,13 +719,22 @@ function ClientFolderCard({
         </button>
       </div>
 
-      <button
-        onClick={(e) => { e.stopPropagation(); onConfigure(); }}
-        title="Configurar ClickUp"
-        className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-white"
-      >
-        <Settings className="h-3.5 w-3.5 text-noeval-muted" />
-      </button>
+      <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          title="Eliminar carpeta"
+          className="p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-destructive/10"
+        >
+          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onConfigure(); }}
+          title="Configurar ClickUp"
+          className="p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-white"
+        >
+          <Settings className="h-3.5 w-3.5 text-noeval-muted" />
+        </button>
+      </div>
     </div>
   );
 }
