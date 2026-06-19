@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { action, team_id, space_id, folder_id, list_id } = body || {};
+    const { action, team_id, space_id, folder_id, list_id, name } = body || {};
 
     let result: any = {};
     switch (action) {
@@ -83,6 +83,36 @@ Deno.serve(async (req) => {
       case 'folder_lists': {
         if (!folder_id) throw new Error('folder_id required');
         result = await cu(`/folder/${folder_id}/list?archived=false`);
+        break;
+      }
+      case 'all_space_lists': {
+        if (!space_id) throw new Error('space_id required');
+        // Folderless lists + every folder's lists, merged
+        const [folderless, folders] = await Promise.all([
+          cu(`/space/${space_id}/list?archived=false`),
+          cu(`/space/${space_id}/folder?archived=false`),
+        ]);
+        const lists: any[] = [];
+        for (const l of (folderless.lists || [])) {
+          lists.push({ id: l.id, name: l.name, folder_name: null });
+        }
+        const folderLists = await Promise.all(
+          (folders.folders || []).map(async (f: any) => {
+            const r = await cu(`/folder/${f.id}/list?archived=false`);
+            return (r.lists || []).map((l: any) => ({ id: l.id, name: l.name, folder_name: f.name }));
+          })
+        );
+        for (const arr of folderLists) lists.push(...arr);
+        result = { lists };
+        break;
+      }
+      case 'create_list': {
+        if (!space_id) throw new Error('space_id required');
+        if (!name || typeof name !== 'string') throw new Error('name required');
+        result = await cu(`/space/${space_id}/list`, {
+          method: 'POST',
+          body: JSON.stringify({ name }),
+        });
         break;
       }
       case 'list_members': {
