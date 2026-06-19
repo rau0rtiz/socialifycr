@@ -100,3 +100,21 @@ export const useMoveSheet = () => {
     onError: (e: Error) => toast.error(e.message),
   });
 };
+
+export const useMoveFolder = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, parent_id, client_id }: { id: string; parent_id: string | null; client_id: string }) => {
+      const { error } = await supabase
+        .from('production_folders')
+        .update({ parent_id })
+        .eq('id', id);
+      if (error) throw error;
+      return { client_id };
+    },
+    onSuccess: ({ client_id }) => {
+      qc.invalidateQueries({ queryKey: ['production-folders', client_id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+};
