@@ -52,6 +52,7 @@ const useClients = () =>
       const { data, error } = await supabase
         .from('clients')
         .select('id, name, logo_url')
+        .eq('producciones_hidden', false)
         .order('name');
       if (error) throw error;
       return data as { id: string; name: string; logo_url: string | null }[];
@@ -236,6 +237,16 @@ export default function Producciones() {
                       onOpen={() => setClientFilter(c.id)}
                       onConfigure={() => setConfigClient(c)}
                       onLogoUpdated={() => refetchClients()}
+                      onDelete={async () => {
+                        if (!confirm(`¿Quitar la carpeta de "${c.name}" de Producciones?\n\nNo elimina al cliente, solo lo oculta de esta vista.`)) return;
+                        const { error } = await supabase
+                          .from('clients')
+                          .update({ producciones_hidden: true } as any)
+                          .eq('id', c.id);
+                        if (error) return toast.error(error.message);
+                        toast.success('Carpeta ocultada');
+                        refetchClients();
+                      }}
                     />
                   );
                 })}
@@ -611,13 +622,14 @@ function CreateSheetDialog({
 
 // ---------- Client folder card with logo upload ----------
 function ClientFolderCard({
-  client, count, onOpen, onConfigure, onLogoUpdated,
+  client, count, onOpen, onConfigure, onLogoUpdated, onDelete,
 }: {
   client: { id: string; name: string; logo_url: string | null };
   count: number;
   onOpen: () => void;
   onConfigure: () => void;
   onLogoUpdated: () => void;
+  onDelete: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -707,13 +719,22 @@ function ClientFolderCard({
         </button>
       </div>
 
-      <button
-        onClick={(e) => { e.stopPropagation(); onConfigure(); }}
-        title="Configurar ClickUp"
-        className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-white"
-      >
-        <Settings className="h-3.5 w-3.5 text-noeval-muted" />
-      </button>
+      <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          title="Eliminar carpeta"
+          className="p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-destructive/10"
+        >
+          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onConfigure(); }}
+          title="Configurar ClickUp"
+          className="p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-white"
+        >
+          <Settings className="h-3.5 w-3.5 text-noeval-muted" />
+        </button>
+      </div>
     </div>
   );
 }
