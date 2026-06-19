@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               name: title,
               description,
-              assignees: defaultAssignees,
+              assignees,
               due_date: sheet.shoot_date ? new Date(sheet.shoot_date).getTime() : undefined,
             }),
           });
