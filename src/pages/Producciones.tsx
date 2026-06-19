@@ -260,7 +260,7 @@ export default function Producciones() {
                   <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo cliente
                 </Button>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
                   return (
@@ -330,7 +330,7 @@ export default function Producciones() {
 
           {/* Sub-folders (inside a client, not searching) */}
           {clientFilter && !search && subFolders.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               {subFolders.map((f) => {
                 const count = folderSheetCount[f.id] || 0;
                 return (
