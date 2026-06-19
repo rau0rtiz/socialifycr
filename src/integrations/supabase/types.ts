@@ -4191,6 +4191,9 @@ export type Database = {
         Row: {
           call_time: string | null
           clickup_list_id: string | null
+          clickup_list_name: string | null
+          clickup_space_id: string | null
+          clickup_space_name: string | null
           clickup_task_id: string | null
           clickup_url: string | null
           client_id: string
@@ -4212,6 +4215,9 @@ export type Database = {
         Insert: {
           call_time?: string | null
           clickup_list_id?: string | null
+          clickup_list_name?: string | null
+          clickup_space_id?: string | null
+          clickup_space_name?: string | null
           clickup_task_id?: string | null
           clickup_url?: string | null
           client_id: string
@@ -4233,6 +4239,9 @@ export type Database = {
         Update: {
           call_time?: string | null
           clickup_list_id?: string | null
+          clickup_list_name?: string | null
+          clickup_space_id?: string | null
+          clickup_space_name?: string | null
           clickup_task_id?: string | null
           clickup_url?: string | null
           client_id?: string
