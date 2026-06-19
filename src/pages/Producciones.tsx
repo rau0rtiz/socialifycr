@@ -300,7 +300,10 @@ export default function Producciones() {
               <div className="flex items-center gap-1.5 text-sm flex-wrap">
                 <button
                   onClick={() => setFolderPath([])}
-                  className="font-serif text-xl text-noeval-ink hover:text-noeval-accent transition"
+                  onDragOver={(e) => { if (dragging) { e.preventDefault(); setDropTarget('root'); } }}
+                  onDragLeave={() => setDropTarget(prev => prev === 'root' ? null : prev)}
+                  onDrop={(e) => { e.preventDefault(); handleDropOnFolder(null); }}
+                  className={`font-serif text-xl text-noeval-ink hover:text-noeval-accent transition px-2 py-0.5 rounded ${dropTarget === 'root' ? 'bg-noeval-accent/20 ring-2 ring-noeval-accent' : ''}`}
                 >
                   {clientMap[clientFilter]}
                 </button>
@@ -309,7 +312,10 @@ export default function Producciones() {
                     <span className="text-noeval-muted">/</span>
                     <button
                       onClick={() => setFolderPath(folderPath.slice(0, i + 1))}
-                      className="font-serif text-xl text-noeval-ink hover:text-noeval-accent transition"
+                      onDragOver={(e) => { if (dragging) { e.preventDefault(); setDropTarget(f.id); } }}
+                      onDragLeave={() => setDropTarget(prev => prev === f.id ? null : prev)}
+                      onDrop={(e) => { e.preventDefault(); handleDropOnFolder(f.id); }}
+                      className={`font-serif text-xl text-noeval-ink hover:text-noeval-accent transition px-2 py-0.5 rounded ${dropTarget === f.id ? 'bg-noeval-accent/20 ring-2 ring-noeval-accent' : ''}`}
                     >
                       {f.name}
                     </button>
