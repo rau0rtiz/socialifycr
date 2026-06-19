@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import {
   ArrowLeft, Plus, Trash2, Send, Check, Film, Printer, ExternalLink, Loader2,
-  ChevronDown, ChevronUp, Copy, Sparkles, Share2, Link2, Globe,
+  ChevronDown, ChevronUp, Copy, Sparkles, Share2, Link2, Globe, Mail,
 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -28,6 +28,7 @@ import {
   type ProductionSheet, type SheetShot,
 } from '@/hooks/use-production-sheets';
 import { SendToClickUpDialog } from '@/components/producciones/SendToClickUpDialog';
+import { SendSummaryEmailDialog } from '@/components/producciones/SendSummaryEmailDialog';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
@@ -68,6 +69,7 @@ export default function ProduccionSheet() {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [clickupOpen, setClickupOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   const shareToken = data?.sheet?.public_share_token || null;
   const shareEnabled = !!data?.sheet?.public_share_enabled;
@@ -450,9 +452,14 @@ export default function ProduccionSheet() {
                       Resumen de lo grabado hoy. Listo para imprimir o exportar.
                     </p>
                   </div>
-                  <Button variant="outline" onClick={() => window.print()} className="border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream">
-                    <Printer className="h-4 w-4 mr-1.5" /> Imprimir / PDF
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setEmailOpen(true)} disabled={recordedShots.length === 0} className="border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream">
+                      <Mail className="h-4 w-4 mr-1.5" /> Enviar por correo
+                    </Button>
+                    <Button variant="outline" onClick={() => window.print()} className="border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream">
+                      <Printer className="h-4 w-4 mr-1.5" /> Imprimir / PDF
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Print header */}
@@ -590,18 +597,26 @@ export default function ProduccionSheet() {
       </div>
 
       {data?.sheet && (
-        <SendToClickUpDialog
-          sheetId={sheetId}
-          sheetTitle={data.sheet.title || ''}
-          defaults={{
-            spaceId: data.sheet.clickup_space_id,
-            spaceName: data.sheet.clickup_space_name,
-            listId: data.sheet.clickup_list_id,
-            listName: data.sheet.clickup_list_name,
-          }}
-          open={clickupOpen}
-          onClose={() => setClickupOpen(false)}
-        />
+        <>
+          <SendToClickUpDialog
+            sheetId={sheetId}
+            sheetTitle={data.sheet.title || ''}
+            defaults={{
+              spaceId: data.sheet.clickup_space_id,
+              spaceName: data.sheet.clickup_space_name,
+              listId: data.sheet.clickup_list_id,
+              listName: data.sheet.clickup_list_name,
+            }}
+            open={clickupOpen}
+            onClose={() => setClickupOpen(false)}
+          />
+          <SendSummaryEmailDialog
+            open={emailOpen}
+            onClose={() => setEmailOpen(false)}
+            sheetId={sheetId}
+            defaultSubject={`Resumen de producción · ${data.sheet.title || clientName}`}
+          />
+        </>
       )}
     </DashboardLayout>
   );
