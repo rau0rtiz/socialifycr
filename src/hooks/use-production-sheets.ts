@@ -43,6 +43,18 @@ export interface SheetShot {
   done: boolean;
   notes: string | null;
   sort_order: number;
+  // Nuevos campos: tablero de piezas de contenido
+  content_type: string | null;   // reel | story | post | tiktok | short | otro
+  platform: string | null;       // instagram | tiktok | youtube | linkedin | multi
+  concept: string | null;
+  script: string | null;
+  hook: string | null;
+  cta: string | null;
+  tech_notes: string | null;
+  recorded_at: string | null;
+  clickup_task_id: string | null;
+  clickup_url: string | null;
+  sent_to_clickup_at: string | null;
 }
 
 export interface SheetWardrobe {
