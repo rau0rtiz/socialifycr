@@ -69,8 +69,20 @@ export default function ProduccionSheet() {
 
   const shareToken = data?.sheet?.public_share_token || null;
   const shareEnabled = !!data?.sheet?.public_share_enabled;
+  // Always build the share URL against the public custom domain so it is not
+  // gated by Lovable preview auth (id-preview--*.lovable.app blocks anon).
+  const publicHost = (() => {
+    if (typeof window === 'undefined') return 'https://app.socialifycr.com';
+    const host = window.location.hostname.toLowerCase();
+    // If we're already on a real public domain, use the current origin
+    if (host === 'app.socialifycr.com' || host === 'produ.socialifycr.com' || host === 'socialifycr.lovable.app') {
+      return window.location.origin;
+    }
+    // Preview / lovableproject / localhost → point at the published app
+    return 'https://app.socialifycr.com';
+  })();
   const shareUrl = shareToken
-    ? `${window.location.origin}/produccion-publica/${shareToken}`
+    ? `${publicHost}/produccion-publica/${shareToken}`
     : '';
 
   const handleToggleShare = async (enabled: boolean) => {
