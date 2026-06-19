@@ -335,7 +335,7 @@ export default function ProduccionSheet() {
                   <div className="text-sm text-noeval-muted mt-1">{clientName}</div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 mb-5 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-5 text-sm">
                   <div>
                     <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Fecha</div>
                     <input
