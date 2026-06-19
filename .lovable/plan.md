@@ -1,68 +1,61 @@
+# Subdominio produ.socialifycr.com para Producciones
 
-## 1. Auto-colapsar piezas al marcar "Grabado"
+Objetivo: que `produ.socialifycr.com` muestre únicamente el módulo de Producciones (sin sidebar del dashboard, sin acceso a Ventas, Clientes, etc.), reutilizando el mismo proyecto Lovable, mismo login y mismos datos. `app.socialifycr.com` sigue funcionando igual.
 
-Hoy las tarjetas ya tienen modo colapsado cuando `shot.done = true`, pero como el estado `expanded` vive dentro del componente, al pulsar "Marcar grabado" la tarjeta se queda expandida hasta refrescar.
+## 1. DNS y dominio (acción del usuario, 1 sola vez)
 
-Cambios en `PieceCard` (`src/pages/ProduccionSheet.tsx`):
-- Al pulsar **Marcar grabado** → colapsar inmediatamente (`setExpanded(false)`) además de hacer el toggle.
-- Al pulsar **desmarcar** → expandir de nuevo.
-- La tarjeta colapsada se queda con la fila compacta actual (número, tipo, plataforma, concepto, hora ✓), con un toque visual de "stack" para que se note que está plegada y se puede reabrir con el chevron.
-- Mantener el filtro existente *Todas / Pendientes / Grabadas* sin cambios.
+En Project Settings → Domains → Connect domain, agregar `produ.socialifycr.com` apuntado al mismo proyecto (A record a `185.158.133.1` o CNAME si usa Cloudflare proxy). Lovable emite el SSL automáticamente. No se toca `app.socialifycr.com`.
 
-Resultado: al marcar grabado, la pieza se pliega sola y la lista deja de saturarse; el flujo natural queda *editar → grabar → siguiente*.
+## 2. Detección de host en la app
 
-## 2. Versión optimizada para **tablet** (≈768–1024px)
+Crear `src/lib/host-mode.ts` con un helper:
 
-Ajustes responsive en `ProduccionSheet.tsx` y en la grilla de carpetas/sheets de `Producciones.tsx`:
+- `isProduccionesHost()` → `true` si `window.location.hostname` empieza con `produ.` (también acepta `produ-preview…lovable.app` para poder previsualizar antes de publicar, y un override `?host=produ` solo en dev).
+- Hook `useHostMode()` que expone `{ mode: 'producciones' | 'main' }`.
 
-**Hoja de producción (tablet):**
-- Claqueta header: título un paso más chico (`text-4xl`), grid de Fecha/Locación/Responsable en 3 columnas pero con tipografía más compacta.
-- Barra superior sticky con: ← Volver · título corto · botón **+ Nueva pieza** siempre visible.
-- Tarjetas de pieza: padding reducido (`p-4`), Hook y CTA en 2 columnas, Guion con `rows={4}`.
-- Botón "Marcar grabado" más ancho y táctil (min-height 44px).
-- "Hoja del día" en 2 columnas (resumen | piezas grabadas) para aprovechar el ancho.
+## 3. Router condicional (`src/App.tsx`)
 
-**Listado de Producciones (tablet):**
-- Carpetas de cliente en grid de 2 columnas con logo grande.
-- Lista de sheets dentro de cada cliente: cards en 2 columnas.
+Dentro de `<BrowserRouter>`, antes del `<Routes>` principal, ramificar por host:
 
-## 3. Versión optimizada para **móvil** (<768px)
+- Si `mode === 'producciones'`:
+  - Rutas permitidas: `/` → redirect a `/producciones`, `/producciones`, `/producciones/:sheetId`, `/auth`, `/reset-password`, callbacks OAuth (por si reusan login), y `*` → `NotFound`.
+  - Sin `AppSidebar`, sin layout del dashboard. Mantenemos `AuthProvider`, `BrandProvider`, `ProtectedRoute` (mismos usuarios del dashboard pueden entrar).
+- Si `mode === 'main'`: árbol de rutas actual sin cambios.
 
-Rediseño específico, no solo "encoger":
+Las rutas internas pasan de `/agencia/producciones` a `/producciones` solo cuando el host es `produ.`; en el host principal se mantiene `/agencia/producciones` intacto.
 
-**Hoja de producción (móvil):**
-- Header claqueta compacto: título editable a `text-2xl`, Fecha/Locación/Responsable apilados en una sola columna, cada uno como fila tipo "ficha" (label arriba, input grande abajo, fácil de tocar).
-- **Barra de acción fija en el bottom** (sticky bottom bar) con:
-  - Progreso `recorded/total` + barra delgada.
-  - Botón principal **+ Pieza**.
-  - Acceso a **Enviar a ClickUp** e **Imprimir** vía menú "···".
-- Filtros (Todas/Pend/Grab) como chips horizontales scrollables.
-- Tarjeta de pieza en móvil:
-  - Layout vertical, sin chips amontonados.
-  - Selects de tipo y plataforma como botones grandes.
-  - Concepto como input grande arriba.
-  - Guion / Hook / CTA / Notas técnicas en **acordeones colapsables** (por defecto solo Concepto + Guion abiertos) para no abrumar.
-  - Botón "Marcar grabado" full-width sticky al final de la tarjeta.
-- "Hoja del día" en una sola columna; cada pieza grabada como fila simple (número + tipo + concepto + hora).
+## 4. Ajustes mínimos en Producciones
 
-**Listado de Producciones (móvil):**
-- Carpetas de cliente en 1 columna, logo grande arriba (foco visual).
-- Dentro de cada cliente, sheets como lista vertical estilo "inbox" (título grande, fecha + #piezas + estado en una línea secundaria).
-- FAB flotante **+ Nueva sheet** abajo a la derecha.
+- En `Producciones.tsx` y `ProduccionSheet.tsx`: usar un helper `produccionesBasePath()` que devuelve `/producciones` o `/agencia/producciones` según host, para que los links internos (`navigate`, breadcrumbs, "← Volver") funcionen en ambos dominios.
+- Ocultar el botón "← Volver al dashboard" cuando `mode === 'producciones'` (no hay dashboard al cual volver) y reemplazar por "← Carpetas".
+- El logout del usuario sigue disponible (menú simple en el header de Producciones), redirige a `/auth` dentro del mismo subdominio.
+
+## 5. Auth y datos
+
+- Mismo `AuthProvider`, misma sesión Supabase. Como el subdominio es distinto (`produ.` vs `app.`), la cookie de sesión no se comparte automáticamente: cada subdominio requiere su propio login. Se documenta como comportamiento esperado.
+- RLS y permisos no cambian: cualquiera con acceso al dashboard puede entrar a `produ.`.
+
+## 6. SEO / metadata
+
+Actualizar `index.html` con lógica mínima en runtime (set `document.title` dentro del layout de Producciones) a "Socialify · Producciones" cuando el host es `produ.`. No tocamos meta tags globales.
 
 ## Detalles técnicos
 
-- Todo se resuelve con Tailwind responsive (`sm: md: lg:`) y un par de utilidades nuevas en `index.css` para la sticky bottom bar y los chips scroll.
-- No cambia el esquema de datos ni los hooks (`use-production-sheets.ts`).
-- No cambia la lógica de ClickUp ni el filtrado.
-- Se respeta el tema NOEVAL (cream/ink/accent) ya definido.
+Archivos nuevos:
+- `src/lib/host-mode.ts`
+- `src/routes/ProduccionesOnlyRoutes.tsx` (subárbol de rutas para el subdominio)
 
-## Archivos a tocar
-- `src/pages/ProduccionSheet.tsx` — auto-colapso, layout tablet/móvil, acordeones de pieza, bottom bar móvil.
-- `src/pages/Producciones.tsx` — grids responsive de carpetas y sheets, FAB móvil.
-- `src/index.css` — utilidades menores (sticky bar móvil, chips horizontales, scrollbar oculta).
+Archivos a editar:
+- `src/App.tsx` — branch por host antes de `<Routes>`.
+- `src/pages/Producciones.tsx` — base path dinámico, título dinámico, ocultar volver-al-dashboard.
+- `src/pages/ProduccionSheet.tsx` — base path dinámico en navigate/links.
 
-## Fuera de alcance
-- No se cambia el flujo de envío a ClickUp.
-- No se modifica el header del dashboard ni la navegación general.
-- No se altera la tipografía/branding global.
+Fuera de alcance: cambios de schema, edge functions, ClickUp, branding global, separar proyectos Lovable, cambiar el path en `app.socialifycr.com`.
+
+## Checklist post-deploy
+
+1. Publicar.
+2. Conectar `produ.socialifycr.com` en Domains.
+3. Esperar SSL activo.
+4. Verificar: `produ.socialifycr.com/` redirige a `/producciones`, no aparece sidebar, intentar `/ventas` → NotFound.
+5. Verificar que `app.socialifycr.com/agencia/producciones` sigue igual.
