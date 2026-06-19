@@ -411,15 +411,7 @@ export default function Producciones() {
           defaultClientId={clientFilter}
           defaultFolderId={currentFolderId}
           onClose={() => setCreating(false)}
-          onCreated={(id) => { setCreating(false); setEditingId(id); }}
-        />
-      )}
-
-      {editingId && (
-        <SheetEditor
-          sheetId={editingId}
-          clientName={clientMap[sheets.find(s => s.id === editingId)?.client_id || ''] || ''}
-          onClose={() => setEditingId(null)}
+          onCreated={(id) => { setCreating(false); navigate(`/agencia/producciones/${id}`); }}
         />
       )}
 
