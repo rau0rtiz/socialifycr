@@ -553,10 +553,10 @@ export default function ProduccionSheet() {
                   )}
                   <Button
                     onClick={handleSendClickUp}
-                    disabled={sending || recordedShots.length === 0}
+                    disabled={recordedShots.length === 0}
                     className="bg-noeval-accent text-white hover:bg-noeval-accent/90 disabled:opacity-50 w-full sm:w-auto"
                   >
-                    {sending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Send className="h-4 w-4 mr-1.5" />}
+                    <Send className="h-4 w-4 mr-1.5" />
                     Enviar {pendingToSend > 0 ? `${pendingToSend} pieza${pendingToSend !== 1 ? 's' : ''}` : 'grabadas'} a ClickUp
                   </Button>
                 </div>
