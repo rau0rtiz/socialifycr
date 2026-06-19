@@ -12,8 +12,12 @@ import {
 } from '@/components/ui/select';
 import {
   ArrowLeft, Plus, Trash2, Send, Check, Film, Printer, ExternalLink, Loader2,
-  ChevronDown, ChevronUp, Copy, Sparkles,
+  ChevronDown, ChevronUp, Copy, Sparkles, Share2, Link2, Globe,
 } from 'lucide-react';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
