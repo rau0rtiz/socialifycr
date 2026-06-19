@@ -186,7 +186,12 @@ export default function ProduccionSheet() {
     });
   };
 
+  const sheetSent = data?.sheet?.status === 'sent_to_clickup' || !!data?.sheet?.sent_to_clickup_at;
+
   const handleSendClickUp = () => {
+    if (sheetSent) {
+      if (!confirm('Esta hoja ya fue enviada a ClickUp. ¿Seguro que querés reenviar? Las tasks existentes se actualizarán y las nuevas piezas se crearán.')) return;
+    }
     setClickupOpen(true);
   };
 
@@ -199,6 +204,7 @@ export default function ProduccionSheet() {
   const recordedShots = shots.filter(s => s.done);
   const pendingToSend = recordedShots.filter(s => !s.clickup_task_id).length;
   const alreadySent = recordedShots.filter(s => s.clickup_task_id).length;
+
 
   return (
     <DashboardLayout>
