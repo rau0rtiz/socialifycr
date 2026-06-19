@@ -145,16 +145,20 @@ Deno.serve(async (req) => {
       }).eq('id', sheet_id);
     }
 
-    // Resolve assignees from the chosen list
-    const membersRes = await cuFetch(`/list/${listId}/member`);
-    const emailToId = new Map<string, number>();
-    for (const m of (membersRes.members || [])) {
-      if (m.email) emailToId.set(m.email.toLowerCase(), m.id);
-    }
-    const defaultAssignees: number[] = [];
-    for (const e of defaultAssigneeEmails) {
-      const id = emailToId.get(String(e).toLowerCase());
-      if (id) defaultAssignees.push(id);
+    // Resolve assignees: explicit picker selection wins; otherwise fall back to client default emails.
+    let assignees: number[] = [];
+    if (typeof assignee_id === 'number' && Number.isFinite(assignee_id)) {
+      assignees = [assignee_id];
+    } else {
+      const membersRes = await cuFetch(`/list/${listId}/member`);
+      const emailToId = new Map<string, number>();
+      for (const m of (membersRes.members || [])) {
+        if (m.email) emailToId.set(m.email.toLowerCase(), m.id);
+      }
+      for (const e of defaultAssigneeEmails) {
+        const id = emailToId.get(String(e).toLowerCase());
+        if (id) assignees.push(id);
+      }
     }
 
     const created: any[] = [];
