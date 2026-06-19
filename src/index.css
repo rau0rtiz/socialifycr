@@ -242,28 +242,25 @@
 
 /* ===== Producciones: stamp "GRABADO" ===== */
 .noeval-scope .grabado-stamp {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 10;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 6px;
   background: rgba(220, 38, 38, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 0 24px rgba(220, 38, 38, 0.35);
+  box-shadow: 0 0 18px rgba(220, 38, 38, 0.35);
   color: #fff;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   line-height: 1;
   pointer-events: none;
+  flex-shrink: 0;
 }
 
 .noeval-scope .grabado-stamp-dot {
