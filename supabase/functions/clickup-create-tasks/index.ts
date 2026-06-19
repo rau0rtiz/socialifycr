@@ -79,7 +79,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { sheet_id } = await req.json();
+    const reqBody = await req.json();
+    const { sheet_id, list_id: overrideListId, list_name: overrideListName, space_id: overrideSpaceId, space_name: overrideSpaceName } = reqBody || {};
     if (!sheet_id || typeof sheet_id !== 'string') {
       throw new Error('sheet_id requerido');
     }
@@ -97,22 +98,43 @@ Deno.serve(async (req) => {
       throw new Error('No hay piezas grabadas para enviar. Marca tarjetas como grabadas primero.');
     }
 
-    const { data: cfg, error: cfgErr } = await admin
+    // Prefer explicit override (from per-sheet picker), fall back to the sheet's stored list, then client-level config.
+    let listId: string | null = overrideListId || sheet.clickup_list_id || null;
+    let listName: string | null = overrideListName || sheet.clickup_list_name || null;
+    let defaultAssigneeEmails: string[] = [];
+
+    const { data: cfg } = await admin
       .from('client_clickup_config')
       .select('*')
       .eq('client_id', sheet.client_id)
       .maybeSingle();
-    if (cfgErr) throw cfgErr;
-    if (!cfg?.list_id) throw new Error('ClickUp no está configurado para este cliente. Configúralo desde la carpeta del cliente.');
+    if (cfg?.default_assignee_emails) defaultAssigneeEmails = cfg.default_assignee_emails;
+    if (!listId && cfg?.list_id) {
+      listId = cfg.list_id;
+      listName = cfg.list_name || null;
+    }
+    if (!listId) {
+      throw new Error('Selecciona o crea una lista de ClickUp para esta hoja.');
+    }
 
-    // Resolve assignees once
-    const membersRes = await cuFetch(`/list/${cfg.list_id}/member`);
+    // Persist picked list on the sheet so next send defaults to it
+    if (overrideListId) {
+      await admin.from('production_sheets').update({
+        clickup_list_id: overrideListId,
+        clickup_list_name: overrideListName || null,
+        clickup_space_id: overrideSpaceId || null,
+        clickup_space_name: overrideSpaceName || null,
+      }).eq('id', sheet_id);
+    }
+
+    // Resolve assignees from the chosen list
+    const membersRes = await cuFetch(`/list/${listId}/member`);
     const emailToId = new Map<string, number>();
     for (const m of (membersRes.members || [])) {
       if (m.email) emailToId.set(m.email.toLowerCase(), m.id);
     }
     const defaultAssignees: number[] = [];
-    for (const e of (cfg.default_assignee_emails || [])) {
+    for (const e of defaultAssigneeEmails) {
       const id = emailToId.get(String(e).toLowerCase());
       if (id) defaultAssignees.push(id);
     }
@@ -138,7 +160,7 @@ Deno.serve(async (req) => {
           updated.push({ id: shot.id, task_id: shot.clickup_task_id });
         } else {
           // Create
-          const task = await cuFetch(`/list/${cfg.list_id}/task`, {
+          const task = await cuFetch(`/list/${listId}/task`, {
             method: 'POST',
             body: JSON.stringify({
               name: title,

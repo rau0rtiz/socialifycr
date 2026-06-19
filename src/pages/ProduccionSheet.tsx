@@ -27,6 +27,7 @@ import {
   useUpsertChild, useDeleteChild,
   type ProductionSheet, type SheetShot,
 } from '@/hooks/use-production-sheets';
+import { SendToClickUpDialog } from '@/components/producciones/SendToClickUpDialog';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
@@ -63,9 +64,10 @@ export default function ProduccionSheet() {
   const [local, setLocal] = useState<Partial<ProductionSheet>>({});
   const [clientName, setClientName] = useState<string>('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'recorded'>('all');
-  const [sending, setSending] = useState(false);
+  
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [clickupOpen, setClickupOpen] = useState(false);
 
   const shareToken = data?.sheet?.public_share_token || null;
   const shareEnabled = !!data?.sheet?.public_share_enabled;
@@ -184,18 +186,8 @@ export default function ProduccionSheet() {
     });
   };
 
-  const handleSendClickUp = async () => {
-    setSending(true);
-    try {
-      const { data: resp, error } = await supabase.functions.invoke('clickup-create-tasks', { body: { sheet_id: sheetId } });
-      if (error) throw new Error(error.message);
-      if (resp?.error) throw new Error(resp.error);
-      toast.success(`${resp.tasks_created || 0} pieza(s) enviada(s) a ClickUp`);
-    } catch (e: any) {
-      toast.error(e.message || 'Error enviando a ClickUp');
-    } finally {
-      setSending(false);
-    }
+  const handleSendClickUp = () => {
+    setClickupOpen(true);
   };
 
   const handleDelete = async () => {
@@ -561,10 +553,10 @@ export default function ProduccionSheet() {
                   )}
                   <Button
                     onClick={handleSendClickUp}
-                    disabled={sending || recordedShots.length === 0}
+                    disabled={recordedShots.length === 0}
                     className="bg-noeval-accent text-white hover:bg-noeval-accent/90 disabled:opacity-50 w-full sm:w-auto"
                   >
-                    {sending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Send className="h-4 w-4 mr-1.5" />}
+                    <Send className="h-4 w-4 mr-1.5" />
                     Enviar {pendingToSend > 0 ? `${pendingToSend} pieza${pendingToSend !== 1 ? 's' : ''}` : 'grabadas'} a ClickUp
                   </Button>
                 </div>
@@ -582,6 +574,21 @@ export default function ProduccionSheet() {
           </div>
         )}
       </div>
+
+      {data?.sheet && (
+        <SendToClickUpDialog
+          sheetId={sheetId}
+          sheetTitle={data.sheet.title || ''}
+          defaults={{
+            spaceId: data.sheet.clickup_space_id,
+            spaceName: data.sheet.clickup_space_name,
+            listId: data.sheet.clickup_list_id,
+            listName: data.sheet.clickup_list_name,
+          }}
+          open={clickupOpen}
+          onClose={() => setClickupOpen(false)}
+        />
+      )}
     </DashboardLayout>
   );
 }

@@ -23,6 +23,10 @@ export interface ProductionSheet {
   updated_at: string;
   public_share_token: string | null;
   public_share_enabled: boolean;
+  clickup_list_id: string | null;
+  clickup_list_name: string | null;
+  clickup_space_id: string | null;
+  clickup_space_name: string | null;
 }
 
 export interface SheetTeamMember {
