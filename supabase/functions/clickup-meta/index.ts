@@ -12,9 +12,14 @@ const CLICKUP_TOKEN = Deno.env.get('CLICKUP_API_TOKEN');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-async function cu(path: string) {
+async function cu(path: string, init?: RequestInit) {
   const res = await fetch(`https://api.clickup.com/api/v2${path}`, {
-    headers: { Authorization: CLICKUP_TOKEN!, 'Content-Type': 'application/json' },
+    ...init,
+    headers: {
+      Authorization: CLICKUP_TOKEN!,
+      'Content-Type': 'application/json',
+      ...(init?.headers || {}),
+    },
   });
   if (!res.ok) {
     const text = await res.text();
