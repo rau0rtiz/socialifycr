@@ -552,20 +552,28 @@ export default function ProduccionSheet() {
                   <Trash2 className="h-3.5 w-3.5 mr-1" /> Eliminar sheet
                 </Button>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  {alreadySent > 0 && (
+                  {sheetSent && (
+                    <span className="inline-flex items-center gap-1.5 text-[10px] tracking-[0.3em] uppercase px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 font-semibold">
+                      ✓ Completado
+                    </span>
+                  )}
+                  {alreadySent > 0 && !sheetSent && (
                     <span className="text-xs text-noeval-muted">
                       {alreadySent} ya enviada{alreadySent !== 1 ? 's' : ''} a ClickUp
                     </span>
                   )}
                   <Button
                     onClick={handleSendClickUp}
-                    disabled={recordedShots.length === 0}
-                    className="bg-noeval-accent text-white hover:bg-noeval-accent/90 disabled:opacity-50 w-full sm:w-auto"
+                    disabled={recordedShots.length === 0 && !sheetSent}
+                    className={`${sheetSent ? 'bg-noeval-ink/10 text-noeval-ink hover:bg-noeval-ink/20 border border-noeval-line' : 'bg-noeval-accent text-white hover:bg-noeval-accent/90'} disabled:opacity-50 w-full sm:w-auto`}
                   >
                     <Send className="h-4 w-4 mr-1.5" />
-                    Enviar {pendingToSend > 0 ? `${pendingToSend} pieza${pendingToSend !== 1 ? 's' : ''}` : 'grabadas'} a ClickUp
+                    {sheetSent
+                      ? 'Reenviar a ClickUp'
+                      : `Enviar ${pendingToSend > 0 ? `${pendingToSend} pieza${pendingToSend !== 1 ? 's' : ''}` : 'grabadas'} a ClickUp`}
                   </Button>
                 </div>
+
               </div>
             </div>
 
