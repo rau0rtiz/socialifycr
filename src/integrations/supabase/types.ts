@@ -4044,6 +4044,7 @@ export type Database = {
           duration_estimate: string | null
           hook: string | null
           id: string
+          is_draft: boolean
           notes: string | null
           platform: string | null
           recorded_at: string | null
@@ -4068,6 +4069,7 @@ export type Database = {
           duration_estimate?: string | null
           hook?: string | null
           id?: string
+          is_draft?: boolean
           notes?: string | null
           platform?: string | null
           recorded_at?: string | null
@@ -4092,6 +4094,7 @@ export type Database = {
           duration_estimate?: string | null
           hook?: string | null
           id?: string
+          is_draft?: boolean
           notes?: string | null
           platform?: string | null
           recorded_at?: string | null

@@ -1,79 +1,51 @@
-# Generador de shots con Claude Opus
+# Flujo de guardado para ideas + guion completo visible
 
-Agregar en cada hoja de producción (`/agencia/producciones/:sheetId`) un botón **"Generar shots con IA"** que abre un modal con un prompt denso obligatorio, llama a Claude Opus vía edge function, y rellena la sección **Shots** de la hoja.
+## Problema
 
-## Alcance
+1. La cajita de **Guion / Copy** corta el texto: hay que hacer scroll dentro de un textarea chico para ver todo.
+2. Una idea recién creada (manual o con IA) ya está "viva" — un clic accidental sobre el guion lo edita sin que haya un momento explícito de "confirmar".
 
-- Solo pobla la sección **Shots** (`production_sheet_shots`). Equipo, vestuario, título y metadata no se tocan.
-- Claude Opus como motor único de esta función (no toggle con Gemini, según indicaste API key propia).
-- Lovable AI / Gemini sigue intacto para el resto del proyecto.
+## Solución
 
-## Flujo de usuario
+### 1. Estado `borrador` para piezas nuevas
 
-1. En la hoja, botón **"Generar shots con IA"** junto a los controles existentes de Shots.
-2. Modal con:
-   - Textarea **obligatoria** del prompt (mín. ~120 caracteres, contador visible).
-   - Helper text con guía: tipo de pieza, audiencia, tono, locación, referencias, restricciones, duración objetivo.
-   - Selector de modelo (default `claude-opus-4`, opción `claude-sonnet-4` para ahorrar).
-   - Input numérico "Cantidad de shots" (default 8, rango 3–20).
-   - Checkbox "Reemplazar shots existentes" (off por defecto → agrega al final).
-   - Botón **Generar** (deshabilitado hasta cumplir longitud mínima).
-3. Loading state con mensaje "Claude está pensando…".
-4. Preview de los shots generados antes de guardar: lista editable con check para descartar individualmente.
-5. Botón **Guardar en hoja** → inserta en `production_sheet_shots` con `sort_order` correlativo.
+Agregar columna `is_draft boolean default false` en `production_sheet_shots`.
 
-## Backend
+- **"Nueva pieza"** crea la card en modo **Borrador**: badge ámbar "Borrador — pendiente de guardar", borde dashed, y el botón principal de la card pasa a ser **"Guardar idea"** (en vez de "Marcar grabado", que queda deshabilitado hasta guardar).
+- Los inputs se editan normalmente (debounce ya existe), pero la pieza no aparece en la **Hoja del día** ni se puede mandar a ClickUp mientras esté en borrador.
+- Al hacer clic en **Guardar idea**, `is_draft` pasa a `false` y la card entra en modo "lectura segura" (ver punto 2).
 
-**Secret nuevo:** `ANTHROPIC_API_KEY` (la pedimos vía `add_secret` tras aprobar el plan).
+Para piezas generadas con IA: el dialog ya tiene su propio paso de revisión + Guardar, así que se insertan directamente como `is_draft = false` (ya fueron confirmadas en el dialog).
 
-**Edge function nueva:** `supabase/functions/generate-production-shots/index.ts`
-- `verify_jwt` por default, valida `getClaims()`.
-- Valida acceso del usuario al `client_id` de la hoja vía `has_client_access`.
-- Input (Zod): `sheet_id`, `prompt` (min 80 chars), `model` (`claude-opus-4-20250514` | `claude-sonnet-4-20250514`), `shot_count` (3–20).
-- Trae contexto de la hoja: título, fecha, locación, cliente (nombre + marca/colores), shots existentes (para que Claude no duplique si "agregar").
-- Llama a `https://api.anthropic.com/v1/messages` con:
-  - System prompt experto en dirección de fotografía/video publicitario, instrucciones de formato JSON estricto.
-  - Output estructurado JSON: `[{ shot_type, description, duration_seconds, notes }]`.
-- Parsea, valida con Zod, devuelve array al frontend (no escribe en DB — el frontend confirma y guarda).
-- Manejo de errores: 401 (API key inválida), 429 (rate limit Anthropic), 529 (overloaded) → mensajes claros al UI.
+### 2. Modo lectura del guion (anti-edición accidental)
 
-## Frontend
+Una vez que la pieza dejó de ser borrador (o si ya estaba guardada), el campo **Guion / Copy** se renderiza como bloque de lectura:
 
-- Nuevo componente `src/components/producciones/GenerateShotsDialog.tsx`.
-- Integrado en `src/pages/ProduccionSheet.tsx` cerca del header de la sección Shots.
-- `supabase.functions.invoke('generate-production-shots', { body })`.
-- Tras confirmar, inserts batch en `production_sheet_shots` con el cliente Supabase existente.
-- Toasts para éxito/error usando el sistema actual.
+- Texto completo visible (`whitespace-pre-wrap`, sin scroll interno, sin recorte) sobre fondo crema.
+- Botón discreto **"Editar guion"** (icono lápiz) arriba a la derecha del bloque.
+- Al hacer clic se transforma en `<Textarea>` con `autosize` (altura crece con el contenido) y aparecen **Guardar** / **Cancelar**.
+- Mismo patrón para el campo **Concepto** (es el otro que duele si se edita sin querer).
 
-## Detalles técnicos
+Los demás campos (Hook, CTA, Notas técnicas) siguen como ahora — son cortos y de bajo riesgo.
 
-- **Modelo default**: `claude-opus-4-20250514` (Opus 4). Sonnet 4 como alternativa más barata.
-- **Max tokens**: 4000 (suficiente para 20 shots detallados).
-- **Temperature**: 0.8 para creatividad.
-- **No streaming** en esta v1 — devuelve JSON completo, más simple y el usuario ve loader corto.
-- **Costo**: cada generación con Opus ronda $0.05–$0.15 según largo de prompt + output. Se cobra a la API key del usuario directamente con Anthropic, no a créditos Lovable.
-- **Rate limiting app-level**: máx. 1 generación simultánea por usuario (estado local del botón).
+### 3. Visibilidad completa también en lectura colapsada y Hoja del día
 
-## Archivos
+La Hoja del día ya muestra hook/cta/notas técnicas pero **no muestra el script**. Agregar el guion completo al resumen de cada pieza grabada (texto completo, sin truncar).
 
-Nuevos:
-- `supabase/functions/generate-production-shots/index.ts`
-- `src/components/producciones/GenerateShotsDialog.tsx`
+## Cambios técnicos
 
-Editados:
-- `src/pages/ProduccionSheet.tsx` (botón + integración del modal en la sección Shots)
-
-## Pasos de implementación
-
-1. Pedir secret `ANTHROPIC_API_KEY`.
-2. Crear edge function con validación y llamada a Anthropic.
-3. Crear `GenerateShotsDialog` con prompt denso + preview.
-4. Integrar botón en `ProduccionSheet.tsx`.
-5. Probar flujo end-to-end en la hoja actual.
+- **Migración**: `ALTER TABLE production_sheet_shots ADD COLUMN is_draft boolean NOT NULL DEFAULT false;`
+- **`src/pages/ProduccionSheet.tsx`**:
+  - `handleAddPiece`: insertar con `is_draft: true`.
+  - `PieceCard`: nuevo prop/estado de borrador; reemplaza CTA "Marcar grabado" por "Guardar idea" cuando `is_draft`; agrega badge.
+  - Modo lectura para Concepto y Guion con toggle de edición (`editing.script`, `editing.concept`). Componente auxiliar `<ReadEditField>` para no duplicar lógica.
+  - Filtrar `recordedShots` y `pendingToSend` para excluir drafts.
+  - Hoja del día: agregar bloque "Guion" con `s.script` cuando exista.
+- **`GenerateShotsDialog`**: sin cambios funcionales (ya tiene revisión); el `onInsert` en `ProduccionSheet.tsx` pasa `is_draft: false`.
+- **Vista pública (`/produccion-publica/...`)**: ocultar drafts y mostrar guion completo (alinear con Hoja del día).
 
 ## Fuera de alcance
 
-- Generar título/locación/equipo/vestuario.
-- Generar hoja completa desde cero (botón solo dentro de una hoja existente).
-- Edición de imágenes de referencia / moodboard.
-- Toggle Claude vs Gemini.
+- No se toca el flujo de IA (ya tiene preview + Guardar explícito).
+- No se cambia el envío a ClickUp (sigue exigiendo `done=true`, ahora también `is_draft=false` implícito).
+- No se agrega historial/versionado del guion.
