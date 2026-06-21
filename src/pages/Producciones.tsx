@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Plus, Folder, Search, Trash2, FileText, Film,
-  Calendar, MapPin, User as UserIcon, Settings, Loader2, ImagePlus,
+  Calendar, MapPin, User as UserIcon, Loader2, ImagePlus,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -26,7 +26,7 @@ import {
   useProductionSheets, useCreateSheet, useUpdateSheet,
   type SheetStatus, type ProductionSheet,
 } from '@/hooks/use-production-sheets';
-import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
+
 import {
   useProductionFolders, useCreateFolder, useDeleteFolder, useRenameFolder,
   useMoveSheet, useMoveFolder,
@@ -68,7 +68,7 @@ export default function Producciones() {
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
   const [creatingClient, setCreatingClient] = useState(false);
-  const [configClient, setConfigClient] = useState<{ id: string; name: string } | null>(null);
+  
 
   const { data: sheets = [], isLoading } = useProductionSheets();
   const { data: clients = [], refetch: refetchClients } = useClients();
@@ -233,21 +233,10 @@ export default function Producciones() {
               />
             </div>
             {clientFilter && (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const c = clients.find(x => x.id === clientFilter);
-                    if (c) setConfigClient(c);
-                  }}
-                >
-                  <Settings className="h-4 w-4 mr-1.5" /> ClickUp
-                </Button>
-                <Button variant="outline" onClick={() => setClientFilter(null)}>
-                  <ArrowLeft className="h-4 w-4 mr-1.5" />
-                  Todas las carpetas
-                </Button>
-              </>
+              <Button variant="outline" onClick={() => setClientFilter(null)}>
+                <ArrowLeft className="h-4 w-4 mr-1.5" />
+                Todas las carpetas
+              </Button>
             )}
           </div>
 
@@ -269,7 +258,6 @@ export default function Producciones() {
                       client={c}
                       count={count}
                       onOpen={() => setClientFilter(c.id)}
-                      onConfigure={() => setConfigClient(c)}
                       onLogoUpdated={() => refetchClients()}
                       onDelete={async () => {
                         if (!confirm(`¿Quitar la carpeta de "${c.name}" de Producciones?\n\nNo elimina al cliente, solo lo oculta de esta vista.`)) return;
@@ -457,14 +445,6 @@ export default function Producciones() {
         />
       )}
 
-      {configClient && (
-        <ClickUpConfigDialog
-          clientId={configClient.id}
-          clientName={configClient.name}
-          open
-          onClose={() => setConfigClient(null)}
-        />
-      )}
 
       {creatingClient && (
         <CreateClientDialog
@@ -671,12 +651,11 @@ function CreateSheetDialog({
 
 // ---------- Client folder card with logo upload ----------
 function ClientFolderCard({
-  client, count, onOpen, onConfigure, onLogoUpdated, onDelete,
+  client, count, onOpen, onLogoUpdated, onDelete,
 }: {
   client: { id: string; name: string; logo_url: string | null };
   count: number;
   onOpen: () => void;
-  onConfigure: () => void;
   onLogoUpdated: () => void;
   onDelete: () => void;
 }) {
@@ -775,13 +754,6 @@ function ClientFolderCard({
           className="p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-destructive/10"
         >
           <Trash2 className="h-3.5 w-3.5 text-destructive" />
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onConfigure(); }}
-          title="Configurar ClickUp"
-          className="p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-white"
-        >
-          <Settings className="h-3.5 w-3.5 text-noeval-muted" />
         </button>
       </div>
     </div>
