@@ -233,21 +233,10 @@ export default function Producciones() {
               />
             </div>
             {clientFilter && (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const c = clients.find(x => x.id === clientFilter);
-                    if (c) setConfigClient(c);
-                  }}
-                >
-                  <Settings className="h-4 w-4 mr-1.5" /> ClickUp
-                </Button>
-                <Button variant="outline" onClick={() => setClientFilter(null)}>
-                  <ArrowLeft className="h-4 w-4 mr-1.5" />
-                  Todas las carpetas
-                </Button>
-              </>
+              <Button variant="outline" onClick={() => setClientFilter(null)}>
+                <ArrowLeft className="h-4 w-4 mr-1.5" />
+                Todas las carpetas
+              </Button>
             )}
           </div>
 
