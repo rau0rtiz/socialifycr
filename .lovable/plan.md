@@ -1,61 +1,79 @@
-# Subdominio produ.socialifycr.com para Producciones
+# Generador de shots con Claude Opus
 
-Objetivo: que `produ.socialifycr.com` muestre únicamente el módulo de Producciones (sin sidebar del dashboard, sin acceso a Ventas, Clientes, etc.), reutilizando el mismo proyecto Lovable, mismo login y mismos datos. `app.socialifycr.com` sigue funcionando igual.
+Agregar en cada hoja de producción (`/agencia/producciones/:sheetId`) un botón **"Generar shots con IA"** que abre un modal con un prompt denso obligatorio, llama a Claude Opus vía edge function, y rellena la sección **Shots** de la hoja.
 
-## 1. DNS y dominio (acción del usuario, 1 sola vez)
+## Alcance
 
-En Project Settings → Domains → Connect domain, agregar `produ.socialifycr.com` apuntado al mismo proyecto (A record a `185.158.133.1` o CNAME si usa Cloudflare proxy). Lovable emite el SSL automáticamente. No se toca `app.socialifycr.com`.
+- Solo pobla la sección **Shots** (`production_sheet_shots`). Equipo, vestuario, título y metadata no se tocan.
+- Claude Opus como motor único de esta función (no toggle con Gemini, según indicaste API key propia).
+- Lovable AI / Gemini sigue intacto para el resto del proyecto.
 
-## 2. Detección de host en la app
+## Flujo de usuario
 
-Crear `src/lib/host-mode.ts` con un helper:
+1. En la hoja, botón **"Generar shots con IA"** junto a los controles existentes de Shots.
+2. Modal con:
+   - Textarea **obligatoria** del prompt (mín. ~120 caracteres, contador visible).
+   - Helper text con guía: tipo de pieza, audiencia, tono, locación, referencias, restricciones, duración objetivo.
+   - Selector de modelo (default `claude-opus-4`, opción `claude-sonnet-4` para ahorrar).
+   - Input numérico "Cantidad de shots" (default 8, rango 3–20).
+   - Checkbox "Reemplazar shots existentes" (off por defecto → agrega al final).
+   - Botón **Generar** (deshabilitado hasta cumplir longitud mínima).
+3. Loading state con mensaje "Claude está pensando…".
+4. Preview de los shots generados antes de guardar: lista editable con check para descartar individualmente.
+5. Botón **Guardar en hoja** → inserta en `production_sheet_shots` con `sort_order` correlativo.
 
-- `isProduccionesHost()` → `true` si `window.location.hostname` empieza con `produ.` (también acepta `produ-preview…lovable.app` para poder previsualizar antes de publicar, y un override `?host=produ` solo en dev).
-- Hook `useHostMode()` que expone `{ mode: 'producciones' | 'main' }`.
+## Backend
 
-## 3. Router condicional (`src/App.tsx`)
+**Secret nuevo:** `ANTHROPIC_API_KEY` (la pedimos vía `add_secret` tras aprobar el plan).
 
-Dentro de `<BrowserRouter>`, antes del `<Routes>` principal, ramificar por host:
+**Edge function nueva:** `supabase/functions/generate-production-shots/index.ts`
+- `verify_jwt` por default, valida `getClaims()`.
+- Valida acceso del usuario al `client_id` de la hoja vía `has_client_access`.
+- Input (Zod): `sheet_id`, `prompt` (min 80 chars), `model` (`claude-opus-4-20250514` | `claude-sonnet-4-20250514`), `shot_count` (3–20).
+- Trae contexto de la hoja: título, fecha, locación, cliente (nombre + marca/colores), shots existentes (para que Claude no duplique si "agregar").
+- Llama a `https://api.anthropic.com/v1/messages` con:
+  - System prompt experto en dirección de fotografía/video publicitario, instrucciones de formato JSON estricto.
+  - Output estructurado JSON: `[{ shot_type, description, duration_seconds, notes }]`.
+- Parsea, valida con Zod, devuelve array al frontend (no escribe en DB — el frontend confirma y guarda).
+- Manejo de errores: 401 (API key inválida), 429 (rate limit Anthropic), 529 (overloaded) → mensajes claros al UI.
 
-- Si `mode === 'producciones'`:
-  - Rutas permitidas: `/` → redirect a `/producciones`, `/producciones`, `/producciones/:sheetId`, `/auth`, `/reset-password`, callbacks OAuth (por si reusan login), y `*` → `NotFound`.
-  - Sin `AppSidebar`, sin layout del dashboard. Mantenemos `AuthProvider`, `BrandProvider`, `ProtectedRoute` (mismos usuarios del dashboard pueden entrar).
-- Si `mode === 'main'`: árbol de rutas actual sin cambios.
+## Frontend
 
-Las rutas internas pasan de `/agencia/producciones` a `/producciones` solo cuando el host es `produ.`; en el host principal se mantiene `/agencia/producciones` intacto.
-
-## 4. Ajustes mínimos en Producciones
-
-- En `Producciones.tsx` y `ProduccionSheet.tsx`: usar un helper `produccionesBasePath()` que devuelve `/producciones` o `/agencia/producciones` según host, para que los links internos (`navigate`, breadcrumbs, "← Volver") funcionen en ambos dominios.
-- Ocultar el botón "← Volver al dashboard" cuando `mode === 'producciones'` (no hay dashboard al cual volver) y reemplazar por "← Carpetas".
-- El logout del usuario sigue disponible (menú simple en el header de Producciones), redirige a `/auth` dentro del mismo subdominio.
-
-## 5. Auth y datos
-
-- Mismo `AuthProvider`, misma sesión Supabase. Como el subdominio es distinto (`produ.` vs `app.`), la cookie de sesión no se comparte automáticamente: cada subdominio requiere su propio login. Se documenta como comportamiento esperado.
-- RLS y permisos no cambian: cualquiera con acceso al dashboard puede entrar a `produ.`.
-
-## 6. SEO / metadata
-
-Actualizar `index.html` con lógica mínima en runtime (set `document.title` dentro del layout de Producciones) a "Socialify · Producciones" cuando el host es `produ.`. No tocamos meta tags globales.
+- Nuevo componente `src/components/producciones/GenerateShotsDialog.tsx`.
+- Integrado en `src/pages/ProduccionSheet.tsx` cerca del header de la sección Shots.
+- `supabase.functions.invoke('generate-production-shots', { body })`.
+- Tras confirmar, inserts batch en `production_sheet_shots` con el cliente Supabase existente.
+- Toasts para éxito/error usando el sistema actual.
 
 ## Detalles técnicos
 
-Archivos nuevos:
-- `src/lib/host-mode.ts`
-- `src/routes/ProduccionesOnlyRoutes.tsx` (subárbol de rutas para el subdominio)
+- **Modelo default**: `claude-opus-4-20250514` (Opus 4). Sonnet 4 como alternativa más barata.
+- **Max tokens**: 4000 (suficiente para 20 shots detallados).
+- **Temperature**: 0.8 para creatividad.
+- **No streaming** en esta v1 — devuelve JSON completo, más simple y el usuario ve loader corto.
+- **Costo**: cada generación con Opus ronda $0.05–$0.15 según largo de prompt + output. Se cobra a la API key del usuario directamente con Anthropic, no a créditos Lovable.
+- **Rate limiting app-level**: máx. 1 generación simultánea por usuario (estado local del botón).
 
-Archivos a editar:
-- `src/App.tsx` — branch por host antes de `<Routes>`.
-- `src/pages/Producciones.tsx` — base path dinámico, título dinámico, ocultar volver-al-dashboard.
-- `src/pages/ProduccionSheet.tsx` — base path dinámico en navigate/links.
+## Archivos
 
-Fuera de alcance: cambios de schema, edge functions, ClickUp, branding global, separar proyectos Lovable, cambiar el path en `app.socialifycr.com`.
+Nuevos:
+- `supabase/functions/generate-production-shots/index.ts`
+- `src/components/producciones/GenerateShotsDialog.tsx`
 
-## Checklist post-deploy
+Editados:
+- `src/pages/ProduccionSheet.tsx` (botón + integración del modal en la sección Shots)
 
-1. Publicar.
-2. Conectar `produ.socialifycr.com` en Domains.
-3. Esperar SSL activo.
-4. Verificar: `produ.socialifycr.com/` redirige a `/producciones`, no aparece sidebar, intentar `/ventas` → NotFound.
-5. Verificar que `app.socialifycr.com/agencia/producciones` sigue igual.
+## Pasos de implementación
+
+1. Pedir secret `ANTHROPIC_API_KEY`.
+2. Crear edge function con validación y llamada a Anthropic.
+3. Crear `GenerateShotsDialog` con prompt denso + preview.
+4. Integrar botón en `ProduccionSheet.tsx`.
+5. Probar flujo end-to-end en la hoja actual.
+
+## Fuera de alcance
+
+- Generar título/locación/equipo/vestuario.
+- Generar hoja completa desde cero (botón solo dentro de una hoja existente).
+- Edición de imágenes de referencia / moodboard.
+- Toggle Claude vs Gemini.
