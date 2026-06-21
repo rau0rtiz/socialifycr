@@ -765,13 +765,6 @@ function ClientFolderCard({
         >
           <Trash2 className="h-3.5 w-3.5 text-destructive" />
         </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onConfigure(); }}
-          title="Configurar ClickUp"
-          className="p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-white"
-        >
-          <Settings className="h-3.5 w-3.5 text-noeval-muted" />
-        </button>
       </div>
     </div>
   );
