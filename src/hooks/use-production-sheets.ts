@@ -61,6 +61,7 @@ export interface SheetShot {
   clickup_task_id: string | null;
   clickup_url: string | null;
   sent_to_clickup_at: string | null;
+  is_draft: boolean;
 }
 
 export interface SheetWardrobe {
