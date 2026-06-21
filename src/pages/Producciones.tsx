@@ -689,7 +689,7 @@ function ClientFolderCard({
     setUploading(true);
     try {
       const ext = (file.name.split('.').pop() || 'png').toLowerCase();
-      const path = `producciones/client-logos/${client.id}-${Date.now()}.${ext}`;
+      const path = `${client.id}/producciones/client-logos/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from('content-images')
         .upload(path, file, { contentType: file.type, upsert: false });
