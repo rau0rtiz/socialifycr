@@ -713,25 +713,37 @@ function PieceCard({
 
   const recordedTime = shot.recorded_at ? format(parseISO(shot.recorded_at), 'HH:mm') : null;
 
-  if (shot.done && !expanded) {
-    // COLLAPSED RECORDED CARD
+  if (!expanded) {
+    // COLLAPSED CARD (recorded or pending)
     return (
-      <div className="relative bg-noeval-surface border border-noeval-line/60 rounded-xl p-3 sm:p-4 opacity-90 hover:opacity-100 transition group">
+      <div className={`relative border rounded-xl p-3 sm:p-4 transition group ${
+        shot.done
+          ? 'bg-noeval-surface border-noeval-line/60 opacity-90 hover:opacity-100'
+          : 'bg-noeval-cream border-noeval-line hover:border-noeval-ink/30'
+      }`}>
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="font-serif text-lg sm:text-xl text-noeval-muted w-7 sm:w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
-          <div className="grabado-stamp hidden sm:inline-flex">
-            <span className="grabado-stamp-dot">
-              <span className="grabado-stamp-ping" />
+          {shot.done ? (
+            <div className="grabado-stamp hidden sm:inline-flex">
+              <span className="grabado-stamp-dot">
+                <span className="grabado-stamp-ping" />
+              </span>
+              Grabado
+            </div>
+          ) : (
+            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-noeval-muted border border-noeval-line rounded-full px-2 py-0.5">
+              Pendiente
             </span>
-            Grabado
-          </div>
+          )}
           <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.25em] uppercase bg-noeval-ink text-noeval-cream rounded-full px-2 sm:px-2.5 py-1 shrink-0">
             {meta.icon} <span className="hidden xs:inline">{meta.label}</span>
           </span>
           {platformLabel && (
             <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-muted hidden md:inline">{platformLabel}</span>
           )}
-          <div className="font-serif text-base sm:text-lg text-noeval-ink truncate flex-1 min-w-0">
+          <div className={`font-serif text-base sm:text-lg truncate flex-1 min-w-0 ${
+            shot.done ? 'text-noeval-ink' : 'text-noeval-ink'
+          }`}>
             {local.concept || '(sin concepto)'}
           </div>
           {recordedTime && (
@@ -748,7 +760,7 @@ function PieceCard({
           </button>
         </div>
 
-        {local.tech_notes && (
+        {shot.done && local.tech_notes && (
           <div className="mt-2.5 pt-2.5 border-t border-noeval-line/40">
             <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-muted mb-1">🎥 Notas técnicas</div>
             <div className="text-sm text-noeval-ink whitespace-pre-wrap font-serif leading-snug">{local.tech_notes}</div>
@@ -760,7 +772,7 @@ function PieceCard({
             href={shot.clickup_url}
             target="_blank"
             rel="noreferrer"
-            className="no-print absolute top-3 right-3 text-[10px] tracking-[0.2em] uppercase text-noeval-accent hover:underline inline-flex items-center gap-1"
+            className="no-print absolute top-3 right-10 text-[10px] tracking-[0.2em] uppercase text-noeval-accent hover:underline inline-flex items-center gap-1"
           >
             ClickUp <ExternalLink className="h-3 w-3" />
           </a>
@@ -768,6 +780,7 @@ function PieceCard({
       </div>
     );
   }
+
 
   // EXPANDED CARD
   return (
@@ -814,15 +827,13 @@ function PieceCard({
           )}
         </div>
         <div className="flex items-center gap-0.5 sm:gap-1 no-print shrink-0">
-          {shot.done && (
-            <button
-              onClick={() => setExpanded(false)}
-              className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded hover:bg-noeval-line/30"
-              title="Colapsar"
-            >
-              <ChevronUp className="h-4 w-4" />
-            </button>
-          )}
+          <button
+            onClick={() => setExpanded(false)}
+            className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded hover:bg-noeval-line/30"
+            title="Colapsar"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </button>
           <button
             onClick={onDuplicate}
             className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded hover:bg-noeval-line/30"
