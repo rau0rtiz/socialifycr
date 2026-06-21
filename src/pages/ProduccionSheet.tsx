@@ -538,7 +538,13 @@ export default function ProduccionSheet() {
                             </div>
                             <div className="font-serif text-lg text-noeval-ink mt-1">{s.concept || s.description || '(sin concepto)'}</div>
                             {s.hook && <div className="text-sm text-noeval-muted mt-1"><strong className="text-noeval-ink">Hook:</strong> {s.hook}</div>}
-                            {s.cta && <div className="text-sm text-noeval-muted"><strong className="text-noeval-ink">CTA:</strong> {s.cta}</div>}
+                            {s.script && (
+                              <div className="mt-2 pt-2 border-t border-noeval-line/60">
+                                <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-muted mb-0.5">📝 Guion</div>
+                                <div className="text-sm text-noeval-ink whitespace-pre-wrap leading-relaxed">{s.script}</div>
+                              </div>
+                            )}
+                            {s.cta && <div className="text-sm text-noeval-muted mt-1"><strong className="text-noeval-ink">CTA:</strong> {s.cta}</div>}
                             {s.tech_notes && (
                               <div className="mt-2 pt-2 border-t border-noeval-line/60">
                                 <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-muted mb-0.5">🎥 Notas técnicas</div>
@@ -647,6 +653,7 @@ export default function ProduccionSheet() {
                   content_type: s.content_type,
                   platform: s.platform,
                   done: false,
+                  is_draft: false,
                   sort_order: base + i,
                 });
               }
