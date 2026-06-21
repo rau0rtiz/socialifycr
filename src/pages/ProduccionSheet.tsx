@@ -827,15 +827,13 @@ function PieceCard({
           )}
         </div>
         <div className="flex items-center gap-0.5 sm:gap-1 no-print shrink-0">
-          {shot.done && (
-            <button
-              onClick={() => setExpanded(false)}
-              className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded hover:bg-noeval-line/30"
-              title="Colapsar"
-            >
-              <ChevronUp className="h-4 w-4" />
-            </button>
-          )}
+          <button
+            onClick={() => setExpanded(false)}
+            className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded hover:bg-noeval-line/30"
+            title="Colapsar"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </button>
           <button
             onClick={onDuplicate}
             className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded hover:bg-noeval-line/30"
