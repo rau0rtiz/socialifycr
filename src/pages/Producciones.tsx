@@ -26,7 +26,7 @@ import {
   useProductionSheets, useCreateSheet, useUpdateSheet,
   type SheetStatus, type ProductionSheet,
 } from '@/hooks/use-production-sheets';
-import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
+
 import {
   useProductionFolders, useCreateFolder, useDeleteFolder, useRenameFolder,
   useMoveSheet, useMoveFolder,
@@ -68,7 +68,7 @@ export default function Producciones() {
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
   const [creatingClient, setCreatingClient] = useState(false);
-  const [configClient, setConfigClient] = useState<{ id: string; name: string } | null>(null);
+  
 
   const { data: sheets = [], isLoading } = useProductionSheets();
   const { data: clients = [], refetch: refetchClients } = useClients();
@@ -258,7 +258,6 @@ export default function Producciones() {
                       client={c}
                       count={count}
                       onOpen={() => setClientFilter(c.id)}
-                      onConfigure={() => setConfigClient(c)}
                       onLogoUpdated={() => refetchClients()}
                       onDelete={async () => {
                         if (!confirm(`¿Quitar la carpeta de "${c.name}" de Producciones?\n\nNo elimina al cliente, solo lo oculta de esta vista.`)) return;
@@ -446,14 +445,6 @@ export default function Producciones() {
         />
       )}
 
-      {configClient && (
-        <ClickUpConfigDialog
-          clientId={configClient.id}
-          clientName={configClient.name}
-          open
-          onClose={() => setConfigClient(null)}
-        />
-      )}
 
       {creatingClient && (
         <CreateClientDialog
