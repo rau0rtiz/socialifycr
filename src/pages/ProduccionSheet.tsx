@@ -29,6 +29,7 @@ import {
 } from '@/hooks/use-production-sheets';
 import { SendToClickUpDialog } from '@/components/producciones/SendToClickUpDialog';
 import { SendSummaryEmailDialog } from '@/components/producciones/SendSummaryEmailDialog';
+import { GenerateShotsDialog } from '@/components/producciones/GenerateShotsDialog';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
@@ -70,6 +71,7 @@ export default function ProduccionSheet() {
   const [shareCopied, setShareCopied] = useState(false);
   const [clickupOpen, setClickupOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
 
   const shareToken = data?.sheet?.public_share_token || null;
   const shareEnabled = !!data?.sheet?.public_share_enabled;
@@ -393,6 +395,9 @@ export default function ProduccionSheet() {
                         </button>
                       ))}
                     </div>
+                    <Button onClick={() => setAiOpen(true)} variant="outline" className="border-purple-400 text-purple-600 hover:bg-purple-50 shrink-0 hidden sm:inline-flex">
+                      <Sparkles className="h-4 w-4 mr-1.5" /> Generar con IA
+                    </Button>
                     <Button onClick={handleAddPiece} className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90 shrink-0 hidden sm:inline-flex">
                       <Plus className="h-4 w-4 mr-1.5" /> Nueva pieza
                     </Button>
