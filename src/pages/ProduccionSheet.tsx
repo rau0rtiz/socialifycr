@@ -621,6 +621,35 @@ export default function ProduccionSheet() {
             sheetId={sheetId}
             defaultSubject={`Resumen de producción · ${data.sheet.title || clientName}`}
           />
+          <GenerateShotsDialog
+            open={aiOpen}
+            onOpenChange={setAiOpen}
+            sheetId={sheetId}
+            existingCount={shots.length}
+            onInsert={async (newShots, replace) => {
+              if (replace) {
+                await Promise.all(shots.map((s) => delShot.mutateAsync({ id: s.id, sheet_id: sheetId })));
+              }
+              const base = replace ? 0 : shots.length;
+              for (let i = 0; i < newShots.length; i++) {
+                const s = newShots[i];
+                await upsertShot.mutateAsync({
+                  sheet_id: sheetId,
+                  concept: s.concept,
+                  description: s.description,
+                  hook: s.hook,
+                  script: s.script,
+                  cta: s.cta,
+                  tech_notes: s.tech_notes,
+                  duration_estimate: s.duration_estimate,
+                  content_type: s.content_type,
+                  platform: s.platform,
+                  done: false,
+                  sort_order: base + i,
+                });
+              }
+            }}
+          />
         </>
       )}
     </DashboardLayout>
