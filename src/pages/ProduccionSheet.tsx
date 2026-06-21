@@ -677,8 +677,11 @@ function PieceCard({
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
-  const [expanded, setExpanded] = useState(!shot.done);
+  const isDraft = !!shot.is_draft;
+  const [expanded, setExpanded] = useState(!shot.done || isDraft);
   const [detailsOpen, setDetailsOpen] = useState(true);
+  const [editConcept, setEditConcept] = useState(false);
+  const [editScript, setEditScript] = useState(false);
   const meta = typeMeta(shot.content_type);
   const platformLabel = PLATFORMS.find(p => p.value === shot.platform)?.label;
 
@@ -721,6 +724,17 @@ function PieceCard({
   }, [local]);
 
   const recordedTime = shot.recorded_at ? format(parseISO(shot.recorded_at), 'HH:mm') : null;
+
+  // While draft, fields are always editable (no read-mode)
+  const conceptEditing = isDraft || editConcept || !local.concept;
+  const scriptEditing = isDraft || editScript;
+
+  const handleSaveIdea = () => {
+    onChange({ is_draft: false });
+    setEditConcept(false);
+    setEditScript(false);
+    toast.success('Idea guardada — el guion queda bloqueado para evitar edits accidentales.');
+  };
 
   if (!expanded) {
     // COLLAPSED CARD (recorded or pending)
@@ -793,9 +807,26 @@ function PieceCard({
 
   // EXPANDED CARD
   return (
-    <div className={`relative bg-noeval-surface border-2 rounded-xl p-3 sm:p-5 transition ${
-      shot.done ? 'border-noeval-accent/40 bg-noeval-accent/5' : 'border-noeval-line hover:border-noeval-ink/30'
+    <div className={`relative bg-noeval-surface rounded-xl p-3 sm:p-5 transition ${
+      isDraft
+        ? 'border-2 border-dashed border-amber-400 bg-amber-50/40'
+        : shot.done
+          ? 'border-2 border-noeval-accent/40 bg-noeval-accent/5'
+          : 'border-2 border-noeval-line hover:border-noeval-ink/30'
     }`}>
+
+      {/* Draft banner */}
+      {isDraft && (
+        <div className="mb-3 -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 px-3 sm:px-5 py-2 bg-amber-100/70 border-b border-amber-300 rounded-t-xl flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2 text-amber-900 text-[10px] sm:text-[11px] tracking-[0.25em] uppercase font-semibold">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+            Borrador · pendiente de guardar
+          </div>
+          <span className="text-[10px] sm:text-[11px] text-amber-800/80 normal-case tracking-normal">
+            Completá la idea y dale <strong>Guardar idea</strong> para confirmarla.
+          </span>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
@@ -862,27 +893,74 @@ function PieceCard({
 
       {/* Concepto / Título */}
       <div className="mb-3 sm:mb-4">
-        <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">Concepto · idea</Label>
-        <input
-          value={local.concept}
-          onChange={(e) => setLocal({ ...local, concept: e.target.value })}
-          placeholder="¿De qué trata esta pieza?"
-          className="w-full bg-transparent font-serif text-xl sm:text-2xl text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-2 placeholder:text-noeval-muted/50"
-        />
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted block">Concepto · idea</Label>
+          {!isDraft && local.concept && (
+            <button
+              onClick={() => setEditConcept((v) => !v)}
+              className="no-print text-[10px] tracking-[0.2em] uppercase text-noeval-muted hover:text-noeval-ink inline-flex items-center gap-1"
+              title={editConcept ? 'Bloquear edición' : 'Editar concepto'}
+            >
+              {editConcept ? <><Check className="h-3 w-3" /> Listo</> : <><Pencil className="h-3 w-3" /> Editar</>}
+            </button>
+          )}
+        </div>
+        {conceptEditing ? (
+          <input
+            value={local.concept}
+            onChange={(e) => setLocal({ ...local, concept: e.target.value })}
+            placeholder="¿De qué trata esta pieza?"
+            autoFocus={editConcept}
+            className="w-full bg-transparent font-serif text-xl sm:text-2xl text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-2 placeholder:text-noeval-muted/50"
+          />
+        ) : (
+          <div
+            onDoubleClick={() => setEditConcept(true)}
+            className="font-serif text-xl sm:text-2xl text-noeval-ink leading-snug border-b border-transparent pb-2 cursor-default select-text break-words"
+            title="Doble clic para editar"
+          >
+            {local.concept}
+          </div>
+        )}
       </div>
 
       {/* Guion */}
       <div className="mb-3 sm:mb-4">
-        <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1.5 flex items-center gap-1.5">
-          <Sparkles className="h-3 w-3 text-noeval-accent" /> Guion / Copy
-        </Label>
-        <Textarea
-          value={local.script}
-          onChange={(e) => setLocal({ ...local, script: e.target.value })}
-          placeholder="Escribe el guion completo, copy del post o estructura del story…"
-          rows={4}
-          className="bg-noeval-cream border-noeval-line text-sm resize-y leading-relaxed sm:min-h-[120px]"
-        />
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted flex items-center gap-1.5">
+            <Sparkles className="h-3 w-3 text-noeval-accent" /> Guion / Copy
+          </Label>
+          {!isDraft && local.script && (
+            <button
+              onClick={() => setEditScript((v) => !v)}
+              className="no-print text-[10px] tracking-[0.2em] uppercase text-noeval-muted hover:text-noeval-ink inline-flex items-center gap-1"
+              title={editScript ? 'Bloquear edición' : 'Editar guion'}
+            >
+              {editScript ? <><Check className="h-3 w-3" /> Listo</> : <><Pencil className="h-3 w-3" /> Editar</>}
+            </button>
+          )}
+        </div>
+        {scriptEditing || !local.script ? (
+          <Textarea
+            value={local.script}
+            onChange={(e) => setLocal({ ...local, script: e.target.value })}
+            placeholder="Escribe el guion completo, copy del post o estructura del story…"
+            rows={Math.max(4, local.script.split('\n').length + 2)}
+            autoFocus={editScript}
+            className="bg-noeval-cream border-noeval-line text-sm resize-y leading-relaxed sm:min-h-[120px]"
+          />
+        ) : (
+          <div
+            onDoubleClick={() => setEditScript(true)}
+            className="bg-noeval-cream border border-noeval-line rounded-md px-3 py-3 text-sm text-noeval-ink whitespace-pre-wrap leading-relaxed cursor-default select-text break-words"
+            title="Doble clic para editar"
+          >
+            {local.script}
+            <div className="mt-2 flex items-center gap-1 text-[9px] tracking-[0.25em] uppercase text-noeval-muted/70 font-semibold">
+              <Lock className="h-2.5 w-2.5" /> Lectura — clic en Editar para modificar
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Detalles avanzados: colapsable en móvil, siempre abierto en sm+ */}
@@ -941,15 +1019,26 @@ function PieceCard({
             Ver en ClickUp <ExternalLink className="h-3 w-3" />
           </a>
         ) : <span className="hidden sm:block" />}
-        <button
-          onClick={() => { const wasDone = shot.done; onToggleRecorded(); setExpanded(wasDone); }}
-          className={`inline-flex items-center justify-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-5 py-3 sm:py-2.5 transition w-full sm:w-auto
-            ${shot.done
-              ? 'bg-noeval-accent text-white shadow-sm hover:bg-noeval-accent/90'
-              : 'border-2 border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream'}`}
-        >
-          {shot.done ? <><Check className="h-3.5 w-3.5" strokeWidth={3} /> Grabado · desmarcar</> : <><Check className="h-3.5 w-3.5" strokeWidth={3} /> Marcar grabado</>}
-        </button>
+        {isDraft ? (
+          <button
+            onClick={handleSaveIdea}
+            disabled={!local.concept.trim()}
+            className="inline-flex items-center justify-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-5 py-3 sm:py-2.5 transition w-full sm:w-auto bg-amber-500 text-white shadow-sm hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!local.concept.trim() ? 'Escribí al menos un concepto' : 'Guardar y bloquear edición del guion'}
+          >
+            <Check className="h-3.5 w-3.5" strokeWidth={3} /> Guardar idea
+          </button>
+        ) : (
+          <button
+            onClick={() => { const wasDone = shot.done; onToggleRecorded(); setExpanded(wasDone); }}
+            className={`inline-flex items-center justify-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-5 py-3 sm:py-2.5 transition w-full sm:w-auto
+              ${shot.done
+                ? 'bg-noeval-accent text-white shadow-sm hover:bg-noeval-accent/90'
+                : 'border-2 border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream'}`}
+          >
+            {shot.done ? <><Check className="h-3.5 w-3.5" strokeWidth={3} /> Grabado · desmarcar</> : <><Check className="h-3.5 w-3.5" strokeWidth={3} /> Marcar grabado</>}
+          </button>
+        )}
       </div>
     </div>
   );
