@@ -38,7 +38,7 @@ interface Props {
 
 export function GenerateShotsDialog({ open, onOpenChange, sheetId, existingCount, onInsert }: Props) {
   const [prompt, setPrompt] = useState('');
-  const [model, setModel] = useState<'claude-opus-4-20250514' | 'claude-sonnet-4-20250514'>('claude-opus-4-20250514');
+  const [model, setModel] = useState<'claude-opus-4-5' | 'claude-sonnet-4-5'>('claude-opus-4-5');
   const [count, setCount] = useState(8);
   const [replace, setReplace] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -142,8 +142,8 @@ export function GenerateShotsDialog({ open, onOpenChange, sheetId, existingCount
                 <Select value={model} onValueChange={(v) => setModel(v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="claude-opus-4-20250514">Claude Opus 4 (mejor)</SelectItem>
-                    <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4 (más barato)</SelectItem>
+                    <SelectItem value="claude-opus-4-5">Claude Opus 4.5 (mejor)</SelectItem>
+                    <SelectItem value="claude-sonnet-4-5">Claude Sonnet 4.5 (más barato)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

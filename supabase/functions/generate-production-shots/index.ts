@@ -5,7 +5,7 @@ import { z } from 'npm:zod@3';
 const InputSchema = z.object({
   sheet_id: z.string().uuid(),
   prompt: z.string().min(80).max(8000),
-  model: z.enum(['claude-opus-4-20250514', 'claude-sonnet-4-20250514']).default('claude-opus-4-20250514'),
+  model: z.enum(['claude-opus-4-5', 'claude-sonnet-4-5']).default('claude-opus-4-5'),
   shot_count: z.number().int().min(3).max(20).default(8),
 });
 
