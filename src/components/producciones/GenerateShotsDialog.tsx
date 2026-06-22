@@ -142,8 +142,8 @@ export function GenerateShotsDialog({ open, onOpenChange, sheetId, existingCount
                 <Select value={model} onValueChange={(v) => setModel(v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="claude-opus-4-20250514">Claude Opus 4 (mejor)</SelectItem>
-                    <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4 (más barato)</SelectItem>
+                    <SelectItem value="claude-opus-4-5">Claude Opus 4.5 (mejor)</SelectItem>
+                    <SelectItem value="claude-sonnet-4-5">Claude Sonnet 4.5 (más barato)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
