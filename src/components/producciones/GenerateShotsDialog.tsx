@@ -38,7 +38,7 @@ interface Props {
 
 export function GenerateShotsDialog({ open, onOpenChange, sheetId, existingCount, onInsert }: Props) {
   const [prompt, setPrompt] = useState('');
-  const [model, setModel] = useState<'claude-opus-4-20250514' | 'claude-sonnet-4-20250514'>('claude-opus-4-20250514');
+  const [model, setModel] = useState<'claude-opus-4-5' | 'claude-sonnet-4-5'>('claude-opus-4-5');
   const [count, setCount] = useState(8);
   const [replace, setReplace] = useState(false);
   const [loading, setLoading] = useState(false);
