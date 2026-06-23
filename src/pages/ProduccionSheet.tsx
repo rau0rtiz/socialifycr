@@ -13,7 +13,7 @@ import {
 import {
   ArrowLeft, Plus, Trash2, Send, Check, Film, Printer, ExternalLink, Loader2,
   ChevronDown, ChevronUp, Copy, Sparkles, Share2, Link2, Globe, Mail,
-  Pencil, Lock, FileText, GripVertical,
+  Pencil, Lock, FileText, GripVertical, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -465,6 +465,17 @@ export default function ProduccionSheet() {
                             shot={shot}
                             index={shots.indexOf(shot)}
                             canDrag={canDrag}
+                            canMoveUp={canDrag && shots.indexOf(shot) > 0}
+                            canMoveDown={canDrag && shots.indexOf(shot) < shots.length - 1}
+                            onMove={(dir) => {
+                              const idx = shots.indexOf(shot);
+                              const targetIdx = dir === 'up' ? idx - 1 : idx + 1;
+                              if (targetIdx < 0 || targetIdx >= shots.length) return;
+                              const list = shots.map(s => s.id);
+                              [list[idx], list[targetIdx]] = [list[targetIdx], list[idx]];
+                              const items = list.map((id, i) => ({ id, sort_order: (i + 1) * 10 }));
+                              reorderShots.mutate({ sheet_id: sheetId, items });
+                            }}
                             onDragStart={() => setDragShotId(shot.id)}
                             onDragEnd={() => { setDragShotId(null); setDropBeforeShotId(null); }}
                             onChange={(patch) => upsertShot.mutate({ ...shot, ...patch })}
@@ -737,6 +748,7 @@ export default function ProduccionSheet() {
 function PieceCard({
   shot, index, onChange, onToggleRecorded, onDuplicate, onDelete,
   canDrag = false, onDragStart, onDragEnd,
+  canMoveUp = false, canMoveDown = false, onMove,
 }: {
   shot: SheetShot;
   index: number;
@@ -747,6 +759,9 @@ function PieceCard({
   canDrag?: boolean;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  onMove?: (dir: 'up' | 'down') => void;
 }) {
   const [dragArmed, setDragArmed] = useState(false);
   const isDraft = !!shot.is_draft;
@@ -822,13 +837,37 @@ function PieceCard({
       }`}>
         <div className="flex items-center gap-2 sm:gap-3">
           {canDrag && (
+            <div className="no-print flex flex-col -ml-1 shrink-0">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onMove?.('up'); }}
+                disabled={!canMoveUp}
+                className="text-noeval-muted/60 hover:text-noeval-ink disabled:opacity-20 disabled:cursor-not-allowed p-0.5"
+                title="Subir"
+                aria-label="Subir pieza"
+              >
+                <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onMove?.('down'); }}
+                disabled={!canMoveDown}
+                className="text-noeval-muted/60 hover:text-noeval-ink disabled:opacity-20 disabled:cursor-not-allowed p-0.5"
+                title="Bajar"
+                aria-label="Bajar pieza"
+              >
+                <ArrowDown className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
+          {canDrag && (
             <button
               type="button"
               onMouseDown={() => setDragArmed(true)}
               onMouseUp={() => setDragArmed(false)}
               onTouchStart={() => setDragArmed(true)}
               onTouchEnd={() => setDragArmed(false)}
-              className="no-print text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing shrink-0 -ml-1"
+              className="no-print hidden md:inline-flex text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing shrink-0"
               title="Arrastrar para reordenar"
               aria-label="Reordenar"
             >
@@ -926,13 +965,37 @@ function PieceCard({
       <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
           {canDrag && (
+            <div className="no-print flex flex-col -ml-1">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onMove?.('up'); }}
+                disabled={!canMoveUp}
+                className="text-noeval-muted/60 hover:text-noeval-ink disabled:opacity-20 disabled:cursor-not-allowed p-0.5"
+                title="Subir"
+                aria-label="Subir pieza"
+              >
+                <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onMove?.('down'); }}
+                disabled={!canMoveDown}
+                className="text-noeval-muted/60 hover:text-noeval-ink disabled:opacity-20 disabled:cursor-not-allowed p-0.5"
+                title="Bajar"
+                aria-label="Bajar pieza"
+              >
+                <ArrowDown className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
+          {canDrag && (
             <button
               type="button"
               onMouseDown={() => setDragArmed(true)}
               onMouseUp={() => setDragArmed(false)}
               onTouchStart={() => setDragArmed(true)}
               onTouchEnd={() => setDragArmed(false)}
-              className="no-print text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing -ml-1"
+              className="no-print hidden md:inline-flex text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing"
               title="Arrastrar para reordenar"
               aria-label="Reordenar"
             >
