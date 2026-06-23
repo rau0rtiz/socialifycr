@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import {
   useProductionSheet, useUpdateSheet, useDeleteSheet,
-  useUpsertChild, useDeleteChild,
+  useUpsertChild, useDeleteChild, useReorderShots,
   type ProductionSheet, type SheetShot,
 } from '@/hooks/use-production-sheets';
 import { SendToClickUpDialog } from '@/components/producciones/SendToClickUpDialog';
