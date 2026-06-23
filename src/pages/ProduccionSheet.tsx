@@ -68,6 +68,9 @@ export default function ProduccionSheet() {
   const [local, setLocal] = useState<Partial<ProductionSheet>>({});
   const [clientName, setClientName] = useState<string>('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'recorded'>('all');
+  const [dragShotId, setDragShotId] = useState<string | null>(null);
+  const [dropBeforeShotId, setDropBeforeShotId] = useState<string | null>(null);
+
   
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
