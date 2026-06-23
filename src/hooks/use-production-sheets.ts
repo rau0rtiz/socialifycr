@@ -79,11 +79,42 @@ export const useProductionSheets = () =>
       const { data, error } = await supabase
         .from('production_sheets')
         .select('*')
+        .order('sort_order', { ascending: true })
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return data as ProductionSheet[];
     },
   });
+
+export const useReorderSheets = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (items: { id: string; sort_order: number }[]) => {
+      await Promise.all(
+        items.map((it) =>
+          supabase.from('production_sheets').update({ sort_order: it.sort_order } as any).eq('id', it.id)
+        )
+      );
+    },
+    onMutate: async (items) => {
+      await qc.cancelQueries({ queryKey: ['production-sheets'] });
+      const prev = qc.getQueryData<ProductionSheet[]>(['production-sheets']);
+      if (prev) {
+        const map = new Map(items.map(i => [i.id, i.sort_order]));
+        qc.setQueryData<ProductionSheet[]>(
+          ['production-sheets'],
+          prev.map(s => map.has(s.id) ? ({ ...s, sort_order: map.get(s.id)! } as any) : s)
+        );
+      }
+      return { prev };
+    },
+    onError: (_e, _v, ctx: any) => {
+      if (ctx?.prev) qc.setQueryData(['production-sheets'], ctx.prev);
+      toast.error('No se pudo reordenar');
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['production-sheets'] }),
+  });
+};
 
 export const useProductionSheet = (id: string | null) =>
   useQuery({
