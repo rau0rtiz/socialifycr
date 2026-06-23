@@ -13,7 +13,7 @@ import {
 import {
   ArrowLeft, Plus, Trash2, Send, Check, Film, Printer, ExternalLink, Loader2,
   ChevronDown, ChevronUp, Copy, Sparkles, Share2, Link2, Globe, Mail,
-  Pencil, Lock, FileText,
+  Pencil, Lock, FileText, GripVertical,
 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import {
   useProductionSheet, useUpdateSheet, useDeleteSheet,
-  useUpsertChild, useDeleteChild,
+  useUpsertChild, useDeleteChild, useReorderShots,
   type ProductionSheet, type SheetShot,
 } from '@/hooks/use-production-sheets';
 import { SendToClickUpDialog } from '@/components/producciones/SendToClickUpDialog';
@@ -63,10 +63,14 @@ export default function ProduccionSheet() {
   const del = useDeleteSheet();
   const upsertShot = useUpsertChild('production_sheet_shots');
   const delShot = useDeleteChild('production_sheet_shots');
+  const reorderShots = useReorderShots();
 
   const [local, setLocal] = useState<Partial<ProductionSheet>>({});
   const [clientName, setClientName] = useState<string>('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'recorded'>('all');
+  const [dragShotId, setDragShotId] = useState<string | null>(null);
+  const [dropBeforeShotId, setDropBeforeShotId] = useState<string | null>(null);
+
   
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -416,17 +420,80 @@ export default function ProduccionSheet() {
                   </Card>
                 ) : (
                   <div className="space-y-3">
-                    {filteredShots.map((shot, idx) => (
-                      <PieceCard
-                        key={shot.id}
-                        shot={shot}
-                        index={shots.indexOf(shot)}
-                        onChange={(patch) => upsertShot.mutate({ ...shot, ...patch })}
-                        onToggleRecorded={() => handleToggleRecorded(shot)}
-                        onDuplicate={() => handleDuplicate(shot)}
-                        onDelete={() => delShot.mutate({ id: shot.id, sheet_id: sheetId })}
-                      />
-                    ))}
+                    {filter !== 'all' && (
+                      <div className="text-[10px] tracking-[0.25em] uppercase text-noeval-muted/70 -mb-1">
+                        Cambiá el filtro a <em>Todas</em> para reordenar.
+                      </div>
+                    )}
+                    {filteredShots.map((shot) => {
+                      const canDrag = filter === 'all';
+                      const isDragging = dragShotId === shot.id;
+                      const showDropLine = dropBeforeShotId === shot.id && dragShotId && dragShotId !== shot.id;
+                      return (
+                        <div
+                          key={shot.id}
+                          onDragOver={(e) => {
+                            if (!canDrag || !dragShotId || dragShotId === shot.id) return;
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'move';
+                            setDropBeforeShotId(shot.id);
+                          }}
+                          onDragLeave={() => {
+                            if (dropBeforeShotId === shot.id) setDropBeforeShotId(null);
+                          }}
+                          onDrop={(e) => {
+                            if (!canDrag || !dragShotId || dragShotId === shot.id) {
+                              setDropBeforeShotId(null);
+                              return;
+                            }
+                            e.preventDefault();
+                            const list = shots.map(s => s.id).filter(id => id !== dragShotId);
+                            const targetIdx = list.indexOf(shot.id);
+                            if (targetIdx === -1) { setDropBeforeShotId(null); setDragShotId(null); return; }
+                            list.splice(targetIdx, 0, dragShotId);
+                            const items = list.map((id, i) => ({ id, sort_order: (i + 1) * 10 }));
+                            setDragShotId(null);
+                            setDropBeforeShotId(null);
+                            reorderShots.mutate({ sheet_id: sheetId, items });
+                          }}
+                          className={`relative transition ${isDragging ? 'opacity-40' : ''}`}
+                        >
+                          {showDropLine && (
+                            <div className="absolute -top-1.5 left-0 right-0 h-0.5 bg-noeval-accent rounded-full z-10 pointer-events-none" />
+                          )}
+                          <PieceCard
+                            shot={shot}
+                            index={shots.indexOf(shot)}
+                            canDrag={canDrag}
+                            onDragStart={() => setDragShotId(shot.id)}
+                            onDragEnd={() => { setDragShotId(null); setDropBeforeShotId(null); }}
+                            onChange={(patch) => upsertShot.mutate({ ...shot, ...patch })}
+                            onToggleRecorded={() => handleToggleRecorded(shot)}
+                            onDuplicate={() => handleDuplicate(shot)}
+                            onDelete={() => delShot.mutate({ id: shot.id, sheet_id: sheetId })}
+                          />
+                        </div>
+                      );
+                    })}
+                    {/* Drop zone at end */}
+                    {filter === 'all' && dragShotId && (
+                      <div
+                        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (!dragShotId) return;
+                          const list = shots.map(s => s.id).filter(id => id !== dragShotId);
+                          list.push(dragShotId);
+                          const items = list.map((id, i) => ({ id, sort_order: (i + 1) * 10 }));
+                          setDragShotId(null);
+                          setDropBeforeShotId(null);
+                          reorderShots.mutate({ sheet_id: sheetId, items });
+                        }}
+                        className="h-10 rounded-lg border-2 border-dashed border-noeval-accent/40 bg-noeval-accent/5 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-noeval-accent"
+                      >
+                        Soltar al final
+                      </div>
+                    )}
                   </div>
                 )}
               </section>
@@ -669,6 +736,7 @@ export default function ProduccionSheet() {
 // ---------- Piece Card ----------
 function PieceCard({
   shot, index, onChange, onToggleRecorded, onDuplicate, onDelete,
+  canDrag = false, onDragStart, onDragEnd,
 }: {
   shot: SheetShot;
   index: number;
@@ -676,7 +744,11 @@ function PieceCard({
   onToggleRecorded: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  canDrag?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }) {
+  const [dragArmed, setDragArmed] = useState(false);
   const isDraft = !!shot.is_draft;
   const [expanded, setExpanded] = useState(!shot.done || isDraft);
   const [detailsOpen, setDetailsOpen] = useState(true);
@@ -739,12 +811,30 @@ function PieceCard({
   if (!expanded) {
     // COLLAPSED CARD (recorded or pending)
     return (
-      <div className={`relative border rounded-xl p-3 sm:p-4 transition group ${
+      <div
+        draggable={canDrag && dragArmed}
+        onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
+        onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
+        className={`relative border rounded-xl p-3 sm:p-4 transition group ${
         shot.done
           ? 'bg-noeval-surface border-noeval-line/60 opacity-90 hover:opacity-100'
           : 'bg-noeval-cream border-noeval-line hover:border-noeval-ink/30'
       }`}>
         <div className="flex items-center gap-2 sm:gap-3">
+          {canDrag && (
+            <button
+              type="button"
+              onMouseDown={() => setDragArmed(true)}
+              onMouseUp={() => setDragArmed(false)}
+              onTouchStart={() => setDragArmed(true)}
+              onTouchEnd={() => setDragArmed(false)}
+              className="no-print text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing shrink-0 -ml-1"
+              title="Arrastrar para reordenar"
+              aria-label="Reordenar"
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          )}
           <span className="font-serif text-lg sm:text-xl text-noeval-muted w-7 sm:w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
           {shot.done ? (
             <div className="grabado-stamp hidden sm:inline-flex">
@@ -807,7 +897,11 @@ function PieceCard({
 
   // EXPANDED CARD
   return (
-    <div className={`relative bg-noeval-surface rounded-xl p-3 sm:p-5 transition ${
+    <div
+      draggable={canDrag && dragArmed}
+      onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
+      onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
+      className={`relative bg-noeval-surface rounded-xl p-3 sm:p-5 transition ${
       isDraft
         ? 'border-2 border-dashed border-amber-400 bg-amber-50/40'
         : shot.done
@@ -831,6 +925,20 @@ function PieceCard({
       {/* Header */}
       <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
+          {canDrag && (
+            <button
+              type="button"
+              onMouseDown={() => setDragArmed(true)}
+              onMouseUp={() => setDragArmed(false)}
+              onTouchStart={() => setDragArmed(true)}
+              onTouchEnd={() => setDragArmed(false)}
+              className="no-print text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing -ml-1"
+              title="Arrastrar para reordenar"
+              aria-label="Reordenar"
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          )}
           <span className="font-serif text-xl sm:text-2xl text-noeval-muted">{String(index + 1).padStart(2, '0')}</span>
           <Select value={shot.content_type || 'reel'} onValueChange={(v) => onChange({ content_type: v })}>
             <SelectTrigger className="w-auto h-8 bg-noeval-ink text-noeval-cream border-0 rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3">
