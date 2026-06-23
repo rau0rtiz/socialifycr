@@ -214,7 +214,7 @@ export default function Producciones() {
   return (
     <DashboardLayout>
       <div className="noeval-scope min-h-screen">
-        <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-6">
+        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 space-y-6">
           {/* Header */}
           <div className="noeval-slate relative overflow-hidden rounded-2xl p-6 md:p-9">
             <div className="noeval-stripe absolute inset-x-0 top-0 h-3" />
@@ -271,7 +271,7 @@ export default function Producciones() {
                   <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo cliente
                 </Button>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
                   return (
@@ -340,7 +340,7 @@ export default function Producciones() {
 
           {/* Sub-folders (inside a client, not searching) */}
           {clientFilter && !search && subFolders.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {subFolders.map((f) => {
                 const count = folderSheetCount[f.id] || 0;
                 return (
@@ -366,7 +366,7 @@ export default function Producciones() {
                       </div>
                       <div className="mt-3 font-medium text-noeval-ink truncate pr-12">{f.name}</div>
                     </button>
-                    <div className="absolute bottom-3 right-3 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-3 right-3 flex gap-0.5 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleRenameFolder(f.id, f.name); }}
                         title="Renombrar"
@@ -430,7 +430,7 @@ export default function Producciones() {
                 </p>
               </Card>
             ) : view === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {filteredSheets.map((s) => (
                   <div
                     key={s.id}
@@ -449,7 +449,7 @@ export default function Producciones() {
                     className={`group relative text-left bg-noeval-surface border rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
                     {clientFilter && (
-                      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-60 transition-opacity">
+                      <div className="absolute top-2 left-2 opacity-50 lg:opacity-0 lg:group-hover:opacity-60 transition-opacity">
                         <GripVertical className="h-4 w-4 text-noeval-muted" />
                       </div>
                     )}
@@ -829,7 +829,7 @@ function ClientFolderCard({
         onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ''; }}
       />
 
-      <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-2 left-2 flex gap-1 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
         <button
           onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
           title={client.logo_url ? 'Cambiar logo' : 'Subir logo'}
@@ -842,7 +842,7 @@ function ClientFolderCard({
         </button>
       </div>
 
-      <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute bottom-2 right-2 flex gap-1 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           title="Eliminar carpeta"
