@@ -116,6 +116,22 @@ export default function Producciones() {
     setDropTarget(null);
   };
 
+  const handleDropOnSheet = async (targetSheetId: string) => {
+    if (!dragging || dragging.kind !== 'sheet' || dragging.id === targetSheetId) {
+      setDropBeforeSheetId(null);
+      return;
+    }
+    // Reorder within current filtered list
+    const list = filteredSheets.map(s => s.id).filter(id => id !== dragging.id);
+    const targetIdx = list.indexOf(targetSheetId);
+    if (targetIdx === -1) { setDropBeforeSheetId(null); return; }
+    list.splice(targetIdx, 0, dragging.id);
+    const items = list.map((id, i) => ({ id, sort_order: (i + 1) * 10 }));
+    setDragging(null);
+    setDropBeforeSheetId(null);
+    await reorderSheets.mutateAsync(items);
+  };
+
   const clientMap = useMemo(
     () => Object.fromEntries(clients.map(c => [c.id, c.name])),
     [clients],
