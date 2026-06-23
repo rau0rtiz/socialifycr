@@ -420,17 +420,80 @@ export default function ProduccionSheet() {
                   </Card>
                 ) : (
                   <div className="space-y-3">
-                    {filteredShots.map((shot, idx) => (
-                      <PieceCard
-                        key={shot.id}
-                        shot={shot}
-                        index={shots.indexOf(shot)}
-                        onChange={(patch) => upsertShot.mutate({ ...shot, ...patch })}
-                        onToggleRecorded={() => handleToggleRecorded(shot)}
-                        onDuplicate={() => handleDuplicate(shot)}
-                        onDelete={() => delShot.mutate({ id: shot.id, sheet_id: sheetId })}
-                      />
-                    ))}
+                    {filter !== 'all' && (
+                      <div className="text-[10px] tracking-[0.25em] uppercase text-noeval-muted/70 -mb-1">
+                        Cambiá el filtro a <em>Todas</em> para reordenar.
+                      </div>
+                    )}
+                    {filteredShots.map((shot) => {
+                      const canDrag = filter === 'all';
+                      const isDragging = dragShotId === shot.id;
+                      const showDropLine = dropBeforeShotId === shot.id && dragShotId && dragShotId !== shot.id;
+                      return (
+                        <div
+                          key={shot.id}
+                          onDragOver={(e) => {
+                            if (!canDrag || !dragShotId || dragShotId === shot.id) return;
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'move';
+                            setDropBeforeShotId(shot.id);
+                          }}
+                          onDragLeave={() => {
+                            if (dropBeforeShotId === shot.id) setDropBeforeShotId(null);
+                          }}
+                          onDrop={(e) => {
+                            if (!canDrag || !dragShotId || dragShotId === shot.id) {
+                              setDropBeforeShotId(null);
+                              return;
+                            }
+                            e.preventDefault();
+                            const list = shots.map(s => s.id).filter(id => id !== dragShotId);
+                            const targetIdx = list.indexOf(shot.id);
+                            if (targetIdx === -1) { setDropBeforeShotId(null); setDragShotId(null); return; }
+                            list.splice(targetIdx, 0, dragShotId);
+                            const items = list.map((id, i) => ({ id, sort_order: (i + 1) * 10 }));
+                            setDragShotId(null);
+                            setDropBeforeShotId(null);
+                            reorderShots.mutate({ sheet_id: sheetId, items });
+                          }}
+                          className={`relative transition ${isDragging ? 'opacity-40' : ''}`}
+                        >
+                          {showDropLine && (
+                            <div className="absolute -top-1.5 left-0 right-0 h-0.5 bg-noeval-accent rounded-full z-10 pointer-events-none" />
+                          )}
+                          <PieceCard
+                            shot={shot}
+                            index={shots.indexOf(shot)}
+                            canDrag={canDrag}
+                            onDragStart={() => setDragShotId(shot.id)}
+                            onDragEnd={() => { setDragShotId(null); setDropBeforeShotId(null); }}
+                            onChange={(patch) => upsertShot.mutate({ ...shot, ...patch })}
+                            onToggleRecorded={() => handleToggleRecorded(shot)}
+                            onDuplicate={() => handleDuplicate(shot)}
+                            onDelete={() => delShot.mutate({ id: shot.id, sheet_id: sheetId })}
+                          />
+                        </div>
+                      );
+                    })}
+                    {/* Drop zone at end */}
+                    {filter === 'all' && dragShotId && (
+                      <div
+                        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (!dragShotId) return;
+                          const list = shots.map(s => s.id).filter(id => id !== dragShotId);
+                          list.push(dragShotId);
+                          const items = list.map((id, i) => ({ id, sort_order: (i + 1) * 10 }));
+                          setDragShotId(null);
+                          setDropBeforeShotId(null);
+                          reorderShots.mutate({ sheet_id: sheetId, items });
+                        }}
+                        className="h-10 rounded-lg border-2 border-dashed border-noeval-accent/40 bg-noeval-accent/5 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-noeval-accent"
+                      >
+                        Soltar al final
+                      </div>
+                    )}
                   </div>
                 )}
               </section>
