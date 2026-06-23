@@ -465,6 +465,17 @@ export default function ProduccionSheet() {
                             shot={shot}
                             index={shots.indexOf(shot)}
                             canDrag={canDrag}
+                            canMoveUp={canDrag && shots.indexOf(shot) > 0}
+                            canMoveDown={canDrag && shots.indexOf(shot) < shots.length - 1}
+                            onMove={(dir) => {
+                              const idx = shots.indexOf(shot);
+                              const targetIdx = dir === 'up' ? idx - 1 : idx + 1;
+                              if (targetIdx < 0 || targetIdx >= shots.length) return;
+                              const list = shots.map(s => s.id);
+                              [list[idx], list[targetIdx]] = [list[targetIdx], list[idx]];
+                              const items = list.map((id, i) => ({ id, sort_order: (i + 1) * 10 }));
+                              reorderShots.mutate({ sheet_id: sheetId, items });
+                            }}
                             onDragStart={() => setDragShotId(shot.id)}
                             onDragEnd={() => { setDragShotId(null); setDropBeforeShotId(null); }}
                             onChange={(patch) => upsertShot.mutate({ ...shot, ...patch })}
