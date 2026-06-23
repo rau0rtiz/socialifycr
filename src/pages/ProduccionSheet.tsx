@@ -897,7 +897,11 @@ function PieceCard({
 
   // EXPANDED CARD
   return (
-    <div className={`relative bg-noeval-surface rounded-xl p-3 sm:p-5 transition ${
+    <div
+      draggable={canDrag && dragArmed}
+      onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
+      onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
+      className={`relative bg-noeval-surface rounded-xl p-3 sm:p-5 transition ${
       isDraft
         ? 'border-2 border-dashed border-amber-400 bg-amber-50/40'
         : shot.done
@@ -921,6 +925,20 @@ function PieceCard({
       {/* Header */}
       <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
+          {canDrag && (
+            <button
+              type="button"
+              onMouseDown={() => setDragArmed(true)}
+              onMouseUp={() => setDragArmed(false)}
+              onTouchStart={() => setDragArmed(true)}
+              onTouchEnd={() => setDragArmed(false)}
+              className="no-print text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing -ml-1"
+              title="Arrastrar para reordenar"
+              aria-label="Reordenar"
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          )}
           <span className="font-serif text-xl sm:text-2xl text-noeval-muted">{String(index + 1).padStart(2, '0')}</span>
           <Select value={shot.content_type || 'reel'} onValueChange={(v) => onChange({ content_type: v })}>
             <SelectTrigger className="w-auto h-8 bg-noeval-ink text-noeval-cream border-0 rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3">
