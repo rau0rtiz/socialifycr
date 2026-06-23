@@ -811,12 +811,30 @@ function PieceCard({
   if (!expanded) {
     // COLLAPSED CARD (recorded or pending)
     return (
-      <div className={`relative border rounded-xl p-3 sm:p-4 transition group ${
+      <div
+        draggable={canDrag && dragArmed}
+        onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
+        onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
+        className={`relative border rounded-xl p-3 sm:p-4 transition group ${
         shot.done
           ? 'bg-noeval-surface border-noeval-line/60 opacity-90 hover:opacity-100'
           : 'bg-noeval-cream border-noeval-line hover:border-noeval-ink/30'
       }`}>
         <div className="flex items-center gap-2 sm:gap-3">
+          {canDrag && (
+            <button
+              type="button"
+              onMouseDown={() => setDragArmed(true)}
+              onMouseUp={() => setDragArmed(false)}
+              onTouchStart={() => setDragArmed(true)}
+              onTouchEnd={() => setDragArmed(false)}
+              className="no-print text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing shrink-0 -ml-1"
+              title="Arrastrar para reordenar"
+              aria-label="Reordenar"
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          )}
           <span className="font-serif text-lg sm:text-xl text-noeval-muted w-7 sm:w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
           {shot.done ? (
             <div className="grabado-stamp hidden sm:inline-flex">
