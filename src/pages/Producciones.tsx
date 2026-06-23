@@ -214,7 +214,7 @@ export default function Producciones() {
   return (
     <DashboardLayout>
       <div className="noeval-scope min-h-screen">
-        <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-6">
+        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 space-y-6">
           {/* Header */}
           <div className="noeval-slate relative overflow-hidden rounded-2xl p-6 md:p-9">
             <div className="noeval-stripe absolute inset-x-0 top-0 h-3" />
