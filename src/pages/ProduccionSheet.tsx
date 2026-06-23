@@ -13,7 +13,7 @@ import {
 import {
   ArrowLeft, Plus, Trash2, Send, Check, Film, Printer, ExternalLink, Loader2,
   ChevronDown, ChevronUp, Copy, Sparkles, Share2, Link2, Globe, Mail,
-  Pencil, Lock, FileText, GripVertical,
+  Pencil, Lock, FileText, GripVertical, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
