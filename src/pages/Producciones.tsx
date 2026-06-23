@@ -18,12 +18,13 @@ import {
 import {
   ArrowLeft, Plus, Folder, Search, Trash2, FileText, Film,
   Calendar, MapPin, User as UserIcon, Loader2, ImagePlus,
+  LayoutGrid, List, GripVertical,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import {
-  useProductionSheets, useCreateSheet, useUpdateSheet,
+  useProductionSheets, useCreateSheet, useUpdateSheet, useReorderSheets,
   type SheetStatus, type ProductionSheet,
 } from '@/hooks/use-production-sheets';
 
