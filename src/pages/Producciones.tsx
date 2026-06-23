@@ -842,7 +842,7 @@ function ClientFolderCard({
         </button>
       </div>
 
-      <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute bottom-2 right-2 flex gap-1 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           title="Eliminar carpeta"
