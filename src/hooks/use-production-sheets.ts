@@ -219,3 +219,37 @@ export const useDeleteChild = (table: ChildTable) => {
     },
   });
 };
+
+// Reorder shots within a sheet (optimistic)
+export const useReorderShots = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ sheet_id, items }: { sheet_id: string; items: { id: string; sort_order: number }[] }) => {
+      await Promise.all(
+        items.map((it) =>
+          supabase.from('production_sheet_shots').update({ sort_order: it.sort_order }).eq('id', it.id)
+        )
+      );
+    },
+    onMutate: async ({ sheet_id, items }) => {
+      await qc.cancelQueries({ queryKey: ['production-sheet', sheet_id] });
+      const prev = qc.getQueryData<any>(['production-sheet', sheet_id]);
+      if (prev?.shots) {
+        const map = new Map(items.map(i => [i.id, i.sort_order]));
+        const nextShots = prev.shots
+          .map((s: SheetShot) => map.has(s.id) ? { ...s, sort_order: map.get(s.id)! } : s)
+          .sort((a: SheetShot, b: SheetShot) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        qc.setQueryData(['production-sheet', sheet_id], { ...prev, shots: nextShots });
+      }
+      return { prev };
+    },
+    onError: (_e, vars, ctx: any) => {
+      if (ctx?.prev) qc.setQueryData(['production-sheet', vars.sheet_id], ctx.prev);
+      toast.error('No se pudo reordenar');
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['production-sheet', vars.sheet_id] });
+    },
+  });
+};
+
