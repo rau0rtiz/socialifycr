@@ -366,7 +366,7 @@ export default function Producciones() {
                       </div>
                       <div className="mt-3 font-medium text-noeval-ink truncate pr-12">{f.name}</div>
                     </button>
-                    <div className="absolute bottom-3 right-3 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-3 right-3 flex gap-0.5 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleRenameFolder(f.id, f.name); }}
                         title="Renombrar"
