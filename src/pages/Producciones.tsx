@@ -83,6 +83,11 @@ export default function Producciones() {
   // Drag state: { kind: 'sheet'|'folder', id }
   const [dragging, setDragging] = useState<{ kind: 'sheet' | 'folder'; id: string } | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null); // folder id or 'root'
+  const [dropBeforeSheetId, setDropBeforeSheetId] = useState<string | null>(null);
+  const [view, setView] = useState<'grid' | 'list'>(() => (localStorage.getItem('producciones-view') as any) || 'grid');
+  const reorderSheets = useReorderSheets();
+
+  useEffect(() => { localStorage.setItem('producciones-view', view); }, [view]);
 
   const isDescendant = (folderId: string, maybeAncestorId: string): boolean => {
     let cur = folders.find(f => f.id === folderId);
