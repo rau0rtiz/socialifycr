@@ -20,11 +20,28 @@ export const useProductionFolders = (clientId: string | null) =>
         .from('production_folders')
         .select('*')
         .eq('client_id', clientId!)
+        .order('sort_order', { ascending: true })
         .order('name');
       if (error) throw error;
       return (data || []) as ProductionFolder[];
     },
   });
+
+export const useReorderFolders = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ items, client_id }: { items: { id: string; sort_order: number }[]; client_id: string }) => {
+      await Promise.all(
+        items.map((it) =>
+          supabase.from('production_folders').update({ sort_order: it.sort_order } as any).eq('id', it.id)
+        )
+      );
+      return { client_id };
+    },
+    onSuccess: ({ client_id }) => qc.invalidateQueries({ queryKey: ['production-folders', client_id] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+};
 
 export const useCreateFolder = () => {
   const qc = useQueryClient();

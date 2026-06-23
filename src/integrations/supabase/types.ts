@@ -3994,6 +3994,7 @@ export type Database = {
           id: string
           name: string
           parent_id: string | null
+          sort_order: number
           updated_at: string
         }
         Insert: {
@@ -4003,6 +4004,7 @@ export type Database = {
           id?: string
           name: string
           parent_id?: string | null
+          sort_order?: number
           updated_at?: string
         }
         Update: {
@@ -4012,6 +4014,7 @@ export type Database = {
           id?: string
           name?: string
           parent_id?: string | null
+          sort_order?: number
           updated_at?: string
         }
         Relationships: [
@@ -4211,6 +4214,7 @@ export type Database = {
           public_share_token: string | null
           sent_to_clickup_at: string | null
           shoot_date: string | null
+          sort_order: number
           status: Database["public"]["Enums"]["production_sheet_status"]
           title: string
           updated_at: string
@@ -4235,6 +4239,7 @@ export type Database = {
           public_share_token?: string | null
           sent_to_clickup_at?: string | null
           shoot_date?: string | null
+          sort_order?: number
           status?: Database["public"]["Enums"]["production_sheet_status"]
           title?: string
           updated_at?: string
@@ -4259,6 +4264,7 @@ export type Database = {
           public_share_token?: string | null
           sent_to_clickup_at?: string | null
           shoot_date?: string | null
+          sort_order?: number
           status?: Database["public"]["Enums"]["production_sheet_status"]
           title?: string
           updated_at?: string
