@@ -829,7 +829,7 @@ function ClientFolderCard({
         onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ''; }}
       />
 
-      <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-2 left-2 flex gap-1 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
         <button
           onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
           title={client.logo_url ? 'Cambiar logo' : 'Subir logo'}
