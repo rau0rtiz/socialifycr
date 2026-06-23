@@ -449,7 +449,7 @@ export default function Producciones() {
                     className={`group relative text-left bg-noeval-surface border rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
                     {clientFilter && (
-                      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-60 transition-opacity">
+                      <div className="absolute top-2 left-2 opacity-50 lg:opacity-0 lg:group-hover:opacity-60 transition-opacity">
                         <GripVertical className="h-4 w-4 text-noeval-muted" />
                       </div>
                     )}
