@@ -748,6 +748,7 @@ export default function ProduccionSheet() {
 function PieceCard({
   shot, index, onChange, onToggleRecorded, onDuplicate, onDelete,
   canDrag = false, onDragStart, onDragEnd,
+  canMoveUp = false, canMoveDown = false, onMove,
 }: {
   shot: SheetShot;
   index: number;
@@ -758,6 +759,9 @@ function PieceCard({
   canDrag?: boolean;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  onMove?: (dir: 'up' | 'down') => void;
 }) {
   const [dragArmed, setDragArmed] = useState(false);
   const isDraft = !!shot.is_draft;
