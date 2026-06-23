@@ -965,13 +965,37 @@ function PieceCard({
       <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
           {canDrag && (
+            <div className="no-print flex flex-col -ml-1">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onMove?.('up'); }}
+                disabled={!canMoveUp}
+                className="text-noeval-muted/60 hover:text-noeval-ink disabled:opacity-20 disabled:cursor-not-allowed p-0.5"
+                title="Subir"
+                aria-label="Subir pieza"
+              >
+                <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onMove?.('down'); }}
+                disabled={!canMoveDown}
+                className="text-noeval-muted/60 hover:text-noeval-ink disabled:opacity-20 disabled:cursor-not-allowed p-0.5"
+                title="Bajar"
+                aria-label="Bajar pieza"
+              >
+                <ArrowDown className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
+          {canDrag && (
             <button
               type="button"
               onMouseDown={() => setDragArmed(true)}
               onMouseUp={() => setDragArmed(false)}
               onTouchStart={() => setDragArmed(true)}
               onTouchEnd={() => setDragArmed(false)}
-              className="no-print text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing -ml-1"
+              className="no-print hidden md:inline-flex text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing"
               title="Arrastrar para reordenar"
               aria-label="Reordenar"
             >
