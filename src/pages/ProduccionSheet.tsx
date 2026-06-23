@@ -63,6 +63,7 @@ export default function ProduccionSheet() {
   const del = useDeleteSheet();
   const upsertShot = useUpsertChild('production_sheet_shots');
   const delShot = useDeleteChild('production_sheet_shots');
+  const reorderShots = useReorderShots();
 
   const [local, setLocal] = useState<Partial<ProductionSheet>>({});
   const [clientName, setClientName] = useState<string>('');
