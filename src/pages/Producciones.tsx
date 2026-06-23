@@ -390,14 +390,36 @@ export default function Producciones() {
 
           {/* Sheets list */}
           <div>
-            {!clientFilter && (
-              <h2 className="font-serif text-2xl text-noeval-ink mb-3">
-                {search ? 'Resultados' : 'Sheets recientes'}
-              </h2>
-            )}
-            {clientFilter && !search && (
-              <h3 className="font-serif text-lg text-noeval-muted mb-3">Sheets</h3>
-            )}
+            <div className="flex items-end justify-between gap-3 mb-3">
+              <div>
+                {!clientFilter && (
+                  <h2 className="font-serif text-2xl text-noeval-ink">
+                    {search ? 'Resultados' : 'Sheets recientes'}
+                  </h2>
+                )}
+                {clientFilter && !search && (
+                  <h3 className="font-serif text-lg text-noeval-muted">Sheets</h3>
+                )}
+              </div>
+              <div className="flex items-center rounded-lg border border-noeval-line bg-noeval-surface p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setView('grid')}
+                  title="Vista de cuadrícula"
+                  className={`p-1.5 rounded-md transition ${view === 'grid' ? 'bg-noeval-ink text-noeval-cream' : 'text-noeval-muted hover:text-noeval-ink'}`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView('list')}
+                  title="Vista de lista"
+                  className={`p-1.5 rounded-md transition ${view === 'list' ? 'bg-noeval-ink text-noeval-cream' : 'text-noeval-muted hover:text-noeval-ink'}`}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
             {isLoading ? (
               <div className="text-noeval-muted text-sm">Cargando…</div>
             ) : filteredSheets.length === 0 ? (
@@ -407,17 +429,30 @@ export default function Producciones() {
                   No hay sheets {clientFilter ? 'en esta carpeta' : 'aún'}. Crea uno nuevo para empezar.
                 </p>
               </Card>
-            ) : (
+            ) : view === 'grid' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredSheets.map((s) => (
-                  <button
+                  <div
                     key={s.id}
-                    onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
                     draggable={!!clientFilter}
                     onDragStart={(e) => { setDragging({ kind: 'sheet', id: s.id }); e.dataTransfer.effectAllowed = 'move'; }}
-                    onDragEnd={() => { setDragging(null); setDropTarget(null); }}
-                    className={`text-left bg-noeval-surface border border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all ${clientFilter ? 'cursor-grab active:cursor-grabbing' : ''} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
+                    onDragEnd={() => { setDragging(null); setDropTarget(null); setDropBeforeSheetId(null); }}
+                    onDragOver={(e) => {
+                      if (dragging?.kind === 'sheet' && dragging.id !== s.id) {
+                        e.preventDefault();
+                        setDropBeforeSheetId(s.id);
+                      }
+                    }}
+                    onDragLeave={() => setDropBeforeSheetId(prev => prev === s.id ? null : prev)}
+                    onDrop={(e) => { e.preventDefault(); handleDropOnSheet(s.id); }}
+                    onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
+                    className={`group relative text-left bg-noeval-surface border rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
+                    {clientFilter && (
+                      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-60 transition-opacity">
+                        <GripVertical className="h-4 w-4 text-noeval-muted" />
+                      </div>
+                    )}
                     <div className="flex items-start justify-between gap-2">
                       <FileText className="h-5 w-5 text-noeval-accent shrink-0 mt-0.5" />
                       <Badge variant="outline" className={`text-[10px] ${STATUS_TONE[s.status]}`}>
@@ -448,7 +483,45 @@ export default function Producciones() {
                         </div>
                       )}
                     </div>
-                  </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-noeval-surface border border-noeval-line rounded-xl overflow-hidden divide-y divide-noeval-line">
+                {filteredSheets.map((s) => (
+                  <div
+                    key={s.id}
+                    draggable={!!clientFilter}
+                    onDragStart={(e) => { setDragging({ kind: 'sheet', id: s.id }); e.dataTransfer.effectAllowed = 'move'; }}
+                    onDragEnd={() => { setDragging(null); setDropTarget(null); setDropBeforeSheetId(null); }}
+                    onDragOver={(e) => {
+                      if (dragging?.kind === 'sheet' && dragging.id !== s.id) {
+                        e.preventDefault();
+                        setDropBeforeSheetId(s.id);
+                      }
+                    }}
+                    onDragLeave={() => setDropBeforeSheetId(prev => prev === s.id ? null : prev)}
+                    onDrop={(e) => { e.preventDefault(); handleDropOnSheet(s.id); }}
+                    onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
+                    className={`group flex items-center gap-3 px-3 py-2.5 hover:bg-noeval-cream/40 transition cursor-pointer ${dropBeforeSheetId === s.id ? 'bg-noeval-accent/10 border-l-4 border-l-noeval-accent' : ''} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
+                  >
+                    {clientFilter && (
+                      <GripVertical className="h-4 w-4 text-noeval-muted/40 group-hover:text-noeval-muted shrink-0" />
+                    )}
+                    <FileText className="h-4 w-4 text-noeval-accent shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-noeval-ink text-sm truncate">{s.title}</div>
+                      <div className="flex items-center gap-3 text-[11px] text-noeval-muted mt-0.5">
+                        <span className="flex items-center gap-1"><Folder className="h-3 w-3" />{clientMap[s.client_id] || '—'}</span>
+                        {s.shoot_date && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es })}</span>}
+                        {s.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{s.location}</span>}
+                        {s.producer_name && <span className="flex items-center gap-1"><UserIcon className="h-3 w-3" />{s.producer_name}</span>}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className={`text-[10px] shrink-0 ${STATUS_TONE[s.status]}`}>
+                      {STATUS_LABEL[s.status]}
+                    </Badge>
+                  </div>
                 ))}
               </div>
             )}
