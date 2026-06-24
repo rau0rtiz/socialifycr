@@ -74,8 +74,8 @@ export default function ProduccionSheet() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'recorded'>('all');
   const [dragShotId, setDragShotId] = useState<string | null>(null);
   const [dropBeforeShotId, setDropBeforeShotId] = useState<string | null>(null);
+  const [confirmDeleteShot, setConfirmDeleteShot] = useState<SheetShot | null>(null);
 
-  
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [clickupOpen, setClickupOpen] = useState(false);
