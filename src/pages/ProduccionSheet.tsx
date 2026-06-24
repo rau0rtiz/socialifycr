@@ -743,6 +743,34 @@ export default function ProduccionSheet() {
           />
         </>
       )}
+
+      {/* Confirmación de eliminación de pieza */}
+      <AlertDialog open={!!confirmDeleteShot} onOpenChange={(open) => !open && setConfirmDeleteShot(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar pieza</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDeleteShot
+                ? `¿Eliminar "${confirmDeleteShot.concept || confirmDeleteShot.description || 'esta pieza'}"? Esta acción no se puede deshacer.`
+                : '¿Eliminar esta pieza? Esta acción no se puede deshacer.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmDeleteShot(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDeleteShot) {
+                  delShot.mutate({ id: confirmDeleteShot.id, sheet_id: sheetId });
+                }
+                setConfirmDeleteShot(null);
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
