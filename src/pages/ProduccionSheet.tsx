@@ -18,6 +18,10 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -70,8 +74,8 @@ export default function ProduccionSheet() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'recorded'>('all');
   const [dragShotId, setDragShotId] = useState<string | null>(null);
   const [dropBeforeShotId, setDropBeforeShotId] = useState<string | null>(null);
+  const [confirmDeleteShot, setConfirmDeleteShot] = useState<SheetShot | null>(null);
 
-  
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [clickupOpen, setClickupOpen] = useState(false);
@@ -481,7 +485,7 @@ export default function ProduccionSheet() {
                             onChange={(patch) => upsertShot.mutate({ ...shot, ...patch })}
                             onToggleRecorded={() => handleToggleRecorded(shot)}
                             onDuplicate={() => handleDuplicate(shot)}
-                            onDelete={() => delShot.mutate({ id: shot.id, sheet_id: sheetId })}
+                            onDelete={() => setConfirmDeleteShot(shot)}
                           />
                         </div>
                       );
@@ -739,6 +743,34 @@ export default function ProduccionSheet() {
           />
         </>
       )}
+
+      {/* Confirmación de eliminación de pieza */}
+      <AlertDialog open={!!confirmDeleteShot} onOpenChange={(open) => !open && setConfirmDeleteShot(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar pieza</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDeleteShot
+                ? `¿Eliminar "${confirmDeleteShot.concept || confirmDeleteShot.description || 'esta pieza'}"? Esta acción no se puede deshacer.`
+                : '¿Eliminar esta pieza? Esta acción no se puede deshacer.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmDeleteShot(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDeleteShot) {
+                  delShot.mutate({ id: confirmDeleteShot.id, sheet_id: sheetId });
+                }
+                setConfirmDeleteShot(null);
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
