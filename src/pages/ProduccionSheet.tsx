@@ -485,7 +485,7 @@ export default function ProduccionSheet() {
                             onChange={(patch) => upsertShot.mutate({ ...shot, ...patch })}
                             onToggleRecorded={() => handleToggleRecorded(shot)}
                             onDuplicate={() => handleDuplicate(shot)}
-                            onDelete={() => delShot.mutate({ id: shot.id, sheet_id: sheetId })}
+                            onDelete={() => setConfirmDeleteShot(shot)}
                           />
                         </div>
                       );
