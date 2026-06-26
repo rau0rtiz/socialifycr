@@ -754,8 +754,8 @@ export default function ProduccionSheet() {
             <AlertDialogTitle>Eliminar pieza</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDeleteShot
-                ? `¿Eliminar "${confirmDeleteShot.concept || confirmDeleteShot.description || 'esta pieza'}"? Esta acción no se puede deshacer.`
-                : '¿Eliminar esta pieza? Esta acción no se puede deshacer.'}
+                ? `¿Eliminar "${confirmDeleteShot.concept || confirmDeleteShot.description || 'esta pieza'}"?`
+                : '¿Eliminar esta pieza?'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -763,10 +763,69 @@ export default function ProduccionSheet() {
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               onClick={() => {
-                if (confirmDeleteShot) {
-                  delShot.mutate({ id: confirmDeleteShot.id, sheet_id: sheetId });
-                }
+                const shotToDelete = confirmDeleteShot;
                 setConfirmDeleteShot(null);
+                if (!shotToDelete) return;
+
+                // Clear any existing timeout
+                if (deleteTimeoutRef.current) {
+                  clearTimeout(deleteTimeoutRef.current);
+                }
+
+                // Hide from UI immediately
+                setPendingDeleteIds(prev => new Set(prev).add(shotToDelete.id));
+
+                // Show undo toast
+                const undoToastId = toast(
+                  `Pieza "${shotToDelete.concept || shotToDelete.description || 'sin título'}" eliminada`,
+                  {
+                    description: 'Se eliminará permanentemente en unos segundos.',
+                    duration: 5000,
+                    action: {
+                      label: 'Deshacer',
+                      onClick: () => {
+                        if (deleteTimeoutRef.current) {
+                          clearTimeout(deleteTimeoutRef.current);
+                          deleteTimeoutRef.current = null;
+                        }
+                        setPendingDeleteIds(prev => {
+                          const next = new Set(prev);
+                          next.delete(shotToDelete.id);
+                          return next;
+                        });
+                        toast.success('Eliminación cancelada');
+                      },
+                    },
+                    onAutoClose: () => {
+                      // Timer expired — actually delete
+                    },
+                  }
+                );
+
+                // Start actual deletion timer
+                deleteTimeoutRef.current = setTimeout(() => {
+                  delShot.mutate(
+                    { id: shotToDelete.id, sheet_id: sheetId },
+                    {
+                      onSuccess: () => {
+                        setPendingDeleteIds(prev => {
+                          const next = new Set(prev);
+                          next.delete(shotToDelete.id);
+                          return next;
+                        });
+                      },
+                      onError: () => {
+                        setPendingDeleteIds(prev => {
+                          const next = new Set(prev);
+                          next.delete(shotToDelete.id);
+                          return next;
+                        });
+                        toast.error('No se pudo eliminar la pieza');
+                      },
+                    }
+                  );
+                  deleteTimeoutRef.current = null;
+                }, 5000);
               }}
             >
               Eliminar
