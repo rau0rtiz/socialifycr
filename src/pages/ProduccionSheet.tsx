@@ -75,6 +75,8 @@ export default function ProduccionSheet() {
   const [dragShotId, setDragShotId] = useState<string | null>(null);
   const [dropBeforeShotId, setDropBeforeShotId] = useState<string | null>(null);
   const [confirmDeleteShot, setConfirmDeleteShot] = useState<SheetShot | null>(null);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
+  const deleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
