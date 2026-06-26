@@ -157,8 +157,9 @@ export default function ProduccionSheet() {
   }, [local]);
 
   const shots = data?.shots || [];
-  const total = shots.length;
-  const recorded = shots.filter(s => s.done).length;
+  const visibleShots = useMemo(() => shots.filter(s => !pendingDeleteIds.has(s.id)), [shots, pendingDeleteIds]);
+  const total = visibleShots.length;
+  const recorded = visibleShots.filter(s => s.done).length;
   const pct = total ? Math.round((recorded / total) * 100) : 0;
 
   const visibleShots = useMemo(() => shots.filter(s => !pendingDeleteIds.has(s.id)), [shots, pendingDeleteIds]);
