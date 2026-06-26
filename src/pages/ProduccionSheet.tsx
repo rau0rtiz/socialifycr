@@ -162,8 +162,6 @@ export default function ProduccionSheet() {
   const recorded = visibleShots.filter(s => s.done).length;
   const pct = total ? Math.round((recorded / total) * 100) : 0;
 
-  const visibleShots = useMemo(() => shots.filter(s => !pendingDeleteIds.has(s.id)), [shots, pendingDeleteIds]);
-
   const filteredShots = useMemo(() => {
     if (filter === 'pending') return visibleShots.filter(s => !s.done);
     if (filter === 'recorded') return visibleShots.filter(s => s.done);
