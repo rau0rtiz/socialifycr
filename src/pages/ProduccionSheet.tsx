@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { produccionesBasePath } from '@/lib/host-mode';
@@ -75,6 +75,8 @@ export default function ProduccionSheet() {
   const [dragShotId, setDragShotId] = useState<string | null>(null);
   const [dropBeforeShotId, setDropBeforeShotId] = useState<string | null>(null);
   const [confirmDeleteShot, setConfirmDeleteShot] = useState<SheetShot | null>(null);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
+  const deleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -155,15 +157,16 @@ export default function ProduccionSheet() {
   }, [local]);
 
   const shots = data?.shots || [];
-  const total = shots.length;
-  const recorded = shots.filter(s => s.done).length;
+  const visibleShots = useMemo(() => shots.filter(s => !pendingDeleteIds.has(s.id)), [shots, pendingDeleteIds]);
+  const total = visibleShots.length;
+  const recorded = visibleShots.filter(s => s.done).length;
   const pct = total ? Math.round((recorded / total) * 100) : 0;
 
   const filteredShots = useMemo(() => {
-    if (filter === 'pending') return shots.filter(s => !s.done);
-    if (filter === 'recorded') return shots.filter(s => s.done);
-    return shots;
-  }, [shots, filter]);
+    if (filter === 'pending') return visibleShots.filter(s => !s.done);
+    if (filter === 'recorded') return visibleShots.filter(s => s.done);
+    return visibleShots;
+  }, [visibleShots, filter]);
 
   const handleAddPiece = () => {
     upsertShot.mutate({
@@ -215,7 +218,7 @@ export default function ProduccionSheet() {
     navigate(produccionesBasePath());
   };
 
-  const recordedShots = shots.filter(s => s.done);
+  const recordedShots = visibleShots.filter(s => s.done);
   const pendingToSend = recordedShots.filter(s => !s.clickup_task_id).length;
   const alreadySent = recordedShots.filter(s => s.clickup_task_id).length;
 
@@ -751,8 +754,8 @@ export default function ProduccionSheet() {
             <AlertDialogTitle>Eliminar pieza</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDeleteShot
-                ? `¿Eliminar "${confirmDeleteShot.concept || confirmDeleteShot.description || 'esta pieza'}"? Esta acción no se puede deshacer.`
-                : '¿Eliminar esta pieza? Esta acción no se puede deshacer.'}
+                ? `¿Eliminar "${confirmDeleteShot.concept || confirmDeleteShot.description || 'esta pieza'}"?`
+                : '¿Eliminar esta pieza?'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -760,10 +763,69 @@ export default function ProduccionSheet() {
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               onClick={() => {
-                if (confirmDeleteShot) {
-                  delShot.mutate({ id: confirmDeleteShot.id, sheet_id: sheetId });
-                }
+                const shotToDelete = confirmDeleteShot;
                 setConfirmDeleteShot(null);
+                if (!shotToDelete) return;
+
+                // Clear any existing timeout
+                if (deleteTimeoutRef.current) {
+                  clearTimeout(deleteTimeoutRef.current);
+                }
+
+                // Hide from UI immediately
+                setPendingDeleteIds(prev => new Set(prev).add(shotToDelete.id));
+
+                // Show undo toast
+                const undoToastId = toast(
+                  `Pieza "${shotToDelete.concept || shotToDelete.description || 'sin título'}" eliminada`,
+                  {
+                    description: 'Se eliminará permanentemente en unos segundos.',
+                    duration: 5000,
+                    action: {
+                      label: 'Deshacer',
+                      onClick: () => {
+                        if (deleteTimeoutRef.current) {
+                          clearTimeout(deleteTimeoutRef.current);
+                          deleteTimeoutRef.current = null;
+                        }
+                        setPendingDeleteIds(prev => {
+                          const next = new Set(prev);
+                          next.delete(shotToDelete.id);
+                          return next;
+                        });
+                        toast.success('Eliminación cancelada');
+                      },
+                    },
+                    onAutoClose: () => {
+                      // Timer expired — actually delete
+                    },
+                  }
+                );
+
+                // Start actual deletion timer
+                deleteTimeoutRef.current = setTimeout(() => {
+                  delShot.mutate(
+                    { id: shotToDelete.id, sheet_id: sheetId },
+                    {
+                      onSuccess: () => {
+                        setPendingDeleteIds(prev => {
+                          const next = new Set(prev);
+                          next.delete(shotToDelete.id);
+                          return next;
+                        });
+                      },
+                      onError: () => {
+                        setPendingDeleteIds(prev => {
+                          const next = new Set(prev);
+                          next.delete(shotToDelete.id);
+                          return next;
+                        });
+                        toast.error('No se pudo eliminar la pieza');
+                      },
+                    }
+                  );
+                  deleteTimeoutRef.current = null;
+                }, 5000);
               }}
             >
               Eliminar
