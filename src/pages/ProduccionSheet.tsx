@@ -218,7 +218,7 @@ export default function ProduccionSheet() {
     navigate(produccionesBasePath());
   };
 
-  const recordedShots = shots.filter(s => s.done);
+  const recordedShots = visibleShots.filter(s => s.done);
   const pendingToSend = recordedShots.filter(s => !s.clickup_task_id).length;
   const alreadySent = recordedShots.filter(s => s.clickup_task_id).length;
 
