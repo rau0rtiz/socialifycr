@@ -59,6 +59,8 @@ export const InstantFormLeadDetailDialog = ({ lead, open, onOpenChange, clientId
   const [embroidery, setEmbroidery] = useState(false);
   const [subtotalStr, setSubtotalStr] = useState('');
   const [ivaPct, setIvaPct] = useState('13');
+  const [needsShipping, setNeedsShipping] = useState(false);
+  const [shippingStr, setShippingStr] = useState('');
   const [notes, setNotes] = useState('');
 
   const registerSale = useRegisterSaleFromInstantFormLead(clientId);
@@ -69,6 +71,8 @@ export const InstantFormLeadDetailDialog = ({ lead, open, onOpenChange, clientId
       setEmbroidery(false);
       setSubtotalStr('');
       setIvaPct('13');
+      setNeedsShipping(false);
+      setShippingStr('');
       setNotes('');
     }
   }, [open, lead?.id]);
@@ -78,9 +82,15 @@ export const InstantFormLeadDetailDialog = ({ lead, open, onOpenChange, clientId
     return isFinite(n) && n > 0 ? n : 0;
   }, [subtotalStr]);
 
+  const shipping = useMemo(() => {
+    if (!needsShipping) return 0;
+    const n = parseFloat(shippingStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+    return isFinite(n) && n > 0 ? n : 0;
+  }, [needsShipping, shippingStr]);
+
   const taxRate = parseInt(ivaPct, 10) / 100;
   const taxAmount = Math.round(subtotal * taxRate * 100) / 100;
-  const total = Math.round((subtotal + taxAmount) * 100) / 100;
+  const total = Math.round((subtotal + taxAmount + shipping) * 100) / 100;
 
   if (!lead) return null;
 
@@ -93,6 +103,10 @@ export const InstantFormLeadDetailDialog = ({ lead, open, onOpenChange, clientId
       toast.error('Ingresá un subtotal válido');
       return;
     }
+    if (needsShipping && shipping <= 0) {
+      toast.error('Ingresá el monto de envío');
+      return;
+    }
     try {
       await registerSale.mutateAsync({
         lead,
@@ -100,6 +114,7 @@ export const InstantFormLeadDetailDialog = ({ lead, open, onOpenChange, clientId
         embroidery,
         subtotal,
         tax_rate: taxRate,
+        shipping,
         notes: notes || undefined,
       });
       toast.success('Venta registrada', { description: formatCRC(total) });
