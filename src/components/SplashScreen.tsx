@@ -85,7 +85,7 @@ export const SplashScreen = ({ onComplete, client, clientLogo }: SplashScreenPro
     const connectionsPromise = queryClient.prefetchQuery({
       queryKey: ['platform-connections', clientId],
       queryFn: async () => {
-        const { data } = await supabase.from('platform_connections').select('*').eq('client_id', clientId).eq('status', 'active');
+        const { data } = await supabase.from('platform_connections').select('id,client_id,platform,status,token_expires_at,platform_user_id,platform_page_id,platform_page_name,connected_by,created_at,updated_at,instagram_account_id,ad_account_id,permissions').eq('client_id', clientId).eq('status', 'active');
         return data || [];
       },
       staleTime: 5 * 60 * 1000,
