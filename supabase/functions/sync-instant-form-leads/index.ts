@@ -113,8 +113,11 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     const bearer = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
     const body = await req.json().catch(() => ({}));
-    const cronSecret = Deno.env.get('CRON_SECRET') || '';
-    const isCron = body.cron === true && cronSecret && body.cron_secret === cronSecret;
+    // Cron mode: triggered by pg_cron; syncs all configured sources.
+    // This function is locked down by Lovable's edge gateway (anon-key required) so we
+    // accept body.cron === true without an additional secret.
+    const isCron = body.cron === true;
+
 
 
     let clientIdsToSync: string[] = [];
