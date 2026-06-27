@@ -122,7 +122,7 @@ export const PlatformConnections = ({ clientId }: PlatformConnectionsProps) => {
   const fetchConnections = useCallback(async () => {
     const { data, error } = await supabase
       .from('platform_connections')
-      .select('*')
+      .select('id,client_id,platform,status,token_expires_at,platform_user_id,platform_page_id,platform_page_name,connected_by,created_at,updated_at,instagram_account_id,ad_account_id,permissions')
       .eq('client_id', clientId);
 
     if (error) {
