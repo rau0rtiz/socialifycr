@@ -61,6 +61,18 @@ const parseDate = (v: unknown): string | null => {
   return d.toISOString();
 };
 
+const hasUsefulData = (row: unknown[]) =>
+  row.some((cell) => String(cell ?? '').trim() !== '');
+
+const stableHash = async (value: string) => {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .slice(0, 16)
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -180,7 +192,12 @@ Deno.serve(async (req) => {
     let synced = 0;
     let skipped = 0;
 
-    for (const row of rows) {
+    for (const [rowIndex, row] of rows.entries()) {
+      if (!hasUsefulData(row)) {
+        skipped++;
+        continue;
+      }
+
       const rec: Record<string, any> = {};
       const customAnswers: Record<string, any> = {};
       const raw: Record<string, any> = {};
@@ -196,11 +213,9 @@ Deno.serve(async (req) => {
         }
       });
 
-      const externalId = String(rec.external_id || '').trim();
-      if (!externalId) {
-        skipped++;
-        continue;
-      }
+      const sheetRowNumber = headerRow + rowIndex + 2;
+      const externalId = String(rec.external_id || '').trim() ||
+        `sheet-${source.spreadsheet_id}-${sheetName}-${sheetRowNumber}-${await stableHash(JSON.stringify(row))}`;
 
       const fullName = (rec.full_name || '').toString().trim() || null;
       const phone = (rec.phone || '').toString().trim() || null;
