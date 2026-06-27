@@ -11,6 +11,7 @@ import { BrandProvider } from "@/contexts/BrandContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
+import { SellerHomeGate } from "@/components/SellerHomeGate";
 import { Loader2 } from 'lucide-react';
 import MindCoachMasterclass from "./pages/MindCoachMasterclass";
 
