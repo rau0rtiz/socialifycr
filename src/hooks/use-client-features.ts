@@ -60,6 +60,8 @@ export interface ClientFeatureFlags {
   generador_pauta: boolean;
   content_calendar: boolean;
   giveaway: boolean;
+  // Dashboard widgets - leads
+  instant_form_leads: boolean;
   // Reportes widgets (deprecated — kept in DB for compatibility, no longer surfaced in UI)
   monthly_sales_report: boolean;
   ai_report_generator: boolean;
@@ -78,6 +80,7 @@ const BOOLEAN_FLAG_KEYS: (keyof Omit<ClientFeatureFlags, 'id' | 'client_id' | 'c
   'whatsapp_conversations', 'story_store', 'story_revenue_tracker', 'sales_by_product', 'sales_by_brand', 'collections', 'reservations_widget',
   'content_grid', 'video_ideas', 'generador_pauta', 'content_calendar', 'giveaway',
   'monthly_sales_report', 'ai_report_generator', 'social_performance_report',
+  'instant_form_leads',
 ];
 
 const DEFAULT_FLAGS: Omit<ClientFeatureFlags, 'id' | 'client_id'> = Object.fromEntries([
@@ -102,6 +105,7 @@ export const DASHBOARD_WIDGET_LABELS: Record<string, string> = {
   funnel: 'Embudo (Funnel)',
   campaigns: 'Campañas',
   launch_report: 'Reporte de Lanzamiento Diario',
+  instant_form_leads: 'Leads del Instant Form (Google Sheets)',
 };
 
 export const VENTAS_WIDGET_LABELS: Record<string, string> = {
