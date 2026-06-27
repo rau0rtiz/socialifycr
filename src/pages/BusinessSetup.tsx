@@ -16,13 +16,14 @@ import { ChecklistItemsEditor } from '@/components/business-setup/ChecklistItems
 import { StoriesArchiveBrowser } from '@/components/business-setup/StoriesArchiveBrowser';
 import { TeamMembers } from '@/components/clientes/TeamMembers';
 import { PlatformConnections } from '@/components/clientes/PlatformConnections';
-import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, ToggleRight, GraduationCap, UsersRound, Archive } from 'lucide-react';
+import { InstantFormSetup } from '@/components/business-setup/InstantFormSetup';
+import { Building2, Palette, Package, Users, Save, Loader2, Plug, ArrowLeft, ToggleRight, GraduationCap, UsersRound, Archive, ClipboardList } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Section = null | 'brand' | 'products' | 'inventory' | 'team' | 'connections' | 'features' | 'teachers' | 'groups' | 'stories';
+type Section = null | 'brand' | 'products' | 'inventory' | 'team' | 'connections' | 'features' | 'teachers' | 'groups' | 'stories' | 'instant_form';
 
 const STATIC_SECTIONS = [
   {
@@ -103,6 +104,15 @@ const STATIC_SECTIONS = [
     color: 'text-rose-500',
     bgColor: 'bg-rose-500/10',
     almaBenditaOnly: true,
+  },
+  {
+    key: 'instant_form' as const,
+    title: 'Instant Form',
+    description: 'Conectá el Google Sheet con leads del Instant Form de Meta',
+    icon: ClipboardList,
+    color: 'text-cyan-500',
+    bgColor: 'bg-cyan-500/10',
+    flagKey: 'instant_form_leads',
   },
 ];
 
@@ -358,6 +368,7 @@ const BusinessSetup = () => {
     connections: renderConnections,
     features: renderFeatures,
     stories: () => <StoriesArchiveBrowser clientId={selectedClient.id} />,
+    instant_form: () => <InstantFormSetup clientId={selectedClient.id} />,
   };
 
   const SECTIONS = STATIC_SECTIONS.filter(s => {
@@ -365,6 +376,7 @@ const BusinessSetup = () => {
     if ((s as any).tissueOnly && !isTissue) return false;
     if ((s as any).almaBenditaOnly && !isAlmaBendita) return false;
     if ((s as any).tissueHidden && isTissue) return false;
+    if ((s as any).flagKey && !(featureFlags as any)[(s as any).flagKey]) return false;
     return true;
   });
 
