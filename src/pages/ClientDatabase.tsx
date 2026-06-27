@@ -202,19 +202,56 @@ const ClientDatabase = () => {
     enabled: !!clientId && !isSpkUp,
   });
 
-  // ── Merge appointments + sales-only contacts (dedupe by name) ──
+  // ── Instant Form leads (Google Sheet sync) for non-SpkUp ──
+  const { data: instantFormLeads = [] } = useQuery<LeadRecord[]>({
+    queryKey: ['client-database-instant-form-leads', clientId],
+    queryFn: async () => {
+      if (!clientId) return [];
+      const { data, error } = await supabase.from('instant_form_leads' as any)
+        .select('id, full_name, phone, ad_name, adset_name, campaign_name, form_name, platform, created_time, created_at, custom_answers')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((l: any) => ({
+        id: l.id,
+        lead_name: l.full_name || 'Sin nombre',
+        lead_phone: l.phone,
+        lead_email: l.custom_answers?.email || l.custom_answers?.correo || null,
+        source: l.platform ? `instant-form-${l.platform}` : 'instant-form',
+        status: 'scheduled',
+        setter_name: null,
+        product: l.form_name,
+        appointment_date: l.created_time || l.created_at,
+        created_at: l.created_at,
+        notes: [l.campaign_name && `Campaña: ${l.campaign_name}`, l.adset_name && `Adset: ${l.adset_name}`, l.ad_name && `Anuncio: ${l.ad_name}`].filter(Boolean).join(' • ') || null,
+        not_sold_reason: null,
+        estimated_value: null,
+        currency: 'CRC',
+        ad_campaign_name: l.campaign_name,
+      })) as LeadRecord[];
+    },
+    enabled: !!clientId && !isSpkUp,
+  });
+
+  // ── Merge appointments + sales-only + instant-form leads (dedupe by phone, then name) ──
   const allLeads = useMemo(() => {
     const merged: LeadRecord[] = [...appointmentLeads];
-    const existingNames = new Set(appointmentLeads.map(l => l.lead_name.toLowerCase().trim()));
-    for (const sc of salesContacts) {
-      const key = sc.lead_name.toLowerCase().trim();
-      if (!existingNames.has(key)) {
-        merged.push(sc);
-        existingNames.add(key);
-      }
-    }
+    const seenPhones = new Set(appointmentLeads.map(l => (l.lead_phone || '').trim()).filter(Boolean));
+    const seenNames = new Set(appointmentLeads.map(l => l.lead_name.toLowerCase().trim()));
+    const pushIfNew = (l: LeadRecord) => {
+      const p = (l.lead_phone || '').trim();
+      const n = l.lead_name.toLowerCase().trim();
+      if (p && seenPhones.has(p)) return;
+      if (!p && seenNames.has(n)) return;
+      merged.push(l);
+      if (p) seenPhones.add(p);
+      seenNames.add(n);
+    };
+    salesContacts.forEach(pushIfNew);
+    instantFormLeads.forEach(pushIfNew);
     return merged;
-  }, [appointmentLeads, salesContacts]);
+  }, [appointmentLeads, salesContacts, instantFormLeads]);
+
 
   const sources = useMemo(() => Array.from(new Set(allLeads.map(l => l.source).filter(Boolean))) as string[], [allLeads]);
 
