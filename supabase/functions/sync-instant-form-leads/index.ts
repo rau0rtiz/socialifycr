@@ -36,6 +36,7 @@ const FIELD_MAP: Record<string, string> = {
   conjunto: 'adset_name',
   campaign_id: 'campaign_id',
   campaign_name: 'campaign_name',
+  campaign: 'campaign_name',
   campana: 'campaign_name',
   campania: 'campaign_name',
   form_id: 'form_id',
