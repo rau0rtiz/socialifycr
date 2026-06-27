@@ -284,11 +284,27 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
                 </Select>
               </div>
             </div>
+            <div className={`rounded-md border p-3 transition-colors ${needsShipping ? 'border-[hsl(var(--primary))]/40 bg-[hsl(var(--primary))]/5' : ''}`}>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox checked={needsShipping} onCheckedChange={(v) => setNeedsShipping(!!v)} />
+                <span className="font-medium">Necesita envío</span>
+              </label>
+              {needsShipping && (
+                <div className="mt-2">
+                  <Label className="text-xs">Monto de envío (CRC)</Label>
+                  <Input type="text" inputMode="decimal" value={shippingStr} onChange={(e) => setShippingStr(e.target.value)} />
+                </div>
+              )}
+            </div>
             <div className="rounded-md border p-3 space-y-1 text-sm bg-muted/20">
               <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span className="tabular-nums">{formatCRC(subtotal)}</span></div>
               <div className="flex justify-between text-muted-foreground"><span>IVA ({ivaPct}%)</span><span className="tabular-nums">{formatCRC(taxAmount)}</span></div>
+              {needsShipping && (
+                <div className="flex justify-between text-muted-foreground"><span>Envío</span><span className="tabular-nums">{formatCRC(shipping)}</span></div>
+              )}
               <div className="flex justify-between font-semibold pt-1 border-t"><span>Total</span><span className="tabular-nums">{formatCRC(total)}</span></div>
             </div>
+
           </div>
           <DialogFooter className="flex justify-between sm:justify-between">
             <Button variant="ghost" size="sm" onClick={handleDelete} disabled={deleteSale.isPending} className="text-destructive">
