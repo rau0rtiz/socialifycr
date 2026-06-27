@@ -964,7 +964,6 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
               />
             </TabsContent>
 
-            </TabsContent>
 
           </Tabs>
           </>
