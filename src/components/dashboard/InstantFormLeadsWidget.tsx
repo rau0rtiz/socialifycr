@@ -122,32 +122,8 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
     return result;
   }, [leads, rangeDays, statusFilter]);
 
-  const breakdown = useMemo(() => {
-    const map = new Map<string, number>();
-    filtered.forEach((l) => {
-      const key = (l as any)[breakdownBy] || '(sin asignar)';
-      map.set(key, (map.get(key) || 0) + 1);
-    });
-    const total = filtered.length || 1;
-    return Array.from(map.entries())
-      .map(([name, count]) => ({ name, count, pct: Math.round((count / total) * 100) }))
-      .sort((a, b) => b.count - a.count);
-  }, [filtered, breakdownBy]);
 
-  const chartData = useMemo(() => {
-    const counts = new Map<string, number>();
-    filtered.forEach((l) => {
-      const k = dayKey(l.created_time || l.created_at);
-      if (!k) return;
-      counts.set(k, (counts.get(k) || 0) + 1);
-    });
-    return Array.from(counts.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, count]) => ({
-        date: new Date(date + 'T00:00:00').toLocaleDateString('es-CR', { day: '2-digit', month: 'short' }),
-        leads: count,
-      }));
-  }, [filtered]);
+
 
   const statusCounts = useMemo(() => {
     const c = { new: 0, contactado: 0, seguimiento: 0, venta: 0, perdido: 0 };
