@@ -1,73 +1,40 @@
-## Objetivo
+## Cambio en el sync de Instant Form (Comfortex – Google Sheets)
 
-Crear un **frente CRM para vendedores** (setter/closer del cliente) separado del dashboard de agencia, donde cada vendedor solo ve los leads que tiene asignados y puede trabajarlos rápido: registrar venta, cambiar estado, dejar seguimiento. Los managers ven el mismo frente pero pueden filtrar por vendedor para supervisar.
+### Qué se va a tocar
+Solo el backend (`supabase/functions/sync-instant-form-leads/index.ts`) y la configuración del cliente Comfortex en `instant_form_lead_sources`. **No se toca nada del dashboard ni de los widgets.**
 
-No se toca nada del dashboard actual de agencia/cliente — esto es una pantalla nueva.
+### 1. Apuntar a la hoja `JULIO 2026`
+- Update en `instant_form_lead_sources` para `client_id = d90a18b8-dad0-4f52-9447-c13f8f19f0d7` → `sheet_name = 'JULIO 2026'`.
+- También se puede cambiar desde Configuración del Negocio sin tocar código cuando llegue agosto.
 
-## Cómo se ve
+### 2. Ajustar el mapeo de columnas en el edge function
+Ampliar el `FIELD_MAP` y la lógica de `custom_answers` para que reconozca los headers cortos en español que usa la hoja JULIO 2026, mapeándolos a los campos canónicos que ya consumen los widgets:
 
-### Para un vendedor (setter/closer)
-- Ruta nueva: `/mis-leads` (o `/crm`)
-- Al hacer login, si su único rol activo en el cliente es `setter`/`closer`, lo redirigimos por defecto a esta pantalla en vez de al dashboard general.
-- Layout simple, mobile-first (la mayoría lo va a usar desde celular):
-  - Header con su nombre, avatar, cliente activo y contador de "leads nuevos sin contactar".
-  - Tabs/Filtros: **Nuevos** · **En seguimiento** · **Contactados** · **Ganados** · **Perdidos** · **Todos**.
-  - Lista de tarjetas, cada una con: nombre del lead, teléfono (botón WhatsApp/llamar), modelo de camisa o info clave, fecha de entrada, estado actual.
-  - Tocar una tarjeta abre el detalle (mismo dialog que ya existe en `InstantFormLeadDetailDialog` adaptado): cambiar estado, registrar venta (form CR con cantidad/bordado/subtotal/IVA), agregar nota de seguimiento.
-- **Notificación de lead nuevo**:
-  - Toast in-app vía Realtime (suscripción a `instant_form_leads` filtrada por `assigned_seller_id = auth.uid()`).
-  - Badge rojo con conteo en el header.
-  - Sonido opcional (toggle en perfil).
-  - Notificación nativa del browser (con permiso) cuando la pestaña está en background.
+| Header en Sheet | Se guarda como |
+|---|---|
+| NOMBRE | `full_name` |
+| TELEFONO | `phone` (limpia prefijo `p:`) |
+| MODELO DE CAMISA | `custom_answers.modelo_de_camisa` |
+| CANTIDAD DE CAMISAS | `custom_answers.cantidad_de_camisas` |
+| ¿BORDADO? | `custom_answers.bordado` |
+| TIPO DE POLO | `custom_answers.tipo_de_polo` |
+| TIPO DE CAMISA | `custom_answers.tipo_de_camisa` (cuello redondo) |
+| ANUNCIO | `ad_name` |
+| CAMPAIGN | `campaign_name` |
 
-### Para managers (owner/admin/manager de agencia o `account_manager` del cliente)
-- Misma ruta `/mis-leads`, pero con un selector arriba "Ver como: **Todos los vendedores** / vendedor X / vendedor Y".
-- Permite auditar la cola de cada vendedor sin tener que entrar al dashboard completo.
-- Mismo dialog de detalle, con el extra de poder reasignar el lead a otro vendedor (ya respetado por el trigger `enforce_seller_assignment_permission`).
+Claves canónicas confirmadas mirando `src/lib/comfortex-leads.ts` (los widgets ya leen `modelo_de_camisa`, `tipo_de_polo`, `tipo_de_camisa`) → no hay que tocar nada del frontend.
 
-### Para el resto de roles
-- No ven el link en el sidebar, no se redirigen ahí.
+### 3. `created_time`
+La hoja no trae fecha. Se usará el timestamp del primer sync (la fila se inserta con `created_time = now()` cuando aparezca por primera vez y nunca se sobreescribe en upserts posteriores). Esto implica un pequeño ajuste: en el upsert, `created_time` solo se setea si viene en la hoja **o** si el registro es nuevo; no se pisa con `null` en filas existentes.
 
-## Navegación / redirección al entrar
+### 4. Filtrar los leads de prueba de Meta
+Las filas que empiezan con `<test lead:` en `nombre_completo` se omiten (ya los borraste manualmente, esto evita que vuelvan a entrar en próximos syncs).
 
-- Login → revisa roles:
-  - Si es manager/admin/owner/account_manager → va al dashboard normal (como hoy), con un nuevo item en el sidebar "CRM de vendedores".
-  - Si es solo `setter` o `closer` → redirige a `/mis-leads`. Item del sidebar "Mis leads" como única vista principal.
-- En `/mis-leads`, si no tiene rol válido, redirige al dashboard normal.
+### 5. Re-deploy + sync manual
+Tras desplegar la función, corro un sync para Comfortex y confirmo en `instant_form_leads` que:
+- `full_name`, `phone`, `ad_name`, `campaign_name` quedan poblados.
+- `custom_answers` trae las 5 llaves esperadas.
+- Los widgets (Leads, Sales, Pie por campaña, Barras por día) siguen viéndose igual.
 
-## Datos y permisos
-
-- Lee de `instant_form_leads` con filtro `assigned_seller_id = auth.uid()` para vendedores; sin filtro (o por vendedor seleccionado) para managers.
-- Ya existe `assigned_seller_id`, auto-asignación round-robin y bloqueo de reasignación por trigger → no se cambia nada del schema.
-- RLS actual de `instant_form_leads` ya restringe por cliente; agregar (si no existe) una policy SELECT para que un vendedor lea sus leads asignados aunque no tenga otros permisos del cliente. Lo confirmo en la migración antes de aplicarla.
-- Realtime: habilitar publicación en `instant_form_leads` si todavía no está, para el toast en vivo.
-
-## Detalles técnicos
-
-```
-src/pages/
-  SellerCrm.tsx                 ← nueva página /mis-leads
-src/components/seller-crm/
-  SellerLeadCard.tsx            ← tarjeta compacta con CTA WhatsApp/llamar
-  SellerLeadList.tsx            ← lista filtrable por estado
-  SellerLeadDetailDialog.tsx    ← reutiliza lógica de InstantFormLeadDetailDialog
-  SellerHeader.tsx              ← contador nuevos + selector de vendedor (managers)
-  useSellerLeads.ts             ← query + realtime subscription
-  useLeadNotifications.ts       ← Notification API + sonido
-```
-
-- Reutilizamos los hooks existentes en `use-instant-form-leads.ts` (sale CRUD, status update, parseFormSaleNotes).
-- Sidebar: agregar item "Mis leads" visible cuando el usuario tiene rol setter/closer en el cliente activo, o rol manager en cualquiera.
-- Routing: agregar `<Route path="/mis-leads" ...>` y lógica de redirect en el componente raíz / `ProtectedRoute`.
-
-## Lo que NO cambia
-- El dashboard de agencia y cliente actual queda igual.
-- Widgets de Comfortex (volumen, modelos, ventas, etc.) no se tocan.
-- Esquema de DB no cambia (solo confirmar policies + realtime).
-
-## Preguntas para confirmar antes de implementar
-
-1. **Nombre y ruta**: ¿`/mis-leads` está bien o prefieres `/crm`, `/vendedor`, otro?
-2. **Alcance inicial**: ¿lo lanzamos solo para Comfortex (que es el único con `instant_form_leads` hoy) o lo dejamos genérico desde el inicio para cualquier cliente futuro?
-3. **Notificaciones**: ¿quieres también email/WhatsApp cuando cae un lead nuevo, o por ahora solo in-app (toast + browser notification + badge)?
-4. **Redirección al login**: si un usuario es setter en un cliente y también manager en otro, ¿priorizamos el CRM o el dashboard general?
+### Lo que NO cambia
+- UI del dashboard, widgets, popup de venta, layout, colores, hooks de React, tabla `instant_form_leads` (mismo schema).

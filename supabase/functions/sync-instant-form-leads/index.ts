@@ -57,6 +57,22 @@ const FIELD_MAP: Record<string, string> = {
   estado: 'lead_status',
 };
 
+// Map normalized header → canonical custom_answer key (Comfortex JULIO 2026 short headers
+// and the long Meta question variants both land on the same key the widgets already read).
+const CUSTOM_ANSWER_MAP: Record<string, string> = {
+  modelo_de_camisa: 'modelo_de_camisa',
+  que_modelo_de_camisa_esta_buscando: 'modelo_de_camisa',
+  cantidad_de_camisas: 'cantidad_de_camisas',
+  cuantas_camisas_necesita: 'cantidad_de_camisas',
+  bordado: 'bordado',
+  desea_que_las_camisas_tengan_algun_bordado: 'bordado',
+  tipo_de_polo: 'tipo_de_polo',
+  cual_modelo_de_camisa_tipo_polo_prefiere: 'tipo_de_polo',
+  tipo_de_camisa: 'tipo_de_camisa',
+  cual_modelo_de_camisa_de_cuello_redondo_prefiere: 'tipo_de_camisa',
+};
+
+
 // Some Meta CSV exports prefix phone numbers with "p:" — strip it.
 const cleanPhone = (v: unknown): string | null => {
   const s = String(v ?? '').trim();
@@ -260,17 +276,29 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
         const known = FIELD_MAP[h];
         if (known) {
           rec[known] = cell;
-        } else if (h && cell !== '') {
-          customAnswers[h] = cell;
+          return;
         }
+        if (!h || cell === '') return;
+        const canonical = CUSTOM_ANSWER_MAP[h] || h;
+        customAnswers[canonical] = cell;
       });
+
+      // Skip Meta "<test lead: ...>" rows so they don't keep reappearing.
+      const isTestLead = Object.values(raw).some((v) =>
+        String(v ?? '').trim().toLowerCase().startsWith('<test lead'),
+      );
+      if (isTestLead) {
+        skipped++;
+        continue;
+      }
 
       const sheetRowNumber = headerRow + rowIndex + 2;
       const externalId = String(rec.external_id || '').trim() ||
-        `sheet-${source.spreadsheet_id}-${sheetName}-${sheetRowNumber}-${await stableHash(JSON.stringify(row))}`;
+        `sheet-${source.spreadsheet_id}-${sheetName}-${sheetRowNumber}`;
 
       const fullName = (rec.full_name || '').toString().trim() || null;
       const phone = cleanPhone(rec.phone);
+
 
       // Upsert customer contact when we have a name
       let customerContactId: string | null = null;
@@ -318,10 +346,24 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
         }
       }
 
+      // Preserve the original created_time when the row already exists, since the JULIO 2026
+      // sheet doesn't carry a date column — first sync wins.
+      const { data: existingLead } = await admin
+        .from('instant_form_leads')
+        .select('id, created_time')
+        .eq('client_id', clientId)
+        .eq('external_id', externalId)
+        .maybeSingle();
+
+      const sheetCreated = parseDate(rec.created_time);
+      const createdTime = sheetCreated
+        || existingLead?.created_time
+        || new Date().toISOString();
+
       const payload = {
         client_id: clientId,
         external_id: externalId,
-        created_time: parseDate(rec.created_time),
+        created_time: createdTime,
         ad_id: rec.ad_id || null,
         ad_name: rec.ad_name || null,
         adset_id: rec.adset_id || null,
@@ -344,6 +386,7 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
       const { error: upErr } = await admin
         .from('instant_form_leads')
         .upsert(payload, { onConflict: 'client_id,external_id' });
+
 
       if (upErr) {
         console.error('Upsert error', upErr, externalId);
