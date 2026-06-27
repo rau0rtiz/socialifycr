@@ -276,17 +276,29 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
         const known = FIELD_MAP[h];
         if (known) {
           rec[known] = cell;
-        } else if (h && cell !== '') {
-          customAnswers[h] = cell;
+          return;
         }
+        if (!h || cell === '') return;
+        const canonical = CUSTOM_ANSWER_MAP[h] || h;
+        customAnswers[canonical] = cell;
       });
+
+      // Skip Meta "<test lead: ...>" rows so they don't keep reappearing.
+      const isTestLead = Object.values(raw).some((v) =>
+        String(v ?? '').trim().toLowerCase().startsWith('<test lead'),
+      );
+      if (isTestLead) {
+        skipped++;
+        continue;
+      }
 
       const sheetRowNumber = headerRow + rowIndex + 2;
       const externalId = String(rec.external_id || '').trim() ||
-        `sheet-${source.spreadsheet_id}-${sheetName}-${sheetRowNumber}-${await stableHash(JSON.stringify(row))}`;
+        `sheet-${source.spreadsheet_id}-${sheetName}-${sheetRowNumber}`;
 
       const fullName = (rec.full_name || '').toString().trim() || null;
       const phone = cleanPhone(rec.phone);
+
 
       // Upsert customer contact when we have a name
       let customerContactId: string | null = null;
