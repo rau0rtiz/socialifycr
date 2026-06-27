@@ -65,16 +65,6 @@ const formatDate = (iso: string | null) => {
   }
 };
 
-const dayKey = (iso: string | null) => {
-  if (!iso) return null;
-  try {
-    const d = new Date(iso);
-    const tz = new Date(d.getTime() - 6 * 60 * 60 * 1000);
-    return tz.toISOString().slice(0, 10);
-  } catch {
-    return null;
-  }
-};
 
 export const InstantFormLeadsWidget = ({ clientId }: Props) => {
   const { data: source } = useInstantFormLeadSource(clientId);
