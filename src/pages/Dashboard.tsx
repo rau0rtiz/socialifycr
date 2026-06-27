@@ -13,6 +13,9 @@ const AdvancedFunnelModule = lazy(() => import('@/components/dashboard/AdvancedF
 const ContentGrid = lazy(() => import('@/components/dashboard/ContentGrid').then(m => ({ default: m.ContentGrid })));
 const LaunchReportWidget = lazy(() => import('@/components/dashboard/LaunchReportWidget').then(m => ({ default: m.LaunchReportWidget })));
 const InstantFormLeadsWidget = lazy(() => import('@/components/dashboard/InstantFormLeadsWidget').then(m => ({ default: m.InstantFormLeadsWidget })));
+const ComfortexUtmBreakdown = lazy(() => import('@/components/dashboard/ComfortexUtmBreakdown').then(m => ({ default: m.ComfortexUtmBreakdown })));
+const ComfortexModelDemand = lazy(() => import('@/components/dashboard/ComfortexModelDemand').then(m => ({ default: m.ComfortexModelDemand })));
+const ComfortexVolumeWidget = lazy(() => import('@/components/dashboard/ComfortexVolumeWidget').then(m => ({ default: m.ComfortexVolumeWidget })));
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
