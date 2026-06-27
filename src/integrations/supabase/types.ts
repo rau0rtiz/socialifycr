@@ -1319,6 +1319,7 @@ export type Database = {
           giveaway: boolean
           id: string
           instagram_posts: boolean
+          instant_form_leads: boolean
           launch_report: boolean
           lead_source: boolean
           monthly_sales_report: boolean
@@ -1369,6 +1370,7 @@ export type Database = {
           giveaway?: boolean
           id?: string
           instagram_posts?: boolean
+          instant_form_leads?: boolean
           launch_report?: boolean
           lead_source?: boolean
           monthly_sales_report?: boolean
@@ -1419,6 +1421,7 @@ export type Database = {
           giveaway?: boolean
           id?: string
           instagram_posts?: boolean
+          instant_form_leads?: boolean
           launch_report?: boolean
           lead_source?: boolean
           monthly_sales_report?: boolean
@@ -2822,6 +2825,143 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      instant_form_lead_sources: {
+        Row: {
+          client_id: string
+          created_at: string
+          header_row: number
+          id: string
+          last_error: string | null
+          last_row_count: number | null
+          last_synced_at: string | null
+          sheet_name: string
+          spreadsheet_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          header_row?: number
+          id?: string
+          last_error?: string | null
+          last_row_count?: number | null
+          last_synced_at?: string | null
+          sheet_name?: string
+          spreadsheet_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          header_row?: number
+          id?: string
+          last_error?: string | null
+          last_row_count?: number | null
+          last_synced_at?: string | null
+          sheet_name?: string
+          spreadsheet_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instant_form_lead_sources_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instant_form_leads: {
+        Row: {
+          ad_id: string | null
+          ad_name: string | null
+          adset_id: string | null
+          adset_name: string | null
+          campaign_id: string | null
+          campaign_name: string | null
+          client_id: string
+          created_at: string
+          created_time: string | null
+          custom_answers: Json
+          customer_contact_id: string | null
+          external_id: string
+          form_id: string | null
+          form_name: string | null
+          full_name: string | null
+          id: string
+          is_organic: boolean | null
+          lead_status: string | null
+          phone: string | null
+          platform: string | null
+          raw: Json
+          updated_at: string
+        }
+        Insert: {
+          ad_id?: string | null
+          ad_name?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          client_id: string
+          created_at?: string
+          created_time?: string | null
+          custom_answers?: Json
+          customer_contact_id?: string | null
+          external_id: string
+          form_id?: string | null
+          form_name?: string | null
+          full_name?: string | null
+          id?: string
+          is_organic?: boolean | null
+          lead_status?: string | null
+          phone?: string | null
+          platform?: string | null
+          raw?: Json
+          updated_at?: string
+        }
+        Update: {
+          ad_id?: string | null
+          ad_name?: string | null
+          adset_id?: string | null
+          adset_name?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          client_id?: string
+          created_at?: string
+          created_time?: string | null
+          custom_answers?: Json
+          customer_contact_id?: string | null
+          external_id?: string
+          form_id?: string | null
+          form_name?: string | null
+          full_name?: string | null
+          id?: string
+          is_organic?: boolean | null
+          lead_status?: string | null
+          phone?: string | null
+          platform?: string | null
+          raw?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instant_form_leads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instant_form_leads_customer_contact_id_fkey"
+            columns: ["customer_contact_id"]
+            isOneToOne: false
+            referencedRelation: "customer_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       launch_daily_reports: {
         Row: {
