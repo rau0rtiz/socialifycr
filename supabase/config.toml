@@ -56,3 +56,7 @@ verify_jwt = false
 
 [functions.notify-website-contact]
 verify_jwt = false
+
+[functions.seed-quick-seller]
+verify_jwt = false
+
