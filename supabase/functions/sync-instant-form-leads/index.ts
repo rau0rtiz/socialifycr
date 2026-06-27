@@ -26,16 +26,25 @@ const FIELD_MAP: Record<string, string> = {
   id: 'external_id',
   lead_id: 'external_id',
   created_time: 'created_time',
+  fecha: 'created_time',
+  fecha_creacion: 'created_time',
   ad_id: 'ad_id',
   ad_name: 'ad_name',
+  anuncio: 'ad_name',
   adset_id: 'adset_id',
   adset_name: 'adset_name',
+  conjunto: 'adset_name',
   campaign_id: 'campaign_id',
   campaign_name: 'campaign_name',
+  campana: 'campaign_name',
+  campania: 'campaign_name',
   form_id: 'form_id',
   form_name: 'form_name',
+  formulario: 'form_name',
   is_organic: 'is_organic',
   platform: 'platform',
+  plataforma: 'platform',
+  nombre: 'full_name',
   nombre_completo: 'full_name',
   full_name: 'full_name',
   name: 'full_name',
@@ -44,6 +53,14 @@ const FIELD_MAP: Record<string, string> = {
   phone_number: 'phone',
   phone: 'phone',
   lead_status: 'lead_status',
+  estado: 'lead_status',
+};
+
+// Some Meta CSV exports prefix phone numbers with "p:" — strip it.
+const cleanPhone = (v: unknown): string | null => {
+  const s = String(v ?? '').trim();
+  if (!s) return null;
+  return s.replace(/^p:/i, '').trim() || null;
 };
 
 const parseBool = (v: unknown): boolean | null => {
@@ -218,7 +235,7 @@ Deno.serve(async (req) => {
         `sheet-${source.spreadsheet_id}-${sheetName}-${sheetRowNumber}-${await stableHash(JSON.stringify(row))}`;
 
       const fullName = (rec.full_name || '').toString().trim() || null;
-      const phone = (rec.phone || '').toString().trim() || null;
+      const phone = cleanPhone(rec.phone);
 
       // Upsert customer contact when we have a name
       let customerContactId: string | null = null;
