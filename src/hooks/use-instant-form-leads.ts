@@ -252,22 +252,24 @@ export interface RegisterFormSaleInput {
   embroidery: boolean;
   subtotal: number;
   tax_rate: number; // 0..1 (e.g. 0.13)
+  shipping?: number; // CRC, added on top of total
   notes?: string;
 }
 
-const buildSaleProductLabel = (qty: number, embroidery: boolean) =>
-  `${qty} camisa${qty === 1 ? '' : 's'}${embroidery ? ' c/bordado' : ''}`;
+const buildSaleProductLabel = (qty: number, embroidery: boolean, shipping?: number) =>
+  `${qty} camisa${qty === 1 ? '' : 's'}${embroidery ? ' c/bordado' : ''}${shipping && shipping > 0 ? ' + envío' : ''}`;
 
-const buildSaleNotes = (input: { quantity: number; embroidery: boolean; tax_rate: number; extra?: string | null }) => {
+const buildSaleNotes = (input: { quantity: number; embroidery: boolean; tax_rate: number; shipping?: number; extra?: string | null }) => {
   const meta = `__formsale__:${JSON.stringify({
     quantity: input.quantity,
     embroidery: input.embroidery,
     tax_rate: input.tax_rate,
+    shipping: input.shipping || 0,
   })}`;
   return input.extra ? `${input.extra}\n${meta}` : meta;
 };
 
-export const parseFormSaleNotes = (notes: string | null): { quantity?: number; embroidery?: boolean; tax_rate?: number; extra?: string } => {
+export const parseFormSaleNotes = (notes: string | null): { quantity?: number; embroidery?: boolean; tax_rate?: number; shipping?: number; extra?: string } => {
   if (!notes) return {};
   const m = notes.match(/__formsale__:(\{.*\})/);
   if (!m) return { extra: notes };
