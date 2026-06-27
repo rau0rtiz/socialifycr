@@ -113,7 +113,9 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     const bearer = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
     const body = await req.json().catch(() => ({}));
-    const isCron = body.cron === true || bearer === serviceKey;
+    const cronSecret = Deno.env.get('CRON_SECRET') || '';
+    const isCron = body.cron === true && cronSecret && body.cron_secret === cronSecret;
+
 
     let clientIdsToSync: string[] = [];
 
