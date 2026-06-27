@@ -76,8 +76,8 @@ export const DateRangePicker = ({
   value,
   onChange
 }: DateRangePickerProps) => {
-  const [selectedPreset, setSelectedPreset] = React.useState<DatePresetKey>(value || 'last_30d');
-  const [date, setDate] = React.useState<DateRange | undefined>(presets[value || 'last_30d'].getValue());
+  const [selectedPreset, setSelectedPreset] = React.useState<DatePresetKey>(value || 'this_month');
+  const [date, setDate] = React.useState<DateRange | undefined>(presets[value || 'this_month'].getValue());
   const [isCustomOpen, setIsCustomOpen] = React.useState(false);
 
   // Sync with external value

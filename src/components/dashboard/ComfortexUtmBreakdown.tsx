@@ -10,6 +10,7 @@ import { filterByRange, cleanText } from '@/lib/comfortex-leads';
 const RANGES = [
   { value: '7', label: '7d' },
   { value: '30', label: '30d' },
+  { value: 'month', label: 'Este mes' },
   { value: '90', label: '90d' },
   { value: 'all', label: 'Todo' },
 ];
@@ -20,7 +21,7 @@ type Dim = 'campaign_name' | 'adset_name' | 'ad_name' | 'platform';
 
 export const ComfortexUtmBreakdown = ({ clientId }: Props) => {
   const { data: leads = [] } = useInstantFormLeads(clientId);
-  const [rangeDays, setRangeDays] = useState('30');
+  const [rangeDays, setRangeDays] = useState('month');
 
   const filtered = useMemo(() => filterByRange(leads, rangeDays), [leads, rangeDays]);
 
