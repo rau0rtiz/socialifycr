@@ -260,154 +260,96 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
             )}
           </div>
 
-          <Tabs defaultValue="list">
-            <TabsList>
-              <TabsTrigger value="list">Lista</TabsTrigger>
-              <TabsTrigger value="utm">Por campaña</TabsTrigger>
-              <TabsTrigger value="chart">Por día</TabsTrigger>
-            </TabsList>
+          {isLoading ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">Cargando...</div>
+          ) : filtered.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">Sin leads en este rango.</div>
+          ) : (
+            <div className="rounded-md border divide-y max-h-[560px] overflow-y-auto">
+              {filtered.slice(0, 500).map((l) => {
+                const status = (l.lead_status || 'new') as InstantFormLeadStatus;
+                const sellerLabel = l.assigned_seller_id ? sellerMap.get(l.assigned_seller_id) || 'Vendedor' : 'Sin asignar';
+                return (
+                  <div key={l.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm truncate">{l.full_name || 'Sin nombre'}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                        <span>{formatDate(l.created_time || l.created_at)}</span>
+                        {l.phone && (
+                          <span className="inline-flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {l.phone}
+                          </span>
+                        )}
+                        {l.campaign_name && (
+                          <span className="truncate max-w-[180px]" title={l.campaign_name}>· {l.campaign_name}</span>
+                        )}
+                      </div>
+                    </div>
 
-            <TabsContent value="list" className="mt-3">
-              {isLoading ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">Cargando...</div>
-              ) : filtered.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">Sin leads en este rango.</div>
-              ) : (
-                <div className="rounded-md border divide-y max-h-[560px] overflow-y-auto">
-                  {filtered.slice(0, 500).map((l) => {
-                    const status = (l.lead_status || 'new') as InstantFormLeadStatus;
-                    const sellerLabel = l.assigned_seller_id ? sellerMap.get(l.assigned_seller_id) || 'Vendedor' : 'Sin asignar';
-                    return (
-                      <div key={l.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-sm truncate">{l.full_name || 'Sin nombre'}</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                            <span>{formatDate(l.created_time || l.created_at)}</span>
-                            {l.phone && (
-                              <span className="inline-flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
-                                {l.phone}
-                              </span>
-                            )}
-                            {l.campaign_name && (
-                              <span className="truncate max-w-[180px]" title={l.campaign_name}>· {l.campaign_name}</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Seller */}
-                        <div className="hidden md:block w-[160px] shrink-0">
-                          {isManager ? (
-                            <Select
-                              value={l.assigned_seller_id || '__none__'}
-                              onValueChange={(v) => handleSellerChange(l, v)}
-                            >
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="Sin asignar" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__none__">Sin asignar</SelectItem>
-                                {sellers.map((s) => (
-                                  <SelectItem key={s.user_id} value={s.user_id}>
-                                    {s.full_name || s.email}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <div className="inline-flex items-center gap-1 text-xs text-muted-foreground truncate" title={sellerLabel}>
-                              <User className="h-3 w-3 shrink-0" />
-                              <span className="truncate">{sellerLabel}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Status dropdown */}
-                        <Select value={status} onValueChange={(v) => handleStatusChange(l, v as InstantFormLeadStatus)}>
-                          <SelectTrigger className={`h-8 w-[140px] text-xs shrink-0 font-semibold ${STATUS_STYLES[status]?.trigger || ''}`}>
-                            <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1.5 ${STATUS_STYLES[status]?.dot || 'bg-muted-foreground'}`} />
-                            <SelectValue />
+                    {/* Seller */}
+                    <div className="hidden md:block w-[160px] shrink-0">
+                      {isManager ? (
+                        <Select
+                          value={l.assigned_seller_id || '__none__'}
+                          onValueChange={(v) => handleSellerChange(l, v)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Sin asignar" />
                           </SelectTrigger>
                           <SelectContent>
-                            {STATUS_OPTIONS.map((s) => (
-                              <SelectItem key={s.value} value={s.value}>
-                                <span className="inline-flex items-center gap-2">
-                                  <span className={`h-1.5 w-1.5 rounded-full ${STATUS_STYLES[s.value]?.dot}`} />
-                                  {s.label}
-                                </span>
+                            <SelectItem value="__none__">Sin asignar</SelectItem>
+                            {sellers.map((s) => (
+                              <SelectItem key={s.user_id} value={s.user_id}>
+                                {s.full_name || s.email}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-
-                        {/* Sale button */}
-                        <Button
-                          size="sm"
-                          variant={l.message_sale_id ? 'outline' : 'default'}
-                          onClick={() => openSale(l)}
-                          className={`shrink-0 ${l.message_sale_id ? 'border-[hsl(var(--success))]/60 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10' : 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white'}`}
-                        >
-                          <DollarSign className="h-3.5 w-3.5 mr-1" />
-                          {l.message_sale_id ? 'Vendido' : 'Venta'}
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="utm" className="mt-3">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-sm text-muted-foreground">Agrupar por:</span>
-                <Select value={breakdownBy} onValueChange={(v) => setBreakdownBy(v as any)}>
-                  <SelectTrigger className="w-[180px] h-8"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="campaign_name">Campaña</SelectItem>
-                    <SelectItem value="adset_name">Conjunto (adset)</SelectItem>
-                    <SelectItem value="ad_name">Anuncio</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {breakdown.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">Sin datos.</div>
-              ) : (
-                <div className="space-y-2 max-h-[440px] overflow-y-auto">
-                  {breakdown.map((b) => (
-                    <div key={b.name} className="flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="truncate" title={b.name}>{b.name}</span>
-                          <span className="text-muted-foreground tabular-nums ml-2">{b.count} · {b.pct}%</span>
+                      ) : (
+                        <div className="inline-flex items-center gap-1 text-xs text-muted-foreground truncate" title={sellerLabel}>
+                          <User className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{sellerLabel}</span>
                         </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden mt-1">
-                          <div className="h-full bg-primary" style={{ width: `${b.pct}%` }} />
-                        </div>
-                      </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
 
-            <TabsContent value="chart" className="mt-3">
-              {chartData.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">Sin datos.</div>
-              ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
-                    <Bar dataKey="leads" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </TabsContent>
-          </Tabs>
+                    {/* Status dropdown */}
+                    <Select value={status} onValueChange={(v) => handleStatusChange(l, v as InstantFormLeadStatus)}>
+                      <SelectTrigger className={`h-8 w-[140px] text-xs shrink-0 font-semibold ${STATUS_STYLES[status]?.trigger || ''}`}>
+                        <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1.5 ${STATUS_STYLES[status]?.dot || 'bg-muted-foreground'}`} />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUS_OPTIONS.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            <span className="inline-flex items-center gap-2">
+                              <span className={`h-1.5 w-1.5 rounded-full ${STATUS_STYLES[s.value]?.dot}`} />
+                              {s.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Sale button */}
+                    <Button
+                      size="sm"
+                      variant={l.message_sale_id ? 'outline' : 'default'}
+                      onClick={() => openSale(l)}
+                      className={`shrink-0 ${l.message_sale_id ? 'border-[hsl(var(--success))]/60 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10' : 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white'}`}
+                    >
+                      <DollarSign className="h-3.5 w-3.5 mr-1" />
+                      {l.message_sale_id ? 'Vendido' : 'Venta'}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
         </CardContent>
       </Card>
 
