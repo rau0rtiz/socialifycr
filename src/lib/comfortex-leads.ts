@@ -75,10 +75,11 @@ export const filterByRange = (leads: InstantFormLead[], rangeDays: string): Inst
   });
 };
 
+// Buckets exactamente como las opciones del Instant Form de Comfortex
 export const VOLUME_BUCKETS: { label: string; min: number; max: number }[] = [
-  { label: '1–10', min: 1, max: 10 },
-  { label: '11–50', min: 11, max: 50 },
-  { label: '51–100', min: 51, max: 100 },
-  { label: '101–500', min: 101, max: 500 },
-  { label: '500+', min: 501, max: Infinity },
+  { label: '6–12', min: 6, max: 12 },
+  { label: '13–29', min: 13, max: 29 },
+  { label: '30–99', min: 30, max: 99 },
+  { label: '100+', min: 100, max: Infinity },
 ];
+
