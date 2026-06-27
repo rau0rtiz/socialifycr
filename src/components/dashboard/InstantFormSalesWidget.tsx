@@ -1,9 +1,24 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DollarSign, TrendingUp, Users } from 'lucide-react';
-import { useInstantFormSales, useInstantFormLeads } from '@/hooks/use-instant-form-leads';
+import { DollarSign, TrendingUp, Users, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  useInstantFormSales,
+  useInstantFormLeads,
+  useUpdateInstantFormSale,
+  useDeleteInstantFormSale,
+  parseFormSaleNotes,
+  InstantFormSale,
+} from '@/hooks/use-instant-form-leads';
 
 interface Props {
   clientId: string;
@@ -17,6 +32,17 @@ const RANGES = [
   { value: 'all', label: 'Todo' },
 ];
 
+const IVA_OPTIONS = [
+  { value: '0', label: '0%' },
+  { value: '1', label: '1%' },
+  { value: '2', label: '2%' },
+  { value: '4', label: '4%' },
+  { value: '13', label: '13%' },
+];
+
+const formatCRC = (n: number) =>
+  '₡' + new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 }).format(n);
+
 const formatMoney = (amount: number, currency: string) => {
   const symbol = currency === 'USD' ? '$' : '₡';
   return symbol + new Intl.NumberFormat('es-CR', { maximumFractionDigits: 0 }).format(amount);
@@ -25,19 +51,34 @@ const formatMoney = (amount: number, currency: string) => {
 const formatDate = (iso: string) => {
   try {
     return new Date(iso).toLocaleDateString('es-CR', {
-      timeZone: 'America/Costa_Rica',
-      day: '2-digit',
-      month: 'short',
+      timeZone: 'America/Costa_Rica', day: '2-digit', month: 'short',
     });
-  } catch {
-    return '—';
-  }
+  } catch { return '—'; }
 };
 
 export const InstantFormSalesWidget = ({ clientId }: Props) => {
   const { data: sales = [], isLoading } = useInstantFormSales(clientId);
   const { data: leads = [] } = useInstantFormLeads(clientId);
+  const updateSale = useUpdateInstantFormSale(clientId);
+  const deleteSale = useDeleteInstantFormSale(clientId);
+
   const [rangeDays, setRangeDays] = useState('month');
+  const [editing, setEditing] = useState<InstantFormSale | null>(null);
+  const [quantity, setQuantity] = useState('1');
+  const [embroidery, setEmbroidery] = useState(false);
+  const [subtotalStr, setSubtotalStr] = useState('');
+  const [ivaPct, setIvaPct] = useState('13');
+
+  useEffect(() => {
+    if (editing) {
+      const meta = parseFormSaleNotes(editing.notes);
+      setQuantity(String(meta.quantity ?? 1));
+      setEmbroidery(!!meta.embroidery);
+      const sub = editing.subtotal ?? (Number(editing.amount) / (1 + (meta.tax_rate ?? 0.13)));
+      setSubtotalStr(String(Math.round(sub)));
+      setIvaPct(String(Math.round((meta.tax_rate ?? 0.13) * 100)));
+    }
+  }, [editing]);
 
   const filteredSales = useMemo(() => {
     if (rangeDays === 'all') return sales;
@@ -81,90 +122,172 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
     ? Math.round((filteredSales.length / filteredLeads.length) * 1000) / 10
     : 0;
 
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <DollarSign className="h-5 w-5" />
-          Ventas desde Instant Form
-          <Badge variant="secondary">{filteredSales.length}</Badge>
-        </CardTitle>
-        <Select value={rangeDays} onValueChange={setRangeDays}>
-          <SelectTrigger className="w-[160px] h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {RANGES.map((r) => (
-              <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* KPIs */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <DollarSign className="h-3.5 w-3.5" />
-              Total ventas
-            </div>
-            <div className="mt-1 space-y-0.5">
-              {Object.keys(totals).length === 0 ? (
-                <div className="text-lg font-semibold">—</div>
-              ) : (
-                Object.entries(totals).map(([cur, amt]) => (
-                  <div key={cur} className="text-lg font-semibold tabular-nums">
-                    {formatMoney(amt, cur)}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Users className="h-3.5 w-3.5" />
-              Cantidad
-            </div>
-            <div className="text-lg font-semibold mt-1">{filteredSales.length}</div>
-          </div>
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <TrendingUp className="h-3.5 w-3.5" />
-              Conversión
-            </div>
-            <div className="text-lg font-semibold mt-1">{conversionRate}%</div>
-          </div>
-        </div>
+  const subtotal = useMemo(() => {
+    const n = parseFloat(subtotalStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+    return isFinite(n) && n > 0 ? n : 0;
+  }, [subtotalStr]);
+  const taxRate = parseInt(ivaPct, 10) / 100;
+  const taxAmount = Math.round(subtotal * taxRate * 100) / 100;
+  const total = Math.round((subtotal + taxAmount) * 100) / 100;
 
-        {/* Recent sales */}
-        <div>
-          <div className="text-xs font-medium text-muted-foreground mb-2">Ventas recientes</div>
-          {isLoading ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">Cargando...</div>
-          ) : filteredSales.length === 0 ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              Aún no hay ventas registradas desde formularios.
-            </div>
-          ) : (
-            <div className="rounded-md border divide-y max-h-[280px] overflow-y-auto">
-              {filteredSales.slice(0, 20).map((s) => (
-                <div key={s.id} className="flex items-center justify-between gap-3 px-3 py-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate">{s.customer_name || 'Cliente'}</div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-2">
-                      <span>{formatDate(s.sale_date)}</span>
-                      {s.product && <span className="truncate">· {s.product}</span>}
-                    </div>
-                  </div>
-                  <div className="font-semibold text-sm tabular-nums">
-                    {formatMoney(Number(s.amount), s.currency)}
-                  </div>
-                </div>
+  const handleSave = async () => {
+    if (!editing) return;
+    if (!subtotal) { toast.error('Subtotal inválido'); return; }
+    try {
+      await updateSale.mutateAsync({
+        saleId: editing.id,
+        quantity: Math.max(1, parseInt(quantity, 10) || 1),
+        embroidery,
+        subtotal,
+        tax_rate: taxRate,
+      });
+      toast.success('Venta actualizada');
+      setEditing(null);
+    } catch (e: any) {
+      toast.error('Error', { description: e.message });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!editing) return;
+    if (!confirm('¿Eliminar esta venta?')) return;
+    try {
+      await deleteSale.mutateAsync({ saleId: editing.id, leadId: editing.lead_id });
+      toast.success('Venta eliminada');
+      setEditing(null);
+    } catch (e: any) {
+      toast.error('Error', { description: e.message });
+    }
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <DollarSign className="h-5 w-5" />
+            Ventas desde Instant Form
+            <Badge variant="secondary">{filteredSales.length}</Badge>
+          </CardTitle>
+          <Select value={rangeDays} onValueChange={setRangeDays}>
+            <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {RANGES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <DollarSign className="h-3.5 w-3.5" /> Total ventas
+              </div>
+              <div className="mt-1 space-y-0.5">
+                {Object.keys(totals).length === 0 ? (
+                  <div className="text-lg font-semibold">—</div>
+                ) : (
+                  Object.entries(totals).map(([cur, amt]) => (
+                    <div key={cur} className="text-lg font-semibold tabular-nums">{formatMoney(amt, cur)}</div>
+                  ))
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Users className="h-3.5 w-3.5" /> Cantidad
+              </div>
+              <div className="text-lg font-semibold mt-1">{filteredSales.length}</div>
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <TrendingUp className="h-3.5 w-3.5" /> Conversión
+              </div>
+              <div className="text-lg font-semibold mt-1">{conversionRate}%</div>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-xs font-medium text-muted-foreground mb-2">Ventas recientes</div>
+            {isLoading ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">Cargando...</div>
+            ) : filteredSales.length === 0 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">Aún no hay ventas registradas desde formularios.</div>
+            ) : (
+              <div className="rounded-md border divide-y max-h-[320px] overflow-y-auto">
+                {filteredSales.slice(0, 50).map((s) => (
+                  <div key={s.id} className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-muted/30">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{s.customer_name || 'Cliente'}</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <span>{formatDate(s.sale_date)}</span>
+                        {s.product && <span className="truncate">· {s.product}</span>}
+                      </div>
+                    </div>
+                    <div className="font-semibold text-sm tabular-nums">{formatMoney(Number(s.amount), s.currency)}</div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(s)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar venta — {editing?.customer_name || 'Cliente'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Cantidad</Label>
+                <Input type="number" min={1} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+              </div>
+              <div className="flex items-end pb-2">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox checked={embroidery} onCheckedChange={(v) => setEmbroidery(!!v)} />
+                  Bordado
+                </label>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Subtotal (CRC)</Label>
+                <Input type="text" inputMode="decimal" value={subtotalStr} onChange={(e) => setSubtotalStr(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">IVA</Label>
+                <Select value={ivaPct} onValueChange={setIvaPct}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {IVA_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="rounded-md border p-3 space-y-1 text-sm bg-muted/20">
+              <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span className="tabular-nums">{formatCRC(subtotal)}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span>IVA ({ivaPct}%)</span><span className="tabular-nums">{formatCRC(taxAmount)}</span></div>
+              <div className="flex justify-between font-semibold pt-1 border-t"><span>Total</span><span className="tabular-nums">{formatCRC(total)}</span></div>
+            </div>
+          </div>
+          <DialogFooter className="flex justify-between sm:justify-between">
+            <Button variant="ghost" size="sm" onClick={handleDelete} disabled={deleteSale.isPending} className="text-destructive">
+              <Trash2 className="h-4 w-4 mr-1" /> Eliminar
+            </Button>
+            <Button onClick={handleSave} disabled={updateSale.isPending || !subtotal}>
+              {updateSale.isPending ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

@@ -4,13 +4,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, ClipboardList, Phone, Inbox, ChevronRight } from 'lucide-react';
+import { RefreshCw, ClipboardList, Phone, Inbox, DollarSign, User } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   InstantFormLead,
   useInstantFormLeads,
   useInstantFormLeadSource,
   useSyncInstantFormLeads,
+  useUpdateInstantFormLeadStatus,
+  useUpdateInstantFormLeadSeller,
+  useClientSellers,
+  useIsClientManager,
+  InstantFormLeadStatus,
 } from '@/hooks/use-instant-form-leads';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { InstantFormLeadDetailDialog } from './InstantFormLeadDetailDialog';
@@ -27,13 +32,15 @@ const RANGES = [
   { value: 'all', label: 'Todo' },
 ];
 
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'Todos los estados' },
-  { value: 'new', label: 'Nuevos' },
-  { value: 'contactado', label: 'Contactados' },
+const STATUS_OPTIONS: { value: InstantFormLeadStatus | 'new'; label: string }[] = [
+  { value: 'new', label: 'Nuevo' },
+  { value: 'contactado', label: 'Contactado' },
   { value: 'seguimiento', label: 'Seguimiento' },
   { value: 'venta', label: 'Venta' },
+  { value: 'perdido', label: 'Perdido' },
 ];
+
+const STATUS_FILTER = [{ value: 'all', label: 'Todos los estados' }, ...STATUS_OPTIONS];
 
 const formatDate = (iso: string | null) => {
   if (!iso) return '—';
@@ -61,27 +68,26 @@ const dayKey = (iso: string | null) => {
   }
 };
 
-const statusBadgeVariant = (status: string | null): 'default' | 'secondary' | 'outline' => {
-  if (status === 'venta') return 'default';
-  if (status === 'contactado' || status === 'seguimiento') return 'secondary';
-  return 'outline';
-};
-
-const statusLabel = (status: string | null) => {
-  if (!status) return 'Nuevo';
-  return status.charAt(0).toUpperCase() + status.slice(1);
-};
-
 export const InstantFormLeadsWidget = ({ clientId }: Props) => {
   const { data: source } = useInstantFormLeadSource(clientId);
   const { data: leads = [], isLoading } = useInstantFormLeads(clientId);
+  const { data: sellers = [] } = useClientSellers(clientId);
+  const isManager = useIsClientManager(clientId);
   const syncMutation = useSyncInstantFormLeads(clientId);
+  const updateStatus = useUpdateInstantFormLeadStatus(clientId);
+  const updateSeller = useUpdateInstantFormLeadSeller(clientId);
 
   const [rangeDays, setRangeDays] = useState('month');
   const [statusFilter, setStatusFilter] = useState('all');
   const [breakdownBy, setBreakdownBy] = useState<'campaign_name' | 'adset_name' | 'ad_name'>('campaign_name');
   const [selectedLead, setSelectedLead] = useState<InstantFormLead | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const sellerMap = useMemo(() => {
+    const m = new Map<string, string>();
+    sellers.forEach((s) => m.set(s.user_id, s.full_name || s.email || 'Vendedor'));
+    return m;
+  }, [sellers]);
 
   const filtered = useMemo(() => {
     let result = leads;
@@ -130,16 +136,13 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
     return Array.from(counts.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, count]) => ({
-        date: new Date(date + 'T00:00:00').toLocaleDateString('es-CR', {
-          day: '2-digit',
-          month: 'short',
-        }),
+        date: new Date(date + 'T00:00:00').toLocaleDateString('es-CR', { day: '2-digit', month: 'short' }),
         leads: count,
       }));
   }, [filtered]);
 
   const statusCounts = useMemo(() => {
-    const c = { new: 0, contactado: 0, seguimiento: 0, venta: 0 };
+    const c = { new: 0, contactado: 0, seguimiento: 0, venta: 0, perdido: 0 };
     filtered.forEach((l) => {
       const s = (l.lead_status || 'new') as keyof typeof c;
       if (s in c) c[s]++;
@@ -158,7 +161,24 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
     }
   };
 
-  const openLead = (lead: InstantFormLead) => {
+  const handleStatusChange = async (lead: InstantFormLead, status: InstantFormLeadStatus) => {
+    try {
+      await updateStatus.mutateAsync({ leadId: lead.id, status });
+    } catch (e: any) {
+      toast.error('Error', { description: e.message });
+    }
+  };
+
+  const handleSellerChange = async (lead: InstantFormLead, sellerId: string) => {
+    try {
+      await updateSeller.mutateAsync({ leadId: lead.id, sellerId: sellerId === '__none__' ? null : sellerId });
+      toast.success('Vendedor actualizado');
+    } catch (e: any) {
+      toast.error('Solo managers pueden reasignar', { description: e.message });
+    }
+  };
+
+  const openSale = (lead: InstantFormLead) => {
     setSelectedLead(lead);
     setDialogOpen(true);
   };
@@ -195,26 +215,20 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
               <Badge variant="secondary">{filtered.length}</Badge>
             </CardTitle>
             {source.last_synced_at && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Última sync: {formatDate(source.last_synced_at)}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Última sync: {formatDate(source.last_synced_at)}</p>
             )}
           </div>
           <div className="flex items-center gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px] h-9">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-[150px] h-9"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {STATUS_OPTIONS.map((s) => (
+                {STATUS_FILTER.map((s) => (
                   <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={rangeDays} onValueChange={setRangeDays}>
-              <SelectTrigger className="w-[150px] h-9">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-[150px] h-9"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {RANGES.map((r) => (
                   <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
@@ -229,18 +243,10 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
         <CardContent>
           {/* Status summary chips */}
           <div className="flex flex-wrap gap-2 mb-3 text-xs">
-            <div className="px-2.5 py-1 rounded-md bg-muted/50">
-              Nuevos <span className="font-semibold ml-1">{statusCounts.new}</span>
-            </div>
-            <div className="px-2.5 py-1 rounded-md bg-muted/50">
-              Contactados <span className="font-semibold ml-1">{statusCounts.contactado}</span>
-            </div>
-            <div className="px-2.5 py-1 rounded-md bg-muted/50">
-              Seguimiento <span className="font-semibold ml-1">{statusCounts.seguimiento}</span>
-            </div>
-            <div className="px-2.5 py-1 rounded-md bg-primary/10 text-primary">
-              Ventas <span className="font-semibold ml-1">{statusCounts.venta}</span>
-            </div>
+            <div className="px-2.5 py-1 rounded-md bg-muted/50">Nuevos <span className="font-semibold ml-1">{statusCounts.new}</span></div>
+            <div className="px-2.5 py-1 rounded-md bg-muted/50">Contactados <span className="font-semibold ml-1">{statusCounts.contactado}</span></div>
+            <div className="px-2.5 py-1 rounded-md bg-muted/50">Seguimiento <span className="font-semibold ml-1">{statusCounts.seguimiento}</span></div>
+            <div className="px-2.5 py-1 rounded-md bg-primary/10 text-primary">Ventas <span className="font-semibold ml-1">{statusCounts.venta}</span></div>
           </div>
 
           <Tabs defaultValue="list">
@@ -256,23 +262,17 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
               ) : filtered.length === 0 ? (
                 <div className="py-8 text-center text-sm text-muted-foreground">Sin leads en este rango.</div>
               ) : (
-                <div className="rounded-md border divide-y max-h-[520px] overflow-y-auto">
+                <div className="rounded-md border divide-y max-h-[560px] overflow-y-auto">
                   {filtered.slice(0, 500).map((l) => {
-                    const cleanPhone = (l.phone || '').replace(/\D/g, '');
+                    const status = (l.lead_status || 'new') as InstantFormLeadStatus;
+                    const sellerLabel = l.assigned_seller_id ? sellerMap.get(l.assigned_seller_id) || 'Vendedor' : 'Sin asignar';
                     return (
-                      <button
-                        key={l.id}
-                        onClick={() => openLead(l)}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/40 transition-colors text-left"
-                      >
+                      <div key={l.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium text-sm truncate">{l.full_name || 'Sin nombre'}</span>
-                            <Badge variant={statusBadgeVariant(l.lead_status)} className="text-[10px] capitalize">
-                              {statusLabel(l.lead_status)}
-                            </Badge>
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
                             <span>{formatDate(l.created_time || l.created_at)}</span>
                             {l.phone && (
                               <span className="inline-flex items-center gap-1">
@@ -281,14 +281,56 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
                               </span>
                             )}
                             {l.campaign_name && (
-                              <span className="truncate max-w-[200px]" title={l.campaign_name}>
-                                · {l.campaign_name}
-                              </span>
+                              <span className="truncate max-w-[180px]" title={l.campaign_name}>· {l.campaign_name}</span>
                             )}
                           </div>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                      </button>
+
+                        {/* Seller */}
+                        <div className="hidden md:block w-[160px] shrink-0">
+                          {isManager ? (
+                            <Select
+                              value={l.assigned_seller_id || '__none__'}
+                              onValueChange={(v) => handleSellerChange(l, v)}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Sin asignar" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">Sin asignar</SelectItem>
+                                {sellers.map((s) => (
+                                  <SelectItem key={s.user_id} value={s.user_id}>
+                                    {s.full_name || s.email}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <div className="inline-flex items-center gap-1 text-xs text-muted-foreground truncate" title={sellerLabel}>
+                              <User className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{sellerLabel}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Status dropdown */}
+                        <Select value={status} onValueChange={(v) => handleStatusChange(l, v as InstantFormLeadStatus)}>
+                          <SelectTrigger className="h-8 w-[130px] text-xs shrink-0">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATUS_OPTIONS.map((s) => (
+                              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {/* Sale button */}
+                        <Button size="sm" variant={l.message_sale_id ? 'outline' : 'default'} onClick={() => openSale(l)} className="shrink-0">
+                          <DollarSign className="h-3.5 w-3.5 mr-1" />
+                          {l.message_sale_id ? 'Vendido' : 'Venta'}
+                        </Button>
+                      </div>
                     );
                   })}
                 </div>
@@ -299,9 +341,7 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-sm text-muted-foreground">Agrupar por:</span>
                 <Select value={breakdownBy} onValueChange={(v) => setBreakdownBy(v as any)}>
-                  <SelectTrigger className="w-[180px] h-8">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="w-[180px] h-8"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="campaign_name">Campaña</SelectItem>
                     <SelectItem value="adset_name">Conjunto (adset)</SelectItem>
@@ -318,9 +358,7 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between text-sm">
                           <span className="truncate" title={b.name}>{b.name}</span>
-                          <span className="text-muted-foreground tabular-nums ml-2">
-                            {b.count} · {b.pct}%
-                          </span>
+                          <span className="text-muted-foreground tabular-nums ml-2">{b.count} · {b.pct}%</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden mt-1">
                           <div className="h-full bg-primary" style={{ width: `${b.pct}%` }} />
@@ -341,13 +379,7 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: 8,
-                      }}
-                    />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8 }} />
                     <Bar dataKey="leads" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
