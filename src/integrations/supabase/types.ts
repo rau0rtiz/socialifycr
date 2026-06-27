@@ -2893,6 +2893,7 @@ export type Database = {
           id: string
           is_organic: boolean | null
           lead_status: string | null
+          message_sale_id: string | null
           phone: string | null
           platform: string | null
           raw: Json
@@ -2917,6 +2918,7 @@ export type Database = {
           id?: string
           is_organic?: boolean | null
           lead_status?: string | null
+          message_sale_id?: string | null
           phone?: string | null
           platform?: string | null
           raw?: Json
@@ -2941,6 +2943,7 @@ export type Database = {
           id?: string
           is_organic?: boolean | null
           lead_status?: string | null
+          message_sale_id?: string | null
           phone?: string | null
           platform?: string | null
           raw?: Json
@@ -2959,6 +2962,13 @@ export type Database = {
             columns: ["customer_contact_id"]
             isOneToOne: false
             referencedRelation: "customer_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instant_form_leads_message_sale_id_fkey"
+            columns: ["message_sale_id"]
+            isOneToOne: false
+            referencedRelation: "message_sales"
             referencedColumns: ["id"]
           },
         ]

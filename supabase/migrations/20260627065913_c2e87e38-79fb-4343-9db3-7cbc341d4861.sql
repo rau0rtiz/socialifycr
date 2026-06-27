@@ -1,0 +1,1 @@
+ALTER TABLE public.instant_form_leads ADD COLUMN IF NOT EXISTS message_sale_id uuid REFERENCES public.message_sales(id) ON DELETE SET NULL; CREATE INDEX IF NOT EXISTS idx_instant_form_leads_sale ON public.instant_form_leads(message_sale_id);
