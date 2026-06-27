@@ -330,7 +330,7 @@ const Dashboard = () => {
 
         if (isComfortex && (topPostsNode || contentGridNode)) {
           return (
-            <div className="mb-3 md:mb-6 grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6 items-start">
+            <div className="mb-3 md:mb-6 grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6 items-stretch">
               {topPostsNode && <div className="min-w-0">{topPostsNode}</div>}
               {contentGridNode && <div className="min-w-0">{contentGridNode}</div>}
             </div>
