@@ -108,7 +108,7 @@ export const FunnelModule = ({ clientId, hasAdAccount }: FunnelModuleProps) => {
   const [salesCurrency, setSalesCurrency] = useState('CRC');
   
   // Date range state
-  const [datePreset, setDatePreset] = useState<DatePresetKey>('last_30d');
+  const [datePreset, setDatePreset] = useState<DatePresetKey>('this_month');
   const [customRange, setCustomRange] = useState<DateRange>({});
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
