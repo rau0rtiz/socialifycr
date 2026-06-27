@@ -105,7 +105,24 @@ export const useSyncInstantFormLeads = (clientId: string | null) => {
       const { data, error } = await supabase.functions.invoke('sync-instant-form-leads', {
         body: { client_id: clientId },
       });
-      if (error) throw error;
+      if (error) {
+        let detail = error.message;
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json();
+            if (body?.detail) {
+              try {
+                const parsed = JSON.parse(body.detail);
+                detail = parsed?.error?.message || body.error || detail;
+              } catch { detail = body.error || detail; }
+            } else if (body?.error) {
+              detail = body.error;
+            }
+          }
+        } catch {/* ignore */}
+        throw new Error(detail);
+      }
       if (data?.error) throw new Error(data.error);
       return data as { ok: true; synced: number; skipped: number; total: number };
     },
