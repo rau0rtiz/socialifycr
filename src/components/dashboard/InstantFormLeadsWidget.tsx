@@ -87,7 +87,7 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
 
   const [rangeDays, setRangeDays] = useState('month');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [breakdownBy, setBreakdownBy] = useState<'campaign_name' | 'adset_name' | 'ad_name'>('campaign_name');
+  
   const [selectedLead, setSelectedLead] = useState<InstantFormLead | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
