@@ -68,6 +68,8 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
   const [embroidery, setEmbroidery] = useState(false);
   const [subtotalStr, setSubtotalStr] = useState('');
   const [ivaPct, setIvaPct] = useState('13');
+  const [needsShipping, setNeedsShipping] = useState(false);
+  const [shippingStr, setShippingStr] = useState('');
 
   useEffect(() => {
     if (editing) {
@@ -77,6 +79,9 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
       const sub = editing.subtotal ?? (Number(editing.amount) / (1 + (meta.tax_rate ?? 0.13)));
       setSubtotalStr(String(Math.round(sub)));
       setIvaPct(String(Math.round((meta.tax_rate ?? 0.13) * 100)));
+      const ship = Number(meta.shipping || 0);
+      setNeedsShipping(ship > 0);
+      setShippingStr(ship > 0 ? String(Math.round(ship)) : '');
     }
   }, [editing]);
 
@@ -126,13 +131,19 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
     const n = parseFloat(subtotalStr.replace(/[^\d.,]/g, '').replace(',', '.'));
     return isFinite(n) && n > 0 ? n : 0;
   }, [subtotalStr]);
+  const shipping = useMemo(() => {
+    if (!needsShipping) return 0;
+    const n = parseFloat(shippingStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+    return isFinite(n) && n > 0 ? n : 0;
+  }, [needsShipping, shippingStr]);
   const taxRate = parseInt(ivaPct, 10) / 100;
   const taxAmount = Math.round(subtotal * taxRate * 100) / 100;
-  const total = Math.round((subtotal + taxAmount) * 100) / 100;
+  const total = Math.round((subtotal + taxAmount + shipping) * 100) / 100;
 
   const handleSave = async () => {
     if (!editing) return;
     if (!subtotal) { toast.error('Subtotal inválido'); return; }
+    if (needsShipping && shipping <= 0) { toast.error('Ingresá el monto de envío'); return; }
     try {
       await updateSale.mutateAsync({
         saleId: editing.id,
@@ -140,6 +151,7 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
         embroidery,
         subtotal,
         tax_rate: taxRate,
+        shipping,
       });
       toast.success('Venta actualizada');
       setEditing(null);
@@ -272,11 +284,27 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
                 </Select>
               </div>
             </div>
+            <div className={`rounded-md border p-3 transition-colors ${needsShipping ? 'border-[hsl(var(--primary))]/40 bg-[hsl(var(--primary))]/5' : ''}`}>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox checked={needsShipping} onCheckedChange={(v) => setNeedsShipping(!!v)} />
+                <span className="font-medium">Necesita envío</span>
+              </label>
+              {needsShipping && (
+                <div className="mt-2">
+                  <Label className="text-xs">Monto de envío (CRC)</Label>
+                  <Input type="text" inputMode="decimal" value={shippingStr} onChange={(e) => setShippingStr(e.target.value)} />
+                </div>
+              )}
+            </div>
             <div className="rounded-md border p-3 space-y-1 text-sm bg-muted/20">
               <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span className="tabular-nums">{formatCRC(subtotal)}</span></div>
               <div className="flex justify-between text-muted-foreground"><span>IVA ({ivaPct}%)</span><span className="tabular-nums">{formatCRC(taxAmount)}</span></div>
+              {needsShipping && (
+                <div className="flex justify-between text-muted-foreground"><span>Envío</span><span className="tabular-nums">{formatCRC(shipping)}</span></div>
+              )}
               <div className="flex justify-between font-semibold pt-1 border-t"><span>Total</span><span className="tabular-nums">{formatCRC(total)}</span></div>
             </div>
+
           </div>
           <DialogFooter className="flex justify-between sm:justify-between">
             <Button variant="ghost" size="sm" onClick={handleDelete} disabled={deleteSale.isPending} className="text-destructive">

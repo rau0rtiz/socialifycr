@@ -252,22 +252,24 @@ export interface RegisterFormSaleInput {
   embroidery: boolean;
   subtotal: number;
   tax_rate: number; // 0..1 (e.g. 0.13)
+  shipping?: number; // CRC, added on top of total
   notes?: string;
 }
 
-const buildSaleProductLabel = (qty: number, embroidery: boolean) =>
-  `${qty} camisa${qty === 1 ? '' : 's'}${embroidery ? ' c/bordado' : ''}`;
+const buildSaleProductLabel = (qty: number, embroidery: boolean, shipping?: number) =>
+  `${qty} camisa${qty === 1 ? '' : 's'}${embroidery ? ' c/bordado' : ''}${shipping && shipping > 0 ? ' + envío' : ''}`;
 
-const buildSaleNotes = (input: { quantity: number; embroidery: boolean; tax_rate: number; extra?: string | null }) => {
+const buildSaleNotes = (input: { quantity: number; embroidery: boolean; tax_rate: number; shipping?: number; extra?: string | null }) => {
   const meta = `__formsale__:${JSON.stringify({
     quantity: input.quantity,
     embroidery: input.embroidery,
     tax_rate: input.tax_rate,
+    shipping: input.shipping || 0,
   })}`;
   return input.extra ? `${input.extra}\n${meta}` : meta;
 };
 
-export const parseFormSaleNotes = (notes: string | null): { quantity?: number; embroidery?: boolean; tax_rate?: number; extra?: string } => {
+export const parseFormSaleNotes = (notes: string | null): { quantity?: number; embroidery?: boolean; tax_rate?: number; shipping?: number; extra?: string } => {
   if (!notes) return {};
   const m = notes.match(/__formsale__:(\{.*\})/);
   if (!m) return { extra: notes };
@@ -283,13 +285,14 @@ export const parseFormSaleNotes = (notes: string | null): { quantity?: number; e
 export const useRegisterSaleFromInstantFormLead = (clientId: string | null) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ lead, quantity, embroidery, subtotal, tax_rate, notes }: RegisterFormSaleInput) => {
+    mutationFn: async ({ lead, quantity, embroidery, subtotal, tax_rate, shipping, notes }: RegisterFormSaleInput) => {
       if (!clientId) throw new Error('No client');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const tax_amount = Math.round(subtotal * tax_rate * 100) / 100;
-      const amount = Math.round((subtotal + tax_amount) * 100) / 100;
+      const shippingAmount = Math.max(0, Math.round((shipping || 0) * 100) / 100);
+      const amount = Math.round((subtotal + tax_amount + shippingAmount) * 100) / 100;
 
       // 1) Upsert customer_contacts (find by phone first)
       let contactId = lead.customer_contact_id;
@@ -334,8 +337,8 @@ export const useRegisterSaleFromInstantFormLead = (clientId: string | null) => {
           ad_name: lead.ad_name,
           customer_name: fullName,
           customer_phone: phone,
-          product: buildSaleProductLabel(quantity, embroidery),
-          notes: buildSaleNotes({ quantity, embroidery, tax_rate, extra: notes }),
+          product: buildSaleProductLabel(quantity, embroidery, shippingAmount),
+          notes: buildSaleNotes({ quantity, embroidery, tax_rate, shipping: shippingAmount, extra: notes }),
           status: 'completed',
         } as any)
         .select('id')
@@ -370,23 +373,25 @@ export interface UpdateFormSaleInput {
   embroidery: boolean;
   subtotal: number;
   tax_rate: number;
+  shipping?: number;
   notes?: string;
 }
 
 export const useUpdateInstantFormSale = (clientId: string | null) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ saleId, quantity, embroidery, subtotal, tax_rate, notes }: UpdateFormSaleInput) => {
+    mutationFn: async ({ saleId, quantity, embroidery, subtotal, tax_rate, shipping, notes }: UpdateFormSaleInput) => {
       const tax_amount = Math.round(subtotal * tax_rate * 100) / 100;
-      const amount = Math.round((subtotal + tax_amount) * 100) / 100;
+      const shippingAmount = Math.max(0, Math.round((shipping || 0) * 100) / 100);
+      const amount = Math.round((subtotal + tax_amount + shippingAmount) * 100) / 100;
       const { error } = await supabase
         .from('message_sales')
         .update({
           subtotal,
           tax_amount,
           amount,
-          product: buildSaleProductLabel(quantity, embroidery),
-          notes: buildSaleNotes({ quantity, embroidery, tax_rate, extra: notes }),
+          product: buildSaleProductLabel(quantity, embroidery, shippingAmount),
+          notes: buildSaleNotes({ quantity, embroidery, tax_rate, shipping: shippingAmount, extra: notes }),
         } as any)
         .eq('id', saleId);
       if (error) throw error;

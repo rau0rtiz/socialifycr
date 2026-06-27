@@ -14,6 +14,8 @@ const ContentGrid = lazy(() => import('@/components/dashboard/ContentGrid').then
 const LaunchReportWidget = lazy(() => import('@/components/dashboard/LaunchReportWidget').then(m => ({ default: m.LaunchReportWidget })));
 const InstantFormLeadsWidget = lazy(() => import('@/components/dashboard/InstantFormLeadsWidget').then(m => ({ default: m.InstantFormLeadsWidget })));
 const InstantFormSalesWidget = lazy(() => import('@/components/dashboard/InstantFormSalesWidget').then(m => ({ default: m.InstantFormSalesWidget })));
+const InstantFormCampaignPieWidget = lazy(() => import('@/components/dashboard/InstantFormCampaignPieWidget').then(m => ({ default: m.InstantFormCampaignPieWidget })));
+const InstantFormDailyBarWidget = lazy(() => import('@/components/dashboard/InstantFormDailyBarWidget').then(m => ({ default: m.InstantFormDailyBarWidget })));
 const ComfortexUtmBreakdown = lazy(() => import('@/components/dashboard/ComfortexUtmBreakdown').then(m => ({ default: m.ComfortexUtmBreakdown })));
 const ComfortexModelDemand = lazy(() => import('@/components/dashboard/ComfortexModelDemand').then(m => ({ default: m.ComfortexModelDemand })));
 const ComfortexVolumeWidget = lazy(() => import('@/components/dashboard/ComfortexVolumeWidget').then(m => ({ default: m.ComfortexVolumeWidget })));
@@ -361,6 +363,14 @@ const Dashboard = () => {
                 </Suspense>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
                   <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                    <InstantFormCampaignPieWidget clientId={selectedClient.id} />
+                  </Suspense>
+                  <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                    <InstantFormDailyBarWidget clientId={selectedClient.id} />
+                  </Suspense>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+                  <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
                     <ComfortexUtmBreakdown clientId={selectedClient.id} />
                   </Suspense>
                   <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
@@ -395,6 +405,14 @@ const Dashboard = () => {
               <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
                 <InstantFormLeadsWidget clientId={selectedClient.id} />
               </Suspense>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+                <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                  <InstantFormCampaignPieWidget clientId={selectedClient.id} />
+                </Suspense>
+                <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                  <InstantFormDailyBarWidget clientId={selectedClient.id} />
+                </Suspense>
+              </div>
               <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
                 <InstantFormSalesWidget clientId={selectedClient.id} />
               </Suspense>
