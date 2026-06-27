@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/use-user-role';
 
 export interface InstantFormLead {
   id: string;
@@ -22,6 +24,8 @@ export interface InstantFormLead {
   custom_answers: Record<string, any>;
   customer_contact_id: string | null;
   message_sale_id: string | null;
+  assigned_seller_id: string | null;
+  assigned_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -153,25 +157,141 @@ export const useUpdateInstantFormLeadStatus = (clientId: string | null) => {
   });
 };
 
+export const useUpdateInstantFormLeadSeller = (clientId: string | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ leadId, sellerId }: { leadId: string; sellerId: string | null }) => {
+      const { error } = await supabase
+        .from('instant_form_leads')
+        .update({ assigned_seller_id: sellerId })
+        .eq('id', leadId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['instant-form-leads', clientId] });
+    },
+  });
+};
+
+export interface ClientSeller {
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+}
+
+export const useClientSellers = (clientId: string | null) => {
+  return useQuery({
+    queryKey: ['client-sellers', clientId],
+    queryFn: async () => {
+      if (!clientId) return [] as ClientSeller[];
+      // Members of this client...
+      const { data: members, error: mErr } = await supabase
+        .from('client_team_members')
+        .select('user_id')
+        .eq('client_id', clientId);
+      if (mErr) throw mErr;
+      const userIds = (members || []).map((m: any) => m.user_id);
+      if (userIds.length === 0) return [];
+
+      // ...who have system role setter or closer
+      const { data: roles, error: rErr } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds)
+        .in('role', ['setter', 'closer']);
+      if (rErr) throw rErr;
+      const sellerIds = Array.from(new Set((roles || []).map((r: any) => r.user_id)));
+      if (sellerIds.length === 0) return [];
+
+      const { data: profiles, error: pErr } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url')
+        .in('id', sellerIds);
+      if (pErr) throw pErr;
+      return (profiles || []).map((p: any) => ({
+        user_id: p.id,
+        full_name: p.full_name,
+        email: p.email,
+        avatar_url: p.avatar_url,
+      })) as ClientSeller[];
+    },
+    enabled: !!clientId,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useIsClientManager = (clientId: string | null): boolean => {
+  const { user } = useAuth();
+  const { systemRole } = useUserRole();
+  const { data } = useQuery({
+    queryKey: ['is-account-manager', clientId, user?.id],
+    queryFn: async () => {
+      if (!user?.id || !clientId) return false;
+      const { data, error } = await supabase
+        .from('client_team_members')
+        .select('role')
+        .eq('client_id', clientId)
+        .eq('user_id', user.id)
+        .eq('role', 'account_manager')
+        .maybeSingle();
+      if (error) return false;
+      return !!data;
+    },
+    enabled: !!user?.id && !!clientId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (systemRole === 'owner' || systemRole === 'admin' || systemRole === 'manager') return true;
+  return !!data;
+};
+
 export interface RegisterFormSaleInput {
   lead: InstantFormLead;
-  amount: number;
-  currency: 'CRC' | 'USD';
-  product?: string;
-  payment_method?: string;
-  sale_date?: string;
+  quantity: number;
+  embroidery: boolean;
+  subtotal: number;
+  tax_rate: number; // 0..1 (e.g. 0.13)
   notes?: string;
 }
+
+const buildSaleProductLabel = (qty: number, embroidery: boolean) =>
+  `${qty} camisa${qty === 1 ? '' : 's'}${embroidery ? ' c/bordado' : ''}`;
+
+const buildSaleNotes = (input: { quantity: number; embroidery: boolean; tax_rate: number; extra?: string | null }) => {
+  const meta = `__formsale__:${JSON.stringify({
+    quantity: input.quantity,
+    embroidery: input.embroidery,
+    tax_rate: input.tax_rate,
+  })}`;
+  return input.extra ? `${input.extra}\n${meta}` : meta;
+};
+
+export const parseFormSaleNotes = (notes: string | null): { quantity?: number; embroidery?: boolean; tax_rate?: number; extra?: string } => {
+  if (!notes) return {};
+  const m = notes.match(/__formsale__:(\{.*\})/);
+  if (!m) return { extra: notes };
+  try {
+    const parsed = JSON.parse(m[1]);
+    const extra = notes.replace(m[0], '').trim();
+    return { ...parsed, extra: extra || undefined };
+  } catch {
+    return { extra: notes };
+  }
+};
 
 export const useRegisterSaleFromInstantFormLead = (clientId: string | null) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ lead, amount, currency, product, payment_method, sale_date, notes }: RegisterFormSaleInput) => {
+    mutationFn: async ({ lead, quantity, embroidery, subtotal, tax_rate, notes }: RegisterFormSaleInput) => {
       if (!clientId) throw new Error('No client');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // 1) Upsert customer_contacts (find by phone first, else by name)
+      const tax_amount = Math.round(subtotal * tax_rate * 100) / 100;
+      const amount = Math.round((subtotal + tax_amount) * 100) / 100;
+
+      // 1) Upsert customer_contacts (find by phone first)
       let contactId = lead.customer_contact_id;
       const phone = (lead.phone || '').trim() || null;
       const fullName = (lead.full_name || 'Lead sin nombre').trim();
@@ -189,11 +309,7 @@ export const useRegisterSaleFromInstantFormLead = (clientId: string | null) => {
       if (!contactId) {
         const { data: created, error: ccErr } = await supabase
           .from('customer_contacts')
-          .insert({
-            client_id: clientId,
-            full_name: fullName,
-            phone,
-          })
+          .insert({ client_id: clientId, full_name: fullName, phone })
           .select('id')
           .single();
         if (ccErr) throw ccErr;
@@ -201,32 +317,32 @@ export const useRegisterSaleFromInstantFormLead = (clientId: string | null) => {
       }
 
       // 2) Insert message_sales
-      const saleInsert: any = {
-        client_id: clientId,
-        created_by: user.id,
-        sale_date: sale_date || new Date().toISOString().slice(0, 10),
-        amount,
-        currency,
-        source: 'ad',
-        ad_campaign_id: lead.campaign_id,
-        ad_campaign_name: lead.campaign_name,
-        ad_id: lead.ad_id,
-        ad_name: lead.ad_name,
-        customer_name: fullName,
-        customer_phone: phone,
-        product: product || null,
-        payment_method: payment_method || null,
-        notes: notes || `Venta desde Instant Form${lead.form_name ? ` (${lead.form_name})` : ''}`,
-        status: 'completed',
-      };
       const { data: sale, error: saleErr } = await supabase
         .from('message_sales')
-        .insert(saleInsert)
+        .insert({
+          client_id: clientId,
+          created_by: user.id,
+          sale_date: new Date().toISOString().slice(0, 10),
+          amount,
+          subtotal,
+          tax_amount,
+          currency: 'CRC',
+          source: 'ad',
+          ad_campaign_id: lead.campaign_id,
+          ad_campaign_name: lead.campaign_name,
+          ad_id: lead.ad_id,
+          ad_name: lead.ad_name,
+          customer_name: fullName,
+          customer_phone: phone,
+          product: buildSaleProductLabel(quantity, embroidery),
+          notes: buildSaleNotes({ quantity, embroidery, tax_rate, extra: notes }),
+          status: 'completed',
+        } as any)
         .select('id')
         .single();
       if (saleErr) throw saleErr;
 
-      // 3) Update lead with sale link + status
+      // 3) Link lead -> sale
       const { error: updErr } = await supabase
         .from('instant_form_leads')
         .update({
@@ -248,15 +364,74 @@ export const useRegisterSaleFromInstantFormLead = (clientId: string | null) => {
   });
 };
 
+export interface UpdateFormSaleInput {
+  saleId: string;
+  quantity: number;
+  embroidery: boolean;
+  subtotal: number;
+  tax_rate: number;
+  notes?: string;
+}
+
+export const useUpdateInstantFormSale = (clientId: string | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ saleId, quantity, embroidery, subtotal, tax_rate, notes }: UpdateFormSaleInput) => {
+      const tax_amount = Math.round(subtotal * tax_rate * 100) / 100;
+      const amount = Math.round((subtotal + tax_amount) * 100) / 100;
+      const { error } = await supabase
+        .from('message_sales')
+        .update({
+          subtotal,
+          tax_amount,
+          amount,
+          product: buildSaleProductLabel(quantity, embroidery),
+          notes: buildSaleNotes({ quantity, embroidery, tax_rate, extra: notes }),
+        } as any)
+        .eq('id', saleId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['instant-form-sales', clientId] });
+      qc.invalidateQueries({ queryKey: ['message-sales', clientId] });
+    },
+  });
+};
+
+export const useDeleteInstantFormSale = (clientId: string | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ saleId, leadId }: { saleId: string; leadId?: string | null }) => {
+      if (leadId) {
+        await supabase
+          .from('instant_form_leads')
+          .update({ message_sale_id: null, lead_status: 'seguimiento' } as any)
+          .eq('id', leadId);
+      }
+      const { error } = await supabase.from('message_sales').delete().eq('id', saleId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['instant-form-leads', clientId] });
+      qc.invalidateQueries({ queryKey: ['instant-form-sales', clientId] });
+      qc.invalidateQueries({ queryKey: ['message-sales', clientId] });
+    },
+  });
+};
+
 export interface InstantFormSale {
   id: string;
   sale_date: string;
   amount: number;
+  subtotal: number | null;
+  tax_amount: number | null;
   currency: string;
   customer_name: string | null;
   product: string | null;
+  notes: string | null;
   ad_campaign_name: string | null;
   created_at: string;
+  lead_id?: string | null;
 }
 
 export const useInstantFormSales = (clientId: string | null) => {
@@ -266,19 +441,26 @@ export const useInstantFormSales = (clientId: string | null) => {
       if (!clientId) return [];
       const { data: leads, error: leadsErr } = await supabase
         .from('instant_form_leads')
-        .select('message_sale_id')
+        .select('id, message_sale_id')
         .eq('client_id', clientId)
         .not('message_sale_id', 'is', null);
       if (leadsErr) throw leadsErr;
-      const ids = (leads || []).map((l: any) => l.message_sale_id).filter(Boolean);
+      const leadsBySaleId = new Map<string, string>();
+      (leads || []).forEach((l: any) => {
+        if (l.message_sale_id) leadsBySaleId.set(l.message_sale_id, l.id);
+      });
+      const ids = Array.from(leadsBySaleId.keys());
       if (ids.length === 0) return [] as InstantFormSale[];
       const { data, error } = await supabase
         .from('message_sales')
-        .select('id, sale_date, amount, currency, customer_name, product, ad_campaign_name, created_at')
+        .select('id, sale_date, amount, subtotal, tax_amount, currency, customer_name, product, notes, ad_campaign_name, created_at')
         .in('id', ids)
         .order('sale_date', { ascending: false });
       if (error) throw error;
-      return (data || []) as InstantFormSale[];
+      return ((data || []) as any[]).map((s) => ({
+        ...s,
+        lead_id: leadsBySaleId.get(s.id) || null,
+      })) as InstantFormSale[];
     },
     enabled: !!clientId,
     staleTime: 2 * 60 * 1000,
