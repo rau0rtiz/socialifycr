@@ -114,7 +114,7 @@ export const ContentGrid = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [gridPage, setGridPage] = useState(0);
-  const GRID_PAGE_SIZE = 9;
+  const GRID_PAGE_SIZE = 3;
   const [showAllDialog, setShowAllDialog] = useState(false);
   const [dialogSearch, setDialogSearch] = useState('');
   const [dialogPlatforms, setDialogPlatforms] = useState<string[]>(['all']);
@@ -359,10 +359,10 @@ export const ContentGrid = ({
           </div>
         </CardHeader>
         <CardContent className="px-3 md:px-6">
-          {/* 3x3 Grid with vertical 4:5 thumbnail cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {/* 1x3 Grid with vertical 4:5 thumbnail cards */}
+          <div className="grid grid-cols-3 gap-2">
             {isLoading ? (
-              Array.from({ length: 9 }).map((_, i) => <ContentSkeleton key={i} />)
+              Array.from({ length: 3 }).map((_, i) => <ContentSkeleton key={i} />)
             ) : filteredData.length === 0 ? (
               <div className="col-span-full text-center py-8 text-muted-foreground text-sm">
                 No hay contenido en el rango seleccionado
