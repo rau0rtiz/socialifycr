@@ -90,30 +90,31 @@ const SellerCrm = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="max-w-5xl mx-auto space-y-3 sm:space-y-4 px-1 sm:px-0">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <Inbox className="h-6 w-6 text-primary" />
-              {isManagerView ? 'CRM de Vendedores' : 'Mis Leads'}
+        <div className="flex items-start justify-between gap-2 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Inbox className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
+              <span className="truncate">{isManagerView ? 'CRM de Vendedores' : 'Mis Leads'}</span>
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
               {isManagerView
                 ? 'Supervisa la cola y el avance de cada vendedor.'
                 : 'Aquí caen tus leads asignados. Atendelos rápido y registrá la venta cuando cierres.'}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {newCount > 0 && (
-              <Badge variant="default" className="bg-[hsl(var(--status-new))] text-white animate-pulse">
-                {newCount} {newCount === 1 ? 'lead nuevo' : 'leads nuevos'}
+              <Badge variant="default" className="bg-[hsl(var(--status-new))] text-white animate-pulse text-[10px] sm:text-xs px-1.5 sm:px-2.5">
+                {newCount} {newCount === 1 ? 'nuevo' : 'nuevos'}
               </Badge>
             )}
             <Button
               variant="outline"
               size="sm"
+              className="h-9 w-9 p-0 sm:w-auto sm:px-3"
               onClick={requestNotifPermission}
               title={notifEnabled ? 'Notificaciones activas' : 'Activar notificaciones del navegador'}
             >
@@ -122,40 +123,40 @@ const SellerCrm = () => {
           </div>
         </div>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        {/* KPIs - 5 cols always, more compact on mobile */}
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
           {[
             { key: 'new', label: 'Nuevos',       value: counts.new,         color: 'status-new' },
-            { key: 'contactado', label: 'Contactados', value: counts.contactado,  color: 'status-contactado' },
-            { key: 'seguimiento', label: 'Seguimiento', value: counts.seguimiento, color: 'status-seguimiento' },
+            { key: 'contactado', label: 'Contact.', value: counts.contactado,  color: 'status-contactado' },
+            { key: 'seguimiento', label: 'Segui.', value: counts.seguimiento, color: 'status-seguimiento' },
             { key: 'venta', label: 'Ventas',     value: counts.venta,       color: 'status-venta' },
             { key: 'perdido', label: 'Perdidos',  value: counts.perdido,     color: 'status-perdido' },
           ].map((k) => (
             <Card
               key={k.key}
-              className={`p-3 cursor-pointer transition-all ${statusFilter === k.key ? `ring-2 ring-[hsl(var(--${k.color}))]` : ''}`}
+              className={`p-2 sm:p-3 cursor-pointer transition-all active:scale-95 ${statusFilter === k.key ? `ring-2 ring-[hsl(var(--${k.color}))]` : ''}`}
               onClick={() => setStatusFilter(statusFilter === k.key ? 'all' : k.key)}
             >
-              <p className="text-xs text-muted-foreground">{k.label}</p>
-              <p className={`text-2xl font-bold tabular-nums text-[hsl(var(--${k.color}))]`}>{k.value}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">{k.label}</p>
+              <p className={`text-lg sm:text-2xl font-bold tabular-nums text-[hsl(var(--${k.color}))]`}>{k.value}</p>
             </Card>
           ))}
         </div>
 
         {/* Filters */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 min-w-[160px]">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre, teléfono, campaña..."
+              placeholder="Buscar nombre, teléfono..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
+              className="pl-9 h-10 sm:h-9 text-base sm:text-sm"
             />
           </div>
           {isManagerView && (
             <Select value={selectedSellerId} onValueChange={setSelectedSellerId}>
-              <SelectTrigger className="w-[200px] h-9">
+              <SelectTrigger className="w-full sm:w-[200px] h-10 sm:h-9">
                 <Users className="h-4 w-4 mr-1.5" />
                 <SelectValue />
               </SelectTrigger>
@@ -170,9 +171,9 @@ const SellerCrm = () => {
         </div>
 
         <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-          <TabsList className="flex-wrap h-auto">
+          <TabsList className="w-full overflow-x-auto flex justify-start sm:justify-center sm:flex-wrap h-auto no-scrollbar">
             {STATUSES.map((s) => (
-              <TabsTrigger key={s.value} value={s.value} className="text-xs">{s.label}</TabsTrigger>
+              <TabsTrigger key={s.value} value={s.value} className="text-xs whitespace-nowrap shrink-0">{s.label}</TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
@@ -195,7 +196,7 @@ const SellerCrm = () => {
             )}
           </Card>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
             {filtered.map((lead) => (
               <SellerLeadCard
                 key={lead.id}
@@ -214,3 +215,4 @@ const SellerCrm = () => {
 };
 
 export default SellerCrm;
+
