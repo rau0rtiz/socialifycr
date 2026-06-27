@@ -40,6 +40,14 @@ const STATUS_OPTIONS: { value: InstantFormLeadStatus | 'new'; label: string }[] 
   { value: 'perdido', label: 'Perdido' },
 ];
 
+const STATUS_STYLES: Record<string, { trigger: string; dot: string; chip: string }> = {
+  new:          { trigger: 'border-[hsl(var(--status-new))]/50 bg-[hsl(var(--status-new))]/10 text-[hsl(var(--status-new))]', dot: 'bg-[hsl(var(--status-new))]', chip: 'bg-[hsl(var(--status-new))]/12 text-[hsl(var(--status-new))] ring-1 ring-[hsl(var(--status-new))]/30' },
+  contactado:   { trigger: 'border-[hsl(var(--status-contactado))]/50 bg-[hsl(var(--status-contactado))]/12 text-[hsl(var(--status-contactado))]', dot: 'bg-[hsl(var(--status-contactado))]', chip: 'bg-[hsl(var(--status-contactado))]/15 text-[hsl(var(--status-contactado))] ring-1 ring-[hsl(var(--status-contactado))]/30' },
+  seguimiento:  { trigger: 'border-[hsl(var(--status-seguimiento))]/50 bg-[hsl(var(--status-seguimiento))]/12 text-[hsl(var(--status-seguimiento))]', dot: 'bg-[hsl(var(--status-seguimiento))]', chip: 'bg-[hsl(var(--status-seguimiento))]/15 text-[hsl(var(--status-seguimiento))] ring-1 ring-[hsl(var(--status-seguimiento))]/30' },
+  venta:        { trigger: 'border-[hsl(var(--status-venta))]/50 bg-[hsl(var(--status-venta))]/15 text-[hsl(var(--status-venta))]', dot: 'bg-[hsl(var(--status-venta))]', chip: 'bg-[hsl(var(--status-venta))]/18 text-[hsl(var(--status-venta))] ring-1 ring-[hsl(var(--status-venta))]/35' },
+  perdido:      { trigger: 'border-[hsl(var(--status-perdido))]/50 bg-[hsl(var(--status-perdido))]/12 text-[hsl(var(--status-perdido))]', dot: 'bg-[hsl(var(--status-perdido))]', chip: 'bg-[hsl(var(--status-perdido))]/15 text-[hsl(var(--status-perdido))] ring-1 ring-[hsl(var(--status-perdido))]/30' },
+};
+
 const STATUS_FILTER = [{ value: 'all', label: 'Todos los estados' }, ...STATUS_OPTIONS];
 
 const formatDate = (iso: string | null) => {
@@ -243,10 +251,13 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
         <CardContent>
           {/* Status summary chips */}
           <div className="flex flex-wrap gap-2 mb-3 text-xs">
-            <div className="px-2.5 py-1 rounded-md bg-muted/50">Nuevos <span className="font-semibold ml-1">{statusCounts.new}</span></div>
-            <div className="px-2.5 py-1 rounded-md bg-muted/50">Contactados <span className="font-semibold ml-1">{statusCounts.contactado}</span></div>
-            <div className="px-2.5 py-1 rounded-md bg-muted/50">Seguimiento <span className="font-semibold ml-1">{statusCounts.seguimiento}</span></div>
-            <div className="px-2.5 py-1 rounded-md bg-primary/10 text-primary">Ventas <span className="font-semibold ml-1">{statusCounts.venta}</span></div>
+            <div className={`px-2.5 py-1 rounded-md ${STATUS_STYLES.new.chip}`}>Nuevos <span className="font-bold ml-1">{statusCounts.new}</span></div>
+            <div className={`px-2.5 py-1 rounded-md ${STATUS_STYLES.contactado.chip}`}>Contactados <span className="font-bold ml-1">{statusCounts.contactado}</span></div>
+            <div className={`px-2.5 py-1 rounded-md ${STATUS_STYLES.seguimiento.chip}`}>Seguimiento <span className="font-bold ml-1">{statusCounts.seguimiento}</span></div>
+            <div className={`px-2.5 py-1 rounded-md ${STATUS_STYLES.venta.chip}`}>Ventas <span className="font-bold ml-1">{statusCounts.venta}</span></div>
+            {statusCounts.perdido > 0 && (
+              <div className={`px-2.5 py-1 rounded-md ${STATUS_STYLES.perdido.chip}`}>Perdidos <span className="font-bold ml-1">{statusCounts.perdido}</span></div>
+            )}
           </div>
 
           <Tabs defaultValue="list">
@@ -315,18 +326,29 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
 
                         {/* Status dropdown */}
                         <Select value={status} onValueChange={(v) => handleStatusChange(l, v as InstantFormLeadStatus)}>
-                          <SelectTrigger className="h-8 w-[130px] text-xs shrink-0">
+                          <SelectTrigger className={`h-8 w-[140px] text-xs shrink-0 font-semibold ${STATUS_STYLES[status]?.trigger || ''}`}>
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1.5 ${STATUS_STYLES[status]?.dot || 'bg-muted-foreground'}`} />
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             {STATUS_OPTIONS.map((s) => (
-                              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                              <SelectItem key={s.value} value={s.value}>
+                                <span className="inline-flex items-center gap-2">
+                                  <span className={`h-1.5 w-1.5 rounded-full ${STATUS_STYLES[s.value]?.dot}`} />
+                                  {s.label}
+                                </span>
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
 
                         {/* Sale button */}
-                        <Button size="sm" variant={l.message_sale_id ? 'outline' : 'default'} onClick={() => openSale(l)} className="shrink-0">
+                        <Button
+                          size="sm"
+                          variant={l.message_sale_id ? 'outline' : 'default'}
+                          onClick={() => openSale(l)}
+                          className={`shrink-0 ${l.message_sale_id ? 'border-[hsl(var(--success))]/60 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10' : 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white'}`}
+                        >
                           <DollarSign className="h-3.5 w-3.5 mr-1" />
                           {l.message_sale_id ? 'Vendido' : 'Venta'}
                         </Button>
