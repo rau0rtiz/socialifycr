@@ -237,9 +237,16 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
                 const sellerLabel = l.assigned_seller_id ? sellerMap.get(l.assigned_seller_id) || 'Vendedor' : 'Sin asignar';
                 return (
                   <div key={l.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30">
-                    <div className="flex-1 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => openSale(l)}
+                      className="flex-1 min-w-0 text-left rounded-md -mx-1 px-1 py-0.5 transition-colors hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 group"
+                      title="Ver detalles del lead"
+                    >
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm truncate">{l.full_name || 'Sin nombre'}</span>
+                        <span className="font-medium text-sm truncate group-hover:text-primary group-hover:underline underline-offset-2 decoration-dotted">
+                          {l.full_name || 'Sin nombre'}
+                        </span>
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
                         <span>{formatDate(l.created_time || l.created_at)}</span>
@@ -253,7 +260,8 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
                           <span className="truncate max-w-[180px]" title={l.campaign_name}>· {l.campaign_name}</span>
                         )}
                       </div>
-                    </div>
+                    </button>
+
 
                     {/* Seller */}
                     <div className="hidden md:block w-[160px] shrink-0">
