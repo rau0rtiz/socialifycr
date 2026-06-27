@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
         `sheet-${source.spreadsheet_id}-${sheetName}-${sheetRowNumber}-${await stableHash(JSON.stringify(row))}`;
 
       const fullName = (rec.full_name || '').toString().trim() || null;
-      const phone = (rec.phone || '').toString().trim() || null;
+      const phone = cleanPhone(rec.phone);
 
       // Upsert customer contact when we have a name
       let customerContactId: string | null = null;
