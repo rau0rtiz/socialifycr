@@ -201,20 +201,6 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
     }
 
 
-    // Load config
-    const { data: source } = await admin
-      .from('instant_form_lead_sources')
-      .select('*')
-      .eq('client_id', clientId)
-      .maybeSingle();
-
-    if (!source) {
-      return new Response(
-        JSON.stringify({ error: 'No Google Sheet configurado para este cliente' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const sheetName = source.sheet_name || 'Sheet1';
     const range = `${sheetName}!A1:ZZ10000`;
     const url = `${GATEWAY_URL}/spreadsheets/${source.spreadsheet_id}/values/${range}`;
@@ -232,10 +218,7 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
         .from('instant_form_lead_sources')
         .update({ last_error: `${gwRes.status}: ${errText.slice(0, 500)}` })
         .eq('id', source.id);
-      return new Response(
-        JSON.stringify({ error: 'Google Sheets error', status: gwRes.status, detail: errText }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error(`Google Sheets ${gwRes.status}: ${errText.slice(0, 200)}`);
     }
 
     const sheetData = await gwRes.json();
@@ -246,10 +229,7 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
         .from('instant_form_lead_sources')
         .update({ last_synced_at: new Date().toISOString(), last_row_count: 0, last_error: null })
         .eq('id', source.id);
-      return new Response(
-        JSON.stringify({ ok: true, synced: 0, total: 0 }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return { synced: 0, total: 0 };
     }
 
     const headerRow = Math.max(0, (source.header_row || 1) - 1);
@@ -290,7 +270,6 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
       // Upsert customer contact when we have a name
       let customerContactId: string | null = null;
       if (fullName) {
-        // Try to find existing by client_id + phone
         let existingId: string | null = null;
         if (phone) {
           const { data: existing } = await admin
@@ -378,15 +357,6 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
       })
       .eq('id', source.id);
 
-    return new Response(
-      JSON.stringify({ ok: true, synced, skipped, total: rows.length }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (e: any) {
-    console.error('sync-instant-form-leads error', e);
-    return new Response(JSON.stringify({ error: e.message || 'unknown' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-});
+    return { synced, skipped, total: rows.length };
+}
+
