@@ -192,7 +192,8 @@ const App = () => (
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/invitacion/:token" element={<Invitacion />} />
                   <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
-                  <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/" element={<ProtectedRoute><SellerHomeGate /></ProtectedRoute>} />
+                  <Route path="/mis-leads" element={<ProtectedRoute><SellerCrm /></ProtectedRoute>} />
                   {/* Agency-only routes */}
                   <Route path="/brand-settings" element={
                     <ProtectedRoute>
