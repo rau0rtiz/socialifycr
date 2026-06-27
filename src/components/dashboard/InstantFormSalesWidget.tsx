@@ -180,8 +180,8 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg border bg-muted/30 p-3">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="rounded-lg border border-[hsl(var(--success))]/30 bg-[hsl(var(--success))]/10 p-3">
+              <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--success))] font-medium">
                 <DollarSign className="h-3.5 w-3.5" /> Total ventas
               </div>
               <div className="mt-1 space-y-0.5">
@@ -189,22 +189,22 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
                   <div className="text-lg font-semibold">—</div>
                 ) : (
                   Object.entries(totals).map(([cur, amt]) => (
-                    <div key={cur} className="text-lg font-semibold tabular-nums">{formatMoney(amt, cur)}</div>
+                    <div key={cur} className="text-lg font-bold tabular-nums text-[hsl(var(--success))]">{formatMoney(amt, cur)}</div>
                   ))
                 )}
               </div>
             </div>
-            <div className="rounded-lg border bg-muted/30 p-3">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="rounded-lg border border-[hsl(var(--info))]/30 bg-[hsl(var(--info))]/10 p-3">
+              <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--info))] font-medium">
                 <Users className="h-3.5 w-3.5" /> Cantidad
               </div>
-              <div className="text-lg font-semibold mt-1">{filteredSales.length}</div>
+              <div className="text-lg font-bold mt-1 text-[hsl(var(--info))]">{filteredSales.length}</div>
             </div>
-            <div className="rounded-lg border bg-muted/30 p-3">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="rounded-lg border border-[hsl(var(--warning))]/30 bg-[hsl(var(--warning))]/10 p-3">
+              <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--warning))] font-medium">
                 <TrendingUp className="h-3.5 w-3.5" /> Conversión
               </div>
-              <div className="text-lg font-semibold mt-1">{conversionRate}%</div>
+              <div className="text-lg font-bold mt-1 text-[hsl(var(--warning))]">{conversionRate}%</div>
             </div>
           </div>
 
