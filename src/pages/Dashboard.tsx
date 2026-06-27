@@ -315,6 +315,15 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Instant Form Leads (Google Sheets) */}
+      {showInstantFormLeads && (
+        <div className="mb-3 md:mb-6">
+          <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+            <InstantFormLeadsWidget clientId={selectedClient.id} />
+          </Suspense>
+        </div>
+      )}
+
       {/* Content Grid */}
       {showContentGrid && (
         <div className="mb-3 md:mb-6">
