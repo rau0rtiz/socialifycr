@@ -11,6 +11,7 @@ import { BrandProvider } from "@/contexts/BrandContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
+import { SellerHomeGate } from "@/components/SellerHomeGate";
 import { Loader2 } from 'lucide-react';
 import MindCoachMasterclass from "./pages/MindCoachMasterclass";
 
@@ -48,6 +49,7 @@ const AgencyCRM = lazy(() => import("./pages/AgencyCRM"));
 const Producciones = lazy(() => import("./pages/Producciones"));
 const ProduccionSheet = lazy(() => import("./pages/ProduccionSheet"));
 const ProduccionPublica = lazy(() => import("./pages/ProduccionPublica"));
+const SellerCrm = lazy(() => import("./pages/SellerCrm"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -190,7 +192,8 @@ const App = () => (
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/invitacion/:token" element={<Invitacion />} />
                   <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
-                  <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/" element={<ProtectedRoute><SellerHomeGate /></ProtectedRoute>} />
+                  <Route path="/mis-leads" element={<ProtectedRoute><SellerCrm /></ProtectedRoute>} />
                   {/* Agency-only routes */}
                   <Route path="/brand-settings" element={
                     <ProtectedRoute>

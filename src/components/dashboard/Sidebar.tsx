@@ -24,6 +24,7 @@ import {
   Package,
   UserPlus,
   Clapperboard,
+  Inbox,
 } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -105,6 +106,16 @@ export const Sidebar = () => {
   const menuItems: { title: string; url: string; icon: React.ElementType; dataTour?: string }[] = [
     { title: 'Dashboard', url: isPreviewMode ? `/?preview=${searchParams.get('preview')}` : '/', icon: LayoutDashboard },
   ];
+
+  // CRM de vendedores — visible para setters/closers (su pantalla principal) y managers (supervisión)
+  const isSeller = systemRole === 'setter' || systemRole === 'closer';
+  if ((isSeller || canManage) && !isPreviewMode) {
+    menuItems.push({
+      title: isSeller && !canManage ? 'Mis Leads' : 'CRM Vendedores',
+      url: '/mis-leads',
+      icon: Inbox,
+    });
+  }
 
   // Detect retail clients — for them "Órdenes" replaces "Ventas" entirely
   const isAlmaBenditaClient = selectedClient?.name?.toLowerCase().includes('alma bendita');
