@@ -66,8 +66,9 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
     const days = parseInt(rangeDays, 10);
     const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
     return leads.filter((l) => {
-      if (!l.created_time) return false;
-      return new Date(l.created_time).getTime() >= cutoff;
+      const ts = l.created_time || l.created_at;
+      if (!ts) return false;
+      return new Date(ts).getTime() >= cutoff;
     });
   }, [leads, rangeDays]);
 
@@ -86,7 +87,7 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
   const chartData = useMemo(() => {
     const counts = new Map<string, number>();
     filtered.forEach((l) => {
-      const k = dayKey(l.created_time);
+      const k = dayKey(l.created_time || l.created_at);
       if (!k) return;
       counts.set(k, (counts.get(k) || 0) + 1);
     });
@@ -197,7 +198,7 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
                   <TableBody>
                     {filtered.slice(0, 500).map((l) => (
                       <TableRow key={l.id}>
-                        <TableCell className="text-xs whitespace-nowrap">{formatDate(l.created_time)}</TableCell>
+                        <TableCell className="text-xs whitespace-nowrap">{formatDate(l.created_time || l.created_at)}</TableCell>
                         <TableCell className="font-medium">{l.full_name || '—'}</TableCell>
                         <TableCell>
                           {l.phone ? (
