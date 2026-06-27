@@ -320,9 +320,20 @@ const Dashboard = () => {
 
       {/* Instant Form Leads (Google Sheets) */}
       {showInstantFormLeads && (
-        <div className="mb-3 md:mb-6">
+        <div className="mb-3 md:mb-6 space-y-3 md:space-y-6">
           <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
             <InstantFormLeadsWidget clientId={selectedClient.id} />
+          </Suspense>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+            <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+              <ComfortexUtmBreakdown clientId={selectedClient.id} />
+            </Suspense>
+            <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+              <ComfortexVolumeWidget clientId={selectedClient.id} />
+            </Suspense>
+          </div>
+          <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+            <ComfortexModelDemand clientId={selectedClient.id} />
           </Suspense>
         </div>
       )}
