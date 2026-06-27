@@ -12,6 +12,7 @@ const CampaignsDrilldown = lazy(() => import('@/components/dashboard/CampaignsDr
 const AdvancedFunnelModule = lazy(() => import('@/components/dashboard/AdvancedFunnelModule').then(m => ({ default: m.AdvancedFunnelModule })));
 const ContentGrid = lazy(() => import('@/components/dashboard/ContentGrid').then(m => ({ default: m.ContentGrid })));
 const LaunchReportWidget = lazy(() => import('@/components/dashboard/LaunchReportWidget').then(m => ({ default: m.LaunchReportWidget })));
+const InstantFormLeadsWidget = lazy(() => import('@/components/dashboard/InstantFormLeadsWidget').then(m => ({ default: m.InstantFormLeadsWidget })));
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
@@ -140,6 +141,7 @@ const Dashboard = () => {
   const showCampaigns = !shouldRespectFlags || flags.campaigns;
   const isRobertoOlivas = !!selectedClient?.name?.toLowerCase().includes('roberto olivas');
   const showLaunchReport = isRobertoOlivas && (!shouldRespectFlags || flags.launch_report);
+  const showInstantFormLeads = !shouldRespectFlags || flags.instant_form_leads;
 
   if (clientsLoading || roleLoading) {
     // Render empty layout shell — no spinner — to avoid flash of loading text.
@@ -310,6 +312,15 @@ const Dashboard = () => {
             isLoading={youtubeLoading}
             isConnected={youtubeConnected}
           />
+        </div>
+      )}
+
+      {/* Instant Form Leads (Google Sheets) */}
+      {showInstantFormLeads && (
+        <div className="mb-3 md:mb-6">
+          <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+            <InstantFormLeadsWidget clientId={selectedClient.id} />
+          </Suspense>
         </div>
       )}
 
