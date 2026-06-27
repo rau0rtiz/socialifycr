@@ -294,9 +294,10 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Top Posts - Instagram */}
-      {showInstagramPosts && (contentLoading || content.length > 0 || hasMetaConnection) && (
-        <div className="mb-3 md:mb-6">
+      {/* Top Posts + Content Grid — paired 2-col layout for Comfortex */}
+      {(() => {
+        const isComfortex = selectedClient?.id === 'd90a18b8-dad0-4f52-9447-c13f8f19f0d7';
+        const topPostsNode = showInstagramPosts && (contentLoading || content.length > 0 || hasMetaConnection) ? (
           <InstagramTopPosts
             content={content}
             isLoading={contentLoading}
@@ -304,43 +305,8 @@ const Dashboard = () => {
             isConnected={hasMetaConnection}
             onPostClick={setSelectedPost}
           />
-        </div>
-      )}
-
-      {/* Top Videos - YouTube */}
-      {showYouTubeVideos && (youtubeLoading || youtubeConnected) && (
-        <div className="mb-3 md:mb-6">
-          <YouTubeTopVideos
-            videos={youtubeVideos}
-            isLoading={youtubeLoading}
-            isConnected={youtubeConnected}
-          />
-        </div>
-      )}
-
-      {/* Instant Form Leads (Google Sheets) */}
-      {showInstantFormLeads && (
-        <div className="mb-3 md:mb-6 space-y-3 md:space-y-6">
-          <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
-            <InstantFormLeadsWidget clientId={selectedClient.id} />
-          </Suspense>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
-            <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
-              <ComfortexUtmBreakdown clientId={selectedClient.id} />
-            </Suspense>
-            <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
-              <ComfortexVolumeWidget clientId={selectedClient.id} />
-            </Suspense>
-          </div>
-          <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
-            <ComfortexModelDemand clientId={selectedClient.id} />
-          </Suspense>
-        </div>
-      )}
-
-      {/* Content Grid */}
-      {showContentGrid && (
-        <div className="mb-3 md:mb-6">
+        ) : null;
+        const contentGridNode = showContentGrid ? (
           <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
             <ContentGrid
               data={content}
@@ -360,8 +326,90 @@ const Dashboard = () => {
               getLinkedPosts={getLinkedPosts}
             />
           </Suspense>
-        </div>
+        ) : null;
+
+        if (isComfortex && (topPostsNode || contentGridNode)) {
+          return (
+            <div className="mb-3 md:mb-6 grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6 items-start">
+              {topPostsNode && <div className="min-w-0">{topPostsNode}</div>}
+              {contentGridNode && <div className="min-w-0">{contentGridNode}</div>}
+            </div>
+          );
+        }
+
+        return (
+          <>
+            {topPostsNode && <div className="mb-3 md:mb-6">{topPostsNode}</div>}
+
+            {/* Top Videos - YouTube */}
+            {showYouTubeVideos && (youtubeLoading || youtubeConnected) && (
+              <div className="mb-3 md:mb-6">
+                <YouTubeTopVideos
+                  videos={youtubeVideos}
+                  isLoading={youtubeLoading}
+                  isConnected={youtubeConnected}
+                />
+              </div>
+            )}
+
+            {/* Instant Form Leads (Google Sheets) */}
+            {showInstantFormLeads && (
+              <div className="mb-3 md:mb-6 space-y-3 md:space-y-6">
+                <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                  <InstantFormLeadsWidget clientId={selectedClient.id} />
+                </Suspense>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+                  <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                    <ComfortexUtmBreakdown clientId={selectedClient.id} />
+                  </Suspense>
+                  <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                    <ComfortexVolumeWidget clientId={selectedClient.id} />
+                  </Suspense>
+                </div>
+                <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                  <ComfortexModelDemand clientId={selectedClient.id} />
+                </Suspense>
+              </div>
+            )}
+
+            {contentGridNode && <div className="mb-3 md:mb-6">{contentGridNode}</div>}
+          </>
+        );
+      })()}
+
+      {/* Comfortex-only: render the other widgets (YouTube, Instant Form) after the paired grid */}
+      {selectedClient?.id === 'd90a18b8-dad0-4f52-9447-c13f8f19f0d7' && (
+        <>
+          {showYouTubeVideos && (youtubeLoading || youtubeConnected) && (
+            <div className="mb-3 md:mb-6">
+              <YouTubeTopVideos
+                videos={youtubeVideos}
+                isLoading={youtubeLoading}
+                isConnected={youtubeConnected}
+              />
+            </div>
+          )}
+          {showInstantFormLeads && (
+            <div className="mb-3 md:mb-6 space-y-3 md:space-y-6">
+              <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                <InstantFormLeadsWidget clientId={selectedClient.id} />
+              </Suspense>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+                <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                  <ComfortexUtmBreakdown clientId={selectedClient.id} />
+                </Suspense>
+                <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                  <ComfortexVolumeWidget clientId={selectedClient.id} />
+                </Suspense>
+              </div>
+              <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                <ComfortexModelDemand clientId={selectedClient.id} />
+              </Suspense>
+            </div>
+          )}
+        </>
       )}
+
 
       {/* Launch Report (Roberto Olivas only) */}
       {showLaunchReport && (
