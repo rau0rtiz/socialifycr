@@ -24,6 +24,7 @@ import {
   Package,
   UserPlus,
   Clapperboard,
+  Inbox,
 } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
