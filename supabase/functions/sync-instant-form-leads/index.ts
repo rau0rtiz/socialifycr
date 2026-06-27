@@ -57,6 +57,22 @@ const FIELD_MAP: Record<string, string> = {
   estado: 'lead_status',
 };
 
+// Map normalized header → canonical custom_answer key (Comfortex JULIO 2026 short headers
+// and the long Meta question variants both land on the same key the widgets already read).
+const CUSTOM_ANSWER_MAP: Record<string, string> = {
+  modelo_de_camisa: 'modelo_de_camisa',
+  que_modelo_de_camisa_esta_buscando: 'modelo_de_camisa',
+  cantidad_de_camisas: 'cantidad_de_camisas',
+  cuantas_camisas_necesita: 'cantidad_de_camisas',
+  bordado: 'bordado',
+  desea_que_las_camisas_tengan_algun_bordado: 'bordado',
+  tipo_de_polo: 'tipo_de_polo',
+  cual_modelo_de_camisa_tipo_polo_prefiere: 'tipo_de_polo',
+  tipo_de_camisa: 'tipo_de_camisa',
+  cual_modelo_de_camisa_de_cuello_redondo_prefiere: 'tipo_de_camisa',
+};
+
+
 // Some Meta CSV exports prefix phone numbers with "p:" — strip it.
 const cleanPhone = (v: unknown): string | null => {
   const s = String(v ?? '').trim();
