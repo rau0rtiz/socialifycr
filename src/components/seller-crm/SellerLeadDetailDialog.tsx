@@ -107,13 +107,13 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-xl w-[calc(100vw-1rem)] sm:w-full max-h-[95vh] sm:max-h-[92vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 flex-wrap">
+          <DialogTitle className="flex items-center gap-2 flex-wrap text-base sm:text-lg">
             {lead.full_name || 'Lead'}
             {status === 'venta' && <Badge variant="default">Venta</Badge>}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             {lead.client_name ? `${lead.client_name} · ` : ''}{formatDate(lead.created_time || lead.created_at)}
           </DialogDescription>
         </DialogHeader>
@@ -122,7 +122,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
         <div className="flex items-center gap-2 flex-wrap">
           <Label className="text-xs shrink-0">Estado:</Label>
           <Select value={status} onValueChange={(v) => handleStatusChange(v as InstantFormLeadStatus)}>
-            <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-10 sm:h-9 flex-1 sm:flex-none sm:w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               {STATUS_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -130,12 +130,12 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
             </SelectContent>
           </Select>
           {cleanPhone && (
-            <div className="ml-auto flex items-center gap-1.5">
-              <Button size="sm" variant="outline" onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank')}>
-                <MessageCircle className="h-3.5 w-3.5 mr-1" /> WA
+            <div className="flex items-center gap-1.5 w-full sm:w-auto sm:ml-auto">
+              <Button size="sm" variant="outline" className="h-10 sm:h-9 flex-1 sm:flex-none" onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank')}>
+                <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
               </Button>
-              <Button size="sm" variant="outline" onClick={() => window.location.href = `tel:${cleanPhone}`}>
-                <Phone className="h-3.5 w-3.5" />
+              <Button size="sm" variant="outline" className="h-10 sm:h-9 px-3" onClick={() => window.location.href = `tel:${cleanPhone}`}>
+                <Phone className="h-4 w-4" />
               </Button>
             </div>
           )}
@@ -144,14 +144,15 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
         {/* Tabs */}
         <div className="flex gap-1 border-b">
           <button
-            className={`px-3 py-1.5 text-sm border-b-2 -mb-px ${tab === 'info' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted-foreground'}`}
+            className={`px-3 py-2 text-sm border-b-2 -mb-px ${tab === 'info' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted-foreground'}`}
             onClick={() => setTab('info')}
           >Info del lead</button>
           <button
-            className={`px-3 py-1.5 text-sm border-b-2 -mb-px ${tab === 'sale' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted-foreground'}`}
+            className={`px-3 py-2 text-sm border-b-2 -mb-px ${tab === 'sale' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted-foreground'}`}
             onClick={() => setTab('sale')}
           ><DollarSign className="inline h-3.5 w-3.5 mr-1" />Registrar venta</button>
         </div>
+
 
         {tab === 'info' && (
           <div className="space-y-3 text-sm">
