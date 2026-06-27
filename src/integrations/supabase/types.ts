@@ -2879,6 +2879,8 @@ export type Database = {
           ad_name: string | null
           adset_id: string | null
           adset_name: string | null
+          assigned_at: string | null
+          assigned_seller_id: string | null
           campaign_id: string | null
           campaign_name: string | null
           client_id: string
@@ -2904,6 +2906,8 @@ export type Database = {
           ad_name?: string | null
           adset_id?: string | null
           adset_name?: string | null
+          assigned_at?: string | null
+          assigned_seller_id?: string | null
           campaign_id?: string | null
           campaign_name?: string | null
           client_id: string
@@ -2929,6 +2933,8 @@ export type Database = {
           ad_name?: string | null
           adset_id?: string | null
           adset_name?: string | null
+          assigned_at?: string | null
+          assigned_seller_id?: string | null
           campaign_id?: string | null
           campaign_name?: string | null
           client_id?: string
@@ -5327,6 +5333,10 @@ export type Database = {
       }
       is_admin_or_higher: { Args: { _user_id: string }; Returns: boolean }
       is_agency_member: { Args: { _user_id: string }; Returns: boolean }
+      is_client_manager: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_team_member: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
