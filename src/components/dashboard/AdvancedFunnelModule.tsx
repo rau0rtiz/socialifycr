@@ -904,7 +904,7 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
           )}
 
           <Tabs defaultValue="funnel" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 h-9">
+            <TabsList className="grid w-full grid-cols-2 h-9">
               <TabsTrigger value="funnel" className="text-xs">
                 <ArrowDown className="h-3 w-3 mr-1" />
                 Embudo
@@ -912,10 +912,6 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
               <TabsTrigger value="calculator" className="text-xs">
                 <Calculator className="h-3 w-3 mr-1" />
                 Proyección
-              </TabsTrigger>
-              <TabsTrigger value="utm" className="text-xs">
-                <Link className="h-3 w-3 mr-1" />
-                UTM
               </TabsTrigger>
             </TabsList>
 
@@ -968,9 +964,7 @@ export const AdvancedFunnelModule = ({ clientId, hasAdAccount }: AdvancedFunnelM
               />
             </TabsContent>
 
-            <TabsContent value="utm" className="mt-4">
-              <UTMTracker clientId={clientId} />
-            </TabsContent>
+
           </Tabs>
           </>
         )}
