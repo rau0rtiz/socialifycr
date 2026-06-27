@@ -174,11 +174,12 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
                 <p className="text-xs text-muted-foreground mb-1 font-medium">Respuestas del formulario</p>
                 <div className="space-y-1 text-xs">
                   {answers.map(([k, v]) => (
-                    <div key={k} className="flex gap-2">
-                      <span className="text-muted-foreground capitalize min-w-[120px]">{k.replace(/_/g, ' ')}:</span>
-                      <span className="font-medium">{String(v)}</span>
+                    <div key={k} className="flex flex-col sm:flex-row gap-0.5 sm:gap-2">
+                      <span className="text-muted-foreground capitalize sm:min-w-[120px]">{k.replace(/_/g, ' ')}:</span>
+                      <span className="font-medium break-words">{String(v)}</span>
                     </div>
                   ))}
+
                 </div>
               </div>
             )}
