@@ -198,7 +198,7 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
                   <TableBody>
                     {filtered.slice(0, 500).map((l) => (
                       <TableRow key={l.id}>
-                        <TableCell className="text-xs whitespace-nowrap">{formatDate(l.created_time)}</TableCell>
+                        <TableCell className="text-xs whitespace-nowrap">{formatDate(l.created_time || l.created_at)}</TableCell>
                         <TableCell className="font-medium">{l.full_name || '—'}</TableCell>
                         <TableCell>
                           {l.phone ? (
