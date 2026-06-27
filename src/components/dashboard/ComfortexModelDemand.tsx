@@ -13,6 +13,21 @@ import {
 } from '@/lib/comfortex-leads';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
+// Mapea los valores normalizados (lowercase, sin puntuación) que vienen del sheet
+// al nombre real de display tal como aparece en el Instant Form de Comfortex.
+const MODEL_DISPLAY_MAP: { match: RegExp; label: string }[] = [
+  { match: /polo/, label: 'Camisa Tipo Polo' },
+  { match: /columbia|pescador/, label: 'Camisa Tipo Columbia/Pescador' },
+  { match: /vestir|manga\s*corta/, label: 'Camisa de vestir manga corta' },
+  { match: /cuello\s*redondo|redonda|redondo/, label: 'Camisa de Cuello Redondo' },
+];
+
+const toDisplayModel = (normalized: string): string => {
+  const lower = normalized.toLowerCase();
+  for (const m of MODEL_DISPLAY_MAP) if (m.match.test(lower)) return m.label;
+  return titleCase(normalized);
+};
+
 const RANGES = [
   { value: '7', label: '7d' },
   { value: '30', label: '30d' },
