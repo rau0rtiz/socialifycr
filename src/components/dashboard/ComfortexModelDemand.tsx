@@ -53,7 +53,7 @@ export const ComfortexModelDemand = ({ clientId }: Props) => {
       counts.set(m, (counts.get(m) || 0) + 1);
     });
     return Array.from(counts.entries())
-      .map(([name, count]) => ({ name: titleCase(name), count }))
+      .map(([name, count]) => ({ name: toDisplayModel(name), count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
   }, [filtered, modelType]);
