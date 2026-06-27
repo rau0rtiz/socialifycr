@@ -95,14 +95,6 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -116,41 +108,98 @@ Deno.serve(async (req) => {
       );
     }
 
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claims, error: claimsErr } = await userClient.auth.getClaims(token);
-    if (claimsErr || !claims?.claims) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const userId = claims.claims.sub as string;
-
-    const body = await req.json().catch(() => ({}));
-    const clientId: string | undefined = body.client_id;
-    if (!clientId) {
-      return new Response(JSON.stringify({ error: 'Missing client_id' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Check access
-    const { data: hasAccess } = await admin.rpc('has_client_access', {
-      _user_id: userId,
-      _client_id: clientId,
-    });
-    if (!hasAccess) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403,
+    const authHeader = req.headers.get('Authorization');
+    const bearer = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    const body = await req.json().catch(() => ({}));
+    const isCron = body.cron === true || bearer === serviceKey;
+
+    let clientIdsToSync: string[] = [];
+
+    if (isCron) {
+      // Cron / service-role: sync ALL configured sources
+      const { data: sources } = await admin
+        .from('instant_form_lead_sources')
+        .select('client_id');
+      clientIdsToSync = (sources || []).map((s: any) => s.client_id);
+    } else {
+      if (!authHeader?.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: claims, error: claimsErr } = await userClient.auth.getClaims(bearer);
+      if (claimsErr || !claims?.claims) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const userId = claims.claims.sub as string;
+      const clientId: string | undefined = body.client_id;
+      if (!clientId) {
+        return new Response(JSON.stringify({ error: 'Missing client_id' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { data: hasAccess } = await admin.rpc('has_client_access', {
+        _user_id: userId,
+        _client_id: clientId,
+      });
+      if (!hasAccess) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      clientIdsToSync = [clientId];
+    }
+
+    const results: any[] = [];
+    for (const clientId of clientIdsToSync) {
+      try {
+        const r = await syncOne(admin, clientId, lovableKey, sheetsKey);
+        results.push({ client_id: clientId, ...r });
+      } catch (e: any) {
+        results.push({ client_id: clientId, error: e.message || 'unknown' });
+      }
+    }
+
+    if (isCron) {
+      return new Response(JSON.stringify({ ok: true, results }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    return new Response(JSON.stringify({ ok: true, ...(results[0] || {}) }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (e: any) {
+    console.error('sync-instant-form-leads error', e);
+    return new Response(JSON.stringify({ error: e.message || 'unknown' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
+
+async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsKey: string) {
+    // Load config
+    const { data: source } = await admin
+      .from('instant_form_lead_sources')
+      .select('*')
+      .eq('client_id', clientId)
+      .maybeSingle();
+
+    if (!source) {
+      throw new Error('No Google Sheet configurado para este cliente');
+    }
+
 
     // Load config
     const { data: source } = await admin
