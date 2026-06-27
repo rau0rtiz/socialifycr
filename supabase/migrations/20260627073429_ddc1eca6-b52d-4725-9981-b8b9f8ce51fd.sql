@@ -1,0 +1,1 @@
+DELETE FROM instant_form_leads WHERE id = '60a458f1-efca-478d-a5c0-fec23a4e4f36';
