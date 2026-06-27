@@ -87,7 +87,7 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
   const chartData = useMemo(() => {
     const counts = new Map<string, number>();
     filtered.forEach((l) => {
-      const k = dayKey(l.created_time);
+      const k = dayKey(l.created_time || l.created_at);
       if (!k) return;
       counts.set(k, (counts.get(k) || 0) + 1);
     });
