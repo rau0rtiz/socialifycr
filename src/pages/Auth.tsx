@@ -14,6 +14,12 @@ import loginBanner from '@/assets/login-banner.jpg';
 const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'La contraseña debe tener al menos 6 caracteres');
 
+// Quick demo seller shortcut: user "vender" + pass "pass" -> real credentials behind the scenes
+const QUICK_USER = 'vender';
+const QUICK_PASS = 'pass';
+const QUICK_EMAIL = 'vender@socialify.local';
+const QUICK_REAL_PASS = 'QuickSeller!2026';
+
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -31,21 +37,30 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
+  const isQuickShortcut = (e: string, p: string) =>
+    e.trim().toLowerCase() === QUICK_USER && p === QUICK_PASS;
+
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
-    
+
+    // Skip validation when using the quick demo shortcut
+    if (mode === 'login' && isQuickShortcut(email, password)) {
+      setErrors({});
+      return true;
+    }
+
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
       newErrors.email = emailResult.error.errors[0].message;
     }
-    
+
     if (mode === 'login') {
       const passwordResult = passwordSchema.safeParse(password);
       if (!passwordResult.success) {
         newErrors.password = passwordResult.error.errors[0].message;
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -53,9 +68,13 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
+    const useQuick = isQuickShortcut(email, password);
+    const realEmail = useQuick ? QUICK_EMAIL : email;
+    const realPassword = useQuick ? QUICK_REAL_PASS : password;
+
     setIsLoading(true);
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(realEmail, realPassword);
     setIsLoading(false);
 
     if (error) {
