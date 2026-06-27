@@ -66,8 +66,9 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
     const days = parseInt(rangeDays, 10);
     const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
     return leads.filter((l) => {
-      if (!l.created_time) return false;
-      return new Date(l.created_time).getTime() >= cutoff;
+      const ts = l.created_time || l.created_at;
+      if (!ts) return false;
+      return new Date(ts).getTime() >= cutoff;
     });
   }, [leads, rangeDays]);
 
