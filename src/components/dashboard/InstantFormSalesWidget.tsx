@@ -68,6 +68,8 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
   const [embroidery, setEmbroidery] = useState(false);
   const [subtotalStr, setSubtotalStr] = useState('');
   const [ivaPct, setIvaPct] = useState('13');
+  const [needsShipping, setNeedsShipping] = useState(false);
+  const [shippingStr, setShippingStr] = useState('');
 
   useEffect(() => {
     if (editing) {
@@ -77,6 +79,9 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
       const sub = editing.subtotal ?? (Number(editing.amount) / (1 + (meta.tax_rate ?? 0.13)));
       setSubtotalStr(String(Math.round(sub)));
       setIvaPct(String(Math.round((meta.tax_rate ?? 0.13) * 100)));
+      const ship = Number(meta.shipping || 0);
+      setNeedsShipping(ship > 0);
+      setShippingStr(ship > 0 ? String(Math.round(ship)) : '');
     }
   }, [editing]);
 
@@ -126,13 +131,19 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
     const n = parseFloat(subtotalStr.replace(/[^\d.,]/g, '').replace(',', '.'));
     return isFinite(n) && n > 0 ? n : 0;
   }, [subtotalStr]);
+  const shipping = useMemo(() => {
+    if (!needsShipping) return 0;
+    const n = parseFloat(shippingStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+    return isFinite(n) && n > 0 ? n : 0;
+  }, [needsShipping, shippingStr]);
   const taxRate = parseInt(ivaPct, 10) / 100;
   const taxAmount = Math.round(subtotal * taxRate * 100) / 100;
-  const total = Math.round((subtotal + taxAmount) * 100) / 100;
+  const total = Math.round((subtotal + taxAmount + shipping) * 100) / 100;
 
   const handleSave = async () => {
     if (!editing) return;
     if (!subtotal) { toast.error('Subtotal inválido'); return; }
+    if (needsShipping && shipping <= 0) { toast.error('Ingresá el monto de envío'); return; }
     try {
       await updateSale.mutateAsync({
         saleId: editing.id,
@@ -140,6 +151,7 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
         embroidery,
         subtotal,
         tax_rate: taxRate,
+        shipping,
       });
       toast.success('Venta actualizada');
       setEditing(null);
