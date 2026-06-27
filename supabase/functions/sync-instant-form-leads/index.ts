@@ -346,10 +346,24 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
         }
       }
 
+      // Preserve the original created_time when the row already exists, since the JULIO 2026
+      // sheet doesn't carry a date column — first sync wins.
+      const { data: existingLead } = await admin
+        .from('instant_form_leads')
+        .select('id, created_time')
+        .eq('client_id', clientId)
+        .eq('external_id', externalId)
+        .maybeSingle();
+
+      const sheetCreated = parseDate(rec.created_time);
+      const createdTime = sheetCreated
+        || existingLead?.created_time
+        || new Date().toISOString();
+
       const payload = {
         client_id: clientId,
         external_id: externalId,
-        created_time: parseDate(rec.created_time),
+        created_time: createdTime,
         ad_id: rec.ad_id || null,
         ad_name: rec.ad_name || null,
         adset_id: rec.adset_id || null,
@@ -372,6 +386,7 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
       const { error: upErr } = await admin
         .from('instant_form_leads')
         .upsert(payload, { onConflict: 'client_id,external_id' });
+
 
       if (upErr) {
         console.error('Upsert error', upErr, externalId);
