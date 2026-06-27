@@ -293,11 +293,31 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
       }
 
       const sheetRowNumber = headerRow + rowIndex + 2;
-      const externalId = String(rec.external_id || '').trim() ||
+      const rawExternalId = String(rec.external_id || '').trim();
+      const externalId = rawExternalId ||
         `sheet-${source.spreadsheet_id}-${sheetName}-${sheetRowNumber}`;
+      const isSheetSynthetic = !rawExternalId;
 
       const fullName = (rec.full_name || '').toString().trim() || null;
       const phone = cleanPhone(rec.phone);
+
+      // Avoid duplicating Meta-sourced leads: if this sheet row has no real Meta lead_id
+      // and there is already a lead for the same client+phone from another source, skip it.
+      if (isSheetSynthetic && phone) {
+        const { data: dupe } = await admin
+          .from('instant_form_leads')
+          .select('id, external_id')
+          .eq('client_id', clientId)
+          .eq('phone', phone)
+          .neq('external_id', externalId)
+          .limit(1)
+          .maybeSingle();
+        if (dupe) {
+          skipped++;
+          continue;
+        }
+      }
+
 
 
       // Upsert customer contact when we have a name
