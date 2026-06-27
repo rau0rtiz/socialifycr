@@ -373,23 +373,25 @@ export interface UpdateFormSaleInput {
   embroidery: boolean;
   subtotal: number;
   tax_rate: number;
+  shipping?: number;
   notes?: string;
 }
 
 export const useUpdateInstantFormSale = (clientId: string | null) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ saleId, quantity, embroidery, subtotal, tax_rate, notes }: UpdateFormSaleInput) => {
+    mutationFn: async ({ saleId, quantity, embroidery, subtotal, tax_rate, shipping, notes }: UpdateFormSaleInput) => {
       const tax_amount = Math.round(subtotal * tax_rate * 100) / 100;
-      const amount = Math.round((subtotal + tax_amount) * 100) / 100;
+      const shippingAmount = Math.max(0, Math.round((shipping || 0) * 100) / 100);
+      const amount = Math.round((subtotal + tax_amount + shippingAmount) * 100) / 100;
       const { error } = await supabase
         .from('message_sales')
         .update({
           subtotal,
           tax_amount,
           amount,
-          product: buildSaleProductLabel(quantity, embroidery),
-          notes: buildSaleNotes({ quantity, embroidery, tax_rate, extra: notes }),
+          product: buildSaleProductLabel(quantity, embroidery, shippingAmount),
+          notes: buildSaleNotes({ quantity, embroidery, tax_rate, shipping: shippingAmount, extra: notes }),
         } as any)
         .eq('id', saleId);
       if (error) throw error;
