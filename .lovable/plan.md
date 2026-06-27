@@ -1,51 +1,84 @@
-# Flujo de guardado para ideas + guion completo visible
 
-## Problema
+## Objetivo
 
-1. La cajita de **Guion / Copy** corta el texto: hay que hacer scroll dentro de un textarea chico para ver todo.
-2. Una idea recién creada (manual o con IA) ya está "viva" — un clic accidental sobre el guion lo edita sin que haya un momento explícito de "confirmar".
+Dashboard mínimo para **Comfortex** con:
+- Seguidores de Redes + Top Posts (Instagram / YouTube) — ya existen.
+- **Nuevo widget**: Leads del Instant Form de Meta sincronizados desde Google Sheets.
+- Cada lead se guarda también en **Client Database** (porque incluye nombre + teléfono).
+- Resto de módulos ocultos vía feature flags.
 
-## Solución
+## Qué necesito de vos (durante la implementación)
 
-### 1. Estado `borrador` para piezas nuevas
+1. **Conectar Google Sheets** mediante el connector — te voy a pedir autorización una vez en build mode.
+2. **Sheet ID + nombre de pestaña** donde caen los leads (el link del Google Sheet).
+3. Confirmar que las columnas del sheet son las que listaste (`id, created_time, ad_id, ad_name, adset_id, adset_name, campaign_id, campaign_name, form_id, form_name, is_organic, platform, ¿qué_modelo_de_camisa_está_buscando?, ¿cuántas_camisas_necesita?, ¿desea_que_las_camisas_tengan_algún_bordado?, ¿cuál_modelo_de_camisa_tipo_polo_prefiere?, ¿cuál_modelo_de_camisa_de_cuello_redondo_prefiere?, nombre_completo, número_de_teléfono, lead_status`).
 
-Agregar columna `is_draft boolean default false` en `production_sheet_shots`.
+## Cambios
 
-- **"Nueva pieza"** crea la card en modo **Borrador**: badge ámbar "Borrador — pendiente de guardar", borde dashed, y el botón principal de la card pasa a ser **"Guardar idea"** (en vez de "Marcar grabado", que queda deshabilitado hasta guardar).
-- Los inputs se editan normalmente (debounce ya existe), pero la pieza no aparece en la **Hoja del día** ni se puede mandar a ClickUp mientras esté en borrador.
-- Al hacer clic en **Guardar idea**, `is_draft` pasa a `false` y la card entra en modo "lectura segura" (ver punto 2).
+### 1. Base de datos (migration)
+- Tabla **`instant_form_leads`** (por cliente):
+  - Campos fijos: `id`, `client_id`, `external_id` (id del sheet, unique por cliente), `created_time`, `ad_id`, `ad_name`, `adset_id`, `adset_name`, `campaign_id`, `campaign_name`, `form_id`, `form_name`, `platform`, `is_organic`, `full_name`, `phone`, `lead_status`.
+  - `custom_answers jsonb` para las preguntas variables del formulario (modelo, cantidad, bordado, polo, cuello redondo, etc.).
+  - `raw jsonb` con la fila completa por si agregan columnas.
+  - `customer_contact_id` (FK a `customer_contacts`).
+  - RLS por `has_client_access(auth.uid(), client_id)` + GRANTs (`authenticated`, `service_role`).
+- Tabla **`instant_form_lead_sources`** (config por cliente):
+  - `client_id`, `spreadsheet_id`, `sheet_name`, `header_row`, `last_synced_at`, `last_row_count`.
+  - Mismo patrón RLS + GRANTs.
+- Nuevo flag `instant_form_leads` (boolean default true) en `client_feature_flags`.
 
-Para piezas generadas con IA: el dialog ya tiene su propio paso de revisión + Guardar, así que se insertan directamente como `is_draft = false` (ya fueron confirmadas en el dialog).
+### 2. Edge function `sync-instant-form-leads`
+- `verify_jwt = false` con validación de JWT en código.
+- Lee `instant_form_lead_sources` del cliente, llama al gateway Google Sheets (`/spreadsheets/{id}/values/{tab}`), mapea encabezados → columnas conocidas, resto cae en `custom_answers`.
+- Upsert por `(client_id, external_id)`.
+- Para cada lead nuevo con `full_name` + `phone`, crea/actualiza `customer_contacts` y guarda el `customer_contact_id` en `instant_form_leads`.
+- Actualiza `last_synced_at`.
 
-### 2. Modo lectura del guion (anti-edición accidental)
+### 3. UI — nuevo widget `InstantFormLeadsWidget`
+Ubicación: `src/components/dashboard/InstantFormLeadsWidget.tsx`. Tres tabs internos:
+1. **Tabla de leads recientes**: nombre, teléfono, fecha (CR UTC-6), campaña, ad, modelo solicitado, estado. Filtros por rango de fechas y campaña. Botón "Sincronizar ahora".
+2. **Breakdown por UTM**: conteo y % por `campaign_name` / `adset_name` / `ad_name` (tabs internos o selector).
+3. **Chart por día**: barras con leads/día en el rango seleccionado.
 
-Una vez que la pieza dejó de ser borrador (o si ya estaba guardada), el campo **Guion / Copy** se renderiza como bloque de lectura:
+Hook `use-instant-form-leads.ts` con TanStack Query (`staleTime: 5m`, filtrado client-side por fecha).
 
-- Texto completo visible (`whitespace-pre-wrap`, sin scroll interno, sin recorte) sobre fondo crema.
-- Botón discreto **"Editar guion"** (icono lápiz) arriba a la derecha del bloque.
-- Al hacer clic se transforma en `<Textarea>` con `autosize` (altura crece con el contenido) y aparecen **Guardar** / **Cancelar**.
-- Mismo patrón para el campo **Concepto** (es el otro que duele si se edita sin querer).
+### 4. Configuración por cliente (Business Setup)
+Sección nueva en Business Setup: "Instant Form (Google Sheets)" → input para Spreadsheet ID + nombre de pestaña + botón "Sincronizar ahora" + última sincronización. Sólo visible cuando el flag `instant_form_leads` está activo.
 
-Los demás campos (Hook, CTA, Notas técnicas) siguen como ahora — son cortos y de bajo riesgo.
+### 5. Dashboard de Comfortex
+- Edito `src/pages/Dashboard.tsx`: cuando `flags.instant_form_leads`, monto `<InstantFormLeadsWidget clientId=... />` después de Top Posts.
+- Reemplaza visualmente el funnel/campaigns/content grid para Comfortex (ya los apaga por flags).
 
-### 3. Visibilidad completa también en lectura colapsada y Hoja del día
+### 6. Feature flags de Comfortex
+Insert/update en `client_feature_flags` para `client_id = d90a18b8-dad0-4f52-9447-c13f8f19f0d7`:
+- **ON**: `dashboard`, `social_followers`, `instagram_posts`, `youtube_videos`, `instant_form_leads`, `business_setup_section`.
+- **OFF**: todo lo demás (ventas, contenido, reportes, email marketing, asistencia, funnel, campaigns, content_grid, etc.).
+- Client Database vive bajo Business Setup / Accesos según la app actual; los leads se acumulan ahí automáticamente.
 
-La Hoja del día ya muestra hook/cta/notas técnicas pero **no muestra el script**. Agregar el guion completo al resumen de cada pieza grabada (texto completo, sin truncar).
+### 7. Cron opcional (no en este plan, lo dejamos manual por ahora)
+Sincronización manual con el botón. Si después querés, agregamos cron cada X minutos.
 
-## Cambios técnicos
+## Detalles técnicos
 
-- **Migración**: `ALTER TABLE production_sheet_shots ADD COLUMN is_draft boolean NOT NULL DEFAULT false;`
-- **`src/pages/ProduccionSheet.tsx`**:
-  - `handleAddPiece`: insertar con `is_draft: true`.
-  - `PieceCard`: nuevo prop/estado de borrador; reemplaza CTA "Marcar grabado" por "Guardar idea" cuando `is_draft`; agrega badge.
-  - Modo lectura para Concepto y Guion con toggle de edición (`editing.script`, `editing.concept`). Componente auxiliar `<ReadEditField>` para no duplicar lógica.
-  - Filtrar `recordedShots` y `pendingToSend` para excluir drafts.
-  - Hoja del día: agregar bloque "Guion" con `s.script` cuando exista.
-- **`GenerateShotsDialog`**: sin cambios funcionales (ya tiene revisión); el `onInsert` en `ProduccionSheet.tsx` pasa `is_draft: false`.
-- **Vista pública (`/produccion-publica/...`)**: ocultar drafts y mostrar guion completo (alinear con Hoja del día).
+```text
+Google Sheet
+   │ (Meta Lead Ads → Zapier/Make → Sheet, ya existente)
+   ▼
+Edge function sync-instant-form-leads
+   │   - Gateway: https://connector-gateway.lovable.dev/google_sheets/v4
+   │   - Upsert por (client_id, external_id)
+   │   - Sync a customer_contacts (Client Database)
+   ▼
+Tabla instant_form_leads  ─►  InstantFormLeadsWidget (3 tabs)
+                          └►  Client Database (vía customer_contacts)
+```
 
-## Fuera de alcance
+- Connector: `google_sheets` (gateway-enabled). Una sola conexión a nivel agencia alcanza para todos los clientes.
+- Mapeo de columnas: normalizamos encabezados (minúsculas, sin tildes, espacios → `_`), comparamos con whitelist de campos fijos, resto al `custom_answers`.
+- Manejo de errores del gateway: 4xx → mostramos error y no reintentamos; 429/5xx → backoff exponencial en el botón de sync.
+- Sin polling automático: el widget recarga al montar (con caché de 5 min) y mediante el botón "Sincronizar".
 
-- No se toca el flujo de IA (ya tiene preview + Guardar explícito).
-- No se cambia el envío a ClickUp (sigue exigiendo `done=true`, ahora también `is_draft=false` implícito).
-- No se agrega historial/versionado del guion.
+## Riesgos / cosas a vigilar
+- Si Comfortex luego cambia la estructura del form, los campos nuevos caen en `custom_answers` sin romper nada.
+- El connector accede a la cuenta del workspace que lo autorice; el Sheet debe estar compartido con esa cuenta de Google.
+- No agrego límites de rate al edge function (sólo se llama on-demand desde el botón).
