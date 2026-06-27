@@ -17,7 +17,7 @@ import {
   useIsClientManager,
   InstantFormLeadStatus,
 } from '@/hooks/use-instant-form-leads';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+// recharts no longer needed here
 import { InstantFormLeadDetailDialog } from './InstantFormLeadDetailDialog';
 
 interface Props {
