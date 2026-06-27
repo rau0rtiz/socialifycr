@@ -395,6 +395,9 @@ const Dashboard = () => {
               <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
                 <InstantFormLeadsWidget clientId={selectedClient.id} />
               </Suspense>
+              <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                <InstantFormSalesWidget clientId={selectedClient.id} />
+              </Suspense>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
                 <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
                   <ComfortexUtmBreakdown clientId={selectedClient.id} />
