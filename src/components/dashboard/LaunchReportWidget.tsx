@@ -10,15 +10,18 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Copy, Rocket, Save, RefreshCw, TrendingDown, TrendingUp } from 'lucide-react';
+import { CalendarIcon, Copy, Rocket, Save, RefreshCw, TrendingDown, TrendingUp, Archive, Plus, Lock } from 'lucide-react';
 import {
   useLaunchReports,
   useUpsertLaunchReport,
   useLaunchCampaigns,
   useCampaignDayInsights,
-  type LaunchReport,
+  useLaunches,
+  useCreateLaunch,
+  useArchiveLaunch,
 } from '@/hooks/use-launch-reports';
 import { useMetaConnections } from '@/hooks/use-platform-connections';
 import {
@@ -33,7 +36,6 @@ interface Props {
 }
 
 const todayCR = () => {
-  // Costa Rica is UTC-6, no DST
   const now = new Date();
   const offsetMs = (now.getTimezoneOffset() - -360) * 60_000;
   return new Date(now.getTime() - offsetMs);
@@ -62,9 +64,40 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
     } catch { /* ignore */ }
   }, [connectionId, connectionStorageKey]);
 
+  // Launches
+  const { data: launches = [] } = useLaunches(clientId);
+  const launchStorageKey = `launch-report:launch:${clientId}`;
+  const [selectedLaunchId, setSelectedLaunchId] = useState<string | null>(() => {
+    try { return localStorage.getItem(launchStorageKey) || null; } catch { return null; }
+  });
+
+  // Default to first active launch (or any) when no selection
+  useEffect(() => {
+    if (launches.length === 0) return;
+    const stillExists = launches.some((l) => l.id === selectedLaunchId);
+    if (!selectedLaunchId || !stillExists) {
+      const active = launches.find((l) => l.status === 'active');
+      setSelectedLaunchId((active || launches[0]).id);
+    }
+  }, [launches, selectedLaunchId]);
+
+  useEffect(() => {
+    try {
+      if (selectedLaunchId) localStorage.setItem(launchStorageKey, selectedLaunchId);
+    } catch { /* ignore */ }
+  }, [selectedLaunchId, launchStorageKey]);
+
+  const selectedLaunch = useMemo(
+    () => launches.find((l) => l.id === selectedLaunchId) || null,
+    [launches, selectedLaunchId],
+  );
+  const isArchived = selectedLaunch?.status === 'archived';
+
   const { data: campaigns = [], isLoading: campaignsLoading } = useLaunchCampaigns(clientId, connectionId);
-  const { data: allReports = [] } = useLaunchReports(clientId);
+  const { data: allReports = [] } = useLaunchReports(selectedLaunchId);
   const upsert = useUpsertLaunchReport();
+  const createLaunch = useCreateLaunch();
+  const archiveLaunch = useArchiveLaunch();
 
   // Current day report from DB (if any)
   const existing = useMemo(() => allReports.find((r) => r.report_date === dateStr), [allReports, dateStr]);
@@ -73,38 +106,21 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
   const prevDayStr = format(subDays(date, 1), 'yyyy-MM-dd');
   const prevReport = useMemo(() => allReports.find((r) => r.report_date === prevDayStr), [allReports, prevDayStr]);
 
-  // Form state — campaign persists across date changes (sticky in localStorage),
-  // manual inputs reload from the existing report for the selected date.
-  const campaignStorageKey = `launch-report:campaign:${clientId}`;
-  const [campaignId, setCampaignId] = useState<string>(() => {
-    try { return localStorage.getItem(campaignStorageKey) || ''; } catch { return ''; }
-  });
+  // Campaign comes from the launch itself
+  const campaignId = selectedLaunch?.campaign_id || '';
+
   const [groupSignups, setGroupSignups] = useState<string>('0');
   const [manychatCtr, setManychatCtr] = useState<string>('0');
 
-  // Persist campaign selection whenever the user changes it
-  useEffect(() => {
-    try {
-      if (campaignId) localStorage.setItem(campaignStorageKey, campaignId);
-    } catch { /* ignore */ }
-  }, [campaignId, campaignStorageKey]);
-
-  // When date changes, refill manual inputs from existing report.
-  // Only seed campaignId if none is currently chosen (sticky behavior).
   useEffect(() => {
     if (existing) {
       setGroupSignups(String(existing.group_signups || 0));
       setManychatCtr(String(existing.manychat_ctr || 0));
-      if (!campaignId && existing.campaign_id) setCampaignId(existing.campaign_id);
     } else {
       setGroupSignups('0');
       setManychatCtr('0');
-      if (!campaignId) {
-        const lastUsed = [...allReports].reverse().find((r) => r.campaign_id)?.campaign_id;
-        if (lastUsed) setCampaignId(lastUsed);
-      }
     }
-  }, [existing, dateStr]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [existing, dateStr]);
 
   const { data: insights, isLoading: insightsLoading, refetch: refetchInsights } = useCampaignDayInsights(
     clientId,
@@ -113,10 +129,9 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
     date,
   );
 
-  const existingMatchesCampaign = !!existing && (!campaignId || existing.campaign_id === campaignId);
-  const spend = insights?.spend ?? (existingMatchesCampaign ? existing?.spend_snapshot : 0) ?? 0;
-  const conversations = insights?.conversations ?? (existingMatchesCampaign ? existing?.conversations_snapshot : 0) ?? 0;
-  const currency = insights?.currency ?? (existingMatchesCampaign ? existing?.currency : undefined) ?? 'USD';
+  const spend = insights?.spend ?? existing?.spend_snapshot ?? 0;
+  const conversations = insights?.conversations ?? existing?.conversations_snapshot ?? 0;
+  const currency = insights?.currency ?? existing?.currency ?? 'USD';
 
   const signupsNum = parseInt(groupSignups) || 0;
   const ctrNum = parseFloat(manychatCtr) || 0;
@@ -128,10 +143,19 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
   const fmt = (n: number, dec = 2) => `${symbol}${n.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
 
   const handleSave = async () => {
-    const campaignName = campaigns.find((c) => c.id === campaignId)?.name || existing?.campaign_name || null;
+    if (!selectedLaunchId) {
+      toast.error('Selecciona o crea un lanzamiento primero');
+      return;
+    }
+    if (isArchived) {
+      toast.error('Este lanzamiento está archivado');
+      return;
+    }
+    const campaignName = campaigns.find((c) => c.id === campaignId)?.name || selectedLaunch?.campaign_name || null;
     try {
       await upsert.mutateAsync({
         client_id: clientId,
+        launch_id: selectedLaunchId,
         report_date: dateStr,
         campaign_id: campaignId || null,
         campaign_name: campaignName,
@@ -161,6 +185,44 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
   };
 
   const cpsDelta = prevCps > 0 && costPerSignup > 0 ? costPerSignup - prevCps : 0;
+
+  // New launch dialog
+  const [newOpen, setNewOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newCampaignId, setNewCampaignId] = useState<string>('');
+  const [archiveCurrent, setArchiveCurrent] = useState(true);
+
+  const openNewLaunchDialog = (defaultArchive: boolean) => {
+    const nextNumber = launches.length + 1;
+    setNewName(`Lanzamiento ${nextNumber}`);
+    setNewCampaignId('');
+    setArchiveCurrent(defaultArchive);
+    setNewOpen(true);
+  };
+
+  const handleCreateLaunch = async () => {
+    if (!newName.trim()) {
+      toast.error('Dale un nombre al lanzamiento');
+      return;
+    }
+    try {
+      if (archiveCurrent && selectedLaunch && selectedLaunch.status === 'active') {
+        await archiveLaunch.mutateAsync({ id: selectedLaunch.id, client_id: clientId });
+      }
+      const campaignName = campaigns.find((c) => c.id === newCampaignId)?.name || null;
+      const created = await createLaunch.mutateAsync({
+        client_id: clientId,
+        name: newName.trim(),
+        campaign_id: newCampaignId || null,
+        campaign_name: campaignName,
+      });
+      setSelectedLaunchId(created.id);
+      setNewOpen(false);
+      toast.success('Nuevo lanzamiento creado');
+    } catch (e: any) {
+      toast.error('No se pudo crear', { description: e?.message });
+    }
+  };
 
   return (
     <Card className="border-border/50">
@@ -197,7 +259,57 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
       </CardHeader>
 
       <CardContent className="space-y-5">
-        {/* Connection + campaign selectors */}
+        {/* Launch selector + actions */}
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex-1 min-w-[200px]">
+            <Label className="text-xs text-muted-foreground">Lanzamiento</Label>
+            <Select value={selectedLaunchId || ''} onValueChange={setSelectedLaunchId}>
+              <SelectTrigger className="h-9 mt-1">
+                <SelectValue placeholder={launches.length === 0 ? 'Crea tu primer lanzamiento' : 'Selecciona lanzamiento'} />
+              </SelectTrigger>
+              <SelectContent>
+                {launches.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    <span className="flex items-center gap-2">
+                      {l.status === 'archived' && <Archive className="h-3 w-3 text-muted-foreground" />}
+                      <span>{l.name}</span>
+                      {l.status === 'archived' && <span className="text-xs text-muted-foreground">(archivado)</span>}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {selectedLaunch && !isArchived && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5"
+              onClick={() => openNewLaunchDialog(true)}
+            >
+              <Archive className="h-4 w-4" />
+              Archivar y nuevo
+            </Button>
+          )}
+          <Button
+            variant="default"
+            size="sm"
+            className="h-9 gap-1.5"
+            onClick={() => openNewLaunchDialog(false)}
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo
+          </Button>
+        </div>
+
+        {isArchived && (
+          <div className="rounded-lg border border-border/50 bg-muted/40 px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+            <Lock className="h-3.5 w-3.5" />
+            Lanzamiento archivado: solo lectura. Selecciona o crea un lanzamiento activo para registrar nuevos datos.
+          </div>
+        )}
+
+        {/* Connection + campaign info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {eligibleConnections.length > 1 && (
             <div>
@@ -217,19 +329,10 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
             </div>
           )}
           <div className={eligibleConnections.length > 1 ? '' : 'md:col-span-2'}>
-            <Label className="text-xs text-muted-foreground">Campaña de Lanzamiento</Label>
-            <Select value={campaignId} onValueChange={setCampaignId} disabled={campaignsLoading || campaigns.length === 0}>
-              <SelectTrigger className="h-9 mt-1">
-                <SelectValue placeholder={campaignsLoading ? 'Cargando…' : 'Selecciona campaña'} />
-              </SelectTrigger>
-              <SelectContent>
-                {campaigns.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-xs text-muted-foreground">Campaña del lanzamiento</Label>
+            <div className="h-9 mt-1 px-3 rounded-md border border-border/50 bg-muted/30 flex items-center text-sm text-muted-foreground truncate">
+              {selectedLaunch?.campaign_name || (campaignId ? `Campaña ${campaignId}` : 'Sin campaña asignada')}
+            </div>
           </div>
         </div>
 
@@ -280,6 +383,7 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
               value={groupSignups}
               onChange={(e) => setGroupSignups(e.target.value)}
               className="h-9 mt-1"
+              disabled={isArchived}
             />
           </div>
           <div>
@@ -291,13 +395,14 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
               value={manychatCtr}
               onChange={(e) => setManychatCtr(e.target.value)}
               className="h-9 mt-1"
+              disabled={isArchived}
             />
           </div>
         </div>
 
         {/* Actions */}
         <div className="flex flex-wrap gap-2">
-          <Button onClick={handleSave} disabled={upsert.isPending} className="gap-2">
+          <Button onClick={handleSave} disabled={upsert.isPending || isArchived || !selectedLaunchId} className="gap-2">
             <Save className="h-4 w-4" />
             {existing ? 'Actualizar' : 'Guardar'}
           </Button>
@@ -315,6 +420,52 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
         {/* Historical charts + table */}
         <LaunchReportCharts reports={allReports} currency={currency} onEditDate={(d) => setDate(d)} />
       </CardContent>
+
+      <Dialog open={newOpen} onOpenChange={setNewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nuevo lanzamiento</DialogTitle>
+            <DialogDescription>
+              Crea un nuevo lanzamiento desde cero. Podrás seguir consultando los anteriores.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Nombre</Label>
+              <Input value={newName} onChange={(e) => setNewName(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Campaña de Meta</Label>
+              <Select value={newCampaignId} onValueChange={setNewCampaignId} disabled={campaignsLoading || campaigns.length === 0}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder={campaignsLoading ? 'Cargando…' : 'Selecciona campaña'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {selectedLaunch && selectedLaunch.status === 'active' && (
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={archiveCurrent}
+                  onChange={(e) => setArchiveCurrent(e.target.checked)}
+                />
+                Archivar lanzamiento actual ({selectedLaunch.name})
+              </label>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateLaunch} disabled={createLaunch.isPending || archiveLaunch.isPending}>
+              Crear lanzamiento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
