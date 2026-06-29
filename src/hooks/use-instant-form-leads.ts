@@ -145,11 +145,15 @@ export const useUpdateInstantFormLeadStatus = (clientId: string | null) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ leadId, status }: { leadId: string; status: InstantFormLeadStatus }) => {
-      const { error } = await supabase
-        .from('instant_form_leads')
-        .update({ lead_status: status })
-        .eq('id', leadId);
-      if (error) throw error;
+      const { withFreshAuth } = await import('@/lib/auth-retry');
+      await withFreshAuth(async () => {
+        const res = await supabase
+          .from('instant_form_leads')
+          .update({ lead_status: status })
+          .eq('id', leadId);
+        if (res.error) throw res.error;
+        return res;
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['instant-form-leads', clientId] });
