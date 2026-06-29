@@ -48,7 +48,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Refresh the session when the tab regains focus so long-open tabs
+    // don't hit "JWT expired" on the next write.
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) return;
+          const expSec = (session as any).expires_at as number | undefined;
+          const nowSec = Math.floor(Date.now() / 1000);
+          // If it expires within 2 minutes (or already expired), refresh now.
+          if (!expSec || expSec - nowSec < 120) {
+            supabase.auth.refreshSession();
+          }
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
