@@ -14,6 +14,16 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuditLog } from '@/hooks/use-audit-log';
 import { InviteClientDialog } from './InviteClientDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface TeamMember {
   id: string;
@@ -56,6 +66,8 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
   const [refreshing, setRefreshing] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState<TeamMember | null>(null);
+  const [confirmCancelInvite, setConfirmCancelInvite] = useState<PendingInvitation | null>(null);
   const { toast } = useToast();
   const { logAction } = useAuditLog();
 
@@ -298,7 +310,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-destructive"
-                onClick={() => handleRemoveMember(member.id)}
+                onClick={() => setConfirmRemove(member)}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -346,7 +358,7 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-destructive"
-                onClick={() => handleCancelInvite(invite.id)}
+                onClick={() => setConfirmCancelInvite(invite)}
                 title="Cancelar invitación"
               >
                 <Trash2 className="h-4 w-4" />
@@ -369,6 +381,52 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
         clientName={clientName}
         onInviteCreated={handleInviteCreated}
       />
+
+      <AlertDialog open={!!confirmRemove} onOpenChange={(o) => !o && setConfirmRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar a este miembro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a remover a <strong>{confirmRemove?.profile?.full_name || confirmRemove?.profile?.email}</strong> del equipo de {clientName}. Perderá acceso inmediato a este cliente. Esta acción se puede revertir invitándolo nuevamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (confirmRemove) await handleRemoveMember(confirmRemove.id);
+                setConfirmRemove(null);
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmCancelInvite} onOpenChange={(o) => !o && setConfirmCancelInvite(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar invitación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se cancelará la invitación enviada a <strong>{confirmCancelInvite?.email}</strong>. El enlace dejará de funcionar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Volver</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (confirmCancelInvite) await handleCancelInvite(confirmCancelInvite.id);
+                setConfirmCancelInvite(null);
+              }}
+            >
+              Cancelar invitación
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
