@@ -66,6 +66,8 @@ export const TeamMembers = ({ clientId, clientName }: TeamMembersProps) => {
   const [refreshing, setRefreshing] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState<TeamMember | null>(null);
+  const [confirmCancelInvite, setConfirmCancelInvite] = useState<PendingInvitation | null>(null);
   const { toast } = useToast();
   const { logAction } = useAuditLog();
 
