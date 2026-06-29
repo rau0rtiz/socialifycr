@@ -2990,6 +2990,7 @@ export type Database = {
           currency: string | null
           group_signups: number | null
           id: string
+          launch_id: string
           manychat_ctr: number | null
           notes: string | null
           report_date: string
@@ -3006,6 +3007,7 @@ export type Database = {
           currency?: string | null
           group_signups?: number | null
           id?: string
+          launch_id: string
           manychat_ctr?: number | null
           notes?: string | null
           report_date: string
@@ -3022,6 +3024,7 @@ export type Database = {
           currency?: string | null
           group_signups?: number | null
           id?: string
+          launch_id?: string
           manychat_ctr?: number | null
           notes?: string | null
           report_date?: string
@@ -3034,6 +3037,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "launch_daily_reports_launch_id_fkey"
+            columns: ["launch_id"]
+            isOneToOne: false
+            referencedRelation: "launches"
             referencedColumns: ["id"]
           },
         ]
@@ -3091,6 +3101,56 @@ export type Database = {
             columns: ["phase_id"]
             isOneToOne: false
             referencedRelation: "ad_framework_dimensions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      launches: {
+        Row: {
+          archived_at: string | null
+          campaign_id: string | null
+          campaign_name: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "launches_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
