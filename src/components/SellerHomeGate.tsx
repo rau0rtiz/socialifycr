@@ -21,7 +21,7 @@ export const SellerHomeGate = () => {
     !isAgency &&
     !canManage &&
     clientAccess.length > 0 &&
-    clientAccess.every((a) => a.role === 'closer' || a.role === 'setter');
+    clientAccess.every((a) => (a.role as string) === 'closer' || (a.role as string) === 'setter');
 
   const isSellerOnly = !canManage && (sellerSystemRole || sellerClientRole);
 
