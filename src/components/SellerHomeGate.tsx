@@ -10,12 +10,20 @@ const SellerCrm = lazy(() => import('@/pages/SellerCrm'));
  * Everyone else gets the regular dashboard.
  */
 export const SellerHomeGate = () => {
-  const { systemRole, canManage, loading } = useUserRole();
+  const { systemRole, canManage, isAgency, clientAccess, loading } = useUserRole();
 
   if (loading) return null;
 
-  const isSellerOnly =
-    !canManage && (systemRole === 'setter' || systemRole === 'closer');
+  const sellerSystemRole = systemRole === 'setter' || systemRole === 'closer';
+  // Some users are only "closer"/"setter" at the client_team_members level (no system role).
+  // Treat them as sellers too, as long as they aren't agency/managers.
+  const sellerClientRole =
+    !isAgency &&
+    !canManage &&
+    clientAccess.length > 0 &&
+    clientAccess.every((a) => (a.role as string) === 'closer' || (a.role as string) === 'setter');
+
+  const isSellerOnly = !canManage && (sellerSystemRole || sellerClientRole);
 
   return (
     <Suspense fallback={null}>
