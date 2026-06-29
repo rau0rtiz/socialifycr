@@ -185,23 +185,32 @@ export const useClientSellers = (clientId: string | null) => {
     queryKey: ['client-sellers', clientId],
     queryFn: async () => {
       if (!clientId) return [] as ClientSeller[];
-      // Members of this client...
+      // Members of this client
       const { data: members, error: mErr } = await supabase
         .from('client_team_members')
-        .select('user_id')
+        .select('user_id, role')
         .eq('client_id', clientId);
       if (mErr) throw mErr;
       const userIds = (members || []).map((m: any) => m.user_id);
       if (userIds.length === 0) return [];
 
-      // ...who have system role setter or closer
+      // System roles for those members
       const { data: roles, error: rErr } = await supabase
         .from('user_roles')
         .select('user_id, role')
-        .in('user_id', userIds)
-        .in('role', ['setter', 'closer']);
+        .in('user_id', userIds);
       if (rErr) throw rErr;
-      const sellerIds = Array.from(new Set((roles || []).map((r: any) => r.user_id)));
+      const systemSellerIds = new Set(
+        (roles || []).filter((r: any) => r.role === 'setter' || r.role === 'closer').map((r: any) => r.user_id)
+      );
+
+      // A user is a "vendedor" if they have system role setter/closer
+      // OR their client_team_members.role is setter/closer.
+      const sellerIds = Array.from(new Set(
+        (members || [])
+          .filter((m: any) => systemSellerIds.has(m.user_id) || m.role === 'setter' || m.role === 'closer')
+          .map((m: any) => m.user_id)
+      ));
       if (sellerIds.length === 0) return [];
 
       const { data: profiles, error: pErr } = await supabase
@@ -220,6 +229,7 @@ export const useClientSellers = (clientId: string | null) => {
     staleTime: 5 * 60 * 1000,
   });
 };
+
 
 export const useIsClientManager = (clientId: string | null): boolean => {
   const { user } = useAuth();
