@@ -109,6 +109,35 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
     }
   };
 
+  const isComfortex = (lead.client_name || '').toLowerCase().includes('comfortex')
+    || lead.client_id === 'd90a18b8-dad0-4f52-9447-c13f8f19f0d7';
+
+  const handleGenerateMessage = async () => {
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-comfortex-reply', {
+        body: { leadId: lead.id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setGeneratedMessage((data as any)?.message || '');
+      toast.success('Mensaje generado');
+    } catch (e: any) {
+      toast.error('No se pudo generar el mensaje', { description: e.message });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCopyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedMessage);
+      toast.success('Mensaje copiado');
+    } catch {
+      toast.error('No se pudo copiar');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl w-[calc(100vw-1rem)] sm:w-full max-h-[95vh] sm:max-h-[92vh] overflow-y-auto p-4 sm:p-6">
