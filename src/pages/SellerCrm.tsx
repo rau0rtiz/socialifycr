@@ -35,7 +35,7 @@ const SellerCrm = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
-  const [openLead, setOpenLead] = useState<SellerLead | null>(null);
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState<boolean>(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission === 'granted' : false
