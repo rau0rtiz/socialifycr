@@ -621,7 +621,11 @@ const ClientDatabase = () => {
                   {filteredLeads.length === 0 ? (
                     <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">No se encontraron leads</TableCell></TableRow>
                   ) : filteredLeads.map(lead => (
-                    <TableRow key={lead.id} className="text-xs">
+                    <TableRow
+                      key={lead.id}
+                      className={`text-xs ${isComfortex ? 'cursor-pointer hover:bg-muted/40' : ''}`}
+                      onClick={isComfortex ? () => setSelectedLead(lead) : undefined}
+                    >
                       <TableCell className="font-medium">{lead.lead_name}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
@@ -633,7 +637,7 @@ const ClientDatabase = () => {
                       <TableCell className="text-muted-foreground">{lead.source || '—'}</TableCell>
                       <TableCell className="text-muted-foreground">{lead.setter_name || '—'}</TableCell>
                       <TableCell className="text-muted-foreground whitespace-nowrap">{lead.created_at ? format(new Date(lead.created_at), 'dd MMM yy', { locale: es }) : '—'}</TableCell>
-                      <TableCell><Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(lead)}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
+                      <TableCell><Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(lead); }}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
