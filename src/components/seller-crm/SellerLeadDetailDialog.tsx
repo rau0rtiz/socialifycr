@@ -70,6 +70,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
       setSubtotalStr('');
       setIvaPct('13');
       setNotes('');
+      setGeneratedMessage('');
     }
   }, [open, lead?.id]);
 
