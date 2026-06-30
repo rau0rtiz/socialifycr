@@ -429,6 +429,9 @@ const Dashboard = () => {
                 </Suspense>
               </div>
               <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                <ComfortexActiveHours clientId={selectedClient.id} />
+              </Suspense>
+              <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
                 <ComfortexModelDemand clientId={selectedClient.id} />
               </Suspense>
             </div>
