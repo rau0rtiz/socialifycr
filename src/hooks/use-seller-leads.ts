@@ -121,21 +121,49 @@ export const useUpdateSellerLeadStatus = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ leadId, status }: { leadId: string; status: InstantFormLeadStatus }) => {
-      await withFreshAuth(async () => {
+      return await withFreshAuth(async () => {
         const res = await supabase
           .from('instant_form_leads')
           .update({ lead_status: status })
-          .eq('id', leadId);
+          .eq('id', leadId)
+          .select('id, lead_status')
+          .single();
         if (res.error) throw res.error;
-        return res;
+        return res.data;
       });
     },
-    onSuccess: () => {
+    onMutate: async ({ leadId, status }) => {
+      // Cancel in-flight refetches that would overwrite optimistic update
+      await qc.cancelQueries({ queryKey: ['seller-leads'] });
+      await qc.cancelQueries({ queryKey: ['instant-form-leads'] });
+
+      const prevSeller = qc.getQueriesData<SellerLead[]>({ queryKey: ['seller-leads'] });
+      const prevInstant = qc.getQueriesData<any>({ queryKey: ['instant-form-leads'] });
+
+      // Optimistically patch every matching cache entry
+      qc.setQueriesData<SellerLead[]>({ queryKey: ['seller-leads'] }, (old) => {
+        if (!Array.isArray(old)) return old as any;
+        return old.map((l) => (l.id === leadId ? { ...l, lead_status: status } : l));
+      });
+      qc.setQueriesData<any>({ queryKey: ['instant-form-leads'] }, (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((l: any) => (l.id === leadId ? { ...l, lead_status: status } : l));
+      });
+
+      return { prevSeller, prevInstant };
+    },
+    onError: (_err, _vars, ctx) => {
+      // Rollback
+      ctx?.prevSeller?.forEach(([key, data]) => qc.setQueryData(key, data));
+      ctx?.prevInstant?.forEach(([key, data]) => qc.setQueryData(key, data));
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['seller-leads'] });
       qc.invalidateQueries({ queryKey: ['instant-form-leads'] });
     },
   });
 };
+
 
 export const useSellerLeadCounts = (leads: SellerLead[]) =>
   useMemo(() => {
