@@ -56,6 +56,8 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
   const [subtotalStr, setSubtotalStr] = useState('');
   const [ivaPct, setIvaPct] = useState('13');
   const [notes, setNotes] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [generatedMessage, setGeneratedMessage] = useState('');
 
   const registerSale = useRegisterSaleFromInstantFormLead(lead?.client_id || null);
   const updateStatus = useUpdateSellerLeadStatus();
