@@ -19,6 +19,7 @@ const InstantFormDailyBarWidget = lazy(() => import('@/components/dashboard/Inst
 const ComfortexUtmBreakdown = lazy(() => import('@/components/dashboard/ComfortexUtmBreakdown').then(m => ({ default: m.ComfortexUtmBreakdown })));
 const ComfortexModelDemand = lazy(() => import('@/components/dashboard/ComfortexModelDemand').then(m => ({ default: m.ComfortexModelDemand })));
 const ComfortexVolumeWidget = lazy(() => import('@/components/dashboard/ComfortexVolumeWidget').then(m => ({ default: m.ComfortexVolumeWidget })));
+const ComfortexActiveHours = lazy(() => import('@/components/dashboard/ComfortexActiveHours').then(m => ({ default: m.ComfortexActiveHours })));
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
