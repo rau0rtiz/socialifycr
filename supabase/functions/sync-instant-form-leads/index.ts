@@ -396,7 +396,7 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
         is_organic: parseBool(rec.is_organic),
         full_name: fullName,
         phone,
-        lead_status: rec.lead_status || null,
+        lead_status: rec.lead_status || 'new',
         custom_answers: customAnswers,
         raw,
         customer_contact_id: customerContactId,
