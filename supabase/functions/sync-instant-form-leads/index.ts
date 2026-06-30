@@ -396,7 +396,11 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
         is_organic: parseBool(rec.is_organic),
         full_name: fullName,
         phone,
-        lead_status: rec.lead_status || 'new',
+        lead_status: (() => {
+          const raw = (rec.lead_status || '').toString().trim().toLowerCase();
+          const allowed = ['new', 'contactado', 'seguimiento', 'venta', 'perdido'];
+          return allowed.includes(raw) ? raw : 'new';
+        })(),
         custom_answers: customAnswers,
         raw,
         customer_contact_id: customerContactId,
