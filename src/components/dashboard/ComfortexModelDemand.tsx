@@ -29,6 +29,7 @@ const toDisplayModel = (normalized: string): string => {
 };
 
 const RANGES = [
+  { value: 'today', label: 'Hoy' },
   { value: '7', label: '7d' },
   { value: '30', label: '30d' },
   { value: 'month', label: 'Este mes' },
