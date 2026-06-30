@@ -23,6 +23,7 @@ import { useUserRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
 import { StudentDetailDialog } from '@/components/ventas/StudentDetailDialog';
 import { CustomerDetailDialog } from '@/components/clientes/CustomerDetailDialog';
+import { LeadContactDetailDialog } from '@/components/clientes/LeadContactDetailDialog';
 import { MapPin, Shirt } from 'lucide-react';
 import { BillingInfoSection, BillingInfo, isBillingEmpty } from '@/components/common/BillingInfoSection';
 
@@ -43,6 +44,7 @@ const ClientDatabase = () => {
   const clientId = selectedClient?.id ?? null;
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
+  const isComfortex = selectedClient?.name?.toLowerCase().includes('comfortex');
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { systemRole, clientAccess } = useUserRole();
@@ -63,6 +65,7 @@ const ClientDatabase = () => {
   const [purchasesFilter, setPurchasesFilter] = useState<string>('all'); // all | with | without | gt3 | gt5
   const [amountFilter, setAmountFilter] = useState<string>('all'); // all | gt50k | gt100k | gt250k
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerContact | null>(null);
+  const [selectedLead, setSelectedLead] = useState<LeadRecord | null>(null);
 
   // ── Speak Up: student_contacts ──
   const { students, isLoading: studentsLoading, addStudent, updateStudent, deleteStudent } = useStudentContacts(isSpkUp ? clientId : null);
@@ -618,7 +621,11 @@ const ClientDatabase = () => {
                   {filteredLeads.length === 0 ? (
                     <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">No se encontraron leads</TableCell></TableRow>
                   ) : filteredLeads.map(lead => (
-                    <TableRow key={lead.id} className="text-xs">
+                    <TableRow
+                      key={lead.id}
+                      className={`text-xs ${isComfortex ? 'cursor-pointer hover:bg-muted/40' : ''}`}
+                      onClick={isComfortex ? () => setSelectedLead(lead) : undefined}
+                    >
                       <TableCell className="font-medium">{lead.lead_name}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
@@ -630,7 +637,7 @@ const ClientDatabase = () => {
                       <TableCell className="text-muted-foreground">{lead.source || '—'}</TableCell>
                       <TableCell className="text-muted-foreground">{lead.setter_name || '—'}</TableCell>
                       <TableCell className="text-muted-foreground whitespace-nowrap">{lead.created_at ? format(new Date(lead.created_at), 'dd MMM yy', { locale: es }) : '—'}</TableCell>
-                      <TableCell><Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(lead)}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
+                      <TableCell><Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(lead); }}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -786,6 +793,17 @@ const ClientDatabase = () => {
           onOpenChange={(open) => { if (!open) setSelectedCustomer(null); }}
           customer={selectedCustomer}
           clientId={clientId}
+        />
+      )}
+
+      {isComfortex && (
+        <LeadContactDetailDialog
+          open={!!selectedLead}
+          onOpenChange={(open) => { if (!open) setSelectedLead(null); }}
+          clientId={clientId}
+          leadName={selectedLead?.lead_name || null}
+          leadPhone={selectedLead?.lead_phone || null}
+          leadEmail={selectedLead?.lead_email || null}
         />
       )}
     </DashboardLayout>
