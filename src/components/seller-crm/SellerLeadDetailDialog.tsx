@@ -216,7 +216,47 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
                 </div>
               </div>
             )}
-          </div>
+            {isComfortex && (
+              <div className="rounded-md border border-dashed p-2 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium">Mensaje WhatsApp (IA)</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8"
+                    onClick={handleGenerateMessage}
+                    disabled={generating}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 mr-1" />
+                    {generating ? 'Generando…' : generatedMessage ? 'Regenerar' : 'Generar mensaje'}
+                  </Button>
+                </div>
+                {generatedMessage && (
+                  <>
+                    <Textarea
+                      value={generatedMessage}
+                      onChange={(e) => setGeneratedMessage(e.target.value)}
+                      rows={8}
+                      className="text-xs"
+                    />
+                    <div className="flex gap-1.5">
+                      <Button size="sm" variant="secondary" className="flex-1 h-9" onClick={handleCopyMessage}>
+                        <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
+                      </Button>
+                      {cleanPhone && (
+                        <Button
+                          size="sm"
+                          className="flex-1 h-9"
+                          onClick={() => window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(generatedMessage)}`, '_blank')}
+                        >
+                          <MessageCircle className="h-3.5 w-3.5 mr-1" /> Abrir WhatsApp
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
         )}
 
         {tab === 'sale' && (
