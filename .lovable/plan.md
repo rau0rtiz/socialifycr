@@ -1,10 +1,39 @@
-Voy a corregir el problema desde la fuente: el sincronizador está reimportando leads y sobrescribiendo `lead_status` con `new`, por eso al recargar parece que todos vuelven a Nuevo.
 
-Plan:
-1. Ajustar la función de sincronización de leads para que, si el lead ya existe, preserve el `lead_status` guardado en la base de datos.
-2. Solo asignar `new` automáticamente cuando el lead es realmente nuevo o cuando el estado existente está vacío/inválido.
-3. Evitar que una columna `estado` del Google Sheet vuelva a pisar cambios hechos por el vendedor dentro del CRM.
-4. Mantener intactos los demás campos que sí deben actualizarse desde la sincronización: nombre, teléfono, campaña, formulario, respuestas, etc.
-5. Verificar que el flujo quede consistente: cambio de estado en CRM → recarga/refetch/sync → el estado se mantiene hasta que el vendedor lo cambie de nuevo.
+## Qué se va a construir
 
-Resultado esperado: los estados `Contactado`, `Seguimiento`, `Venta` y `Perdido` ya no regresan automáticamente a `Nuevo` después de refrescar o sincronizar.
+Un botón **"Generar mensaje WhatsApp"** dentro del popup de cada lead en el CRM de Vendedores (`SellerLeadDetailDialog`, pestaña *Info del lead*). Al presionarlo:
+
+1. Envía los datos del lead (nombre, respuestas del formulario, campaña/anuncio) a una edge function nueva.
+2. La edge function llama a la API de Anthropic (Claude) usando el prompt de Comfortex que diste como `system prompt`, y el contenido del lead como mensaje del usuario.
+3. La respuesta aparece en un cuadro de texto dentro del mismo popup con un botón **Copiar** y otro **Abrir en WhatsApp** (que abre `wa.me/<teléfono>` con el mensaje pre-rellenado).
+
+El mensaje sigue exactamente el formato que diste: identifica producto, cantidad, bordado/no bordado, y arma el texto listo para pegar. Los precios y reglas viven en el `system prompt` para que Claude nunca invente valores.
+
+## Detalles técnicos
+
+**Edge function nueva:** `supabase/functions/generate-comfortex-reply/index.ts`
+- `verify_jwt = false` (estándar Lovable). Validamos sesión del usuario manualmente leyendo el JWT.
+- Recibe `{ leadId }`. Carga el lead desde `instant_form_leads` con service_role y verifica que el usuario tenga acceso al `client_id`.
+- Llama a `https://api.anthropic.com/v1/messages` con:
+  - `model`: `claude-sonnet-4-5` (rápido y bueno para extracción + formato).
+  - `system`: el prompt completo que diste (precios, reglas, formato).
+  - `messages`: un único mensaje `user` que serializa nombre + `custom_answers` del lead.
+- Usa el secreto `ANTHROPIC_API_KEY` (ya existe en el proyecto).
+- Devuelve `{ message: string }`.
+
+**UI — cambios en `src/components/seller-crm/SellerLeadDetailDialog.tsx`:**
+- En la pestaña *Info del lead*, debajo de "Respuestas del formulario", agregar:
+  - Botón `Generar mensaje WhatsApp` (con ícono Sparkles, loading state).
+  - Cuando hay respuesta: un `<Textarea readonly>` con el mensaje, botón **Copiar** (usa `navigator.clipboard`) y botón **Abrir WhatsApp** que abre `https://wa.me/<phone>?text=<encoded>`.
+  - Toast de éxito/error.
+- El botón solo aparece para clientes Comfortex (filtrado por `client_id === 'd90a18b8-...'` o por nombre del cliente que contenga "comfortex", para que no aparezca en otros clientes del CRM).
+
+**Manejo de errores:**
+- Si Anthropic devuelve 429/401/5xx, mostrar toast con el mensaje.
+- Si el lead no tiene respuestas útiles, igual se envía a Claude (puede usar el nombre/campaña).
+
+## Lo que NO cambia
+
+- No se toca el flujo de venta, estados, ni sincronización de leads.
+- No se persiste el mensaje generado en la base de datos (es solo para copiar y pegar). Si más adelante lo quieres guardar como nota o log, se agrega después.
+- No se modifica el prompt en código del frontend — vive en la edge function para evitar exponer reglas/precios al navegador.

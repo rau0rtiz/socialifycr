@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Phone, DollarSign, MessageCircle } from 'lucide-react';
+import { Phone, DollarSign, MessageCircle, Sparkles, Copy } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   useRegisterSaleFromInstantFormLead,
@@ -55,6 +56,8 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
   const [subtotalStr, setSubtotalStr] = useState('');
   const [ivaPct, setIvaPct] = useState('13');
   const [notes, setNotes] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [generatedMessage, setGeneratedMessage] = useState('');
 
   const registerSale = useRegisterSaleFromInstantFormLead(lead?.client_id || null);
   const updateStatus = useUpdateSellerLeadStatus();
@@ -67,6 +70,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
       setSubtotalStr('');
       setIvaPct('13');
       setNotes('');
+      setGeneratedMessage('');
     }
   }, [open, lead?.id]);
 
@@ -102,6 +106,35 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
       toast.success(`Estado: ${STATUS_OPTIONS.find(o => o.value === newStatus)?.label}`);
     } catch (e: any) {
       toast.error('No se pudo actualizar', { description: e.message });
+    }
+  };
+
+  const isComfortex = (lead.client_name || '').toLowerCase().includes('comfortex')
+    || lead.client_id === 'd90a18b8-dad0-4f52-9447-c13f8f19f0d7';
+
+  const handleGenerateMessage = async () => {
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-comfortex-reply', {
+        body: { leadId: lead.id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setGeneratedMessage((data as any)?.message || '');
+      toast.success('Mensaje generado');
+    } catch (e: any) {
+      toast.error('No se pudo generar el mensaje', { description: e.message });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCopyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedMessage);
+      toast.success('Mensaje copiado');
+    } catch {
+      toast.error('No se pudo copiar');
     }
   };
 
@@ -181,6 +214,47 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
                   ))}
 
                 </div>
+              </div>
+            )}
+            {isComfortex && (
+              <div className="rounded-md border border-dashed p-2 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium">Mensaje WhatsApp (IA)</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8"
+                    onClick={handleGenerateMessage}
+                    disabled={generating}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 mr-1" />
+                    {generating ? 'Generando…' : generatedMessage ? 'Regenerar' : 'Generar mensaje'}
+                  </Button>
+                </div>
+                {generatedMessage && (
+                  <>
+                    <Textarea
+                      value={generatedMessage}
+                      onChange={(e) => setGeneratedMessage(e.target.value)}
+                      rows={8}
+                      className="text-xs"
+                    />
+                    <div className="flex gap-1.5">
+                      <Button size="sm" variant="secondary" className="flex-1 h-9" onClick={handleCopyMessage}>
+                        <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
+                      </Button>
+                      {cleanPhone && (
+                        <Button
+                          size="sm"
+                          className="flex-1 h-9"
+                          onClick={() => window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(generatedMessage)}`, '_blank')}
+                        >
+                          <MessageCircle className="h-3.5 w-3.5 mr-1" /> Abrir WhatsApp
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
