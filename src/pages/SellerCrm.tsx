@@ -67,7 +67,8 @@ const SellerCrm = () => {
   // New leads counter (sin contactar)
   const newCount = counts.new;
 
-  const handleOpen = (lead: SellerLead) => { setOpenLead(lead); setDialogOpen(true); };
+  const handleOpen = (lead: SellerLead) => { setOpenLeadId(lead.id); setDialogOpen(true); };
+  const openLead = useMemo(() => leads.find((l) => l.id === openLeadId) || null, [leads, openLeadId]);
 
   const requestNotifPermission = async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
