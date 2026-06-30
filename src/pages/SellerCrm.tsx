@@ -35,7 +35,7 @@ const SellerCrm = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
-  const [openLead, setOpenLead] = useState<SellerLead | null>(null);
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState<boolean>(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission === 'granted' : false
@@ -67,7 +67,8 @@ const SellerCrm = () => {
   // New leads counter (sin contactar)
   const newCount = counts.new;
 
-  const handleOpen = (lead: SellerLead) => { setOpenLead(lead); setDialogOpen(true); };
+  const handleOpen = (lead: SellerLead) => { setOpenLeadId(lead.id); setDialogOpen(true); };
+  const openLead = useMemo(() => leads.find((l) => l.id === openLeadId) || null, [leads, openLeadId]);
 
   const requestNotifPermission = async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
