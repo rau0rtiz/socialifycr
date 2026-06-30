@@ -1,0 +1,1 @@
+UPDATE public.instant_form_leads SET lead_status = 'new' WHERE lead_status IS NULL OR lower(lead_status) NOT IN ('new','contactado','seguimiento','venta','perdido');
