@@ -370,7 +370,7 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
       // sheet doesn't carry a date column — first sync wins.
       const { data: existingLead } = await admin
         .from('instant_form_leads')
-        .select('id, created_time')
+        .select('id, created_time, lead_status')
         .eq('client_id', clientId)
         .eq('external_id', externalId)
         .maybeSingle();
@@ -379,6 +379,15 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
       const createdTime = sheetCreated
         || existingLead?.created_time
         || new Date().toISOString();
+
+      const allowedStatuses = ['new', 'contactado', 'seguimiento', 'venta', 'perdido'];
+      const existingStatus = (existingLead?.lead_status || '').toString().trim().toLowerCase();
+      const sheetStatus = (rec.lead_status || '').toString().trim().toLowerCase();
+      const leadStatus = allowedStatuses.includes(existingStatus)
+        ? existingStatus
+        : allowedStatuses.includes(sheetStatus)
+          ? sheetStatus
+          : 'new';
 
       const payload = {
         client_id: clientId,
@@ -396,11 +405,7 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
         is_organic: parseBool(rec.is_organic),
         full_name: fullName,
         phone,
-        lead_status: (() => {
-          const raw = (rec.lead_status || '').toString().trim().toLowerCase();
-          const allowed = ['new', 'contactado', 'seguimiento', 'venta', 'perdido'];
-          return allowed.includes(raw) ? raw : 'new';
-        })(),
+        lead_status: leadStatus,
         custom_answers: customAnswers,
         raw,
         customer_contact_id: customerContactId,
