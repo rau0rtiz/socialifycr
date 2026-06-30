@@ -65,6 +65,15 @@ export const getModelFromLead = (lead: InstantFormLead, type: ModelType | 'all')
 
 export const filterByRange = (leads: InstantFormLead[], rangeDays: string): InstantFormLead[] => {
   if (rangeDays === 'all') return leads;
+  if (rangeDays === 'today') {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    return leads.filter((l) => {
+      const ts = l.created_time || l.created_at;
+      if (!ts) return false;
+      return new Date(ts).getTime() >= start;
+    });
+  }
   if (rangeDays === 'month') {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1).getTime();

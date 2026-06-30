@@ -13,6 +13,7 @@ import {
 } from '@/lib/comfortex-leads';
 
 const RANGES = [
+  { value: 'today', label: 'Hoy' },
   { value: '7', label: '7d' },
   { value: '30', label: '30d' },
   { value: 'month', label: 'Este mes' },
@@ -25,6 +26,10 @@ const inRange = (dateStr: string | null | undefined, rangeDays: string): boolean
   if (!dateStr) return false;
   const ts = new Date(dateStr).getTime();
   if (isNaN(ts)) return false;
+  if (rangeDays === 'today') {
+    const now = new Date();
+    return ts >= new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  }
   if (rangeDays === 'month') {
     const now = new Date();
     return ts >= new Date(now.getFullYear(), now.getMonth(), 1).getTime();
