@@ -257,6 +257,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
                 )}
               </div>
             )}
+          </div>
         )}
 
         {tab === 'sale' && (
