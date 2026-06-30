@@ -44,6 +44,7 @@ const ClientDatabase = () => {
   const clientId = selectedClient?.id ?? null;
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
+  const isComfortex = selectedClient?.name?.toLowerCase().includes('comfortex');
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { systemRole, clientAccess } = useUserRole();
