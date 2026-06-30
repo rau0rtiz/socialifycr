@@ -140,9 +140,11 @@ export const useUpdateSellerLeadStatus = () => {
 export const useSellerLeadCounts = (leads: SellerLead[]) =>
   useMemo(() => {
     const counts = { new: 0, contactado: 0, seguimiento: 0, venta: 0, perdido: 0, total: leads.length };
+    const allowed = ['new', 'contactado', 'seguimiento', 'venta', 'perdido'];
     leads.forEach((l) => {
-      const s = (l.lead_status || 'new') as keyof typeof counts;
-      if (s in counts) (counts as any)[s] += 1;
+      const raw = (l.lead_status || '').toString().trim().toLowerCase();
+      const s = (allowed.includes(raw) ? raw : 'new') as keyof typeof counts;
+      (counts as any)[s] += 1;
     });
     return counts;
   }, [leads]);
