@@ -23,6 +23,7 @@ import { useUserRole } from '@/hooks/use-user-role';
 import { useAuth } from '@/contexts/AuthContext';
 import { StudentDetailDialog } from '@/components/ventas/StudentDetailDialog';
 import { CustomerDetailDialog } from '@/components/clientes/CustomerDetailDialog';
+import { LeadContactDetailDialog } from '@/components/clientes/LeadContactDetailDialog';
 import { MapPin, Shirt } from 'lucide-react';
 import { BillingInfoSection, BillingInfo, isBillingEmpty } from '@/components/common/BillingInfoSection';
 
