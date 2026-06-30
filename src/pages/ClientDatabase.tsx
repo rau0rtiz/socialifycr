@@ -795,6 +795,17 @@ const ClientDatabase = () => {
           clientId={clientId}
         />
       )}
+
+      {isComfortex && (
+        <LeadContactDetailDialog
+          open={!!selectedLead}
+          onOpenChange={(open) => { if (!open) setSelectedLead(null); }}
+          clientId={clientId}
+          leadName={selectedLead?.lead_name || null}
+          leadPhone={selectedLead?.lead_phone || null}
+          leadEmail={selectedLead?.lead_email || null}
+        />
+      )}
     </DashboardLayout>
   );
 };
