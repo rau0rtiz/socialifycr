@@ -42,7 +42,7 @@ interface Props { clientId: string }
 
 export const ComfortexModelDemand = ({ clientId }: Props) => {
   const { data: leads = [] } = useInstantFormLeads(clientId);
-  const [rangeDays, setRangeDays] = useState('month');
+  const [rangeDays, setRangeDays] = useState('all');
   const [modelType, setModelType] = useState<ModelType | 'all'>('all');
 
   const filtered = useMemo(() => filterByRange(leads, rangeDays), [leads, rangeDays]);

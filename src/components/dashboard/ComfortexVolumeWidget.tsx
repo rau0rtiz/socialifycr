@@ -28,7 +28,7 @@ interface Props { clientId: string }
 export const ComfortexVolumeWidget = ({ clientId }: Props) => {
   const { data: leads = [] } = useInstantFormLeads(clientId);
   const { data: sales = [] } = useInstantFormSales(clientId);
-  const [rangeDays, setRangeDays] = useState('month');
+  const [rangeDays, setRangeDays] = useState('all');
 
   const filtered = useMemo(() => filterByRange(leads, rangeDays), [leads, rangeDays]);
 

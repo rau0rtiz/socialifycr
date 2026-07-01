@@ -33,7 +33,7 @@ interface Props { clientId: string }
 
 export const ComfortexActiveHours = ({ clientId }: Props) => {
   const { data: leads = [] } = useInstantFormLeads(clientId);
-  const [rangeDays, setRangeDays] = useState('month');
+  const [rangeDays, setRangeDays] = useState('all');
 
   const filtered = useMemo(() => filterByRange(leads, rangeDays), [leads, rangeDays]);
 

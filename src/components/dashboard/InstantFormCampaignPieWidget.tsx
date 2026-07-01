@@ -33,7 +33,7 @@ const COLORS = [
 
 export const InstantFormCampaignPieWidget = ({ clientId }: Props) => {
   const { data: leads = [], isLoading } = useInstantFormLeads(clientId);
-  const [rangeDays, setRangeDays] = useState('month');
+  const [rangeDays, setRangeDays] = useState('all');
   const [breakdownBy, setBreakdownBy] = useState<'campaign_name' | 'adset_name' | 'ad_name'>('campaign_name');
 
   const filtered = useMemo(
