@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { useInstantFormLeads } from '@/hooks/use-instant-form-leads';
+import { isInRange } from '@/lib/comfortex-leads';
 
 interface Props {
   clientId: string;
