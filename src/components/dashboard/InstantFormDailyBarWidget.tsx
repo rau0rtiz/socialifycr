@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BarChart3 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useInstantFormLeads } from '@/hooks/use-instant-form-leads';
+import { isInRange } from '@/lib/comfortex-leads';
 
 interface Props {
   clientId: string;
