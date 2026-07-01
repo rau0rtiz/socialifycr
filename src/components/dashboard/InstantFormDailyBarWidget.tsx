@@ -33,22 +33,7 @@ export const InstantFormDailyBarWidget = ({ clientId }: Props) => {
   const [rangeDays, setRangeDays] = useState('30');
 
   const chartData = useMemo(() => {
-    let filtered = leads;
-    if (rangeDays === 'month') {
-      const now = new Date();
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-      filtered = leads.filter((l) => {
-        const ts = l.created_time || l.created_at;
-        return ts ? new Date(ts).getTime() >= firstOfMonth : false;
-      });
-    } else {
-      const days = parseInt(rangeDays, 10);
-      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-      filtered = leads.filter((l) => {
-        const ts = l.created_time || l.created_at;
-        return ts ? new Date(ts).getTime() >= cutoff : false;
-      });
-    }
+    const filtered = leads.filter((l) => isInRange(l.created_time || l.created_at, rangeDays));
     const counts = new Map<string, number>();
     filtered.forEach((l) => {
       const k = dayKey(l.created_time || l.created_at);
