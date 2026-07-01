@@ -77,7 +77,7 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
   const updateStatus = useUpdateInstantFormLeadStatus(clientId);
   const updateSeller = useUpdateInstantFormLeadSeller(clientId);
 
-  const [rangeDays, setRangeDays] = useState('month');
+  const [rangeDays, setRangeDays] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   
   const [selectedLead, setSelectedLead] = useState<InstantFormLead | null>(null);

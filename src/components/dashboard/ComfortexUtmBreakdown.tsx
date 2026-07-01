@@ -25,7 +25,7 @@ const TOP_LIMIT = 5;
 
 export const ComfortexUtmBreakdown = ({ clientId }: Props) => {
   const { data: leads = [] } = useInstantFormLeads(clientId);
-  const [rangeDays, setRangeDays] = useState('month');
+  const [rangeDays, setRangeDays] = useState('all');
   const [expanded, setExpanded] = useState<Record<Dim, boolean>>({
     campaign_name: false, adset_name: false, ad_name: false, platform: false,
   });

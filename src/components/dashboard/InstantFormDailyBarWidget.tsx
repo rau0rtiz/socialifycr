@@ -17,6 +17,7 @@ const RANGES = [
   { value: '7', label: 'Últimos 7 días' },
   { value: '30', label: 'Últimos 30 días' },
   { value: '90', label: 'Últimos 90 días' },
+  { value: 'all', label: 'Todo' },
 ];
 
 const dayKey = (iso: string | null) => {
@@ -32,7 +33,7 @@ const dayKey = (iso: string | null) => {
 
 export const InstantFormDailyBarWidget = ({ clientId }: Props) => {
   const { data: leads = [], isLoading } = useInstantFormLeads(clientId);
-  const [rangeDays, setRangeDays] = useState('30');
+  const [rangeDays, setRangeDays] = useState('all');
 
   const chartData = useMemo(() => {
     const filtered = leads.filter((l) => isInRange(l.created_time || l.created_at, rangeDays));

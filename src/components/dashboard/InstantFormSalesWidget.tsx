@@ -64,7 +64,7 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
   const updateSale = useUpdateInstantFormSale(clientId);
   const deleteSale = useDeleteInstantFormSale(clientId);
 
-  const [rangeDays, setRangeDays] = useState('month');
+  const [rangeDays, setRangeDays] = useState('all');
   const [editing, setEditing] = useState<InstantFormSale | null>(null);
   const [quantity, setQuantity] = useState('1');
   const [embroidery, setEmbroidery] = useState(false);
