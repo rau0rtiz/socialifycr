@@ -19,6 +19,7 @@ import {
 } from '@/hooks/use-instant-form-leads';
 // recharts no longer needed here
 import { InstantFormLeadDetailDialog } from './InstantFormLeadDetailDialog';
+import { isInRange } from '@/lib/comfortex-leads';
 
 interface Props {
   clientId: string;
