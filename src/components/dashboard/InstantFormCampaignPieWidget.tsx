@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { useInstantFormLeads } from '@/hooks/use-instant-form-leads';
+import { isInRange } from '@/lib/comfortex-leads';
 
 interface Props {
   clientId: string;
@@ -34,23 +35,10 @@ export const InstantFormCampaignPieWidget = ({ clientId }: Props) => {
   const [rangeDays, setRangeDays] = useState('month');
   const [breakdownBy, setBreakdownBy] = useState<'campaign_name' | 'adset_name' | 'ad_name'>('campaign_name');
 
-  const filtered = useMemo(() => {
-    if (rangeDays === 'all') return leads;
-    if (rangeDays === 'month') {
-      const now = new Date();
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-      return leads.filter((l) => {
-        const ts = l.created_time || l.created_at;
-        return ts ? new Date(ts).getTime() >= firstOfMonth : false;
-      });
-    }
-    const days = parseInt(rangeDays, 10);
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-    return leads.filter((l) => {
-      const ts = l.created_time || l.created_at;
-      return ts ? new Date(ts).getTime() >= cutoff : false;
-    });
-  }, [leads, rangeDays]);
+  const filtered = useMemo(
+    () => leads.filter((l) => isInRange(l.created_time || l.created_at, rangeDays)),
+    [leads, rangeDays],
+  );
 
   const data = useMemo(() => {
     const map = new Map<string, number>();

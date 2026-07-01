@@ -19,6 +19,7 @@ import {
 } from '@/hooks/use-instant-form-leads';
 // recharts no longer needed here
 import { InstantFormLeadDetailDialog } from './InstantFormLeadDetailDialog';
+import { isInRange } from '@/lib/comfortex-leads';
 
 interface Props {
   clientId: string;
@@ -88,24 +89,7 @@ export const InstantFormLeadsWidget = ({ clientId }: Props) => {
   }, [sellers]);
 
   const filtered = useMemo(() => {
-    let result = leads;
-    if (rangeDays !== 'all') {
-      if (rangeDays === 'month') {
-        const now = new Date();
-        const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-        result = result.filter((l) => {
-          const ts = l.created_time || l.created_at;
-          return ts ? new Date(ts).getTime() >= firstOfMonth : false;
-        });
-      } else {
-        const days = parseInt(rangeDays, 10);
-        const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-        result = result.filter((l) => {
-          const ts = l.created_time || l.created_at;
-          return ts ? new Date(ts).getTime() >= cutoff : false;
-        });
-      }
-    }
+    let result = leads.filter((l) => isInRange(l.created_time || l.created_at, rangeDays));
     if (statusFilter !== 'all') {
       result = result.filter((l) => (l.lead_status || 'new') === statusFilter);
     }

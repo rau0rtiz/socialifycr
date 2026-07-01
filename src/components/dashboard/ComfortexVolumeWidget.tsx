@@ -6,6 +6,7 @@ import { Package } from 'lucide-react';
 import { useInstantFormLeads, useInstantFormSales, parseFormSaleNotes } from '@/hooks/use-instant-form-leads';
 import {
   filterByRange,
+  isInRange as inRange,
   parseQuantity,
   getModelFromLead,
   titleCase,
@@ -20,24 +21,6 @@ const RANGES = [
   { value: '90', label: '90d' },
   { value: 'all', label: 'Todo' },
 ];
-
-const inRange = (dateStr: string | null | undefined, rangeDays: string): boolean => {
-  if (rangeDays === 'all') return true;
-  if (!dateStr) return false;
-  const ts = new Date(dateStr).getTime();
-  if (isNaN(ts)) return false;
-  if (rangeDays === 'today') {
-    const now = new Date();
-    return ts >= new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  }
-  if (rangeDays === 'month') {
-    const now = new Date();
-    return ts >= new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  }
-  const days = parseInt(rangeDays, 10);
-  if (!days) return true;
-  return ts >= Date.now() - days * 24 * 60 * 60 * 1000;
-};
 
 interface Props { clientId: string }
 

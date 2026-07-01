@@ -9,6 +9,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { isInRange } from '@/lib/comfortex-leads';
 import { DollarSign, TrendingUp, Users, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -85,35 +86,15 @@ export const InstantFormSalesWidget = ({ clientId }: Props) => {
     }
   }, [editing]);
 
-  const filteredSales = useMemo(() => {
-    if (rangeDays === 'all') return sales;
-    if (rangeDays === 'month') {
-      const now = new Date();
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-      return sales.filter((s) => new Date(s.sale_date).getTime() >= firstOfMonth);
-    }
-    const days = parseInt(rangeDays, 10);
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-    return sales.filter((s) => new Date(s.sale_date).getTime() >= cutoff);
-  }, [sales, rangeDays]);
+  const filteredSales = useMemo(
+    () => sales.filter((s) => isInRange(s.sale_date, rangeDays)),
+    [sales, rangeDays],
+  );
 
-  const filteredLeads = useMemo(() => {
-    if (rangeDays === 'all') return leads;
-    if (rangeDays === 'month') {
-      const now = new Date();
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-      return leads.filter((l) => {
-        const ts = l.created_time || l.created_at;
-        return ts ? new Date(ts).getTime() >= firstOfMonth : false;
-      });
-    }
-    const days = parseInt(rangeDays, 10);
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-    return leads.filter((l) => {
-      const ts = l.created_time || l.created_at;
-      return ts ? new Date(ts).getTime() >= cutoff : false;
-    });
-  }, [leads, rangeDays]);
+  const filteredLeads = useMemo(
+    () => leads.filter((l) => isInRange(l.created_time || l.created_at, rangeDays)),
+    [leads, rangeDays],
+  );
 
   const totals = useMemo(() => {
     const byCurrency: Record<string, number> = {};
