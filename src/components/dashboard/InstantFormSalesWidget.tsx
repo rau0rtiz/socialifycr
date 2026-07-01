@@ -9,6 +9,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { isInRange } from '@/lib/comfortex-leads';
 import { DollarSign, TrendingUp, Users, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
