@@ -33,6 +33,7 @@ const RANGES = [
   { value: '7', label: '7d' },
   { value: '30', label: '30d' },
   { value: 'month', label: 'Este mes' },
+  { value: 'last_month', label: 'Mes pasado' },
   { value: '90', label: '90d' },
   { value: 'all', label: 'Todo' },
 ];

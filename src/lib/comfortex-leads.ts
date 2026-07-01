@@ -68,31 +68,42 @@ export const getModelFromLead = (lead: InstantFormLead, type: ModelType | 'all')
 // zona horaria del navegador.
 const CR_OFFSET_MS = -6 * 60 * 60 * 1000;
 
-/** Devuelve el timestamp UTC que corresponde a la medianoche CR del día/mes indicado. */
-const crStartTimestamp = (mode: 'today' | 'month'): number => {
+/** Timestamp UTC que corresponde a la medianoche CR del 1° del mes con offset. */
+const crMonthStartUtc = (monthOffset: number): number => {
   const nowCr = new Date(Date.now() + CR_OFFSET_MS);
   const y = nowCr.getUTCFullYear();
-  const m = nowCr.getUTCMonth();
-  const d = mode === 'today' ? nowCr.getUTCDate() : 1;
-  // medianoche CR = 06:00 UTC de ese día
-  return Date.UTC(y, m, d) - CR_OFFSET_MS;
+  const m = nowCr.getUTCMonth() + monthOffset;
+  return Date.UTC(y, m, 1) - CR_OFFSET_MS;
 };
 
-export const getRangeCutoff = (rangeDays: string): number | null => {
-  if (rangeDays === 'all') return null;
-  if (rangeDays === 'today') return crStartTimestamp('today');
-  if (rangeDays === 'month') return crStartTimestamp('month');
-  const days = parseInt(rangeDays, 10);
-  if (!days) return null;
-  return Date.now() - days * 24 * 60 * 60 * 1000;
+const crTodayStartUtc = (): number => {
+  const nowCr = new Date(Date.now() + CR_OFFSET_MS);
+  return Date.UTC(nowCr.getUTCFullYear(), nowCr.getUTCMonth(), nowCr.getUTCDate()) - CR_OFFSET_MS;
 };
+
+/** Rango [start, end) en ms UTC. end=null significa "hasta ahora". */
+export const getRange = (rangeDays: string): { start: number | null; end: number | null } => {
+  if (rangeDays === 'all') return { start: null, end: null };
+  if (rangeDays === 'today') return { start: crTodayStartUtc(), end: null };
+  if (rangeDays === 'month') return { start: crMonthStartUtc(0), end: null };
+  if (rangeDays === 'last_month') return { start: crMonthStartUtc(-1), end: crMonthStartUtc(0) };
+  const days = parseInt(rangeDays, 10);
+  if (!days) return { start: null, end: null };
+  return { start: Date.now() - days * 24 * 60 * 60 * 1000, end: null };
+};
+
+/** Compatibilidad hacia atrás: sólo devuelve el cutoff inferior. */
+export const getRangeCutoff = (rangeDays: string): number | null => getRange(rangeDays).start;
 
 export const isInRange = (dateStr: string | null | undefined, rangeDays: string): boolean => {
-  const cutoff = getRangeCutoff(rangeDays);
-  if (cutoff === null) return true;
+  const { start, end } = getRange(rangeDays);
+  if (start === null && end === null) return true;
   if (!dateStr) return false;
   const t = new Date(dateStr).getTime();
-  return Number.isFinite(t) && t >= cutoff;
+  if (!Number.isFinite(t)) return false;
+  if (start !== null && t < start) return false;
+  if (end !== null && t >= end) return false;
+  return true;
 };
 
 export const filterByRange = (leads: InstantFormLead[], rangeDays: string): InstantFormLead[] => {

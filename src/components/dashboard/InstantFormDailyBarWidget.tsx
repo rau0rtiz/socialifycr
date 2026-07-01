@@ -13,6 +13,7 @@ interface Props {
 
 const RANGES = [
   { value: 'month', label: 'Este mes' },
+  { value: 'last_month', label: 'Mes pasado' },
   { value: '7', label: 'Últimos 7 días' },
   { value: '30', label: 'Últimos 30 días' },
   { value: '90', label: 'Últimos 90 días' },
