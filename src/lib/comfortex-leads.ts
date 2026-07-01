@@ -63,33 +63,46 @@ export const getModelFromLead = (lead: InstantFormLead, type: ModelType | 'all')
   );
 };
 
-export const filterByRange = (leads: InstantFormLead[], rangeDays: string): InstantFormLead[] => {
-  if (rangeDays === 'all') return leads;
-  if (rangeDays === 'today') {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    return leads.filter((l) => {
-      const ts = l.created_time || l.created_at;
-      if (!ts) return false;
-      return new Date(ts).getTime() >= start;
-    });
-  }
-  if (rangeDays === 'month') {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    return leads.filter((l) => {
-      const ts = l.created_time || l.created_at;
-      if (!ts) return false;
-      return new Date(ts).getTime() >= start;
-    });
-  }
+// Costa Rica = UTC-6 (sin DST). Todos los cortes por día/mes se calculan
+// en CR para que "Hoy" y "Este mes" sean consistentes sin importar la
+// zona horaria del navegador.
+const CR_OFFSET_MS = -6 * 60 * 60 * 1000;
+
+/** Devuelve el timestamp UTC que corresponde a la medianoche CR del día/mes indicado. */
+const crStartTimestamp = (mode: 'today' | 'month'): number => {
+  const nowCr = new Date(Date.now() + CR_OFFSET_MS);
+  const y = nowCr.getUTCFullYear();
+  const m = nowCr.getUTCMonth();
+  const d = mode === 'today' ? nowCr.getUTCDate() : 1;
+  // medianoche CR = 06:00 UTC de ese día
+  return Date.UTC(y, m, d) - CR_OFFSET_MS;
+};
+
+export const getRangeCutoff = (rangeDays: string): number | null => {
+  if (rangeDays === 'all') return null;
+  if (rangeDays === 'today') return crStartTimestamp('today');
+  if (rangeDays === 'month') return crStartTimestamp('month');
   const days = parseInt(rangeDays, 10);
-  if (!days) return leads;
-  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  if (!days) return null;
+  return Date.now() - days * 24 * 60 * 60 * 1000;
+};
+
+export const isInRange = (dateStr: string | null | undefined, rangeDays: string): boolean => {
+  const cutoff = getRangeCutoff(rangeDays);
+  if (cutoff === null) return true;
+  if (!dateStr) return false;
+  const t = new Date(dateStr).getTime();
+  return Number.isFinite(t) && t >= cutoff;
+};
+
+export const filterByRange = (leads: InstantFormLead[], rangeDays: string): InstantFormLead[] => {
+  const cutoff = getRangeCutoff(rangeDays);
+  if (cutoff === null) return leads;
   return leads.filter((l) => {
     const ts = l.created_time || l.created_at;
     if (!ts) return false;
-    return new Date(ts).getTime() >= cutoff;
+    const t = new Date(ts).getTime();
+    return Number.isFinite(t) && t >= cutoff;
   });
 };
 
