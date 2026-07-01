@@ -2873,6 +2873,51 @@ export type Database = {
           },
         ]
       }
+      instant_form_lead_status_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          client_id: string
+          from_status: string | null
+          id: string
+          lead_id: string
+          to_status: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          client_id: string
+          from_status?: string | null
+          id?: string
+          lead_id: string
+          to_status?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          client_id?: string
+          from_status?: string | null
+          id?: string
+          lead_id?: string
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instant_form_lead_status_history_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instant_form_lead_status_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "instant_form_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instant_form_leads: {
         Row: {
           ad_id: string | null
