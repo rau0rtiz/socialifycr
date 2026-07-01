@@ -1,30 +1,47 @@
-## Widget: Tiempo Promedio de Cierre
+## Widget: Duración Promedio por Estado del Lead
 
-Nuevo widget en el dashboard de Comfortex que mide cuánto tiempo pasa desde que un lead llena el Instant Form hasta que se registra la venta.
+Mide cuánto tiempo pasa un lead en cada estado del pipeline (`nuevo → contactado → seguimiento → venta/perdido`) para Comfortex.
 
-### Fuente de datos
-- `instant_form_leads.created_time` → llegada del lead
-- `message_sales.created_at` (o `sale_date`) del registro vinculado vía `instant_form_leads.message_sale_id`
-- Solo cuentan leads con `message_sale_id IS NOT NULL` y venta no `cancelled`
+### Problema
+Hoy `instant_form_leads.lead_status` sólo guarda el estado actual — no hay historial de cambios, así que no se puede calcular duración por etapa. Hay que empezar a registrar cada transición.
 
-### Métrica principal
-- **Promedio** de duración lead→venta, mostrado en la unidad más legible (horas si <48h, días en caso contrario)
-- Sub-métricas: mediana, más rápido, más lento, y # de ventas atribuidas usadas en el cálculo
+### Cambios en base de datos
+Migración que crea:
 
-### UI
-- Card estilo KPI, misma línea visual que los otros widgets Comfortex
-- Ícono de reloj, título sugerido: **"Tiempo de cierre"** (subtítulo: "desde formulario hasta venta")
-- Selector de rango con las mismas opciones que los demás widgets (`Todo` por default, `Hoy`, `Este mes`, `Mes pasado`, `7/30/90` días). El rango filtra por `sale_date` de la venta.
-- Mini distribución: barras cortas con buckets `<24h`, `1–3d`, `4–7d`, `8–14d`, `15d+`
-- Estado vacío claro cuando aún no hay ventas vinculadas en el rango
+1. **Tabla `instant_form_lead_status_history`**
+   - `id uuid pk`, `lead_id uuid fk`, `client_id uuid fk`, `from_status text`, `to_status text`, `changed_at timestamptz default now()`, `changed_by uuid`
+   - Índices por `(lead_id, changed_at)` y `(client_id, changed_at)`
+   - RLS: SELECT/INSERT para team del cliente (via `has_client_access`), full para `service_role`
+   - GRANTs correspondientes
 
-### Ubicación
-- Se agrega a la grilla de widgets Comfortex del Dashboard (junto a `ComfortexVolumeWidget` / `InstantFormSalesWidget`), respetando la lógica de feature flags existente.
+2. **Trigger `AFTER INSERT OR UPDATE OF lead_status`** en `instant_form_leads`
+   - INSERT nuevo lead → registra transición `null → <estado inicial>` con `changed_at = created_time` (o `now()`)
+   - UPDATE con cambio de estado → registra `old → new`
+
+3. **Backfill inicial** (una sola vez)
+   - Para cada lead existente inserta una fila `null → <estado_actual>` con `changed_at = created_time`. Esto nos da al menos el punto de partida; las duraciones reales por etapa se irán calculando a medida que ocurran nuevas transiciones.
+
+### Widget nuevo
+`src/components/dashboard/ComfortexStageDurationWidget.tsx`
+
+- Hook `useInstantFormLeadStatusHistory(clientId)` que trae el historial (últimos 1000 eventos)
+- Calcula, por cada par consecutivo del mismo lead, el delta de tiempo
+- Agrupa por transición: `Nuevo → Contactado`, `Contactado → Seguimiento`, `Seguimiento → Venta`, `Seguimiento → Perdido`, `Contactado → Perdido`
+- Muestra por cada una:
+  - Promedio y mediana (formato inteligente: min/horas/días)
+  - Cantidad de transiciones usadas
+  - Barra visual comparativa
+- Selector de rango como los otros widgets (`Todo` default, `Hoy`, `Este mes`, `Mes pasado`, `7/30/90 días`) filtrado por `changed_at` de la transición de destino
+- Estado vacío claro: "Empezamos a medir desde hoy — vuelve en unos días para ver duraciones reales."
+
+### Ubicación en Dashboard
+En el bloque Comfortex, en fila con `ComfortexCloseTimeWidget` (grid 2 columnas), justo después de `InstantFormSalesWidget`.
 
 ### Archivos técnicos
-- Nuevo: `src/components/dashboard/ComfortexCloseTimeWidget.tsx`
-- Editar: `src/pages/Dashboard.tsx` (o el contenedor donde se listan los widgets Comfortex) para insertarlo
-- Reutiliza `getRange` / `isInRange` de `src/lib/comfortex-leads.ts` y el hook `useInstantFormLeads` + `useMessageSales` ya existentes
+- Migración nueva (tabla + trigger + backfill + RLS + GRANTs)
+- Nuevo hook en `src/hooks/use-instant-form-leads.ts` (o archivo aparte)
+- Nuevo: `src/components/dashboard/ComfortexStageDurationWidget.tsx`
+- Editar: `src/pages/Dashboard.tsx` para insertarlo
 
-### Pregunta abierta
-¿El "cierre" se mide contra `sale_date` (fecha comercial, día) o `created_at` de la venta (timestamp exacto)? Por defecto usaré `created_at` para tener precisión en horas — dime si prefieres `sale_date`.
+### Nota sobre datos históricos
+No se puede reconstruir duraciones pasadas con precisión porque nunca se guardaron los cambios. Desde el momento en que se despliegue esta migración, cada transición futura queda registrada y el widget se irá poblando naturalmente.

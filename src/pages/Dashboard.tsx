@@ -21,6 +21,7 @@ const ComfortexModelDemand = lazy(() => import('@/components/dashboard/Comfortex
 const ComfortexVolumeWidget = lazy(() => import('@/components/dashboard/ComfortexVolumeWidget').then(m => ({ default: m.ComfortexVolumeWidget })));
 const ComfortexActiveHours = lazy(() => import('@/components/dashboard/ComfortexActiveHours').then(m => ({ default: m.ComfortexActiveHours })));
 const ComfortexCloseTimeWidget = lazy(() => import('@/components/dashboard/ComfortexCloseTimeWidget').then(m => ({ default: m.ComfortexCloseTimeWidget })));
+const ComfortexStageDurationWidget = lazy(() => import('@/components/dashboard/ComfortexStageDurationWidget').then(m => ({ default: m.ComfortexStageDurationWidget })));
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
@@ -421,9 +422,14 @@ const Dashboard = () => {
               <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
                 <InstantFormSalesWidget clientId={selectedClient.id} />
               </Suspense>
-              <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
-                <ComfortexCloseTimeWidget clientId={selectedClient.id} />
-              </Suspense>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+                <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                  <ComfortexCloseTimeWidget clientId={selectedClient.id} />
+                </Suspense>
+                <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                  <ComfortexStageDurationWidget clientId={selectedClient.id} />
+                </Suspense>
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
                 <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
                   <ComfortexUtmBreakdown clientId={selectedClient.id} />
