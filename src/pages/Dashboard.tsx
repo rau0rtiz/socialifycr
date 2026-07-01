@@ -20,6 +20,7 @@ const ComfortexUtmBreakdown = lazy(() => import('@/components/dashboard/Comforte
 const ComfortexModelDemand = lazy(() => import('@/components/dashboard/ComfortexModelDemand').then(m => ({ default: m.ComfortexModelDemand })));
 const ComfortexVolumeWidget = lazy(() => import('@/components/dashboard/ComfortexVolumeWidget').then(m => ({ default: m.ComfortexVolumeWidget })));
 const ComfortexActiveHours = lazy(() => import('@/components/dashboard/ComfortexActiveHours').then(m => ({ default: m.ComfortexActiveHours })));
+const ComfortexCloseTimeWidget = lazy(() => import('@/components/dashboard/ComfortexCloseTimeWidget').then(m => ({ default: m.ComfortexCloseTimeWidget })));
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
