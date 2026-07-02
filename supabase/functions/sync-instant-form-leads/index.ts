@@ -226,17 +226,11 @@ Deno.serve(async (req) => {
   }
 });
 
-async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsKey: string) {
-    // Load config
-    const { data: source } = await admin
-      .from('instant_form_lead_sources')
-      .select('*')
-      .eq('client_id', clientId)
-      .maybeSingle();
-
+async function syncOne(admin: any, clientId: string, source: any, lovableKey: string, sheetsKey: string) {
     if (!source) {
       throw new Error('No Google Sheet configurado para este cliente');
     }
+
 
 
     const sheetName = source.sheet_name || 'Sheet1';
