@@ -30,6 +30,27 @@ export interface InstantFormLead {
   updated_at: string;
 }
 
+export const useInstantFormLeads = (clientId: string | null, enabled = true) => {
+  return useQuery({
+    queryKey: ['instant-form-leads', clientId],
+    queryFn: async () => {
+      if (!clientId) return [];
+      const { data, error } = await supabase
+        .from('instant_form_leads')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_time', { ascending: false, nullsFirst: false })
+        .limit(5000);
+      if (error) throw error;
+      return (data || []) as unknown as InstantFormLead[];
+    },
+    enabled: !!clientId && enabled,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+  });
+};
+
+
 export interface InstantFormLeadSource {
   id: string;
   client_id: string;
