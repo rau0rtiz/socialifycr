@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
       const { data: sources } = await admin
         .from('instant_form_lead_sources')
         .select('client_id');
-      clientIdsToSync = (sources || []).map((s: any) => s.client_id);
+      clientIdsToSync = Array.from(new Set((sources || []).map((s: any) => s.client_id)));
     } else {
       if (!authHeader?.startsWith('Bearer ')) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
