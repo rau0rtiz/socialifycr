@@ -2832,6 +2832,7 @@ export type Database = {
           created_at: string
           header_row: number
           id: string
+          label: string | null
           last_error: string | null
           last_row_count: number | null
           last_synced_at: string | null
@@ -2844,6 +2845,7 @@ export type Database = {
           created_at?: string
           header_row?: number
           id?: string
+          label?: string | null
           last_error?: string | null
           last_row_count?: number | null
           last_synced_at?: string | null
@@ -2856,6 +2858,7 @@ export type Database = {
           created_at?: string
           header_row?: number
           id?: string
+          label?: string | null
           last_error?: string | null
           last_row_count?: number | null
           last_synced_at?: string | null
@@ -2867,7 +2870,7 @@ export type Database = {
           {
             foreignKeyName: "instant_form_lead_sources_client_id_fkey"
             columns: ["client_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
