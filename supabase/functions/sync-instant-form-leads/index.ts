@@ -411,7 +411,7 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
         campaign_id: rec.campaign_id || null,
         campaign_name: rec.campaign_name || null,
         form_id: rec.form_id || null,
-        form_name: rec.form_name || null,
+        form_name: rec.form_name || source.label || null,
         platform: rec.platform || null,
         is_organic: parseBool(rec.is_organic),
         full_name: fullName,
