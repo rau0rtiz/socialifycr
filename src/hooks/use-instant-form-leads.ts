@@ -165,7 +165,7 @@ export const useSyncInstantFormLeads = (clientId: string | null) => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['instant-form-leads', clientId] });
-      qc.invalidateQueries({ queryKey: ['instant-form-lead-source', clientId] });
+      qc.invalidateQueries({ queryKey: ['instant-form-lead-sources', clientId] });
       qc.invalidateQueries({ queryKey: ['customer-contacts', clientId] });
     },
   });
