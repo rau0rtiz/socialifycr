@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
       const { data: sources } = await admin
         .from('instant_form_lead_sources')
         .select('client_id');
-      clientIdsToSync = (sources || []).map((s: any) => s.client_id);
+      clientIdsToSync = Array.from(new Set((sources || []).map((s: any) => s.client_id)));
     } else {
       if (!authHeader?.startsWith('Bearer ')) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -184,12 +184,28 @@ Deno.serve(async (req) => {
 
     const results: any[] = [];
     for (const clientId of clientIdsToSync) {
-      try {
-        const r = await syncOne(admin, clientId, lovableKey, sheetsKey);
-        results.push({ client_id: clientId, ...r });
-      } catch (e: any) {
-        results.push({ client_id: clientId, error: e.message || 'unknown' });
+      const { data: sources } = await admin
+        .from('instant_form_lead_sources')
+        .select('*')
+        .eq('client_id', clientId);
+      if (!sources || sources.length === 0) {
+        results.push({ client_id: clientId, error: 'No Google Sheet configurado' });
+        continue;
       }
+      let totalSynced = 0, totalSkipped = 0, totalRows = 0;
+      const perSource: any[] = [];
+      for (const source of sources) {
+        try {
+          const r = await syncOne(admin, clientId, source, lovableKey, sheetsKey);
+          totalSynced += r.synced || 0;
+          totalSkipped += r.skipped || 0;
+          totalRows += r.total || 0;
+          perSource.push({ source_id: source.id, label: source.label, ...r });
+        } catch (e: any) {
+          perSource.push({ source_id: source.id, label: source.label, error: e.message || 'unknown' });
+        }
+      }
+      results.push({ client_id: clientId, synced: totalSynced, skipped: totalSkipped, total: totalRows, sources: perSource });
     }
 
     if (isCron) {
@@ -200,6 +216,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ok: true, ...(results[0] || {}) }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (e: any) {
     console.error('sync-instant-form-leads error', e);
     return new Response(JSON.stringify({ error: e.message || 'unknown' }), {
@@ -209,17 +226,11 @@ Deno.serve(async (req) => {
   }
 });
 
-async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsKey: string) {
-    // Load config
-    const { data: source } = await admin
-      .from('instant_form_lead_sources')
-      .select('*')
-      .eq('client_id', clientId)
-      .maybeSingle();
-
+async function syncOne(admin: any, clientId: string, source: any, lovableKey: string, sheetsKey: string) {
     if (!source) {
       throw new Error('No Google Sheet configurado para este cliente');
     }
+
 
 
     const sheetName = source.sheet_name || 'Sheet1';
@@ -400,7 +411,7 @@ async function syncOne(admin: any, clientId: string, lovableKey: string, sheetsK
         campaign_id: rec.campaign_id || null,
         campaign_name: rec.campaign_name || null,
         form_id: rec.form_id || null,
-        form_name: rec.form_name || null,
+        form_name: rec.form_name || source.label || null,
         platform: rec.platform || null,
         is_organic: parseBool(rec.is_organic),
         full_name: fullName,

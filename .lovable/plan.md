@@ -1,47 +1,42 @@
-## Widget: Duración Promedio por Estado del Lead
+## Soporte multi-formulario para Instant Form (Google Sheets)
 
-Mide cuánto tiempo pasa un lead en cada estado del pipeline (`nuevo → contactado → seguimiento → venta/perdido`) para Comfortex.
+Hoy Comfortex tiene **una** hoja de Google conectada (`instant_form_lead_sources` con UNIQUE por `client_id`). Se puede agregar un segundo formulario sin romper nada: el sync ya deduplica por `spreadsheet_id + row` en `external_id`, y los widgets consultan `instant_form_leads` por `client_id` así que absorben automáticamente los leads del nuevo sheet.
 
-### Problema
-Hoy `instant_form_leads.lead_status` sólo guarda el estado actual — no hay historial de cambios, así que no se puede calcular duración por etapa. Hay que empezar a registrar cada transición.
+### Cambios necesarios
 
-### Cambios en base de datos
-Migración que crea:
+**1. Base de datos**
+- Quitar el UNIQUE `(client_id)` de `instant_form_lead_sources`.
+- Agregar columna `label text` (ej: "Uniformes empresariales", "Polos"). Permite distinguir formularios en UI y filtros.
+- Nuevo UNIQUE `(client_id, spreadsheet_id, sheet_name)` para evitar duplicar el mismo tab.
+- Backfill: la fila existente recibe `label = 'Formulario principal'`.
 
-1. **Tabla `instant_form_lead_status_history`**
-   - `id uuid pk`, `lead_id uuid fk`, `client_id uuid fk`, `from_status text`, `to_status text`, `changed_at timestamptz default now()`, `changed_by uuid`
-   - Índices por `(lead_id, changed_at)` y `(client_id, changed_at)`
-   - RLS: SELECT/INSERT para team del cliente (via `has_client_access`), full para `service_role`
-   - GRANTs correspondientes
+**2. Edge function `sync-instant-form-leads`**
+- Iterar **todas** las fuentes del cliente en lugar de asumir una (`.single()`). Cada una sincroniza su sheet independientemente y guarda su propio `last_synced_at` / `last_error`.
+- `external_id` sigue incluyendo `spreadsheet_id` así que no hay colisiones entre hojas.
 
-2. **Trigger `AFTER INSERT OR UPDATE OF lead_status`** en `instant_form_leads`
-   - INSERT nuevo lead → registra transición `null → <estado inicial>` con `changed_at = created_time` (o `now()`)
-   - UPDATE con cambio de estado → registra `old → new`
+**3. UI `InstantFormSetup.tsx`**
+- Convertir en lista: mostrar todas las fuentes del cliente con label, link al sheet, botón "Sincronizar" y "Eliminar" por cada una.
+- Botón "Agregar formulario" abre un formulario para pegar URL + tab + label.
+- Hook `useInstantFormSource` pasa a `useInstantFormSources` (array).
 
-3. **Backfill inicial** (una sola vez)
-   - Para cada lead existente inserta una fila `null → <estado_actual>` con `changed_at = created_time`. Esto nos da al menos el punto de partida; las duraciones reales por etapa se irán calculando a medida que ocurran nuevas transiciones.
+**4. Widgets — sin cambios funcionales requeridos**
+- Todos leen `instant_form_leads` por `client_id`, por lo que suman leads de todas las hojas de forma automática.
+- **Mejora opcional (misma iteración)**: agregar un selector "Formulario" en `InstantFormLeadsWidget` que filtre por `form_name` cuando hay más de un valor distinto en la data, para poder ver un formulario a la vez o el consolidado. Aplica el mismo filtro a los demás widgets Comfortex si el usuario lo desea (por ahora sólo se agrega al principal).
 
-### Widget nuevo
-`src/components/dashboard/ComfortexStageDurationWidget.tsx`
+**5. Detalle del lead / CRM (`/mis-leads`, `ClientDatabase`, `LeadContactDetailDialog`)**
+- Ya muestran `form_name` cuando existe. Con múltiples fuentes ese campo se poblará naturalmente desde el nombre del sheet / label del source cuando el sheet no traiga `form_name` propio (se agrega fallback en el sync: si la fila no trae `form_name`, usar `source.label`).
 
-- Hook `useInstantFormLeadStatusHistory(clientId)` que trae el historial (últimos 1000 eventos)
-- Calcula, por cada par consecutivo del mismo lead, el delta de tiempo
-- Agrupa por transición: `Nuevo → Contactado`, `Contactado → Seguimiento`, `Seguimiento → Venta`, `Seguimiento → Perdido`, `Contactado → Perdido`
-- Muestra por cada una:
-  - Promedio y mediana (formato inteligente: min/horas/días)
-  - Cantidad de transiciones usadas
-  - Barra visual comparativa
-- Selector de rango como los otros widgets (`Todo` default, `Hoy`, `Este mes`, `Mes pasado`, `7/30/90 días`) filtrado por `changed_at` de la transición de destino
-- Estado vacío claro: "Empezamos a medir desde hoy — vuelve en unos días para ver duraciones reales."
+### Riesgos / consideraciones
+- Ninguna migración destructiva de datos existentes.
+- Historial de estados, ventas vinculadas, asignación de vendedor: siguen funcionando sin cambios (todo se apoya en `lead_id`, no en la fuente).
+- Cuota de Google Sheets API: cada sync ahora hace N llamadas en vez de 1. Aceptable con pocas hojas.
 
-### Ubicación en Dashboard
-En el bloque Comfortex, en fila con `ComfortexCloseTimeWidget` (grid 2 columnas), justo después de `InstantFormSalesWidget`.
+### Archivos
+- Migración nueva (ajustes en `instant_form_lead_sources`)
+- `supabase/functions/sync-instant-form-leads/index.ts`
+- `src/hooks/use-instant-form-leads.ts` (nuevo hook plural + mantener el singular como shim)
+- `src/components/business-setup/InstantFormSetup.tsx`
+- (Opcional) `src/components/dashboard/InstantFormLeadsWidget.tsx` para selector de formulario
 
-### Archivos técnicos
-- Migración nueva (tabla + trigger + backfill + RLS + GRANTs)
-- Nuevo hook en `src/hooks/use-instant-form-leads.ts` (o archivo aparte)
-- Nuevo: `src/components/dashboard/ComfortexStageDurationWidget.tsx`
-- Editar: `src/pages/Dashboard.tsx` para insertarlo
-
-### Nota sobre datos históricos
-No se puede reconstruir duraciones pasadas con precisión porque nunca se guardaron los cambios. Desde el momento en que se despliegue esta migración, cada transición futura queda registrada y el widget se irá poblando naturalmente.
+### Pregunta
+¿Incluyo en esta misma iteración el selector de "Formulario" en los widgets para poder verlos separados, o lo dejamos para después y por ahora todo se ve consolidado?

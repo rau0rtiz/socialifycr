@@ -30,17 +30,6 @@ export interface InstantFormLead {
   updated_at: string;
 }
 
-export interface InstantFormLeadSource {
-  id: string;
-  client_id: string;
-  spreadsheet_id: string;
-  sheet_name: string;
-  header_row: number;
-  last_synced_at: string | null;
-  last_row_count: number | null;
-  last_error: string | null;
-}
-
 export const useInstantFormLeads = (clientId: string | null, enabled = true) => {
   return useQuery({
     queryKey: ['instant-form-leads', clientId],
@@ -61,46 +50,89 @@ export const useInstantFormLeads = (clientId: string | null, enabled = true) => 
   });
 };
 
-export const useInstantFormLeadSource = (clientId: string | null) => {
+
+export interface InstantFormLeadSource {
+  id: string;
+  client_id: string;
+  spreadsheet_id: string;
+  sheet_name: string;
+  header_row: number;
+  label: string | null;
+  last_synced_at: string | null;
+  last_row_count: number | null;
+  last_error: string | null;
+}
+
+export const useInstantFormLeadSources = (clientId: string | null) => {
   return useQuery({
-    queryKey: ['instant-form-lead-source', clientId],
+    queryKey: ['instant-form-lead-sources', clientId],
     queryFn: async () => {
-      if (!clientId) return null;
+      if (!clientId) return [] as InstantFormLeadSource[];
       const { data, error } = await supabase
         .from('instant_form_lead_sources')
         .select('*')
         .eq('client_id', clientId)
-        .maybeSingle();
+        .order('created_at', { ascending: true });
       if (error) throw error;
-      return data as InstantFormLeadSource | null;
+      return (data || []) as unknown as InstantFormLeadSource[];
     },
     enabled: !!clientId,
   });
 };
 
+// Backward-compat: returns the first source for the client.
+export const useInstantFormLeadSource = (clientId: string | null) => {
+  const q = useInstantFormLeadSources(clientId);
+  return { ...q, data: (q.data && q.data[0]) || null } as any;
+};
+
 export const useSaveInstantFormLeadSource = (clientId: string | null) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { spreadsheet_id: string; sheet_name: string }) => {
+    mutationFn: async (input: { id?: string; spreadsheet_id: string; sheet_name: string; label?: string | null }) => {
       if (!clientId) throw new Error('No client');
-      const { error } = await supabase
-        .from('instant_form_lead_sources')
-        .upsert(
-          {
+      if (input.id) {
+        const { error } = await supabase
+          .from('instant_form_lead_sources')
+          .update({
+            spreadsheet_id: input.spreadsheet_id.trim(),
+            sheet_name: (input.sheet_name || 'Sheet1').trim(),
+            label: input.label?.trim() || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', input.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('instant_form_lead_sources')
+          .insert({
             client_id: clientId,
             spreadsheet_id: input.spreadsheet_id.trim(),
-            sheet_name: input.sheet_name.trim() || 'Sheet1',
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'client_id' }
-        );
-      if (error) throw error;
+            sheet_name: (input.sheet_name || 'Sheet1').trim(),
+            label: input.label?.trim() || null,
+          } as any);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['instant-form-lead-source', clientId] });
+      qc.invalidateQueries({ queryKey: ['instant-form-lead-sources', clientId] });
     },
   });
 };
+
+export const useDeleteInstantFormLeadSource = (clientId: string | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('instant_form_lead_sources').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['instant-form-lead-sources', clientId] });
+    },
+  });
+};
+
 
 export const useSyncInstantFormLeads = (clientId: string | null) => {
   const qc = useQueryClient();
@@ -133,7 +165,7 @@ export const useSyncInstantFormLeads = (clientId: string | null) => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['instant-form-leads', clientId] });
-      qc.invalidateQueries({ queryKey: ['instant-form-lead-source', clientId] });
+      qc.invalidateQueries({ queryKey: ['instant-form-lead-sources', clientId] });
       qc.invalidateQueries({ queryKey: ['customer-contacts', clientId] });
     },
   });
