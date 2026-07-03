@@ -1856,6 +1856,7 @@ export type Database = {
           banner_url: string | null
           created_at: string | null
           default_campaign_goal: string | null
+          default_instant_form_seller_id: string | null
           id: string
           industry: string | null
           logo_url: string | null
@@ -1871,6 +1872,7 @@ export type Database = {
           banner_url?: string | null
           created_at?: string | null
           default_campaign_goal?: string | null
+          default_instant_form_seller_id?: string | null
           id?: string
           industry?: string | null
           logo_url?: string | null
@@ -1886,6 +1888,7 @@ export type Database = {
           banner_url?: string | null
           created_at?: string | null
           default_campaign_goal?: string | null
+          default_instant_form_seller_id?: string | null
           id?: string
           industry?: string | null
           logo_url?: string | null
