@@ -181,30 +181,37 @@ Deno.serve(async (req) => {
 
     const userMessage = lines.join('\n') || 'Lead sin información adicional.';
 
-    // Call Anthropic
-    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+    // Call Lovable AI Gateway
+    const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
+        'Lovable-API-Key': lovableKey,
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
+        model: 'google/gemini-3-flash-preview',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userMessage },
+        ],
       }),
     });
 
-    if (!anthropicRes.ok) {
-      const errText = await anthropicRes.text();
-      console.error('Anthropic error', anthropicRes.status, errText);
-      return new Response(JSON.stringify({ error: `Anthropic ${anthropicRes.status}: ${errText.slice(0, 300)}` }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (!aiRes.ok) {
+      const errText = await aiRes.text();
+      console.error('Lovable AI error', aiRes.status, errText);
+      if (aiRes.status === 429) {
+        return new Response(JSON.stringify({ error: 'Límite de solicitudes alcanzado. Intenta en unos segundos.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (aiRes.status === 402) {
+        return new Response(JSON.stringify({ error: 'Créditos de Lovable AI agotados. Recarga en Settings → Plans & credits.' }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ error: `AI ${aiRes.status}: ${errText.slice(0, 300)}` }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const anthropicData = await anthropicRes.json();
-    const message = anthropicData?.content?.[0]?.text || '';
+    const aiData = await aiRes.json();
+    const message = aiData?.choices?.[0]?.message?.content || '';
+
 
     return new Response(JSON.stringify({ message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
