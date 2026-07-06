@@ -220,6 +220,12 @@ const Auth = () => {
             </form>
           )}
         </CardContent>
+
+        <div className="pb-4 flex justify-center gap-4 text-xs text-muted-foreground">
+          <Link to="/privacidad" className="hover:text-primary hover:underline">Privacidad</Link>
+          <span>·</span>
+          <Link to="/terminos" className="hover:text-primary hover:underline">Términos</Link>
+        </div>
       </Card>
     </div>
   );
