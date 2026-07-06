@@ -483,6 +483,8 @@ export interface InstantFormSale {
   product: string | null;
   notes: string | null;
   ad_campaign_name: string | null;
+  ad_name: string | null;
+  ad_id: string | null;
   created_at: string;
   lead_id?: string | null;
 }
@@ -506,10 +508,11 @@ export const useInstantFormSales = (clientId: string | null) => {
       if (ids.length === 0) return [] as InstantFormSale[];
       const { data, error } = await supabase
         .from('message_sales')
-        .select('id, sale_date, amount, subtotal, tax_amount, currency, customer_name, product, notes, ad_campaign_name, created_at')
+        .select('id, sale_date, amount, subtotal, tax_amount, currency, customer_name, product, notes, ad_campaign_name, ad_name, ad_id, created_at')
         .in('id', ids)
         .order('sale_date', { ascending: false });
       if (error) throw error;
+
       return ((data || []) as any[]).map((s) => ({
         ...s,
         lead_id: leadsBySaleId.get(s.id) || null,
