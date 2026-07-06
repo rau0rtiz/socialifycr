@@ -38,7 +38,7 @@ const Accesos = lazy(() => import("./pages/Accesos"));
 const BusinessSetup = lazy(() => import("./pages/BusinessSetup"));
 const ClientDatabase = lazy(() => import("./pages/ClientDatabase"));
 const WidgetCatalogPage = lazy(() => import("./pages/WidgetCatalog"));
-const Asistencia = lazy(() => import("./pages/Asistencia"));
+
 const ActualizarFoto = lazy(() => import("./pages/ActualizarFoto"));
 const Funnel = lazy(() => import("./pages/Funnel"));
 const AgencyLeads = lazy(() => import("./pages/AgencyLeads"));
