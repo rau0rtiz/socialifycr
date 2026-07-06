@@ -51,7 +51,7 @@ const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
   { title: 'Comunicaciones', url: '/comunicaciones', icon: Mail },
   { title: 'Accesos', url: '/accesos', icon: KeyRound },
-  { title: 'Ad Frameworks', url: '/ad-frameworks', icon: Layers },
+  
   
   { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },
   { title: 'CRM Agencia', url: '/agencia/crm', icon: UserPlus },
