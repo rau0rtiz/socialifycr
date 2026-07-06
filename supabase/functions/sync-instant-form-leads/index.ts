@@ -1,6 +1,10 @@
 // Sync Instant Form leads from a Google Sheet into instant_form_leads + customer_contacts.
 // Auth: validates caller JWT and checks they have access to the client.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import {
+  COMFORTEX_CLIENT_ID,
+  generateAndSaveComfortexReply,
+} from '../_shared/comfortex-reply.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
