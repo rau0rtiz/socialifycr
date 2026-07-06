@@ -167,6 +167,8 @@ const App = () => (
                     <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
                     <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
                     <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
+                    <Route path="/privacidad" element={<Privacy />} />
+                    <Route path="/terminos" element={<Terms />} />
                     <Route path="/" element={<Navigate to="/producciones" replace />} />
                     <Route path="/producciones" element={
                       <ProtectedRoute>
@@ -194,6 +196,8 @@ const App = () => (
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/invitacion/:token" element={<Invitacion />} />
                   <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
+                  <Route path="/privacidad" element={<Privacy />} />
+                  <Route path="/terminos" element={<Terms />} />
                   <Route path="/" element={<ProtectedRoute><SellerHomeGate /></ProtectedRoute>} />
                   <Route path="/mis-leads" element={<ProtectedRoute><SellerCrm /></ProtectedRoute>} />
                   {/* Agency-only routes */}
