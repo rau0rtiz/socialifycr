@@ -62,6 +62,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
 
   const registerSale = useRegisterSaleFromInstantFormLead(lead?.client_id || null);
   const updateStatus = useUpdateSellerLeadStatus();
+  const qc = useQueryClient();
 
   useEffect(() => {
     if (open) {
@@ -71,7 +72,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
       setSubtotalStr('');
       setIvaPct('13');
       setNotes('');
-      setGeneratedMessage('');
+      setGeneratedMessage((lead as any)?.ai_message || '');
     }
   }, [open, lead?.id]);
 
