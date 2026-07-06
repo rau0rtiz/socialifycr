@@ -28,6 +28,8 @@ const Auth = lazy(() => import("./pages/Auth"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const Invitacion = lazy(() => import("./pages/Invitacion"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ImageDB = lazy(() => import("./pages/ImageDB"));
 const Archivos = lazy(() => import("./pages/Archivos"));
