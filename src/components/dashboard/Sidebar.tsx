@@ -1,14 +1,10 @@
 import { useTransition } from 'react';
 import { 
   LayoutDashboard, 
-  FileText, 
   Users, 
   Palette, 
   LogOut,
   ShoppingCart,
-  ClipboardCheck,
-  History,
-  BarChart3,
   
   Eye,
   FolderOpen,
@@ -19,13 +15,12 @@ import {
   Database,
   Loader2,
   DollarSign,
-  Layers,
-  GraduationCap,
   Package,
   UserPlus,
   Clapperboard,
   Inbox,
 } from 'lucide-react';
+
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sidebar as SidebarComponent,
