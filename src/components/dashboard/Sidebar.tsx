@@ -140,11 +140,8 @@ export const Sidebar = () => {
     menuItems.push({ title: 'Reportes', url: '/reportes', icon: BarChart3 });
   }
 
-  const isTissueClient = selectedClient?.name?.toLowerCase().includes('tissue');
-  const showAsistencia = (effectiveAgency || (flags as any).asistencia_section) && !isTissueClient;
-  if (showAsistencia) {
-    menuItems.push({ title: 'Asistencia', url: '/asistencia', icon: ClipboardCheck });
-  }
+  // Asistencia removida del sidebar (accesible por URL directa /asistencia).
+
 
   // Comisiones — only for The Mind Coach, visible to owners/admins/account managers
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
