@@ -427,16 +427,24 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
         updated_at: new Date().toISOString(),
       };
 
-      const { error: upErr } = await admin
+      const { data: upserted, error: upErr } = await admin
         .from('instant_form_leads')
-        .upsert(payload, { onConflict: 'client_id,external_id' });
-
+        .upsert(payload, { onConflict: 'client_id,external_id' })
+        .select('id')
+        .single();
 
       if (upErr) {
         console.error('Upsert error', upErr, externalId);
         skipped++;
       } else {
         synced++;
+
+        // Auto-generate the WhatsApp reply for brand-new Comfortex leads.
+        // Best-effort: never blocks the sync loop.
+        const isNew = !existingLead;
+        if (isNew && clientId === COMFORTEX_CLIENT_ID && upserted?.id) {
+          await generateAndSaveComfortexReply(admin, upserted.id, lovableKey);
+        }
       }
     }
 
