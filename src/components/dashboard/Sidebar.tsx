@@ -134,15 +134,7 @@ export const Sidebar = () => {
     menuItems.push({ title: 'Órdenes', url: '/ordenes', icon: Package, dataTour: 'ventas-link' });
   }
 
-  // Reportes — exclusive section for Speak Up (sales analytics, charts, collections)
-  const isSpeakUpClient = selectedClient?.name?.toLowerCase().includes('speak up');
-  if (isSpeakUpClient && (effectiveAgency || flags.ventas_section)) {
-    menuItems.push({ title: 'Reportes', url: '/reportes', icon: BarChart3 });
-  }
-
-  // Asistencia removida del sidebar (accesible por URL directa /asistencia).
-
-
+  // Reportes (Speak Up) removido del sidebar — accesible por URL directa /reportes.
   // Comisiones — only for The Mind Coach, visible to owners/admins/account managers
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
   const isAccountManager = selectedClient
@@ -152,10 +144,8 @@ export const Sidebar = () => {
   if (canSeeCommissions) {
     menuItems.push({ title: 'Comisiones', url: '/comisiones', icon: DollarSign });
   }
-  // Frameworks — exclusive section for The Mind Coach (visible to all team members)
-  if (isMindCoach) {
-    menuItems.push({ title: 'Frameworks', url: '/masterclass', icon: GraduationCap });
-  }
+  // Frameworks (Masterclass Mind Coach) removido del sidebar — accesible por URL directa /masterclass.
+
   menuItems.push({ title: 'Client Database', url: '/client-database', icon: Database });
   const showBusinessSetup = effectiveAgency || (flags as any).business_setup_section;
   if (showBusinessSetup) {
