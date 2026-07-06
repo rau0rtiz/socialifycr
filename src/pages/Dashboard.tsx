@@ -427,7 +427,7 @@ const Dashboard = () => {
                   <ComfortexCloseTimeWidget clientId={selectedClient.id} />
                 </Suspense>
                 <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
-                  <ComfortexStageDurationWidget clientId={selectedClient.id} />
+                  <ComfortexSalesByAdWidget clientId={selectedClient.id} />
                 </Suspense>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
