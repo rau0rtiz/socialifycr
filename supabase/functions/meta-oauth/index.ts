@@ -65,8 +65,7 @@ serve(async (req) => {
         'instagram_basic',
         'instagram_manage_insights',
         'ads_read',
-        'business_management',
-        'pages_read_user_content'
+        'business_management'
       ].join(',');
 
       const state = JSON.stringify({ clientId, timestamp: Date.now() });
