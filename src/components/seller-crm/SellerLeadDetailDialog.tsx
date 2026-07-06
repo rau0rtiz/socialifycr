@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Phone, DollarSign, MessageCircle, Sparkles, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useRegisterSaleFromInstantFormLead,
   type InstantFormLeadStatus,
