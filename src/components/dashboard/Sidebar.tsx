@@ -1,14 +1,10 @@
 import { useTransition } from 'react';
 import { 
   LayoutDashboard, 
-  FileText, 
   Users, 
   Palette, 
   LogOut,
   ShoppingCart,
-  ClipboardCheck,
-  History,
-  BarChart3,
   
   Eye,
   FolderOpen,
@@ -19,13 +15,12 @@ import {
   Database,
   Loader2,
   DollarSign,
-  Layers,
-  GraduationCap,
   Package,
   UserPlus,
   Clapperboard,
   Inbox,
 } from 'lucide-react';
+
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sidebar as SidebarComponent,
@@ -51,15 +46,12 @@ const managementMenuItems = [
   { title: 'Clientes', url: '/clientes', icon: Users },
   { title: 'Comunicaciones', url: '/comunicaciones', icon: Mail },
   { title: 'Accesos', url: '/accesos', icon: KeyRound },
-  
-  
-  { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },
   { title: 'CRM Agencia', url: '/agencia/crm', icon: UserPlus },
   { title: 'Producciones', url: '/agencia/producciones', icon: Clapperboard },
-  { title: 'Historial', url: '/historial', icon: History },
   { title: 'Archivos', url: '/archivos', icon: FolderOpen },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
 ];
+
 
 export const Sidebar = () => {
   const location = useLocation();
@@ -134,18 +126,7 @@ export const Sidebar = () => {
     menuItems.push({ title: 'Órdenes', url: '/ordenes', icon: Package, dataTour: 'ventas-link' });
   }
 
-  // Reportes — exclusive section for Speak Up (sales analytics, charts, collections)
-  const isSpeakUpClient = selectedClient?.name?.toLowerCase().includes('speak up');
-  if (isSpeakUpClient && (effectiveAgency || flags.ventas_section)) {
-    menuItems.push({ title: 'Reportes', url: '/reportes', icon: BarChart3 });
-  }
-
-  const isTissueClient = selectedClient?.name?.toLowerCase().includes('tissue');
-  const showAsistencia = (effectiveAgency || (flags as any).asistencia_section) && !isTissueClient;
-  if (showAsistencia) {
-    menuItems.push({ title: 'Asistencia', url: '/asistencia', icon: ClipboardCheck });
-  }
-
+  // Reportes (Speak Up) removido del sidebar — accesible por URL directa /reportes.
   // Comisiones — only for The Mind Coach, visible to owners/admins/account managers
   const isMindCoach = selectedClient?.name?.toLowerCase().includes('mind coach');
   const isAccountManager = selectedClient
@@ -155,10 +136,8 @@ export const Sidebar = () => {
   if (canSeeCommissions) {
     menuItems.push({ title: 'Comisiones', url: '/comisiones', icon: DollarSign });
   }
-  // Frameworks — exclusive section for The Mind Coach (visible to all team members)
-  if (isMindCoach) {
-    menuItems.push({ title: 'Frameworks', url: '/masterclass', icon: GraduationCap });
-  }
+  // Frameworks (Masterclass Mind Coach) removido del sidebar — accesible por URL directa /masterclass.
+
   menuItems.push({ title: 'Client Database', url: '/client-database', icon: Database });
   const showBusinessSetup = effectiveAgency || (flags as any).business_setup_section;
   if (showBusinessSetup) {

@@ -9,7 +9,7 @@ const ROUTE_LOADERS: Record<string, Loader> = {
   '/': () => import('@/pages/Dashboard'),
   '/ventas': () => import('@/pages/Ventas'),
   '/ordenes': () => import('@/pages/Ordenes'),
-  '/asistencia': () => import('@/pages/Asistencia'),
+  
   '/comisiones': () => import('@/pages/Comisiones'),
   '/funnel': () => import('@/pages/Funnel'),
   '/agency-leads': () => import('@/pages/AgencyLeads'),

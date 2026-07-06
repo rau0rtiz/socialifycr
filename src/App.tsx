@@ -38,7 +38,7 @@ const Accesos = lazy(() => import("./pages/Accesos"));
 const BusinessSetup = lazy(() => import("./pages/BusinessSetup"));
 const ClientDatabase = lazy(() => import("./pages/ClientDatabase"));
 const WidgetCatalogPage = lazy(() => import("./pages/WidgetCatalog"));
-const Asistencia = lazy(() => import("./pages/Asistencia"));
+
 const ActualizarFoto = lazy(() => import("./pages/ActualizarFoto"));
 const Funnel = lazy(() => import("./pages/Funnel"));
 const AgencyLeads = lazy(() => import("./pages/AgencyLeads"));
@@ -306,7 +306,7 @@ const App = () => (
                   <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
                   <Route path="/ordenes" element={<ProtectedRoute><Ordenes /></ProtectedRoute>} />
                   <Route path="/reportes" element={<ProtectedRoute><SpeakUpReportes /></ProtectedRoute>} />
-                  <Route path="/asistencia" element={<ProtectedRoute><Asistencia /></ProtectedRoute>} />
+                  {/* /asistencia removida del sidebar */}
                   <Route path="/comisiones" element={<ProtectedRoute><Comisiones /></ProtectedRoute>} />
                   <Route path="/actualizar-foto" element={<ProtectedRoute><ActualizarFoto /></ProtectedRoute>} />
                   <Route path="/roadmap" element={<Funnel />} />
