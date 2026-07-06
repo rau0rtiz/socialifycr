@@ -28,6 +28,8 @@ const Auth = lazy(() => import("./pages/Auth"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const Invitacion = lazy(() => import("./pages/Invitacion"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ImageDB = lazy(() => import("./pages/ImageDB"));
 const Archivos = lazy(() => import("./pages/Archivos"));
@@ -165,6 +167,8 @@ const App = () => (
                     <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
                     <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
                     <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
+                    <Route path="/privacidad" element={<Privacy />} />
+                    <Route path="/terminos" element={<Terms />} />
                     <Route path="/" element={<Navigate to="/producciones" replace />} />
                     <Route path="/producciones" element={
                       <ProtectedRoute>
@@ -192,6 +196,8 @@ const App = () => (
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/invitacion/:token" element={<Invitacion />} />
                   <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
+                  <Route path="/privacidad" element={<Privacy />} />
+                  <Route path="/terminos" element={<Terms />} />
                   <Route path="/" element={<ProtectedRoute><SellerHomeGate /></ProtectedRoute>} />
                   <Route path="/mis-leads" element={<ProtectedRoute><SellerCrm /></ProtectedRoute>} />
                   {/* Agency-only routes */}

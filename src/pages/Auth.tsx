@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -220,6 +220,12 @@ const Auth = () => {
             </form>
           )}
         </CardContent>
+
+        <div className="pb-4 flex justify-center gap-4 text-xs text-muted-foreground">
+          <Link to="/privacidad" className="hover:text-primary hover:underline">Privacidad</Link>
+          <span>·</span>
+          <Link to="/terminos" className="hover:text-primary hover:underline">Términos</Link>
+        </div>
       </Card>
     </div>
   );
