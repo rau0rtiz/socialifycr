@@ -1,6 +1,10 @@
 // Sync Instant Form leads from a Google Sheet into instant_form_leads + customer_contacts.
 // Auth: validates caller JWT and checks they have access to the client.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import {
+  COMFORTEX_CLIENT_ID,
+  generateAndSaveComfortexReply,
+} from '../_shared/comfortex-reply.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -423,16 +427,24 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
         updated_at: new Date().toISOString(),
       };
 
-      const { error: upErr } = await admin
+      const { data: upserted, error: upErr } = await admin
         .from('instant_form_leads')
-        .upsert(payload, { onConflict: 'client_id,external_id' });
-
+        .upsert(payload, { onConflict: 'client_id,external_id' })
+        .select('id')
+        .single();
 
       if (upErr) {
         console.error('Upsert error', upErr, externalId);
         skipped++;
       } else {
         synced++;
+
+        // Auto-generate the WhatsApp reply for brand-new Comfortex leads.
+        // Best-effort: never blocks the sync loop.
+        const isNew = !existingLead;
+        if (isNew && clientId === COMFORTEX_CLIENT_ID && upserted?.id) {
+          await generateAndSaveComfortexReply(admin, upserted.id, lovableKey);
+        }
       }
     }
 

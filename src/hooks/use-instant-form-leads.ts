@@ -26,6 +26,8 @@ export interface InstantFormLead {
   message_sale_id: string | null;
   assigned_seller_id: string | null;
   assigned_at: string | null;
+  ai_message: string | null;
+  ai_message_generated_at: string | null;
   created_at: string;
   updated_at: string;
 }

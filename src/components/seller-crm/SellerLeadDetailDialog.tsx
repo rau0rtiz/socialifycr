@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Phone, DollarSign, MessageCircle, Sparkles, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useRegisterSaleFromInstantFormLead,
   type InstantFormLeadStatus,
@@ -61,6 +62,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
 
   const registerSale = useRegisterSaleFromInstantFormLead(lead?.client_id || null);
   const updateStatus = useUpdateSellerLeadStatus();
+  const qc = useQueryClient();
 
   useEffect(() => {
     if (open) {
@@ -70,7 +72,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
       setSubtotalStr('');
       setIvaPct('13');
       setNotes('');
-      setGeneratedMessage('');
+      setGeneratedMessage((lead as any)?.ai_message || '');
     }
   }, [open, lead?.id]);
 
@@ -121,6 +123,9 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setGeneratedMessage((data as any)?.message || '');
+      // Refresh cached leads so the stored ai_message stays in sync everywhere.
+      qc.invalidateQueries({ queryKey: ['seller-leads'] });
+      qc.invalidateQueries({ queryKey: ['instant-form-leads', lead.client_id] });
       toast.success('Mensaje generado');
     } catch (e: any) {
       toast.error('No se pudo generar el mensaje', { description: e.message });
