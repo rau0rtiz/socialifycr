@@ -123,6 +123,9 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setGeneratedMessage((data as any)?.message || '');
+      // Refresh cached leads so the stored ai_message stays in sync everywhere.
+      qc.invalidateQueries({ queryKey: ['seller-leads'] });
+      qc.invalidateQueries({ queryKey: ['instant-form-leads', lead.client_id] });
       toast.success('Mensaje generado');
     } catch (e: any) {
       toast.error('No se pudo generar el mensaje', { description: e.message });
