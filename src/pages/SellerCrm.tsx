@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, BellOff, Inbox, Search, Users } from 'lucide-react';
+import { Bell, BellOff, Inbox, RefreshCw, Search, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useBrand } from '@/contexts/BrandContext';
@@ -28,6 +29,8 @@ const SellerCrm = () => {
   const { user } = useAuth();
   const { systemRole, canManage, loading: roleLoading } = useUserRole();
   const { selectedClient } = useBrand();
+  const qc = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
 
   const isManagerView = canManage; // owner/admin/manager — they get the supervisor view
   const mode: 'self' | 'manager' = isManagerView ? 'manager' : 'self';
@@ -72,6 +75,16 @@ const SellerCrm = () => {
   const handleOpen = (lead: SellerLead) => { setOpenLeadId(lead.id); setDialogOpen(true); };
   const openLead = useMemo(() => leads.find((l) => l.id === openLeadId) || null, [leads, openLeadId]);
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await qc.invalidateQueries({ queryKey: ['seller-leads'] });
+      await qc.invalidateQueries({ queryKey: ['seller-lead-counts'] });
+    } finally {
+      setTimeout(() => setRefreshing(false), 400);
+    }
+  };
+
   const requestNotifPermission = async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     if (Notification.permission === 'granted') { setNotifEnabled(true); return; }
@@ -114,6 +127,17 @@ const SellerCrm = () => {
                 {newCount} {newCount === 1 ? 'nuevo' : 'nuevos'}
               </Badge>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 w-9 p-0 sm:w-auto sm:px-3 gap-1.5"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="Actualizar leads"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline text-xs">Actualizar</span>
+            </Button>
             <Button
               variant="outline"
               size="sm"
