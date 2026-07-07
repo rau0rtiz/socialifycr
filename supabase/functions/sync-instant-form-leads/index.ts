@@ -319,10 +319,7 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
         customAnswers[canonical] = cell;
       });
 
-      const isTestLead = Object.values(raw).some((v) =>
-        String(v ?? '').trim().toLowerCase().startsWith('<test lead'),
-      );
-      if (isTestLead) { skipped++; continue; }
+      // Test leads de Meta se procesan igual (temporal, para validar la ingesta).
 
       const sheetRowNumber = headerRow + rowIndex + 2;
       const rawExternalId = String(rec.external_id || '').trim();
