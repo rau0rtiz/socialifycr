@@ -130,6 +130,17 @@ const SellerCrm = () => {
             <Button
               variant="outline"
               size="sm"
+              className="h-9 w-9 p-0 sm:w-auto sm:px-3 gap-1.5"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="Actualizar leads"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline text-xs">Actualizar</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               className="h-9 w-9 p-0 sm:w-auto sm:px-3"
               onClick={requestNotifPermission}
               title={notifEnabled ? 'Notificaciones activas' : 'Activar notificaciones del navegador'}
