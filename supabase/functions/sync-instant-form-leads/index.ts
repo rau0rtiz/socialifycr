@@ -272,14 +272,38 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
     const headers = (values[headerRow] || []).map(normalize);
     const rows = values.slice(headerRow + 1);
 
+    // Preload existing leads and customer contacts once (avoids per-row round-trips).
+    const { data: existingLeadsRows } = await admin
+      .from('instant_form_leads')
+      .select('id, external_id, phone, created_time, lead_status')
+      .eq('client_id', clientId);
+    const existingByExternalId = new Map<string, any>();
+    const existingByPhone = new Map<string, any>();
+    for (const l of existingLeadsRows || []) {
+      if (l.external_id) existingByExternalId.set(l.external_id, l);
+      if (l.phone) existingByPhone.set(l.phone, l);
+    }
+
+    const { data: contactsRows } = await admin
+      .from('customer_contacts')
+      .select('id, phone, full_name')
+      .eq('client_id', clientId);
+    const contactByPhone = new Map<string, string>();
+    const contactByName = new Map<string, string>();
+    for (const c of contactsRows || []) {
+      if (c.phone) contactByPhone.set(c.phone, c.id);
+      if (c.full_name) contactByName.set(c.full_name.toLowerCase(), c.id);
+    }
+
     let synced = 0;
     let skipped = 0;
+    const payloads: any[] = [];
+    const newContactInserts: any[] = [];
+    const pendingContactAssign: Array<{ payloadIndex: number; fullName: string; phone: string | null }> = [];
+    const newLeadFlags: boolean[] = [];
 
     for (const [rowIndex, row] of rows.entries()) {
-      if (!hasUsefulData(row)) {
-        skipped++;
-        continue;
-      }
+      if (!hasUsefulData(row)) { skipped++; continue; }
 
       const rec: Record<string, any> = {};
       const customAnswers: Record<string, any> = {};
@@ -289,23 +313,16 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
         const cell = row[i] ?? '';
         raw[h] = cell;
         const known = FIELD_MAP[h];
-        if (known) {
-          rec[known] = cell;
-          return;
-        }
+        if (known) { rec[known] = cell; return; }
         if (!h || cell === '') return;
         const canonical = CUSTOM_ANSWER_MAP[h] || h;
         customAnswers[canonical] = cell;
       });
 
-      // Skip Meta "<test lead: ...>" rows so they don't keep reappearing.
       const isTestLead = Object.values(raw).some((v) =>
         String(v ?? '').trim().toLowerCase().startsWith('<test lead'),
       );
-      if (isTestLead) {
-        skipped++;
-        continue;
-      }
+      if (isTestLead) { skipped++; continue; }
 
       const sheetRowNumber = headerRow + rowIndex + 2;
       const rawExternalId = String(rec.external_id || '').trim();
@@ -316,93 +333,29 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
       const fullName = (rec.full_name || '').toString().trim() || null;
       const phone = cleanPhone(rec.phone);
 
-      // Avoid duplicating Meta-sourced leads: if this sheet row has no real Meta lead_id
-      // and there is already a lead for the same client+phone from another source, skip it.
+      // Dedupe synthetic sheet rows against existing leads for the same phone.
       if (isSheetSynthetic && phone) {
-        const { data: dupe } = await admin
-          .from('instant_form_leads')
-          .select('id, external_id')
-          .eq('client_id', clientId)
-          .eq('phone', phone)
-          .neq('external_id', externalId)
-          .limit(1)
-          .maybeSingle();
-        if (dupe) {
-          skipped++;
-          continue;
-        }
+        const dupe = existingByPhone.get(phone);
+        if (dupe && dupe.external_id !== externalId) { skipped++; continue; }
       }
 
-
-
-      // Upsert customer contact when we have a name
+      // Resolve customer contact from preloaded maps.
       let customerContactId: string | null = null;
       if (fullName) {
-        let existingId: string | null = null;
-        if (phone) {
-          const { data: existing } = await admin
-            .from('customer_contacts')
-            .select('id')
-            .eq('client_id', clientId)
-            .eq('phone', phone)
-            .maybeSingle();
-          if (existing) existingId = existing.id;
-        }
-        if (!existingId) {
-          const { data: existingName } = await admin
-            .from('customer_contacts')
-            .select('id')
-            .eq('client_id', clientId)
-            .eq('full_name', fullName)
-            .maybeSingle();
-          if (existingName) existingId = existingName.id;
-        }
-
-        if (existingId) {
-          customerContactId = existingId;
-          if (phone) {
-            await admin
-              .from('customer_contacts')
-              .update({ phone, updated_at: new Date().toISOString() })
-              .eq('id', existingId);
-          }
-        } else {
-          const { data: created } = await admin
-            .from('customer_contacts')
-            .insert({
-              client_id: clientId,
-              full_name: fullName,
-              phone,
-              notes: 'Importado de Instant Form',
-            })
-            .select('id')
-            .single();
-          if (created) customerContactId = created.id;
-        }
+        if (phone && contactByPhone.has(phone)) customerContactId = contactByPhone.get(phone)!;
+        else if (contactByName.has(fullName.toLowerCase())) customerContactId = contactByName.get(fullName.toLowerCase())!;
       }
 
-      // Preserve the original created_time when the row already exists, since the JULIO 2026
-      // sheet doesn't carry a date column — first sync wins.
-      const { data: existingLead } = await admin
-        .from('instant_form_leads')
-        .select('id, created_time, lead_status')
-        .eq('client_id', clientId)
-        .eq('external_id', externalId)
-        .maybeSingle();
-
+      const existingLead = existingByExternalId.get(externalId);
       const sheetCreated = parseDate(rec.created_time);
-      const createdTime = sheetCreated
-        || existingLead?.created_time
-        || new Date().toISOString();
+      const createdTime = sheetCreated || existingLead?.created_time || new Date().toISOString();
 
       const allowedStatuses = ['new', 'contactado', 'seguimiento', 'venta', 'perdido'];
       const existingStatus = (existingLead?.lead_status || '').toString().trim().toLowerCase();
       const sheetStatus = (rec.lead_status || '').toString().trim().toLowerCase();
       const leadStatus = allowedStatuses.includes(existingStatus)
         ? existingStatus
-        : allowedStatuses.includes(sheetStatus)
-          ? sheetStatus
-          : 'new';
+        : allowedStatuses.includes(sheetStatus) ? sheetStatus : 'new';
 
       const payload = {
         client_id: clientId,
@@ -427,25 +380,71 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
         updated_at: new Date().toISOString(),
       };
 
+      if (fullName && !customerContactId) {
+        pendingContactAssign.push({ payloadIndex: payloads.length, fullName, phone });
+        newContactInserts.push({
+          client_id: clientId, full_name: fullName, phone, notes: 'Importado de Instant Form',
+        });
+      }
+
+      payloads.push(payload);
+      newLeadFlags.push(!existingLead);
+    }
+
+    // Batch insert new customer contacts.
+    if (newContactInserts.length > 0) {
+      const { data: inserted } = await admin
+        .from('customer_contacts')
+        .insert(newContactInserts)
+        .select('id, phone, full_name');
+      const insertedByKey = new Map<string, string>();
+      for (const c of inserted || []) {
+        const key = `${(c.phone || '').trim()}|${(c.full_name || '').toLowerCase()}`;
+        insertedByKey.set(key, c.id);
+      }
+      for (const item of pendingContactAssign) {
+        const key = `${(item.phone || '').trim()}|${item.fullName.toLowerCase()}`;
+        const id = insertedByKey.get(key);
+        if (id) payloads[item.payloadIndex].customer_contact_id = id;
+      }
+    }
+
+    // Batch upsert leads.
+    const CHUNK = 200;
+    const newLeadIds: string[] = [];
+    for (let i = 0; i < payloads.length; i += CHUNK) {
+      const chunk = payloads.slice(i, i + CHUNK);
+      const flagsChunk = newLeadFlags.slice(i, i + CHUNK);
       const { data: upserted, error: upErr } = await admin
         .from('instant_form_leads')
-        .upsert(payload, { onConflict: 'client_id,external_id' })
-        .select('id')
-        .single();
-
+        .upsert(chunk, { onConflict: 'client_id,external_id' })
+        .select('id, external_id');
       if (upErr) {
-        console.error('Upsert error', upErr, externalId);
-        skipped++;
-      } else {
-        synced++;
-
-        // Auto-generate the WhatsApp reply for brand-new Comfortex leads.
-        // Best-effort: never blocks the sync loop.
-        const isNew = !existingLead;
-        if (isNew && clientId === COMFORTEX_CLIENT_ID && upserted?.id) {
-          await generateAndSaveComfortexReply(admin, upserted.id, lovableKey);
-        }
+        console.error('Batch upsert error', upErr);
+        skipped += chunk.length;
+        continue;
       }
+      synced += upserted?.length || 0;
+      const idByExt = new Map<string, string>();
+      for (const r of upserted || []) idByExt.set(r.external_id, r.id);
+      chunk.forEach((p, idx) => {
+        if (flagsChunk[idx]) {
+          const id = idByExt.get(p.external_id);
+          if (id) newLeadIds.push(id);
+        }
+      });
+    }
+
+    // Fire-and-forget Comfortex AI replies (never block the sync response).
+    if (clientId === COMFORTEX_CLIENT_ID && newLeadIds.length > 0) {
+      const task = (async () => {
+        for (const id of newLeadIds) {
+          try { await generateAndSaveComfortexReply(admin, id, lovableKey); }
+          catch (e) { console.error('comfortex reply failed', id, e); }
+        }
+      })();
+      // @ts-ignore EdgeRuntime is available in Supabase edge runtime
+      if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(task);
     }
 
     await admin
