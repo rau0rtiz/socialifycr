@@ -75,6 +75,16 @@ const SellerCrm = () => {
   const handleOpen = (lead: SellerLead) => { setOpenLeadId(lead.id); setDialogOpen(true); };
   const openLead = useMemo(() => leads.find((l) => l.id === openLeadId) || null, [leads, openLeadId]);
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await qc.invalidateQueries({ queryKey: ['seller-leads'] });
+      await qc.invalidateQueries({ queryKey: ['seller-lead-counts'] });
+    } finally {
+      setTimeout(() => setRefreshing(false), 400);
+    }
+  };
+
   const requestNotifPermission = async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     if (Notification.permission === 'granted') { setNotifEnabled(true); return; }
