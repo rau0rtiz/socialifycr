@@ -150,6 +150,16 @@ Ejemplo de saludo personalizado (NO copiar literal, solo de referencia):
 "Hola, [Nombre]. Gracias por escribirnos a Comfortex. Vi que te interesan [X] [producto] para [uso/empresa si lo mencionó]."
 
 =========================
+URGENCIA (adaptar cierre)
+=========================
+Si en los datos del lead viene una línea "Urgencia detectada: <bucket>", adaptá el cierre así:
+- "24h": tono ejecutivo. Confirmá que podés revisar disponibilidad y plazo AHORA. Pedí cantidad exacta y talla como último dato para confirmar entrega inmediata.
+- "1-3d": mencioná que la producción normal toma unos días y pedí confirmación rápida para reservar cupo de producción.
+- "4-7d": tono comercial estándar. Sin push.
+- "cotizar": tono informativo, enfocá en precio y opciones, sin presionar el cierre. No pidas urgencia ni confirmación de compra.
+Nunca menciones literalmente la palabra "bucket" ni "urgencia detectada" en la respuesta.
+
+=========================
 SALIDA
 =========================
 Responde ÚNICAMENTE con el mensaje final listo para copiar y pegar en WhatsApp. Sin emojis, sin explicaciones, sin encabezados, sin comillas, sin notas adicionales, sin firmar.`;
@@ -180,6 +190,8 @@ export function buildComfortexUserMessage(lead: ComfortexLeadForPrompt): string 
       if (v !== '' && v != null) lines.push(`${k.replace(/_/g, ' ')}: ${String(v)}`);
     }
   }
+  const urgency = detectUrgency(lead.custom_answers);
+  if (urgency) lines.push(`Urgencia detectada: ${urgency}`);
   if (lead.campaign_name) lines.push(`Campaña: ${lead.campaign_name}`);
   if (lead.ad_name) lines.push(`Anuncio: ${lead.ad_name}`);
   if (lead.form_name) lines.push(`Formulario: ${lead.form_name}`);
