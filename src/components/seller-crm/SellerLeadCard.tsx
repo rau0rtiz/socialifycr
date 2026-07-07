@@ -3,6 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Phone, MessageCircle, Sparkles, Clock } from 'lucide-react';
 import type { SellerLead } from '@/hooks/use-seller-leads';
+import { getUrgencyFromLead } from '@/lib/comfortex-urgency';
+import { UrgencyBadge } from './UrgencyBadge';
 
 const STATUS_STYLES: Record<string, { label: string; chip: string; ring: string }> = {
   new:         { label: 'Nuevo',       chip: 'bg-[hsl(var(--status-new))]/15 text-[hsl(var(--status-new))]',          ring: 'ring-[hsl(var(--status-new))]/40' },
@@ -37,6 +39,7 @@ export const SellerLeadCard = ({ lead, onOpen, showClient = false }: Props) => {
   const ca = lead.custom_answers || {};
   const model = ca.modelo_de_camisa || ca.tipo_de_polo || ca.tipo_de_camisa;
   const cantidad = ca.cantidad_de_camisas;
+  const urgency = getUrgencyFromLead(ca);
 
   const isNew = status === 'new';
 
@@ -55,7 +58,10 @@ export const SellerLeadCard = ({ lead, onOpen, showClient = false }: Props) => {
             <p className="text-[11px] text-muted-foreground truncate">{lead.client_name}</p>
           )}
         </div>
-        <Badge className={`shrink-0 ${style.chip} border-0`}>{style.label}</Badge>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <UrgencyBadge urgency={urgency} />
+          <Badge className={`${style.chip} border-0`}>{style.label}</Badge>
+        </div>
       </div>
 
       <div className="space-y-1 text-xs text-muted-foreground mb-3">
