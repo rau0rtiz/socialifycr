@@ -1,6 +1,45 @@
 // Shared Comfortex WhatsApp reply generator.
 // Used by generate-comfortex-reply (manual) and sync-instant-form-leads (auto on new lead).
 
+// -------- Urgency detection (duplicated from src/lib/comfortex-urgency.ts) --------
+type UrgencyBucket = '24h' | '1-3d' | '4-7d' | 'cotizar';
+
+const urgencyNormalize = (s: string): string =>
+  s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[_\-\s]+/g, ' ').trim();
+
+const URGENCY_KEY_HINTS = ['pronto', 'urgen', 'cuando', 'necesitan', 'plazo', 'entrega'];
+
+const mapUrgencyValue = (value: string): UrgencyBucket | null => {
+  const v = urgencyNormalize(value);
+  if (!v) return null;
+  if (v.includes('24') || v.includes('proxima') || v.includes('hoy') || v.includes('urgen')) return '24h';
+  if (v.match(/\b1\s*[-a]?\s*3\b/) || v.includes('1 a 3') || v.includes('1-3')) return '1-3d';
+  if (v.match(/\b4\s*[-a]?\s*7\b/) || v.includes('4 a 7') || v.includes('4-7') || v.includes('semana')) return '4-7d';
+  if (v.includes('cotiz') || v.includes('solo quiero') || v.includes('informacion')) return 'cotizar';
+  return null;
+};
+
+export function detectUrgency(custom_answers: Record<string, unknown> | null | undefined): UrgencyBucket | null {
+  if (!custom_answers || typeof custom_answers !== 'object') return null;
+  for (const [rawKey, rawVal] of Object.entries(custom_answers)) {
+    const key = urgencyNormalize(rawKey);
+    if (!URGENCY_KEY_HINTS.some((h) => key.includes(h))) continue;
+    if (rawVal == null) continue;
+    const b = mapUrgencyValue(String(rawVal));
+    if (b) return b;
+  }
+  for (const rawVal of Object.values(custom_answers)) {
+    if (rawVal == null) continue;
+    const v = urgencyNormalize(String(rawVal));
+    if (v.includes('proxima') && v.includes('24')) return '24h';
+    if (v.includes('1-3 dias') || v.includes('1 a 3 dias')) return '1-3d';
+    if (v.includes('4-7 dias') || v.includes('4 a 7 dias')) return '4-7d';
+    if (v === 'solo quiero cotizar') return 'cotizar';
+  }
+  return null;
+}
+
+
 export const COMFORTEX_CLIENT_ID = 'd90a18b8-dad0-4f52-9447-c13f8f19f0d7';
 
 export const COMFORTEX_SYSTEM_PROMPT = `Eres el asesor comercial oficial de Comfortex, empresa costarricense dedicada a la fabricación y venta de uniformes, ropa corporativa e industrial.
@@ -111,6 +150,16 @@ Ejemplo de saludo personalizado (NO copiar literal, solo de referencia):
 "Hola, [Nombre]. Gracias por escribirnos a Comfortex. Vi que te interesan [X] [producto] para [uso/empresa si lo mencionó]."
 
 =========================
+URGENCIA (adaptar cierre)
+=========================
+Si en los datos del lead viene una línea "Urgencia detectada: <bucket>", adaptá el cierre así:
+- "24h": tono ejecutivo. Confirmá que podés revisar disponibilidad y plazo AHORA. Pedí cantidad exacta y talla como último dato para confirmar entrega inmediata.
+- "1-3d": mencioná que la producción normal toma unos días y pedí confirmación rápida para reservar cupo de producción.
+- "4-7d": tono comercial estándar. Sin push.
+- "cotizar": tono informativo, enfocá en precio y opciones, sin presionar el cierre. No pidas urgencia ni confirmación de compra.
+Nunca menciones literalmente la palabra "bucket" ni "urgencia detectada" en la respuesta.
+
+=========================
 SALIDA
 =========================
 Responde ÚNICAMENTE con el mensaje final listo para copiar y pegar en WhatsApp. Sin emojis, sin explicaciones, sin encabezados, sin comillas, sin notas adicionales, sin firmar.`;
@@ -141,6 +190,8 @@ export function buildComfortexUserMessage(lead: ComfortexLeadForPrompt): string 
       if (v !== '' && v != null) lines.push(`${k.replace(/_/g, ' ')}: ${String(v)}`);
     }
   }
+  const urgency = detectUrgency(lead.custom_answers);
+  if (urgency) lines.push(`Urgencia detectada: ${urgency}`);
   if (lead.campaign_name) lines.push(`Campaña: ${lead.campaign_name}`);
   if (lead.ad_name) lines.push(`Anuncio: ${lead.ad_name}`);
   if (lead.form_name) lines.push(`Formulario: ${lead.form_name}`);

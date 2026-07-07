@@ -22,6 +22,7 @@ const ComfortexVolumeWidget = lazy(() => import('@/components/dashboard/Comforte
 const ComfortexActiveHours = lazy(() => import('@/components/dashboard/ComfortexActiveHours').then(m => ({ default: m.ComfortexActiveHours })));
 const ComfortexCloseTimeWidget = lazy(() => import('@/components/dashboard/ComfortexCloseTimeWidget').then(m => ({ default: m.ComfortexCloseTimeWidget })));
 const ComfortexSalesByAdWidget = lazy(() => import('@/components/dashboard/ComfortexSalesByAdWidget').then(m => ({ default: m.ComfortexSalesByAdWidget })));
+const ComfortexUrgencyWidget = lazy(() => import('@/components/dashboard/ComfortexUrgencyWidget').then(m => ({ default: m.ComfortexUrgencyWidget })));
 import { useBrand } from '@/contexts/BrandContext';
 import { useContentData } from '@/hooks/use-content-data';
 import { useContentMetadata } from '@/hooks/use-content-metadata';
@@ -432,12 +433,15 @@ const Dashboard = () => {
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
                 <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
-                  <ComfortexUtmBreakdown clientId={selectedClient.id} />
+                  <ComfortexUrgencyWidget clientId={selectedClient.id} />
                 </Suspense>
                 <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
-                  <ComfortexVolumeWidget clientId={selectedClient.id} />
+                  <ComfortexUtmBreakdown clientId={selectedClient.id} />
                 </Suspense>
               </div>
+              <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
+                <ComfortexVolumeWidget clientId={selectedClient.id} />
+              </Suspense>
               <Suspense fallback={<Skeleton className="h-80 w-full rounded-xl" />}>
                 <ComfortexActiveHours clientId={selectedClient.id} />
               </Suspense>
