@@ -1,0 +1,1 @@
+ALTER TABLE public.instant_form_lead_sources ADD COLUMN IF NOT EXISTS label text;
