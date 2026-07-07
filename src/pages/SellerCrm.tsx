@@ -29,6 +29,8 @@ const SellerCrm = () => {
   const { user } = useAuth();
   const { systemRole, canManage, loading: roleLoading } = useUserRole();
   const { selectedClient } = useBrand();
+  const qc = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
 
   const isManagerView = canManage; // owner/admin/manager — they get the supervisor view
   const mode: 'self' | 'manager' = isManagerView ? 'manager' : 'self';
