@@ -400,75 +400,77 @@ const Propuestas = () => {
 
       {/* Editor dialog */}
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="max-w-5xl">
-          <DialogHeader>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-5xl max-h-[92dvh] p-0 gap-0 flex flex-col">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b shrink-0">
             <DialogTitle>{editing ? 'Editar propuesta' : 'Nueva propuesta'}</DialogTitle>
             <DialogDescription>
               Pegá el código HTML completo de la propuesta. Se mostrará tal cual en el link público.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Título</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Propuesta comercial" />
-              </div>
-              <div className="space-y-2">
-                <Label>Cliente (opcional)</Label>
-                <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Nombre del cliente" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>HTML</Label>
-                <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
-                  <button
-                    type="button"
-                    onClick={() => setEditorPreview(false)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded ${!editorPreview ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
-                  >
-                    <Code2 className="h-3.5 w-3.5" /> Código
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditorPreview(true)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded ${editorPreview ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
-                  >
-                    <Monitor className="h-3.5 w-3.5" /> Vista previa
-                  </button>
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4">
+            <div className="grid gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Título</Label>
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Propuesta comercial" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cliente (opcional)</Label>
+                  <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Nombre del cliente" />
                 </div>
               </div>
-              {editorPreview ? (
-                html.trim() ? (
-                  <iframe
-                    title="Vista previa propuesta"
-                    srcDoc={html}
-                    sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
-                    className="w-full h-[480px] rounded-md border bg-white"
-                  />
-                ) : (
-                  <div className="w-full h-[480px] rounded-md border border-dashed flex items-center justify-center text-sm text-muted-foreground">
-                    Pegá HTML en la pestaña "Código" para ver la vista previa.
+              <div className="space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <Label>HTML</Label>
+                  <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
+                    <button
+                      type="button"
+                      onClick={() => setEditorPreview(false)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded ${!editorPreview ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+                    >
+                      <Code2 className="h-3.5 w-3.5" /> Código
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditorPreview(true)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded ${editorPreview ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+                    >
+                      <Monitor className="h-3.5 w-3.5" /> Vista previa
+                    </button>
                   </div>
-                )
-              ) : (
-                <Textarea
-                  value={html}
-                  onChange={(e) => setHtml(e.target.value)}
-                  placeholder="<html>...</html>"
-                  className="min-h-[480px] font-mono text-xs"
-                />
-              )}
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <Label className="text-sm">Publicada</Label>
-                <p className="text-xs text-muted-foreground">Si se desactiva, el link público deja de funcionar.</p>
+                </div>
+                {editorPreview ? (
+                  html.trim() ? (
+                    <iframe
+                      title="Vista previa propuesta"
+                      srcDoc={html}
+                      sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
+                      className="w-full h-[50dvh] min-h-[280px] rounded-md border bg-white"
+                    />
+                  ) : (
+                    <div className="w-full h-[50dvh] min-h-[280px] rounded-md border border-dashed flex items-center justify-center text-sm text-muted-foreground text-center px-4">
+                      Pegá HTML en la pestaña "Código" para ver la vista previa.
+                    </div>
+                  )
+                ) : (
+                  <Textarea
+                    value={html}
+                    onChange={(e) => setHtml(e.target.value)}
+                    placeholder="<html>...</html>"
+                    className="h-[50dvh] min-h-[280px] font-mono text-xs"
+                  />
+                )}
               </div>
-              <Switch checked={isPublished} onCheckedChange={setIsPublished} />
+              <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                <div className="min-w-0">
+                  <Label className="text-sm">Publicada</Label>
+                  <p className="text-xs text-muted-foreground">Si se desactiva, el link público deja de funcionar.</p>
+                </div>
+                <Switch checked={isPublished} onCheckedChange={setIsPublished} />
+              </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="px-4 sm:px-6 py-3 border-t shrink-0 gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={createMut.isPending || updateMut.isPending}>
               {(createMut.isPending || updateMut.isPending) && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
