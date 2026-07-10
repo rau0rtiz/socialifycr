@@ -823,6 +823,42 @@ export type Database = {
           },
         ]
       }
+      agency_proposals: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          html_content: string
+          id: string
+          is_published: boolean
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          html_content?: string
+          id?: string
+          is_published?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          html_content?: string
+          id?: string
+          is_published?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       archived_stories: {
         Row: {
           captured_at: string
