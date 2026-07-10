@@ -31,19 +31,34 @@ const slugify = (str: string) =>
 
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
 
+export type AgencyProposalListItem = Omit<AgencyProposal, 'html_content'>;
+
 export const useAgencyProposals = () => {
   return useQuery({
     queryKey: ['agency-proposals'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('agency_proposals')
-        .select('*')
+        .select('id,title,client_name,contact_point,amount,currency,package_type,slug,is_published,created_by,created_at,updated_at')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []) as AgencyProposal[];
+      return (data ?? []) as AgencyProposalListItem[];
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
+
+export const fetchProposalHtml = async (id: string): Promise<string> => {
+  const { data, error } = await supabase
+    .from('agency_proposals')
+    .select('html_content')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.html_content as string) || '';
+};
+
 
 export const useAgencyProposal = (id: string | null) => {
   return useQuery({
