@@ -663,10 +663,14 @@ const Propuestas = () => {
           </DialogHeader>
           <div className="flex-1 min-h-0 bg-muted/30">
             {previewTarget && (
-              previewTarget.html_content ? (
+              previewLoading ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : previewHtml ? (
                 <iframe
                   title={`Vista previa ${previewTarget.title}`}
-                  srcDoc={previewTarget.html_content}
+                  srcDoc={previewHtml}
                   sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
                   className="w-full h-full bg-white"
                 />
@@ -677,6 +681,7 @@ const Propuestas = () => {
               )
             )}
           </div>
+
         </DialogContent>
       </Dialog>
     </DashboardLayout>
