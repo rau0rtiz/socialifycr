@@ -318,7 +318,7 @@ const Propuestas = () => {
               <Card key={p.id} className="flex flex-col hover:shadow-md hover:border-primary/40 transition-all">
                 <button
                   type="button"
-                  onClick={() => window.open(buildShareUrl(p.slug), '_blank', 'noopener,noreferrer')}
+                  onClick={() => setPreviewTarget(p)}
                   className="text-left"
                 >
                   <CardHeader className="pb-3">
