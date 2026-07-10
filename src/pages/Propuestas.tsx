@@ -602,6 +602,64 @@ const Propuestas = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview dialog */}
+      <Dialog open={!!previewTarget} onOpenChange={(open) => !open && setPreviewTarget(null)}>
+        <DialogContent className="max-w-6xl p-0 gap-0 h-[85vh] flex flex-col">
+          <DialogHeader className="px-5 py-3 border-b flex-row items-center justify-between space-y-0">
+            <div className="min-w-0">
+              <DialogTitle className="truncate text-base">{previewTarget?.title}</DialogTitle>
+              <DialogDescription className="truncate text-xs">
+                {previewTarget?.client_name || 'Sin cliente'} · {previewTarget ? buildShareUrl(previewTarget.slug) : ''}
+              </DialogDescription>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {previewTarget && (
+                <>
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => copyLink(previewTarget)}>
+                    <Copy className="h-3.5 w-3.5" /> Link
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => window.open(buildShareUrl(previewTarget.slug), '_blank', 'noopener,noreferrer')}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Abrir
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => {
+                      const t = previewTarget;
+                      setPreviewTarget(null);
+                      if (t) openEdit(t);
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Editar
+                  </Button>
+                </>
+              )}
+            </div>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 bg-muted/30">
+            {previewTarget && (
+              previewTarget.html_content ? (
+                <iframe
+                  title={`Vista previa ${previewTarget.title}`}
+                  srcDoc={previewTarget.html_content}
+                  sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
+                  className="w-full h-full bg-white"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                  Esta propuesta todavía no tiene HTML cargado.
+                </div>
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
