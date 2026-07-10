@@ -20,9 +20,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   useAgencyProposals,
-  useCreateAgencyProposal,
-  useUpdateAgencyProposal,
-  useDeleteAgencyProposal,
+  useCreateAgencyProposalListItem,
+  useUpdateAgencyProposalListItem,
+  useDeleteAgencyProposalListItem,
   fetchProposalHtml,
   type AgencyProposalListItem,
   type PackageType,
@@ -80,32 +80,32 @@ const copyToClipboard = async (text: string) => {
 
 const Propuestas = () => {
   const { data: proposals = [], isLoading } = useAgencyProposals();
-  const createMut = useCreateAgencyProposal();
-  const updateMut = useUpdateAgencyProposal();
-  const deleteMut = useDeleteAgencyProposal();
+  const createMut = useCreateAgencyProposalListItem();
+  const updateMut = useUpdateAgencyProposalListItem();
+  const deleteMut = useDeleteAgencyProposalListItem();
 
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editing, setEditing] = useState<AgencyProposal | null>(null);
+  const [editing, setEditing] = useState<AgencyProposalListItem | null>(null);
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
   const [html, setHtml] = useState('');
   const [isPublished, setIsPublished] = useState(true);
 
   const [emailOpen, setEmailOpen] = useState(false);
-  const [emailTarget, setEmailTarget] = useState<AgencyProposal | null>(null);
+  const [emailTarget, setEmailTarget] = useState<AgencyProposalListItem | null>(null);
   const [emailTo, setEmailTo] = useState('');
   const [emailToName, setEmailToName] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
 
-  const [deleteTarget, setDeleteTarget] = useState<AgencyProposal | null>(null);
-  const [previewTarget, setPreviewTarget] = useState<AgencyProposal | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AgencyProposalListItem | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<AgencyProposalListItem | null>(null);
   const [editorPreview, setEditorPreview] = useState(false);
 
   // Quick "Editar info" dialog state
   const [infoOpen, setInfoOpen] = useState(false);
-  const [infoTarget, setInfoTarget] = useState<AgencyProposal | null>(null);
+  const [infoTarget, setInfoTarget] = useState<AgencyProposalListItem | null>(null);
   const [infoClientName, setInfoClientName] = useState('');
   const [infoContact, setInfoContact] = useState('');
   const [infoAmount, setInfoAmount] = useState('');
@@ -113,7 +113,7 @@ const Propuestas = () => {
   const [infoPackage, setInfoPackage] = useState<PackageType | ''>('');
   const [savingInfo, setSavingInfo] = useState(false);
 
-  const openInfo = (p: AgencyProposal) => {
+  const openInfo = (p: AgencyProposalListItem) => {
     setInfoTarget(p);
     setInfoClientName(p.client_name || '');
     setInfoContact(p.contact_point || '');
@@ -156,7 +156,7 @@ const Propuestas = () => {
     setEditorOpen(true);
   };
 
-  const openEdit = (p: AgencyProposal) => {
+  const openEdit = (p: AgencyProposalListItem) => {
     setEditing(p);
     setTitle(p.title);
     setClientName(p.client_name || '');
@@ -197,7 +197,7 @@ const Propuestas = () => {
     }
   };
 
-  const copyLink = async (p: AgencyProposal) => {
+  const copyLink = async (p: AgencyProposalListItem) => {
     const url = buildShareUrl(p.slug);
     const ok = await copyToClipboard(url);
     if (ok) {
@@ -207,7 +207,7 @@ const Propuestas = () => {
     }
   };
 
-  const openEmail = (p: AgencyProposal) => {
+  const openEmail = (p: AgencyProposalListItem) => {
     setEmailTarget(p);
     setEmailTo('');
     setEmailToName('');
