@@ -23,9 +23,11 @@ import {
   useCreateAgencyProposal,
   useUpdateAgencyProposal,
   useDeleteAgencyProposal,
-  type AgencyProposal,
+  fetchProposalHtml,
+  type AgencyProposalListItem,
   type PackageType,
 } from '@/hooks/use-agency-proposals';
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2 } from 'lucide-react';
