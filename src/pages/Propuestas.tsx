@@ -160,15 +160,26 @@ const Propuestas = () => {
     setEditorOpen(true);
   };
 
-  const openEdit = (p: AgencyProposalListItem) => {
+  const openEdit = async (p: AgencyProposalListItem) => {
     setEditing(p);
     setTitle(p.title);
     setClientName(p.client_name || '');
-    setHtml(p.html_content || '');
+    setHtml('');
     setIsPublished(p.is_published);
     setEditorPreview(false);
     setEditorOpen(true);
+    setEditorHtmlLoading(true);
+    try {
+      const content = await fetchProposalHtml(p.id);
+      setHtml(content);
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudo cargar el HTML');
+    } finally {
+      setEditorHtmlLoading(false);
+    }
   };
+
 
   const handleSave = async () => {
     if (!title.trim()) {
