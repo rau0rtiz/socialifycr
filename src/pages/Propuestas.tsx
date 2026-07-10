@@ -48,7 +48,33 @@ const formatMoney = (amount: number | null, currency: string | null) => {
   }
 };
 
-const buildShareUrl = (slug: string) => `${window.location.origin}/propuesta/${slug}`;
+const PUBLIC_BASE_URL = 'https://app.socialifycr.com';
+const buildShareUrl = (slug: string) => `${PUBLIC_BASE_URL}/propuesta/${slug}`;
+
+const copyToClipboard = async (text: string) => {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // fall through to fallback
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.setAttribute('readonly', '');
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+};
 
 const Propuestas = () => {
   const { data: proposals = [], isLoading } = useAgencyProposals();
