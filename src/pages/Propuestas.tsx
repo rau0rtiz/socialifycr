@@ -458,6 +458,68 @@ const Propuestas = () => {
       </Dialog>
 
       {/* Delete confirm */}
+      {/* Quick edit info dialog */}
+      <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Info className="h-4 w-4" /> Editar información</DialogTitle>
+            <DialogDescription>
+              Datos que se muestran en la tarjeta de la propuesta.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="space-y-1.5">
+              <Label>Nombre del cliente</Label>
+              <Input value={infoClientName} onChange={(e) => setInfoClientName(e.target.value)} placeholder="Ej: Comfortex" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Punto de contacto</Label>
+              <Input value={infoContact} onChange={(e) => setInfoContact(e.target.value)} placeholder="Ej: Juan Pérez — juan@empresa.com" />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1.5 col-span-2">
+                <Label>Monto</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={infoAmount}
+                  onChange={(e) => setInfoAmount(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Moneda</Label>
+                <Select value={infoCurrency} onValueChange={(v) => setInfoCurrency(v as 'USD' | 'CRC')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="CRC">CRC</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Tipo de paquete</Label>
+              <Select value={infoPackage} onValueChange={(v) => setInfoPackage(v as PackageType)}>
+                <SelectTrigger><SelectValue placeholder="Seleccioná una opción" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Mensual</SelectItem>
+                  <SelectItem value="quarterly">Trimestral</SelectItem>
+                  <SelectItem value="one_time">Pago único</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInfoOpen(false)}>Cancelar</Button>
+            <Button onClick={saveInfo} disabled={savingInfo}>
+              {savingInfo && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
