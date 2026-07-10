@@ -73,6 +73,49 @@ const Propuestas = () => {
 
   const [deleteTarget, setDeleteTarget] = useState<AgencyProposal | null>(null);
 
+  // Quick "Editar info" dialog state
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [infoTarget, setInfoTarget] = useState<AgencyProposal | null>(null);
+  const [infoClientName, setInfoClientName] = useState('');
+  const [infoContact, setInfoContact] = useState('');
+  const [infoAmount, setInfoAmount] = useState('');
+  const [infoCurrency, setInfoCurrency] = useState<'USD' | 'CRC'>('USD');
+  const [infoPackage, setInfoPackage] = useState<PackageType | ''>('');
+  const [savingInfo, setSavingInfo] = useState(false);
+
+  const openInfo = (p: AgencyProposal) => {
+    setInfoTarget(p);
+    setInfoClientName(p.client_name || '');
+    setInfoContact(p.contact_point || '');
+    setInfoAmount(p.amount != null ? String(p.amount) : '');
+    setInfoCurrency((p.currency as 'USD' | 'CRC') || 'USD');
+    setInfoPackage((p.package_type as PackageType) || '');
+    setInfoOpen(true);
+  };
+
+  const saveInfo = async () => {
+    if (!infoTarget) return;
+    setSavingInfo(true);
+    try {
+      await updateMut.mutateAsync({
+        id: infoTarget.id,
+        client_name: infoClientName.trim() || null,
+        contact_point: infoContact.trim() || null,
+        amount: infoAmount.trim() === '' ? null : Number(infoAmount),
+        currency: infoCurrency,
+        package_type: infoPackage || null,
+      });
+      toast.success('Información actualizada');
+      setInfoOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudo guardar');
+    } finally {
+      setSavingInfo(false);
+    }
+  };
+
+
   const openCreate = () => {
     setEditing(null);
     setTitle('');
