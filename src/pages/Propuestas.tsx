@@ -367,6 +367,9 @@ const Propuestas = () => {
                 </button>
                 <CardContent className="pt-0 pb-4 mt-auto">
                   <div className="flex flex-wrap gap-1.5 border-t pt-3">
+                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => setPreviewTarget(p)}>
+                      <Monitor className="h-3.5 w-3.5" /> Vista previa
+                    </Button>
                     <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => openInfo(p)}>
                       <Info className="h-3.5 w-3.5" /> Editar info
                     </Button>
