@@ -160,6 +160,7 @@ const Propuestas = () => {
     setClientName(p.client_name || '');
     setHtml(p.html_content || '');
     setIsPublished(p.is_published);
+    setEditorPreview(false);
     setEditorOpen(true);
   };
 
