@@ -1,0 +1,114 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+
+export interface AgencyProposal {
+  id: string;
+  title: string;
+  client_name: string | null;
+  html_content: string;
+  slug: string;
+  is_published: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+const slugify = (str: string) =>
+  str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'propuesta';
+
+const randomSuffix = () => Math.random().toString(36).slice(2, 8);
+
+export const useAgencyProposals = () => {
+  return useQuery({
+    queryKey: ['agency-proposals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agency_proposals')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as AgencyProposal[];
+    },
+  });
+};
+
+export const useAgencyProposal = (id: string | null) => {
+  return useQuery({
+    queryKey: ['agency-proposal', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('agency_proposals')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as AgencyProposal | null;
+    },
+    enabled: !!id,
+  });
+};
+
+export const useCreateAgencyProposal = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (input: { title: string; client_name?: string | null; html_content: string; is_published?: boolean }) => {
+      const slug = `${slugify(input.title)}-${randomSuffix()}`;
+      const { data, error } = await supabase
+        .from('agency_proposals')
+        .insert({
+          title: input.title,
+          client_name: input.client_name || null,
+          html_content: input.html_content,
+          slug,
+          is_published: input.is_published ?? true,
+          created_by: user?.id ?? null,
+        })
+        .select('*')
+        .single();
+      if (error) throw error;
+      return data as AgencyProposal;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['agency-proposals'] }),
+  });
+};
+
+export const useUpdateAgencyProposal = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; title?: string; client_name?: string | null; html_content?: string; is_published?: boolean }) => {
+      const { id, ...updates } = input;
+      const { data, error } = await supabase
+        .from('agency_proposals')
+        .update(updates)
+        .eq('id', id)
+        .select('*')
+        .single();
+      if (error) throw error;
+      return data as AgencyProposal;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['agency-proposals'] });
+      qc.invalidateQueries({ queryKey: ['agency-proposal', data.id] });
+    },
+  });
+};
+
+export const useDeleteAgencyProposal = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('agency_proposals').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['agency-proposals'] }),
+  });
+};
