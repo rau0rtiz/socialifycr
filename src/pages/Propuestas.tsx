@@ -400,7 +400,7 @@ const Propuestas = () => {
 
       {/* Editor dialog */}
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar propuesta' : 'Nueva propuesta'}</DialogTitle>
             <DialogDescription>
@@ -419,13 +419,46 @@ const Propuestas = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>HTML</Label>
-              <Textarea
-                value={html}
-                onChange={(e) => setHtml(e.target.value)}
-                placeholder="<html>...</html>"
-                className="min-h-[280px] font-mono text-xs"
-              />
+              <div className="flex items-center justify-between">
+                <Label>HTML</Label>
+                <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
+                  <button
+                    type="button"
+                    onClick={() => setEditorPreview(false)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded ${!editorPreview ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+                  >
+                    <Code2 className="h-3.5 w-3.5" /> Código
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditorPreview(true)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded ${editorPreview ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+                  >
+                    <Monitor className="h-3.5 w-3.5" /> Vista previa
+                  </button>
+                </div>
+              </div>
+              {editorPreview ? (
+                html.trim() ? (
+                  <iframe
+                    title="Vista previa propuesta"
+                    srcDoc={html}
+                    sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
+                    className="w-full h-[480px] rounded-md border bg-white"
+                  />
+                ) : (
+                  <div className="w-full h-[480px] rounded-md border border-dashed flex items-center justify-center text-sm text-muted-foreground">
+                    Pegá HTML en la pestaña "Código" para ver la vista previa.
+                  </div>
+                )
+              ) : (
+                <Textarea
+                  value={html}
+                  onChange={(e) => setHtml(e.target.value)}
+                  placeholder="<html>...</html>"
+                  className="min-h-[480px] font-mono text-xs"
+                />
+              )}
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
