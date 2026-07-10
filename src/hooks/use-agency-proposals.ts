@@ -2,10 +2,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+export type PackageType = 'monthly' | 'quarterly' | 'one_time';
+
 export interface AgencyProposal {
   id: string;
   title: string;
   client_name: string | null;
+  contact_point: string | null;
+  amount: number | null;
+  currency: string | null;
+  package_type: PackageType | null;
   html_content: string;
   slug: string;
   is_published: boolean;
@@ -84,7 +90,17 @@ export const useCreateAgencyProposal = () => {
 export const useUpdateAgencyProposal = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { id: string; title?: string; client_name?: string | null; html_content?: string; is_published?: boolean }) => {
+    mutationFn: async (input: {
+      id: string;
+      title?: string;
+      client_name?: string | null;
+      contact_point?: string | null;
+      amount?: number | null;
+      currency?: string | null;
+      package_type?: PackageType | null;
+      html_content?: string;
+      is_published?: boolean;
+    }) => {
       const { id, ...updates } = input;
       const { data, error } = await supabase
         .from('agency_proposals')

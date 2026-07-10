@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog,
@@ -23,12 +24,29 @@ import {
   useUpdateAgencyProposal,
   useDeleteAgencyProposal,
   type AgencyProposal,
+  type PackageType,
 } from '@/hooks/use-agency-proposals';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff } from 'lucide-react';
+import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+const PACKAGE_LABELS: Record<PackageType, string> = {
+  monthly: 'Mensual',
+  quarterly: 'Trimestral',
+  one_time: 'Pago único',
+};
+
+const formatMoney = (amount: number | null, currency: string | null) => {
+  if (amount == null) return null;
+  const cur = currency || 'USD';
+  try {
+    return new Intl.NumberFormat('es-CR', { style: 'currency', currency: cur, maximumFractionDigits: 0 }).format(amount);
+  } catch {
+    return `${cur} ${amount.toLocaleString('es-CR')}`;
+  }
+};
 
 const buildShareUrl = (slug: string) => `${window.location.origin}/propuesta/${slug}`;
 
@@ -54,6 +72,49 @@ const Propuestas = () => {
   const [sendingEmail, setSendingEmail] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<AgencyProposal | null>(null);
+
+  // Quick "Editar info" dialog state
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [infoTarget, setInfoTarget] = useState<AgencyProposal | null>(null);
+  const [infoClientName, setInfoClientName] = useState('');
+  const [infoContact, setInfoContact] = useState('');
+  const [infoAmount, setInfoAmount] = useState('');
+  const [infoCurrency, setInfoCurrency] = useState<'USD' | 'CRC'>('USD');
+  const [infoPackage, setInfoPackage] = useState<PackageType | ''>('');
+  const [savingInfo, setSavingInfo] = useState(false);
+
+  const openInfo = (p: AgencyProposal) => {
+    setInfoTarget(p);
+    setInfoClientName(p.client_name || '');
+    setInfoContact(p.contact_point || '');
+    setInfoAmount(p.amount != null ? String(p.amount) : '');
+    setInfoCurrency((p.currency as 'USD' | 'CRC') || 'USD');
+    setInfoPackage((p.package_type as PackageType) || '');
+    setInfoOpen(true);
+  };
+
+  const saveInfo = async () => {
+    if (!infoTarget) return;
+    setSavingInfo(true);
+    try {
+      await updateMut.mutateAsync({
+        id: infoTarget.id,
+        client_name: infoClientName.trim() || null,
+        contact_point: infoContact.trim() || null,
+        amount: infoAmount.trim() === '' ? null : Number(infoAmount),
+        currency: infoCurrency,
+        package_type: infoPackage || null,
+      });
+      toast.success('Información actualizada');
+      setInfoOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudo guardar');
+    } finally {
+      setSavingInfo(false);
+    }
+  };
+
 
   const openCreate = () => {
     setEditing(null);
@@ -224,43 +285,74 @@ const Propuestas = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {sorted.map((p) => (
-              <Card key={p.id} className="flex flex-col hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base leading-snug line-clamp-2">{p.title}</CardTitle>
-                    {p.is_published ? (
-                      <span title="Publicada" className="text-emerald-600 shrink-0"><Eye className="h-4 w-4" /></span>
-                    ) : (
-                      <span title="Oculta" className="text-muted-foreground shrink-0"><EyeOff className="h-4 w-4" /></span>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {p.client_name || 'Sin cliente'} · {format(new Date(p.created_at), "d MMM yyyy", { locale: es })}
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0 flex-1 flex flex-col gap-3">
-                  <div className="rounded-md border bg-muted/30 h-28 overflow-hidden text-[10px] text-muted-foreground p-2 font-mono line-clamp-6">
-                    {p.html_content?.slice(0, 280) || '<vacío>'}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-auto">
-                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => copyLink(p)}>
+              <Card key={p.id} className="flex flex-col hover:shadow-md hover:border-primary/40 transition-all">
+                <button
+                  type="button"
+                  onClick={() => window.open(buildShareUrl(p.slug), '_blank', 'noopener,noreferrer')}
+                  className="text-left"
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base leading-snug line-clamp-2">{p.title}</CardTitle>
+                      {p.is_published ? (
+                        <span title="Publicada" className="text-emerald-600 shrink-0"><Eye className="h-4 w-4" /></span>
+                      ) : (
+                        <span title="Oculta" className="text-muted-foreground shrink-0"><EyeOff className="h-4 w-4" /></span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {format(new Date(p.created_at), "d MMM yyyy", { locale: es })}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0 space-y-2">
+                    <div className="grid grid-cols-1 gap-1.5 text-sm">
+                      <div className="flex items-center gap-2 text-foreground">
+                        <UserIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate font-medium">{p.client_name || 'Sin cliente'}</span>
+                      </div>
+                      {p.contact_point && (
+                        <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                          <Info className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{p.contact_point}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        {p.amount != null ? (
+                          <span className="inline-flex items-center gap-1 text-sm font-semibold">
+                            <DollarSign className="h-3.5 w-3.5 text-emerald-600" />
+                            {formatMoney(p.amount, p.currency)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Sin monto</span>
+                        )}
+                        {p.package_type && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                            <PackageIcon className="h-3 w-3" />
+                            {PACKAGE_LABELS[p.package_type]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </button>
+                <CardContent className="pt-0 pb-4 mt-auto">
+                  <div className="flex flex-wrap gap-1.5 border-t pt-3">
+                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => openInfo(p)}>
+                      <Info className="h-3.5 w-3.5" /> Editar info
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => copyLink(p)}>
                       <Copy className="h-3.5 w-3.5" /> Link
                     </Button>
-                    <Button size="sm" variant="outline" className="gap-1.5" asChild>
-                      <a href={buildShareUrl(p.slug)} target="_blank" rel="noreferrer">
-                        <ExternalLink className="h-3.5 w-3.5" /> Ver
-                      </a>
-                    </Button>
-                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => openEmail(p)}>
+                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => openEmail(p)}>
                       <Mail className="h-3.5 w-3.5" /> Enviar
                     </Button>
-                    <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => openEdit(p)}>
-                      <Pencil className="h-3.5 w-3.5" /> Editar
+                    <Button size="sm" variant="ghost" className="gap-1.5 h-8" onClick={() => openEdit(p)} title="Editar HTML">
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="gap-1.5 text-destructive hover:text-destructive ml-auto"
+                      className="gap-1.5 h-8 text-destructive hover:text-destructive ml-auto"
                       onClick={() => setDeleteTarget(p)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -366,6 +458,68 @@ const Propuestas = () => {
       </Dialog>
 
       {/* Delete confirm */}
+      {/* Quick edit info dialog */}
+      <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Info className="h-4 w-4" /> Editar información</DialogTitle>
+            <DialogDescription>
+              Datos que se muestran en la tarjeta de la propuesta.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="space-y-1.5">
+              <Label>Nombre del cliente</Label>
+              <Input value={infoClientName} onChange={(e) => setInfoClientName(e.target.value)} placeholder="Ej: Comfortex" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Punto de contacto</Label>
+              <Input value={infoContact} onChange={(e) => setInfoContact(e.target.value)} placeholder="Ej: Juan Pérez — juan@empresa.com" />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1.5 col-span-2">
+                <Label>Monto</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={infoAmount}
+                  onChange={(e) => setInfoAmount(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Moneda</Label>
+                <Select value={infoCurrency} onValueChange={(v) => setInfoCurrency(v as 'USD' | 'CRC')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="CRC">CRC</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Tipo de paquete</Label>
+              <Select value={infoPackage} onValueChange={(v) => setInfoPackage(v as PackageType)}>
+                <SelectTrigger><SelectValue placeholder="Seleccioná una opción" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Mensual</SelectItem>
+                  <SelectItem value="quarterly">Trimestral</SelectItem>
+                  <SelectItem value="one_time">Pago único</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInfoOpen(false)}>Cancelar</Button>
+            <Button onClick={saveInfo} disabled={savingInfo}>
+              {savingInfo && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

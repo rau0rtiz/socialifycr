@@ -1,0 +1,6 @@
+
+ALTER TABLE public.agency_proposals
+  ADD COLUMN IF NOT EXISTS contact_point TEXT,
+  ADD COLUMN IF NOT EXISTS amount NUMERIC,
+  ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'USD',
+  ADD COLUMN IF NOT EXISTS package_type TEXT;
