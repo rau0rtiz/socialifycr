@@ -297,7 +297,31 @@ const Propuestas = () => {
     }
   };
 
+  useEffect(() => {
+    if (!previewTarget) {
+      setPreviewHtml('');
+      return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+    fetchProposalHtml(previewTarget.id)
+      .then((content) => {
+        if (!cancelled) setPreviewHtml(content);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (!cancelled) toast.error('No se pudo cargar la vista previa');
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [previewTarget]);
+
   const sorted = useMemo(() => proposals, [proposals]);
+
 
   return (
     <DashboardLayout>
