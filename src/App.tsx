@@ -53,6 +53,8 @@ const Producciones = lazy(() => import("./pages/Producciones"));
 const ProduccionSheet = lazy(() => import("./pages/ProduccionSheet"));
 const ProduccionPublica = lazy(() => import("./pages/ProduccionPublica"));
 const SellerCrm = lazy(() => import("./pages/SellerCrm"));
+const Propuestas = lazy(() => import("./pages/Propuestas"));
+const PropuestaPublica = lazy(() => import("./pages/PropuestaPublica"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -198,6 +200,7 @@ const App = () => (
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/invitacion/:token" element={<Invitacion />} />
                   <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
+                  <Route path="/propuesta/:slug" element={<PropuestaPublica />} />
                   <Route path="/privacidad" element={<Privacy />} />
                   <Route path="/terminos" element={<Terms />} />
                   <Route path="/eliminar-datos" element={<DataDeletion />} />
@@ -259,6 +262,13 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <ProduccionSheet />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/propuestas" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <Propuestas />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
