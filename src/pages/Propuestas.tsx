@@ -101,7 +101,11 @@ const Propuestas = () => {
 
   const [deleteTarget, setDeleteTarget] = useState<AgencyProposalListItem | null>(null);
   const [previewTarget, setPreviewTarget] = useState<AgencyProposalListItem | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string>('');
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [editorPreview, setEditorPreview] = useState(false);
+  const [editorHtmlLoading, setEditorHtmlLoading] = useState(false);
+
 
   // Quick "Editar info" dialog state
   const [infoOpen, setInfoOpen] = useState(false);
