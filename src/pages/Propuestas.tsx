@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,9 +23,11 @@ import {
   useCreateAgencyProposal,
   useUpdateAgencyProposal,
   useDeleteAgencyProposal,
-  type AgencyProposal,
+  fetchProposalHtml,
+  type AgencyProposalListItem,
   type PackageType,
 } from '@/hooks/use-agency-proposals';
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2 } from 'lucide-react';
@@ -83,27 +85,31 @@ const Propuestas = () => {
   const deleteMut = useDeleteAgencyProposal();
 
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editing, setEditing] = useState<AgencyProposal | null>(null);
+  const [editing, setEditing] = useState<AgencyProposalListItem | null>(null);
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
   const [html, setHtml] = useState('');
   const [isPublished, setIsPublished] = useState(true);
 
   const [emailOpen, setEmailOpen] = useState(false);
-  const [emailTarget, setEmailTarget] = useState<AgencyProposal | null>(null);
+  const [emailTarget, setEmailTarget] = useState<AgencyProposalListItem | null>(null);
   const [emailTo, setEmailTo] = useState('');
   const [emailToName, setEmailToName] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
 
-  const [deleteTarget, setDeleteTarget] = useState<AgencyProposal | null>(null);
-  const [previewTarget, setPreviewTarget] = useState<AgencyProposal | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AgencyProposalListItem | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<AgencyProposalListItem | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string>('');
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [editorPreview, setEditorPreview] = useState(false);
+  const [editorHtmlLoading, setEditorHtmlLoading] = useState(false);
+
 
   // Quick "Editar info" dialog state
   const [infoOpen, setInfoOpen] = useState(false);
-  const [infoTarget, setInfoTarget] = useState<AgencyProposal | null>(null);
+  const [infoTarget, setInfoTarget] = useState<AgencyProposalListItem | null>(null);
   const [infoClientName, setInfoClientName] = useState('');
   const [infoContact, setInfoContact] = useState('');
   const [infoAmount, setInfoAmount] = useState('');
@@ -111,7 +117,7 @@ const Propuestas = () => {
   const [infoPackage, setInfoPackage] = useState<PackageType | ''>('');
   const [savingInfo, setSavingInfo] = useState(false);
 
-  const openInfo = (p: AgencyProposal) => {
+  const openInfo = (p: AgencyProposalListItem) => {
     setInfoTarget(p);
     setInfoClientName(p.client_name || '');
     setInfoContact(p.contact_point || '');
@@ -154,15 +160,26 @@ const Propuestas = () => {
     setEditorOpen(true);
   };
 
-  const openEdit = (p: AgencyProposal) => {
+  const openEdit = async (p: AgencyProposalListItem) => {
     setEditing(p);
     setTitle(p.title);
     setClientName(p.client_name || '');
-    setHtml(p.html_content || '');
+    setHtml('');
     setIsPublished(p.is_published);
     setEditorPreview(false);
     setEditorOpen(true);
+    setEditorHtmlLoading(true);
+    try {
+      const content = await fetchProposalHtml(p.id);
+      setHtml(content);
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudo cargar el HTML');
+    } finally {
+      setEditorHtmlLoading(false);
+    }
   };
+
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -195,7 +212,7 @@ const Propuestas = () => {
     }
   };
 
-  const copyLink = async (p: AgencyProposal) => {
+  const copyLink = async (p: AgencyProposalListItem) => {
     const url = buildShareUrl(p.slug);
     const ok = await copyToClipboard(url);
     if (ok) {
@@ -205,7 +222,7 @@ const Propuestas = () => {
     }
   };
 
-  const openEmail = (p: AgencyProposal) => {
+  const openEmail = (p: AgencyProposalListItem) => {
     setEmailTarget(p);
     setEmailTo('');
     setEmailToName('');
@@ -280,7 +297,31 @@ const Propuestas = () => {
     }
   };
 
+  useEffect(() => {
+    if (!previewTarget) {
+      setPreviewHtml('');
+      return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+    fetchProposalHtml(previewTarget.id)
+      .then((content) => {
+        if (!cancelled) setPreviewHtml(content);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (!cancelled) toast.error('No se pudo cargar la vista previa');
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [previewTarget]);
+
   const sorted = useMemo(() => proposals, [proposals]);
+
 
   return (
     <DashboardLayout>
@@ -646,10 +687,14 @@ const Propuestas = () => {
           </DialogHeader>
           <div className="flex-1 min-h-0 bg-muted/30">
             {previewTarget && (
-              previewTarget.html_content ? (
+              previewLoading ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : previewHtml ? (
                 <iframe
                   title={`Vista previa ${previewTarget.title}`}
-                  srcDoc={previewTarget.html_content}
+                  srcDoc={previewHtml}
                   sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
                   className="w-full h-full bg-white"
                 />
@@ -660,6 +705,7 @@ const Propuestas = () => {
               )
             )}
           </div>
+
         </DialogContent>
       </Dialog>
     </DashboardLayout>
