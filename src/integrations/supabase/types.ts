@@ -825,34 +825,46 @@ export type Database = {
       }
       agency_proposals: {
         Row: {
+          amount: number | null
           client_name: string | null
+          contact_point: string | null
           created_at: string
           created_by: string | null
+          currency: string | null
           html_content: string
           id: string
           is_published: boolean
+          package_type: string | null
           slug: string
           title: string
           updated_at: string
         }
         Insert: {
+          amount?: number | null
           client_name?: string | null
+          contact_point?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string | null
           html_content?: string
           id?: string
           is_published?: boolean
+          package_type?: string | null
           slug: string
           title: string
           updated_at?: string
         }
         Update: {
+          amount?: number | null
           client_name?: string | null
+          contact_point?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string | null
           html_content?: string
           id?: string
           is_published?: boolean
+          package_type?: string | null
           slug?: string
           title?: string
           updated_at?: string
