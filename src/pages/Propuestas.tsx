@@ -28,7 +28,7 @@ import {
 } from '@/hooks/use-agency-proposals';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign } from 'lucide-react';
+import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -98,6 +98,8 @@ const Propuestas = () => {
   const [sendingEmail, setSendingEmail] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<AgencyProposal | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<AgencyProposal | null>(null);
+  const [editorPreview, setEditorPreview] = useState(false);
 
   // Quick "Editar info" dialog state
   const [infoOpen, setInfoOpen] = useState(false);
@@ -148,6 +150,7 @@ const Propuestas = () => {
     setClientName('');
     setHtml('');
     setIsPublished(true);
+    setEditorPreview(false);
     setEditorOpen(true);
   };
 
@@ -157,6 +160,7 @@ const Propuestas = () => {
     setClientName(p.client_name || '');
     setHtml(p.html_content || '');
     setIsPublished(p.is_published);
+    setEditorPreview(false);
     setEditorOpen(true);
   };
 
@@ -314,7 +318,7 @@ const Propuestas = () => {
               <Card key={p.id} className="flex flex-col hover:shadow-md hover:border-primary/40 transition-all">
                 <button
                   type="button"
-                  onClick={() => window.open(buildShareUrl(p.slug), '_blank', 'noopener,noreferrer')}
+                  onClick={() => setPreviewTarget(p)}
                   className="text-left"
                 >
                   <CardHeader className="pb-3">
@@ -363,6 +367,9 @@ const Propuestas = () => {
                 </button>
                 <CardContent className="pt-0 pb-4 mt-auto">
                   <div className="flex flex-wrap gap-1.5 border-t pt-3">
+                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => setPreviewTarget(p)}>
+                      <Monitor className="h-3.5 w-3.5" /> Vista previa
+                    </Button>
                     <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => openInfo(p)}>
                       <Info className="h-3.5 w-3.5" /> Editar info
                     </Button>
@@ -393,7 +400,7 @@ const Propuestas = () => {
 
       {/* Editor dialog */}
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar propuesta' : 'Nueva propuesta'}</DialogTitle>
             <DialogDescription>
@@ -412,13 +419,46 @@ const Propuestas = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>HTML</Label>
-              <Textarea
-                value={html}
-                onChange={(e) => setHtml(e.target.value)}
-                placeholder="<html>...</html>"
-                className="min-h-[280px] font-mono text-xs"
-              />
+              <div className="flex items-center justify-between">
+                <Label>HTML</Label>
+                <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
+                  <button
+                    type="button"
+                    onClick={() => setEditorPreview(false)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded ${!editorPreview ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+                  >
+                    <Code2 className="h-3.5 w-3.5" /> Código
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditorPreview(true)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded ${editorPreview ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+                  >
+                    <Monitor className="h-3.5 w-3.5" /> Vista previa
+                  </button>
+                </div>
+              </div>
+              {editorPreview ? (
+                html.trim() ? (
+                  <iframe
+                    title="Vista previa propuesta"
+                    srcDoc={html}
+                    sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
+                    className="w-full h-[480px] rounded-md border bg-white"
+                  />
+                ) : (
+                  <div className="w-full h-[480px] rounded-md border border-dashed flex items-center justify-center text-sm text-muted-foreground">
+                    Pegá HTML en la pestaña "Código" para ver la vista previa.
+                  </div>
+                )
+              ) : (
+                <Textarea
+                  value={html}
+                  onChange={(e) => setHtml(e.target.value)}
+                  placeholder="<html>...</html>"
+                  className="min-h-[480px] font-mono text-xs"
+                />
+              )}
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
@@ -562,6 +602,64 @@ const Propuestas = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview dialog */}
+      <Dialog open={!!previewTarget} onOpenChange={(open) => !open && setPreviewTarget(null)}>
+        <DialogContent className="max-w-6xl p-0 gap-0 h-[85vh] flex flex-col">
+          <DialogHeader className="px-5 py-3 border-b flex-row items-center justify-between space-y-0">
+            <div className="min-w-0">
+              <DialogTitle className="truncate text-base">{previewTarget?.title}</DialogTitle>
+              <DialogDescription className="truncate text-xs">
+                {previewTarget?.client_name || 'Sin cliente'} · {previewTarget ? buildShareUrl(previewTarget.slug) : ''}
+              </DialogDescription>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {previewTarget && (
+                <>
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => copyLink(previewTarget)}>
+                    <Copy className="h-3.5 w-3.5" /> Link
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => window.open(buildShareUrl(previewTarget.slug), '_blank', 'noopener,noreferrer')}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Abrir
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => {
+                      const t = previewTarget;
+                      setPreviewTarget(null);
+                      if (t) openEdit(t);
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Editar
+                  </Button>
+                </>
+              )}
+            </div>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 bg-muted/30">
+            {previewTarget && (
+              previewTarget.html_content ? (
+                <iframe
+                  title={`Vista previa ${previewTarget.title}`}
+                  srcDoc={previewTarget.html_content}
+                  sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
+                  className="w-full h-full bg-white"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                  Esta propuesta todavía no tiene HTML cargado.
+                </div>
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
