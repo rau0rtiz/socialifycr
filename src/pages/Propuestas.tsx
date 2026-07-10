@@ -28,9 +28,25 @@ import {
 } from '@/hooks/use-agency-proposals';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff } from 'lucide-react';
+import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+const PACKAGE_LABELS: Record<PackageType, string> = {
+  monthly: 'Mensual',
+  quarterly: 'Trimestral',
+  one_time: 'Pago único',
+};
+
+const formatMoney = (amount: number | null, currency: string | null) => {
+  if (amount == null) return null;
+  const cur = currency || 'USD';
+  try {
+    return new Intl.NumberFormat('es-CR', { style: 'currency', currency: cur, maximumFractionDigits: 0 }).format(amount);
+  } catch {
+    return `${cur} ${amount.toLocaleString('es-CR')}`;
+  }
+};
 
 const buildShareUrl = (slug: string) => `${window.location.origin}/propuesta/${slug}`;
 
