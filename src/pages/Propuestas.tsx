@@ -20,9 +20,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   useAgencyProposals,
-  useCreateAgencyProposalListItem,
-  useUpdateAgencyProposalListItem,
-  useDeleteAgencyProposalListItem,
+  useCreateAgencyProposal,
+  useUpdateAgencyProposal,
+  useDeleteAgencyProposal,
   fetchProposalHtml,
   type AgencyProposalListItem,
   type PackageType,
@@ -80,9 +80,9 @@ const copyToClipboard = async (text: string) => {
 
 const Propuestas = () => {
   const { data: proposals = [], isLoading } = useAgencyProposals();
-  const createMut = useCreateAgencyProposalListItem();
-  const updateMut = useUpdateAgencyProposalListItem();
-  const deleteMut = useDeleteAgencyProposalListItem();
+  const createMut = useCreateAgencyProposal();
+  const updateMut = useUpdateAgencyProposal();
+  const deleteMut = useDeleteAgencyProposal();
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<AgencyProposalListItem | null>(null);
