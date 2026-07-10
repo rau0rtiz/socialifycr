@@ -193,11 +193,11 @@ const Propuestas = () => {
 
   const copyLink = async (p: AgencyProposal) => {
     const url = buildShareUrl(p.slug);
-    try {
-      await navigator.clipboard.writeText(url);
+    const ok = await copyToClipboard(url);
+    if (ok) {
       toast.success('Link copiado al portapapeles');
-    } catch {
-      toast.error('No se pudo copiar');
+    } else {
+      toast.error('No se pudo copiar. Copialo manualmente: ' + url);
     }
   };
 
