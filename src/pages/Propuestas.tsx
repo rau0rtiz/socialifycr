@@ -607,19 +607,19 @@ const Propuestas = () => {
 
       {/* Preview dialog */}
       <Dialog open={!!previewTarget} onOpenChange={(open) => !open && setPreviewTarget(null)}>
-        <DialogContent className="max-w-6xl p-0 gap-0 h-[85vh] flex flex-col">
-          <DialogHeader className="px-5 py-3 border-b flex-row items-center justify-between space-y-0">
-            <div className="min-w-0">
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-6xl h-[92dvh] max-h-[92dvh] p-0 gap-0 flex flex-col">
+          <DialogHeader className="px-4 sm:px-5 py-3 border-b space-y-0 shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="min-w-0 pr-8 sm:pr-4">
               <DialogTitle className="truncate text-base">{previewTarget?.title}</DialogTitle>
               <DialogDescription className="truncate text-xs">
                 {previewTarget?.client_name || 'Sin cliente'} · {previewTarget ? buildShareUrl(previewTarget.slug) : ''}
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
               {previewTarget && (
                 <>
                   <Button size="sm" variant="outline" className="gap-1.5" onClick={() => copyLink(previewTarget)}>
-                    <Copy className="h-3.5 w-3.5" /> Link
+                    <Copy className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Link</span>
                   </Button>
                   <Button
                     size="sm"
@@ -627,7 +627,7 @@ const Propuestas = () => {
                     className="gap-1.5"
                     onClick={() => window.open(buildShareUrl(previewTarget.slug), '_blank', 'noopener,noreferrer')}
                   >
-                    <ExternalLink className="h-3.5 w-3.5" /> Abrir
+                    <ExternalLink className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Abrir</span>
                   </Button>
                   <Button
                     size="sm"
@@ -638,7 +638,7 @@ const Propuestas = () => {
                       if (t) openEdit(t);
                     }}
                   >
-                    <Pencil className="h-3.5 w-3.5" /> Editar
+                    <Pencil className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Editar</span>
                   </Button>
                 </>
               )}
