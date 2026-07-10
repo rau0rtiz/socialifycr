@@ -150,6 +150,7 @@ const Propuestas = () => {
     setClientName('');
     setHtml('');
     setIsPublished(true);
+    setEditorPreview(false);
     setEditorOpen(true);
   };
 
