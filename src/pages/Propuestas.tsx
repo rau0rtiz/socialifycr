@@ -98,6 +98,8 @@ const Propuestas = () => {
   const [sendingEmail, setSendingEmail] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<AgencyProposal | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<AgencyProposal | null>(null);
+  const [editorPreview, setEditorPreview] = useState(false);
 
   // Quick "Editar info" dialog state
   const [infoOpen, setInfoOpen] = useState(false);
