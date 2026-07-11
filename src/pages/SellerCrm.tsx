@@ -151,14 +151,15 @@ const SellerCrm = () => {
           </div>
         </div>
 
-        {/* KPIs - 5 cols always, more compact on mobile */}
-        <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+        {/* KPIs - 6 cols always, compact on mobile */}
+        <div className="grid grid-cols-6 gap-1 sm:gap-2">
           {[
-            { key: 'new', label: 'Nuevos',       value: counts.new,         color: 'status-new' },
-            { key: 'contactado', label: 'Contact.', value: counts.contactado,  color: 'status-contactado' },
-            { key: 'seguimiento', label: 'Segui.', value: counts.seguimiento, color: 'status-seguimiento' },
-            { key: 'venta', label: 'Ventas',     value: counts.venta,       color: 'status-venta' },
-            { key: 'perdido', label: 'Perdidos',  value: counts.perdido,     color: 'status-perdido' },
+            { key: 'new', label: 'Nuevos',       value: counts.new,            color: 'status-new' },
+            { key: 'contactado', label: 'Contact.', value: counts.contactado,   color: 'status-contactado' },
+            { key: 'seguimiento', label: 'Segui.', value: counts.seguimiento,  color: 'status-seguimiento' },
+            { key: 'visita_tienda', label: 'Visita', value: counts.visita_tienda, color: 'status-visita' },
+            { key: 'venta', label: 'Ventas',     value: counts.venta,          color: 'status-venta' },
+            { key: 'perdido', label: 'Perdidos', value: counts.perdido,        color: 'status-perdido' },
           ].map((k) => (
             <Card
               key={k.key}
