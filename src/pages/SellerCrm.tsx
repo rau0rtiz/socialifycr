@@ -58,7 +58,7 @@ const SellerCrm = () => {
   const filtered = useMemo(() => {
     return leads.filter((l) => {
       const raw = (l.lead_status || '').toString().trim().toLowerCase();
-      const allowed = ['new','contactado','seguimiento','venta','perdido'];
+      const allowed = ['new','contactado','seguimiento','visita_tienda','venta','perdido'];
       const s = allowed.includes(raw) ? raw : 'new';
       if (statusFilter !== 'all' && s !== statusFilter) return false;
       if (search) {
