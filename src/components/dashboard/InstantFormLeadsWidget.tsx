@@ -38,16 +38,18 @@ const STATUS_OPTIONS: { value: InstantFormLeadStatus | 'new'; label: string }[] 
   { value: 'new', label: 'Nuevo' },
   { value: 'contactado', label: 'Contactado' },
   { value: 'seguimiento', label: 'Seguimiento' },
+  { value: 'visita_tienda', label: 'Visita a la tienda' },
   { value: 'venta', label: 'Venta' },
   { value: 'perdido', label: 'Perdido' },
 ];
 
 const STATUS_STYLES: Record<string, { trigger: string; dot: string; chip: string }> = {
-  new:          { trigger: 'border-[hsl(var(--status-new))]/50 bg-[hsl(var(--status-new))]/10 text-[hsl(var(--status-new))]', dot: 'bg-[hsl(var(--status-new))]', chip: 'bg-[hsl(var(--status-new))]/12 text-[hsl(var(--status-new))] ring-1 ring-[hsl(var(--status-new))]/30' },
-  contactado:   { trigger: 'border-[hsl(var(--status-contactado))]/50 bg-[hsl(var(--status-contactado))]/12 text-[hsl(var(--status-contactado))]', dot: 'bg-[hsl(var(--status-contactado))]', chip: 'bg-[hsl(var(--status-contactado))]/15 text-[hsl(var(--status-contactado))] ring-1 ring-[hsl(var(--status-contactado))]/30' },
-  seguimiento:  { trigger: 'border-[hsl(var(--status-seguimiento))]/50 bg-[hsl(var(--status-seguimiento))]/12 text-[hsl(var(--status-seguimiento))]', dot: 'bg-[hsl(var(--status-seguimiento))]', chip: 'bg-[hsl(var(--status-seguimiento))]/15 text-[hsl(var(--status-seguimiento))] ring-1 ring-[hsl(var(--status-seguimiento))]/30' },
-  venta:        { trigger: 'border-[hsl(var(--status-venta))]/50 bg-[hsl(var(--status-venta))]/15 text-[hsl(var(--status-venta))]', dot: 'bg-[hsl(var(--status-venta))]', chip: 'bg-[hsl(var(--status-venta))]/18 text-[hsl(var(--status-venta))] ring-1 ring-[hsl(var(--status-venta))]/35' },
-  perdido:      { trigger: 'border-[hsl(var(--status-perdido))]/50 bg-[hsl(var(--status-perdido))]/12 text-[hsl(var(--status-perdido))]', dot: 'bg-[hsl(var(--status-perdido))]', chip: 'bg-[hsl(var(--status-perdido))]/15 text-[hsl(var(--status-perdido))] ring-1 ring-[hsl(var(--status-perdido))]/30' },
+  new:           { trigger: 'border-[hsl(var(--status-new))]/50 bg-[hsl(var(--status-new))]/10 text-[hsl(var(--status-new))]', dot: 'bg-[hsl(var(--status-new))]', chip: 'bg-[hsl(var(--status-new))]/12 text-[hsl(var(--status-new))] ring-1 ring-[hsl(var(--status-new))]/30' },
+  contactado:    { trigger: 'border-[hsl(var(--status-contactado))]/50 bg-[hsl(var(--status-contactado))]/12 text-[hsl(var(--status-contactado))]', dot: 'bg-[hsl(var(--status-contactado))]', chip: 'bg-[hsl(var(--status-contactado))]/15 text-[hsl(var(--status-contactado))] ring-1 ring-[hsl(var(--status-contactado))]/30' },
+  seguimiento:   { trigger: 'border-[hsl(var(--status-seguimiento))]/50 bg-[hsl(var(--status-seguimiento))]/12 text-[hsl(var(--status-seguimiento))]', dot: 'bg-[hsl(var(--status-seguimiento))]', chip: 'bg-[hsl(var(--status-seguimiento))]/15 text-[hsl(var(--status-seguimiento))] ring-1 ring-[hsl(var(--status-seguimiento))]/30' },
+  visita_tienda: { trigger: 'border-[hsl(var(--status-visita))]/50 bg-[hsl(var(--status-visita))]/12 text-[hsl(var(--status-visita))]', dot: 'bg-[hsl(var(--status-visita))]', chip: 'bg-[hsl(var(--status-visita))]/15 text-[hsl(var(--status-visita))] ring-1 ring-[hsl(var(--status-visita))]/30' },
+  venta:         { trigger: 'border-[hsl(var(--status-venta))]/50 bg-[hsl(var(--status-venta))]/15 text-[hsl(var(--status-venta))]', dot: 'bg-[hsl(var(--status-venta))]', chip: 'bg-[hsl(var(--status-venta))]/18 text-[hsl(var(--status-venta))] ring-1 ring-[hsl(var(--status-venta))]/35' },
+  perdido:       { trigger: 'border-[hsl(var(--status-perdido))]/50 bg-[hsl(var(--status-perdido))]/12 text-[hsl(var(--status-perdido))]', dot: 'bg-[hsl(var(--status-perdido))]', chip: 'bg-[hsl(var(--status-perdido))]/15 text-[hsl(var(--status-perdido))] ring-1 ring-[hsl(var(--status-perdido))]/30' },
 };
 
 const STATUS_FILTER = [{ value: 'all', label: 'Todos los estados' }, ...STATUS_OPTIONS];
