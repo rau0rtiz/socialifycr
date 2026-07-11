@@ -88,8 +88,21 @@ export const useSellerLeads = ({ sellerId, clientId, mode }: UseSellerLeadsOpts)
         });
       }
 
-      // Collapse duplicates: same client + same phone → keep only the newest lead card,
-      // flag it as recontact so the seller sees history without duplicated rows.
+      // Collapse duplicates: same client + same phone → keep only ONE card.
+      // Prefer the most advanced pipeline status (so a lead progressed to "venta"
+      // isn't hidden by a newer duplicate submission that arrived as "new").
+      // Ties broken by newest created_time.
+      const statusRank = (s?: string | null) => {
+        const v = (s || '').toString().trim().toLowerCase();
+        if (v === 'venta') return 5;
+        if (v === 'seguimiento') return 4;
+        if (v === 'visita_tienda') return 3;
+        if (v === 'contactado') return 2;
+        if (v === 'perdido') return 1;
+        return 0;
+      };
+      const timeOf = (l: SellerLead) =>
+        new Date(l.created_time || (l as any).created_at || 0).getTime();
       const seen = new Map<string, SellerLead>();
       const collapsed: SellerLead[] = [];
       for (const l of leads) {
@@ -100,8 +113,19 @@ export const useSellerLeads = ({ sellerId, clientId, mode }: UseSellerLeadsOpts)
         if (!prev) {
           seen.set(key, l);
           collapsed.push(l);
+          continue;
+        }
+        const prevScore = statusRank(prev.lead_status);
+        const curScore = statusRank(l.lead_status);
+        const preferCurrent =
+          curScore > prevScore ||
+          (curScore === prevScore && timeOf(l) > timeOf(prev));
+        if (preferCurrent) {
+          const idx = collapsed.indexOf(prev);
+          if (idx !== -1) collapsed[idx] = l;
+          l.is_recontact = true;
+          seen.set(key, l);
         } else {
-          // Already have a newer entry (leads are ordered by created_time desc).
           prev.is_recontact = true;
         }
       }
