@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Phone, MessageCircle, Sparkles, Clock } from 'lucide-react';
+import { Phone, MessageCircle, Sparkles, Clock, Repeat } from 'lucide-react';
 import type { SellerLead } from '@/hooks/use-seller-leads';
 import { getUrgencyFromLead } from '@/lib/comfortex-urgency';
 import { UrgencyBadge } from './UrgencyBadge';
@@ -58,7 +58,15 @@ export const SellerLeadCard = ({ lead, onOpen, showClient = false }: Props) => {
             <p className="text-[11px] text-muted-foreground truncate">{lead.client_name}</p>
           )}
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+          {lead.is_recontact && (
+            <Badge
+              className="bg-amber-500/15 text-amber-500 border-amber-500/30 border gap-1"
+              title="Este lead ya había llenado otro formulario antes"
+            >
+              <Repeat className="h-3 w-3" /> Recontacto
+            </Badge>
+          )}
           <UrgencyBadge urgency={urgency} />
           <Badge className={`${style.chip} border-0`}>{style.label}</Badge>
         </div>
