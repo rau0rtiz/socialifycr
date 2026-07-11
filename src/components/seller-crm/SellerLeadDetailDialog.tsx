@@ -384,6 +384,75 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
           </div>
         )}
       </DialogContent>
+
+      {/* Nested: Visit scheduler */}
+      <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
+        <DialogContent className="max-w-md w-[calc(100vw-1rem)] sm:w-full">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Store className="h-5 w-5 text-[hsl(var(--status-visita))]" />
+              Agendar visita a la tienda
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {lead.full_name || 'Lead'} · Se guarda la fecha y hora en el lead.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Fecha *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn('w-full justify-start text-left font-normal h-10', !visitDate && 'text-muted-foreground')}
+                    >
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      {visitDate ? format(visitDate, 'd MMM yyyy', { locale: es }) : <span>Fecha</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={visitDate}
+                      onSelect={setVisitDate}
+                      initialFocus
+                      locale={es}
+                      className={cn('p-3 pointer-events-auto')}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label className="text-xs">Hora *</Label>
+                <Input
+                  type="time"
+                  value={visitTime}
+                  onChange={(e) => setVisitTime(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Notas (opcional)</Label>
+              <Textarea
+                placeholder="Ej: viene con su esposa, prefiere la sucursal de Escazú..."
+                value={visitNotes}
+                onChange={(e) => setVisitNotes(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setVisitDialogOpen(false)} disabled={savingVisit}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveVisit} disabled={savingVisit || !visitDate}>
+              {savingVisit ? 'Guardando…' : 'Guardar visita'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
