@@ -254,6 +254,21 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
 
         {tab === 'info' && (
           <div className="space-y-3 text-sm">
+            {(lead as any).store_visit_at && (
+              <div className="flex items-start gap-2 rounded-md border border-[hsl(var(--status-visita))]/40 bg-[hsl(var(--status-visita))]/10 p-2.5">
+                <Store className="h-4 w-4 text-[hsl(var(--status-visita))] mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground">Visita agendada</p>
+                  <p className="font-semibold text-[hsl(var(--status-visita))]">{formatDate((lead as any).store_visit_at)}</p>
+                  {(lead as any).store_visit_notes && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{(lead as any).store_visit_notes}</p>
+                  )}
+                </div>
+                <Button size="sm" variant="ghost" className="h-7 text-xs shrink-0" onClick={() => setVisitDialogOpen(true)}>
+                  Reagendar
+                </Button>
+              </div>
+            )}
             {cleanPhone && (
               <div className="flex items-center gap-2 rounded-md bg-muted/30 p-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
