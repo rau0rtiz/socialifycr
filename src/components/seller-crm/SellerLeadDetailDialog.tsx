@@ -288,13 +288,23 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
           </div>
 
           {/* CTA principal */}
-          <Button
-            size="lg"
-            onClick={() => setSaleDialogOpen(true)}
-            className="w-full h-12 bg-[hsl(var(--status-venta))] hover:bg-[hsl(var(--status-venta))]/90 text-white font-bold tracking-wide uppercase text-[13px] rounded-xl shadow-[0_10px_20px_-8px_hsl(var(--status-venta)/0.5)] active:scale-[0.98] transition-transform"
-          >
-            <DollarSign className="h-5 w-5 mr-2" /> Registrar venta
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              size="lg"
+              onClick={() => setSaleDialogOpen(true)}
+              className="flex-1 h-12 bg-[hsl(var(--status-venta))] hover:bg-[hsl(var(--status-venta))]/90 text-white font-bold tracking-wide uppercase text-[13px] rounded-xl shadow-[0_10px_20px_-8px_hsl(var(--status-venta)/0.5)] active:scale-[0.98] transition-transform"
+            >
+              <DollarSign className="h-5 w-5 mr-2" /> Registrar venta
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setVisitDialogOpen(true)}
+              className="sm:flex-1 h-12 font-bold tracking-wide uppercase text-[13px] rounded-xl border-[hsl(var(--status-visita))]/40 text-[hsl(var(--status-visita))] hover:bg-[hsl(var(--status-visita))]/10 hover:text-[hsl(var(--status-visita))]"
+            >
+              <Store className="h-5 w-5 mr-2" /> {(lead as any).store_visit_at ? 'Reagendar visita' : 'Agendar visita'}
+            </Button>
+          </div>
 
           {/* Visita agendada */}
           {(lead as any).store_visit_at && (
