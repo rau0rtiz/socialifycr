@@ -107,7 +107,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
 
   useEffect(() => {
     if (open) {
-      setTab('info');
+      setSaleDialogOpen(false);
       setQuantity('1');
       setEmbroidery(false);
       setSubtotalStr('');
@@ -157,7 +157,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
   };
 
   const handleStatusChange = async (newStatus: InstantFormLeadStatus) => {
-    if (newStatus === 'venta') { setTab('sale'); return; }
+    if (newStatus === 'venta') { setSaleDialogOpen(true); return; }
     if (newStatus === 'visita_tienda') { setVisitDialogOpen(true); return; }
     try {
       await updateStatus.mutateAsync({ leadId: lead.id, status: newStatus });
@@ -244,7 +244,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Status selector — always on top */}
+        {/* Status selector + actions */}
         <div className="flex items-center gap-2 flex-wrap">
           <Label className="text-xs shrink-0">Estado:</Label>
           <Select value={status} onValueChange={(v) => handleStatusChange(v as InstantFormLeadStatus)}>
@@ -267,20 +267,16 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
           )}
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 border-b">
-          <button
-            className={`px-3 py-2 text-sm border-b-2 -mb-px ${tab === 'info' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted-foreground'}`}
-            onClick={() => setTab('info')}
-          >Info del lead</button>
-          <button
-            className={`px-3 py-2 text-sm border-b-2 -mb-px ${tab === 'sale' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted-foreground'}`}
-            onClick={() => setTab('sale')}
-          ><DollarSign className="inline h-3.5 w-3.5 mr-1" />Registrar venta</button>
-        </div>
+        {/* Prominent CTA: Register sale */}
+        <Button
+          size="lg"
+          onClick={() => setSaleDialogOpen(true)}
+          className="w-full h-11 bg-[hsl(var(--status-venta))] hover:bg-[hsl(var(--status-venta))]/90 text-white font-semibold shadow-sm"
+        >
+          <DollarSign className="h-4 w-4 mr-1.5" /> Registrar venta
+        </Button>
 
-
-        {tab === 'info' && (
+        {true && (
           <div className="space-y-3 text-sm">
             {(lead as any).store_visit_at && (
               <div className="flex items-start gap-2 rounded-md border border-[hsl(var(--status-visita))]/40 bg-[hsl(var(--status-visita))]/10 p-2.5">
