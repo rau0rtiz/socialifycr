@@ -47,6 +47,7 @@
     --status-seguimiento: 271 81% 56%;/* purple */
     --status-venta: 142 71% 42%;      /* green */
     --status-perdido: 0 72% 55%;      /* red */
+    --status-visita: 180 72% 40%;     /* teal */
 
     --border: 0 0% 88%;
     --input: 0 0% 88%;
@@ -110,6 +111,7 @@
     --status-seguimiento: 271 81% 64%;
     --status-venta: 142 65% 48%;
     --status-perdido: 0 72% 60%;
+    --status-visita: 180 72% 50%;
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;

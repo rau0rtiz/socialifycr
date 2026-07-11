@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Phone, DollarSign, MessageCircle, Sparkles, Copy } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Phone, DollarSign, MessageCircle, Sparkles, Copy, Store, CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import {
   useRegisterSaleFromInstantFormLead,
   type InstantFormLeadStatus,
@@ -29,6 +34,7 @@ const STATUS_OPTIONS: { value: InstantFormLeadStatus; label: string }[] = [
   { value: 'new', label: 'Nuevo' },
   { value: 'contactado', label: 'Contactado' },
   { value: 'seguimiento', label: 'Seguimiento' },
+  { value: 'visita_tienda', label: 'Visita a la tienda' },
   { value: 'venta', label: 'Venta' },
   { value: 'perdido', label: 'Perdido' },
 ];
@@ -60,6 +66,13 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
   const [generating, setGenerating] = useState(false);
   const [generatedMessage, setGeneratedMessage] = useState('');
 
+  // Visit scheduler state
+  const [visitDialogOpen, setVisitDialogOpen] = useState(false);
+  const [visitDate, setVisitDate] = useState<Date | undefined>(undefined);
+  const [visitTime, setVisitTime] = useState('10:00');
+  const [visitNotes, setVisitNotes] = useState('');
+  const [savingVisit, setSavingVisit] = useState(false);
+
   const registerSale = useRegisterSaleFromInstantFormLead(lead?.client_id || null);
   const updateStatus = useUpdateSellerLeadStatus();
   const qc = useQueryClient();
@@ -73,6 +86,20 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
       setIvaPct('13');
       setNotes('');
       setGeneratedMessage((lead as any)?.ai_message || '');
+      // Preload existing visit info if any
+      const existingVisit = (lead as any)?.store_visit_at as string | null | undefined;
+      if (existingVisit) {
+        const d = new Date(existingVisit);
+        setVisitDate(d);
+        setVisitTime(
+          new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Costa_Rica', hour: '2-digit', minute: '2-digit', hour12: false })
+            .format(d)
+        );
+      } else {
+        setVisitDate(undefined);
+        setVisitTime('10:00');
+      }
+      setVisitNotes((lead as any)?.store_visit_notes || '');
     }
   }, [open, lead?.id]);
 
@@ -103,11 +130,44 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
 
   const handleStatusChange = async (newStatus: InstantFormLeadStatus) => {
     if (newStatus === 'venta') { setTab('sale'); return; }
+    if (newStatus === 'visita_tienda') { setVisitDialogOpen(true); return; }
     try {
       await updateStatus.mutateAsync({ leadId: lead.id, status: newStatus });
       toast.success(`Estado: ${STATUS_OPTIONS.find(o => o.value === newStatus)?.label}`);
     } catch (e: any) {
       toast.error('No se pudo actualizar', { description: e.message });
+    }
+  };
+
+  const handleSaveVisit = async () => {
+    if (!visitDate) { toast.error('Elegí una fecha para la visita'); return; }
+    const [hh, mm] = (visitTime || '10:00').split(':').map((n) => parseInt(n, 10) || 0);
+    // Build a UTC ISO from CR-local date + time (CR is UTC-6, no DST)
+    const y = visitDate.getFullYear();
+    const mo = visitDate.getMonth();
+    const d = visitDate.getDate();
+    // Local wall time in CR → convert to UTC by adding 6h
+    const utcMs = Date.UTC(y, mo, d, hh + 6, mm, 0, 0);
+    const iso = new Date(utcMs).toISOString();
+    setSavingVisit(true);
+    try {
+      const { error } = await supabase
+        .from('instant_form_leads')
+        .update({
+          lead_status: 'visita_tienda',
+          store_visit_at: iso,
+          store_visit_notes: visitNotes.trim() || null,
+        } as any)
+        .eq('id', lead.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ['seller-leads'] });
+      qc.invalidateQueries({ queryKey: ['instant-form-leads'] });
+      toast.success('Visita agendada', { description: format(visitDate, "d MMM yyyy", { locale: es }) + ' · ' + visitTime });
+      setVisitDialogOpen(false);
+    } catch (e: any) {
+      toast.error('No se pudo agendar la visita', { description: e.message });
+    } finally {
+      setSavingVisit(false);
     }
   };
 
@@ -194,6 +254,21 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
 
         {tab === 'info' && (
           <div className="space-y-3 text-sm">
+            {(lead as any).store_visit_at && (
+              <div className="flex items-start gap-2 rounded-md border border-[hsl(var(--status-visita))]/40 bg-[hsl(var(--status-visita))]/10 p-2.5">
+                <Store className="h-4 w-4 text-[hsl(var(--status-visita))] mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground">Visita agendada</p>
+                  <p className="font-semibold text-[hsl(var(--status-visita))]">{formatDate((lead as any).store_visit_at)}</p>
+                  {(lead as any).store_visit_notes && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{(lead as any).store_visit_notes}</p>
+                  )}
+                </div>
+                <Button size="sm" variant="ghost" className="h-7 text-xs shrink-0" onClick={() => setVisitDialogOpen(true)}>
+                  Reagendar
+                </Button>
+              </div>
+            )}
             {cleanPhone && (
               <div className="flex items-center gap-2 rounded-md bg-muted/30 p-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
@@ -309,6 +384,75 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
           </div>
         )}
       </DialogContent>
+
+      {/* Nested: Visit scheduler */}
+      <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
+        <DialogContent className="max-w-md w-[calc(100vw-1rem)] sm:w-full">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Store className="h-5 w-5 text-[hsl(var(--status-visita))]" />
+              Agendar visita a la tienda
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {lead.full_name || 'Lead'} · Se guarda la fecha y hora en el lead.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Fecha *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn('w-full justify-start text-left font-normal h-10', !visitDate && 'text-muted-foreground')}
+                    >
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      {visitDate ? format(visitDate, 'd MMM yyyy', { locale: es }) : <span>Fecha</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={visitDate}
+                      onSelect={setVisitDate}
+                      initialFocus
+                      locale={es}
+                      className={cn('p-3 pointer-events-auto')}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label className="text-xs">Hora *</Label>
+                <Input
+                  type="time"
+                  value={visitTime}
+                  onChange={(e) => setVisitTime(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Notas (opcional)</Label>
+              <Textarea
+                placeholder="Ej: viene con su esposa, prefiere la sucursal de Escazú..."
+                value={visitNotes}
+                onChange={(e) => setVisitNotes(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setVisitDialogOpen(false)} disabled={savingVisit}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveVisit} disabled={savingVisit || !visitDate}>
+              {savingVisit ? 'Guardando…' : 'Guardar visita'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };

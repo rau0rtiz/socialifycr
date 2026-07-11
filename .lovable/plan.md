@@ -1,31 +1,40 @@
-## Objetivo
-Adaptar la lógica de Comfortex al nuevo formulario de Meta (6 preguntas) donde ya no existe la camisa de vestir manga larga ni su variante. Solo quedan 3 categorías: **Polo**, **Columbia/Pescador (manga corta)** y **Cuello Redondo**.
+## Nuevo estado de lead: "Visita a la tienda"
 
-## Cambios
+Agrego un sexto estado al pipeline de leads (`instant_form_leads`) que permite además agendar fecha y hora de la visita. La info queda guardada en el propio lead y visible en todas las vistas donde ya aparece el estado.
 
-### 1. Prompt de IA (`supabase/functions/_shared/comfortex-reply.ts`)
-- **Eliminar** el bloque `CAMISA TIPO COLUMBIA` (la de vestir manga larga con precios ₡10.735 / ₡7.345 / ₡5.910).
-- **Renombrar/aclarar** `POLO COLUMBIA` como **"Camisa Tipo Columbia / Pescador (manga corta)"** para que coincida con la etiqueta que ve el lead en el form.
-- Agregar regla explícita: *"Comfortex ya no maneja camisas de vestir ni versiones manga larga. Todas las camisas tipo Columbia son manga corta (Pescador). Si el lead pregunta por manga larga o camisa de vestir, aclará amablemente que ese producto ya no está disponible y ofrecé las 3 opciones actuales."*
-- Añadir mapeo de las nuevas preguntas del form para que la IA sepa interpretarlas:
-  - Q1 `¿Qué modelo de camisa está buscando?` → categoría (Polo / Columbia-Pescador / Cuello Redondo)
-  - Q2 `¿Cuántas camisas necesita?` → aplica lógica detalle vs. mayor
-  - Q3 `¿Desea que las camisas tengan algún bordado?` → si Sí, adjuntar precios de bordado + digitalización
-  - Q4 `¿Cuál Modelo de Camisa Tipo Polo prefiere?` → WAFFIT / JICK / COLUMBIA
-  - Q5 `¿Cuál Modelo de Camisa de Cuello Redondo prefiere?` → mapear al catálogo
-  - Q6 `¿Qué tan pronto necesitan los uniformes?` → urgencia
+### 1. Base de datos (migración)
+- Agregar en `instant_form_leads`:
+  - `store_visit_at TIMESTAMPTZ NULL` — fecha/hora agendada
+  - `store_visit_notes TEXT NULL` — nota corta opcional (dirección alternativa, quién lo atenderá, etc.)
+- El campo `lead_status` es `TEXT` libre, así que no requiere alterar constraints. Solo se amplía el conjunto de valores válidos que la UI acepta a: `new | contactado | seguimiento | visita_tienda | venta | perdido`.
 
-### 2. Detección de urgencia (`src/lib/comfortex-urgency.ts` y duplicado en `_shared/comfortex-reply.ts`)
-- Verificar que `KEY_HINTS` capture bien la Q6 nueva ("pronto" ya está incluido → OK, no requiere cambio salvo que las opciones exactas del Sheet difieran).
-- Dejar el mapeo actual (24h / 1-3d / 4-7d / cotizar) tal cual hasta ver los labels exactos del Sheet.
+### 2. Token visual y helpers
+- Agregar variable CSS `--status-visita` (teal/cyan, distinto de los demás) en `src/index.css`, tanto en tema claro como oscuro.
+- Extender la lista `allowed` y el diccionario `counts` en `use-seller-leads.ts` con `visita_tienda`.
+- Extender `InstantFormLeadStatus` en `use-instant-form-leads.ts` con `'visita_tienda'`.
 
-### 3. Pendiente hasta recibir link del Sheet
-- Conectar el nuevo Google Sheet como fuente adicional en **Business Setup → Instant Form Setup** (o reemplazar el actual, según decidas).
-- Ajustar `getUrgencyFromLead` si los valores literales de Q6 no matchean los patrones actuales (ej. si dicen "Ya mismo" en vez de "Próximas 24 horas").
+### 3. UI del selector con agendado
+- En `SellerLeadDetailDialog.tsx`:
+  - Añadir opción "Visita a la tienda" al `STATUS_OPTIONS`.
+  - Cuando el usuario elige ese estado, en vez de actualizar directamente, abrir un pequeño diálogo secundario ("Agendar visita") con:
+    - Datepicker (shadcn `Calendar` en `Popover`, con `pointer-events-auto`)
+    - Input de hora (`type="time"`)
+    - Textarea opcional para notas
+    - Botones Cancelar / Guardar
+  - Al guardar: `update` sobre `instant_form_leads` con `lead_status = 'visita_tienda'`, `store_visit_at`, `store_visit_notes`, e invalidar `seller-leads` / `instant-form-leads`.
+  - Si el lead ya tenía `store_visit_at`, precargar los campos para permitir reagendar.
+  - Mostrar en la pestaña "Info del lead" un bloque destacado con la visita agendada (fecha, hora en zona CR, notas) cuando exista.
 
-## Fuera de alcance (por ahora)
-- No se toca UI del dashboard/urgencia (los buckets siguen igual).
-- No se cambia el pipeline de sync ni el edge function `generate-comfortex-reply` (solo el prompt compartido).
+### 4. Tarjetas y listas
+- `SellerLeadCard.tsx`: agregar entrada `visita_tienda` en `STATUS_STYLES` usando `--status-visita`. Si el lead está en ese estado y tiene `store_visit_at`, mostrar debajo del modelo/cantidad una línea "🏬 Visita: 15 dic · 3:00 PM".
+- `SellerCrm.tsx`: agregar un sexto KPI "Visitas" y una pestaña "Visita tienda" en el filtro `STATUSES`. El grid de KPIs pasa de 5 a 6 columnas.
+- `InstantFormLeadsWidget.tsx` (dashboard admin): agregar el mismo estilo/estado para mantener consistencia en la vista del cliente.
 
-## Siguiente paso
-Confirmame el link del nuevo Sheet y si querés que **reemplace** al form viejo o se **agregue como fuente adicional**.
+### 5. Fuera de alcance
+- No se toca `use-instant-form-leads.ts > useRegisterSaleFromInstantFormLead` ni la sincronización con `message_sales`: "visita a la tienda" es un estado intermedio, no dispara venta ni la cancela.
+- No se agregan recordatorios/notificaciones automáticas. Si más adelante querés notificaciones (ej. push el día de la visita), lo hacemos en una segunda iteración.
+
+### Detalles técnicos
+- La hora se combina con la fecha en zona `America/Costa_Rica` antes de guardarse como `timestamptz` (misma convención que el resto del proyecto).
+- El precargado del reagendado usa `date-fns` con `toZonedTime` para separar fecha e hora.
+- El diálogo secundario se monta dentro del `SellerLeadDetailDialog` para no interferir con el flujo mobile (mismo patrón que otros modales anidados del proyecto).
