@@ -27,18 +27,25 @@ export const ComfortexUrgencyWidget = ({ clientId }: Props) => {
   const { data: leads = [], isLoading } = useInstantFormLeads(clientId);
   const [range, setRange] = useState('30');
 
-  const { counts, total, unknown } = useMemo(() => {
+  const { counts, total } = useMemo(() => {
+    // Only include leads whose form actually captures urgency data.
+    const formsWithUrgency = new Set<string>();
+    for (const l of leads) {
+      if (l.form_id && getUrgencyFromLead(l.custom_answers)) {
+        formsWithUrgency.add(l.form_id);
+      }
+    }
     const c: Record<UrgencyBucket, number> = { '24h': 0, '1-3d': 0, '4-7d': 0, cotizar: 0 };
-    let u = 0;
     let t = 0;
     for (const l of leads) {
+      if (!l.form_id || !formsWithUrgency.has(l.form_id)) continue;
       if (!isInRange(l.created_time || l.created_at, range)) continue;
-      t++;
       const b = getUrgencyFromLead(l.custom_answers);
-      if (b) c[b]++;
-      else u++;
+      if (!b) continue;
+      c[b]++;
+      t++;
     }
-    return { counts: c, total: t, unknown: u };
+    return { counts: c, total: t };
   }, [leads, range]);
 
   return (
