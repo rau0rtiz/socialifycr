@@ -108,11 +108,8 @@ export const ComfortexUrgencyWidget = ({ clientId }: Props) => {
                 </div>
               );
             })}
-            {unknown > 0 && (
-              <p className="text-[11px] text-muted-foreground pt-1">
-                {unknown} lead{unknown === 1 ? '' : 's'} sin dato de urgencia
-              </p>
-            )}
+          </>
+        )}
           </>
         )}
       </CardContent>
