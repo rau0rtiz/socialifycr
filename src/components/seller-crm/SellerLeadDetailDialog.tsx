@@ -317,6 +317,53 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
                 </div>
               </div>
             )}
+            {lead.is_recontact && historyFull.length > 0 && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-2">
+                <button
+                  type="button"
+                  onClick={() => setHistoryOpen((v) => !v)}
+                  className="w-full flex items-center gap-2 text-left"
+                >
+                  {historyOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  <Repeat className="h-3.5 w-3.5 text-amber-600" />
+                  <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                    Recontacto · {historyFull.length} formulario{historyFull.length === 1 ? '' : 's'} previo{historyFull.length === 1 ? '' : 's'}
+                  </span>
+                </button>
+                {historyOpen && (
+                  <div className="mt-2 space-y-2">
+                    {historyFull.map((h: any) => {
+                      const prevAnswers = Object.entries(h.custom_answers || {}).filter(([, v]) => v !== '' && v != null);
+                      return (
+                        <div key={h.id} className="rounded-md bg-background/60 border p-2 text-xs space-y-1">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <span className="font-medium">{h.form_name || 'Formulario'}</span>
+                            <span className="text-muted-foreground text-[11px]">{formatDate(h.created_time || h.created_at)}</span>
+                          </div>
+                          {(h.campaign_name || h.ad_name) && (
+                            <div className="text-[11px] text-muted-foreground">
+                              {h.campaign_name && <>Campaña: {h.campaign_name}</>}
+                              {h.campaign_name && h.ad_name && ' · '}
+                              {h.ad_name && <>Anuncio: {h.ad_name}</>}
+                            </div>
+                          )}
+                          {prevAnswers.length > 0 && (
+                            <div className="space-y-0.5 pt-1 border-t">
+                              {prevAnswers.map(([k, v]) => (
+                                <div key={k} className="flex flex-col sm:flex-row gap-0.5 sm:gap-2">
+                                  <span className="text-muted-foreground capitalize sm:min-w-[120px]">{k.replace(/_/g, ' ')}:</span>
+                                  <span className="font-medium break-words">{String(v)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
             {isComfortex && (
               <div className="rounded-md border border-dashed p-2 space-y-2">
                 <div className="flex items-center justify-between gap-2">
