@@ -57,7 +57,7 @@ interface Props {
 }
 
 export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
-  const [tab, setTab] = useState<'info' | 'sale'>('info');
+  const [saleDialogOpen, setSaleDialogOpen] = useState(false);
   const [quantity, setQuantity] = useState('1');
   const [embroidery, setEmbroidery] = useState(false);
   const [subtotalStr, setSubtotalStr] = useState('');
