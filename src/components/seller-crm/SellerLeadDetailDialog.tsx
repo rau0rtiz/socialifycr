@@ -57,7 +57,7 @@ interface Props {
 }
 
 export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
-  const [tab, setTab] = useState<'info' | 'sale'>('info');
+  const [saleDialogOpen, setSaleDialogOpen] = useState(false);
   const [quantity, setQuantity] = useState('1');
   const [embroidery, setEmbroidery] = useState(false);
   const [subtotalStr, setSubtotalStr] = useState('');
@@ -107,7 +107,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
 
   useEffect(() => {
     if (open) {
-      setTab('info');
+      setSaleDialogOpen(false);
       setQuantity('1');
       setEmbroidery(false);
       setSubtotalStr('');
@@ -157,7 +157,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
   };
 
   const handleStatusChange = async (newStatus: InstantFormLeadStatus) => {
-    if (newStatus === 'venta') { setTab('sale'); return; }
+    if (newStatus === 'venta') { setSaleDialogOpen(true); return; }
     if (newStatus === 'visita_tienda') { setVisitDialogOpen(true); return; }
     try {
       await updateStatus.mutateAsync({ leadId: lead.id, status: newStatus });
@@ -244,7 +244,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Status selector — always on top */}
+        {/* Status selector + actions */}
         <div className="flex items-center gap-2 flex-wrap">
           <Label className="text-xs shrink-0">Estado:</Label>
           <Select value={status} onValueChange={(v) => handleStatusChange(v as InstantFormLeadStatus)}>
@@ -267,20 +267,16 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
           )}
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 border-b">
-          <button
-            className={`px-3 py-2 text-sm border-b-2 -mb-px ${tab === 'info' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted-foreground'}`}
-            onClick={() => setTab('info')}
-          >Info del lead</button>
-          <button
-            className={`px-3 py-2 text-sm border-b-2 -mb-px ${tab === 'sale' ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted-foreground'}`}
-            onClick={() => setTab('sale')}
-          ><DollarSign className="inline h-3.5 w-3.5 mr-1" />Registrar venta</button>
-        </div>
+        {/* Prominent CTA: Register sale */}
+        <Button
+          size="lg"
+          onClick={() => setSaleDialogOpen(true)}
+          className="w-full h-11 bg-[hsl(var(--status-venta))] hover:bg-[hsl(var(--status-venta))]/90 text-white font-semibold shadow-sm"
+        >
+          <DollarSign className="h-4 w-4 mr-1.5" /> Registrar venta
+        </Button>
 
-
-        {tab === 'info' && (
+        {true && (
           <div className="space-y-3 text-sm">
             {(lead as any).store_visit_at && (
               <div className="flex items-start gap-2 rounded-md border border-[hsl(var(--status-visita))]/40 bg-[hsl(var(--status-visita))]/10 p-2.5">
@@ -415,7 +411,20 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
           </div>
         )}
 
-        {tab === 'sale' && (
+      </DialogContent>
+
+      {/* Nested: Register sale */}
+      <Dialog open={saleDialogOpen} onOpenChange={setSaleDialogOpen}>
+        <DialogContent className="max-w-md w-[calc(100vw-1rem)] sm:w-full max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-[hsl(var(--status-venta))]" />
+              Registrar venta
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {lead.full_name || 'Lead'}{lead.client_name ? ` · ${lead.client_name}` : ''}
+            </DialogDescription>
+          </DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -453,12 +462,16 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
               <Label className="text-xs">Notas (opcional)</Label>
               <Textarea placeholder="Detalles, talla, color, etc." value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
             </div>
-            <Button onClick={handleRegisterSale} disabled={registerSale.isPending || !subtotal} className="w-full" size="lg">
-              {registerSale.isPending ? 'Guardando...' : `Registrar venta — ${formatCRC(total)}`}
-            </Button>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button variant="outline" onClick={() => setSaleDialogOpen(false)} disabled={registerSale.isPending}>Cancelar</Button>
+              <Button onClick={handleRegisterSale} disabled={registerSale.isPending || !subtotal} size="lg">
+                {registerSale.isPending ? 'Guardando...' : `Registrar — ${formatCRC(total)}`}
+              </Button>
+            </DialogFooter>
           </div>
-        )}
-      </DialogContent>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Nested: Visit scheduler */}
       <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
