@@ -231,186 +231,258 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
     }
   };
 
+  const STATUS_BAR: Record<string, string> = {
+    new: 'bg-[hsl(var(--status-new))]',
+    contactado: 'bg-[hsl(var(--status-contactado))]',
+    seguimiento: 'bg-[hsl(var(--status-seguimiento))]',
+    visita_tienda: 'bg-[hsl(var(--status-visita))]',
+    venta: 'bg-[hsl(var(--status-venta))]',
+    perdido: 'bg-[hsl(var(--status-perdido))]',
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl w-[calc(100vw-1rem)] sm:w-full max-h-[95vh] sm:max-h-[92vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 flex-wrap text-base sm:text-lg">
-            {lead.full_name || 'Lead'}
-            {status === 'venta' && <Badge variant="default">Venta</Badge>}
-          </DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm">
-            {lead.client_name ? `${lead.client_name} · ` : ''}{formatDate(lead.created_time || lead.created_at)}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-xl w-[calc(100vw-1rem)] sm:w-full max-h-[95vh] sm:max-h-[92vh] overflow-y-auto p-0 gap-0 rounded-2xl">
+        {/* Left status accent bar */}
+        <div className={cn('absolute top-0 left-0 w-1.5 h-full rounded-l-2xl', STATUS_BAR[status] || STATUS_BAR.new)} aria-hidden />
 
-        {/* Status selector + actions */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Label className="text-xs shrink-0">Estado:</Label>
-          <Select value={status} onValueChange={(v) => handleStatusChange(v as InstantFormLeadStatus)}>
-            <SelectTrigger className="h-10 sm:h-9 flex-1 sm:flex-none sm:w-[180px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {cleanPhone && (
-            <div className="flex items-center gap-1.5 w-full sm:w-auto sm:ml-auto">
-              <Button size="sm" variant="outline" className="h-10 sm:h-9 flex-1 sm:flex-none" onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank')}>
-                <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
-              </Button>
-              <Button size="sm" variant="outline" className="h-10 sm:h-9 px-3" onClick={() => window.location.href = `tel:${cleanPhone}`}>
-                <Phone className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+        <div className="px-5 sm:px-7 pt-6 pb-2">
+          <DialogHeader className="space-y-1.5 text-left">
+            <DialogTitle className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight pr-8">
+              {lead.full_name || 'Lead'}
+            </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
+              {lead.client_name && <><span className="font-medium">{lead.client_name}</span><span className="w-1 h-1 rounded-full bg-muted-foreground/40" /></>}
+              <span>{formatDate(lead.created_time || lead.created_at)}</span>
+              {lead.is_recontact && (
+                <><span className="w-1 h-1 rounded-full bg-muted-foreground/40" /><span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold"><Repeat className="h-3 w-3" />Recontacto</span></>
+              )}
+            </DialogDescription>
+          </DialogHeader>
         </div>
 
-        {/* Prominent CTA: Register sale */}
-        <Button
-          size="lg"
-          onClick={() => setSaleDialogOpen(true)}
-          className="w-full h-11 bg-[hsl(var(--status-venta))] hover:bg-[hsl(var(--status-venta))]/90 text-white font-semibold shadow-sm"
-        >
-          <DollarSign className="h-4 w-4 mr-1.5" /> Registrar venta
-        </Button>
-
-        {true && (
-          <div className="space-y-3 text-sm">
-            {(lead as any).store_visit_at && (
-              <div className="flex items-start gap-2 rounded-md border border-[hsl(var(--status-visita))]/40 bg-[hsl(var(--status-visita))]/10 p-2.5">
-                <Store className="h-4 w-4 text-[hsl(var(--status-visita))] mt-0.5 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">Visita agendada</p>
-                  <p className="font-semibold text-[hsl(var(--status-visita))]">{formatDate((lead as any).store_visit_at)}</p>
-                  {(lead as any).store_visit_notes && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{(lead as any).store_visit_notes}</p>
-                  )}
-                </div>
-                <Button size="sm" variant="ghost" className="h-7 text-xs shrink-0" onClick={() => setVisitDialogOpen(true)}>
-                  Reagendar
+        <div className="px-5 sm:px-7 pb-6 space-y-5">
+          {/* Estado + acciones rápidas */}
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+            <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+              <Label className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Estado del lead</Label>
+              <Select value={status} onValueChange={(v) => handleStatusChange(v as InstantFormLeadStatus)}>
+                <SelectTrigger className="h-11 font-semibold"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {cleanPhone && (
+              <div className="flex gap-2">
+                <Button variant="outline" className="h-11 flex-1 sm:flex-none font-semibold" onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank')}>
+                  <MessageCircle className="h-4 w-4 mr-1.5 text-emerald-500" /> WhatsApp
+                </Button>
+                <Button variant="outline" className="h-11 w-11 p-0 shrink-0" onClick={() => window.location.href = `tel:${cleanPhone}`} aria-label="Llamar">
+                  <Phone className="h-4 w-4" />
                 </Button>
               </div>
             )}
-            {cleanPhone && (
-              <div className="flex items-center gap-2 rounded-md bg-muted/30 p-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <a href={`https://wa.me/${cleanPhone}`} target="_blank" rel="noreferrer" className="hover:underline">{lead.phone}</a>
-              </div>
-            )}
-            {(lead.campaign_name || lead.ad_name || lead.form_name) && (
-              <div className="rounded-md bg-muted/30 p-2 text-xs space-y-0.5">
-                {lead.campaign_name && <div><span className="text-muted-foreground">Campaña:</span> {lead.campaign_name}</div>}
-                {lead.ad_name && <div><span className="text-muted-foreground">Anuncio:</span> {lead.ad_name}</div>}
-                {lead.form_name && <div><span className="text-muted-foreground">Formulario:</span> {lead.form_name}</div>}
-              </div>
-            )}
-            {answers.length > 0 && (
-              <div className="rounded-md bg-muted/30 p-2">
-                <p className="text-xs text-muted-foreground mb-1 font-medium">Respuestas del formulario</p>
-                <div className="space-y-1 text-xs">
-                  {answers.map(([k, v]) => (
-                    <div key={k} className="flex flex-col sm:flex-row gap-0.5 sm:gap-2">
-                      <span className="text-muted-foreground capitalize sm:min-w-[120px]">{k.replace(/_/g, ' ')}:</span>
-                      <span className="font-medium break-words">{String(v)}</span>
-                    </div>
-                  ))}
-
-                </div>
-              </div>
-            )}
-            {lead.is_recontact && historyFull.length > 0 && (
-              <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-2">
-                <button
-                  type="button"
-                  onClick={() => setHistoryOpen((v) => !v)}
-                  className="w-full flex items-center gap-2 text-left"
-                >
-                  {historyOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                  <Repeat className="h-3.5 w-3.5 text-amber-600" />
-                  <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                    Recontacto · {historyFull.length} formulario{historyFull.length === 1 ? '' : 's'} previo{historyFull.length === 1 ? '' : 's'}
-                  </span>
-                </button>
-                {historyOpen && (
-                  <div className="mt-2 space-y-2">
-                    {historyFull.map((h: any) => {
-                      const prevAnswers = Object.entries(h.custom_answers || {}).filter(([, v]) => v !== '' && v != null);
-                      return (
-                        <div key={h.id} className="rounded-md bg-background/60 border p-2 text-xs space-y-1">
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span className="font-medium">{h.form_name || 'Formulario'}</span>
-                            <span className="text-muted-foreground text-[11px]">{formatDate(h.created_time || h.created_at)}</span>
-                          </div>
-                          {(h.campaign_name || h.ad_name) && (
-                            <div className="text-[11px] text-muted-foreground">
-                              {h.campaign_name && <>Campaña: {h.campaign_name}</>}
-                              {h.campaign_name && h.ad_name && ' · '}
-                              {h.ad_name && <>Anuncio: {h.ad_name}</>}
-                            </div>
-                          )}
-                          {prevAnswers.length > 0 && (
-                            <div className="space-y-0.5 pt-1 border-t">
-                              {prevAnswers.map(([k, v]) => (
-                                <div key={k} className="flex flex-col sm:flex-row gap-0.5 sm:gap-2">
-                                  <span className="text-muted-foreground capitalize sm:min-w-[120px]">{k.replace(/_/g, ' ')}:</span>
-                                  <span className="font-medium break-words">{String(v)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-            {isComfortex && (
-              <div className="rounded-md border border-dashed p-2 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-medium">Mensaje WhatsApp (IA)</p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8"
-                    onClick={handleGenerateMessage}
-                    disabled={generating}
-                  >
-                    <Sparkles className="h-3.5 w-3.5 mr-1" />
-                    {generating ? 'Generando…' : generatedMessage ? 'Regenerar' : 'Generar mensaje'}
-                  </Button>
-                </div>
-                {generatedMessage && (
-                  <>
-                    <Textarea
-                      value={generatedMessage}
-                      onChange={(e) => setGeneratedMessage(e.target.value)}
-                      rows={8}
-                      className="text-xs"
-                    />
-                    <div className="flex gap-1.5">
-                      <Button size="sm" variant="secondary" className="flex-1 h-9" onClick={handleCopyMessage}>
-                        <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
-                      </Button>
-                      {cleanPhone && (
-                        <Button
-                          size="sm"
-                          className="flex-1 h-9"
-                          onClick={() => window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(generatedMessage)}`, '_blank')}
-                        >
-                          <MessageCircle className="h-3.5 w-3.5 mr-1" /> Abrir WhatsApp
-                        </Button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
           </div>
-        )}
 
+          {/* CTA principal */}
+          <Button
+            size="lg"
+            onClick={() => setSaleDialogOpen(true)}
+            className="w-full h-12 bg-[hsl(var(--status-venta))] hover:bg-[hsl(var(--status-venta))]/90 text-white font-bold tracking-wide uppercase text-[13px] rounded-xl shadow-[0_10px_20px_-8px_hsl(var(--status-venta)/0.5)] active:scale-[0.98] transition-transform"
+          >
+            <DollarSign className="h-5 w-5 mr-2" /> Registrar venta
+          </Button>
+
+          {/* Visita agendada */}
+          {(lead as any).store_visit_at && (
+            <div className="flex items-start gap-3 rounded-xl border border-[hsl(var(--status-visita))]/30 bg-[hsl(var(--status-visita))]/8 p-3.5">
+              <div className="p-2 rounded-lg bg-background border shadow-sm shrink-0">
+                <Store className="h-4 w-4 text-[hsl(var(--status-visita))]" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--status-visita))]/80">Visita agendada</p>
+                <p className="text-sm font-bold text-[hsl(var(--status-visita))] mt-0.5">{formatDate((lead as any).store_visit_at)}</p>
+                {(lead as any).store_visit_notes && (
+                  <p className="text-xs text-muted-foreground mt-1">{(lead as any).store_visit_notes}</p>
+                )}
+              </div>
+              <Button size="sm" variant="ghost" className="h-8 text-xs shrink-0" onClick={() => setVisitDialogOpen(true)}>
+                Reagendar
+              </Button>
+            </div>
+          )}
+
+          {/* Origen: teléfono + campaña */}
+          {(cleanPhone || lead.campaign_name || lead.ad_name || lead.form_name) && (
+            <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+              {cleanPhone && (
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-background border shadow-sm shrink-0">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <a href={`https://wa.me/${cleanPhone}`} target="_blank" rel="noreferrer" className="text-sm font-bold tracking-tight hover:underline">{lead.phone}</a>
+                </div>
+              )}
+              {(lead.campaign_name || lead.ad_name || lead.form_name) && (
+                <div className="space-y-0 text-[11px]">
+                  {lead.campaign_name && (
+                    <div className="flex justify-between gap-3 py-2 border-b border-border/60">
+                      <span className="text-muted-foreground font-semibold uppercase tracking-wider">Campaña</span>
+                      <span className="font-bold text-right truncate">{lead.campaign_name}</span>
+                    </div>
+                  )}
+                  {lead.ad_name && (
+                    <div className="flex justify-between gap-3 py-2 border-b border-border/60">
+                      <span className="text-muted-foreground font-semibold uppercase tracking-wider">Anuncio</span>
+                      <span className="font-bold text-right truncate">{lead.ad_name}</span>
+                    </div>
+                  )}
+                  {lead.form_name && (
+                    <div className="flex justify-between gap-3 py-2">
+                      <span className="text-muted-foreground font-semibold uppercase tracking-wider">Formulario</span>
+                      <span className="font-bold text-right truncate">{lead.form_name}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Respuestas del formulario */}
+          {answers.length > 0 && (
+            <div className="space-y-2.5">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground pl-1">Respuestas del formulario</h3>
+              <div className="space-y-2">
+                {answers.map(([k, v]) => {
+                  const isUrgency = /urgenc|pronto|cu[aá]ndo|cuando/i.test(k);
+                  return (
+                    <div
+                      key={k}
+                      className={cn(
+                        'px-4 py-3 rounded-xl border flex items-center justify-between gap-3',
+                        isUrgency
+                          ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-500/30'
+                          : 'bg-card border-border/80'
+                      )}
+                    >
+                      <span className={cn('text-xs sm:text-sm font-medium capitalize truncate', isUrgency ? 'text-amber-700 dark:text-amber-400 font-bold' : 'text-muted-foreground')}>
+                        {k.replace(/_/g, ' ')}
+                      </span>
+                      <span className={cn('text-xs sm:text-sm font-bold text-right break-words', isUrgency && 'text-amber-900 dark:text-amber-300 uppercase tracking-tight')}>
+                        {String(v)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Historial de recontacto */}
+          {lead.is_recontact && historyFull.length > 0 && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3">
+              <button
+                type="button"
+                onClick={() => setHistoryOpen((v) => !v)}
+                className="w-full flex items-center gap-2 text-left"
+              >
+                {historyOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                <Repeat className="h-3.5 w-3.5 text-amber-600" />
+                <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
+                  Recontacto · {historyFull.length} formulario{historyFull.length === 1 ? '' : 's'} previo{historyFull.length === 1 ? '' : 's'}
+                </span>
+              </button>
+              {historyOpen && (
+                <div className="mt-2.5 space-y-2">
+                  {historyFull.map((h: any) => {
+                    const prevAnswers = Object.entries(h.custom_answers || {}).filter(([, v]) => v !== '' && v != null);
+                    return (
+                      <div key={h.id} className="rounded-lg bg-background/70 border p-2.5 text-xs space-y-1.5">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="font-semibold">{h.form_name || 'Formulario'}</span>
+                          <span className="text-muted-foreground text-[11px]">{formatDate(h.created_time || h.created_at)}</span>
+                        </div>
+                        {(h.campaign_name || h.ad_name) && (
+                          <div className="text-[11px] text-muted-foreground">
+                            {h.campaign_name && <>Campaña: {h.campaign_name}</>}
+                            {h.campaign_name && h.ad_name && ' · '}
+                            {h.ad_name && <>Anuncio: {h.ad_name}</>}
+                          </div>
+                        )}
+                        {prevAnswers.length > 0 && (
+                          <div className="space-y-0.5 pt-1.5 border-t">
+                            {prevAnswers.map(([k, v]) => (
+                              <div key={k} className="flex flex-col sm:flex-row gap-0.5 sm:gap-2">
+                                <span className="text-muted-foreground capitalize sm:min-w-[120px]">{k.replace(/_/g, ' ')}:</span>
+                                <span className="font-medium break-words">{String(v)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Asistente IA */}
+          {isComfortex && (
+            <div className="rounded-2xl border border-blue-200/60 dark:border-blue-900/40 bg-card overflow-hidden shadow-sm">
+              <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50/70 to-indigo-50/70 dark:from-blue-950/20 dark:to-indigo-950/20 border-b border-blue-100/60 dark:border-blue-900/30">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-600 dark:text-blue-400">Asistente IA · WhatsApp</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-[10px] font-bold uppercase tracking-wider rounded-full border-blue-200/70 dark:border-blue-800/60 text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                  onClick={handleGenerateMessage}
+                  disabled={generating}
+                >
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  {generating ? 'Generando…' : generatedMessage ? 'Regenerar' : 'Generar'}
+                </Button>
+              </div>
+              {generatedMessage ? (
+                <div className="p-4 space-y-3">
+                  <Textarea
+                    value={generatedMessage}
+                    onChange={(e) => setGeneratedMessage(e.target.value)}
+                    rows={7}
+                    className="text-[13px] leading-relaxed resize-y bg-muted/30 border-border/60"
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="secondary" className="flex-1 h-9 font-semibold" onClick={handleCopyMessage}>
+                      <Copy className="h-3.5 w-3.5 mr-1.5" /> Copiar
+                    </Button>
+                    {cleanPhone && (
+                      <Button
+                        size="sm"
+                        className="flex-1 h-9 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(generatedMessage)}`, '_blank')}
+                      >
+                        <MessageCircle className="h-3.5 w-3.5 mr-1.5" /> Abrir WhatsApp
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6 text-center text-xs text-muted-foreground">
+                  Generá una sugerencia inteligente basada en el formulario.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </DialogContent>
 
       {/* Nested: Register sale */}
