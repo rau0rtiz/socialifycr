@@ -1,17 +1,27 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Phone, MessageCircle, Sparkles, Clock, Repeat } from 'lucide-react';
+import { Phone, MessageCircle, Sparkles, Clock, Repeat, Store } from 'lucide-react';
 import type { SellerLead } from '@/hooks/use-seller-leads';
 import { getUrgencyFromLead } from '@/lib/comfortex-urgency';
 import { UrgencyBadge } from './UrgencyBadge';
 
 const STATUS_STYLES: Record<string, { label: string; chip: string; ring: string }> = {
-  new:         { label: 'Nuevo',       chip: 'bg-[hsl(var(--status-new))]/15 text-[hsl(var(--status-new))]',          ring: 'ring-[hsl(var(--status-new))]/40' },
-  contactado:  { label: 'Contactado',  chip: 'bg-[hsl(var(--status-contactado))]/15 text-[hsl(var(--status-contactado))]', ring: 'ring-[hsl(var(--status-contactado))]/40' },
-  seguimiento: { label: 'Seguimiento', chip: 'bg-[hsl(var(--status-seguimiento))]/15 text-[hsl(var(--status-seguimiento))]', ring: 'ring-[hsl(var(--status-seguimiento))]/40' },
-  venta:       { label: 'Venta',       chip: 'bg-[hsl(var(--status-venta))]/18 text-[hsl(var(--status-venta))]',       ring: 'ring-[hsl(var(--status-venta))]/40' },
-  perdido:     { label: 'Perdido',     chip: 'bg-[hsl(var(--status-perdido))]/15 text-[hsl(var(--status-perdido))]',   ring: 'ring-[hsl(var(--status-perdido))]/40' },
+  new:           { label: 'Nuevo',       chip: 'bg-[hsl(var(--status-new))]/15 text-[hsl(var(--status-new))]',          ring: 'ring-[hsl(var(--status-new))]/40' },
+  contactado:    { label: 'Contactado',  chip: 'bg-[hsl(var(--status-contactado))]/15 text-[hsl(var(--status-contactado))]', ring: 'ring-[hsl(var(--status-contactado))]/40' },
+  seguimiento:   { label: 'Seguimiento', chip: 'bg-[hsl(var(--status-seguimiento))]/15 text-[hsl(var(--status-seguimiento))]', ring: 'ring-[hsl(var(--status-seguimiento))]/40' },
+  visita_tienda: { label: 'Visita tienda', chip: 'bg-[hsl(var(--status-visita))]/15 text-[hsl(var(--status-visita))]', ring: 'ring-[hsl(var(--status-visita))]/40' },
+  venta:         { label: 'Venta',       chip: 'bg-[hsl(var(--status-venta))]/18 text-[hsl(var(--status-venta))]',       ring: 'ring-[hsl(var(--status-venta))]/40' },
+  perdido:       { label: 'Perdido',     chip: 'bg-[hsl(var(--status-perdido))]/15 text-[hsl(var(--status-perdido))]',   ring: 'ring-[hsl(var(--status-perdido))]/40' },
+};
+
+const formatVisit = (iso: string | null | undefined): string => {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleString('es-CR', {
+      timeZone: 'America/Costa_Rica', day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true,
+    });
+  } catch { return ''; }
 };
 
 const formatRelative = (iso: string | null | undefined): string => {
