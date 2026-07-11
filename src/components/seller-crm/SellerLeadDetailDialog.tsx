@@ -411,7 +411,20 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
           </div>
         )}
 
-        {tab === 'sale' && (
+      </DialogContent>
+
+      {/* Nested: Register sale */}
+      <Dialog open={saleDialogOpen} onOpenChange={setSaleDialogOpen}>
+        <DialogContent className="max-w-md w-[calc(100vw-1rem)] sm:w-full max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-[hsl(var(--status-venta))]" />
+              Registrar venta
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {lead.full_name || 'Lead'}{lead.client_name ? ` · ${lead.client_name}` : ''}
+            </DialogDescription>
+          </DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -449,12 +462,16 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
               <Label className="text-xs">Notas (opcional)</Label>
               <Textarea placeholder="Detalles, talla, color, etc." value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
             </div>
-            <Button onClick={handleRegisterSale} disabled={registerSale.isPending || !subtotal} className="w-full" size="lg">
-              {registerSale.isPending ? 'Guardando...' : `Registrar venta — ${formatCRC(total)}`}
-            </Button>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button variant="outline" onClick={() => setSaleDialogOpen(false)} disabled={registerSale.isPending}>Cancelar</Button>
+              <Button onClick={handleRegisterSale} disabled={registerSale.isPending || !subtotal} size="lg">
+                {registerSale.isPending ? 'Guardando...' : `Registrar — ${formatCRC(total)}`}
+              </Button>
+            </DialogFooter>
           </div>
-        )}
-      </DialogContent>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Nested: Visit scheduler */}
       <Dialog open={visitDialogOpen} onOpenChange={setVisitDialogOpen}>
