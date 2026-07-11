@@ -3000,6 +3000,8 @@ export type Database = {
           phone: string | null
           platform: string | null
           raw: Json
+          store_visit_at: string | null
+          store_visit_notes: string | null
           updated_at: string
         }
         Insert: {
@@ -3029,6 +3031,8 @@ export type Database = {
           phone?: string | null
           platform?: string | null
           raw?: Json
+          store_visit_at?: string | null
+          store_visit_notes?: string | null
           updated_at?: string
         }
         Update: {
@@ -3058,6 +3062,8 @@ export type Database = {
           phone?: string | null
           platform?: string | null
           raw?: Json
+          store_visit_at?: string | null
+          store_visit_notes?: string | null
           updated_at?: string
         }
         Relationships: [
