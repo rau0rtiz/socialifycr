@@ -86,15 +86,22 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
     enabled: open && !!lead?.is_recontact && !!lead?.client_id && normalizedPhone.length >= 6,
     staleTime: 60_000,
     queryFn: async () => {
+      // Match phones with the same trailing digits (handles +506, 506, spaces, dashes).
+      const last8 = normalizedPhone.slice(-8);
       const { data, error } = await supabase
         .from('instant_form_leads')
         .select('id, form_id, form_name, phone, created_time, created_at, custom_answers, campaign_name, ad_name, lead_status')
         .eq('client_id', lead!.client_id)
         .neq('id', lead!.id)
+        .ilike('phone', `%${last8}%`)
         .order('created_time', { ascending: false, nullsFirst: false })
-        .limit(200);
+        .limit(50);
       if (error) throw error;
-      return (data || []).filter((r: any) => (r.phone || '').replace(/\D/g, '') === normalizedPhone);
+      // Final normalization check to avoid false positives from partial digit matches.
+      return (data || []).filter((r: any) => {
+        const n = (r.phone || '').replace(/\D/g, '');
+        return n.endsWith(last8) && n.length >= 7;
+      });
     },
   });
 
