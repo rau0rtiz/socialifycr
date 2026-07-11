@@ -84,6 +84,11 @@ export const SellerLeadCard = ({ lead, onOpen, showClient = false }: Props) => {
 
       <div className="space-y-1 text-xs text-muted-foreground mb-3">
         {model && <p className="truncate">📦 {String(model)}{cantidad ? ` · ${String(cantidad)}` : ''}</p>}
+        {status === 'visita_tienda' && (lead as any).store_visit_at && (
+          <p className="flex items-center gap-1 text-[hsl(var(--status-visita))] font-medium">
+            <Store className="h-3 w-3" /> Visita: {formatVisit((lead as any).store_visit_at)}
+          </p>
+        )}
         <p className="flex items-center gap-1"><Clock className="h-3 w-3" /> Entró hace {formatRelative(lead.created_time || lead.created_at)}</p>
       </div>
 
