@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Phone, DollarSign, MessageCircle, Sparkles, Copy } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Phone, DollarSign, MessageCircle, Sparkles, Copy, Store, CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import {
   useRegisterSaleFromInstantFormLead,
   type InstantFormLeadStatus,
@@ -29,6 +34,7 @@ const STATUS_OPTIONS: { value: InstantFormLeadStatus; label: string }[] = [
   { value: 'new', label: 'Nuevo' },
   { value: 'contactado', label: 'Contactado' },
   { value: 'seguimiento', label: 'Seguimiento' },
+  { value: 'visita_tienda', label: 'Visita a la tienda' },
   { value: 'venta', label: 'Venta' },
   { value: 'perdido', label: 'Perdido' },
 ];
