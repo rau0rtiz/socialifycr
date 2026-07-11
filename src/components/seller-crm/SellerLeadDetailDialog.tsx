@@ -80,29 +80,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
   // Previous submissions (recontact history) — same client + same phone, other form_ids
   const normalizedPhone = (lead?.phone || '').replace(/\D/g, '');
   const [historyOpen, setHistoryOpen] = useState(true);
-  const { data: previousSubmissions = [] } = useQuery({
-    queryKey: ['lead-recontact-history', lead?.client_id, normalizedPhone, lead?.id],
-    enabled: open && !!lead?.is_recontact && !!lead?.client_id && normalizedPhone.length >= 6,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('instant_form_leads')
-        .select('id, form_id, form_name, created_time, created_at, custom_answers, campaign_name, ad_name, lead_status')
-        .eq('client_id', lead!.client_id)
-        .neq('id', lead!.id)
-        .order('created_time', { ascending: false, nullsFirst: false })
-        .limit(50);
-      if (error) throw error;
-      return (data || []).filter((r: any) => (r.phone || '').replace(/\D/g, '') !== '' || true)
-        // filter in JS by normalized phone since server-side normalization isn't available
-        .filter((r: any) => {
-          // re-fetch phone via a second field: we didn't select it, so include and re-query below
-          return true;
-        });
-    },
-  });
-
-  // Second query pulls the phone column to filter reliably (kept simple)
+  // Previous submissions from same phone in this client (recontact history)
   const { data: historyFull = [] } = useQuery({
     queryKey: ['lead-recontact-history-full', lead?.client_id, normalizedPhone, lead?.id],
     enabled: open && !!lead?.is_recontact && !!lead?.client_id && normalizedPhone.length >= 6,
