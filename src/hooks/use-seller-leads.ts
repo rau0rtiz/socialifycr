@@ -62,6 +62,31 @@ export const useSellerLeads = ({ sellerId, clientId, mode }: UseSellerLeadsOpts)
         const nameMap = new Map<string, string>((clients || []).map((c: any) => [c.id, c.name]));
         leads.forEach((l) => { l.client_name = nameMap.get(l.client_id) || null; });
       }
+
+      // Recontact detection: same phone across different form_id within the same client.
+      const phones = Array.from(new Set(leads.map((l) => normalizePhone(l.phone)).filter((p) => p.length >= 6)));
+      if (phones.length > 0 && clientIds.length > 0) {
+        const { data: allSubs } = await supabase
+          .from('instant_form_leads')
+          .select('phone, form_id, client_id')
+          .in('client_id', clientIds);
+        // Map: `${client_id}|${normalizedPhone}` -> Set of form_ids
+        const formsByKey = new Map<string, Set<string>>();
+        (allSubs || []).forEach((row: any) => {
+          const ph = normalizePhone(row.phone);
+          if (ph.length < 6) return;
+          const key = `${row.client_id}|${ph}`;
+          if (!formsByKey.has(key)) formsByKey.set(key, new Set());
+          formsByKey.get(key)!.add(row.form_id || '__null__');
+        });
+        leads.forEach((l) => {
+          const ph = normalizePhone(l.phone);
+          if (ph.length < 6) return;
+          const key = `${l.client_id}|${ph}`;
+          const forms = formsByKey.get(key);
+          l.is_recontact = !!forms && forms.size > 1;
+        });
+      }
       return leads;
     },
     enabled: !!user?.id,
