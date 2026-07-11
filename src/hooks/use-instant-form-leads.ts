@@ -173,7 +173,7 @@ export const useSyncInstantFormLeads = (clientId: string | null) => {
   });
 };
 
-export type InstantFormLeadStatus = 'new' | 'contactado' | 'seguimiento' | 'venta' | 'perdido';
+export type InstantFormLeadStatus = 'new' | 'contactado' | 'seguimiento' | 'visita_tienda' | 'venta' | 'perdido';
 
 export const useUpdateInstantFormLeadStatus = (clientId: string | null) => {
   const qc = useQueryClient();
