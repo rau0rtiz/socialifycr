@@ -108,10 +108,6 @@ export const ComfortexUrgencyWidget = ({ clientId }: Props) => {
                 </div>
               );
             })}
-          </>
-        )}
-          </>
-        )}
       </CardContent>
     </Card>
   );
