@@ -6,13 +6,13 @@ import type { SellerLead } from '@/hooks/use-seller-leads';
 import { getUrgencyFromLead } from '@/lib/comfortex-urgency';
 import { UrgencyBadge } from './UrgencyBadge';
 
-const STATUS_STYLES: Record<string, { label: string; chip: string; ring: string }> = {
-  new:           { label: 'Nuevo',       chip: 'bg-[hsl(var(--status-new))]/15 text-[hsl(var(--status-new))]',          ring: 'ring-[hsl(var(--status-new))]/40' },
-  contactado:    { label: 'Contactado',  chip: 'bg-[hsl(var(--status-contactado))]/15 text-[hsl(var(--status-contactado))]', ring: 'ring-[hsl(var(--status-contactado))]/40' },
-  seguimiento:   { label: 'Seguimiento', chip: 'bg-[hsl(var(--status-seguimiento))]/15 text-[hsl(var(--status-seguimiento))]', ring: 'ring-[hsl(var(--status-seguimiento))]/40' },
-  visita_tienda: { label: 'Visita tienda', chip: 'bg-[hsl(var(--status-visita))]/15 text-[hsl(var(--status-visita))]', ring: 'ring-[hsl(var(--status-visita))]/40' },
-  venta:         { label: 'Venta',       chip: 'bg-[hsl(var(--status-venta))]/18 text-[hsl(var(--status-venta))]',       ring: 'ring-[hsl(var(--status-venta))]/40' },
-  perdido:       { label: 'Perdido',     chip: 'bg-[hsl(var(--status-perdido))]/15 text-[hsl(var(--status-perdido))]',   ring: 'ring-[hsl(var(--status-perdido))]/40' },
+const STATUS_STYLES: Record<string, { label: string; chip: string; bar: string; dot: string }> = {
+  new:           { label: 'Nuevo',        chip: 'bg-[hsl(var(--status-new))]/12 text-[hsl(var(--status-new))]',                 bar: 'bg-[hsl(var(--status-new))]',          dot: 'bg-[hsl(var(--status-new))]' },
+  contactado:    { label: 'Contactado',   chip: 'bg-[hsl(var(--status-contactado))]/12 text-[hsl(var(--status-contactado))]',   bar: 'bg-[hsl(var(--status-contactado))]',   dot: 'bg-[hsl(var(--status-contactado))]' },
+  seguimiento:   { label: 'Seguimiento',  chip: 'bg-[hsl(var(--status-seguimiento))]/12 text-[hsl(var(--status-seguimiento))]', bar: 'bg-[hsl(var(--status-seguimiento))]',  dot: 'bg-[hsl(var(--status-seguimiento))]' },
+  visita_tienda: { label: 'Visita',       chip: 'bg-[hsl(var(--status-visita))]/12 text-[hsl(var(--status-visita))]',           bar: 'bg-[hsl(var(--status-visita))]',       dot: 'bg-[hsl(var(--status-visita))]' },
+  venta:         { label: 'Venta',        chip: 'bg-[hsl(var(--status-venta))]/15 text-[hsl(var(--status-venta))]',              bar: 'bg-[hsl(var(--status-venta))]',        dot: 'bg-[hsl(var(--status-venta))]' },
+  perdido:       { label: 'Perdido',      chip: 'bg-[hsl(var(--status-perdido))]/12 text-[hsl(var(--status-perdido))]',         bar: 'bg-[hsl(var(--status-perdido))]',      dot: 'bg-[hsl(var(--status-perdido))]' },
 };
 
 const formatVisit = (iso: string | null | undefined): string => {
@@ -50,70 +50,95 @@ export const SellerLeadCard = ({ lead, onOpen, showClient = false }: Props) => {
   const model = ca.modelo_de_camisa || ca.tipo_de_polo || ca.tipo_de_camisa;
   const cantidad = ca.cantidad_de_camisas;
   const urgency = getUrgencyFromLead(ca);
-
   const isNew = status === 'new';
 
   return (
     <Card
-      className={`p-3 cursor-pointer hover:shadow-md transition-all border ${isNew ? `ring-2 ${style.ring}` : ''}`}
+      className="relative overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all border"
       onClick={onOpen}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            {isNew && <Sparkles className="h-3.5 w-3.5 text-[hsl(var(--status-new))] shrink-0" />}
-            <p className="font-semibold truncate">{lead.full_name || '(Sin nombre)'}</p>
+      {/* Left status bar */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${style.bar}`} />
+
+      <div className="p-3.5 pl-4 space-y-2.5">
+        {/* Header: name + status chip */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              {isNew && <Sparkles className="h-3.5 w-3.5 text-[hsl(var(--status-new))] shrink-0" />}
+              <p className="font-semibold text-sm leading-tight truncate">{lead.full_name || '(Sin nombre)'}</p>
+            </div>
+            {showClient && lead.client_name && (
+              <p className="text-[11px] text-muted-foreground truncate mt-0.5">{lead.client_name}</p>
+            )}
           </div>
-          {showClient && lead.client_name && (
-            <p className="text-[11px] text-muted-foreground truncate">{lead.client_name}</p>
-          )}
+          <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${style.chip}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+            {style.label}
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-          {lead.is_recontact && (
-            <Badge
-              className="bg-amber-500/15 text-amber-500 border-amber-500/30 border gap-1"
-              title="Este lead ya había llenado otro formulario antes"
-            >
-              <Repeat className="h-3 w-3" /> Recontacto
-            </Badge>
-          )}
-          <UrgencyBadge urgency={urgency} />
-          <Badge className={`${style.chip} border-0`}>{style.label}</Badge>
-        </div>
-      </div>
 
-      <div className="space-y-1 text-xs text-muted-foreground mb-3">
-        {model && <p className="truncate">📦 {String(model)}{cantidad ? ` · ${String(cantidad)}` : ''}</p>}
-        {status === 'visita_tienda' && (lead as any).store_visit_at && (
-          <p className="flex items-center gap-1 text-[hsl(var(--status-visita))] font-medium">
-            <Store className="h-3 w-3" /> Visita: {formatVisit((lead as any).store_visit_at)}
+        {/* Meta row: recontact + urgency (only if present) */}
+        {(lead.is_recontact || urgency) && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {lead.is_recontact && (
+              <span
+                className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 px-1.5 py-0.5 text-[10px] font-medium"
+                title="Este lead ya había llenado otro formulario antes"
+              >
+                <Repeat className="h-2.5 w-2.5" /> Recontacto
+              </span>
+            )}
+            {urgency && <UrgencyBadge urgency={urgency} />}
+          </div>
+        )}
+
+        {/* Info block */}
+        <div className="space-y-1 text-xs text-muted-foreground">
+          {model && (
+            <p className="truncate">
+              <span className="opacity-60">📦</span> <span className="text-foreground/80">{String(model)}</span>
+              {cantidad ? <span className="opacity-70"> · {String(cantidad)}</span> : null}
+            </p>
+          )}
+          {status === 'visita_tienda' && (lead as any).store_visit_at && (
+            <p className="flex items-center gap-1 text-[hsl(var(--status-visita))] font-medium">
+              <Store className="h-3 w-3" /> {formatVisit((lead as any).store_visit_at)}
+            </p>
+          )}
+          <p className="flex items-center gap-1 text-[11px]">
+            <Clock className="h-3 w-3 opacity-70" /> hace {formatRelative(lead.created_time || lead.created_at)}
           </p>
-        )}
-        <p className="flex items-center gap-1"><Clock className="h-3 w-3" /> Entró hace {formatRelative(lead.created_time || lead.created_at)}</p>
-      </div>
+        </div>
 
-      <div className="flex items-center gap-1.5">
-        {cleanPhone && (
-          <>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 px-2 flex-1"
-              onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${cleanPhone}`, '_blank'); }}
-            >
-              <MessageCircle className="h-3.5 w-3.5 mr-1" /> WhatsApp
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 px-2"
-              onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${cleanPhone}`; }}
-            >
-              <Phone className="h-3.5 w-3.5" />
-            </Button>
-          </>
-        )}
-        <Button size="sm" className="h-8 px-3 ml-auto" onClick={onOpen}>Abrir</Button>
+        {/* Actions */}
+        <div className="flex items-center gap-1.5 pt-1">
+          {cleanPhone && (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2 text-xs hover:bg-muted"
+                onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${cleanPhone}`, '_blank'); }}
+                title="WhatsApp"
+              >
+                <MessageCircle className="h-3.5 w-3.5 mr-1" /> WhatsApp
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 hover:bg-muted"
+                onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${cleanPhone}`; }}
+                title="Llamar"
+              >
+                <Phone className="h-3.5 w-3.5" />
+              </Button>
+            </>
+          )}
+          <Button size="sm" className="h-8 px-3 ml-auto text-xs font-semibold" onClick={onOpen}>
+            Abrir
+          </Button>
+        </div>
       </div>
     </Card>
   );
