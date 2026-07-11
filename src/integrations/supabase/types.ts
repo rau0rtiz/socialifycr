@@ -5451,6 +5451,13 @@ export type Database = {
         }[]
       }
       get_public_production_sheet: { Args: { _token: string }; Returns: Json }
+      get_published_proposal_by_slug: {
+        Args: { _slug: string }
+        Returns: {
+          html_content: string
+          title: string
+        }[]
+      }
       get_safe_platform_connections: {
         Args: { _client_id: string }
         Returns: {
