@@ -87,7 +87,26 @@ export const useSellerLeads = ({ sellerId, clientId, mode }: UseSellerLeadsOpts)
           l.is_recontact = !!forms && forms.size > 1;
         });
       }
-      return leads;
+
+      // Collapse duplicates: same client + same phone → keep only the newest lead card,
+      // flag it as recontact so the seller sees history without duplicated rows.
+      const seen = new Map<string, SellerLead>();
+      const collapsed: SellerLead[] = [];
+      for (const l of leads) {
+        const ph = normalizePhone(l.phone);
+        if (ph.length < 6) { collapsed.push(l); continue; }
+        const key = `${l.client_id}|${ph}`;
+        const prev = seen.get(key);
+        if (!prev) {
+          seen.set(key, l);
+          collapsed.push(l);
+        } else {
+          // Already have a newer entry (leads are ordered by created_time desc).
+          prev.is_recontact = true;
+        }
+      }
+      return collapsed;
+
     },
     enabled: !!user?.id,
     staleTime: 60 * 1000,
