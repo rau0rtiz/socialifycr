@@ -7,7 +7,10 @@ import { toast } from 'sonner';
 
 export interface SellerLead extends InstantFormLead {
   client_name?: string | null;
+  is_recontact?: boolean;
 }
+
+const normalizePhone = (p?: string | null) => (p || '').replace(/\D/g, '');
 
 interface UseSellerLeadsOpts {
   /** When provided, fetch leads for a specific seller (manager view). */
