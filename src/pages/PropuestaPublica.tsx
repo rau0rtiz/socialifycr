@@ -17,19 +17,17 @@ const PropuestaPublica = () => {
         return;
       }
       const { data, error } = await supabase
-        .from('agency_proposals')
-        .select('title, html_content, is_published')
-        .eq('slug', slug)
-        .maybeSingle();
+        .rpc('get_published_proposal_by_slug', { _slug: slug });
       if (cancelled) return;
-      if (error || !data || !data.is_published) {
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row) {
         setState('not_found');
         return;
       }
-      setTitle(data.title);
-      setHtml(data.html_content || '');
+      setTitle(row.title);
+      setHtml(row.html_content || '');
       setState('ok');
-      document.title = data.title;
+      document.title = row.title;
     };
     load();
     return () => {
