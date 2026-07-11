@@ -330,8 +330,11 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
       const fullName = (rec.full_name || '').toString().trim() || null;
       const phone = cleanPhone(rec.phone);
 
-      // Dedupe synthetic sheet rows against existing leads for the same phone.
-      if (isSheetSynthetic && phone) {
+      // Dedupe against existing leads for the same phone (regardless of source).
+      // Meta assigns a new lead ID each time the same person submits, which would
+      // otherwise create parallel duplicate cards. Skip when we already have a
+      // lead for this phone under a different external_id.
+      if (phone) {
         const dupe = existingByPhone.get(phone);
         if (dupe && dupe.external_id !== externalId) { skipped++; continue; }
       }
