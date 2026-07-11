@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Phone, MessageCircle, Sparkles, Clock } from 'lucide-react';
+import { Phone, MessageCircle, Sparkles, Clock, Repeat } from 'lucide-react';
 import type { SellerLead } from '@/hooks/use-seller-leads';
 import { getUrgencyFromLead } from '@/lib/comfortex-urgency';
 import { UrgencyBadge } from './UrgencyBadge';
