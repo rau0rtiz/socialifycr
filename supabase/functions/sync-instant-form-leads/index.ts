@@ -296,13 +296,22 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
       if (l.phone) existingByPhone.set(l.phone, l);
     }
 
-    const { data: contactsRows } = await admin
-      .from('customer_contacts')
-      .select('id, phone, full_name')
-      .eq('client_id', clientId);
+    const contactsRows: any[] = [];
+    for (let from = 0; ; from += PAGE_EX) {
+      const { data, error } = await admin
+        .from('customer_contacts')
+        .select('id, phone, full_name')
+        .eq('client_id', clientId)
+        .range(from, from + PAGE_EX - 1);
+      if (error) break;
+      const chunk = data || [];
+      contactsRows.push(...chunk);
+      if (chunk.length < PAGE_EX) break;
+      if (contactsRows.length >= 50000) break;
+    }
     const contactByPhone = new Map<string, string>();
     const contactByName = new Map<string, string>();
-    for (const c of contactsRows || []) {
+    for (const c of contactsRows) {
       if (c.phone) contactByPhone.set(c.phone, c.id);
       if (c.full_name) contactByName.set(c.full_name.toLowerCase(), c.id);
     }
