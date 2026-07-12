@@ -37,14 +37,23 @@ export const useInstantFormLeads = (clientId: string | null, enabled = true) => 
     queryKey: ['instant-form-leads', clientId],
     queryFn: async () => {
       if (!clientId) return [];
-      const { data, error } = await supabase
-        .from('instant_form_leads')
-        .select('*')
-        .eq('client_id', clientId)
-        .order('created_time', { ascending: false, nullsFirst: false })
-        .limit(5000);
-      if (error) throw error;
-      return (data || []) as unknown as InstantFormLead[];
+      // Paginate to bypass PostgREST's default 1000-row cap.
+      const PAGE = 1000;
+      const all: any[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from('instant_form_leads')
+          .select('*')
+          .eq('client_id', clientId)
+          .order('created_time', { ascending: false, nullsFirst: false })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        const chunk = data || [];
+        all.push(...chunk);
+        if (chunk.length < PAGE) break;
+        if (all.length >= 20000) break; // safety guard
+      }
+      return all as unknown as InstantFormLead[];
     },
     enabled: !!clientId && enabled,
     staleTime: 5 * 60 * 1000,
