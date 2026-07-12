@@ -435,17 +435,8 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
       });
     }
 
-    // Fire-and-forget Comfortex AI replies (never block the sync response).
-    if (clientId === COMFORTEX_CLIENT_ID && newLeadIds.length > 0) {
-      const task = (async () => {
-        for (const id of newLeadIds) {
-          try { await generateAndSaveComfortexReply(admin, id, lovableKey); }
-          catch (e) { console.error('comfortex reply failed', id, e); }
-        }
-      })();
-      // @ts-ignore EdgeRuntime is available in Supabase edge runtime
-      if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(task);
-    }
+    // Auto-generation of Comfortex AI replies disabled to save credits.
+    // Users now generate messages manually via the "Generar mensaje" button in the lead dialog.
 
     await admin
       .from('instant_form_lead_sources')
