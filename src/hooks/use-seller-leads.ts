@@ -32,25 +32,30 @@ export const useSellerLeads = ({ sellerId, clientId, mode }: UseSellerLeadsOpts)
     queryFn: async () => {
       if (!user?.id) return [] as SellerLead[];
 
-      let q = supabase
-        .from('instant_form_leads')
-        .select('*')
-        .order('created_time', { ascending: false, nullsFirst: false })
-        .limit(2000);
+      // Paginate to bypass PostgREST's default 1000-row cap.
+      const PAGE = 1000;
+      const leads: SellerLead[] = [];
+      for (let from = 0; ; from += PAGE) {
+        let q = supabase
+          .from('instant_form_leads')
+          .select('*')
+          .order('created_time', { ascending: false, nullsFirst: false })
+          .range(from, from + PAGE - 1);
 
-      if (mode === 'self') {
-        if (!user.id) return [];
-        q = q.eq('assigned_seller_id', user.id);
-      } else {
-        if (effectiveSellerId) {
-          q = q.eq('assigned_seller_id', effectiveSellerId);
+        if (mode === 'self') {
+          q = q.eq('assigned_seller_id', user.id);
+        } else {
+          if (effectiveSellerId) q = q.eq('assigned_seller_id', effectiveSellerId);
+          if (clientId) q = q.eq('client_id', clientId);
         }
-        if (clientId) q = q.eq('client_id', clientId);
-      }
 
-      const { data, error } = await q;
-      if (error) throw error;
-      const leads = (data || []) as unknown as SellerLead[];
+        const { data, error } = await q;
+        if (error) throw error;
+        const chunk = (data || []) as unknown as SellerLead[];
+        leads.push(...chunk);
+        if (chunk.length < PAGE) break;
+        if (leads.length >= 20000) break; // safety guard
+      }
 
       // Fetch client names for display
       const clientIds = Array.from(new Set(leads.map((l) => l.client_id))).filter(Boolean);
