@@ -273,13 +273,25 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
     const rows = values.slice(headerRow + 1);
 
     // Preload existing leads and customer contacts once (avoids per-row round-trips).
-    const { data: existingLeadsRows } = await admin
-      .from('instant_form_leads')
-      .select('id, external_id, phone, created_time, lead_status')
-      .eq('client_id', clientId);
+    // Paginate to bypass PostgREST's default 1000-row cap — otherwise leads beyond
+    // the first 1000 would bypass phone dedupe and get re-inserted.
+    const existingLeadsRows: any[] = [];
+    const PAGE_EX = 1000;
+    for (let from = 0; ; from += PAGE_EX) {
+      const { data, error } = await admin
+        .from('instant_form_leads')
+        .select('id, external_id, phone, created_time, lead_status')
+        .eq('client_id', clientId)
+        .range(from, from + PAGE_EX - 1);
+      if (error) break;
+      const chunk = data || [];
+      existingLeadsRows.push(...chunk);
+      if (chunk.length < PAGE_EX) break;
+      if (existingLeadsRows.length >= 50000) break;
+    }
     const existingByExternalId = new Map<string, any>();
     const existingByPhone = new Map<string, any>();
-    for (const l of existingLeadsRows || []) {
+    for (const l of existingLeadsRows) {
       if (l.external_id) existingByExternalId.set(l.external_id, l);
       if (l.phone) existingByPhone.set(l.phone, l);
     }
