@@ -14,6 +14,7 @@ import {
   ArrowLeft, Plus, Trash2, Send, Check, Film, Printer, ExternalLink, Loader2,
   ChevronDown, ChevronUp, Copy, Sparkles, Share2, Link2, Globe, Mail,
   Pencil, Lock, FileText, GripVertical, ArrowUp, ArrowDown,
+  Play, Square, Timer, RotateCcw,
 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -58,6 +59,47 @@ function typeMeta(t?: string | null) {
   return CONTENT_TYPES.find(x => x.value === t) || { value: 'otro', label: 'Pieza', icon: '🎞️' };
 }
 
+// Convert ISO timestamp to <input type="datetime-local"> value in LOCAL time
+function isoToLocalInput(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const tz = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - tz * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function localInputToIso(value: string): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+function formatDuration(startIso: string | null, endIso: string | null): string {
+  if (!startIso || !endIso) return '—';
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+  if (isNaN(start) || isNaN(end) || end <= start) return '—';
+  const totalSec = Math.floor((end - start) / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  if (h === 0) return `${m}m`;
+  return `${h}h ${m.toString().padStart(2, '0')}m`;
+}
+
+function formatLiveDuration(startIso: string | null, now: number): string {
+  if (!startIso) return '00:00:00';
+  const start = new Date(startIso).getTime();
+  if (isNaN(start) || now < start) return '00:00:00';
+  const totalSec = Math.floor((now - start) / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+
 export default function ProduccionSheet() {
   const { sheetId = '' } = useParams();
   const navigate = useNavigate();
@@ -83,6 +125,16 @@ export default function ProduccionSheet() {
   const [clickupOpen, setClickupOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
+
+  // Live tick for recording timer
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  const isRecording = !!local.recording_started_at && !local.recording_ended_at;
+  useEffect(() => {
+    if (!isRecording) return;
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [isRecording]);
+
 
   const shareToken = data?.sheet?.public_share_token || null;
   const shareEnabled = !!data?.sheet?.public_share_enabled;
@@ -147,7 +199,7 @@ export default function ProduccionSheet() {
     if (!data?.sheet) return;
     const t = setTimeout(() => {
       const patch: any = {};
-      (['title', 'shoot_date', 'location', 'producer_name', 'notes'] as const).forEach((k) => {
+      (['title', 'shoot_date', 'location', 'producer_name', 'notes', 'recording_started_at', 'recording_ended_at'] as const).forEach((k) => {
         if (local[k] !== data.sheet[k]) patch[k] = local[k];
       });
       if (Object.keys(patch).length) update.mutate({ id: sheetId, ...patch });
@@ -365,6 +417,79 @@ export default function ProduccionSheet() {
                     />
                   </InlineField>
                 </div>
+
+                {/* CRONÓMETRO DE GRABACIÓN */}
+                <div className="mt-6 border border-noeval-line bg-[color:var(--noeval-cream)]/60 p-4 sm:p-5">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`h-10 w-10 shrink-0 border flex items-center justify-center ${isRecording ? 'border-noeval-accent text-noeval-accent' : 'border-noeval-line text-noeval-muted'}`}>
+                        <Timer className={`h-5 w-5 ${isRecording ? 'animate-pulse' : ''}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-muted font-semibold">Cronómetro de grabación</div>
+                        <div className="font-serif text-2xl sm:text-3xl text-noeval-ink tracking-tight tabular-nums leading-tight mt-0.5">
+                          {isRecording
+                            ? formatLiveDuration(local.recording_started_at || null, nowTick)
+                            : (local.recording_started_at && local.recording_ended_at)
+                              ? formatDuration(local.recording_started_at, local.recording_ended_at)
+                              : '—'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                      <InlineField label="Inicio de grabación">
+                        <input
+                          type="datetime-local"
+                          value={isoToLocalInput(local.recording_started_at || null)}
+                          onChange={(e) => setLocal({ ...local, recording_started_at: localInputToIso(e.target.value) })}
+                          className="bg-transparent text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto"
+                        />
+                      </InlineField>
+                      <InlineField label="Fin de grabación">
+                        <input
+                          type="datetime-local"
+                          value={isoToLocalInput(local.recording_ended_at || null)}
+                          onChange={(e) => setLocal({ ...local, recording_ended_at: localInputToIso(e.target.value) })}
+                          className="bg-transparent text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto"
+                        />
+                      </InlineField>
+                    </div>
+
+                    <div className="flex items-center gap-2 no-print">
+                      {!local.recording_started_at && (
+                        <Button
+                          size="sm"
+                          onClick={() => setLocal({ ...local, recording_started_at: new Date().toISOString(), recording_ended_at: null })}
+                          className="bg-noeval-accent hover:bg-noeval-accent/90 text-white gap-1.5 rounded-none"
+                        >
+                          <Play className="h-4 w-4" /> Iniciar
+                        </Button>
+                      )}
+                      {isRecording && (
+                        <Button
+                          size="sm"
+                          onClick={() => setLocal({ ...local, recording_ended_at: new Date().toISOString() })}
+                          className="bg-noeval-ink hover:bg-noeval-ink/90 text-white gap-1.5 rounded-none"
+                        >
+                          <Square className="h-4 w-4" /> Terminar
+                        </Button>
+                      )}
+                      {local.recording_started_at && local.recording_ended_at && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setLocal({ ...local, recording_started_at: null, recording_ended_at: null })}
+                          className="gap-1.5 rounded-none border-noeval-line text-noeval-muted hover:text-noeval-ink"
+                        >
+                          <RotateCcw className="h-4 w-4" /> Reiniciar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+
 
                 {/* Progress */}
                 <div className="mt-7 flex flex-col md:flex-row md:items-end gap-4">

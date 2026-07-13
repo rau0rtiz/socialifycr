@@ -27,6 +27,8 @@ export interface ProductionSheet {
   clickup_list_name: string | null;
   clickup_space_id: string | null;
   clickup_space_name: string | null;
+  recording_started_at: string | null;
+  recording_ended_at: string | null;
 }
 
 export interface SheetTeamMember {
