@@ -419,10 +419,10 @@ export default function ProduccionSheet() {
                 </div>
 
                 {/* CRONÓMETRO DE GRABACIÓN */}
-                <div className="mt-6 border border-noeval-line bg-[color:var(--noeval-cream)]/60 p-4 sm:p-5">
+                <div className="mt-6 rounded-2xl border border-noeval-line bg-[color:var(--noeval-cream)]/60 p-4 sm:p-5">
                   <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`h-10 w-10 shrink-0 border flex items-center justify-center ${isRecording ? 'border-noeval-accent text-noeval-accent' : 'border-noeval-line text-noeval-muted'}`}>
+                      <div className={`h-10 w-10 shrink-0 rounded-full border flex items-center justify-center ${isRecording ? 'border-noeval-accent text-noeval-accent bg-noeval-accent/5' : 'border-noeval-line text-noeval-muted'}`}>
                         <Timer className={`h-5 w-5 ${isRecording ? 'animate-pulse' : ''}`} />
                       </div>
                       <div className="min-w-0">
@@ -461,7 +461,7 @@ export default function ProduccionSheet() {
                         <Button
                           size="sm"
                           onClick={() => setLocal({ ...local, recording_started_at: new Date().toISOString(), recording_ended_at: null })}
-                          className="bg-noeval-accent hover:bg-noeval-accent/90 text-white gap-1.5 rounded-none"
+                          className="bg-noeval-accent hover:bg-noeval-accent/90 text-white gap-1.5 rounded-full"
                         >
                           <Play className="h-4 w-4" /> Iniciar
                         </Button>
@@ -470,7 +470,7 @@ export default function ProduccionSheet() {
                         <Button
                           size="sm"
                           onClick={() => setLocal({ ...local, recording_ended_at: new Date().toISOString() })}
-                          className="bg-noeval-ink hover:bg-noeval-ink/90 text-white gap-1.5 rounded-none"
+                          className="bg-noeval-ink hover:bg-noeval-ink/90 text-white gap-1.5 rounded-full"
                         >
                           <Square className="h-4 w-4" /> Terminar
                         </Button>
@@ -480,7 +480,7 @@ export default function ProduccionSheet() {
                           size="sm"
                           variant="outline"
                           onClick={() => setLocal({ ...local, recording_started_at: null, recording_ended_at: null })}
-                          className="gap-1.5 rounded-none border-noeval-line text-noeval-muted hover:text-noeval-ink"
+                          className="gap-1.5 rounded-full border-noeval-line text-noeval-muted hover:text-noeval-ink"
                         >
                           <RotateCcw className="h-4 w-4" /> Reiniciar
                         </Button>
@@ -528,7 +528,7 @@ export default function ProduccionSheet() {
                 </div>
 
                 {/* Editorial toolbar — filters + actions */}
-                <div className="mb-4 no-print bg-noeval-surface border border-noeval-ink flex flex-col md:flex-row md:items-stretch md:justify-between overflow-hidden">
+                <div className="mb-4 no-print bg-noeval-surface border border-noeval-ink rounded-2xl flex flex-col md:flex-row md:items-stretch md:justify-between overflow-hidden">
                   {/* Filters as bordered pills */}
                   <div className="flex divide-x divide-noeval-line border-b md:border-b-0 md:border-r border-noeval-line">
                     {(['all', 'pending', 'recorded'] as const).map((f) => {
@@ -565,10 +565,18 @@ export default function ProduccionSheet() {
                     >
                       <Send className="h-3.5 w-3.5" /> <span className="hidden sm:inline">ClickUp</span>
                       {pendingToSend > 0 && (
-                        <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 bg-noeval-accent text-white text-[9px] font-bold">
+                        <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-noeval-accent text-white text-[9px] font-bold">
                           {pendingToSend}
                         </span>
                       )}
+                    </button>
+                    <button
+                      onClick={() => setEmailOpen(true)}
+                      disabled={recordedShots.length === 0}
+                      className="hidden sm:flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-noeval-ink"
+                      title="Enviar resumen por correo"
+                    >
+                      <Mail className="h-3.5 w-3.5" /> Correo
                     </button>
                     <button
                       onClick={() => window.print()}
@@ -590,7 +598,7 @@ export default function ProduccionSheet() {
                 {filteredShots.length === 0 ? (
                   <button
                     onClick={handleAddPiece}
-                    className="w-full py-16 text-center bg-noeval-surface border-2 border-dashed border-noeval-ink/20 hover:border-noeval-accent hover:bg-noeval-accent/5 transition group"
+                    className="w-full py-16 text-center bg-noeval-surface border-2 border-dashed border-noeval-ink/20 rounded-2xl hover:border-noeval-accent hover:bg-noeval-accent/5 transition group"
                   >
                     <div className="mx-auto w-12 h-12 rounded-full border border-noeval-ink/20 flex items-center justify-center mb-3 group-hover:border-noeval-accent group-hover:bg-noeval-accent group-hover:text-white transition">
                       <Plus className="h-6 w-6" strokeWidth={2.5} />
@@ -1098,7 +1106,7 @@ function PieceCard({
         draggable={canDrag && dragArmed}
         onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
         onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
-        className={`relative border p-3 sm:p-4 transition group ${
+        className={`relative border rounded-2xl p-3 sm:p-4 transition group ${
         shot.done
           ? 'bg-noeval-surface border-noeval-line/70 opacity-90 hover:opacity-100'
           : 'bg-noeval-surface border-noeval-ink/70 hover:border-noeval-accent'
@@ -1142,19 +1150,17 @@ function PieceCard({
               <GripVertical className="h-4 w-4" />
             </button>
           )}
-          <span className="font-serif font-bold text-lg sm:text-xl text-noeval-ink bg-noeval-paper border border-noeval-line/60 w-9 sm:w-11 h-9 sm:h-11 flex items-center justify-center shrink-0 tracking-tight">{String(index + 1).padStart(2, '0')}</span>
+          <span className="font-serif font-bold text-sm sm:text-base text-noeval-muted shrink-0 tracking-tight w-7 sm:w-8 tabular-nums">{String(index + 1).padStart(2, '0')}</span>
+          <span className="text-lg sm:text-xl shrink-0 leading-none" title={meta.label}>{meta.icon}</span>
           {shot.done ? (
-            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-noeval-cream bg-noeval-ink font-bold px-2 py-1">
-              Grabada
+            <span className="hidden sm:inline-flex items-center gap-1 text-[9px] tracking-[0.25em] uppercase text-emerald-700 bg-emerald-500/15 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
+              <Check className="h-2.5 w-2.5" strokeWidth={3} /> Grabada
             </span>
           ) : (
-            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-white bg-noeval-accent font-bold px-2 py-1">
+            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-noeval-accent bg-noeval-accent/10 border border-noeval-accent/30 font-bold px-2 py-0.5 rounded-full">
               Pendiente
             </span>
           )}
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-noeval-ink border border-noeval-ink font-bold px-2 py-1 shrink-0">
-            {meta.icon} <span className="hidden xs:inline">{meta.label}</span>
-          </span>
           {platformLabel && (
             <span className="text-[10px] tracking-[0.25em] uppercase text-noeval-muted font-semibold hidden md:inline">· {platformLabel}</span>
           )}
@@ -1164,7 +1170,7 @@ function PieceCard({
             {local.concept || '(sin concepto)'}
           </div>
           {recordedTime && (
-            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent shrink-0">
+            <span className="text-[10px] tracking-[0.2em] uppercase text-emerald-600 shrink-0 font-semibold">
               ✓ {recordedTime}
             </span>
           )}
@@ -1205,17 +1211,17 @@ function PieceCard({
       draggable={canDrag && dragArmed}
       onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
       onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
-      className={`relative bg-noeval-surface p-3 sm:p-5 transition ${
+      className={`relative bg-noeval-surface rounded-2xl p-3 sm:p-5 transition ${
       isDraft
         ? 'border border-dashed border-amber-400 bg-amber-50/40'
         : shot.done
-          ? 'border border-noeval-accent/60 bg-noeval-accent/[0.04]'
+          ? 'border border-emerald-500/40 bg-emerald-500/[0.04]'
           : 'border border-noeval-ink/70 hover:border-noeval-accent'
     }`}>
 
       {/* Draft banner */}
       {isDraft && (
-        <div className="mb-3 -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 px-3 sm:px-5 py-2 bg-amber-100/70 border-b border-amber-300 flex items-center justify-between gap-2 flex-wrap">
+        <div className="mb-3 -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 px-3 sm:px-5 py-2 bg-amber-100/70 border-b border-amber-300 rounded-t-2xl flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2 text-amber-900 text-[10px] sm:text-[11px] tracking-[0.25em] uppercase font-semibold">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
             Borrador · pendiente de guardar
@@ -1267,18 +1273,18 @@ function PieceCard({
               <GripVertical className="h-4 w-4" />
             </button>
           )}
-          <span className="font-serif font-bold text-xl sm:text-2xl text-noeval-ink bg-noeval-paper border border-noeval-line/60 w-11 sm:w-12 h-11 sm:h-12 flex items-center justify-center shrink-0 tracking-tight">{String(index + 1).padStart(2, '0')}</span>
+          <span className="font-serif font-bold text-lg sm:text-xl text-noeval-muted shrink-0 tracking-tight w-8 sm:w-9 tabular-nums">{String(index + 1).padStart(2, '0')}</span>
           {shot.done ? (
-            <span className="inline-flex items-center text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-noeval-cream bg-noeval-ink font-bold px-2 py-1">
-              Grabada
+            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-emerald-700 bg-emerald-500/15 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
+              <Check className="h-2.5 w-2.5" strokeWidth={3} /> Grabada
             </span>
           ) : !isDraft && (
-            <span className="inline-flex items-center text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-white bg-noeval-accent font-bold px-2 py-1">
+            <span className="inline-flex items-center text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-noeval-accent bg-noeval-accent/10 border border-noeval-accent/30 font-bold px-2 py-0.5 rounded-full">
               Pendiente
             </span>
           )}
           <Select value={shot.content_type || 'reel'} onValueChange={(v) => onChange({ content_type: v })}>
-            <SelectTrigger className="w-auto h-8 bg-transparent text-noeval-ink border border-noeval-ink rounded-none text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-bold px-2.5 sm:px-3">
+            <SelectTrigger className="w-auto h-8 bg-transparent text-noeval-ink border border-noeval-ink rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-bold px-2.5 sm:px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1288,7 +1294,7 @@ function PieceCard({
             </SelectContent>
           </Select>
           <Select value={shot.platform || 'instagram'} onValueChange={(v) => onChange({ platform: v })}>
-            <SelectTrigger className="w-auto h-8 bg-transparent border border-noeval-line rounded-none text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3 text-noeval-muted">
+            <SelectTrigger className="w-auto h-8 bg-transparent border border-noeval-line rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3 text-noeval-muted">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
