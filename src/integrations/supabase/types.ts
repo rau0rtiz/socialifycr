@@ -4542,6 +4542,8 @@ export type Database = {
           producer_name: string | null
           public_share_enabled: boolean
           public_share_token: string | null
+          recording_ended_at: string | null
+          recording_started_at: string | null
           sent_to_clickup_at: string | null
           shoot_date: string | null
           sort_order: number
@@ -4567,6 +4569,8 @@ export type Database = {
           producer_name?: string | null
           public_share_enabled?: boolean
           public_share_token?: string | null
+          recording_ended_at?: string | null
+          recording_started_at?: string | null
           sent_to_clickup_at?: string | null
           shoot_date?: string | null
           sort_order?: number
@@ -4592,6 +4596,8 @@ export type Database = {
           producer_name?: string | null
           public_share_enabled?: boolean
           public_share_token?: string | null
+          recording_ended_at?: string | null
+          recording_started_at?: string | null
           sent_to_clickup_at?: string | null
           shoot_date?: string | null
           sort_order?: number
