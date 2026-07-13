@@ -1017,24 +1017,21 @@ function PieceCard({
               <GripVertical className="h-4 w-4" />
             </button>
           )}
-          <span className="font-serif text-lg sm:text-xl text-noeval-muted w-7 sm:w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
+          <span className="font-serif font-bold text-lg sm:text-xl text-noeval-ink bg-noeval-paper border border-noeval-line/60 w-9 sm:w-11 h-9 sm:h-11 flex items-center justify-center shrink-0 tracking-tight">{String(index + 1).padStart(2, '0')}</span>
           {shot.done ? (
-            <div className="grabado-stamp hidden sm:inline-flex">
-              <span className="grabado-stamp-dot">
-                <span className="grabado-stamp-ping" />
-              </span>
-              Grabado
-            </div>
+            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-noeval-cream bg-noeval-ink font-bold px-2 py-1">
+              Grabada
+            </span>
           ) : (
-            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-noeval-muted border border-noeval-line rounded-full px-2 py-0.5">
+            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-white bg-noeval-accent font-bold px-2 py-1">
               Pendiente
             </span>
           )}
-          <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.25em] uppercase bg-noeval-ink text-noeval-cream rounded-full px-2 sm:px-2.5 py-1 shrink-0">
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-noeval-ink border border-noeval-ink font-bold px-2 py-1 shrink-0">
             {meta.icon} <span className="hidden xs:inline">{meta.label}</span>
           </span>
           {platformLabel && (
-            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-muted hidden md:inline">{platformLabel}</span>
+            <span className="text-[10px] tracking-[0.25em] uppercase text-noeval-muted font-semibold hidden md:inline">· {platformLabel}</span>
           )}
           <div className={`font-serif text-base sm:text-lg truncate flex-1 min-w-0 ${
             shot.done ? 'text-noeval-ink' : 'text-noeval-ink'
