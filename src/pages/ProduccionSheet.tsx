@@ -147,7 +147,7 @@ export default function ProduccionSheet() {
     if (!data?.sheet) return;
     const t = setTimeout(() => {
       const patch: any = {};
-      (['title', 'shoot_date', 'location', 'producer_name', 'notes'] as const).forEach((k) => {
+      (['title', 'shoot_date', 'location', 'producer_name', 'notes', 'recording_started_at', 'recording_ended_at'] as const).forEach((k) => {
         if (local[k] !== data.sheet[k]) patch[k] = local[k];
       });
       if (Object.keys(patch).length) update.mutate({ id: sheetId, ...patch });
