@@ -2980,6 +2980,7 @@ export type Database = {
           adset_name: string | null
           ai_message: string | null
           ai_message_generated_at: string | null
+          ai_message_regen_count: number
           assigned_at: string | null
           assigned_seller_id: string | null
           campaign_id: string | null
@@ -3011,6 +3012,7 @@ export type Database = {
           adset_name?: string | null
           ai_message?: string | null
           ai_message_generated_at?: string | null
+          ai_message_regen_count?: number
           assigned_at?: string | null
           assigned_seller_id?: string | null
           campaign_id?: string | null
@@ -3042,6 +3044,7 @@ export type Database = {
           adset_name?: string | null
           ai_message?: string | null
           ai_message_generated_at?: string | null
+          ai_message_regen_count?: number
           assigned_at?: string | null
           assigned_seller_id?: string | null
           campaign_id?: string | null

@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceKey);
     const { data: lead, error: leadErr } = await admin
       .from('instant_form_leads')
-      .select('id, client_id, full_name, phone, custom_answers, campaign_name, ad_name, form_name, ai_message')
+      .select('id, client_id, full_name, phone, custom_answers, campaign_name, ad_name, form_name, ai_message, ai_message_generated_at, ai_message_regen_count')
       .eq('id', leadId)
       .maybeSingle();
 
@@ -57,13 +57,42 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Cost guard: if a message already exists, return it instead of re-billing AI.
-    // Client must send `force: true` (after user confirmation) to regenerate.
-    if ((lead as any).ai_message && !force) {
-      return new Response(JSON.stringify({ message: (lead as any).ai_message, cached: true }), {
+    const existing = (lead as any).ai_message as string | null;
+    const regenCount = (lead as any).ai_message_regen_count ?? 0;
+    const lastAt = (lead as any).ai_message_generated_at as string | null;
+
+    // Cost guard 1: cached response when not forcing.
+    if (existing && !force) {
+      return new Response(JSON.stringify({ message: existing, cached: true, regen_count: regenCount, regen_max: 3 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Cost guard 2: hard cap on regenerations per lead.
+    const MAX_REGENS = 3;
+    if (existing && force && regenCount >= MAX_REGENS) {
+      return new Response(JSON.stringify({
+        error: `Alcanzaste el máximo de ${MAX_REGENS} regeneraciones para este lead. Editá el mensaje a mano.`,
+        message: existing,
+        regen_count: regenCount,
+        regen_max: MAX_REGENS,
+      }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Cost guard 3: 30s cooldown between generations for the same lead.
+    if (lastAt) {
+      const elapsed = Date.now() - new Date(lastAt).getTime();
+      if (elapsed < 30_000) {
+        const wait = Math.ceil((30_000 - elapsed) / 1000);
+        return new Response(JSON.stringify({
+          error: `Esperá ${wait}s antes de regenerar este mensaje.`,
+          message: existing,
+          regen_count: regenCount,
+          regen_max: MAX_REGENS,
+        }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
 
     const userMessage = buildComfortexUserMessage(lead);
 
@@ -84,15 +113,17 @@ Deno.serve(async (req) => {
     }
 
     // Persist so the message survives reloads and is available across users.
+    const newRegenCount = existing ? regenCount + 1 : 0;
     await admin
       .from('instant_form_leads')
       .update({
         ai_message: message,
         ai_message_generated_at: new Date().toISOString(),
+        ai_message_regen_count: newRegenCount,
       })
       .eq('id', leadId);
 
-    return new Response(JSON.stringify({ message }), {
+    return new Response(JSON.stringify({ message, regen_count: newRegenCount, regen_max: 3 }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
