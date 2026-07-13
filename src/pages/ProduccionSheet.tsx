@@ -126,6 +126,16 @@ export default function ProduccionSheet() {
   const [emailOpen, setEmailOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
 
+  // Live tick for recording timer
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  const isRecording = !!local.recording_started_at && !local.recording_ended_at;
+  useEffect(() => {
+    if (!isRecording) return;
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [isRecording]);
+
+
   const shareToken = data?.sheet?.public_share_token || null;
   const shareEnabled = !!data?.sheet?.public_share_enabled;
   // Always build the share URL against the public custom domain so it is not
