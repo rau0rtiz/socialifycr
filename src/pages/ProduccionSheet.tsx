@@ -317,28 +317,35 @@ export default function ProduccionSheet() {
               </Dialog>
 
 
-              {/* CLAQUETA HEADER */}
-              <div className="noeval-slate relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-9">
-                <div className="noeval-stripe absolute inset-x-0 top-0 h-2.5" />
-                <div className="mt-3 flex items-center gap-2 text-noeval-taupe text-[10px] tracking-[0.42em] uppercase font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent animate-pulse" />
-                  <span className="truncate">Hoja · {clientName}</span>
+              {/* HEADER — Editorial paper */}
+              <div className="noeval-paper-hero relative overflow-hidden rounded-2xl p-5 sm:p-8 md:p-10">
+                <div className="absolute inset-x-0 top-0 h-1.5 bg-noeval-accent" />
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 text-noeval-muted text-[10px] tracking-[0.42em] uppercase font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent animate-pulse" />
+                    <span className="truncate text-noeval-ink/60">Hoja de contenido · {clientName}</span>
+                  </div>
+                  <span className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted/70 font-medium">
+                    Producción de redes sociales
+                  </span>
                 </div>
 
                 <input
                   value={local.title || ''}
                   onChange={(e) => setLocal({ ...local, title: e.target.value })}
                   placeholder="Título de la producción"
-                  className="mt-2 w-full bg-transparent font-serif text-2xl sm:text-3xl md:text-5xl uppercase tracking-[0.04em] text-noeval-cream placeholder:text-noeval-taupe/40 outline-none border-0"
+                  className="mt-3 w-full bg-transparent font-serif text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-noeval-ink placeholder:text-noeval-muted/30 outline-none border-0"
                 />
 
-                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="noeval-hero-rule h-px w-full mt-5 opacity-15" />
+
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
                   <InlineField label="Fecha">
                     <input
                       type="date"
                       value={local.shoot_date || ''}
                       onChange={(e) => setLocal({ ...local, shoot_date: e.target.value || null })}
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto"
+                      className="bg-transparent text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto"
                     />
                   </InlineField>
                   <InlineField label="Locación">
@@ -346,7 +353,7 @@ export default function ProduccionSheet() {
                       value={local.location || ''}
                       onChange={(e) => setLocal({ ...local, location: e.target.value })}
                       placeholder="—"
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto placeholder:text-noeval-taupe/40"
+                      className="bg-transparent text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto placeholder:text-noeval-muted/40"
                     />
                   </InlineField>
                   <InlineField label="Responsable">
@@ -354,25 +361,25 @@ export default function ProduccionSheet() {
                       value={local.producer_name || ''}
                       onChange={(e) => setLocal({ ...local, producer_name: e.target.value })}
                       placeholder="—"
-                      className="bg-transparent text-noeval-cream outline-none border-b border-noeval-taupe/40 focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto placeholder:text-noeval-taupe/40"
+                      className="bg-transparent text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto placeholder:text-noeval-muted/40"
                     />
                   </InlineField>
                 </div>
 
                 {/* Progress */}
-                <div className="mt-6 flex flex-col md:flex-row md:items-end gap-4">
+                <div className="mt-7 flex flex-col md:flex-row md:items-end gap-4">
                   <div>
-                    <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-taupe">Grabadas</div>
-                    <div className="font-serif text-3xl sm:text-4xl md:text-5xl text-noeval-cream leading-none mt-1">
+                    <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-muted">Grabadas</div>
+                    <div className="font-serif text-4xl sm:text-5xl md:text-6xl text-noeval-ink leading-none mt-1 tracking-tighter">
                       <span className="text-noeval-accent">{recorded}</span>
-                      <span className="text-noeval-taupe/60"> / {total}</span>
+                      <span className="text-noeval-ink/25"> / {total}</span>
                     </div>
                   </div>
                   <div className="flex-1">
-                    <div className="progress-track h-2.5">
+                    <div className="progress-track h-2">
                       <div className="progress-fill" style={{ width: `${pct}%` }} />
                     </div>
-                    <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-taupe mt-1.5">
+                    <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mt-1.5">
                       {pct}% completado
                     </div>
                   </div>
@@ -517,18 +524,18 @@ export default function ProduccionSheet() {
               </section>
 
               {/* NOTAS GENERALES (editable, no se imprime) */}
-              <section className="noeval-slate rounded-2xl p-6 md:p-8 relative overflow-hidden no-print">
-                <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-taupe flex items-center gap-2">
+              <section className="noeval-paper-hero rounded-2xl p-6 md:p-8 relative overflow-hidden no-print">
+                <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-muted flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent" />
                   Notas generales
                 </div>
-                <h3 className="font-serif text-2xl text-noeval-cream mt-1 mb-3">Apuntes del día</h3>
+                <h3 className="font-serif text-2xl text-noeval-ink mt-1 mb-3 tracking-tight">Apuntes del día</h3>
                 <Textarea
                   value={local.notes || ''}
                   onChange={(e) => setLocal({ ...local, notes: e.target.value })}
                   placeholder="Tratamiento, referencias, instrucciones especiales, ajustes de último minuto…"
                   rows={5}
-                  className="bg-white/5 border-noeval-taupe/30 text-noeval-cream placeholder:text-noeval-taupe/40 resize-none"
+                  className="bg-[color:var(--noeval-paper)]/60 border-noeval-line text-noeval-ink placeholder:text-noeval-muted/50 resize-none"
                 />
               </section>
 
@@ -1312,7 +1319,7 @@ function PieceCard({
 function InlineField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[10px] tracking-[0.32em] uppercase text-noeval-taupe mb-1">{label}</div>
+      <div className="text-[10px] tracking-[0.32em] uppercase text-noeval-muted mb-1 font-semibold">{label}</div>
       {children}
     </div>
   );
