@@ -973,10 +973,10 @@ function PieceCard({
         draggable={canDrag && dragArmed}
         onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
         onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
-        className={`relative border rounded-xl p-3 sm:p-4 transition group ${
+        className={`relative border p-3 sm:p-4 transition group ${
         shot.done
-          ? 'bg-noeval-surface border-noeval-line/60 opacity-90 hover:opacity-100'
-          : 'bg-noeval-cream border-noeval-line hover:border-noeval-ink/30'
+          ? 'bg-noeval-surface border-noeval-line/70 opacity-90 hover:opacity-100'
+          : 'bg-noeval-surface border-noeval-ink/70 hover:border-noeval-accent'
       }`}>
         <div className="flex items-center gap-2 sm:gap-3">
           {canDrag && (
