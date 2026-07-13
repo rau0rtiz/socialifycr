@@ -1319,7 +1319,7 @@ function PieceCard({
 function InlineField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[10px] tracking-[0.32em] uppercase text-noeval-taupe mb-1">{label}</div>
+      <div className="text-[10px] tracking-[0.32em] uppercase text-noeval-muted mb-1 font-semibold">{label}</div>
       {children}
     </div>
   );
