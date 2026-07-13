@@ -347,6 +347,17 @@ export const useRegisterSaleFromInstantFormLead = (clientId: string | null) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Anti-duplicate guard: re-check lead state right before insert.
+      // Prevents double-clicks/race conditions from creating duplicate message_sales rows.
+      const { data: freshLead } = await supabase
+        .from('instant_form_leads')
+        .select('message_sale_id, lead_status')
+        .eq('id', lead.id)
+        .maybeSingle();
+      if (freshLead?.message_sale_id) {
+        throw new Error('Este lead ya tiene una venta registrada. Refresca la página.');
+      }
+
       const tax_amount = Math.round(subtotal * tax_rate * 100) / 100;
       const shippingAmount = Math.max(0, Math.round((shipping || 0) * 100) / 100);
       const amount = Math.round((subtotal + tax_amount + shippingAmount) * 100) / 100;
