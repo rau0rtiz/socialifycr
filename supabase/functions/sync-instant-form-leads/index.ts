@@ -367,16 +367,24 @@ async function syncOne(admin: any, clientId: string, source: any, lovableKey: st
         else if (contactByName.has(fullName.toLowerCase())) customerContactId = contactByName.get(fullName.toLowerCase())!;
       }
 
-      const existingLead = existingByExternalId.get(externalId);
+      // Fallback to phone-based lookup: Meta may reassign external_id across
+      // exports, but the same person keeps the same phone. Without this, an
+      // existing lead's status (contactado/seguimiento/perdido) would be
+      // silently reset to 'new' on the next sync.
+      const existingLead =
+        existingByExternalId.get(externalId) ||
+        (phone ? existingByPhone.get(phone) : null);
       const sheetCreated = parseDate(rec.created_time);
       const createdTime = sheetCreated || existingLead?.created_time || new Date().toISOString();
 
-      const allowedStatuses = ['new', 'contactado', 'seguimiento', 'venta', 'perdido'];
+      const allowedStatuses = ['new', 'contactado', 'seguimiento', 'visita_tienda', 'venta', 'perdido'];
       const existingStatus = (existingLead?.lead_status || '').toString().trim().toLowerCase();
       const sheetStatus = (rec.lead_status || '').toString().trim().toLowerCase();
-      const leadStatus = allowedStatuses.includes(existingStatus)
+      // Never demote an existing lead. If it already has ANY status, preserve
+      // it verbatim (even 'visita_tienda' or a future value we haven't listed).
+      const leadStatus = existingStatus
         ? existingStatus
-        : allowedStatuses.includes(sheetStatus) ? sheetStatus : 'new';
+        : (allowedStatuses.includes(sheetStatus) ? sheetStatus : 'new');
 
       const payload = {
         client_id: clientId,
