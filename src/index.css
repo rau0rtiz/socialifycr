@@ -253,7 +253,9 @@
 }
 .noeval-scope .font-serif { font-family: "Space Grotesk", system-ui, sans-serif; font-weight: 700; letter-spacing: -.02em; }
 .noeval-scope .font-script { font-family: "Space Grotesk", system-ui, sans-serif; font-weight: 700; font-style: italic; letter-spacing: -.02em; }
-.noeval-scope .noeval-slate { background: var(--noeval-ink); color: var(--noeval-cream); box-shadow: 0 1px 0 rgba(33,33,33,.04), 0 18px 40px -22px rgba(33,33,33,.55); }
+.noeval-scope .noeval-slate { background: var(--noeval-ink); color: var(--noeval-cream); box-shadow: 0 1px 0 rgba(26,26,26,.04), 0 18px 40px -22px rgba(26,26,26,.55); }
+.noeval-scope .noeval-paper-hero { background: var(--noeval-surface); color: var(--noeval-ink); border: 1px solid var(--noeval-line); box-shadow: 0 1px 0 rgba(26,26,26,.02), 0 24px 60px -32px rgba(26,26,26,.22); }
+.noeval-scope .noeval-paper-hero .noeval-hero-rule { background: var(--noeval-ink); }
 .noeval-scope .noeval-stripe { background: repeating-linear-gradient(115deg, var(--noeval-accent) 0 22px, var(--noeval-ink) 22px 44px); opacity: .9; }
 .noeval-scope .text-noeval-ink { color: var(--noeval-ink); }
 .noeval-scope .text-noeval-cream { color: var(--noeval-cream); }
