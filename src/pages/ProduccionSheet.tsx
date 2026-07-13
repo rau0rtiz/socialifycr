@@ -1142,9 +1142,18 @@ function PieceCard({
               <GripVertical className="h-4 w-4" />
             </button>
           )}
-          <span className="font-serif text-xl sm:text-2xl text-noeval-muted">{String(index + 1).padStart(2, '0')}</span>
+          <span className="font-serif font-bold text-xl sm:text-2xl text-noeval-ink bg-noeval-paper border border-noeval-line/60 w-11 sm:w-12 h-11 sm:h-12 flex items-center justify-center shrink-0 tracking-tight">{String(index + 1).padStart(2, '0')}</span>
+          {shot.done ? (
+            <span className="inline-flex items-center text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-noeval-cream bg-noeval-ink font-bold px-2 py-1">
+              Grabada
+            </span>
+          ) : !isDraft && (
+            <span className="inline-flex items-center text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-white bg-noeval-accent font-bold px-2 py-1">
+              Pendiente
+            </span>
+          )}
           <Select value={shot.content_type || 'reel'} onValueChange={(v) => onChange({ content_type: v })}>
-            <SelectTrigger className="w-auto h-8 bg-noeval-ink text-noeval-cream border-0 rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3">
+            <SelectTrigger className="w-auto h-8 bg-transparent text-noeval-ink border border-noeval-ink rounded-none text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-bold px-2.5 sm:px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1154,7 +1163,7 @@ function PieceCard({
             </SelectContent>
           </Select>
           <Select value={shot.platform || 'instagram'} onValueChange={(v) => onChange({ platform: v })}>
-            <SelectTrigger className="w-auto h-8 bg-transparent border-noeval-line rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3">
+            <SelectTrigger className="w-auto h-8 bg-transparent border border-noeval-line rounded-none text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3 text-noeval-muted">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1164,17 +1173,9 @@ function PieceCard({
             </SelectContent>
           </Select>
           {recordedTime && (
-            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent">
+            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent font-semibold">
               ✓ {recordedTime}
             </span>
-          )}
-          {shot.done && (
-            <div className="grabado-stamp">
-              <span className="grabado-stamp-dot">
-                <span className="grabado-stamp-ping" />
-              </span>
-              Grabado
-            </div>
           )}
         </div>
         <div className="flex items-center gap-0.5 sm:gap-1 no-print shrink-0">
