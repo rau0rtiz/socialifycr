@@ -113,15 +113,17 @@ Deno.serve(async (req) => {
     }
 
     // Persist so the message survives reloads and is available across users.
+    const newRegenCount = existing ? regenCount + 1 : 0;
     await admin
       .from('instant_form_leads')
       .update({
         ai_message: message,
         ai_message_generated_at: new Date().toISOString(),
+        ai_message_regen_count: newRegenCount,
       })
       .eq('id', leadId);
 
-    return new Response(JSON.stringify({ message }), {
+    return new Response(JSON.stringify({ message, regen_count: newRegenCount, regen_max: 3 }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
