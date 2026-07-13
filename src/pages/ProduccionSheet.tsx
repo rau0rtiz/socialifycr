@@ -1080,17 +1080,17 @@ function PieceCard({
       draggable={canDrag && dragArmed}
       onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
       onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
-      className={`relative bg-noeval-surface rounded-xl p-3 sm:p-5 transition ${
+      className={`relative bg-noeval-surface p-3 sm:p-5 transition ${
       isDraft
-        ? 'border-2 border-dashed border-amber-400 bg-amber-50/40'
+        ? 'border border-dashed border-amber-400 bg-amber-50/40'
         : shot.done
-          ? 'border-2 border-noeval-accent/40 bg-noeval-accent/5'
-          : 'border-2 border-noeval-line hover:border-noeval-ink/30'
+          ? 'border border-noeval-accent/60 bg-noeval-accent/[0.04]'
+          : 'border border-noeval-ink/70 hover:border-noeval-accent'
     }`}>
 
       {/* Draft banner */}
       {isDraft && (
-        <div className="mb-3 -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 px-3 sm:px-5 py-2 bg-amber-100/70 border-b border-amber-300 rounded-t-xl flex items-center justify-between gap-2 flex-wrap">
+        <div className="mb-3 -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 px-3 sm:px-5 py-2 bg-amber-100/70 border-b border-amber-300 flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2 text-amber-900 text-[10px] sm:text-[11px] tracking-[0.25em] uppercase font-semibold">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
             Borrador · pendiente de guardar
