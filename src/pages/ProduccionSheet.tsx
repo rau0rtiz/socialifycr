@@ -389,49 +389,91 @@ export default function ProduccionSheet() {
 
               {/* TABLERO DE PIEZAS */}
               <section>
-                <div className="flex items-start justify-between gap-3 mb-4 flex-wrap no-print">
+                {/* Section title */}
+                <div className="mb-4 flex items-end justify-between gap-3 flex-wrap no-print">
                   <div className="min-w-0">
-                    <span className="inline-block text-[10px] tracking-[0.4em] uppercase border border-noeval-accent text-noeval-accent rounded-full px-3 py-1">
+                    <span className="inline-block text-[10px] tracking-[0.4em] uppercase border border-noeval-accent text-noeval-accent px-2.5 py-1 font-semibold">
                       Piezas
                     </span>
-                    <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-noeval-ink mt-2">Contenido a grabar</h2>
-                    <p className="text-sm text-noeval-muted max-w-xl mt-1 hidden sm:block">
-                      Cada tarjeta es un reel, story o post a producir. Marca como grabado y se minimiza solo.
-                    </p>
+                    <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-noeval-ink mt-2 tracking-tight">Contenido a grabar</h2>
                   </div>
-                  <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
-                    <div className="inline-flex rounded-full border border-noeval-line p-0.5 bg-noeval-surface shrink-0">
-                      {(['all', 'pending', 'recorded'] as const).map((f) => (
+                  <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted font-semibold hidden sm:block">
+                    {total} pieza{total !== 1 ? 's' : ''} · {recorded} grabada{recorded !== 1 ? 's' : ''}
+                  </div>
+                </div>
+
+                {/* Editorial toolbar — filters + actions */}
+                <div className="mb-4 no-print bg-noeval-surface border border-noeval-ink flex flex-col md:flex-row md:items-stretch md:justify-between overflow-hidden">
+                  {/* Filters as bordered pills */}
+                  <div className="flex divide-x divide-noeval-line border-b md:border-b-0 md:border-r border-noeval-line">
+                    {(['all', 'pending', 'recorded'] as const).map((f) => {
+                      const active = filter === f;
+                      const label = f === 'all' ? `Todas · ${total}` : f === 'pending' ? `Pendientes · ${total - recorded}` : `Grabadas · ${recorded}`;
+                      return (
                         <button
                           key={f}
                           onClick={() => setFilter(f)}
-                          className={`text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold rounded-full px-2.5 sm:px-3 py-1.5 transition whitespace-nowrap ${
-                            filter === f
-                              ? 'bg-noeval-ink text-noeval-cream'
-                              : 'text-noeval-muted hover:text-noeval-ink'
+                          className={`px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition whitespace-nowrap ${
+                            active ? 'bg-noeval-ink text-noeval-cream' : 'text-noeval-ink/70 hover:bg-noeval-paper hover:text-noeval-ink'
                           }`}
                         >
-                          {f === 'all' ? `Todas (${total})` : f === 'pending' ? `Pend (${total - recorded})` : `Grab (${recorded})`}
+                          {label}
                         </button>
-                      ))}
-                    </div>
-                    <Button onClick={() => setAiOpen(true)} variant="outline" className="border-purple-400 text-purple-600 hover:bg-purple-50 shrink-0 hidden sm:inline-flex">
-                      <Sparkles className="h-4 w-4 mr-1.5" /> Generar con IA
-                    </Button>
-                    <Button onClick={handleAddPiece} className="bg-noeval-ink text-noeval-cream hover:bg-noeval-ink/90 shrink-0 hidden sm:inline-flex">
-                      <Plus className="h-4 w-4 mr-1.5" /> Nueva pieza
-                    </Button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Actions cluster */}
+                  <div className="flex divide-x divide-noeval-line">
+                    <button
+                      onClick={() => setAiOpen(true)}
+                      className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-accent hover:text-white transition"
+                      title="Generar piezas con IA"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Generar IA</span><span className="sm:hidden">IA</span>
+                    </button>
+                    <button
+                      onClick={handleSendClickUp}
+                      disabled={recordedShots.length === 0 && !sheetSent}
+                      className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-noeval-ink"
+                      title={sheetSent ? 'Reenviar a ClickUp' : 'Enviar grabadas a ClickUp'}
+                    >
+                      <Send className="h-3.5 w-3.5" /> <span className="hidden sm:inline">ClickUp</span>
+                      {pendingToSend > 0 && (
+                        <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 bg-noeval-accent text-white text-[9px] font-bold">
+                          {pendingToSend}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => window.print()}
+                      className="hidden sm:flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition"
+                      title="Imprimir / PDF"
+                    >
+                      <Printer className="h-3.5 w-3.5" /> PDF
+                    </button>
+                    <button
+                      onClick={handleAddPiece}
+                      className="flex items-center gap-1.5 px-3 sm:px-5 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest bg-noeval-accent text-white hover:bg-noeval-ink transition"
+                    >
+                      <Plus className="h-3.5 w-3.5" strokeWidth={3} /> Nueva pieza
+                    </button>
                   </div>
                 </div>
 
 
                 {filteredShots.length === 0 ? (
-                  <Card className="p-10 text-center bg-noeval-surface border-noeval-line border-dashed">
-                    <Film className="h-10 w-10 mx-auto text-noeval-muted mb-2" />
-                    <p className="text-noeval-muted text-sm">
-                      {total === 0 ? 'Sin piezas aún. Crea la primera idea.' : 'Sin piezas con este filtro.'}
+                  <button
+                    onClick={handleAddPiece}
+                    className="w-full py-16 text-center bg-noeval-surface border-2 border-dashed border-noeval-ink/20 hover:border-noeval-accent hover:bg-noeval-accent/5 transition group"
+                  >
+                    <div className="mx-auto w-12 h-12 rounded-full border border-noeval-ink/20 flex items-center justify-center mb-3 group-hover:border-noeval-accent group-hover:bg-noeval-accent group-hover:text-white transition">
+                      <Plus className="h-6 w-6" strokeWidth={2.5} />
+                    </div>
+                    <p className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted font-bold">
+                      {total === 0 ? 'Crear la primera pieza' : 'Sin piezas con este filtro'}
                     </p>
-                  </Card>
+                  </button>
                 ) : (
                   <div className="space-y-3">
                     {filter !== 'all' && (
@@ -931,10 +973,10 @@ function PieceCard({
         draggable={canDrag && dragArmed}
         onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
         onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
-        className={`relative border rounded-xl p-3 sm:p-4 transition group ${
+        className={`relative border p-3 sm:p-4 transition group ${
         shot.done
-          ? 'bg-noeval-surface border-noeval-line/60 opacity-90 hover:opacity-100'
-          : 'bg-noeval-cream border-noeval-line hover:border-noeval-ink/30'
+          ? 'bg-noeval-surface border-noeval-line/70 opacity-90 hover:opacity-100'
+          : 'bg-noeval-surface border-noeval-ink/70 hover:border-noeval-accent'
       }`}>
         <div className="flex items-center gap-2 sm:gap-3">
           {canDrag && (
@@ -975,24 +1017,21 @@ function PieceCard({
               <GripVertical className="h-4 w-4" />
             </button>
           )}
-          <span className="font-serif text-lg sm:text-xl text-noeval-muted w-7 sm:w-10 shrink-0">{String(index + 1).padStart(2, '0')}</span>
+          <span className="font-serif font-bold text-lg sm:text-xl text-noeval-ink bg-noeval-paper border border-noeval-line/60 w-9 sm:w-11 h-9 sm:h-11 flex items-center justify-center shrink-0 tracking-tight">{String(index + 1).padStart(2, '0')}</span>
           {shot.done ? (
-            <div className="grabado-stamp hidden sm:inline-flex">
-              <span className="grabado-stamp-dot">
-                <span className="grabado-stamp-ping" />
-              </span>
-              Grabado
-            </div>
+            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-noeval-cream bg-noeval-ink font-bold px-2 py-1">
+              Grabada
+            </span>
           ) : (
-            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-noeval-muted border border-noeval-line rounded-full px-2 py-0.5">
+            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-white bg-noeval-accent font-bold px-2 py-1">
               Pendiente
             </span>
           )}
-          <span className="inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.25em] uppercase bg-noeval-ink text-noeval-cream rounded-full px-2 sm:px-2.5 py-1 shrink-0">
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-noeval-ink border border-noeval-ink font-bold px-2 py-1 shrink-0">
             {meta.icon} <span className="hidden xs:inline">{meta.label}</span>
           </span>
           {platformLabel && (
-            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-muted hidden md:inline">{platformLabel}</span>
+            <span className="text-[10px] tracking-[0.25em] uppercase text-noeval-muted font-semibold hidden md:inline">· {platformLabel}</span>
           )}
           <div className={`font-serif text-base sm:text-lg truncate flex-1 min-w-0 ${
             shot.done ? 'text-noeval-ink' : 'text-noeval-ink'
@@ -1041,17 +1080,17 @@ function PieceCard({
       draggable={canDrag && dragArmed}
       onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
       onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
-      className={`relative bg-noeval-surface rounded-xl p-3 sm:p-5 transition ${
+      className={`relative bg-noeval-surface p-3 sm:p-5 transition ${
       isDraft
-        ? 'border-2 border-dashed border-amber-400 bg-amber-50/40'
+        ? 'border border-dashed border-amber-400 bg-amber-50/40'
         : shot.done
-          ? 'border-2 border-noeval-accent/40 bg-noeval-accent/5'
-          : 'border-2 border-noeval-line hover:border-noeval-ink/30'
+          ? 'border border-noeval-accent/60 bg-noeval-accent/[0.04]'
+          : 'border border-noeval-ink/70 hover:border-noeval-accent'
     }`}>
 
       {/* Draft banner */}
       {isDraft && (
-        <div className="mb-3 -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 px-3 sm:px-5 py-2 bg-amber-100/70 border-b border-amber-300 rounded-t-xl flex items-center justify-between gap-2 flex-wrap">
+        <div className="mb-3 -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 px-3 sm:px-5 py-2 bg-amber-100/70 border-b border-amber-300 flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2 text-amber-900 text-[10px] sm:text-[11px] tracking-[0.25em] uppercase font-semibold">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
             Borrador · pendiente de guardar
@@ -1103,9 +1142,18 @@ function PieceCard({
               <GripVertical className="h-4 w-4" />
             </button>
           )}
-          <span className="font-serif text-xl sm:text-2xl text-noeval-muted">{String(index + 1).padStart(2, '0')}</span>
+          <span className="font-serif font-bold text-xl sm:text-2xl text-noeval-ink bg-noeval-paper border border-noeval-line/60 w-11 sm:w-12 h-11 sm:h-12 flex items-center justify-center shrink-0 tracking-tight">{String(index + 1).padStart(2, '0')}</span>
+          {shot.done ? (
+            <span className="inline-flex items-center text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-noeval-cream bg-noeval-ink font-bold px-2 py-1">
+              Grabada
+            </span>
+          ) : !isDraft && (
+            <span className="inline-flex items-center text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-white bg-noeval-accent font-bold px-2 py-1">
+              Pendiente
+            </span>
+          )}
           <Select value={shot.content_type || 'reel'} onValueChange={(v) => onChange({ content_type: v })}>
-            <SelectTrigger className="w-auto h-8 bg-noeval-ink text-noeval-cream border-0 rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3">
+            <SelectTrigger className="w-auto h-8 bg-transparent text-noeval-ink border border-noeval-ink rounded-none text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-bold px-2.5 sm:px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1115,7 +1163,7 @@ function PieceCard({
             </SelectContent>
           </Select>
           <Select value={shot.platform || 'instagram'} onValueChange={(v) => onChange({ platform: v })}>
-            <SelectTrigger className="w-auto h-8 bg-transparent border-noeval-line rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3">
+            <SelectTrigger className="w-auto h-8 bg-transparent border border-noeval-line rounded-none text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3 text-noeval-muted">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1125,17 +1173,9 @@ function PieceCard({
             </SelectContent>
           </Select>
           {recordedTime && (
-            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent">
+            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent font-semibold">
               ✓ {recordedTime}
             </span>
-          )}
-          {shot.done && (
-            <div className="grabado-stamp">
-              <span className="grabado-stamp-dot">
-                <span className="grabado-stamp-ping" />
-              </span>
-              Grabado
-            </div>
           )}
         </div>
         <div className="flex items-center gap-0.5 sm:gap-1 no-print shrink-0">
