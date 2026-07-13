@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     }
     const userId = claims.claims.sub;
 
-    const { leadId } = await req.json();
+    const { leadId, force } = await req.json();
     if (!leadId) {
       return new Response(JSON.stringify({ error: 'leadId required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceKey);
     const { data: lead, error: leadErr } = await admin
       .from('instant_form_leads')
-      .select('id, client_id, full_name, phone, custom_answers, campaign_name, ad_name, form_name')
+      .select('id, client_id, full_name, phone, custom_answers, campaign_name, ad_name, form_name, ai_message')
       .eq('id', leadId)
       .maybeSingle();
 
@@ -55,6 +55,14 @@ Deno.serve(async (req) => {
     const { data: hasAccess } = await admin.rpc('has_client_access', { _user_id: userId, _client_id: lead.client_id });
     if (!hasAccess) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Cost guard: if a message already exists, return it instead of re-billing AI.
+    // Client must send `force: true` (after user confirmation) to regenerate.
+    if ((lead as any).ai_message && !force) {
+      return new Response(JSON.stringify({ message: (lead as any).ai_message, cached: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const userMessage = buildComfortexUserMessage(lead);
