@@ -59,6 +59,47 @@ function typeMeta(t?: string | null) {
   return CONTENT_TYPES.find(x => x.value === t) || { value: 'otro', label: 'Pieza', icon: '🎞️' };
 }
 
+// Convert ISO timestamp to <input type="datetime-local"> value in LOCAL time
+function isoToLocalInput(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const tz = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - tz * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function localInputToIso(value: string): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+function formatDuration(startIso: string | null, endIso: string | null): string {
+  if (!startIso || !endIso) return '—';
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+  if (isNaN(start) || isNaN(end) || end <= start) return '—';
+  const totalSec = Math.floor((end - start) / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  if (h === 0) return `${m}m`;
+  return `${h}h ${m.toString().padStart(2, '0')}m`;
+}
+
+function formatLiveDuration(startIso: string | null, now: number): string {
+  if (!startIso) return '00:00:00';
+  const start = new Date(startIso).getTime();
+  if (isNaN(start) || now < start) return '00:00:00';
+  const totalSec = Math.floor((now - start) / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+
 export default function ProduccionSheet() {
   const { sheetId = '' } = useParams();
   const navigate = useNavigate();
