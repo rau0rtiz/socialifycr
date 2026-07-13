@@ -203,10 +203,18 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
     || lead.client_id === 'd90a18b8-dad0-4f52-9447-c13f8f19f0d7';
 
   const handleGenerateMessage = async () => {
+    const alreadyHasMessage = !!(lead as any)?.ai_message;
+    // Cost guard: block silent re-generation. User must explicitly confirm.
+    if (alreadyHasMessage) {
+      const ok = window.confirm(
+        'Ya existe un mensaje generado para este lead.\n\n¿Regenerarlo? Esto consume créditos de IA.\n\n(Si solo querés editar el texto, podés hacerlo directamente en el cuadro).'
+      );
+      if (!ok) return;
+    }
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-comfortex-reply', {
-        body: { leadId: lead.id },
+        body: { leadId: lead.id, force: alreadyHasMessage },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -214,7 +222,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
       // Refresh cached leads so the stored ai_message stays in sync everywhere.
       qc.invalidateQueries({ queryKey: ['seller-leads'] });
       qc.invalidateQueries({ queryKey: ['instant-form-leads', lead.client_id] });
-      toast.success('Mensaje generado');
+      toast.success((data as any)?.cached ? 'Mensaje recuperado (sin gasto de IA)' : 'Mensaje generado');
     } catch (e: any) {
       toast.error('No se pudo generar el mensaje', { description: e.message });
     } finally {
