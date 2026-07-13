@@ -418,6 +418,79 @@ export default function ProduccionSheet() {
                   </InlineField>
                 </div>
 
+                {/* CRONÓMETRO DE GRABACIÓN */}
+                <div className="mt-6 border border-noeval-line bg-[color:var(--noeval-cream)]/60 p-4 sm:p-5">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`h-10 w-10 shrink-0 border flex items-center justify-center ${isRecording ? 'border-noeval-accent text-noeval-accent' : 'border-noeval-line text-noeval-muted'}`}>
+                        <Timer className={`h-5 w-5 ${isRecording ? 'animate-pulse' : ''}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-muted font-semibold">Cronómetro de grabación</div>
+                        <div className="font-serif text-2xl sm:text-3xl text-noeval-ink tracking-tight tabular-nums leading-tight mt-0.5">
+                          {isRecording
+                            ? formatLiveDuration(local.recording_started_at || null, nowTick)
+                            : (local.recording_started_at && local.recording_ended_at)
+                              ? formatDuration(local.recording_started_at, local.recording_ended_at)
+                              : '—'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                      <InlineField label="Inicio de grabación">
+                        <input
+                          type="datetime-local"
+                          value={isoToLocalInput(local.recording_started_at || null)}
+                          onChange={(e) => setLocal({ ...local, recording_started_at: localInputToIso(e.target.value) })}
+                          className="bg-transparent text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto"
+                        />
+                      </InlineField>
+                      <InlineField label="Fin de grabación">
+                        <input
+                          type="datetime-local"
+                          value={isoToLocalInput(local.recording_ended_at || null)}
+                          onChange={(e) => setLocal({ ...local, recording_ended_at: localInputToIso(e.target.value) })}
+                          className="bg-transparent text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-1 w-full text-sm h-10 sm:h-auto"
+                        />
+                      </InlineField>
+                    </div>
+
+                    <div className="flex items-center gap-2 no-print">
+                      {!local.recording_started_at && (
+                        <Button
+                          size="sm"
+                          onClick={() => setLocal({ ...local, recording_started_at: new Date().toISOString(), recording_ended_at: null })}
+                          className="bg-noeval-accent hover:bg-noeval-accent/90 text-white gap-1.5 rounded-none"
+                        >
+                          <Play className="h-4 w-4" /> Iniciar
+                        </Button>
+                      )}
+                      {isRecording && (
+                        <Button
+                          size="sm"
+                          onClick={() => setLocal({ ...local, recording_ended_at: new Date().toISOString() })}
+                          className="bg-noeval-ink hover:bg-noeval-ink/90 text-white gap-1.5 rounded-none"
+                        >
+                          <Square className="h-4 w-4" /> Terminar
+                        </Button>
+                      )}
+                      {local.recording_started_at && local.recording_ended_at && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setLocal({ ...local, recording_started_at: null, recording_ended_at: null })}
+                          className="gap-1.5 rounded-none border-noeval-line text-noeval-muted hover:text-noeval-ink"
+                        >
+                          <RotateCcw className="h-4 w-4" /> Reiniciar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+
+
                 {/* Progress */}
                 <div className="mt-7 flex flex-col md:flex-row md:items-end gap-4">
                   <div>
