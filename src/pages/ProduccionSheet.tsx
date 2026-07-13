@@ -524,18 +524,18 @@ export default function ProduccionSheet() {
               </section>
 
               {/* NOTAS GENERALES (editable, no se imprime) */}
-              <section className="noeval-slate rounded-2xl p-6 md:p-8 relative overflow-hidden no-print">
-                <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-taupe flex items-center gap-2">
+              <section className="noeval-paper-hero rounded-2xl p-6 md:p-8 relative overflow-hidden no-print">
+                <div className="text-[10px] tracking-[0.4em] uppercase text-noeval-muted flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent" />
                   Notas generales
                 </div>
-                <h3 className="font-serif text-2xl text-noeval-cream mt-1 mb-3">Apuntes del día</h3>
+                <h3 className="font-serif text-2xl text-noeval-ink mt-1 mb-3 tracking-tight">Apuntes del día</h3>
                 <Textarea
                   value={local.notes || ''}
                   onChange={(e) => setLocal({ ...local, notes: e.target.value })}
                   placeholder="Tratamiento, referencias, instrucciones especiales, ajustes de último minuto…"
                   rows={5}
-                  className="bg-white/5 border-noeval-taupe/30 text-noeval-cream placeholder:text-noeval-taupe/40 resize-none"
+                  className="bg-[color:var(--noeval-paper)]/60 border-noeval-line text-noeval-ink placeholder:text-noeval-muted/50 resize-none"
                 />
               </section>
 
