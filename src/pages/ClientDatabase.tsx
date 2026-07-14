@@ -159,21 +159,26 @@ const ClientDatabase = () => {
   const isMinor = sAge ? parseInt(sAge) < 18 : false;
 
   // ── Legacy: setter_appointments for non-SpkUp ──
-  const { data: appointmentLeads = [] } = useQuery<LeadRecord[]>({
+  const { data: appointmentLeads = [], isLoading: appointmentsLoading } = useQuery<LeadRecord[]>({
     queryKey: ['client-database-leads', clientId],
     queryFn: async () => {
       if (!clientId) return [];
       const { data, error } = await supabase.from('setter_appointments')
         .select('id, lead_name, lead_phone, lead_email, source, status, setter_name, product, appointment_date, created_at, notes, not_sold_reason, estimated_value, currency, ad_campaign_name')
-        .eq('client_id', clientId).order('created_at', { ascending: false });
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false })
+        .limit(2000);
       if (error) throw error;
       return (data ?? []) as LeadRecord[];
     },
     enabled: !!clientId && !isSpkUp,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // ── Sales-only contacts (no appointment) for non-SpkUp ──
-  const { data: salesContacts = [] } = useQuery<LeadRecord[]>({
+  const { data: salesContacts = [], isLoading: salesContactsLoading } = useQuery<LeadRecord[]>({
     queryKey: ['client-database-sales-contacts', clientId],
     queryFn: async () => {
       if (!clientId) return [];
@@ -181,7 +186,8 @@ const ClientDatabase = () => {
         .select('id, customer_name, customer_phone, source, status, closer_name, product, sale_date, created_at, notes, amount, currency, ad_campaign_name')
         .eq('client_id', clientId)
         .not('customer_name', 'is', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(2000);
       if (error) throw error;
       return (data ?? []).map((s: any) => ({
         id: s.id,
@@ -203,17 +209,21 @@ const ClientDatabase = () => {
       })) as (LeadRecord & { _fromSale?: boolean })[];
     },
     enabled: !!clientId && !isSpkUp,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // ── Instant Form leads (Google Sheet sync) for non-SpkUp ──
-  const { data: instantFormLeads = [] } = useQuery<LeadRecord[]>({
+  const { data: instantFormLeads = [], isLoading: instantFormLoading } = useQuery<LeadRecord[]>({
     queryKey: ['client-database-instant-form-leads', clientId],
     queryFn: async () => {
       if (!clientId) return [];
       const { data, error } = await supabase.from('instant_form_leads' as any)
         .select('id, full_name, phone, ad_name, adset_name, campaign_name, form_name, platform, created_time, created_at, custom_answers')
         .eq('client_id', clientId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(2000);
       if (error) throw error;
       return (data ?? []).map((l: any) => ({
         id: l.id,
@@ -234,7 +244,11 @@ const ClientDatabase = () => {
       })) as LeadRecord[];
     },
     enabled: !!clientId && !isSpkUp,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
+
 
   // ── Merge appointments + sales-only + instant-form leads (dedupe by phone, then name) ──
   const allLeads = useMemo(() => {
