@@ -725,7 +725,7 @@ const Propuestas = () => {
                     size="sm"
                     variant="outline"
                     className="gap-1.5"
-                    onClick={() => window.open(buildShareUrl(previewTarget.slug), '_blank', 'noopener,noreferrer')}
+                    onClick={() => window.open(buildShareUrl(previewTarget.slug, (previewTarget.kind as ProposalKind) || 'proposal'), '_blank', 'noopener,noreferrer')}
                   >
                     <ExternalLink className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Abrir</span>
                   </Button>
