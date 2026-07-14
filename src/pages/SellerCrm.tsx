@@ -151,6 +151,16 @@ const SellerCrm = () => {
             >
               {notifEnabled ? <Bell className="h-4 w-4 text-[hsl(var(--status-venta))]" /> : <BellOff className="h-4 w-4" />}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5 px-2 sm:px-3"
+              onClick={() => setTiktokDialogOpen(true)}
+              title="Registrar venta TikTok"
+            >
+              <Music2 className="h-4 w-4" />
+              <span className="hidden sm:inline text-xs">Venta TikTok</span>
+            </Button>
           </div>
         </div>
 
