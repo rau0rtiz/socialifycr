@@ -93,6 +93,9 @@ const ClientDatabase = () => {
       return counts;
     },
     enabled: !!clientId && !!isSpkUp,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
   const [studentDialog, setStudentDialog] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
