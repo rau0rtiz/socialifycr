@@ -251,7 +251,7 @@ const Propuestas = () => {
       return;
     }
     setSendingEmail(true);
-    const url = buildShareUrl(emailTarget.slug);
+    const url = buildShareUrl(emailTarget.slug, (emailTarget.kind as ProposalKind) || 'proposal');
     const safeMessage = emailMessage
       .split('\n')
       .map((line) => `<p style="margin:0 0 12px 0;color:#334155;font-size:15px;line-height:1.55;">${line || '&nbsp;'}</p>`)
