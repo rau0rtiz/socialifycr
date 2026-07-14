@@ -406,17 +406,40 @@ const ClientDatabase = () => {
   const customerWithPurchasesCount = customerContacts.filter(c => (c.total_purchases || 0) > 0).length;
   const customerWithAddressCount = customerContacts.filter(c => (c.addresses || []).length > 0).length;
 
+  const isPageLoading = isSpkUp
+    ? studentsLoading
+    : isAlmaBendita
+      ? customersLoading
+      : (appointmentsLoading || salesContactsLoading || instantFormLoading);
+  const hasNoData = isSpkUp
+    ? students.length === 0
+    : isAlmaBendita
+      ? customerContacts.length === 0
+      : allLeads.length === 0;
+
   return (
     <DashboardLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : isAlmaBendita ? 'Base de Clientas' : 'Base de Clientes'}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : isAlmaBendita ? 'Base de Clientas' : 'Base de Clientes'}</h1>
+            {isPageLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </div>
           {isSpkUp && (
             <Button size="sm" onClick={openNewStudent} className="gap-1.5 h-8 text-xs">
               <Plus className="h-3.5 w-3.5" /> Nuevo estudiante
             </Button>
           )}
         </div>
+
+        {isPageLoading && hasNoData ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm">Cargando base de datos...</p>
+          </div>
+        ) : (
+        <>
+
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
