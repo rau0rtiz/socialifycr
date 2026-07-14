@@ -74,14 +74,23 @@ const attachClientNames = async (leads: SellerLead[]) => {
   leads.forEach((l) => { l.client_name = nameMap.get(l.client_id) || null; });
 };
 
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 min
+
 export const useSellerLeads = ({ sellerId, clientId, mode }: UseSellerLeadsOpts) => {
   const { user } = useAuth();
   const qc = useQueryClient();
 
   const effectiveSellerId = mode === 'self' ? user?.id : sellerId;
+  const cacheKey = useMemo(
+    () => ['seller-leads', mode, effectiveSellerId || null, clientId || null] as const,
+    [mode, effectiveSellerId, clientId]
+  );
+  const tsKey = useMemo(() => [...cacheKey, '__ts'] as const, [cacheKey]);
 
-  const [data, setData] = useState<SellerLead[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Seed initial state from React Query cache so returning to the page is instant.
+  const cachedInitial = qc.getQueryData<SellerLead[]>(cacheKey as any);
+  const [data, setData] = useState<SellerLead[]>(cachedInitial || []);
+  const [isLoading, setIsLoading] = useState(!cachedInitial);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -102,9 +111,24 @@ export const useSellerLeads = ({ sellerId, clientId, mode }: UseSellerLeadsOpts)
 
   useEffect(() => {
     if (!user?.id) return;
-    let cancelled = false;
-    setIsLoading(true);
+
+    const cached = qc.getQueryData<SellerLead[]>(cacheKey as any);
+    const cachedTs = qc.getQueryData<number>(tsKey as any) || 0;
+    const isFresh = cached && Date.now() - cachedTs < CACHE_TTL_MS;
+
+    // Hydrate immediately from cache
+    if (cached) {
+      setData(cached);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
     setIsLoadingMore(false);
+
+    // If the cache is fresh and this wasn't a manual/realtime refresh, skip network.
+    if (isFresh && reloadKey === 0) return;
+
+    let cancelled = false;
 
     (async () => {
       // 1) Fast first paint: 100 most recent
@@ -118,7 +142,10 @@ export const useSellerLeads = ({ sellerId, clientId, mode }: UseSellerLeadsOpts)
       const first = (firstBatch || []) as unknown as SellerLead[];
       await attachClientNames(first);
       if (cancelled) return;
-      setData(collapseLeads([...first]));
+      const firstCollapsed = collapseLeads([...first]);
+      setData(firstCollapsed);
+      qc.setQueryData(cacheKey as any, firstCollapsed);
+      qc.setQueryData(tsKey as any, Date.now());
       setIsLoading(false);
 
       if (first.length < FIRST) return; // no more
@@ -136,7 +163,10 @@ export const useSellerLeads = ({ sellerId, clientId, mode }: UseSellerLeadsOpts)
         await attachClientNames(chunk);
         if (cancelled) return;
         acc.push(...chunk);
-        setData(collapseLeads([...acc]));
+        const collapsed = collapseLeads([...acc]);
+        setData(collapsed);
+        qc.setQueryData(cacheKey as any, collapsed);
+        qc.setQueryData(tsKey as any, Date.now());
         if (chunk.length < PAGE) break;
         if (acc.length >= 20000) break;
       }
@@ -144,7 +174,7 @@ export const useSellerLeads = ({ sellerId, clientId, mode }: UseSellerLeadsOpts)
     })();
 
     return () => { cancelled = true; };
-  }, [user?.id, mode, effectiveSellerId, clientId, reloadKey, buildQuery]);
+  }, [user?.id, cacheKey, tsKey, reloadKey, buildQuery, qc]);
 
   // Realtime: receive INSERT/UPDATE on instant_form_leads relevant to this user.
   const lastNotifiedIdRef = useRef<Set<string>>(new Set());
