@@ -855,31 +855,21 @@ function ClientFolderCard({
         {/* Dark backdrop */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-noeval-ink to-black" />
 
-        {/* Logo hero — square placeholder that the logo fills */}
+        {/* Logo hero — large centered logo that fills the placeholder area */}
         {client.logo_url && (
-          <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-5">
-            <div className="relative w-[72%] aspect-square rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
-              <img
-                src={client.logo_url}
-                alt=""
-                aria-hidden
-                className="absolute inset-0 w-full h-full object-cover opacity-20 blur-lg scale-110"
-              />
-              <img
-                src={client.logo_url}
-                alt={client.name}
-                loading="lazy"
-                className="relative w-full h-full object-contain p-3 sm:p-4 drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] group-hover:scale-[1.04] transition-transform duration-500"
-              />
-            </div>
+          <div className="absolute inset-0 flex items-center justify-center p-5 sm:p-6">
+            <img
+              src={client.logo_url}
+              alt={client.name}
+              loading="lazy"
+              className="w-full h-full object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] group-hover:scale-[1.04] transition-transform duration-500"
+            />
           </div>
         )}
         {!client.logo_url && (
-          <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-5">
-            <div className="relative w-[72%] aspect-square rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <div className="font-serif text-5xl uppercase tracking-wide text-white/25">
-                {client.name.slice(0, 2)}
-              </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="font-serif text-6xl uppercase tracking-wide text-white/25">
+              {client.name.slice(0, 2)}
             </div>
           </div>
         )}
