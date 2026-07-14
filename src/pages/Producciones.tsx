@@ -272,7 +272,7 @@ export default function Producciones() {
                   <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo cliente
                 </Button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
                   return (
@@ -297,10 +297,10 @@ export default function Producciones() {
                 })}
                 <button
                   onClick={() => setCreatingClient(true)}
-                  className="bg-noeval-surface/50 border-2 border-dashed border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:bg-noeval-surface transition-all flex flex-col items-center justify-center min-h-[160px] text-noeval-muted hover:text-noeval-accent"
+                  className="aspect-[4/5] rounded-2xl bg-noeval-ink/5 border-2 border-dashed border-noeval-ink/25 hover:border-noeval-accent hover:bg-noeval-accent/5 transition-all flex flex-col items-center justify-center text-noeval-muted hover:text-noeval-accent"
                 >
-                  <Plus className="h-8 w-8 mb-1.5" />
-                  <span className="text-sm font-medium">Nuevo cliente</span>
+                  <Plus className="h-9 w-9 mb-1.5" />
+                  <span className="text-xs tracking-[0.2em] uppercase font-medium">Nuevo cliente</span>
                 </button>
               </div>
             </div>
