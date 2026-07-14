@@ -485,13 +485,20 @@ export default function Producciones() {
                     {/* Bottom gradient overlay */}
                     <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
 
-                    {/* Top overlay: drag + upload + status */}
+                    {/* Top overlay: drag + logo + upload */}
                     <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2">
-                      {clientFilter ? (
-                        <div className="opacity-60 lg:opacity-0 lg:group-hover:opacity-80 transition-opacity">
-                          <GripVertical className="h-4 w-4 text-white/80 drop-shadow" />
-                        </div>
-                      ) : <div />}
+                      <div className="flex items-center gap-1.5">
+                        {clientFilter ? (
+                          <div className="opacity-60 lg:opacity-0 lg:group-hover:opacity-80 transition-opacity">
+                            <GripVertical className="h-4 w-4 text-white/80 drop-shadow" />
+                          </div>
+                        ) : null}
+                        <ClientMark
+                          name={clientMap[s.client_id]}
+                          logo={clientLogoMap[s.client_id]}
+                          size="md"
+                        />
+                      </div>
                       <div className="flex items-center gap-1.5">
                         <SheetThumbnailUploader
                           sheetId={s.id}
