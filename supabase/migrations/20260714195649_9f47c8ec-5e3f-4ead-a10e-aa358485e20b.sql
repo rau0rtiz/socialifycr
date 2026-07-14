@@ -1,0 +1,2 @@
+ALTER TABLE public.agency_proposals ADD COLUMN IF NOT EXISTS kind text NOT NULL DEFAULT 'proposal' CHECK (kind IN ('proposal','report'));
+CREATE INDEX IF NOT EXISTS idx_agency_proposals_kind ON public.agency_proposals(kind);

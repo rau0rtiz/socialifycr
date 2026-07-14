@@ -26,11 +26,13 @@ import {
   fetchProposalHtml,
   type AgencyProposalListItem,
   type PackageType,
+  type ProposalKind,
 } from '@/hooks/use-agency-proposals';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2 } from 'lucide-react';
+import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -51,7 +53,8 @@ const formatMoney = (amount: number | null, currency: string | null) => {
 };
 
 const PUBLIC_BASE_URL = 'https://app.socialifycr.com';
-const buildShareUrl = (slug: string) => `${PUBLIC_BASE_URL}/propuesta/${slug}`;
+const buildShareUrl = (slug: string, kind: ProposalKind = 'proposal') =>
+  `${PUBLIC_BASE_URL}/${kind === 'report' ? 'reporte' : 'propuesta'}/${slug}`;
 
 const copyToClipboard = async (text: string) => {
   try {
@@ -84,12 +87,15 @@ const Propuestas = () => {
   const updateMut = useUpdateAgencyProposal();
   const deleteMut = useDeleteAgencyProposal();
 
+  const [kindFilter, setKindFilter] = useState<'all' | ProposalKind>('all');
+
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<AgencyProposalListItem | null>(null);
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
   const [html, setHtml] = useState('');
   const [isPublished, setIsPublished] = useState(true);
+  const [kind, setKind] = useState<ProposalKind>('proposal');
 
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailTarget, setEmailTarget] = useState<AgencyProposalListItem | null>(null);
@@ -150,12 +156,13 @@ const Propuestas = () => {
   };
 
 
-  const openCreate = () => {
+  const openCreate = (initialKind: ProposalKind = 'proposal') => {
     setEditing(null);
     setTitle('');
     setClientName('');
     setHtml('');
     setIsPublished(true);
+    setKind(initialKind);
     setEditorPreview(false);
     setEditorOpen(true);
   };
@@ -166,6 +173,7 @@ const Propuestas = () => {
     setClientName(p.client_name || '');
     setHtml('');
     setIsPublished(p.is_published);
+    setKind((p.kind as ProposalKind) || 'proposal');
     setEditorPreview(false);
     setEditorOpen(true);
     setEditorHtmlLoading(true);
@@ -194,16 +202,18 @@ const Propuestas = () => {
           client_name: clientName.trim() || null,
           html_content: html,
           is_published: isPublished,
+          kind,
         });
-        toast.success('Propuesta actualizada');
+        toast.success(kind === 'report' ? 'Reporte actualizado' : 'Propuesta actualizada');
       } else {
         await createMut.mutateAsync({
           title: title.trim(),
           client_name: clientName.trim() || null,
           html_content: html,
           is_published: isPublished,
+          kind,
         });
-        toast.success('Propuesta creada');
+        toast.success(kind === 'report' ? 'Reporte creado' : 'Propuesta creada');
       }
       setEditorOpen(false);
     } catch (err) {
@@ -213,7 +223,7 @@ const Propuestas = () => {
   };
 
   const copyLink = async (p: AgencyProposalListItem) => {
-    const url = buildShareUrl(p.slug);
+    const url = buildShareUrl(p.slug, (p.kind as ProposalKind) || 'proposal');
     const ok = await copyToClipboard(url);
     if (ok) {
       toast.success('Link copiado al portapapeles');
@@ -223,12 +233,13 @@ const Propuestas = () => {
   };
 
   const openEmail = (p: AgencyProposalListItem) => {
+    const isReport = p.kind === 'report';
     setEmailTarget(p);
     setEmailTo('');
     setEmailToName('');
-    setEmailSubject(`Propuesta: ${p.title}`);
+    setEmailSubject(`${isReport ? 'Reporte' : 'Propuesta'}: ${p.title}`);
     setEmailMessage(
-      `Hola${p.client_name ? ' ' + p.client_name : ''},\n\nTe comparto la propuesta que preparamos para vos. Podés verla en el siguiente enlace:`,
+      `Hola${p.client_name ? ' ' + p.client_name : ''},\n\nTe comparto ${isReport ? 'el reporte' : 'la propuesta'} que preparamos para vos. Podés ver${isReport ? 'lo' : 'la'} en el siguiente enlace:`,
     );
     setEmailOpen(true);
   };
@@ -240,7 +251,7 @@ const Propuestas = () => {
       return;
     }
     setSendingEmail(true);
-    const url = buildShareUrl(emailTarget.slug);
+    const url = buildShareUrl(emailTarget.slug, (emailTarget.kind as ProposalKind) || 'proposal');
     const safeMessage = emailMessage
       .split('\n')
       .map((line) => `<p style="margin:0 0 12px 0;color:#334155;font-size:15px;line-height:1.55;">${line || '&nbsp;'}</p>`)
@@ -320,8 +331,19 @@ const Propuestas = () => {
     };
   }, [previewTarget]);
 
-  const sorted = useMemo(() => proposals, [proposals]);
+  const sorted = useMemo(
+    () => (kindFilter === 'all' ? proposals : proposals.filter((p) => ((p.kind as ProposalKind) || 'proposal') === kindFilter)),
+    [proposals, kindFilter],
+  );
 
+  const counts = useMemo(() => {
+    const c = { all: proposals.length, proposal: 0, report: 0 };
+    for (const p of proposals) {
+      const k = ((p.kind as ProposalKind) || 'proposal');
+      c[k] = (c[k] || 0) + 1;
+    }
+    return c;
+  }, [proposals]);
 
   return (
     <DashboardLayout>
@@ -330,16 +352,34 @@ const Propuestas = () => {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileText className="h-6 w-6 text-primary" />
-              Propuestas
+              Propuestas y Reportes
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Cargá HTML de una propuesta y compartila con un link o por correo.
+              Cargá HTML de una propuesta o reporte y compartilo con un link o por correo.
             </p>
           </div>
-          <Button onClick={openCreate} className="gap-2">
-            <Plus className="h-4 w-4" /> Nueva propuesta
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => openCreate('report')} className="gap-2">
+              <BarChart3 className="h-4 w-4" /> Nuevo reporte
+            </Button>
+            <Button onClick={() => openCreate('proposal')} className="gap-2">
+              <Plus className="h-4 w-4" /> Nueva propuesta
+            </Button>
+          </div>
         </div>
+
+        <Tabs value={kindFilter} onValueChange={(v) => setKindFilter(v as 'all' | ProposalKind)}>
+          <TabsList>
+            <TabsTrigger value="all">Todo ({counts.all})</TabsTrigger>
+            <TabsTrigger value="proposal" className="gap-1.5">
+              <FileText className="h-3.5 w-3.5" /> Propuestas ({counts.proposal})
+            </TabsTrigger>
+            <TabsTrigger value="report" className="gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5" /> Reportes ({counts.report})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
 
         {isLoading ? (
           <div className="flex justify-center py-16">
@@ -349,8 +389,8 @@ const Propuestas = () => {
           <Card>
             <CardContent className="py-16 text-center text-muted-foreground">
               <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="font-medium text-foreground">Todavía no hay propuestas</p>
-              <p className="text-sm mt-1">Creá tu primera propuesta pegando el HTML.</p>
+              <p className="font-medium text-foreground">Todavía no hay {kindFilter === 'report' ? 'reportes' : kindFilter === 'proposal' ? 'propuestas' : 'nada acá'}</p>
+              <p className="text-sm mt-1">Creá tu primer{kindFilter === 'report' ? ' reporte' : 'a propuesta'} pegando el HTML.</p>
             </CardContent>
           </Card>
         ) : (
@@ -371,8 +411,13 @@ const Propuestas = () => {
                         <span title="Oculta" className="text-muted-foreground shrink-0"><EyeOff className="h-4 w-4" /></span>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {format(new Date(p.created_at), "d MMM yyyy", { locale: es })}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : 'bg-primary/10 text-primary'}`}>
+                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                        {p.kind === 'report' ? 'Reporte' : 'Propuesta'}
+                      </span>
+                      <span>·</span>
+                      <span>{format(new Date(p.created_at), "d MMM yyyy", { locale: es })}</span>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0 space-y-2">
@@ -443,17 +488,31 @@ const Propuestas = () => {
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-5xl max-h-[92dvh] p-0 gap-0 flex flex-col">
           <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b shrink-0">
-            <DialogTitle>{editing ? 'Editar propuesta' : 'Nueva propuesta'}</DialogTitle>
+            <DialogTitle>
+              {editing
+                ? `Editar ${kind === 'report' ? 'reporte' : 'propuesta'}`
+                : `${kind === 'report' ? 'Nuevo reporte' : 'Nueva propuesta'}`}
+            </DialogTitle>
             <DialogDescription>
-              Pegá el código HTML completo de la propuesta. Se mostrará tal cual en el link público.
+              Pegá el código HTML completo. Se mostrará tal cual en el link público.
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4">
             <div className="grid gap-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Select value={kind} onValueChange={(v) => setKind(v as ProposalKind)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="proposal">Propuesta</SelectItem>
+                      <SelectItem value="report">Reporte</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label>Título</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Propuesta comercial" />
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === 'report' ? 'Reporte mensual' : 'Propuesta comercial'} />
                 </div>
                 <div className="space-y-2">
                   <Label>Cliente (opcional)</Label>
@@ -515,7 +574,7 @@ const Propuestas = () => {
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={createMut.isPending || updateMut.isPending}>
               {(createMut.isPending || updateMut.isPending) && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {editing ? 'Guardar cambios' : 'Crear propuesta'}
+              {editing ? 'Guardar cambios' : (kind === 'report' ? 'Crear reporte' : 'Crear propuesta')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -552,7 +611,7 @@ const Propuestas = () => {
             {emailTarget && (
               <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <LinkIcon className="h-3.5 w-3.5" />
-                <span className="truncate">{buildShareUrl(emailTarget.slug)}</span>
+                <span className="truncate">{buildShareUrl(emailTarget.slug, (emailTarget.kind as ProposalKind) || 'proposal')}</span>
               </div>
             )}
           </div>
@@ -653,7 +712,7 @@ const Propuestas = () => {
             <div className="min-w-0 pr-8 sm:pr-4">
               <DialogTitle className="truncate text-base">{previewTarget?.title}</DialogTitle>
               <DialogDescription className="truncate text-xs">
-                {previewTarget?.client_name || 'Sin cliente'} · {previewTarget ? buildShareUrl(previewTarget.slug) : ''}
+                {previewTarget?.client_name || 'Sin cliente'} · {previewTarget ? buildShareUrl(previewTarget.slug, (previewTarget.kind as ProposalKind) || 'proposal') : ''}
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
@@ -666,7 +725,7 @@ const Propuestas = () => {
                     size="sm"
                     variant="outline"
                     className="gap-1.5"
-                    onClick={() => window.open(buildShareUrl(previewTarget.slug), '_blank', 'noopener,noreferrer')}
+                    onClick={() => window.open(buildShareUrl(previewTarget.slug, (previewTarget.kind as ProposalKind) || 'proposal'), '_blank', 'noopener,noreferrer')}
                   >
                     <ExternalLink className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Abrir</span>
                   </Button>

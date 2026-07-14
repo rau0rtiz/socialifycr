@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type PackageType = 'monthly' | 'quarterly' | 'one_time';
+export type ProposalKind = 'proposal' | 'report';
 
 export interface AgencyProposal {
   id: string;
@@ -12,6 +13,7 @@ export interface AgencyProposal {
   amount: number | null;
   currency: string | null;
   package_type: PackageType | null;
+  kind: ProposalKind;
   html_content: string;
   slug: string;
   is_published: boolean;
@@ -39,7 +41,7 @@ export const useAgencyProposals = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('agency_proposals')
-        .select('id,title,client_name,contact_point,amount,currency,package_type,slug,is_published,created_by,created_at,updated_at')
+        .select('id,title,client_name,contact_point,amount,currency,package_type,kind,slug,is_published,created_by,created_at,updated_at')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as AgencyProposalListItem[];
@@ -81,7 +83,7 @@ export const useCreateAgencyProposal = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (input: { title: string; client_name?: string | null; html_content: string; is_published?: boolean }) => {
+    mutationFn: async (input: { title: string; client_name?: string | null; html_content: string; is_published?: boolean; kind?: ProposalKind }) => {
       const slug = `${slugify(input.title)}-${randomSuffix()}`;
       const { data, error } = await supabase
         .from('agency_proposals')
@@ -91,6 +93,7 @@ export const useCreateAgencyProposal = () => {
           html_content: input.html_content,
           slug,
           is_published: input.is_published ?? true,
+          kind: input.kind ?? 'proposal',
           created_by: user?.id ?? null,
         })
         .select('*')
@@ -115,6 +118,7 @@ export const useUpdateAgencyProposal = () => {
       package_type?: PackageType | null;
       html_content?: string;
       is_published?: boolean;
+      kind?: ProposalKind;
     }) => {
       const { id, ...updates } = input;
       const { data, error } = await supabase
