@@ -43,6 +43,7 @@ const SellerCrm = () => {
   const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [tiktokDialogOpen, setTiktokDialogOpen] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState<boolean>(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission === 'granted' : false
   );
