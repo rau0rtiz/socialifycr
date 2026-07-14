@@ -4548,6 +4548,7 @@ export type Database = {
           shoot_date: string | null
           sort_order: number
           status: Database["public"]["Enums"]["production_sheet_status"]
+          thumbnail_url: string | null
           title: string
           updated_at: string
         }
@@ -4575,6 +4576,7 @@ export type Database = {
           shoot_date?: string | null
           sort_order?: number
           status?: Database["public"]["Enums"]["production_sheet_status"]
+          thumbnail_url?: string | null
           title?: string
           updated_at?: string
         }
@@ -4602,6 +4604,7 @@ export type Database = {
           shoot_date?: string | null
           sort_order?: number
           status?: Database["public"]["Enums"]["production_sheet_status"]
+          thumbnail_url?: string | null
           title?: string
           updated_at?: string
         }
