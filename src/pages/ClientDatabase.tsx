@@ -4,7 +4,7 @@ import { useBrand } from '@/contexts/BrandContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Search, Users, Phone, Mail, Calendar, DollarSign, Filter, Trash2, Plus, Pencil, ShieldAlert } from 'lucide-react';
+import { Building2, Search, Users, Phone, Mail, Calendar, DollarSign, Filter, Trash2, Plus, Pencil, ShieldAlert, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
