@@ -83,7 +83,7 @@ export const useCreateAgencyProposal = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (input: { title: string; client_name?: string | null; html_content: string; is_published?: boolean }) => {
+    mutationFn: async (input: { title: string; client_name?: string | null; html_content: string; is_published?: boolean; kind?: ProposalKind }) => {
       const slug = `${slugify(input.title)}-${randomSuffix()}`;
       const { data, error } = await supabase
         .from('agency_proposals')
@@ -93,6 +93,7 @@ export const useCreateAgencyProposal = () => {
           html_content: input.html_content,
           slug,
           is_published: input.is_published ?? true,
+          kind: input.kind ?? 'proposal',
           created_by: user?.id ?? null,
         })
         .select('*')
