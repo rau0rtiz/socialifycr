@@ -32,6 +32,7 @@ import { SendToClickUpDialog } from '@/components/producciones/SendToClickUpDial
 import { SendSummaryEmailDialog } from '@/components/producciones/SendSummaryEmailDialog';
 import { GenerateShotsDialog } from '@/components/producciones/GenerateShotsDialog';
 import { PieceCard } from '@/components/producciones/PieceCard';
+import { SheetThumbnailUploader } from '@/components/producciones/SheetThumbnailUploader';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
