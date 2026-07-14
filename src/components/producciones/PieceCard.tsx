@@ -105,12 +105,10 @@ export function PieceCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [local]);
 
-  const conceptEditing = isDraft || editConcept || !local.concept;
   const scriptEditing = isDraft || editScript;
 
   const handleSaveIdea = () => {
     onChange({ is_draft: false });
-    setEditConcept(false);
     setEditScript(false);
     toast.success('Idea guardada — el guion queda bloqueado para evitar edits accidentales.');
   };
