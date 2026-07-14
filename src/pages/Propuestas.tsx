@@ -712,7 +712,7 @@ const Propuestas = () => {
             <div className="min-w-0 pr-8 sm:pr-4">
               <DialogTitle className="truncate text-base">{previewTarget?.title}</DialogTitle>
               <DialogDescription className="truncate text-xs">
-                {previewTarget?.client_name || 'Sin cliente'} · {previewTarget ? buildShareUrl(previewTarget.slug) : ''}
+                {previewTarget?.client_name || 'Sin cliente'} · {previewTarget ? buildShareUrl(previewTarget.slug, (previewTarget.kind as ProposalKind) || 'proposal') : ''}
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
