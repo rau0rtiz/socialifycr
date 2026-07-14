@@ -527,7 +527,7 @@ export default function Producciones() {
                 ))}
               </div>
             ) : (
-              <div className="bg-noeval-surface border border-noeval-line rounded-xl overflow-hidden divide-y divide-noeval-line">
+              <div className="bg-noeval-ink border border-noeval-ink rounded-2xl overflow-hidden divide-y divide-white/10">
                 {filteredSheets.map((s) => (
                   <div
                     key={s.id}
@@ -543,15 +543,23 @@ export default function Producciones() {
                     onDragLeave={() => setDropBeforeSheetId(prev => prev === s.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnSheet(s.id); }}
                     onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
-                    className={`group flex items-center gap-3 px-3 py-2.5 hover:bg-noeval-cream/40 transition cursor-pointer ${dropBeforeSheetId === s.id ? 'bg-noeval-accent/10 border-l-4 border-l-noeval-accent' : ''} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
+                    className={`group flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition cursor-pointer ${dropBeforeSheetId === s.id ? 'bg-noeval-accent/15 border-l-4 border-l-noeval-accent' : ''} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
                     {clientFilter && (
-                      <GripVertical className="h-4 w-4 text-noeval-muted/40 group-hover:text-noeval-muted shrink-0" />
+                      <GripVertical className="h-4 w-4 text-white/30 group-hover:text-white/60 shrink-0" />
                     )}
-                    <FileText className="h-4 w-4 text-noeval-accent shrink-0" />
+                    <div className="w-10 h-[50px] rounded-md overflow-hidden bg-black/60 shrink-0 border border-white/10">
+                      {s.thumbnail_url ? (
+                        <img src={s.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Film className="h-4 w-4 text-noeval-accent/60" />
+                        </div>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-noeval-ink text-sm truncate">{s.title}</div>
-                      <div className="flex items-center gap-3 text-[11px] text-noeval-muted mt-0.5">
+                      <div className="font-medium text-noeval-cream text-sm truncate">{s.title}</div>
+                      <div className="flex items-center gap-3 text-[11px] text-white/60 mt-0.5">
                         <span className="flex items-center gap-1"><Folder className="h-3 w-3" />{clientMap[s.client_id] || '—'}</span>
                         {s.shoot_date && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es })}</span>}
                         {s.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{s.location}</span>}
