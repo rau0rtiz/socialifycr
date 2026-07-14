@@ -341,7 +341,7 @@ export default function Producciones() {
 
           {/* Sub-folders (inside a client, not searching) */}
           {clientFilter && !search && subFolders.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
               {subFolders.map((f) => {
                 const count = folderSheetCount[f.id] || 0;
                 return (
@@ -353,34 +353,48 @@ export default function Producciones() {
                     onDragOver={(e) => { if (dragging && dragging.id !== f.id) { e.preventDefault(); setDropTarget(f.id); } }}
                     onDragLeave={() => setDropTarget(prev => prev === f.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnFolder(f.id); }}
-                    className={`group relative bg-noeval-surface border rounded-xl p-4 transition-all hover:shadow-md cursor-grab active:cursor-grabbing ${dropTarget === f.id ? 'border-noeval-accent ring-2 ring-noeval-accent bg-noeval-accent/5' : 'border-noeval-line hover:border-noeval-accent'} ${dragging?.id === f.id ? 'opacity-50' : ''}`}
+                    className={`group relative aspect-[4/5] overflow-hidden rounded-2xl border cursor-grab active:cursor-grabbing transition-all hover:shadow-xl ${dropTarget === f.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === f.id ? 'opacity-50' : ''}`}
                   >
                     <button
                       onClick={() => setFolderPath([...folderPath, { id: f.id, name: f.name }])}
-                      className="text-left w-full"
+                      className="absolute inset-0 text-left w-full h-full"
                     >
-                      <div className="flex items-start justify-between">
-                        <Folder className="h-7 w-7 text-noeval-accent" />
-                        <Badge variant="outline" className="border-noeval-line text-noeval-muted text-[10px]">
+                      {/* Dark backdrop with folder motif */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#2a2a2a] via-noeval-ink to-black" />
+                      <div className="absolute -right-6 -bottom-6 opacity-10">
+                        <Folder className="h-40 w-40 text-noeval-accent" strokeWidth={1} />
+                      </div>
+                      {/* Top row */}
+                      <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+                        <div className="p-2 rounded-lg bg-noeval-accent/15 border border-noeval-accent/30">
+                          <Folder className="h-5 w-5 text-noeval-accent" />
+                        </div>
+                        <Badge variant="outline" className="bg-white/10 border-white/20 text-white text-[10px]">
                           {count}
                         </Badge>
                       </div>
-                      <div className="mt-3 font-medium text-noeval-ink truncate pr-12">{f.name}</div>
+                      {/* Bottom label */}
+                      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                        <div className="text-[9px] tracking-[0.3em] uppercase text-white/50 mb-1">Carpeta</div>
+                        <div className="font-serif text-base sm:text-lg text-white leading-tight line-clamp-2 pr-8">
+                          {f.name}
+                        </div>
+                      </div>
                     </button>
-                    <div className="absolute bottom-3 right-3 flex gap-0.5 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-2 right-2 flex gap-0.5 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleRenameFolder(f.id, f.name); }}
                         title="Renombrar"
-                        className="p-1 rounded hover:bg-noeval-taupe/40"
+                        className="p-1.5 rounded-md bg-black/50 backdrop-blur text-white hover:bg-black/70"
                       >
-                        <FileText className="h-3.5 w-3.5 text-noeval-muted" />
+                        <FileText className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteFolder(f.id, f.name); }}
                         title="Eliminar carpeta"
-                        className="p-1 rounded hover:bg-destructive/10"
+                        className="p-1.5 rounded-md bg-black/50 backdrop-blur text-white hover:bg-destructive"
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
