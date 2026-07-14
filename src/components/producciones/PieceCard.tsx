@@ -363,34 +363,13 @@ export function PieceCard({
 
       {/* Concepto */}
       <div className="mb-4">
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">Concepto · idea</Label>
-          {!isDraft && local.concept && (
-            <button
-              onClick={() => setEditConcept((v) => !v)}
-              className="no-print text-[10px] tracking-[0.2em] uppercase text-noeval-muted hover:text-noeval-ink inline-flex items-center gap-1"
-            >
-              {editConcept ? <><Check className="h-3 w-3" /> Listo</> : <><Pencil className="h-3 w-3" /> Editar</>}
-            </button>
-          )}
-        </div>
-        {conceptEditing ? (
-          <input
-            value={local.concept}
-            onChange={(e) => setLocal({ ...local, concept: e.target.value })}
-            placeholder="¿De qué trata esta pieza?"
-            autoFocus={editConcept}
-            className="w-full bg-transparent font-serif text-2xl sm:text-3xl text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-2 placeholder:text-noeval-muted/40"
-          />
-        ) : (
-          <div
-            onDoubleClick={() => setEditConcept(true)}
-            className="font-serif text-2xl sm:text-3xl text-noeval-ink leading-snug border-b border-transparent pb-2 cursor-default select-text break-words"
-            title="Doble clic para editar"
-          >
-            {local.concept}
-          </div>
-        )}
+        <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1.5 block">Concepto · idea</Label>
+        <input
+          value={local.concept}
+          onChange={(e) => setLocal({ ...local, concept: e.target.value })}
+          placeholder="¿De qué trata esta pieza?"
+          className="w-full bg-transparent font-serif text-2xl sm:text-3xl text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-2 placeholder:text-noeval-muted/40"
+        />
       </div>
 
       {/* Guion */}
