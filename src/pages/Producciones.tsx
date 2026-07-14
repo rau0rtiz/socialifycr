@@ -32,6 +32,7 @@ import {
   useProductionFolders, useCreateFolder, useDeleteFolder, useRenameFolder,
   useMoveSheet, useMoveFolder,
 } from '@/hooks/use-production-folders';
+import { SheetThumbnailUploader } from '@/components/producciones/SheetThumbnailUploader';
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
   draft: 'Borrador',
