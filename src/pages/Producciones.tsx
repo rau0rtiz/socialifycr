@@ -937,4 +937,37 @@ function ClientFolderCard({
   );
 }
 
+// ---------- Client mini-favicon ----------
+function ClientMark({
+  name,
+  logo,
+  size = 'md',
+}: {
+  name?: string;
+  logo?: string | null;
+  size?: 'sm' | 'md';
+}) {
+  const dim = size === 'sm' ? 'h-4 w-4 text-[8px]' : 'h-6 w-6 text-[9px]';
+  const initials = (name || '?')
+    .split(' ')
+    .map(w => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+  return (
+    <div
+      title={name}
+      className={`${dim} shrink-0 rounded-full overflow-hidden bg-black/60 border border-white/20 flex items-center justify-center text-white/80 font-semibold shadow-sm`}
+    >
+      {logo ? (
+        <img src={logo} alt={name || ''} className="w-full h-full object-cover" />
+      ) : (
+        <span>{initials}</span>
+      )}
+    </div>
+  );
+}
+
+
 
