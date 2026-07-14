@@ -42,10 +42,10 @@ const STATUS_LABEL: Record<SheetStatus, string> = {
 };
 
 const STATUS_TONE: Record<SheetStatus, string> = {
-  draft: 'bg-noeval-taupe/30 text-noeval-ink border-noeval-line',
-  in_production: 'bg-amber-100 text-amber-900 border-amber-300',
-  done: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-  sent_to_clickup: 'bg-purple-100 text-purple-900 border-purple-300',
+  draft: 'bg-white/10 text-white border-white/20',
+  in_production: 'bg-amber-500/20 text-amber-200 border-amber-400/40',
+  done: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40',
+  sent_to_clickup: 'bg-purple-500/20 text-purple-200 border-purple-400/40',
 };
 
 const useClients = () =>
@@ -272,7 +272,7 @@ export default function Producciones() {
                   <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo cliente
                 </Button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
                   return (
@@ -297,10 +297,10 @@ export default function Producciones() {
                 })}
                 <button
                   onClick={() => setCreatingClient(true)}
-                  className="bg-noeval-surface/50 border-2 border-dashed border-noeval-line rounded-xl p-4 hover:border-noeval-accent hover:bg-noeval-surface transition-all flex flex-col items-center justify-center min-h-[160px] text-noeval-muted hover:text-noeval-accent"
+                  className="aspect-[4/5] rounded-2xl bg-noeval-ink/5 border-2 border-dashed border-noeval-ink/25 hover:border-noeval-accent hover:bg-noeval-accent/5 transition-all flex flex-col items-center justify-center text-noeval-muted hover:text-noeval-accent"
                 >
-                  <Plus className="h-8 w-8 mb-1.5" />
-                  <span className="text-sm font-medium">Nuevo cliente</span>
+                  <Plus className="h-9 w-9 mb-1.5" />
+                  <span className="text-xs tracking-[0.2em] uppercase font-medium">Nuevo cliente</span>
                 </button>
               </div>
             </div>
@@ -341,7 +341,7 @@ export default function Producciones() {
 
           {/* Sub-folders (inside a client, not searching) */}
           {clientFilter && !search && subFolders.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
               {subFolders.map((f) => {
                 const count = folderSheetCount[f.id] || 0;
                 return (
@@ -353,34 +353,48 @@ export default function Producciones() {
                     onDragOver={(e) => { if (dragging && dragging.id !== f.id) { e.preventDefault(); setDropTarget(f.id); } }}
                     onDragLeave={() => setDropTarget(prev => prev === f.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnFolder(f.id); }}
-                    className={`group relative bg-noeval-surface border rounded-xl p-4 transition-all hover:shadow-md cursor-grab active:cursor-grabbing ${dropTarget === f.id ? 'border-noeval-accent ring-2 ring-noeval-accent bg-noeval-accent/5' : 'border-noeval-line hover:border-noeval-accent'} ${dragging?.id === f.id ? 'opacity-50' : ''}`}
+                    className={`group relative aspect-[4/5] overflow-hidden rounded-2xl border cursor-grab active:cursor-grabbing transition-all hover:shadow-xl ${dropTarget === f.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === f.id ? 'opacity-50' : ''}`}
                   >
                     <button
                       onClick={() => setFolderPath([...folderPath, { id: f.id, name: f.name }])}
-                      className="text-left w-full"
+                      className="absolute inset-0 text-left w-full h-full"
                     >
-                      <div className="flex items-start justify-between">
-                        <Folder className="h-7 w-7 text-noeval-accent" />
-                        <Badge variant="outline" className="border-noeval-line text-noeval-muted text-[10px]">
+                      {/* Dark backdrop with folder motif */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#2a2a2a] via-noeval-ink to-black" />
+                      <div className="absolute -right-6 -bottom-6 opacity-10">
+                        <Folder className="h-40 w-40 text-noeval-accent" strokeWidth={1} />
+                      </div>
+                      {/* Top row */}
+                      <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+                        <div className="p-2 rounded-lg bg-noeval-accent/15 border border-noeval-accent/30">
+                          <Folder className="h-5 w-5 text-noeval-accent" />
+                        </div>
+                        <Badge variant="outline" className="bg-white/10 border-white/20 text-white text-[10px]">
                           {count}
                         </Badge>
                       </div>
-                      <div className="mt-3 font-medium text-noeval-ink truncate pr-12">{f.name}</div>
+                      {/* Bottom label */}
+                      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                        <div className="text-[9px] tracking-[0.3em] uppercase text-white/50 mb-1">Carpeta</div>
+                        <div className="font-serif text-base sm:text-lg text-white leading-tight line-clamp-2 pr-8">
+                          {f.name}
+                        </div>
+                      </div>
                     </button>
-                    <div className="absolute bottom-3 right-3 flex gap-0.5 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-2 right-2 flex gap-0.5 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleRenameFolder(f.id, f.name); }}
                         title="Renombrar"
-                        className="p-1 rounded hover:bg-noeval-taupe/40"
+                        className="p-1.5 rounded-md bg-black/50 backdrop-blur text-white hover:bg-black/70"
                       >
-                        <FileText className="h-3.5 w-3.5 text-noeval-muted" />
+                        <FileText className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteFolder(f.id, f.name); }}
                         title="Eliminar carpeta"
-                        className="p-1 rounded hover:bg-destructive/10"
+                        className="p-1.5 rounded-md bg-black/50 backdrop-blur text-white hover:bg-destructive"
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -424,12 +438,12 @@ export default function Producciones() {
             {isLoading ? (
               <div className="text-noeval-muted text-sm">Cargando…</div>
             ) : filteredSheets.length === 0 ? (
-              <Card className="p-8 text-center bg-noeval-surface border-noeval-line">
+              <div className="rounded-2xl border-2 border-dashed border-noeval-ink/20 bg-noeval-ink/5 p-10 text-center">
                 <Film className="h-10 w-10 mx-auto text-noeval-muted mb-2" />
                 <p className="text-noeval-muted text-sm">
                   No hay sheets {clientFilter ? 'en esta carpeta' : 'aún'}. Crea uno nuevo para empezar.
                 </p>
-              </Card>
+              </div>
             ) : view === 'grid' ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {filteredSheets.map((s) => (
@@ -513,7 +527,7 @@ export default function Producciones() {
                 ))}
               </div>
             ) : (
-              <div className="bg-noeval-surface border border-noeval-line rounded-xl overflow-hidden divide-y divide-noeval-line">
+              <div className="bg-noeval-ink border border-noeval-ink rounded-2xl overflow-hidden divide-y divide-white/10">
                 {filteredSheets.map((s) => (
                   <div
                     key={s.id}
@@ -529,15 +543,23 @@ export default function Producciones() {
                     onDragLeave={() => setDropBeforeSheetId(prev => prev === s.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnSheet(s.id); }}
                     onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
-                    className={`group flex items-center gap-3 px-3 py-2.5 hover:bg-noeval-cream/40 transition cursor-pointer ${dropBeforeSheetId === s.id ? 'bg-noeval-accent/10 border-l-4 border-l-noeval-accent' : ''} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
+                    className={`group flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition cursor-pointer ${dropBeforeSheetId === s.id ? 'bg-noeval-accent/15 border-l-4 border-l-noeval-accent' : ''} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
                     {clientFilter && (
-                      <GripVertical className="h-4 w-4 text-noeval-muted/40 group-hover:text-noeval-muted shrink-0" />
+                      <GripVertical className="h-4 w-4 text-white/30 group-hover:text-white/60 shrink-0" />
                     )}
-                    <FileText className="h-4 w-4 text-noeval-accent shrink-0" />
+                    <div className="w-10 h-[50px] rounded-md overflow-hidden bg-black/60 shrink-0 border border-white/10">
+                      {s.thumbnail_url ? (
+                        <img src={s.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Film className="h-4 w-4 text-noeval-accent/60" />
+                        </div>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-noeval-ink text-sm truncate">{s.title}</div>
-                      <div className="flex items-center gap-3 text-[11px] text-noeval-muted mt-0.5">
+                      <div className="font-medium text-noeval-cream text-sm truncate">{s.title}</div>
+                      <div className="flex items-center gap-3 text-[11px] text-white/60 mt-0.5">
                         <span className="flex items-center gap-1"><Folder className="h-3 w-3" />{clientMap[s.client_id] || '—'}</span>
                         {s.shoot_date && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es })}</span>}
                         {s.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{s.location}</span>}
@@ -810,41 +832,56 @@ function ClientFolderCard({
   };
 
   return (
-    <div className="group relative bg-noeval-surface border border-noeval-line rounded-xl overflow-hidden hover:border-noeval-accent transition-all hover:shadow-md flex flex-col">
-      <button onClick={onOpen} className="text-left w-full flex-1 flex flex-col">
-        {client.logo_url ? (
-          <div className="relative aspect-square w-full bg-white overflow-hidden">
+    <div className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-noeval-line bg-noeval-ink hover:shadow-xl transition-all">
+      <button onClick={onOpen} className="absolute inset-0 text-left w-full h-full">
+        {/* Dark backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-noeval-ink to-black" />
+
+        {/* Logo hero — soft-blurred fill + crisp centered logo */}
+        {client.logo_url && (
+          <>
             <img
               src={client.logo_url}
-              alt={client.name}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
+              alt=""
+              aria-hidden
+              className="absolute inset-0 w-full h-full object-cover opacity-30 blur-xl scale-110"
             />
-            <Badge variant="outline" className="absolute top-2 right-2 bg-white/90 border-noeval-line text-noeval-muted text-[10px]">
-              {count}
-            </Badge>
-          </div>
-        ) : (
-          <div className="relative aspect-square w-full p-4 flex flex-col">
-            <div className="flex items-start justify-between">
-              <Folder className="h-10 w-10 text-noeval-accent" />
-              <Badge variant="outline" className="border-noeval-line text-noeval-muted">
-                {count}
-              </Badge>
+            <div className="absolute inset-0 flex items-center justify-center p-6">
+              <img
+                src={client.logo_url}
+                alt={client.name}
+                loading="lazy"
+                className="max-h-[55%] max-w-[75%] object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] group-hover:scale-[1.05] transition-transform duration-500"
+              />
             </div>
-            <div className="mt-auto pt-3 font-serif text-xl text-noeval-ink truncate">
-              {client.name}
+          </>
+        )}
+        {!client.logo_url && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="font-serif text-5xl uppercase tracking-wide text-white/25">
+              {client.name.slice(0, 2)}
             </div>
           </div>
         )}
-        {client.logo_url && (
-          <div className="px-3 py-2 border-t border-noeval-line bg-noeval-surface flex items-center justify-between gap-2">
-            <span className="font-medium text-sm text-noeval-ink truncate">{client.name}</span>
-            <span className="text-[10px] text-noeval-muted shrink-0">
-              {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
-            </span>
+
+        {/* Vignette bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black via-black/60 to-transparent" />
+
+        {/* Count chip */}
+        <Badge variant="outline" className="absolute top-3 right-3 bg-white/10 border-white/20 text-white text-[10px] backdrop-blur">
+          {count}
+        </Badge>
+
+        {/* Client name */}
+        <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+          <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-accent mb-1">Cliente</div>
+          <div className="font-serif text-base sm:text-lg text-white leading-tight truncate">
+            {client.name}
           </div>
-        )}
+          <div className="text-[10px] text-white/60 mt-0.5">
+            {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
+          </div>
+        </div>
       </button>
 
       <input
@@ -855,26 +892,27 @@ function ClientFolderCard({
         onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ''; }}
       />
 
-      <div className="absolute top-2 left-2 flex gap-1 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+      {/* Action buttons — overlay */}
+      <div className="absolute top-3 left-3 flex gap-1 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10">
         <button
           onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
           title={client.logo_url ? 'Cambiar logo' : 'Subir logo'}
           disabled={uploading}
-          className="h-7 w-7 rounded-md bg-white/95 border border-noeval-line flex items-center justify-center hover:bg-white shadow-sm"
+          className="p-1.5 rounded-md bg-black/60 backdrop-blur border border-white/10 text-white hover:bg-black/80 transition"
         >
           {uploading
-            ? <Loader2 className="h-3.5 w-3.5 animate-spin text-noeval-muted" />
-            : <ImagePlus className="h-3.5 w-3.5 text-noeval-ink" />}
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <ImagePlus className="h-3.5 w-3.5" />}
         </button>
       </div>
 
-      <div className="absolute bottom-2 right-2 flex gap-1 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+      <div className="absolute bottom-3 right-3 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10">
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           title="Eliminar carpeta"
-          className="p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-destructive/10"
+          className="p-1.5 rounded-md bg-black/60 backdrop-blur border border-white/10 text-white hover:bg-destructive transition"
         >
-          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
