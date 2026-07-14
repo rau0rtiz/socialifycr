@@ -275,6 +275,26 @@ const ClientDatabase = () => {
 
   const sources = useMemo(() => Array.from(new Set(allLeads.map(l => l.source).filter(Boolean))) as string[], [allLeads]);
 
+  // ── Lifetime value per lead (from message_sales) ──
+  const leadSpend = useMemo(() => {
+    const map = new Map<string, number>();
+    salesContacts.forEach((s: any) => {
+      const amount = Number(s.estimated_value) || 0;
+      const phone = (s.lead_phone || '').trim();
+      const name = (s.lead_name || '').toLowerCase().trim();
+      if (phone) map.set(phone, (map.get(phone) || 0) + amount);
+      if (name) map.set(name, (map.get(name) || 0) + amount);
+    });
+    return map;
+  }, [salesContacts]);
+
+  const formatMoney = (amount: number, currency: string) =>
+    new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-CR', {
+      style: 'currency',
+      currency: currency === 'USD' ? 'USD' : 'CRC',
+      maximumFractionDigits: 0,
+    }).format(amount);
+
   const filteredLeads = useMemo(() => {
     const filtered = allLeads.filter(lead => {
       const matchSearch = !search || lead.lead_name.toLowerCase().includes(search.toLowerCase()) || (lead.lead_phone && lead.lead_phone.includes(search)) || (lead.lead_email && lead.lead_email.toLowerCase().includes(search.toLowerCase()));
@@ -655,7 +675,7 @@ const ClientDatabase = () => {
                     <TableHead className="text-xs">Contacto</TableHead>
                     <TableHead className="text-xs">Estado</TableHead>
                     <TableHead className="text-xs">Fuente</TableHead>
-                    <TableHead className="text-xs">Vendedor</TableHead>
+                    <TableHead className="text-xs">Valor de Vida Útil</TableHead>
                     <TableHead className="text-xs">Fecha</TableHead>
                     <TableHead className="text-xs w-[50px]"></TableHead>
                   </TableRow>
@@ -678,7 +698,14 @@ const ClientDatabase = () => {
                       </TableCell>
                       <TableCell><Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[lead.status] || ''}`}>{STATUS_LABELS[lead.status] || lead.status}</Badge></TableCell>
                       <TableCell className="text-muted-foreground">{lead.source || '—'}</TableCell>
-                      <TableCell className="text-muted-foreground">{lead.setter_name || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {(() => {
+                          const spend = leadSpend.get((lead.lead_phone || '').trim())
+                            ?? leadSpend.get(lead.lead_name.toLowerCase().trim())
+                            ?? 0;
+                          return spend > 0 ? formatMoney(spend, lead.currency || 'CRC') : '—';
+                        })()}
+                      </TableCell>
                       <TableCell className="text-muted-foreground whitespace-nowrap">{lead.created_at ? format(new Date(lead.created_at), 'dd MMM yy', { locale: es }) : '—'}</TableCell>
                       <TableCell><Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(lead); }}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
                     </TableRow>
