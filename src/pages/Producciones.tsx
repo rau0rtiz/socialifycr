@@ -438,12 +438,12 @@ export default function Producciones() {
             {isLoading ? (
               <div className="text-noeval-muted text-sm">Cargando…</div>
             ) : filteredSheets.length === 0 ? (
-              <Card className="p-8 text-center bg-noeval-surface border-noeval-line">
+              <div className="rounded-2xl border-2 border-dashed border-noeval-ink/20 bg-noeval-ink/5 p-10 text-center">
                 <Film className="h-10 w-10 mx-auto text-noeval-muted mb-2" />
                 <p className="text-noeval-muted text-sm">
                   No hay sheets {clientFilter ? 'en esta carpeta' : 'aún'}. Crea uno nuevo para empezar.
                 </p>
-              </Card>
+              </div>
             ) : view === 'grid' ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {filteredSheets.map((s) => (
