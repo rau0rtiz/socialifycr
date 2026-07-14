@@ -202,16 +202,18 @@ const Propuestas = () => {
           client_name: clientName.trim() || null,
           html_content: html,
           is_published: isPublished,
+          kind,
         });
-        toast.success('Propuesta actualizada');
+        toast.success(kind === 'report' ? 'Reporte actualizado' : 'Propuesta actualizada');
       } else {
         await createMut.mutateAsync({
           title: title.trim(),
           client_name: clientName.trim() || null,
           html_content: html,
           is_published: isPublished,
+          kind,
         });
-        toast.success('Propuesta creada');
+        toast.success(kind === 'report' ? 'Reporte creado' : 'Propuesta creada');
       }
       setEditorOpen(false);
     } catch (err) {
