@@ -569,7 +569,14 @@ export default function Producciones() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-noeval-cream text-sm truncate">{s.title}</div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <ClientMark
+                          name={clientMap[s.client_id]}
+                          logo={clientLogoMap[s.client_id]}
+                          size="sm"
+                        />
+                        <div className="font-medium text-noeval-cream text-sm truncate">{s.title}</div>
+                      </div>
                       <div className="flex items-center gap-3 text-[11px] text-white/60 mt-0.5">
                         <span className="flex items-center gap-1"><Folder className="h-3 w-3" />{clientMap[s.client_id] || '—'}</span>
                         {s.shoot_date && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es })}</span>}
