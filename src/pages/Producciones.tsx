@@ -850,34 +850,36 @@ function ClientFolderCard({
   };
 
   return (
-    <div className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-noeval-line bg-noeval-ink hover:shadow-xl transition-all">
+    <div className="group relative aspect-square overflow-hidden rounded-2xl border border-noeval-line bg-noeval-ink hover:shadow-xl transition-all">
       <button onClick={onOpen} className="absolute inset-0 text-left w-full h-full">
         {/* Dark backdrop */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-noeval-ink to-black" />
 
-        {/* Logo hero — soft-blurred fill + crisp centered logo */}
+        {/* Logo hero — square placeholder that the logo fills */}
         {client.logo_url && (
-          <>
-            <img
-              src={client.logo_url}
-              alt=""
-              aria-hidden
-              className="absolute inset-0 w-full h-full object-cover opacity-30 blur-xl scale-110"
-            />
-            <div className="absolute inset-0 flex items-center justify-center p-6">
+          <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-5">
+            <div className="relative w-[72%] aspect-square rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+              <img
+                src={client.logo_url}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 w-full h-full object-cover opacity-20 blur-lg scale-110"
+              />
               <img
                 src={client.logo_url}
                 alt={client.name}
                 loading="lazy"
-                className="max-h-[55%] max-w-[75%] object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] group-hover:scale-[1.05] transition-transform duration-500"
+                className="relative w-full h-full object-contain p-3 sm:p-4 drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] group-hover:scale-[1.04] transition-transform duration-500"
               />
             </div>
-          </>
+          </div>
         )}
         {!client.logo_url && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="font-serif text-5xl uppercase tracking-wide text-white/25">
-              {client.name.slice(0, 2)}
+          <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-5">
+            <div className="relative w-[72%] aspect-square rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <div className="font-serif text-5xl uppercase tracking-wide text-white/25">
+                {client.name.slice(0, 2)}
+              </div>
             </div>
           </div>
         )}
