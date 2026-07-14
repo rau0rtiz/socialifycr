@@ -53,7 +53,8 @@ const formatMoney = (amount: number | null, currency: string | null) => {
 };
 
 const PUBLIC_BASE_URL = 'https://app.socialifycr.com';
-const buildShareUrl = (slug: string) => `${PUBLIC_BASE_URL}/propuesta/${slug}`;
+const buildShareUrl = (slug: string, kind: ProposalKind = 'proposal') =>
+  `${PUBLIC_BASE_URL}/${kind === 'report' ? 'reporte' : 'propuesta'}/${slug}`;
 
 const copyToClipboard = async (text: string) => {
   try {
