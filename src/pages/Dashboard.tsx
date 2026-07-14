@@ -14,6 +14,7 @@ const ContentGrid = lazy(() => import('@/components/dashboard/ContentGrid').then
 const LaunchReportWidget = lazy(() => import('@/components/dashboard/LaunchReportWidget').then(m => ({ default: m.LaunchReportWidget })));
 const InstantFormLeadsWidget = lazy(() => import('@/components/dashboard/InstantFormLeadsWidget').then(m => ({ default: m.InstantFormLeadsWidget })));
 const InstantFormSalesWidget = lazy(() => import('@/components/dashboard/InstantFormSalesWidget').then(m => ({ default: m.InstantFormSalesWidget })));
+const TiktokSalesWidget = lazy(() => import('@/components/dashboard/TiktokSalesWidget').then(m => ({ default: m.TiktokSalesWidget })));
 const InstantFormCampaignPieWidget = lazy(() => import('@/components/dashboard/InstantFormCampaignPieWidget').then(m => ({ default: m.InstantFormCampaignPieWidget })));
 const InstantFormDailyBarWidget = lazy(() => import('@/components/dashboard/InstantFormDailyBarWidget').then(m => ({ default: m.InstantFormDailyBarWidget })));
 const ComfortexUtmBreakdown = lazy(() => import('@/components/dashboard/ComfortexUtmBreakdown').then(m => ({ default: m.ComfortexUtmBreakdown })));
