@@ -275,6 +275,26 @@ const ClientDatabase = () => {
 
   const sources = useMemo(() => Array.from(new Set(allLeads.map(l => l.source).filter(Boolean))) as string[], [allLeads]);
 
+  // ── Lifetime value per lead (from message_sales) ──
+  const leadSpend = useMemo(() => {
+    const map = new Map<string, number>();
+    salesContacts.forEach((s: any) => {
+      const amount = Number(s.estimated_value) || 0;
+      const phone = (s.lead_phone || '').trim();
+      const name = (s.lead_name || '').toLowerCase().trim();
+      if (phone) map.set(phone, (map.get(phone) || 0) + amount);
+      if (name) map.set(name, (map.get(name) || 0) + amount);
+    });
+    return map;
+  }, [salesContacts]);
+
+  const formatMoney = (amount: number, currency: string) =>
+    new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'es-CR', {
+      style: 'currency',
+      currency: currency === 'USD' ? 'USD' : 'CRC',
+      maximumFractionDigits: 0,
+    }).format(amount);
+
   const filteredLeads = useMemo(() => {
     const filtered = allLeads.filter(lead => {
       const matchSearch = !search || lead.lead_name.toLowerCase().includes(search.toLowerCase()) || (lead.lead_phone && lead.lead_phone.includes(search)) || (lead.lead_email && lead.lead_email.toLowerCase().includes(search.toLowerCase()));
