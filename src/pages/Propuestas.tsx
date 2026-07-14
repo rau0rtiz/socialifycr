@@ -87,12 +87,15 @@ const Propuestas = () => {
   const updateMut = useUpdateAgencyProposal();
   const deleteMut = useDeleteAgencyProposal();
 
+  const [kindFilter, setKindFilter] = useState<'all' | ProposalKind>('all');
+
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<AgencyProposalListItem | null>(null);
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
   const [html, setHtml] = useState('');
   const [isPublished, setIsPublished] = useState(true);
+  const [kind, setKind] = useState<ProposalKind>('proposal');
 
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailTarget, setEmailTarget] = useState<AgencyProposalListItem | null>(null);
