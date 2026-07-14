@@ -244,7 +244,7 @@ export default function ProduccionSheet() {
 
   return (
     <DashboardLayout>
-      <div className="noeval-scope noeval-dark min-h-screen">
+      <div className="noeval-scope min-h-screen">
         {isLoading || !data ? (
           <div className="py-24 text-center text-noeval-muted">Cargando…</div>
         ) : (
