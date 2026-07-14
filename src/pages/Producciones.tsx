@@ -855,9 +855,9 @@ function ClientFolderCard({
         {/* Dark backdrop */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-noeval-ink to-black" />
 
-        {/* Logo hero — logo fills the entire card surface */}
+        {/* Logo hero — logo touches the card edges, no padding */}
         {client.logo_url && (
-          <div className="absolute inset-0 flex items-center justify-center p-1.5 sm:p-2">
+          <div className="absolute inset-0 flex items-center justify-center">
             <img
               src={client.logo_url}
               alt={client.name}
@@ -874,8 +874,8 @@ function ClientFolderCard({
           </div>
         )}
 
-        {/* Vignette bottom — stronger gradient for text legibility over large logos */}
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black via-black/80 to-transparent" />
+        {/* Vignette bottom — strong gradient so text reads over the logo */}
+        <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black via-black/85 to-transparent" />
 
         {/* Count chip */}
         <Badge variant="outline" className="absolute top-3 right-3 bg-black/60 border-white/20 text-white text-[10px] backdrop-blur">
