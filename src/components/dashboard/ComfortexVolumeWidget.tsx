@@ -50,11 +50,16 @@ export const ComfortexVolumeWidget = ({ clientId }: Props) => {
     const maxBucket = Math.max(1, ...buckets.map((b) => b.count));
     const top = [...items].sort((a, b) => b.qty - a.qty).slice(0, 5);
 
-    // Ventas reales (desde sales registradas)
-    const salesInRange = sales
+    // Ventas reales (Instant Form + TikTok manuales)
+    const ifQty = sales
       .filter((s) => inRange(s.sale_date || s.created_at, rangeDays))
       .map((s) => parseFormSaleNotes(s.notes).quantity || 0)
       .filter((q) => q > 0);
+    const ttQty = tiktokSales
+      .filter((s) => inRange(s.sale_date || s.created_at, rangeDays))
+      .map((s) => parseFormSaleNotes(s.notes).quantity || 0)
+      .filter((q) => q > 0);
+    const salesInRange = [...ifQty, ...ttQty];
     const soldTotal = salesInRange.reduce((s, q) => s + q, 0);
     const soldAvg = salesInRange.length ? soldTotal / salesInRange.length : 0;
 
@@ -68,7 +73,8 @@ export const ComfortexVolumeWidget = ({ clientId }: Props) => {
       soldAvg,
       salesCount: salesInRange.length,
     };
-  }, [filtered, sales, rangeDays]);
+  }, [filtered, sales, tiktokSales, rangeDays]);
+
 
   return (
     <Card>
