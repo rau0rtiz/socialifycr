@@ -225,7 +225,10 @@ const SellerCrm = () => {
 
         {/* List */}
         {isLoading ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">Cargando leads...</p>
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Cargando leads...</p>
+          </div>
         ) : filtered.length === 0 ? (
           <Card className="p-8 text-center">
             <Inbox className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
@@ -241,16 +244,24 @@ const SellerCrm = () => {
             )}
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-            {filtered.map((lead) => (
-              <SellerLeadCard
-                key={lead.id}
-                lead={lead}
-                onOpen={() => handleOpen(lead)}
-                showClient={isManagerView}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+              {filtered.map((lead) => (
+                <SellerLeadCard
+                  key={lead.id}
+                  lead={lead}
+                  onOpen={() => handleOpen(lead)}
+                  showClient={isManagerView}
+                />
+              ))}
+            </div>
+            {isLoadingMore && (
+              <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Cargando más leads en segundo plano...
+              </div>
+            )}
+          </>
         )}
       </div>
 
