@@ -301,7 +301,7 @@ export default function Producciones() {
                 })}
                 <button
                   onClick={() => setCreatingClient(true)}
-                  className="aspect-[4/5] rounded-2xl bg-noeval-ink/5 border-2 border-dashed border-noeval-ink/25 hover:border-noeval-accent hover:bg-noeval-accent/5 transition-all flex flex-col items-center justify-center text-noeval-muted hover:text-noeval-accent"
+                  className="aspect-square rounded-2xl bg-noeval-ink/5 border-2 border-dashed border-noeval-ink/25 hover:border-noeval-accent hover:bg-noeval-accent/5 transition-all flex flex-col items-center justify-center text-noeval-muted hover:text-noeval-accent"
                 >
                   <Plus className="h-9 w-9 mb-1.5" />
                   <span className="text-xs tracking-[0.2em] uppercase font-medium">Nuevo cliente</span>
@@ -850,33 +850,25 @@ function ClientFolderCard({
   };
 
   return (
-    <div className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-noeval-line bg-noeval-ink hover:shadow-xl transition-all">
+    <div className="group relative aspect-square overflow-hidden rounded-2xl border border-noeval-line bg-noeval-ink hover:shadow-xl transition-all">
       <button onClick={onOpen} className="absolute inset-0 text-left w-full h-full">
         {/* Dark backdrop */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-noeval-ink to-black" />
 
-        {/* Logo hero — soft-blurred fill + crisp centered logo */}
+        {/* Logo hero — large centered logo that fills the placeholder area */}
         {client.logo_url && (
-          <>
+          <div className="absolute inset-0 flex items-center justify-center p-5 sm:p-6">
             <img
               src={client.logo_url}
-              alt=""
-              aria-hidden
-              className="absolute inset-0 w-full h-full object-cover opacity-30 blur-xl scale-110"
+              alt={client.name}
+              loading="lazy"
+              className="w-full h-full object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] group-hover:scale-[1.04] transition-transform duration-500"
             />
-            <div className="absolute inset-0 flex items-center justify-center p-6">
-              <img
-                src={client.logo_url}
-                alt={client.name}
-                loading="lazy"
-                className="max-h-[55%] max-w-[75%] object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] group-hover:scale-[1.05] transition-transform duration-500"
-              />
-            </div>
-          </>
+          </div>
         )}
         {!client.logo_url && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="font-serif text-5xl uppercase tracking-wide text-white/25">
+            <div className="font-serif text-6xl uppercase tracking-wide text-white/25">
               {client.name.slice(0, 2)}
             </div>
           </div>
