@@ -692,8 +692,11 @@ const ClientDatabase = () => {
               Mostrando {isSpkUp ? filteredStudents.length : isAlmaBendita ? filteredCustomers.length : filteredLeads.length} de {totalCount} {isSpkUp ? 'estudiantes' : isAlmaBendita ? 'clientas' : 'leads'}
             </div>
           )}
-        </CardContent></Card>
+          </CardContent></Card>
+        </>
+        )}
       </div>
+
 
       {/* Delete confirmation */}
       {isSpkUp ? (
