@@ -117,6 +117,9 @@ const SellerCrm = () => {
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
               <Inbox className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
               <span className="truncate">{isManagerView ? 'CRM de Vendedores' : 'Mis Leads'}</span>
+              {(isLoading || isLoadingMore) && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+              )}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
               {isManagerView
