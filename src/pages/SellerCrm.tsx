@@ -252,6 +252,11 @@ const SellerCrm = () => {
       </div>
 
       <SellerLeadDetailDialog lead={openLead} open={dialogOpen} onOpenChange={setDialogOpen} />
+      <TikTokSaleDialog
+        open={tiktokDialogOpen}
+        onOpenChange={setTiktokDialogOpen}
+        clientId={isManagerView ? (selectedClient?.id || null) : null}
+      />
     </DashboardLayout>
   );
 };
