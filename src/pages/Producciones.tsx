@@ -301,7 +301,7 @@ export default function Producciones() {
                 })}
                 <button
                   onClick={() => setCreatingClient(true)}
-                  className="aspect-[4/5] rounded-2xl bg-noeval-ink/5 border-2 border-dashed border-noeval-ink/25 hover:border-noeval-accent hover:bg-noeval-accent/5 transition-all flex flex-col items-center justify-center text-noeval-muted hover:text-noeval-accent"
+                  className="aspect-square rounded-2xl bg-noeval-ink/5 border-2 border-dashed border-noeval-ink/25 hover:border-noeval-accent hover:bg-noeval-accent/5 transition-all flex flex-col items-center justify-center text-noeval-muted hover:text-noeval-accent"
                 >
                   <Plus className="h-9 w-9 mb-1.5" />
                   <span className="text-xs tracking-[0.2em] uppercase font-medium">Nuevo cliente</span>
