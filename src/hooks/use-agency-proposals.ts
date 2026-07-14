@@ -118,6 +118,7 @@ export const useUpdateAgencyProposal = () => {
       package_type?: PackageType | null;
       html_content?: string;
       is_published?: boolean;
+      kind?: ProposalKind;
     }) => {
       const { id, ...updates } = input;
       const { data, error } = await supabase
