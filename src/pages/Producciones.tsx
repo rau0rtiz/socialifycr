@@ -137,6 +137,10 @@ export default function Producciones() {
     () => Object.fromEntries(clients.map(c => [c.id, c.name])),
     [clients],
   );
+  const clientLogoMap = useMemo(
+    () => Object.fromEntries(clients.map(c => [c.id, c.logo_url])),
+    [clients],
+  );
 
   const sheetsByClient = useMemo(() => {
     const map: Record<string, ProductionSheet[]> = {};
