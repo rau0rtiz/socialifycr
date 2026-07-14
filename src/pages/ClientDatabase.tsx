@@ -4,7 +4,7 @@ import { useBrand } from '@/contexts/BrandContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Search, Users, Phone, Mail, Calendar, DollarSign, Filter, Trash2, Plus, Pencil, ShieldAlert } from 'lucide-react';
+import { Building2, Search, Users, Phone, Mail, Calendar, DollarSign, Filter, Trash2, Plus, Pencil, ShieldAlert, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -93,6 +93,9 @@ const ClientDatabase = () => {
       return counts;
     },
     enabled: !!clientId && !!isSpkUp,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
   const [studentDialog, setStudentDialog] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
@@ -159,21 +162,26 @@ const ClientDatabase = () => {
   const isMinor = sAge ? parseInt(sAge) < 18 : false;
 
   // ── Legacy: setter_appointments for non-SpkUp ──
-  const { data: appointmentLeads = [] } = useQuery<LeadRecord[]>({
+  const { data: appointmentLeads = [], isLoading: appointmentsLoading } = useQuery<LeadRecord[]>({
     queryKey: ['client-database-leads', clientId],
     queryFn: async () => {
       if (!clientId) return [];
       const { data, error } = await supabase.from('setter_appointments')
         .select('id, lead_name, lead_phone, lead_email, source, status, setter_name, product, appointment_date, created_at, notes, not_sold_reason, estimated_value, currency, ad_campaign_name')
-        .eq('client_id', clientId).order('created_at', { ascending: false });
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false })
+        .limit(2000);
       if (error) throw error;
       return (data ?? []) as LeadRecord[];
     },
     enabled: !!clientId && !isSpkUp,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // ── Sales-only contacts (no appointment) for non-SpkUp ──
-  const { data: salesContacts = [] } = useQuery<LeadRecord[]>({
+  const { data: salesContacts = [], isLoading: salesContactsLoading } = useQuery<LeadRecord[]>({
     queryKey: ['client-database-sales-contacts', clientId],
     queryFn: async () => {
       if (!clientId) return [];
@@ -181,7 +189,8 @@ const ClientDatabase = () => {
         .select('id, customer_name, customer_phone, source, status, closer_name, product, sale_date, created_at, notes, amount, currency, ad_campaign_name')
         .eq('client_id', clientId)
         .not('customer_name', 'is', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(2000);
       if (error) throw error;
       return (data ?? []).map((s: any) => ({
         id: s.id,
@@ -203,17 +212,21 @@ const ClientDatabase = () => {
       })) as (LeadRecord & { _fromSale?: boolean })[];
     },
     enabled: !!clientId && !isSpkUp,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // ── Instant Form leads (Google Sheet sync) for non-SpkUp ──
-  const { data: instantFormLeads = [] } = useQuery<LeadRecord[]>({
+  const { data: instantFormLeads = [], isLoading: instantFormLoading } = useQuery<LeadRecord[]>({
     queryKey: ['client-database-instant-form-leads', clientId],
     queryFn: async () => {
       if (!clientId) return [];
       const { data, error } = await supabase.from('instant_form_leads' as any)
         .select('id, full_name, phone, ad_name, adset_name, campaign_name, form_name, platform, created_time, created_at, custom_answers')
         .eq('client_id', clientId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(2000);
       if (error) throw error;
       return (data ?? []).map((l: any) => ({
         id: l.id,
@@ -234,7 +247,11 @@ const ClientDatabase = () => {
       })) as LeadRecord[];
     },
     enabled: !!clientId && !isSpkUp,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
+
 
   // ── Merge appointments + sales-only + instant-form leads (dedupe by phone, then name) ──
   const allLeads = useMemo(() => {
@@ -286,7 +303,8 @@ const ClientDatabase = () => {
         .from('message_sales')
         .select('customer_phone, customer_name, amount')
         .eq('client_id', clientId)
-        .not('customer_name', 'is', null);
+        .not('customer_name', 'is', null)
+        .limit(5000);
       if (error) throw error;
       const totals: Record<string, number> = {};
       for (const row of (data ?? []) as any[]) {
@@ -297,7 +315,9 @@ const ClientDatabase = () => {
       return totals;
     },
     enabled: !!clientId && !!isAlmaBendita,
-    staleTime: 60_000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const customerSpendFor = (c: CustomerContact) => {
@@ -386,17 +406,40 @@ const ClientDatabase = () => {
   const customerWithPurchasesCount = customerContacts.filter(c => (c.total_purchases || 0) > 0).length;
   const customerWithAddressCount = customerContacts.filter(c => (c.addresses || []).length > 0).length;
 
+  const isPageLoading = isSpkUp
+    ? studentsLoading
+    : isAlmaBendita
+      ? customersLoading
+      : (appointmentsLoading || salesContactsLoading || instantFormLoading);
+  const hasNoData = isSpkUp
+    ? students.length === 0
+    : isAlmaBendita
+      ? customerContacts.length === 0
+      : allLeads.length === 0;
+
   return (
     <DashboardLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : isAlmaBendita ? 'Base de Clientas' : 'Base de Clientes'}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : isAlmaBendita ? 'Base de Clientas' : 'Base de Clientes'}</h1>
+            {isPageLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </div>
           {isSpkUp && (
             <Button size="sm" onClick={openNewStudent} className="gap-1.5 h-8 text-xs">
               <Plus className="h-3.5 w-3.5" /> Nuevo estudiante
             </Button>
           )}
         </div>
+
+        {isPageLoading && hasNoData ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm">Cargando base de datos...</p>
+          </div>
+        ) : (
+        <>
+
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -649,8 +692,11 @@ const ClientDatabase = () => {
               Mostrando {isSpkUp ? filteredStudents.length : isAlmaBendita ? filteredCustomers.length : filteredLeads.length} de {totalCount} {isSpkUp ? 'estudiantes' : isAlmaBendita ? 'clientas' : 'leads'}
             </div>
           )}
-        </CardContent></Card>
+          </CardContent></Card>
+        </>
+        )}
       </div>
+
 
       {/* Delete confirmation */}
       {isSpkUp ? (
