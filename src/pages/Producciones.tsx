@@ -42,10 +42,10 @@ const STATUS_LABEL: Record<SheetStatus, string> = {
 };
 
 const STATUS_TONE: Record<SheetStatus, string> = {
-  draft: 'bg-noeval-taupe/30 text-noeval-ink border-noeval-line',
-  in_production: 'bg-amber-100 text-amber-900 border-amber-300',
-  done: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-  sent_to_clickup: 'bg-purple-100 text-purple-900 border-purple-300',
+  draft: 'bg-white/10 text-white border-white/20',
+  in_production: 'bg-amber-500/20 text-amber-200 border-amber-400/40',
+  done: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40',
+  sent_to_clickup: 'bg-purple-500/20 text-purple-200 border-purple-400/40',
 };
 
 const useClients = () =>
