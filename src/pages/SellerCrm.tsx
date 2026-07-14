@@ -50,7 +50,7 @@ const SellerCrm = () => {
 
   const { data: sellers = [] } = useClientSellers(isManagerView ? (selectedClient?.id || null) : null);
 
-  const { data: leads = [], isLoading } = useSellerLeads({
+  const { data: leads = [], isLoading, isLoadingMore } = useSellerLeads({
     mode,
     clientId: isManagerView ? (selectedClient?.id || null) : null,
     sellerId: isManagerView ? (selectedSellerId === 'all' ? null : selectedSellerId) : null,
