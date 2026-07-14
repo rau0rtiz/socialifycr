@@ -488,17 +488,31 @@ const Propuestas = () => {
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-5xl max-h-[92dvh] p-0 gap-0 flex flex-col">
           <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b shrink-0">
-            <DialogTitle>{editing ? 'Editar propuesta' : 'Nueva propuesta'}</DialogTitle>
+            <DialogTitle>
+              {editing
+                ? `Editar ${kind === 'report' ? 'reporte' : 'propuesta'}`
+                : `${kind === 'report' ? 'Nuevo reporte' : 'Nueva propuesta'}`}
+            </DialogTitle>
             <DialogDescription>
-              Pegá el código HTML completo de la propuesta. Se mostrará tal cual en el link público.
+              Pegá el código HTML completo. Se mostrará tal cual en el link público.
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4">
             <div className="grid gap-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Select value={kind} onValueChange={(v) => setKind(v as ProposalKind)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="proposal">Propuesta</SelectItem>
+                      <SelectItem value="report">Reporte</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label>Título</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Propuesta comercial" />
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === 'report' ? 'Reporte mensual' : 'Propuesta comercial'} />
                 </div>
                 <div className="space-y-2">
                   <Label>Cliente (opcional)</Label>
