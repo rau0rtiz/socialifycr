@@ -15,6 +15,8 @@ import { useSellerLeads, useSellerLeadCounts, type SellerLead } from '@/hooks/us
 import { useClientSellers } from '@/hooks/use-instant-form-leads';
 import { SellerLeadCard } from '@/components/seller-crm/SellerLeadCard';
 import { SellerLeadDetailDialog } from '@/components/seller-crm/SellerLeadDetailDialog';
+import { TikTokSaleDialog } from '@/components/seller-crm/TikTokSaleDialog';
+import { Music2 } from 'lucide-react';
 
 const STATUSES = [
   { value: 'all', label: 'Todos' },
@@ -41,6 +43,7 @@ const SellerCrm = () => {
   const [selectedSellerId, setSelectedSellerId] = useState<string>('all');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [tiktokDialogOpen, setTiktokDialogOpen] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState<boolean>(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission === 'granted' : false
   );
@@ -148,6 +151,16 @@ const SellerCrm = () => {
             >
               {notifEnabled ? <Bell className="h-4 w-4 text-[hsl(var(--status-venta))]" /> : <BellOff className="h-4 w-4" />}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5 px-2 sm:px-3"
+              onClick={() => setTiktokDialogOpen(true)}
+              title="Registrar venta TikTok"
+            >
+              <Music2 className="h-4 w-4" />
+              <span className="hidden sm:inline text-xs">Venta TikTok</span>
+            </Button>
           </div>
         </div>
 
@@ -239,6 +252,11 @@ const SellerCrm = () => {
       </div>
 
       <SellerLeadDetailDialog lead={openLead} open={dialogOpen} onOpenChange={setDialogOpen} />
+      <TikTokSaleDialog
+        open={tiktokDialogOpen}
+        onOpenChange={setTiktokDialogOpen}
+        clientId={isManagerView ? (selectedClient?.id || null) : null}
+      />
     </DashboardLayout>
   );
 };

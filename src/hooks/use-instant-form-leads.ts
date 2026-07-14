@@ -313,10 +313,10 @@ export interface RegisterFormSaleInput {
   notes?: string;
 }
 
-const buildSaleProductLabel = (qty: number, embroidery: boolean, shipping?: number) =>
+export const buildSaleProductLabel = (qty: number, embroidery: boolean, shipping?: number) =>
   `${qty} camisa${qty === 1 ? '' : 's'}${embroidery ? ' c/bordado' : ''}${shipping && shipping > 0 ? ' + envío' : ''}`;
 
-const buildSaleNotes = (input: { quantity: number; embroidery: boolean; tax_rate: number; shipping?: number; extra?: string | null }) => {
+export const buildSaleNotes = (input: { quantity: number; embroidery: boolean; tax_rate: number; shipping?: number; extra?: string | null }) => {
   const meta = `__formsale__:${JSON.stringify({
     quantity: input.quantity,
     embroidery: input.embroidery,
@@ -325,6 +325,7 @@ const buildSaleNotes = (input: { quantity: number; embroidery: boolean; tax_rate
   })}`;
   return input.extra ? `${input.extra}\n${meta}` : meta;
 };
+
 
 export const parseFormSaleNotes = (notes: string | null): { quantity?: number; embroidery?: boolean; tax_rate?: number; shipping?: number; extra?: string } => {
   if (!notes) return {};

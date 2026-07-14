@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Package } from 'lucide-react';
 import { useInstantFormLeads, useInstantFormSales, parseFormSaleNotes } from '@/hooks/use-instant-form-leads';
+import { useTiktokSales } from '@/hooks/use-tiktok-sales';
 import {
   filterByRange,
   isInRange as inRange,
@@ -28,6 +29,7 @@ interface Props { clientId: string }
 export const ComfortexVolumeWidget = ({ clientId }: Props) => {
   const { data: leads = [] } = useInstantFormLeads(clientId);
   const { data: sales = [] } = useInstantFormSales(clientId);
+  const { data: tiktokSales = [] } = useTiktokSales(clientId);
   const [rangeDays, setRangeDays] = useState('all');
 
   const filtered = useMemo(() => filterByRange(leads, rangeDays), [leads, rangeDays]);
@@ -48,11 +50,16 @@ export const ComfortexVolumeWidget = ({ clientId }: Props) => {
     const maxBucket = Math.max(1, ...buckets.map((b) => b.count));
     const top = [...items].sort((a, b) => b.qty - a.qty).slice(0, 5);
 
-    // Ventas reales (desde sales registradas)
-    const salesInRange = sales
+    // Ventas reales (Instant Form + TikTok manuales)
+    const ifQty = sales
       .filter((s) => inRange(s.sale_date || s.created_at, rangeDays))
       .map((s) => parseFormSaleNotes(s.notes).quantity || 0)
       .filter((q) => q > 0);
+    const ttQty = tiktokSales
+      .filter((s) => inRange(s.sale_date || s.created_at, rangeDays))
+      .map((s) => parseFormSaleNotes(s.notes).quantity || 0)
+      .filter((q) => q > 0);
+    const salesInRange = [...ifQty, ...ttQty];
     const soldTotal = salesInRange.reduce((s, q) => s + q, 0);
     const soldAvg = salesInRange.length ? soldTotal / salesInRange.length : 0;
 
@@ -66,7 +73,8 @@ export const ComfortexVolumeWidget = ({ clientId }: Props) => {
       soldAvg,
       salesCount: salesInRange.length,
     };
-  }, [filtered, sales, rangeDays]);
+  }, [filtered, sales, tiktokSales, rangeDays]);
+
 
   return (
     <Card>
@@ -90,7 +98,7 @@ export const ComfortexVolumeWidget = ({ clientId }: Props) => {
           <>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border p-3 bg-success/5 border-success/30">
-                <p className="text-xs text-muted-foreground">Volumen vendido (real)</p>
+                <p className="text-xs text-muted-foreground">Volumen vendido (Instant Form + TikTok)</p>
                 <p className="text-2xl font-semibold tabular-nums">{stats.soldTotal.toLocaleString('es-CR')}</p>
                 <p className="text-xs text-muted-foreground">
                   camisas · {stats.salesCount} venta{stats.salesCount === 1 ? '' : 's'}
