@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, BellOff, Inbox, RefreshCw, Search, Users } from 'lucide-react';
+import { Bell, BellOff, Inbox, Loader2, RefreshCw, Search, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useBrand } from '@/contexts/BrandContext';
@@ -50,7 +50,7 @@ const SellerCrm = () => {
 
   const { data: sellers = [] } = useClientSellers(isManagerView ? (selectedClient?.id || null) : null);
 
-  const { data: leads = [], isLoading } = useSellerLeads({
+  const { data: leads = [], isLoading, isLoadingMore } = useSellerLeads({
     mode,
     clientId: isManagerView ? (selectedClient?.id || null) : null,
     sellerId: isManagerView ? (selectedSellerId === 'all' ? null : selectedSellerId) : null,
@@ -117,6 +117,9 @@ const SellerCrm = () => {
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
               <Inbox className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
               <span className="truncate">{isManagerView ? 'CRM de Vendedores' : 'Mis Leads'}</span>
+              {(isLoading || isLoadingMore) && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+              )}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
               {isManagerView
@@ -222,7 +225,10 @@ const SellerCrm = () => {
 
         {/* List */}
         {isLoading ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">Cargando leads...</p>
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Cargando leads...</p>
+          </div>
         ) : filtered.length === 0 ? (
           <Card className="p-8 text-center">
             <Inbox className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
@@ -238,16 +244,24 @@ const SellerCrm = () => {
             )}
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-            {filtered.map((lead) => (
-              <SellerLeadCard
-                key={lead.id}
-                lead={lead}
-                onOpen={() => handleOpen(lead)}
-                showClient={isManagerView}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+              {filtered.map((lead) => (
+                <SellerLeadCard
+                  key={lead.id}
+                  lead={lead}
+                  onOpen={() => handleOpen(lead)}
+                  showClient={isManagerView}
+                />
+              ))}
+            </div>
+            {isLoadingMore && (
+              <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Cargando más leads en segundo plano...
+              </div>
+            )}
+          </>
         )}
       </div>
 
