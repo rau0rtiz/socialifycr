@@ -834,6 +834,7 @@ export type Database = {
           html_content: string
           id: string
           is_published: boolean
+          kind: string
           package_type: string | null
           slug: string
           title: string
@@ -849,6 +850,7 @@ export type Database = {
           html_content?: string
           id?: string
           is_published?: boolean
+          kind?: string
           package_type?: string | null
           slug: string
           title: string
@@ -864,6 +866,7 @@ export type Database = {
           html_content?: string
           id?: string
           is_published?: boolean
+          kind?: string
           package_type?: string | null
           slug?: string
           title?: string
