@@ -137,6 +137,10 @@ export default function Producciones() {
     () => Object.fromEntries(clients.map(c => [c.id, c.name])),
     [clients],
   );
+  const clientLogoMap = useMemo(
+    () => Object.fromEntries(clients.map(c => [c.id, c.logo_url])),
+    [clients],
+  );
 
   const sheetsByClient = useMemo(() => {
     const map: Record<string, ProductionSheet[]> = {};
@@ -481,13 +485,20 @@ export default function Producciones() {
                     {/* Bottom gradient overlay */}
                     <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
 
-                    {/* Top overlay: drag + upload + status */}
+                    {/* Top overlay: drag + logo + upload */}
                     <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2">
-                      {clientFilter ? (
-                        <div className="opacity-60 lg:opacity-0 lg:group-hover:opacity-80 transition-opacity">
-                          <GripVertical className="h-4 w-4 text-white/80 drop-shadow" />
-                        </div>
-                      ) : <div />}
+                      <div className="flex items-center gap-1.5">
+                        {clientFilter ? (
+                          <div className="opacity-60 lg:opacity-0 lg:group-hover:opacity-80 transition-opacity">
+                            <GripVertical className="h-4 w-4 text-white/80 drop-shadow" />
+                          </div>
+                        ) : null}
+                        <ClientMark
+                          name={clientMap[s.client_id]}
+                          logo={clientLogoMap[s.client_id]}
+                          size="md"
+                        />
+                      </div>
                       <div className="flex items-center gap-1.5">
                         <SheetThumbnailUploader
                           sheetId={s.id}
@@ -558,7 +569,14 @@ export default function Producciones() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-noeval-cream text-sm truncate">{s.title}</div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <ClientMark
+                          name={clientMap[s.client_id]}
+                          logo={clientLogoMap[s.client_id]}
+                          size="sm"
+                        />
+                        <div className="font-medium text-noeval-cream text-sm truncate">{s.title}</div>
+                      </div>
                       <div className="flex items-center gap-3 text-[11px] text-white/60 mt-0.5">
                         <span className="flex items-center gap-1"><Folder className="h-3 w-3" />{clientMap[s.client_id] || '—'}</span>
                         {s.shoot_date && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es })}</span>}
@@ -918,5 +936,38 @@ function ClientFolderCard({
     </div>
   );
 }
+
+// ---------- Client mini-favicon ----------
+function ClientMark({
+  name,
+  logo,
+  size = 'md',
+}: {
+  name?: string;
+  logo?: string | null;
+  size?: 'sm' | 'md';
+}) {
+  const dim = size === 'sm' ? 'h-4 w-4 text-[8px]' : 'h-6 w-6 text-[9px]';
+  const initials = (name || '?')
+    .split(' ')
+    .map(w => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+  return (
+    <div
+      title={name}
+      className={`${dim} shrink-0 rounded-full overflow-hidden bg-black/60 border border-white/20 flex items-center justify-center text-white/80 font-semibold shadow-sm`}
+    >
+      {logo ? (
+        <img src={logo} alt={name || ''} className="w-full h-full object-cover" />
+      ) : (
+        <span>{initials}</span>
+      )}
+    </div>
+  );
+}
+
 
 
