@@ -333,9 +333,6 @@ export function PieceCard({
                 </SelectContent>
               </Select>
             </div>
-            <h3 className="font-serif text-xl sm:text-2xl text-noeval-ink leading-tight">
-              {local.concept || '(sin concepto)'}
-            </h3>
           </div>
         </div>
 
