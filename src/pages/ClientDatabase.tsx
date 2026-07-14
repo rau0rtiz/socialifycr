@@ -303,7 +303,8 @@ const ClientDatabase = () => {
         .from('message_sales')
         .select('customer_phone, customer_name, amount')
         .eq('client_id', clientId)
-        .not('customer_name', 'is', null);
+        .not('customer_name', 'is', null)
+        .limit(5000);
       if (error) throw error;
       const totals: Record<string, number> = {};
       for (const row of (data ?? []) as any[]) {
@@ -314,7 +315,9 @@ const ClientDatabase = () => {
       return totals;
     },
     enabled: !!clientId && !!isAlmaBendita,
-    staleTime: 60_000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const customerSpendFor = (c: CustomerContact) => {
