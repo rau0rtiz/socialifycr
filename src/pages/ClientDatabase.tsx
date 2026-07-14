@@ -698,7 +698,14 @@ const ClientDatabase = () => {
                       </TableCell>
                       <TableCell><Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[lead.status] || ''}`}>{STATUS_LABELS[lead.status] || lead.status}</Badge></TableCell>
                       <TableCell className="text-muted-foreground">{lead.source || '—'}</TableCell>
-                      <TableCell className="text-muted-foreground">{lead.setter_name || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {(() => {
+                          const spend = leadSpend.get((lead.lead_phone || '').trim())
+                            ?? leadSpend.get(lead.lead_name.toLowerCase().trim())
+                            ?? 0;
+                          return spend > 0 ? formatMoney(spend, lead.currency || 'CRC') : '—';
+                        })()}
+                      </TableCell>
                       <TableCell className="text-muted-foreground whitespace-nowrap">{lead.created_at ? format(new Date(lead.created_at), 'dd MMM yy', { locale: es }) : '—'}</TableCell>
                       <TableCell><Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(lead); }}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
                     </TableRow>
