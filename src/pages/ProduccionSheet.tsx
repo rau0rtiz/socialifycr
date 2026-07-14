@@ -32,6 +32,7 @@ import { SendToClickUpDialog } from '@/components/producciones/SendToClickUpDial
 import { SendSummaryEmailDialog } from '@/components/producciones/SendSummaryEmailDialog';
 import { GenerateShotsDialog } from '@/components/producciones/GenerateShotsDialog';
 import { PieceCard } from '@/components/producciones/PieceCard';
+import { SheetThumbnailUploader } from '@/components/producciones/SheetThumbnailUploader';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
@@ -378,12 +379,34 @@ export default function ProduccionSheet() {
                   </span>
                 </div>
 
-                <input
-                  value={local.title || ''}
-                  onChange={(e) => setLocal({ ...local, title: e.target.value })}
-                  placeholder="Título de la producción"
-                  className="mt-3 w-full bg-transparent font-serif text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-noeval-ink placeholder:text-noeval-muted/30 outline-none border-0"
-                />
+                {/* Portada + título */}
+                <div className="mt-4 flex gap-4 sm:gap-6 items-start">
+                  <div className="shrink-0 no-print">
+                    <div className="w-20 sm:w-28 md:w-32 aspect-[4/5] rounded-xl overflow-hidden border border-noeval-line bg-noeval-slate relative group">
+                      {local.thumbnail_url ? (
+                        <img src={local.thumbnail_url} alt="Portada" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-noeval-taupe/60">
+                          <span className="text-[9px] tracking-[0.3em] uppercase text-center px-2">Sin portada</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-2">
+                      <SheetThumbnailUploader
+                        sheetId={sheetId}
+                        clientId={data!.sheet.client_id}
+                        currentUrl={local.thumbnail_url ?? null}
+                        variant="full"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    value={local.title || ''}
+                    onChange={(e) => setLocal({ ...local, title: e.target.value })}
+                    placeholder="Título de la producción"
+                    className="flex-1 min-w-0 bg-transparent font-serif text-2xl sm:text-4xl md:text-5xl uppercase tracking-tight text-noeval-ink placeholder:text-noeval-muted/30 outline-none border-0"
+                  />
+                </div>
 
                 <div className="noeval-hero-rule h-px w-full mt-5 opacity-15" />
 
