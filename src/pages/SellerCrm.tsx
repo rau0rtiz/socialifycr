@@ -15,6 +15,8 @@ import { useSellerLeads, useSellerLeadCounts, type SellerLead } from '@/hooks/us
 import { useClientSellers } from '@/hooks/use-instant-form-leads';
 import { SellerLeadCard } from '@/components/seller-crm/SellerLeadCard';
 import { SellerLeadDetailDialog } from '@/components/seller-crm/SellerLeadDetailDialog';
+import { TikTokSaleDialog } from '@/components/seller-crm/TikTokSaleDialog';
+import { Music2 } from 'lucide-react';
 
 const STATUSES = [
   { value: 'all', label: 'Todos' },
