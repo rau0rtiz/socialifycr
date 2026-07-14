@@ -331,8 +331,19 @@ const Propuestas = () => {
     };
   }, [previewTarget]);
 
-  const sorted = useMemo(() => proposals, [proposals]);
+  const sorted = useMemo(
+    () => (kindFilter === 'all' ? proposals : proposals.filter((p) => ((p.kind as ProposalKind) || 'proposal') === kindFilter)),
+    [proposals, kindFilter],
+  );
 
+  const counts = useMemo(() => {
+    const c = { all: proposals.length, proposal: 0, report: 0 };
+    for (const p of proposals) {
+      const k = ((p.kind as ProposalKind) || 'proposal');
+      c[k] = (c[k] || 0) + 1;
+    }
+    return c;
+  }, [proposals]);
 
   return (
     <DashboardLayout>
@@ -341,16 +352,34 @@ const Propuestas = () => {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileText className="h-6 w-6 text-primary" />
-              Propuestas
+              Propuestas y Reportes
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Cargá HTML de una propuesta y compartila con un link o por correo.
+              Cargá HTML de una propuesta o reporte y compartilo con un link o por correo.
             </p>
           </div>
-          <Button onClick={openCreate} className="gap-2">
-            <Plus className="h-4 w-4" /> Nueva propuesta
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => openCreate('report')} className="gap-2">
+              <BarChart3 className="h-4 w-4" /> Nuevo reporte
+            </Button>
+            <Button onClick={() => openCreate('proposal')} className="gap-2">
+              <Plus className="h-4 w-4" /> Nueva propuesta
+            </Button>
+          </div>
         </div>
+
+        <Tabs value={kindFilter} onValueChange={(v) => setKindFilter(v as 'all' | ProposalKind)}>
+          <TabsList>
+            <TabsTrigger value="all">Todo ({counts.all})</TabsTrigger>
+            <TabsTrigger value="proposal" className="gap-1.5">
+              <FileText className="h-3.5 w-3.5" /> Propuestas ({counts.proposal})
+            </TabsTrigger>
+            <TabsTrigger value="report" className="gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5" /> Reportes ({counts.report})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
 
         {isLoading ? (
           <div className="flex justify-center py-16">
