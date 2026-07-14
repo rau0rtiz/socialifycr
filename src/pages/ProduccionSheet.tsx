@@ -6,14 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import {
-  ArrowLeft, Plus, Trash2, Send, Check, Film, Printer, ExternalLink, Loader2,
-  ChevronDown, ChevronUp, Copy, Sparkles, Share2, Link2, Globe, Mail,
-  Pencil, Lock, FileText, GripVertical, ArrowUp, ArrowDown,
+  ArrowLeft, Plus, Trash2, Send, Check, Copy, Printer, ExternalLink, Loader2,
+  Sparkles, Share2, Globe, Mail,
   Play, Square, Timer, RotateCcw,
 } from 'lucide-react';
 import {
@@ -36,6 +31,7 @@ import {
 import { SendToClickUpDialog } from '@/components/producciones/SendToClickUpDialog';
 import { SendSummaryEmailDialog } from '@/components/producciones/SendSummaryEmailDialog';
 import { GenerateShotsDialog } from '@/components/producciones/GenerateShotsDialog';
+import { PieceCard } from '@/components/producciones/PieceCard';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
@@ -608,9 +604,9 @@ export default function ProduccionSheet() {
                     </p>
                   </button>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {filter !== 'all' && (
-                      <div className="text-[10px] tracking-[0.25em] uppercase text-noeval-muted/70 -mb-1">
+                      <div className="col-span-full text-[10px] tracking-[0.25em] uppercase text-noeval-muted/70">
                         Cambiá el filtro a <em>Todas</em> para reordenar.
                       </div>
                     )}
@@ -648,7 +644,7 @@ export default function ProduccionSheet() {
                           className={`relative transition ${isDragging ? 'opacity-40' : ''}`}
                         >
                           {showDropLine && (
-                            <div className="absolute -top-1.5 left-0 right-0 h-0.5 bg-noeval-accent rounded-full z-10 pointer-events-none" />
+                            <div className="absolute -top-2 left-0 right-0 h-1 bg-noeval-accent rounded-full z-10 pointer-events-none" />
                           )}
                           <PieceCard
                             shot={shot}
@@ -689,7 +685,7 @@ export default function ProduccionSheet() {
                           setDropBeforeShotId(null);
                           reorderShots.mutate({ sheet_id: sheetId, items });
                         }}
-                        className="h-10 rounded-lg border-2 border-dashed border-noeval-accent/40 bg-noeval-accent/5 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-noeval-accent"
+                        className="col-span-full h-12 rounded-xl border-2 border-dashed border-noeval-accent/40 bg-noeval-accent/5 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-noeval-accent"
                       >
                         Soltar al final
                       </div>
@@ -1020,487 +1016,11 @@ export default function ProduccionSheet() {
 }
 
 
-// ---------- Piece Card ----------
-function PieceCard({
-  shot, index, onChange, onToggleRecorded, onDuplicate, onDelete,
-  canDrag = false, onDragStart, onDragEnd,
-  canMoveUp = false, canMoveDown = false, onMove,
-}: {
-  shot: SheetShot;
-  index: number;
-  onChange: (patch: Partial<SheetShot>) => void;
-  onToggleRecorded: () => void;
-  onDuplicate: () => void;
-  onDelete: () => void;
-  canDrag?: boolean;
-  onDragStart?: () => void;
-  onDragEnd?: () => void;
-  canMoveUp?: boolean;
-  canMoveDown?: boolean;
-  onMove?: (dir: 'up' | 'down') => void;
-}) {
-  const [dragArmed, setDragArmed] = useState(false);
-  const isDraft = !!shot.is_draft;
-  const [expanded, setExpanded] = useState(!shot.done || isDraft);
-  const [detailsOpen, setDetailsOpen] = useState(true);
-  const [editConcept, setEditConcept] = useState(false);
-  const [editScript, setEditScript] = useState(false);
-  const meta = typeMeta(shot.content_type);
-  const platformLabel = PLATFORMS.find(p => p.value === shot.platform)?.label;
-
-  // Local field state for debounced text inputs
-  const [local, setLocal] = useState({
-    concept: shot.concept || shot.description || '',
-    script: shot.script || '',
-    hook: shot.hook || '',
-    cta: shot.cta || '',
-    tech_notes: shot.tech_notes || '',
-  });
-
-  useEffect(() => {
-    setLocal({
-      concept: shot.concept || shot.description || '',
-      script: shot.script || '',
-      hook: shot.hook || '',
-      cta: shot.cta || '',
-      tech_notes: shot.tech_notes || '',
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shot.id]);
-
-  // Debounced save
-  useEffect(() => {
-    const t = setTimeout(() => {
-      const patch: any = {};
-      if (local.concept !== (shot.concept || shot.description || '')) {
-        patch.concept = local.concept;
-        patch.description = local.concept; // mantener compat
-      }
-      if (local.script !== (shot.script || '')) patch.script = local.script;
-      if (local.hook !== (shot.hook || '')) patch.hook = local.hook;
-      if (local.cta !== (shot.cta || '')) patch.cta = local.cta;
-      if (local.tech_notes !== (shot.tech_notes || '')) patch.tech_notes = local.tech_notes;
-      if (Object.keys(patch).length) onChange(patch);
-    }, 800);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [local]);
-
-  const recordedTime = shot.recorded_at ? format(parseISO(shot.recorded_at), 'HH:mm') : null;
-
-  // While draft, fields are always editable (no read-mode)
-  const conceptEditing = isDraft || editConcept || !local.concept;
-  const scriptEditing = isDraft || editScript;
-
-  const handleSaveIdea = () => {
-    onChange({ is_draft: false });
-    setEditConcept(false);
-    setEditScript(false);
-    toast.success('Idea guardada — el guion queda bloqueado para evitar edits accidentales.');
-  };
-
-  if (!expanded) {
-    // COLLAPSED CARD (recorded or pending)
-    return (
-      <div
-        draggable={canDrag && dragArmed}
-        onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
-        onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
-        className={`relative border rounded-2xl p-3 sm:p-4 transition group ${
-        shot.done
-          ? 'bg-noeval-surface border-noeval-line/70 opacity-90 hover:opacity-100'
-          : 'bg-noeval-surface border-noeval-ink/70 hover:border-noeval-accent'
-      }`}>
-        <div className="flex items-center gap-2 sm:gap-3">
-          {canDrag && (
-            <div className="no-print flex flex-col -ml-1 shrink-0">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onMove?.('up'); }}
-                disabled={!canMoveUp}
-                className="text-noeval-muted/60 hover:text-noeval-ink disabled:opacity-20 disabled:cursor-not-allowed p-0.5"
-                title="Subir"
-                aria-label="Subir pieza"
-              >
-                <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onMove?.('down'); }}
-                disabled={!canMoveDown}
-                className="text-noeval-muted/60 hover:text-noeval-ink disabled:opacity-20 disabled:cursor-not-allowed p-0.5"
-                title="Bajar"
-                aria-label="Bajar pieza"
-              >
-                <ArrowDown className="h-3.5 w-3.5" strokeWidth={2.5} />
-              </button>
-            </div>
-          )}
-          {canDrag && (
-            <button
-              type="button"
-              onMouseDown={() => setDragArmed(true)}
-              onMouseUp={() => setDragArmed(false)}
-              onTouchStart={() => setDragArmed(true)}
-              onTouchEnd={() => setDragArmed(false)}
-              className="no-print hidden md:inline-flex text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing shrink-0"
-              title="Arrastrar para reordenar"
-              aria-label="Reordenar"
-            >
-              <GripVertical className="h-4 w-4" />
-            </button>
-          )}
-          <span className="font-serif font-bold text-sm sm:text-base text-noeval-muted shrink-0 tracking-tight w-7 sm:w-8 tabular-nums">{String(index + 1).padStart(2, '0')}</span>
-          <span className="text-lg sm:text-xl shrink-0 leading-none" title={meta.label}>{meta.icon}</span>
-          {shot.done ? (
-            <span className="hidden sm:inline-flex items-center gap-1 text-[9px] tracking-[0.25em] uppercase text-emerald-700 bg-emerald-500/15 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
-              <Check className="h-2.5 w-2.5" strokeWidth={3} /> Grabada
-            </span>
-          ) : (
-            <span className="hidden sm:inline-flex items-center text-[9px] tracking-[0.25em] uppercase text-noeval-accent bg-noeval-accent/10 border border-noeval-accent/30 font-bold px-2 py-0.5 rounded-full">
-              Pendiente
-            </span>
-          )}
-          {platformLabel && (
-            <span className="text-[10px] tracking-[0.25em] uppercase text-noeval-muted font-semibold hidden md:inline">· {platformLabel}</span>
-          )}
-          <div className={`font-serif text-base sm:text-lg truncate flex-1 min-w-0 ${
-            shot.done ? 'text-noeval-ink' : 'text-noeval-ink'
-          }`}>
-            {local.concept || '(sin concepto)'}
-          </div>
-          {recordedTime && (
-            <span className="text-[10px] tracking-[0.2em] uppercase text-emerald-600 shrink-0 font-semibold">
-              ✓ {recordedTime}
-            </span>
-          )}
-          <button
-            onClick={() => setExpanded(true)}
-            className="no-print text-noeval-muted hover:text-noeval-ink p-1 shrink-0"
-            title="Expandir"
-          >
-            <ChevronDown className="h-4 w-4" />
-          </button>
-        </div>
-
-        {shot.done && local.tech_notes && (
-          <div className="mt-2.5 pt-2.5 border-t border-noeval-line/40">
-            <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-muted mb-1">🎥 Notas técnicas</div>
-            <div className="text-sm text-noeval-ink whitespace-pre-wrap font-serif leading-snug">{local.tech_notes}</div>
-          </div>
-        )}
-
-        {shot.clickup_url && (
-          <a
-            href={shot.clickup_url}
-            target="_blank"
-            rel="noreferrer"
-            className="no-print absolute top-3 right-10 text-[10px] tracking-[0.2em] uppercase text-noeval-accent hover:underline inline-flex items-center gap-1"
-          >
-            ClickUp <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
-      </div>
-    );
-  }
-
-
-  // EXPANDED CARD
-  return (
-    <div
-      draggable={canDrag && dragArmed}
-      onDragStart={(e) => { if (!canDrag) { e.preventDefault(); return; } e.dataTransfer.effectAllowed = 'move'; onDragStart?.(); }}
-      onDragEnd={() => { setDragArmed(false); onDragEnd?.(); }}
-      className={`relative bg-noeval-surface rounded-2xl p-3 sm:p-5 transition ${
-      isDraft
-        ? 'border border-dashed border-amber-400 bg-amber-50/40'
-        : shot.done
-          ? 'border border-emerald-500/40 bg-emerald-500/[0.04]'
-          : 'border border-noeval-ink/70 hover:border-noeval-accent'
-    }`}>
-
-      {/* Draft banner */}
-      {isDraft && (
-        <div className="mb-3 -mx-3 sm:-mx-5 -mt-3 sm:-mt-5 px-3 sm:px-5 py-2 bg-amber-100/70 border-b border-amber-300 rounded-t-2xl flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2 text-amber-900 text-[10px] sm:text-[11px] tracking-[0.25em] uppercase font-semibold">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-            Borrador · pendiente de guardar
-          </div>
-          <span className="text-[10px] sm:text-[11px] text-amber-800/80 normal-case tracking-normal">
-            Completá la idea y dale <strong>Guardar idea</strong> para confirmarla.
-          </span>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
-          {canDrag && (
-            <div className="no-print flex flex-col -ml-1">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onMove?.('up'); }}
-                disabled={!canMoveUp}
-                className="text-noeval-muted/60 hover:text-noeval-ink disabled:opacity-20 disabled:cursor-not-allowed p-0.5"
-                title="Subir"
-                aria-label="Subir pieza"
-              >
-                <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onMove?.('down'); }}
-                disabled={!canMoveDown}
-                className="text-noeval-muted/60 hover:text-noeval-ink disabled:opacity-20 disabled:cursor-not-allowed p-0.5"
-                title="Bajar"
-                aria-label="Bajar pieza"
-              >
-                <ArrowDown className="h-3.5 w-3.5" strokeWidth={2.5} />
-              </button>
-            </div>
-          )}
-          {canDrag && (
-            <button
-              type="button"
-              onMouseDown={() => setDragArmed(true)}
-              onMouseUp={() => setDragArmed(false)}
-              onTouchStart={() => setDragArmed(true)}
-              onTouchEnd={() => setDragArmed(false)}
-              className="no-print hidden md:inline-flex text-noeval-muted/60 hover:text-noeval-ink cursor-grab active:cursor-grabbing"
-              title="Arrastrar para reordenar"
-              aria-label="Reordenar"
-            >
-              <GripVertical className="h-4 w-4" />
-            </button>
-          )}
-          <span className="font-serif font-bold text-lg sm:text-xl text-noeval-muted shrink-0 tracking-tight w-8 sm:w-9 tabular-nums">{String(index + 1).padStart(2, '0')}</span>
-          {shot.done ? (
-            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-emerald-700 bg-emerald-500/15 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
-              <Check className="h-2.5 w-2.5" strokeWidth={3} /> Grabada
-            </span>
-          ) : !isDraft && (
-            <span className="inline-flex items-center text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-noeval-accent bg-noeval-accent/10 border border-noeval-accent/30 font-bold px-2 py-0.5 rounded-full">
-              Pendiente
-            </span>
-          )}
-          <Select value={shot.content_type || 'reel'} onValueChange={(v) => onChange({ content_type: v })}>
-            <SelectTrigger className="w-auto h-8 bg-transparent text-noeval-ink border border-noeval-ink rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-bold px-2.5 sm:px-3">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CONTENT_TYPES.map(t => (
-                <SelectItem key={t.value} value={t.value}>{t.icon} {t.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={shot.platform || 'instagram'} onValueChange={(v) => onChange({ platform: v })}>
-            <SelectTrigger className="w-auto h-8 bg-transparent border border-noeval-line rounded-full text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-semibold px-2.5 sm:px-3 text-noeval-muted">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PLATFORMS.map(p => (
-                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {recordedTime && (
-            <span className="text-[10px] tracking-[0.2em] uppercase text-noeval-accent font-semibold">
-              ✓ {recordedTime}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-0.5 sm:gap-1 no-print shrink-0">
-          <button
-            onClick={() => setExpanded(false)}
-            className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded hover:bg-noeval-line/30"
-            title="Colapsar"
-          >
-            <ChevronUp className="h-4 w-4" />
-          </button>
-          <button
-            onClick={onDuplicate}
-            className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded hover:bg-noeval-line/30"
-            title="Duplicar"
-          >
-            <Copy className="h-4 w-4" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="text-noeval-muted hover:text-destructive p-1.5 rounded hover:bg-destructive/10"
-            title="Eliminar"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Concepto / Título */}
-      <div className="mb-3 sm:mb-4">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted block">Concepto · idea</Label>
-          {!isDraft && local.concept && (
-            <button
-              onClick={() => setEditConcept((v) => !v)}
-              className="no-print text-[10px] tracking-[0.2em] uppercase text-noeval-muted hover:text-noeval-ink inline-flex items-center gap-1"
-              title={editConcept ? 'Bloquear edición' : 'Editar concepto'}
-            >
-              {editConcept ? <><Check className="h-3 w-3" /> Listo</> : <><Pencil className="h-3 w-3" /> Editar</>}
-            </button>
-          )}
-        </div>
-        {conceptEditing ? (
-          <input
-            value={local.concept}
-            onChange={(e) => setLocal({ ...local, concept: e.target.value })}
-            placeholder="¿De qué trata esta pieza?"
-            autoFocus={editConcept}
-            className="w-full bg-transparent font-serif text-xl sm:text-2xl text-noeval-ink outline-none border-b border-noeval-line focus:border-noeval-accent pb-2 placeholder:text-noeval-muted/50"
-          />
-        ) : (
-          <div
-            onDoubleClick={() => setEditConcept(true)}
-            className="font-serif text-xl sm:text-2xl text-noeval-ink leading-snug border-b border-transparent pb-2 cursor-default select-text break-words"
-            title="Doble clic para editar"
-          >
-            {local.concept}
-          </div>
-        )}
-      </div>
-
-      {/* Guion */}
-      <div className="mb-3 sm:mb-4">
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3 text-noeval-accent" /> Guion / Copy
-          </Label>
-          {!isDraft && local.script && (
-            <button
-              onClick={() => setEditScript((v) => !v)}
-              className="no-print text-[10px] tracking-[0.2em] uppercase text-noeval-muted hover:text-noeval-ink inline-flex items-center gap-1"
-              title={editScript ? 'Bloquear edición' : 'Editar guion'}
-            >
-              {editScript ? <><Check className="h-3 w-3" /> Listo</> : <><Pencil className="h-3 w-3" /> Editar</>}
-            </button>
-          )}
-        </div>
-        {scriptEditing || !local.script ? (
-          <Textarea
-            value={local.script}
-            onChange={(e) => setLocal({ ...local, script: e.target.value })}
-            placeholder="Escribe el guion completo, copy del post o estructura del story…"
-            rows={Math.max(4, local.script.split('\n').length + 2)}
-            autoFocus={editScript}
-            className="bg-noeval-cream border-noeval-line text-sm resize-y leading-relaxed sm:min-h-[120px]"
-          />
-        ) : (
-          <div
-            onDoubleClick={() => setEditScript(true)}
-            className="bg-noeval-cream border border-noeval-line rounded-md px-3 py-3 text-sm text-noeval-ink whitespace-pre-wrap leading-relaxed cursor-default select-text break-words"
-            title="Doble clic para editar"
-          >
-            {local.script}
-            <div className="mt-2 flex items-center gap-1 text-[9px] tracking-[0.25em] uppercase text-noeval-muted/70 font-semibold">
-              <Lock className="h-2.5 w-2.5" /> Lectura — clic en Editar para modificar
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Detalles avanzados: colapsable en móvil, siempre abierto en sm+ */}
-      <details className="mb-3 sm:mb-4 details-responsive" open={detailsOpen}>
-        <summary
-          className="sm:hidden cursor-pointer text-[10px] tracking-[0.3em] uppercase text-noeval-muted font-semibold list-none flex items-center gap-1.5 py-2 select-none"
-          onClick={(e) => { e.preventDefault(); setDetailsOpen(!detailsOpen); }}
-        >
-          <ChevronDown className="h-3.5 w-3.5 details-chevron transition-transform" />
-          Hook · CTA · Notas técnicas
-        </summary>
-        <div className="details-content space-y-3 sm:space-y-4 mt-2 sm:mt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">⚡ Hook (gancho)</Label>
-              <Input
-                value={local.hook}
-                onChange={(e) => setLocal({ ...local, hook: e.target.value })}
-                placeholder="Primera frase que detiene el scroll"
-                className="bg-noeval-cream border-noeval-line text-sm"
-              />
-            </div>
-            <div>
-              <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎯 CTA (llamada a la acción)</Label>
-              <Input
-                value={local.cta}
-                onChange={(e) => setLocal({ ...local, cta: e.target.value })}
-                placeholder="Qué pedimos hacer al final"
-                className="bg-noeval-cream border-noeval-line text-sm"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1 block">🎥 Notas técnicas</Label>
-            <Textarea
-              value={local.tech_notes}
-              onChange={(e) => setLocal({ ...local, tech_notes: e.target.value })}
-              placeholder="Cámara, ángulos, wardrobe, props, locación específica…"
-              rows={2}
-              className="bg-noeval-cream border-noeval-line text-sm resize-none"
-            />
-          </div>
-        </div>
-      </details>
-
-      {/* Action */}
-      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 pt-2 no-print">
-        {shot.clickup_url ? (
-          <a
-            href={shot.clickup_url}
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs text-noeval-accent hover:underline inline-flex items-center gap-1 self-start"
-          >
-            Ver en ClickUp <ExternalLink className="h-3 w-3" />
-          </a>
-        ) : <span className="hidden sm:block" />}
-        {isDraft ? (
-          <button
-            onClick={handleSaveIdea}
-            disabled={!local.concept.trim()}
-            className="inline-flex items-center justify-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-5 py-3 sm:py-2.5 transition w-full sm:w-auto bg-amber-500 text-white shadow-sm hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            title={!local.concept.trim() ? 'Escribí al menos un concepto' : 'Guardar y bloquear edición del guion'}
-          >
-            <Check className="h-3.5 w-3.5" strokeWidth={3} /> Guardar idea
-          </button>
-        ) : (
-          <button
-            onClick={() => { const wasDone = shot.done; onToggleRecorded(); setExpanded(wasDone); }}
-            className={`inline-flex items-center justify-center gap-1.5 text-[11px] tracking-[0.25em] uppercase font-semibold rounded-full px-5 py-3 sm:py-2.5 transition w-full sm:w-auto
-              ${shot.done
-                ? 'bg-noeval-accent text-white shadow-sm hover:bg-noeval-accent/90'
-                : 'border-2 border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream'}`}
-          >
-            {shot.done ? <><Check className="h-3.5 w-3.5" strokeWidth={3} /> Grabado · desmarcar</> : <><Check className="h-3.5 w-3.5" strokeWidth={3} /> Marcar grabado</>}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function InlineField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
       <div className="text-[10px] tracking-[0.32em] uppercase text-noeval-muted mb-1 font-semibold">{label}</div>
       {children}
-    </div>
-  );
-}
-
-function SummaryField({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted">{label}</div>
-      <div className="font-serif text-lg text-noeval-ink mt-0.5">{value}</div>
     </div>
   );
 }
