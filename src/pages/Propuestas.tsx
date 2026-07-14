@@ -233,12 +233,13 @@ const Propuestas = () => {
   };
 
   const openEmail = (p: AgencyProposalListItem) => {
+    const isReport = p.kind === 'report';
     setEmailTarget(p);
     setEmailTo('');
     setEmailToName('');
-    setEmailSubject(`Propuesta: ${p.title}`);
+    setEmailSubject(`${isReport ? 'Reporte' : 'Propuesta'}: ${p.title}`);
     setEmailMessage(
-      `Hola${p.client_name ? ' ' + p.client_name : ''},\n\nTe comparto la propuesta que preparamos para vos. Podés verla en el siguiente enlace:`,
+      `Hola${p.client_name ? ' ' + p.client_name : ''},\n\nTe comparto ${isReport ? 'el reporte' : 'la propuesta'} que preparamos para vos. Podés ver${isReport ? 'lo' : 'la'} en el siguiente enlace:`,
     );
     setEmailOpen(true);
   };
