@@ -430,7 +430,7 @@ export default function Producciones() {
                 </p>
               </Card>
             ) : view === 'grid' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {filteredSheets.map((s) => (
                   <div
                     key={s.id}
@@ -446,42 +446,67 @@ export default function Producciones() {
                     onDragLeave={() => setDropBeforeSheetId(prev => prev === s.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnSheet(s.id); }}
                     onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
-                    className={`group relative text-left bg-noeval-surface border rounded-xl p-4 hover:border-noeval-accent hover:shadow-md transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
+                    className={`group relative aspect-[4/5] overflow-hidden rounded-2xl border bg-noeval-ink hover:shadow-xl transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
-                    {clientFilter && (
-                      <div className="absolute top-2 left-2 opacity-50 lg:opacity-0 lg:group-hover:opacity-60 transition-opacity">
-                        <GripVertical className="h-4 w-4 text-noeval-muted" />
+                    {/* Thumbnail or placeholder */}
+                    {s.thumbnail_url ? (
+                      <img
+                        src={s.thumbnail_url}
+                        alt={s.title}
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-noeval-slate to-noeval-ink flex flex-col items-center justify-center text-noeval-taupe/60">
+                        <Film className="h-10 w-10 mb-2" />
+                        <span className="text-[10px] tracking-[0.3em] uppercase">Sin portada</span>
                       </div>
                     )}
-                    <div className="flex items-start justify-between gap-2">
-                      <FileText className="h-5 w-5 text-noeval-accent shrink-0 mt-0.5" />
-                      <Badge variant="outline" className={`text-[10px] ${STATUS_TONE[s.status]}`}>
+
+                    {/* Bottom gradient overlay */}
+                    <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
+
+                    {/* Top overlay: drag + upload + status */}
+                    <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2">
+                      {clientFilter ? (
+                        <div className="opacity-60 lg:opacity-0 lg:group-hover:opacity-80 transition-opacity">
+                          <GripVertical className="h-4 w-4 text-white/80 drop-shadow" />
+                        </div>
+                      ) : <div />}
+                      <div className="flex items-center gap-1.5">
+                        <SheetThumbnailUploader
+                          sheetId={s.id}
+                          clientId={s.client_id}
+                          currentUrl={s.thumbnail_url}
+                          variant="compact"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Bottom content */}
+                    <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 text-white">
+                      <Badge variant="outline" className={`text-[9px] mb-2 ${STATUS_TONE[s.status]}`}>
                         {STATUS_LABEL[s.status]}
                       </Badge>
-                    </div>
-                    <div className="mt-2 font-serif text-lg text-noeval-ink leading-tight line-clamp-2">
-                      {s.title}
-                    </div>
-                    <div className="mt-2 space-y-1 text-xs text-noeval-muted">
-                      <div className="flex items-center gap-1.5">
-                        <Folder className="h-3 w-3" /> {clientMap[s.client_id] || '—'}
+                      <div className="font-serif text-base sm:text-lg leading-tight line-clamp-2 drop-shadow">
+                        {s.title}
                       </div>
-                      {s.shoot_date && (
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="h-3 w-3" />
-                          {format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es })}
+                      <div className="mt-1.5 space-y-0.5 text-[10px] sm:text-[11px] text-white/80">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <Folder className="h-3 w-3 shrink-0" /> {clientMap[s.client_id] || '—'}
                         </div>
-                      )}
-                      {s.location && (
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="h-3 w-3" /> {s.location}
-                        </div>
-                      )}
-                      {s.producer_name && (
-                        <div className="flex items-center gap-1.5">
-                          <UserIcon className="h-3 w-3" /> {s.producer_name}
-                        </div>
-                      )}
+                        {s.shoot_date && (
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="h-3 w-3 shrink-0" />
+                            {format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es })}
+                          </div>
+                        )}
+                        {s.location && (
+                          <div className="flex items-center gap-1.5 truncate">
+                            <MapPin className="h-3 w-3 shrink-0" /> {s.location}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
