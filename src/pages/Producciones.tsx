@@ -832,41 +832,56 @@ function ClientFolderCard({
   };
 
   return (
-    <div className="group relative bg-noeval-surface border border-noeval-line rounded-xl overflow-hidden hover:border-noeval-accent transition-all hover:shadow-md flex flex-col">
-      <button onClick={onOpen} className="text-left w-full flex-1 flex flex-col">
-        {client.logo_url ? (
-          <div className="relative aspect-square w-full bg-white overflow-hidden">
+    <div className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-noeval-line bg-noeval-ink hover:shadow-xl transition-all">
+      <button onClick={onOpen} className="absolute inset-0 text-left w-full h-full">
+        {/* Dark backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-noeval-ink to-black" />
+
+        {/* Logo hero — soft-blurred fill + crisp centered logo */}
+        {client.logo_url && (
+          <>
             <img
               src={client.logo_url}
-              alt={client.name}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
+              alt=""
+              aria-hidden
+              className="absolute inset-0 w-full h-full object-cover opacity-30 blur-xl scale-110"
             />
-            <Badge variant="outline" className="absolute top-2 right-2 bg-white/90 border-noeval-line text-noeval-muted text-[10px]">
-              {count}
-            </Badge>
-          </div>
-        ) : (
-          <div className="relative aspect-square w-full p-4 flex flex-col">
-            <div className="flex items-start justify-between">
-              <Folder className="h-10 w-10 text-noeval-accent" />
-              <Badge variant="outline" className="border-noeval-line text-noeval-muted">
-                {count}
-              </Badge>
+            <div className="absolute inset-0 flex items-center justify-center p-6">
+              <img
+                src={client.logo_url}
+                alt={client.name}
+                loading="lazy"
+                className="max-h-[55%] max-w-[75%] object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] group-hover:scale-[1.05] transition-transform duration-500"
+              />
             </div>
-            <div className="mt-auto pt-3 font-serif text-xl text-noeval-ink truncate">
-              {client.name}
+          </>
+        )}
+        {!client.logo_url && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="font-serif text-5xl uppercase tracking-wide text-white/25">
+              {client.name.slice(0, 2)}
             </div>
           </div>
         )}
-        {client.logo_url && (
-          <div className="px-3 py-2 border-t border-noeval-line bg-noeval-surface flex items-center justify-between gap-2">
-            <span className="font-medium text-sm text-noeval-ink truncate">{client.name}</span>
-            <span className="text-[10px] text-noeval-muted shrink-0">
-              {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
-            </span>
+
+        {/* Vignette bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black via-black/60 to-transparent" />
+
+        {/* Count chip */}
+        <Badge variant="outline" className="absolute top-3 right-3 bg-white/10 border-white/20 text-white text-[10px] backdrop-blur">
+          {count}
+        </Badge>
+
+        {/* Client name */}
+        <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+          <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-accent mb-1">Cliente</div>
+          <div className="font-serif text-base sm:text-lg text-white leading-tight truncate">
+            {client.name}
           </div>
-        )}
+          <div className="text-[10px] text-white/60 mt-0.5">
+            {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
+          </div>
+        </div>
       </button>
 
       <input
@@ -877,26 +892,27 @@ function ClientFolderCard({
         onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ''; }}
       />
 
-      <div className="absolute top-2 left-2 flex gap-1 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+      {/* Action buttons — overlay */}
+      <div className="absolute top-3 left-3 flex gap-1 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10">
         <button
           onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
           title={client.logo_url ? 'Cambiar logo' : 'Subir logo'}
           disabled={uploading}
-          className="h-7 w-7 rounded-md bg-white/95 border border-noeval-line flex items-center justify-center hover:bg-white shadow-sm"
+          className="p-1.5 rounded-md bg-black/60 backdrop-blur border border-white/10 text-white hover:bg-black/80 transition"
         >
           {uploading
-            ? <Loader2 className="h-3.5 w-3.5 animate-spin text-noeval-muted" />
-            : <ImagePlus className="h-3.5 w-3.5 text-noeval-ink" />}
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <ImagePlus className="h-3.5 w-3.5" />}
         </button>
       </div>
 
-      <div className="absolute bottom-2 right-2 flex gap-1 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+      <div className="absolute bottom-3 right-3 opacity-70 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10">
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           title="Eliminar carpeta"
-          className="p-1 rounded bg-white/95 border border-noeval-line shadow-sm hover:bg-destructive/10"
+          className="p-1.5 rounded-md bg-black/60 backdrop-blur border border-white/10 text-white hover:bg-destructive transition"
         >
-          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
