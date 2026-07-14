@@ -156,12 +156,13 @@ const Propuestas = () => {
   };
 
 
-  const openCreate = () => {
+  const openCreate = (initialKind: ProposalKind = 'proposal') => {
     setEditing(null);
     setTitle('');
     setClientName('');
     setHtml('');
     setIsPublished(true);
+    setKind(initialKind);
     setEditorPreview(false);
     setEditorOpen(true);
   };
@@ -172,6 +173,7 @@ const Propuestas = () => {
     setClientName(p.client_name || '');
     setHtml('');
     setIsPublished(p.is_published);
+    setKind((p.kind as ProposalKind) || 'proposal');
     setEditorPreview(false);
     setEditorOpen(true);
     setEditorHtmlLoading(true);
