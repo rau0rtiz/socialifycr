@@ -611,7 +611,7 @@ const Propuestas = () => {
             {emailTarget && (
               <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <LinkIcon className="h-3.5 w-3.5" />
-                <span className="truncate">{buildShareUrl(emailTarget.slug)}</span>
+                <span className="truncate">{buildShareUrl(emailTarget.slug, (emailTarget.kind as ProposalKind) || 'proposal')}</span>
               </div>
             )}
           </div>
