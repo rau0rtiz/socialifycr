@@ -609,9 +609,9 @@ export default function ProduccionSheet() {
                     </p>
                   </button>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {filter !== 'all' && (
-                      <div className="text-[10px] tracking-[0.25em] uppercase text-noeval-muted/70 -mb-1">
+                      <div className="col-span-full text-[10px] tracking-[0.25em] uppercase text-noeval-muted/70">
                         Cambiá el filtro a <em>Todas</em> para reordenar.
                       </div>
                     )}
@@ -649,7 +649,7 @@ export default function ProduccionSheet() {
                           className={`relative transition ${isDragging ? 'opacity-40' : ''}`}
                         >
                           {showDropLine && (
-                            <div className="absolute -top-1.5 left-0 right-0 h-0.5 bg-noeval-accent rounded-full z-10 pointer-events-none" />
+                            <div className="absolute -top-2 left-0 right-0 h-1 bg-noeval-accent rounded-full z-10 pointer-events-none" />
                           )}
                           <PieceCard
                             shot={shot}
@@ -690,7 +690,7 @@ export default function ProduccionSheet() {
                           setDropBeforeShotId(null);
                           reorderShots.mutate({ sheet_id: sheetId, items });
                         }}
-                        className="h-10 rounded-lg border-2 border-dashed border-noeval-accent/40 bg-noeval-accent/5 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-noeval-accent"
+                        className="col-span-full h-12 rounded-xl border-2 border-dashed border-noeval-accent/40 bg-noeval-accent/5 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-noeval-accent"
                       >
                         Soltar al final
                       </div>
