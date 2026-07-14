@@ -41,7 +41,7 @@ export const useAgencyProposals = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('agency_proposals')
-        .select('id,title,client_name,contact_point,amount,currency,package_type,slug,is_published,created_by,created_at,updated_at')
+        .select('id,title,client_name,contact_point,amount,currency,package_type,kind,slug,is_published,created_by,created_at,updated_at')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as AgencyProposalListItem[];
