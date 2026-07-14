@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  ArrowLeft, Plus, Trash2, Send, Check, Printer, ExternalLink, Loader2,
+  ArrowLeft, Plus, Trash2, Send, Check, Copy, Printer, ExternalLink, Loader2,
   Sparkles, Share2, Globe, Mail,
+  Play, Square, Timer, RotateCcw,
 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
