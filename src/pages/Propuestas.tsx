@@ -223,7 +223,7 @@ const Propuestas = () => {
   };
 
   const copyLink = async (p: AgencyProposalListItem) => {
-    const url = buildShareUrl(p.slug);
+    const url = buildShareUrl(p.slug, (p.kind as ProposalKind) || 'proposal');
     const ok = await copyToClipboard(url);
     if (ok) {
       toast.success('Link copiado al portapapeles');
