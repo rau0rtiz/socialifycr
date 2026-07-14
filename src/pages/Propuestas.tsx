@@ -411,8 +411,13 @@ const Propuestas = () => {
                         <span title="Oculta" className="text-muted-foreground shrink-0"><EyeOff className="h-4 w-4" /></span>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {format(new Date(p.created_at), "d MMM yyyy", { locale: es })}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : 'bg-primary/10 text-primary'}`}>
+                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                        {p.kind === 'report' ? 'Reporte' : 'Propuesta'}
+                      </span>
+                      <span>·</span>
+                      <span>{format(new Date(p.created_at), "d MMM yyyy", { locale: es })}</span>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0 space-y-2">
