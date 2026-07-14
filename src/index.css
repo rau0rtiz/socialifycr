@@ -271,6 +271,30 @@
 .noeval-scope .border-noeval-line { border-color: var(--noeval-line); }
 .noeval-scope .border-noeval-accent { border-color: var(--noeval-accent); }
 
+/* Dark tone variant for production sheets — swaps paper/surface to deep ink
+   and inverts ink/cream so all existing bg-noeval-* / text-noeval-* classes
+   remain legible without touching component markup. */
+.noeval-scope.noeval-dark {
+  --noeval-paper: #141414;
+  --noeval-surface: #1E1E1E;
+  --noeval-ink: #F5F1E8;      /* body text / former dark chips become light */
+  --noeval-cream: #141414;     /* on-dark labels become dark on light chip */
+  --noeval-taupe: #2A2A2A;
+  --noeval-muted: #9A9A9A;
+  --noeval-line: rgba(245, 241, 232, 0.10);
+  background-image:
+    radial-gradient(circle at 18% -5%, rgba(232, 93, 58, 0.10), transparent 42%),
+    radial-gradient(circle at 100% 100%, rgba(245, 241, 232, 0.03), transparent 52%);
+}
+.noeval-scope.noeval-dark .noeval-paper-hero {
+  background: var(--noeval-surface);
+  border-color: var(--noeval-line);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 24px 60px -32px rgba(0, 0, 0, 0.6);
+}
+.noeval-scope.noeval-dark .shot-card.done { background: rgba(245, 241, 232, 0.04); }
+.noeval-scope.noeval-dark .progress-track { background: rgba(245, 241, 232, 0.08); }
+
+
 
 /* ===== Producciones: stamp "GRABADO" ===== */
 .noeval-scope .grabado-stamp {
