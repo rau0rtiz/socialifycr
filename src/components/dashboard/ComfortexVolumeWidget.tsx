@@ -98,7 +98,7 @@ export const ComfortexVolumeWidget = ({ clientId }: Props) => {
           <>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border p-3 bg-success/5 border-success/30">
-                <p className="text-xs text-muted-foreground">Volumen vendido (real)</p>
+                <p className="text-xs text-muted-foreground">Volumen vendido (Instant Form + TikTok)</p>
                 <p className="text-2xl font-semibold tabular-nums">{stats.soldTotal.toLocaleString('es-CR')}</p>
                 <p className="text-xs text-muted-foreground">
                   camisas · {stats.salesCount} venta{stats.salesCount === 1 ? '' : 's'}
