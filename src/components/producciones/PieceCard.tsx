@@ -174,7 +174,7 @@ export function PieceCard({
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-lg leading-none" title={meta.label}>{meta.icon}</span>
               {shot.done ? (
                 <span className="inline-flex items-center gap-1 text-[9px] tracking-[0.25em] uppercase text-emerald-700 bg-emerald-500/15 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
@@ -191,9 +191,6 @@ export function PieceCard({
                 </span>
               )}
             </div>
-            <h3 className="font-serif text-lg sm:text-xl text-noeval-ink truncate">
-              {local.concept || '(sin concepto)'}
-            </h3>
           </div>
 
           <div className="flex items-center gap-0.5 no-print shrink-0">
