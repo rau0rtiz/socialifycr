@@ -188,6 +188,9 @@ export function PieceCard({
                 </span>
               )}
             </div>
+            <div className="mt-1 font-serif text-lg text-noeval-ink truncate">
+              {shot.concept || shot.description || <span className="text-noeval-muted/60 italic">(sin nombre)</span>}
+            </div>
           </div>
 
           <div className="flex items-center gap-0.5 no-print shrink-0">
