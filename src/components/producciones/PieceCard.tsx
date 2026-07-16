@@ -65,7 +65,7 @@ export function PieceCard({
 }: PieceCardProps) {
   const [dragArmed, setDragArmed] = useState(false);
   const isDraft = !!shot.is_draft;
-  const [expanded, setExpanded] = useState(!shot.done || isDraft);
+  const [expanded, setExpanded] = useState(isDraft);
   const [editScript, setEditScript] = useState(false);
   const meta = typeMeta(shot.content_type);
   const platformLabel = PLATFORMS.find(p => p.value === shot.platform)?.label;
