@@ -27,7 +27,7 @@ const SECTIONS: SectionDef[] = [
   { key: 'ventas_section', label: 'Ventas', icon: ShoppingCart, widgets: VENTAS_WIDGET_LABELS },
   { key: 'email_marketing_section', label: 'Email Marketing', icon: Mail, widgets: {} },
   { key: 'business_setup_section', label: 'Business Setup', icon: Settings2, widgets: {} },
-  { key: 'asistencia_section', label: 'Asistencia', icon: ClipboardCheck, widgets: {} },
+  
   { key: null, label: 'Client Database', icon: Database, locked: true, widgets: {} },
 ];
 
