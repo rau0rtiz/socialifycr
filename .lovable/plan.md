@@ -1,34 +1,74 @@
-# Plan: dejar Calma solo con redes, contenido y pauta
+# Ocean Clinic — ¿el dashboard está listo?
 
-Calma CR (`49fce869-…`) no tiene fila en `client_feature_flags`, por lo que hoy todos los flags están en `true` (default). La solución es insertar una fila con todos los flags de Ventas / CRM / Leads apagados y dejar el resto encendido. Es un cambio de configuración de un solo cliente, sin código.
+Respuesta corta: **parcialmente**. Inventario y medición de canales están cubiertos (con ajustes menores). Las agendas por especialista médico y los correos automáticos de confirmación **no existen todavía** y requieren desarrollo.
 
-## Qué se apaga (Ventas, CRM y captación de leads)
+---
 
-- `ventas_section` (oculta toda la sección "Ventas" y su navegación)
-- `sales_tracking`, `sales_goal`, `pipeline_summary`, `closure_rate`
-- `ad_sales_ranking`, `sales_by_product`, `sales_by_brand`
-- `lead_source`, `reservations_widget`
-- `setter_tracker`, `setter_daily`, `setter_checklist`, `checklist_items`
-- `story_store`, `story_revenue_tracker`
-- `whatsapp_conversations`, `collections`
-- `instant_form_leads`, `funnel`
-- `monthly_sales_report`
+## 1. Inventario — ✅ Listo (con ajuste)
 
-## Qué se deja encendido (redes, contenido, pauta)
+Ya existe un módulo de inventario completo (usado por Tissue y Alma Bendita) con:
+- Productos, variantes (talla/color/SKU), stock por variante, movimientos de stock, precio y costo.
+- Catálogos de marcas, categorías, colores, tallas.
+- Recepción de stock, historial de precios y descuento automático al vender.
 
-- Dashboard base: `dashboard`, `social_followers`, `reach_chart`, `social_performance`, `stories_section`, `publication_goals`
-- Contenido: `contenido_section`, `content_grid`, `content_calendar`, `instagram_posts`, `youtube_videos`, `video_ideas`, `ai_insights`, `competitors`, `giveaway`
-- Pauta: `campaigns`, `generador_pauta`
-- Reportes de desempeño: `reportes_section`, `ai_report_generator`, `social_performance_report`, `launch_report`
-- Setup: `business_setup_section`
+**Encaja para una clínica** para: insumos médicos, productos de venta, kits, medicamentos vendidos, etc. Solo hay que activar la sección "Business Setup / Productos" en las feature flags del cliente Ocean Clinic y cargar el catálogo.
 
-## Detalles técnicos
+Limitación: no maneja lotes ni fechas de vencimiento (importantes en clínica). Si se necesita, es un add-on.
 
-- Un solo `INSERT INTO public.client_feature_flags (client_id, …) VALUES (…)` vía la herramienta de migraciones, con los flags de ventas/CRM en `false`.
-- No se toca UI ni hooks: `use-client-features` ya oculta widgets/rutas cuando el flag está en `false`.
-- Reversible en cualquier momento desde Accesos → Feature Flags del cliente.
+---
 
-## Dudas antes de aplicar
+## 2. Agendas por especialista médico — ❌ No existe
 
-1. `email_marketing_section` (Comunicaciones / campañas de email): ¿se apaga también o lo dejamos porque sirve para newsletter/contenido?
-2. `asistencia_section` (asistencia tipo Speak Up): asumo que no aplica y lo dejo apagado. Confirmar si querés dejarlo encendido.
+Lo que hay hoy: `setter_appointments` — agenda de llamadas de venta atadas a un "setter/closer" comercial. **No** modela:
+- Especialistas médicos (doctores) como recurso agendable.
+- Servicios/tratamientos con duración configurable.
+- Disponibilidad y horarios de cada médico.
+- Vista de calendario por médico.
+- Sala/consultorio.
+
+Se puede construir sobre la infraestructura existente (clients, team_members, notifications, RLS), pero es un **módulo nuevo** — no es un simple toggle.
+
+Alcance mínimo estimado:
+- Tabla `clinic_specialists` (nombre, especialidad, color, horario base).
+- Tabla `clinic_services` (nombre, duración, precio).
+- Tabla `clinic_appointments` (paciente, especialista, servicio, inicio/fin, estado, canal).
+- UI: calendario semanal por especialista + vista general, formulario de reserva, estados (confirmada/cancelada/atendida/no-show).
+
+---
+
+## 3. Correos de confirmación de agenda — ❌ No existe para citas
+
+La infraestructura de correos (Resend + edge functions + logs `sent_emails`) **sí existe** y ya se usa para invitaciones, recordatorios de avatar, propuestas, campañas, funnel, etc.
+
+Falta:
+- Plantilla "confirmación de cita" con datos del paciente/médico/hora.
+- Trigger o edge function que dispare al crear/modificar/cancelar una cita.
+- Opcional: recordatorio 24h antes (requiere cron).
+- Opcional: reprogramación/cancelación desde el link del correo.
+
+Es trabajo directo una vez exista el módulo de agendas del punto 2.
+
+---
+
+## 4. Medir canales de agenda — ✅ Base lista, pequeño ajuste
+
+Ya existe:
+- `instant_form_lead_sources` — múltiples fuentes por cliente (Meta, TikTok, landing, DM, etc.).
+- `utm_tracking` — captura UTMs.
+- Widget "Lead Source" en Ventas que muestra distribución por canal.
+- Funnel público con atribución por origen.
+
+Para agendas de clínica solo hay que:
+- Añadir campo `source` / `utm_source` a la nueva tabla `clinic_appointments`.
+- Reusar el widget de canales apuntándolo a citas en lugar de a `message_sales`.
+
+---
+
+## Recomendación de fases
+
+1. **Fase 1 — Activar lo que ya sirve (rápido):** habilitar inventario y feature flags de Ocean Clinic, cargar catálogo de servicios/productos.
+2. **Fase 2 — Módulo de agendas clínicas:** especialistas, servicios, calendario, estados.
+3. **Fase 3 — Correos + medición:** plantilla de confirmación, recordatorio 24h, widget de canales de citas.
+4. **Fase 4 (opcional):** portal público para que el paciente agende solo, con captura de UTM.
+
+Confirmame qué fases querés priorizar y armo el plan de implementación detallado de cada una.
