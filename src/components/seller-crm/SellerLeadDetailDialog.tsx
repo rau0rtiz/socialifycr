@@ -109,20 +109,9 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
       setIvaPct('13');
       setNotes('');
       setGeneratedMessage((lead as any)?.ai_message || '');
-      // Preload existing visit info if any
-      const existingVisit = (lead as any)?.store_visit_at as string | null | undefined;
-      if (existingVisit) {
-        const d = new Date(existingVisit);
-        setVisitDate(d);
-        setVisitTime(
-          new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Costa_Rica', hour: '2-digit', minute: '2-digit', hour12: false })
-            .format(d)
-        );
-      } else {
-        setVisitDate(undefined);
-        setVisitTime('10:00');
-      }
-      setVisitNotes((lead as any)?.store_visit_notes || '');
+    }
+  }, [open, lead?.id]);
+
     }
   }, [open, lead?.id]);
 
