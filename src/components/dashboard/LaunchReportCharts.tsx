@@ -18,7 +18,7 @@ import {
   Area,
   LineChart,
 } from 'recharts';
-import { Pencil, TrendingDown } from 'lucide-react';
+import { Pencil, TrendingDown, Download } from 'lucide-react';
 import type { LaunchReport } from '@/hooks/use-launch-reports';
 import { computeCostPerSignup, computeCostPerConversation } from '@/lib/format-launch-report';
 
@@ -84,18 +84,61 @@ export const LaunchReportCharts = ({ reports, currency, onEditDate }: Props) => 
 
   const fmt = (n: number, dec = 0) => `${symbol}${n.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
 
+  const escapeCsv = (v: string | number | null | undefined) => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const handleExportCsv = () => {
+    const header = ['Fecha', 'Inversión', 'Moneda', 'Conversaciones', 'Costo/conversación', 'Ingresos', 'Costo/ingreso', 'CTR Manychat (%)'];
+    const rows = [...filtered]
+      .sort((a, b) => a.report_date.localeCompare(b.report_date))
+      .map((r) => {
+        const spend = Number(r.spend_snapshot) || 0;
+        const cps = computeCostPerSignup(spend, r.group_signups || 0);
+        const cpc = computeCostPerConversation(spend, r.conversations_snapshot || 0);
+        return [
+          r.report_date,
+          spend.toFixed(2),
+          currency,
+          r.conversations_snapshot || 0,
+          cpc.toFixed(2),
+          r.group_signups || 0,
+          cps.toFixed(2),
+          Number(r.manychat_ctr || 0).toFixed(2),
+        ];
+      });
+    const csv = [header, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const stamp = filtered.length
+      ? `${filtered[0].report_date}_${filtered[filtered.length - 1].report_date}`
+      : new Date().toISOString().slice(0, 10);
+    link.download = `reporte-lanzamiento_${stamp}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4 pt-2 border-t border-border/50">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-sm font-semibold text-foreground">Histórico del Lanzamiento</h3>
-        <Tabs value={range} onValueChange={(v) => setRange(v as Range)}>
-          <TabsList className="h-8">
-            <TabsTrigger value="7" className="text-xs h-6 px-2">7d</TabsTrigger>
-            <TabsTrigger value="14" className="text-xs h-6 px-2">14d</TabsTrigger>
-            <TabsTrigger value="30" className="text-xs h-6 px-2">30d</TabsTrigger>
-            <TabsTrigger value="all" className="text-xs h-6 px-2">Todo</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={handleExportCsv} disabled={filtered.length === 0}>
+            <Download className="h-3.5 w-3.5" />
+            Exportar CSV
+          </Button>
+          <Tabs value={range} onValueChange={(v) => setRange(v as Range)}>
+            <TabsList className="h-8">
+              <TabsTrigger value="7" className="text-xs h-6 px-2">7d</TabsTrigger>
+              <TabsTrigger value="14" className="text-xs h-6 px-2">14d</TabsTrigger>
+              <TabsTrigger value="30" className="text-xs h-6 px-2">30d</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs h-6 px-2">Todo</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* Totals */}
