@@ -99,6 +99,7 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
   const upsert = useUpsertLaunchReport();
   const createLaunch = useCreateLaunch();
   const archiveLaunch = useArchiveLaunch();
+  const updateLaunch = useUpdateLaunch();
 
   // Current day report from DB (if any)
   const existing = useMemo(() => allReports.find((r) => r.report_date === dateStr), [allReports, dateStr]);
@@ -107,8 +108,13 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
   const prevDayStr = format(subDays(date, 1), 'yyyy-MM-dd');
   const prevReport = useMemo(() => allReports.find((r) => r.report_date === prevDayStr), [allReports, prevDayStr]);
 
-  // Campaign comes from the launch itself
-  const campaignId = selectedLaunch?.campaign_id || '';
+  // Campaign: per-day override takes precedence over launch default
+  const [campaignId, setCampaignId] = useState<string>('');
+  const [applyToLaunch, setApplyToLaunch] = useState(false);
+  useEffect(() => {
+    setCampaignId(existing?.campaign_id || selectedLaunch?.campaign_id || '');
+    setApplyToLaunch(false);
+  }, [existing?.campaign_id, selectedLaunch?.campaign_id, selectedLaunchId, dateStr]);
 
   const [groupSignups, setGroupSignups] = useState<string>('0');
   const [manychatCtr, setManychatCtr] = useState<string>('0');
