@@ -141,7 +141,6 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
 
   const handleStatusChange = async (newStatus: InstantFormLeadStatus) => {
     if (newStatus === 'venta') { setSaleDialogOpen(true); return; }
-    if (newStatus === 'visita_tienda') { setVisitDialogOpen(true); return; }
     try {
       await updateStatus.mutateAsync({ leadId: lead.id, status: newStatus });
       toast.success(`Estado: ${STATUS_OPTIONS.find(o => o.value === newStatus)?.label}`);
@@ -150,37 +149,6 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
     }
   };
 
-  const handleSaveVisit = async () => {
-    if (!visitDate) { toast.error('Elegí una fecha para la visita'); return; }
-    const [hh, mm] = (visitTime || '10:00').split(':').map((n) => parseInt(n, 10) || 0);
-    // Build a UTC ISO from CR-local date + time (CR is UTC-6, no DST)
-    const y = visitDate.getFullYear();
-    const mo = visitDate.getMonth();
-    const d = visitDate.getDate();
-    // Local wall time in CR → convert to UTC by adding 6h
-    const utcMs = Date.UTC(y, mo, d, hh + 6, mm, 0, 0);
-    const iso = new Date(utcMs).toISOString();
-    setSavingVisit(true);
-    try {
-      const { error } = await supabase
-        .from('instant_form_leads')
-        .update({
-          lead_status: 'visita_tienda',
-          store_visit_at: iso,
-          store_visit_notes: visitNotes.trim() || null,
-        } as any)
-        .eq('id', lead.id);
-      if (error) throw error;
-      qc.invalidateQueries({ queryKey: ['seller-leads'] });
-      qc.invalidateQueries({ queryKey: ['instant-form-leads'] });
-      toast.success('Visita agendada', { description: format(visitDate, "d MMM yyyy", { locale: es }) + ' · ' + visitTime });
-      setVisitDialogOpen(false);
-    } catch (e: any) {
-      toast.error('No se pudo agendar la visita', { description: e.message });
-    } finally {
-      setSavingVisit(false);
-    }
-  };
 
   const isComfortex = (lead.client_name || '').toLowerCase().includes('comfortex')
     || lead.client_id === 'd90a18b8-dad0-4f52-9447-c13f8f19f0d7';
