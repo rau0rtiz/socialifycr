@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Copy, Rocket, Save, RefreshCw, TrendingDown, TrendingUp, Archive, Plus, Lock } from 'lucide-react';
+import { CalendarIcon, Copy, Rocket, Save, RefreshCw, TrendingDown, TrendingUp, Archive, Plus, Lock, Download } from 'lucide-react';
 import {
   useLaunchReports,
   useUpsertLaunchReport,
