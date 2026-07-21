@@ -132,13 +132,19 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
   const { data: insights, isLoading: insightsLoading, refetch: refetchInsights } = useCampaignDayInsights(
     clientId,
     connectionId,
-    campaignId || null,
-    date,
+    isArchived ? null : (campaignId || null),
+    isArchived ? null : date,
   );
 
-  const spend = insights?.spend ?? existing?.spend_snapshot ?? 0;
-  const conversations = insights?.conversations ?? existing?.conversations_snapshot ?? 0;
-  const currency = insights?.currency ?? existing?.currency ?? 'USD';
+  // Archived launches: always use stored snapshots (Meta may no longer serve that data).
+  // Active launches: prefer live insights, fall back to stored values.
+  const spend = isArchived
+    ? (existing?.spend_snapshot ?? 0)
+    : (insights?.spend ?? existing?.spend_snapshot ?? 0);
+  const conversations = isArchived
+    ? (existing?.conversations_snapshot ?? 0)
+    : (insights?.conversations ?? existing?.conversations_snapshot ?? 0);
+  const currency = existing?.currency ?? insights?.currency ?? 'USD';
 
   const signupsNum = parseInt(groupSignups) || 0;
   const ctrNum = parseFloat(manychatCtr) || 0;
