@@ -344,12 +344,36 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
             </div>
           )}
           <div className={eligibleConnections.length > 1 ? '' : 'md:col-span-2'}>
-            <Label className="text-xs text-muted-foreground">Campaña del lanzamiento</Label>
-            <div className="h-9 mt-1 px-3 rounded-md border border-border/50 bg-muted/30 flex items-center text-sm text-muted-foreground truncate">
-              {selectedLaunch?.campaign_name || (campaignId ? `Campaña ${campaignId}` : 'Sin campaña asignada')}
-            </div>
+            <Label className="text-xs text-muted-foreground">
+              Campaña {existing?.campaign_id && existing.campaign_id !== selectedLaunch?.campaign_id ? '(override para este día)' : 'del día'}
+            </Label>
+            <Select
+              value={campaignId}
+              onValueChange={setCampaignId}
+              disabled={isArchived || campaignsLoading || campaigns.length === 0}
+            >
+              <SelectTrigger className="h-9 mt-1">
+                <SelectValue placeholder={campaignsLoading ? 'Cargando…' : 'Selecciona campaña'} />
+              </SelectTrigger>
+              <SelectContent>
+                {campaigns.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {campaignId && selectedLaunch && campaignId !== selectedLaunch.campaign_id && !isArchived && (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground mt-1.5">
+                <input
+                  type="checkbox"
+                  checked={applyToLaunch}
+                  onChange={(e) => setApplyToLaunch(e.target.checked)}
+                />
+                Guardar como campaña por defecto del lanzamiento
+              </label>
+            )}
           </div>
         </div>
+
 
         {/* Auto KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
