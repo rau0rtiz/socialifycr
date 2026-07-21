@@ -34,7 +34,7 @@ const STATUS_OPTIONS: { value: InstantFormLeadStatus; label: string }[] = [
   { value: 'new', label: 'Nuevo' },
   { value: 'contactado', label: 'Contactado' },
   { value: 'seguimiento', label: 'Seguimiento' },
-  { value: 'visita_tienda', label: 'Visita a la tienda' },
+  { value: 'visita_tienda', label: 'Va a visitar' },
   { value: 'venta', label: 'Venta' },
   { value: 'perdido', label: 'Perdido' },
 ];
