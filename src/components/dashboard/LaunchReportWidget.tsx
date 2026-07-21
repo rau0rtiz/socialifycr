@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Copy, Rocket, Save, RefreshCw, TrendingDown, TrendingUp, Archive, Plus, Lock } from 'lucide-react';
+import { CalendarIcon, Copy, Rocket, Save, RefreshCw, TrendingDown, TrendingUp, Archive, Plus, Lock, Download } from 'lucide-react';
 import {
   useLaunchReports,
   useUpsertLaunchReport,
@@ -454,6 +454,50 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
           <Button variant="secondary" onClick={handleCopy} className="gap-2">
             <Copy className="h-4 w-4" />
             Copiar reporte
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const escapeCsv = (v: any) => {
+                const s = v === null || v === undefined ? '' : String(v);
+                return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+              };
+              const header = ['Fecha', 'Inversión', 'Moneda', 'Conversaciones', 'Costo/conversación', 'Ingresos', 'Costo/ingreso', 'CTR Manychat (%)'];
+              const rows = [...allReports]
+                .sort((a, b) => a.report_date.localeCompare(b.report_date))
+                .map((r) => {
+                  const spend = Number(r.spend_snapshot) || 0;
+                  const cps = computeCostPerSignup(spend, r.group_signups || 0);
+                  const cpc = computeCostPerConversation(spend, r.conversations_snapshot || 0);
+                  return [
+                    r.report_date,
+                    spend.toFixed(2),
+                    currency,
+                    r.conversations_snapshot || 0,
+                    cpc.toFixed(2),
+                    r.group_signups || 0,
+                    cps.toFixed(2),
+                    Number(r.manychat_ctr || 0).toFixed(2),
+                  ];
+                });
+              const csv = [header, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\n');
+              const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              const stamp = allReports.length
+                ? `${[...allReports].sort((a,b)=>a.report_date.localeCompare(b.report_date))[0].report_date}_${[...allReports].sort((a,b)=>a.report_date.localeCompare(b.report_date))[allReports.length-1].report_date}`
+                : new Date().toISOString().slice(0, 10);
+              const launchName = launches?.find((l) => l.id === selectedLaunchId)?.name || 'lanzamiento';
+              link.download = `${launchName.replace(/\s+/g, '-').toLowerCase()}_${stamp}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+            }}
+            disabled={allReports.length === 0}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Exportar CSV
           </Button>
           {existing && (
             <Badge variant="outline" className="self-center">
