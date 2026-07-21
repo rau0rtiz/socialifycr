@@ -18,7 +18,7 @@ import {
   Area,
   LineChart,
 } from 'recharts';
-import { Pencil, TrendingDown } from 'lucide-react';
+import { Pencil, TrendingDown, Download } from 'lucide-react';
 import type { LaunchReport } from '@/hooks/use-launch-reports';
 import { computeCostPerSignup, computeCostPerConversation } from '@/lib/format-launch-report';
 
