@@ -23,7 +23,7 @@ const STATUSES = [
   { value: 'new', label: 'Nuevos' },
   { value: 'contactado', label: 'Contactados' },
   { value: 'seguimiento', label: 'Seguimiento' },
-  { value: 'visita_tienda', label: 'Visita tienda' },
+  { value: 'visita_tienda', label: 'Va a visitar' },
   { value: 'venta', label: 'Ventas' },
   { value: 'perdido', label: 'Perdidos' },
 ];

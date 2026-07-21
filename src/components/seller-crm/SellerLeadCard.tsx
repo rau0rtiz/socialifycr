@@ -10,7 +10,7 @@ const STATUS_STYLES: Record<string, { label: string; chip: string; bar: string; 
   new:           { label: 'Nuevo',        chip: 'bg-[hsl(var(--status-new))]/12 text-[hsl(var(--status-new))]',                 bar: 'bg-[hsl(var(--status-new))]',          dot: 'bg-[hsl(var(--status-new))]' },
   contactado:    { label: 'Contactado',   chip: 'bg-[hsl(var(--status-contactado))]/12 text-[hsl(var(--status-contactado))]',   bar: 'bg-[hsl(var(--status-contactado))]',   dot: 'bg-[hsl(var(--status-contactado))]' },
   seguimiento:   { label: 'Seguimiento',  chip: 'bg-[hsl(var(--status-seguimiento))]/12 text-[hsl(var(--status-seguimiento))]', bar: 'bg-[hsl(var(--status-seguimiento))]',  dot: 'bg-[hsl(var(--status-seguimiento))]' },
-  visita_tienda: { label: 'Visita',       chip: 'bg-[hsl(var(--status-visita))]/12 text-[hsl(var(--status-visita))]',           bar: 'bg-[hsl(var(--status-visita))]',       dot: 'bg-[hsl(var(--status-visita))]' },
+  visita_tienda: { label: 'Va a visitar', chip: 'bg-[hsl(var(--status-visita))]/12 text-[hsl(var(--status-visita))]',           bar: 'bg-[hsl(var(--status-visita))]',       dot: 'bg-[hsl(var(--status-visita))]' },
   venta:         { label: 'Venta',        chip: 'bg-[hsl(var(--status-venta))]/15 text-[hsl(var(--status-venta))]',              bar: 'bg-[hsl(var(--status-venta))]',        dot: 'bg-[hsl(var(--status-venta))]' },
   perdido:       { label: 'Perdido',      chip: 'bg-[hsl(var(--status-perdido))]/12 text-[hsl(var(--status-perdido))]',         bar: 'bg-[hsl(var(--status-perdido))]',      dot: 'bg-[hsl(var(--status-perdido))]' },
 };
@@ -101,11 +101,12 @@ export const SellerLeadCard = ({ lead, onOpen, showClient = false }: Props) => {
               {cantidad ? <span className="opacity-70"> · {String(cantidad)}</span> : null}
             </p>
           )}
-          {status === 'visita_tienda' && (lead as any).store_visit_at && (
+          {status === 'visita_tienda' && (
             <p className="flex items-center gap-1 text-[hsl(var(--status-visita))] font-medium">
-              <Store className="h-3 w-3" /> {formatVisit((lead as any).store_visit_at)}
+              <Store className="h-3 w-3" /> Va a visitar
             </p>
           )}
+
           <p className="flex items-center gap-1 text-[11px]">
             <Clock className="h-3 w-3 opacity-70" /> hace {formatRelative(lead.created_time || lead.created_at)}
           </p>
