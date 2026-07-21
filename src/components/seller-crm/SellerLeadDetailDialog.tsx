@@ -258,31 +258,14 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => setVisitDialogOpen(true)}
+              onClick={() => handleStatusChange('visita_tienda')}
+              disabled={status === 'visita_tienda' || updateStatus.isPending}
               className="sm:flex-1 h-12 font-bold tracking-wide uppercase text-[13px] rounded-xl border-[hsl(var(--status-visita))]/40 text-[hsl(var(--status-visita))] hover:bg-[hsl(var(--status-visita))]/10 hover:text-[hsl(var(--status-visita))]"
             >
-              <Store className="h-5 w-5 mr-2" /> {(lead as any).store_visit_at ? 'Reagendar visita' : 'Agendar visita'}
+              <Store className="h-5 w-5 mr-2" /> {status === 'visita_tienda' ? 'Marcado: va a visitar' : 'Va a visitar'}
             </Button>
           </div>
 
-          {/* Visita agendada */}
-          {(lead as any).store_visit_at && (
-            <div className="flex items-start gap-3 rounded-xl border border-[hsl(var(--status-visita))]/30 bg-[hsl(var(--status-visita))]/8 p-3.5">
-              <div className="p-2 rounded-lg bg-background border shadow-sm shrink-0">
-                <Store className="h-4 w-4 text-[hsl(var(--status-visita))]" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--status-visita))]/80">Visita agendada</p>
-                <p className="text-sm font-bold text-[hsl(var(--status-visita))] mt-0.5">{formatDate((lead as any).store_visit_at)}</p>
-                {(lead as any).store_visit_notes && (
-                  <p className="text-xs text-muted-foreground mt-1">{(lead as any).store_visit_notes}</p>
-                )}
-              </div>
-              <Button size="sm" variant="ghost" className="h-8 text-xs shrink-0" onClick={() => setVisitDialogOpen(true)}>
-                Reagendar
-              </Button>
-            </div>
-          )}
 
           {/* Origen: teléfono + campaña */}
           {(cleanPhone || lead.campaign_name || lead.ad_name || lead.form_name) && (
