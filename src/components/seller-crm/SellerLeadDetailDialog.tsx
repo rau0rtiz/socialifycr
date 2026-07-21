@@ -112,8 +112,7 @@ export const SellerLeadDetailDialog = ({ lead, open, onOpenChange }: Props) => {
     }
   }, [open, lead?.id]);
 
-    }
-  }, [open, lead?.id]);
+
 
   const subtotal = useMemo(() => {
     const n = parseFloat(subtotalStr.replace(/[^\d.,]/g, '').replace(',', '.'));
