@@ -101,11 +101,12 @@ export const SellerLeadCard = ({ lead, onOpen, showClient = false }: Props) => {
               {cantidad ? <span className="opacity-70"> · {String(cantidad)}</span> : null}
             </p>
           )}
-          {status === 'visita_tienda' && (lead as any).store_visit_at && (
+          {status === 'visita_tienda' && (
             <p className="flex items-center gap-1 text-[hsl(var(--status-visita))] font-medium">
-              <Store className="h-3 w-3" /> {formatVisit((lead as any).store_visit_at)}
+              <Store className="h-3 w-3" /> Va a visitar
             </p>
           )}
+
           <p className="flex items-center gap-1 text-[11px]">
             <Clock className="h-3 w-3 opacity-70" /> hace {formatRelative(lead.created_time || lead.created_at)}
           </p>
