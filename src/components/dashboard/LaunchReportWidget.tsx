@@ -158,7 +158,7 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
       toast.error('Este lanzamiento está archivado');
       return;
     }
-    const campaignName = campaigns.find((c) => c.id === campaignId)?.name || selectedLaunch?.campaign_name || null;
+    const campaignName = campaigns.find((c) => c.id === campaignId)?.name || existing?.campaign_name || selectedLaunch?.campaign_name || null;
     try {
       await upsert.mutateAsync({
         client_id: clientId,
@@ -172,6 +172,14 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
         group_signups: signupsNum,
         manychat_ctr: ctrNum,
       });
+      if (applyToLaunch && selectedLaunch && campaignId && campaignId !== selectedLaunch.campaign_id) {
+        await updateLaunch.mutateAsync({
+          id: selectedLaunch.id,
+          client_id: clientId,
+          campaign_id: campaignId,
+          campaign_name: campaignName,
+        });
+      }
       toast.success('Reporte guardado');
     } catch (e: any) {
       toast.error('No se pudo guardar', { description: e?.message });
