@@ -22,6 +22,7 @@ import {
   useLaunches,
   useCreateLaunch,
   useArchiveLaunch,
+  useUpdateLaunch,
 } from '@/hooks/use-launch-reports';
 import { useMetaConnections } from '@/hooks/use-platform-connections';
 import {
@@ -98,6 +99,7 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
   const upsert = useUpsertLaunchReport();
   const createLaunch = useCreateLaunch();
   const archiveLaunch = useArchiveLaunch();
+  const updateLaunch = useUpdateLaunch();
 
   // Current day report from DB (if any)
   const existing = useMemo(() => allReports.find((r) => r.report_date === dateStr), [allReports, dateStr]);
@@ -106,8 +108,13 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
   const prevDayStr = format(subDays(date, 1), 'yyyy-MM-dd');
   const prevReport = useMemo(() => allReports.find((r) => r.report_date === prevDayStr), [allReports, prevDayStr]);
 
-  // Campaign comes from the launch itself
-  const campaignId = selectedLaunch?.campaign_id || '';
+  // Campaign: per-day override takes precedence over launch default
+  const [campaignId, setCampaignId] = useState<string>('');
+  const [applyToLaunch, setApplyToLaunch] = useState(false);
+  useEffect(() => {
+    setCampaignId(existing?.campaign_id || selectedLaunch?.campaign_id || '');
+    setApplyToLaunch(false);
+  }, [existing?.campaign_id, selectedLaunch?.campaign_id, selectedLaunchId, dateStr]);
 
   const [groupSignups, setGroupSignups] = useState<string>('0');
   const [manychatCtr, setManychatCtr] = useState<string>('0');
@@ -151,7 +158,7 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
       toast.error('Este lanzamiento está archivado');
       return;
     }
-    const campaignName = campaigns.find((c) => c.id === campaignId)?.name || selectedLaunch?.campaign_name || null;
+    const campaignName = campaigns.find((c) => c.id === campaignId)?.name || existing?.campaign_name || selectedLaunch?.campaign_name || null;
     try {
       await upsert.mutateAsync({
         client_id: clientId,
@@ -165,6 +172,14 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
         group_signups: signupsNum,
         manychat_ctr: ctrNum,
       });
+      if (applyToLaunch && selectedLaunch && campaignId && campaignId !== selectedLaunch.campaign_id) {
+        await updateLaunch.mutateAsync({
+          id: selectedLaunch.id,
+          client_id: clientId,
+          campaign_id: campaignId,
+          campaign_name: campaignName,
+        });
+      }
       toast.success('Reporte guardado');
     } catch (e: any) {
       toast.error('No se pudo guardar', { description: e?.message });
@@ -329,12 +344,36 @@ export const LaunchReportWidget = ({ clientId }: Props) => {
             </div>
           )}
           <div className={eligibleConnections.length > 1 ? '' : 'md:col-span-2'}>
-            <Label className="text-xs text-muted-foreground">Campaña del lanzamiento</Label>
-            <div className="h-9 mt-1 px-3 rounded-md border border-border/50 bg-muted/30 flex items-center text-sm text-muted-foreground truncate">
-              {selectedLaunch?.campaign_name || (campaignId ? `Campaña ${campaignId}` : 'Sin campaña asignada')}
-            </div>
+            <Label className="text-xs text-muted-foreground">
+              Campaña {existing?.campaign_id && existing.campaign_id !== selectedLaunch?.campaign_id ? '(override para este día)' : 'del día'}
+            </Label>
+            <Select
+              value={campaignId}
+              onValueChange={setCampaignId}
+              disabled={isArchived || campaignsLoading || campaigns.length === 0}
+            >
+              <SelectTrigger className="h-9 mt-1">
+                <SelectValue placeholder={campaignsLoading ? 'Cargando…' : 'Selecciona campaña'} />
+              </SelectTrigger>
+              <SelectContent>
+                {campaigns.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {campaignId && selectedLaunch && campaignId !== selectedLaunch.campaign_id && !isArchived && (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground mt-1.5">
+                <input
+                  type="checkbox"
+                  checked={applyToLaunch}
+                  onChange={(e) => setApplyToLaunch(e.target.checked)}
+                />
+                Guardar como campaña por defecto del lanzamiento
+              </label>
+            )}
           </div>
         </div>
+
 
         {/* Auto KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
