@@ -216,7 +216,7 @@ const Propuestas = () => {
           is_published: isPublished,
           kind,
         });
-        toast.success(kind === 'report' ? 'Reporte creado' : 'Propuesta creada');
+        toast.success(kind === 'report' ? 'Reporte creado' : kind === 'content_plan' ? 'Plan creado' : 'Propuesta creada');
       }
       setEditorOpen(false);
     } catch (err) {
