@@ -1,0 +1,2 @@
+ALTER TABLE public.agency_proposals DROP CONSTRAINT IF EXISTS agency_proposals_kind_check;
+ALTER TABLE public.agency_proposals ADD CONSTRAINT agency_proposals_kind_check CHECK (kind IN ('proposal','report','content_plan'));
