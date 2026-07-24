@@ -471,8 +471,10 @@ export default function Pagos() {
         />
       )}
     </div>
+    </DashboardLayout>
   );
 }
+
 
 // ---------- Client edit dialog ----------
 
