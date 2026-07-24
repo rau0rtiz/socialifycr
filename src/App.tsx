@@ -55,6 +55,7 @@ const ProduccionPublica = lazy(() => import("./pages/ProduccionPublica"));
 const SellerCrm = lazy(() => import("./pages/SellerCrm"));
 const Propuestas = lazy(() => import("./pages/Propuestas"));
 const PropuestaPublica = lazy(() => import("./pages/PropuestaPublica"));
+const AgencyResumen = lazy(() => import("./pages/agencia/Resumen"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
