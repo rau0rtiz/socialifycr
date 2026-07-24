@@ -57,7 +57,7 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
       >
         {isAgencyHub ? <AgencySidebar /> : <Sidebar />}
         <div className="flex-1 flex flex-col min-w-0 h-full">
-          <TopBar />
+          {!isAgencyHub && <TopBar />}
           <main
             className={cn(
               'flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden relative overscroll-contain [-webkit-overflow-scrolling:touch]',
