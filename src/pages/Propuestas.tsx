@@ -474,6 +474,11 @@ const Propuestas = () => {
                     <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => openEmail(p)}>
                       <Mail className="h-3.5 w-3.5" /> Enviar
                     </Button>
+                    {p.kind === 'content_plan' && (
+                      <Button size="sm" className="gap-1.5 h-8 bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setPlanTarget(p)}>
+                        <Sparkles className="h-3.5 w-3.5" /> A hoja de producción
+                      </Button>
+                    )}
                     <Button size="sm" variant="ghost" className="gap-1.5 h-8" onClick={() => openEdit(p)} title="Editar HTML">
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
