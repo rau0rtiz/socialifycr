@@ -234,91 +234,51 @@
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* ===== Agency Hub scope — Neon Noir (black + orange) ===== */
+/* ===== Agency Hub scope — Light (white + orange accent) ===== */
 .agency-shell {
-  --background: 240 6% 5%;           /* #0A0A0B */
-  --foreground: 0 0% 98%;
-  --card: 240 5% 6%;                 /* #0E0E10 */
-  --card-foreground: 0 0% 98%;
-  --popover: 240 6% 5%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 20 100% 55%;            /* neon orange #FF6A1A */
-  --primary-foreground: 0 0% 6%;
-  --secondary: 240 5% 10%;
-  --secondary-foreground: 0 0% 100%;
-  --muted: 240 5% 10%;
-  --muted-foreground: 0 0% 92%;
-  --accent: 20 100% 55%;
-  --accent-foreground: 0 0% 6%;
-  --border: 0 0% 100% / 0.35;
-  --input: 0 0% 100% / 0.35;
-  --ring: 20 100% 55%;
-  --sidebar-background: 240 6% 5%;
-  --sidebar-foreground: 0 0% 100%;
-  --sidebar-primary: 20 100% 55%;
-  --sidebar-primary-foreground: 0 0% 6%;
-  --sidebar-accent: 240 5% 10%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 0 0% 100% / 0.35;
-  --sidebar-ring: 20 100% 55%;
-  color-scheme: dark;
+  --background: 0 0% 100%;
+  --foreground: 240 10% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 10%;
+  --primary: 20 100% 50%;              /* orange accent */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 5% 96%;
+  --secondary-foreground: 240 10% 10%;
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 5% 40%;
+  --accent: 20 100% 50%;
+  --accent-foreground: 0 0% 100%;
+  --border: 240 6% 90%;
+  --input: 240 6% 90%;
+  --ring: 20 100% 50%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 240 10% 15%;
+  --sidebar-primary: 20 100% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 240 5% 96%;
+  --sidebar-accent-foreground: 240 10% 10%;
+  --sidebar-border: 240 6% 90%;
+  --sidebar-ring: 20 100% 50%;
+  color-scheme: light;
 }
 .agency-shell main {
   background-color: hsl(var(--background));
-  background-image:
-    linear-gradient(hsl(0 0% 100% / 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(0 0% 100% / 0.025) 1px, transparent 1px);
-  background-size: 40px 40px;
 }
 .agency-shell .agency-glow {
-  box-shadow: 0 0 30px -8px hsl(20 100% 55% / 0.35);
+  box-shadow: 0 8px 30px -12px hsl(20 100% 50% / 0.25);
 }
 .agency-shell .agency-kpi { position: relative; overflow: hidden; }
 .agency-shell .agency-kpi::after {
   content: "";
   position: absolute; left: 0; bottom: 0; height: 2px; width: 0;
-  background: hsl(20 100% 55%);
+  background: hsl(20 100% 50%);
   transition: width .5s ease;
 }
 .agency-shell .agency-kpi:hover::after { width: 100%; }
 
-/* Force high-contrast text + borders inside agency shell */
-.agency-shell,
-.agency-shell * {
-  border-color: hsl(0 0% 100% / 0.35);
-}
-.agency-shell .text-muted-foreground,
-.agency-shell .text-slate-400,
-.agency-shell .text-slate-500,
-.agency-shell .text-gray-400,
-.agency-shell .text-gray-500,
-.agency-shell .text-zinc-400,
-.agency-shell .text-zinc-500,
-.agency-shell .text-neutral-400,
-.agency-shell .text-neutral-500 {
-  color: hsl(0 0% 92%);
-}
 
-/* Force readable text on buttons, inputs, tabs inside agency shell */
-.agency-shell button,
-.agency-shell [role="tab"],
-.agency-shell input,
-.agency-shell textarea,
-.agency-shell select {
-  color: hsl(0 0% 100%);
-}
-.agency-shell button svg,
-.agency-shell [role="tab"] svg {
-  color: inherit;
-  opacity: 1;
-}
-.agency-shell [role="tab"][data-state="inactive"] {
-  color: hsl(0 0% 88%);
-}
-.agency-shell input::placeholder,
-.agency-shell textarea::placeholder {
-  color: hsl(0 0% 70%);
-}
 
 /* Producciones scope opts out of agency-shell white overrides (paper theme) */
 .agency-shell .noeval-scope,
