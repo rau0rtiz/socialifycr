@@ -37,8 +37,6 @@ const columnAccent: Record<AgencyCrmStatus, string> = {
 export const CrmKanban = ({ leads, contractClients, search, onOpenLead }: Props) => {
   const { updateLead } = useAgencyCrmLeads();
   const { toast } = useToast();
-  const { data: team = [] } = useInternalTeam();
-  const teamById = useMemo(() => Object.fromEntries(team.map((m) => [m.id, m])), [team]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
 
