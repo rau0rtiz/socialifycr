@@ -12,16 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-
-interface ContractClient {
-  name: string;
-  seller_name: string | null;
-  start_date: string | null;
-}
-
 interface Props {
   leads: AgencyCrmLead[];
-  contractClients: ContractClient[];
   search: string;
   onOpenLead: (lead: AgencyCrmLead) => void;
 }
@@ -35,7 +27,7 @@ const columnAccent: Record<AgencyCrmStatus, string> = {
   perdido: 'from-red-500/40 to-red-500/0',
 };
 
-export const CrmKanban = ({ leads, contractClients, search, onOpenLead }: Props) => {
+export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
   const { updateLead } = useAgencyCrmLeads();
   const { toast } = useToast();
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -51,14 +43,6 @@ export const CrmKanban = ({ leads, contractClients, search, onOpenLead }: Props)
         (l.phone || '').toLowerCase().includes(q),
     );
   }, [leads, search]);
-
-  const syntheticContracts = useMemo(() => {
-    const leadNames = new Set(leads.map((l) => l.name.trim().toLowerCase()));
-    const q = search.trim().toLowerCase();
-    return contractClients
-      .filter((c) => !leadNames.has(c.name.toLowerCase()))
-      .filter((c) => !q || c.name.toLowerCase().includes(q));
-  }, [leads, contractClients, search]);
 
   const columns = useMemo(() => {
     const map: Record<string, AgencyCrmLead[]> = {};
@@ -93,8 +77,7 @@ export const CrmKanban = ({ leads, contractClients, search, onOpenLead }: Props)
           const status = col.value;
           const items = columns[status] || [];
           const isOver = overCol === status;
-          const showContracts = status === 'cliente' ? syntheticContracts : [];
-          const total = items.length + showContracts.length;
+          const total = items.length;
 
           return (
             <div
@@ -187,25 +170,6 @@ export const CrmKanban = ({ leads, contractClients, search, onOpenLead }: Props)
                     <div className="mt-2 text-[10px] text-white/40 uppercase tracking-wider">
                       {format(parseISO(lead.created_at), 'd MMM', { locale: es })}
                     </div>
-                  </div>
-                ))}
-
-                {/* Synthetic contract clients (not draggable) */}
-                {showContracts.map((c) => (
-                  <div
-                    key={`contract-${c.name}`}
-                    className="rounded-lg border border-green-500/40 bg-green-500/10 p-3"
-                    title="Cliente activo (desde Contratos)"
-                  >
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-300 shrink-0" />
-                      <div className="font-semibold text-sm truncate text-white">{c.name}</div>
-                    </div>
-                    {c.start_date && (
-                      <div className="mt-1 text-[10px] text-white/50">
-                        Desde {format(parseISO(c.start_date), 'd MMM yyyy', { locale: es })}
-                      </div>
-                    )}
                   </div>
                 ))}
 
