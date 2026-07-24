@@ -783,6 +783,14 @@ const Propuestas = () => {
 
         </DialogContent>
       </Dialog>
+
+      <AddPlanToSheetDialog
+        open={!!planTarget}
+        onOpenChange={(v) => { if (!v) setPlanTarget(null); }}
+        planId={planTarget?.id ?? null}
+        planTitle={planTarget?.title ?? ''}
+        defaultClientName={planTarget?.client_name ?? null}
+      />
     </DashboardLayout>
   );
 };
