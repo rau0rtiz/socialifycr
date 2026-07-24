@@ -299,6 +299,27 @@
   color: hsl(0 0% 92%);
 }
 
+/* Force readable text on buttons, inputs, tabs inside agency shell */
+.agency-shell button,
+.agency-shell [role="tab"],
+.agency-shell input,
+.agency-shell textarea,
+.agency-shell select {
+  color: hsl(0 0% 100%);
+}
+.agency-shell button svg,
+.agency-shell [role="tab"] svg {
+  color: inherit;
+  opacity: 1;
+}
+.agency-shell [role="tab"][data-state="inactive"] {
+  color: hsl(0 0% 88%);
+}
+.agency-shell input::placeholder,
+.agency-shell textarea::placeholder {
+  color: hsl(0 0% 70%);
+}
+
 /* ===== Producciones scope — Socialify brand ===== */
 .noeval-scope {
   --noeval-paper: #F5F1E8;       /* cream canvas (editorial paper) */
