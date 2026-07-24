@@ -6,11 +6,12 @@ import {
   getLostReasonLabel,
   useAgencyCrmLeads,
 } from '@/hooks/use-agency-crm-leads';
-import { Mail, Phone, GripVertical, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+
 
 interface ContractClient {
   name: string;
