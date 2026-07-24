@@ -7,7 +7,7 @@ import {
   useAgencyCrmLeads,
 } from '@/hooks/use-agency-crm-leads';
 import { Mail, Phone, GripVertical, User } from 'lucide-react';
-import { useInternalTeam } from '@/hooks/use-internal-team';
+import { InternalTeamMember, useInternalTeam } from '@/hooks/use-internal-team';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
