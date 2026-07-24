@@ -54,7 +54,7 @@ const managementMenuItems = [
   { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },
   { title: 'CRM Agencia', url: '/agencia/crm', icon: UserPlus },
   { title: 'Producciones', url: '/agencia/producciones', icon: Clapperboard },
-  { title: 'Propuestas y Reportes', url: '/agencia/propuestas', icon: FileText },
+  { title: 'Documentación', url: '/agencia/propuestas', icon: FileText },
   { title: 'Archivos', url: '/archivos', icon: FolderOpen },
   { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
 ];
