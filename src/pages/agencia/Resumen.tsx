@@ -110,7 +110,7 @@ const AgencyResumen = () => {
               Monitor de métricas críticas y flujos activos.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))] animate-pulse" />
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
               Live
@@ -124,7 +124,7 @@ const AgencyResumen = () => {
             <Link
               key={kpi.key}
               to={kpi.href}
-              className="agency-kpi group rounded-2xl border border-white/5 bg-card p-6 transition-colors hover:border-primary/30"
+              className="agency-kpi group rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/30"
             >
               <div className="flex items-center justify-between">
                 <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
@@ -184,12 +184,12 @@ const QuickAction = ({
 }) => (
   <Link
     to={to}
-    className="group relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-white/[0.02] to-transparent p-8 transition-all hover:border-primary/20"
+    className="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 transition-all hover:border-primary/20"
   >
     <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-primary/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
     <div className="relative flex items-start justify-between gap-6">
       <div className="space-y-5">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-black/40 text-primary transition-all group-hover:border-primary/40 group-hover:agency-glow">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-muted text-primary transition-all group-hover:border-primary/40 group-hover:agency-glow">
           <Icon className="h-6 w-6" />
         </div>
         <div>
@@ -201,7 +201,7 @@ const QuickAction = ({
           </p>
         </div>
       </div>
-      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-muted-foreground transition-all group-hover:border-primary/40 group-hover:text-primary">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-all group-hover:border-primary/40 group-hover:text-primary">
         <ArrowUpRight className="h-5 w-5" />
       </div>
     </div>
