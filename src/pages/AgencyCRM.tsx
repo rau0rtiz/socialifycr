@@ -2,32 +2,19 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, UserPlus, Mail, Phone, Loader2, Wallet, KanbanSquare, Users, CheckCircle2 } from 'lucide-react';
+import { Plus, Search, UserPlus, Loader2, Wallet, KanbanSquare, Users } from 'lucide-react';
 import {
   AgencyCrmLead,
-  CRM_STATUS_OPTIONS,
-  getLostReasonLabel,
-  getStatusMeta,
   useAgencyCrmLeads,
 } from '@/hooks/use-agency-crm-leads';
 import { CrmLeadDialog } from '@/components/agency-crm/CrmLeadDialog';
+import { CrmKanban } from '@/components/agency-crm/CrmKanban';
 import { SellerCommissionsView } from '@/components/agency-crm/SellerCommissionsView';
 import { ClientsView } from '@/components/agency-crm/ClientsView';
-import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+
 
 interface ContractClient {
   name: string;
