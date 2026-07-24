@@ -534,6 +534,7 @@ function ClientDialog({
             notes: notes.trim() || null,
             active,
             monthly_amount: monthlyTotal,
+            iva_rate: effectiveIva,
           })
           .eq('id', clientId);
         if (error) throw error;
@@ -546,12 +547,14 @@ function ClientDialog({
             notes: notes.trim() || null,
             active,
             monthly_amount: monthlyTotal,
+            iva_rate: effectiveIva,
           })
           .select()
           .single();
         if (error) throw error;
         clientId = data.id;
       }
+
 
       // Sync dates: delete removed, upsert kept/new
       const keptIds = drafts.filter(d => d.id).map(d => d.id!) as string[];
