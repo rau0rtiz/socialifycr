@@ -1,0 +1,1 @@
+UPDATE public.profiles SET avatar_url = 'https://chqhyqylnbtwyzhjkxlu.supabase.co/storage/v1/object/public/content-images/avatars/ale-profile.jpg' WHERE id = 'db5e422f-8520-4f30-8573-d5b240931b39';
