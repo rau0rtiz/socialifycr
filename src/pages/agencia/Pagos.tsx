@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, ChevronLeft, ChevronRight, CheckCircle2, Circle, DollarSign, AlertTriangle, Users, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+
 
 interface PayClient {
   id: string;
@@ -246,7 +248,9 @@ export default function Pagos() {
     setMonthDate(new Date(monthDate.getFullYear(), monthDate.getMonth() + delta, 1));
 
   return (
+    <DashboardLayout>
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
+
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Pagos</h1>
@@ -467,8 +471,10 @@ export default function Pagos() {
         />
       )}
     </div>
+    </DashboardLayout>
   );
 }
+
 
 // ---------- Client edit dialog ----------
 
