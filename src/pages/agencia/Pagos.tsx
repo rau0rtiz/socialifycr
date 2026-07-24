@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, ChevronLeft, ChevronRight, CheckCircle2, Circle, DollarSign, AlertTriangle, Users, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+
 
 interface PayClient {
   id: string;
