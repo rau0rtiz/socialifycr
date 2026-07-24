@@ -318,26 +318,25 @@ export default function Pagos() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-6xl mx-auto">
-        <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-          {/* Header */}
-          <div className="px-6 py-5 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-bold text-foreground tracking-tight">Gestión de Cobros</h1>
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-0.5">
-                Panel de control financiero
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={() => setShowNewClient(true)} size="sm" className="gap-1.5 h-8">
-                <Plus className="h-3.5 w-3.5" /> Nuevo cliente
-              </Button>
-            </div>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="px-8 py-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Gestión de Cobros</h1>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-1">
+              Panel de control financiero
+            </p>
           </div>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowNewClient(true)} size="sm" className="gap-1.5 h-8">
+              <Plus className="h-3.5 w-3.5" /> Nuevo cliente
+            </Button>
+          </div>
+        </div>
 
-          {/* Month selector strip */}
-          <div className="px-6 py-3 bg-muted/30 border-b border-border flex items-center gap-2 overflow-x-auto">
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => shiftMonth(-1)}>
+        {/* Month selector strip */}
+        <div className="px-8 py-3 bg-muted/30 border-b border-border flex items-center gap-2 overflow-x-auto">
+          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => shiftMonth(-1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             {monthPills.map((d) => {
@@ -581,9 +580,9 @@ export default function Pagos() {
                 ))}
               </div>
             </div>
-          )}
-        </div>
+        )}
       </div>
+
 
       {showNewClient && (
         <ClientDialog
