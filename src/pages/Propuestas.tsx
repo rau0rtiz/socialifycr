@@ -96,10 +96,21 @@ const Propuestas = () => {
   const [editing, setEditing] = useState<AgencyProposalListItem | null>(null);
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
+  const [clientId, setClientId] = useState<string>('');
   const [html, setHtml] = useState('');
   const [isPublished, setIsPublished] = useState(true);
   const [kind, setKind] = useState<ProposalKind>('proposal');
   const [planTarget, setPlanTarget] = useState<AgencyProposalListItem | null>(null);
+
+  const { data: clientsList = [] } = useQuery({
+    queryKey: ['doc-clients-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('clients').select('id, name').order('name');
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailTarget, setEmailTarget] = useState<AgencyProposalListItem | null>(null);
