@@ -634,6 +634,15 @@ export default function Pagos() {
           existingDates={dates.filter(d => d.client_id === editClient.id)}
         />
       )}
+      {manageRow && (
+        <ManagePaymentDialog
+          open
+          onClose={() => setManageRow(null)}
+          row={manageRow}
+          periodIso={periodIso}
+          onSaved={() => qc.invalidateQueries({ queryKey: ['agency-pay-records', periodIso] })}
+        />
+      )}
     </DashboardLayout>
   );
 }
