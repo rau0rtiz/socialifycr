@@ -77,8 +77,8 @@ Deno.serve(async (req) => {
       .eq('id', sheet.client_id)
       .maybeSingle();
 
-    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-    if (!apiKey) return json({ error: 'ANTHROPIC_API_KEY not configured' }, 500);
+    const apiKey = Deno.env.get('LOVABLE_API_KEY');
+    if (!apiKey) return json({ error: 'LOVABLE_API_KEY not configured' }, 500);
 
     const planText = stripHtml(plan_html).slice(0, 40000);
 
@@ -114,36 +114,36 @@ ${planText}
 
 Convertí este plan en piezas para la hoja de producción siguiendo las reglas. Respondé solo con el JSON.`;
 
-    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+    const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model,
-        max_tokens: 8000,
         temperature: 0.6,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        response_format: { type: 'json_object' },
       }),
     });
 
-    if (!anthropicRes.ok) {
-      const errText = await anthropicRes.text();
-      console.error('Anthropic error', anthropicRes.status, errText);
+    if (!aiRes.ok) {
+      const errText = await aiRes.text();
+      console.error('Lovable AI error', aiRes.status, errText);
       const map: Record<number, string> = {
-        401: 'API key de Anthropic inválida. Revisá el secreto ANTHROPIC_API_KEY.',
-        429: 'Anthropic rate limit. Intentá en unos segundos.',
-        529: 'Anthropic está sobrecargado. Reintentá pronto.',
-        400: 'Anthropic rechazó la petición.',
+        401: 'LOVABLE_API_KEY inválida.',
+        402: 'Sin créditos de Lovable AI. Recargá en el workspace.',
+        429: 'Rate limit del gateway. Reintentá en unos segundos.',
       };
-      return json({ error: map[anthropicRes.status] ?? `Anthropic error ${anthropicRes.status}`, raw: errText.slice(0, 500) }, 502);
+      return json({ error: map[aiRes.status] ?? `Lovable AI error ${aiRes.status}`, raw: errText.slice(0, 500) }, 502);
     }
 
-    const data = await anthropicRes.json();
-    const text: string = data?.content?.[0]?.text ?? '';
+    const data = await aiRes.json();
+    const text: string = data?.choices?.[0]?.message?.content ?? '';
 
     const jsonStr = (() => {
       const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
