@@ -358,10 +358,13 @@ const Propuestas = () => {
               Propuestas y Reportes
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Cargá HTML de una propuesta o reporte y compartilo con un link o por correo.
+              Cargá HTML de una propuesta, reporte o plan de contenido y compartilo con un link o por correo.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => openCreate('content_plan')} className="gap-2">
+              <ClipboardList className="h-4 w-4" /> Nuevo plan
+            </Button>
             <Button variant="outline" onClick={() => openCreate('report')} className="gap-2">
               <BarChart3 className="h-4 w-4" /> Nuevo reporte
             </Button>
@@ -379,6 +382,9 @@ const Propuestas = () => {
             </TabsTrigger>
             <TabsTrigger value="report" className="gap-1.5">
               <BarChart3 className="h-3.5 w-3.5" /> Reportes ({counts.report})
+            </TabsTrigger>
+            <TabsTrigger value="content_plan" className="gap-1.5">
+              <ClipboardList className="h-3.5 w-3.5" /> Planes ({counts.content_plan})
             </TabsTrigger>
           </TabsList>
         </Tabs>
