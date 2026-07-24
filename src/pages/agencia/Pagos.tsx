@@ -42,6 +42,7 @@ interface PayRecord {
   paid: boolean;
   paid_at: string | null;
   payment_method: string | null;
+  notes?: string | null;
 }
 
 const PAYMENT_METHODS = [
