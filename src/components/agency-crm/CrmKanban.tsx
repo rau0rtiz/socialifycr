@@ -31,8 +31,8 @@ const columnAccent: Record<AgencyCrmStatus, string> = {
 export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
   const { data: team = [] } = useInternalTeam();
   const teamById = useMemo(() => {
-    const m = new Map<string, string>();
-    team.forEach((t) => m.set(t.id, (t.full_name || t.email || '').split(' ')[0] || 'Sin nombre'));
+    const m = new Map<string, InternalTeamMember>();
+    team.forEach((t) => m.set(t.id, t));
     return m;
   }, [team]);
   const { updateLead } = useAgencyCrmLeads();
