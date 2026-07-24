@@ -340,7 +340,7 @@ const Propuestas = () => {
   );
 
   const counts = useMemo(() => {
-    const c = { all: proposals.length, proposal: 0, report: 0 };
+    const c: Record<'all' | ProposalKind, number> = { all: proposals.length, proposal: 0, report: 0, content_plan: 0 };
     for (const p of proposals) {
       const k = ((p.kind as ProposalKind) || 'proposal');
       c[k] = (c[k] || 0) + 1;
