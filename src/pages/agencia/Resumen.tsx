@@ -67,8 +67,7 @@ const useAgencyKpis = () => {
           supabase.from('clients').select('id', { count: 'exact', head: true }),
           supabase
             .from('agency_crm_leads')
-            .select('id', { count: 'exact', head: true })
-            .not('status', 'in', '(won,lost)'),
+            .select('id', { count: 'exact', head: true }),
           supabase
             .from('production_sheets')
             .select('id', { count: 'exact', head: true }),
