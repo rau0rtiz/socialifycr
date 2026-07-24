@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -95,10 +96,21 @@ const Propuestas = () => {
   const [editing, setEditing] = useState<AgencyProposalListItem | null>(null);
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
+  const [clientId, setClientId] = useState<string>('');
   const [html, setHtml] = useState('');
   const [isPublished, setIsPublished] = useState(true);
   const [kind, setKind] = useState<ProposalKind>('proposal');
   const [planTarget, setPlanTarget] = useState<AgencyProposalListItem | null>(null);
+
+  const { data: clientsList = [] } = useQuery({
+    queryKey: ['doc-clients-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('clients').select('id, name').order('name');
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailTarget, setEmailTarget] = useState<AgencyProposalListItem | null>(null);
@@ -119,6 +131,7 @@ const Propuestas = () => {
   // Quick "Editar info" dialog state
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoTarget, setInfoTarget] = useState<AgencyProposalListItem | null>(null);
+  const [infoClientId, setInfoClientId] = useState<string>('');
   const [infoClientName, setInfoClientName] = useState('');
   const [infoContact, setInfoContact] = useState('');
   const [infoAmount, setInfoAmount] = useState('');
@@ -128,6 +141,7 @@ const Propuestas = () => {
 
   const openInfo = (p: AgencyProposalListItem) => {
     setInfoTarget(p);
+    setInfoClientId((p as any).client_id || '');
     setInfoClientName(p.client_name || '');
     setInfoContact(p.contact_point || '');
     setInfoAmount(p.amount != null ? String(p.amount) : '');
@@ -140,9 +154,11 @@ const Propuestas = () => {
     if (!infoTarget) return;
     setSavingInfo(true);
     try {
+      const matchedClient = clientsList.find((c) => c.id === infoClientId);
       await updateMut.mutateAsync({
         id: infoTarget.id,
-        client_name: infoClientName.trim() || null,
+        client_id: infoClientId || null,
+        client_name: matchedClient?.name || infoClientName.trim() || null,
         contact_point: infoContact.trim() || null,
         amount: infoAmount.trim() === '' ? null : Number(infoAmount),
         currency: infoCurrency,
@@ -163,6 +179,7 @@ const Propuestas = () => {
     setEditing(null);
     setTitle('');
     setClientName('');
+    setClientId('');
     setHtml('');
     setIsPublished(true);
     setKind(initialKind);
@@ -173,6 +190,7 @@ const Propuestas = () => {
   const openEdit = async (p: AgencyProposalListItem) => {
     setEditing(p);
     setTitle(p.title);
+    setClientId((p as any).client_id || '');
     setClientName(p.client_name || '');
     setHtml('');
     setIsPublished(p.is_published);
@@ -192,17 +210,21 @@ const Propuestas = () => {
   };
 
 
+
   const handleSave = async () => {
     if (!title.trim()) {
       toast.error('El título es obligatorio');
       return;
     }
     try {
+      const matched = clientsList.find((c) => c.id === clientId);
+      const resolvedName = matched?.name || clientName.trim() || null;
       if (editing) {
         await updateMut.mutateAsync({
           id: editing.id,
           title: title.trim(),
-          client_name: clientName.trim() || null,
+          client_id: clientId || null,
+          client_name: resolvedName,
           html_content: html,
           is_published: isPublished,
           kind,
@@ -211,7 +233,8 @@ const Propuestas = () => {
       } else {
         await createMut.mutateAsync({
           title: title.trim(),
-          client_name: clientName.trim() || null,
+          client_id: clientId || null,
+          client_name: resolvedName,
           html_content: html,
           is_published: isPublished,
           kind,
@@ -531,8 +554,27 @@ const Propuestas = () => {
                   <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === 'report' ? 'Reporte mensual' : kind === 'content_plan' ? 'Plan de contenido - Mes' : 'Propuesta comercial'} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Cliente (opcional)</Label>
-                  <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Nombre del cliente" />
+                  <Label>Cliente</Label>
+                  <Select
+                    value={clientId || '__none__'}
+                    onValueChange={(v) => {
+                      if (v === '__none__') {
+                        setClientId('');
+                      } else {
+                        setClientId(v);
+                        const found = clientsList.find((c) => c.id === v);
+                        if (found) setClientName(found.name);
+                      }
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Seleccioná un cliente" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sin cliente</SelectItem>
+                      {clientsList.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="space-y-2">
@@ -653,8 +695,27 @@ const Propuestas = () => {
           </DialogHeader>
           <div className="grid gap-3">
             <div className="space-y-1.5">
-              <Label>Nombre del cliente</Label>
-              <Input value={infoClientName} onChange={(e) => setInfoClientName(e.target.value)} placeholder="Ej: Comfortex" />
+              <Label>Cliente</Label>
+              <Select
+                value={infoClientId || '__none__'}
+                onValueChange={(v) => {
+                  if (v === '__none__') {
+                    setInfoClientId('');
+                  } else {
+                    setInfoClientId(v);
+                    const found = clientsList.find((c) => c.id === v);
+                    if (found) setInfoClientName(found.name);
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Seleccioná un cliente" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin cliente</SelectItem>
+                  {clientsList.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Punto de contacto</Label>

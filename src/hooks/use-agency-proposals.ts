@@ -8,6 +8,7 @@ export type ProposalKind = 'proposal' | 'report' | 'content_plan';
 export interface AgencyProposal {
   id: string;
   title: string;
+  client_id: string | null;
   client_name: string | null;
   contact_point: string | null;
   amount: number | null;
@@ -41,7 +42,7 @@ export const useAgencyProposals = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('agency_proposals')
-        .select('id,title,client_name,contact_point,amount,currency,package_type,kind,slug,is_published,created_by,created_at,updated_at')
+        .select('id,title,client_id,client_name,contact_point,amount,currency,package_type,kind,slug,is_published,created_by,created_at,updated_at')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as AgencyProposalListItem[];
@@ -83,12 +84,13 @@ export const useCreateAgencyProposal = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (input: { title: string; client_name?: string | null; html_content: string; is_published?: boolean; kind?: ProposalKind }) => {
+    mutationFn: async (input: { title: string; client_id?: string | null; client_name?: string | null; html_content: string; is_published?: boolean; kind?: ProposalKind }) => {
       const slug = `${slugify(input.title)}-${randomSuffix()}`;
       const { data, error } = await supabase
         .from('agency_proposals')
         .insert({
           title: input.title,
+          client_id: input.client_id ?? null,
           client_name: input.client_name || null,
           html_content: input.html_content,
           slug,
@@ -111,6 +113,7 @@ export const useUpdateAgencyProposal = () => {
     mutationFn: async (input: {
       id: string;
       title?: string;
+      client_id?: string | null;
       client_name?: string | null;
       contact_point?: string | null;
       amount?: number | null;

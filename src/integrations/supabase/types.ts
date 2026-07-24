@@ -826,6 +826,7 @@ export type Database = {
       agency_proposals: {
         Row: {
           amount: number | null
+          client_id: string | null
           client_name: string | null
           contact_point: string | null
           created_at: string
@@ -842,6 +843,7 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          client_id?: string | null
           client_name?: string | null
           contact_point?: string | null
           created_at?: string
@@ -858,6 +860,7 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          client_id?: string | null
           client_name?: string | null
           contact_point?: string | null
           created_at?: string
@@ -872,7 +875,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "agency_proposals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       archived_stories: {
         Row: {
