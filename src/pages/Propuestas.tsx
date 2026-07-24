@@ -421,9 +421,9 @@ const Propuestas = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : 'bg-primary/10 text-primary'}`}>
-                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-                        {p.kind === 'report' ? 'Reporte' : 'Propuesta'}
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : p.kind === 'content_plan' ? 'bg-amber-500/10 text-amber-600' : 'bg-primary/10 text-primary'}`}>
+                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : p.kind === 'content_plan' ? <ClipboardList className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                        {p.kind === 'report' ? 'Reporte' : p.kind === 'content_plan' ? 'Plan' : 'Propuesta'}
                       </span>
                       <span>·</span>
                       <span>{format(new Date(p.created_at), "d MMM yyyy", { locale: es })}</span>
