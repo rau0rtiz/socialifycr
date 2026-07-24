@@ -56,6 +56,7 @@ const SellerCrm = lazy(() => import("./pages/SellerCrm"));
 const Propuestas = lazy(() => import("./pages/Propuestas"));
 const PropuestaPublica = lazy(() => import("./pages/PropuestaPublica"));
 const AgencyResumen = lazy(() => import("./pages/agencia/Resumen"));
+const AgencyPagos = lazy(() => import("./pages/agencia/Pagos"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -269,6 +270,14 @@ const App = () => (
                     </ProtectedRoute>
                   } />
                   <Route path="/agencia/propuestas" element={<Navigate to="/agencia/documentacion" replace />} />
+
+                  <Route path="/agencia/pagos" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyPagos />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
 
                   {/* Agency hub — internal CRM Agencia */}
                   <Route path="/agencia" element={

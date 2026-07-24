@@ -793,6 +793,140 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_payment_clients: {
+        Row: {
+          active: boolean
+          created_at: string
+          currency: string
+          id: string
+          monthly_amount: number
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          monthly_amount?: number
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          monthly_amount?: number
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agency_payment_dates: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          day_of_month: number
+          id: string
+          label: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_id: string
+          created_at?: string
+          day_of_month: number
+          id?: string
+          label?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          day_of_month?: number
+          id?: string
+          label?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_payment_dates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "agency_payment_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_payment_records: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          currency: string
+          due_date: string
+          id: string
+          notes: string | null
+          paid: boolean
+          paid_at: string | null
+          period: string
+          schedule_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_id: string
+          created_at?: string
+          currency?: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          paid?: boolean
+          paid_at?: string | null
+          period: string
+          schedule_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          currency?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          paid?: boolean
+          paid_at?: string | null
+          period?: string
+          schedule_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_payment_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "agency_payment_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_payment_records_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "agency_payment_dates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_payment_schedules: {
         Row: {
           amount_per_payment: number
