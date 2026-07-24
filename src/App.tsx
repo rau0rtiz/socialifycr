@@ -276,6 +276,58 @@ const App = () => (
                     </ProtectedRoute>
                   } />
                   <Route path="/agencia/propuestas" element={<Navigate to="/agencia/documentacion" replace />} />
+
+                  {/* Agency hub — internal CRM Agencia */}
+                  <Route path="/agencia" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyResumen />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/clientes" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <Clientes />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/comunicaciones" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <Comunicaciones />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/accesos" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireManage>
+                        <Accesos />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/archivos" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <Archivos />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/widget-catalog" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <WidgetCatalogPage />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/ajustes" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <BrandSettings />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+
                   <Route path="/ad-frameworks" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
