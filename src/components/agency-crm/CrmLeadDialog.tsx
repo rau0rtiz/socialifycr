@@ -20,6 +20,8 @@ import {
   SaleReceipt,
   useAgencyCrmLeads,
 } from '@/hooks/use-agency-crm-leads';
+import { useInternalTeam, getInitials } from '@/hooks/use-internal-team';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -55,6 +57,7 @@ interface Props {
 
 export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
   const { createLead, updateLead, deleteLead } = useAgencyCrmLeads();
+  const { data: team = [] } = useInternalTeam();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -64,6 +67,7 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
     phone: '',
     status: 'nuevo',
     notes: '',
+    assigned_to: null,
     sale_package: '',
     sale_includes: '',
     sale_amount: null,
@@ -84,6 +88,7 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
         phone: lead?.phone || '',
         status: lead?.status || 'nuevo',
         notes: lead?.notes || '',
+        assigned_to: lead?.assigned_to || null,
         sale_package: lead?.sale_package || '',
         sale_includes: lead?.sale_includes || '',
         sale_amount: lead?.sale_amount ?? null,
