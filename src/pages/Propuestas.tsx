@@ -207,7 +207,7 @@ const Propuestas = () => {
           is_published: isPublished,
           kind,
         });
-        toast.success(kind === 'report' ? 'Reporte actualizado' : 'Propuesta actualizada');
+        toast.success(kind === 'report' ? 'Reporte actualizado' : kind === 'content_plan' ? 'Plan actualizado' : 'Propuesta actualizada');
       } else {
         await createMut.mutateAsync({
           title: title.trim(),
