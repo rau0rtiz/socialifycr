@@ -100,19 +100,19 @@ export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
                 if (id) handleDrop(status, id);
               }}
               className={cn(
-                'w-72 shrink-0 rounded-xl border bg-white/[0.03] backdrop-blur-sm transition',
-                isOver ? 'border-primary/70 bg-primary/10 ring-2 ring-primary/50' : 'border-white/15',
+                'w-72 shrink-0 rounded-xl border bg-muted/30 transition',
+                isOver ? 'border-primary/70 bg-primary/10 ring-2 ring-primary/40' : 'border-border',
               )}
             >
               {/* Header */}
-              <div className="relative overflow-hidden rounded-t-xl border-b border-white/10">
+              <div className="relative overflow-hidden rounded-t-xl border-b border-border bg-card">
                 <div className={cn('absolute inset-x-0 top-0 h-1 bg-gradient-to-r', columnAccent[status])} />
                 <div className="flex items-center justify-between px-3 py-3">
                   <div className="flex items-center gap-2">
                     <span className={cn('h-2 w-2 rounded-full', col.color.replace('/15', '').replace('bg-', 'bg-').split(' ')[0])} />
-                    <span className="text-sm font-semibold text-white tracking-wide uppercase">{col.label}</span>
+                    <span className="text-sm font-semibold text-foreground tracking-wide uppercase">{col.label}</span>
                   </div>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-white font-semibold">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-foreground font-semibold">
                     {total}
                   </span>
                 </div>
@@ -132,32 +132,32 @@ export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
                     onDragEnd={() => setDraggingId(null)}
                     onClick={() => onOpenLead(lead)}
                     className={cn(
-                      'group rounded-lg border bg-white/[0.06] border-white/15 p-3 cursor-grab active:cursor-grabbing hover:border-primary/60 hover:bg-white/[0.09] hover:shadow-[0_0_0_1px_hsl(var(--primary)/0.3)] transition',
+                      'group rounded-lg border bg-card border-border p-3 cursor-grab active:cursor-grabbing hover:border-primary/60 hover:shadow-[0_0_0_1px_hsl(var(--primary)/0.25)] transition',
                       draggingId === lead.id && 'opacity-40',
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-sm truncate text-white">{lead.name}</div>
-                        <div className="mt-1 flex flex-col gap-0.5 text-[11px] text-white/70">
+                        <div className="font-semibold text-sm truncate text-foreground">{lead.name}</div>
+                        <div className="mt-1 flex flex-col gap-0.5 text-[11px] text-muted-foreground">
                           {lead.email && (
                             <span className="flex items-center gap-1 truncate">
-                              <Mail className="h-3 w-3 shrink-0 text-white/50" /> {lead.email}
+                              <Mail className="h-3 w-3 shrink-0 opacity-60" /> {lead.email}
                             </span>
                           )}
                           {lead.phone && (
                             <span className="flex items-center gap-1 truncate">
-                              <Phone className="h-3 w-3 shrink-0 text-white/50" /> {lead.phone}
+                              <Phone className="h-3 w-3 shrink-0 opacity-60" /> {lead.phone}
                             </span>
                           )}
                         </div>
                       </div>
-                      <GripVertical className="h-4 w-4 text-white/30 shrink-0 mt-0.5 group-hover:text-white/60" />
+                      <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0 mt-0.5 group-hover:text-muted-foreground" />
                     </div>
 
                     {/* Badges */}
                     {lead.status === 'cliente' && (lead.sale_package || lead.sale_amount) && (
-                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-green-500/20 text-green-300 border border-green-500/40 font-medium">
+                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-green-100 text-green-700 border border-green-300 font-medium">
                         {lead.sale_package || 'Venta'}
                         {lead.sale_amount
                           ? ` · ${lead.sale_currency === 'CRC' ? '₡' : '$'}${Number(lead.sale_amount).toLocaleString('en-US')}`
@@ -165,22 +165,22 @@ export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
                       </div>
                     )}
                     {lead.status === 'perdido' && lead.lost_reason && (
-                      <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-red-500/20 text-red-300 border border-red-500/40 font-medium">
+                      <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-red-100 text-red-700 border border-red-300 font-medium">
                         {getLostReasonLabel(lead.lost_reason)}
                       </div>
                     )}
                     {lead.notes && (
-                      <div className="mt-2 text-[11px] text-white/60 line-clamp-2">
+                      <div className="mt-2 text-[11px] text-muted-foreground line-clamp-2">
                         {lead.notes}
                       </div>
                     )}
                     <div className="mt-2 flex items-center justify-between">
-                      <div className="text-[10px] text-white/40 uppercase tracking-wider">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
                         {format(parseISO(lead.created_at), 'd MMM', { locale: es })}
                       </div>
                       {lead.assigned_to && teamById.get(lead.assigned_to) && (
                         <div
-                          className="h-7 w-7 rounded-full border border-white/20 bg-white/10 overflow-hidden shrink-0"
+                          className="h-7 w-7 rounded-full border border-border bg-muted overflow-hidden shrink-0"
                           title={teamById.get(lead.assigned_to)?.full_name || ''}
                         >
                           {teamById.get(lead.assigned_to)?.avatar_url ? (
@@ -190,7 +190,7 @@ export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
                               className="h-full w-full object-cover"
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-white/80">
+                            <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-muted-foreground">
                               <User className="h-3.5 w-3.5" />
                             </div>
                           )}
@@ -201,11 +201,12 @@ export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
                 ))}
 
                 {total === 0 && (
-                  <div className="text-center text-[11px] text-white/40 py-6 border border-dashed border-white/15 rounded-lg">
+                  <div className="text-center text-[11px] text-muted-foreground py-6 border border-dashed border-border rounded-lg">
                     Arrastrá una tarjeta acá
                   </div>
                 )}
               </div>
+
             </div>
           );
         })}
