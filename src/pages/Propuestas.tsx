@@ -398,8 +398,8 @@ const Propuestas = () => {
           <Card>
             <CardContent className="py-16 text-center text-muted-foreground">
               <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="font-medium text-foreground">Todavía no hay {kindFilter === 'report' ? 'reportes' : kindFilter === 'proposal' ? 'propuestas' : 'nada acá'}</p>
-              <p className="text-sm mt-1">Creá tu primer{kindFilter === 'report' ? ' reporte' : 'a propuesta'} pegando el HTML.</p>
+              <p className="font-medium text-foreground">Todavía no hay {kindFilter === 'report' ? 'reportes' : kindFilter === 'proposal' ? 'propuestas' : kindFilter === 'content_plan' ? 'planes de contenido' : 'nada acá'}</p>
+              <p className="text-sm mt-1">Creá tu primer {kindFilter === 'report' ? 'reporte' : kindFilter === 'content_plan' ? 'plan de contenido' : 'propuesta'} pegando el HTML.</p>
             </CardContent>
           </Card>
         ) : (
