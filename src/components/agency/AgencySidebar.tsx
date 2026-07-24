@@ -40,7 +40,7 @@ const items = [
   { title: 'Comunicaciones', url: '/agencia/comunicaciones', icon: Mail },
   { title: 'Accesos', url: '/agencia/accesos', icon: KeyRound },
   { title: 'Archivos', url: '/agencia/archivos', icon: FolderOpen },
-  { title: 'Widget Catalog', url: '/agencia/widget-catalog', icon: Eye },
+  
   { title: 'Ajustes', url: '/agencia/ajustes', icon: Palette },
 ];
 
