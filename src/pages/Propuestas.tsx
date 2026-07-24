@@ -695,8 +695,27 @@ const Propuestas = () => {
           </DialogHeader>
           <div className="grid gap-3">
             <div className="space-y-1.5">
-              <Label>Nombre del cliente</Label>
-              <Input value={infoClientName} onChange={(e) => setInfoClientName(e.target.value)} placeholder="Ej: Comfortex" />
+              <Label>Cliente</Label>
+              <Select
+                value={infoClientId || '__none__'}
+                onValueChange={(v) => {
+                  if (v === '__none__') {
+                    setInfoClientId('');
+                  } else {
+                    setInfoClientId(v);
+                    const found = clientsList.find((c) => c.id === v);
+                    if (found) setInfoClientName(found.name);
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Seleccioná un cliente" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin cliente</SelectItem>
+                  {clientsList.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Punto de contacto</Label>
