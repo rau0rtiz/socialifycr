@@ -84,12 +84,13 @@ export const useCreateAgencyProposal = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (input: { title: string; client_name?: string | null; html_content: string; is_published?: boolean; kind?: ProposalKind }) => {
+    mutationFn: async (input: { title: string; client_id?: string | null; client_name?: string | null; html_content: string; is_published?: boolean; kind?: ProposalKind }) => {
       const slug = `${slugify(input.title)}-${randomSuffix()}`;
       const { data, error } = await supabase
         .from('agency_proposals')
         .insert({
           title: input.title,
+          client_id: input.client_id ?? null,
           client_name: input.client_name || null,
           html_content: input.html_content,
           slug,
