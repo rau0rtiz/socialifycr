@@ -60,3 +60,6 @@ verify_jwt = false
 [functions.seed-quick-seller]
 verify_jwt = false
 
+[functions.generate-shots-from-plan]
+verify_jwt = true
+
