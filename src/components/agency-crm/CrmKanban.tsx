@@ -169,6 +169,11 @@ export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
                         {getLostReasonLabel(lead.lost_reason)}
                       </div>
                     )}
+                    {lead.assigned_to && teamById.get(lead.assigned_to) && (
+                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-primary/15 text-primary border border-primary/40 font-medium">
+                        <User className="h-3 w-3" /> {teamById.get(lead.assigned_to)}
+                      </div>
+                    )}
                     {lead.notes && (
                       <div className="mt-2 text-[11px] text-white/60 line-clamp-2">
                         {lead.notes}
