@@ -32,7 +32,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3 } from 'lucide-react';
+import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3, ClipboardList, Sparkles } from 'lucide-react';
+import { AddPlanToSheetDialog } from '@/components/producciones/AddPlanToSheetDialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -53,8 +54,9 @@ const formatMoney = (amount: number | null, currency: string | null) => {
 };
 
 const PUBLIC_BASE_URL = 'https://app.socialifycr.com';
+const KIND_PATH: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan' };
 const buildShareUrl = (slug: string, kind: ProposalKind = 'proposal') =>
-  `${PUBLIC_BASE_URL}/${kind === 'report' ? 'reporte' : 'propuesta'}/${slug}`;
+  `${PUBLIC_BASE_URL}/${KIND_PATH[kind] ?? 'propuesta'}/${slug}`;
 
 const copyToClipboard = async (text: string) => {
   try {
@@ -96,6 +98,7 @@ const Propuestas = () => {
   const [html, setHtml] = useState('');
   const [isPublished, setIsPublished] = useState(true);
   const [kind, setKind] = useState<ProposalKind>('proposal');
+  const [planTarget, setPlanTarget] = useState<AgencyProposalListItem | null>(null);
 
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailTarget, setEmailTarget] = useState<AgencyProposalListItem | null>(null);
@@ -204,7 +207,7 @@ const Propuestas = () => {
           is_published: isPublished,
           kind,
         });
-        toast.success(kind === 'report' ? 'Reporte actualizado' : 'Propuesta actualizada');
+        toast.success(kind === 'report' ? 'Reporte actualizado' : kind === 'content_plan' ? 'Plan actualizado' : 'Propuesta actualizada');
       } else {
         await createMut.mutateAsync({
           title: title.trim(),
@@ -213,7 +216,7 @@ const Propuestas = () => {
           is_published: isPublished,
           kind,
         });
-        toast.success(kind === 'report' ? 'Reporte creado' : 'Propuesta creada');
+        toast.success(kind === 'report' ? 'Reporte creado' : kind === 'content_plan' ? 'Plan creado' : 'Propuesta creada');
       }
       setEditorOpen(false);
     } catch (err) {
@@ -337,7 +340,7 @@ const Propuestas = () => {
   );
 
   const counts = useMemo(() => {
-    const c = { all: proposals.length, proposal: 0, report: 0 };
+    const c: Record<'all' | ProposalKind, number> = { all: proposals.length, proposal: 0, report: 0, content_plan: 0 };
     for (const p of proposals) {
       const k = ((p.kind as ProposalKind) || 'proposal');
       c[k] = (c[k] || 0) + 1;
@@ -355,10 +358,13 @@ const Propuestas = () => {
               Propuestas y Reportes
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Cargá HTML de una propuesta o reporte y compartilo con un link o por correo.
+              Cargá HTML de una propuesta, reporte o plan de contenido y compartilo con un link o por correo.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => openCreate('content_plan')} className="gap-2">
+              <ClipboardList className="h-4 w-4" /> Nuevo plan
+            </Button>
             <Button variant="outline" onClick={() => openCreate('report')} className="gap-2">
               <BarChart3 className="h-4 w-4" /> Nuevo reporte
             </Button>
@@ -377,6 +383,9 @@ const Propuestas = () => {
             <TabsTrigger value="report" className="gap-1.5">
               <BarChart3 className="h-3.5 w-3.5" /> Reportes ({counts.report})
             </TabsTrigger>
+            <TabsTrigger value="content_plan" className="gap-1.5">
+              <ClipboardList className="h-3.5 w-3.5" /> Planes ({counts.content_plan})
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -389,8 +398,8 @@ const Propuestas = () => {
           <Card>
             <CardContent className="py-16 text-center text-muted-foreground">
               <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="font-medium text-foreground">Todavía no hay {kindFilter === 'report' ? 'reportes' : kindFilter === 'proposal' ? 'propuestas' : 'nada acá'}</p>
-              <p className="text-sm mt-1">Creá tu primer{kindFilter === 'report' ? ' reporte' : 'a propuesta'} pegando el HTML.</p>
+              <p className="font-medium text-foreground">Todavía no hay {kindFilter === 'report' ? 'reportes' : kindFilter === 'proposal' ? 'propuestas' : kindFilter === 'content_plan' ? 'planes de contenido' : 'nada acá'}</p>
+              <p className="text-sm mt-1">Creá tu primer {kindFilter === 'report' ? 'reporte' : kindFilter === 'content_plan' ? 'plan de contenido' : 'propuesta'} pegando el HTML.</p>
             </CardContent>
           </Card>
         ) : (
@@ -412,9 +421,9 @@ const Propuestas = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : 'bg-primary/10 text-primary'}`}>
-                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-                        {p.kind === 'report' ? 'Reporte' : 'Propuesta'}
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : p.kind === 'content_plan' ? 'bg-amber-500/10 text-amber-600' : 'bg-primary/10 text-primary'}`}>
+                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : p.kind === 'content_plan' ? <ClipboardList className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                        {p.kind === 'report' ? 'Reporte' : p.kind === 'content_plan' ? 'Plan' : 'Propuesta'}
                       </span>
                       <span>·</span>
                       <span>{format(new Date(p.created_at), "d MMM yyyy", { locale: es })}</span>
@@ -465,6 +474,11 @@ const Propuestas = () => {
                     <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => openEmail(p)}>
                       <Mail className="h-3.5 w-3.5" /> Enviar
                     </Button>
+                    {p.kind === 'content_plan' && (
+                      <Button size="sm" className="gap-1.5 h-8 bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setPlanTarget(p)}>
+                        <Sparkles className="h-3.5 w-3.5" /> A hoja de producción
+                      </Button>
+                    )}
                     <Button size="sm" variant="ghost" className="gap-1.5 h-8" onClick={() => openEdit(p)} title="Editar HTML">
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -489,9 +503,10 @@ const Propuestas = () => {
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-5xl max-h-[92dvh] p-0 gap-0 flex flex-col">
           <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b shrink-0">
             <DialogTitle>
-              {editing
-                ? `Editar ${kind === 'report' ? 'reporte' : 'propuesta'}`
-                : `${kind === 'report' ? 'Nuevo reporte' : 'Nueva propuesta'}`}
+              {(() => {
+                const label = kind === 'report' ? 'reporte' : kind === 'content_plan' ? 'plan de contenido' : 'propuesta';
+                return editing ? `Editar ${label}` : `Nuevo ${label}`;
+              })()}
             </DialogTitle>
             <DialogDescription>
               Pegá el código HTML completo. Se mostrará tal cual en el link público.
@@ -507,12 +522,13 @@ const Propuestas = () => {
                     <SelectContent>
                       <SelectItem value="proposal">Propuesta</SelectItem>
                       <SelectItem value="report">Reporte</SelectItem>
+                      <SelectItem value="content_plan">Plan de contenido</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Título</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === 'report' ? 'Reporte mensual' : 'Propuesta comercial'} />
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === 'report' ? 'Reporte mensual' : kind === 'content_plan' ? 'Plan de contenido - Mes' : 'Propuesta comercial'} />
                 </div>
                 <div className="space-y-2">
                   <Label>Cliente (opcional)</Label>
@@ -574,7 +590,7 @@ const Propuestas = () => {
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={createMut.isPending || updateMut.isPending}>
               {(createMut.isPending || updateMut.isPending) && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {editing ? 'Guardar cambios' : (kind === 'report' ? 'Crear reporte' : 'Crear propuesta')}
+              {editing ? 'Guardar cambios' : (kind === 'report' ? 'Crear reporte' : kind === 'content_plan' ? 'Crear plan' : 'Crear propuesta')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -767,6 +783,14 @@ const Propuestas = () => {
 
         </DialogContent>
       </Dialog>
+
+      <AddPlanToSheetDialog
+        open={!!planTarget}
+        onOpenChange={(v) => { if (!v) setPlanTarget(null); }}
+        planId={planTarget?.id ?? null}
+        planTitle={planTarget?.title ?? ''}
+        defaultClientName={planTarget?.client_name ?? null}
+      />
     </DashboardLayout>
   );
 };
