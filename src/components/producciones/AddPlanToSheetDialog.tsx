@@ -46,7 +46,7 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
   const [sheetMode, setSheetMode] = useState<'new' | 'existing'>('new');
   const [existingSheetId, setExistingSheetId] = useState<string>('');
   const [newSheetTitle, setNewSheetTitle] = useState<string>('');
-  const [model, setModel] = useState<'claude-opus-4-5' | 'claude-sonnet-4-5'>('claude-opus-4-5');
+  const [model, setModel] = useState<string>('google/gemini-2.5-pro');
   const [replace, setReplace] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -270,8 +270,8 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
                 <Select value={model} onValueChange={(v) => setModel(v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="claude-opus-4-5">Claude Opus 4.5 (mejor)</SelectItem>
-                    <SelectItem value="claude-sonnet-4-5">Claude Sonnet 4.5 (más barato)</SelectItem>
+                    <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (mejor)</SelectItem>
+                    <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (más barato)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
