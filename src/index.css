@@ -282,6 +282,23 @@
 }
 .agency-shell .agency-kpi:hover::after { width: 100%; }
 
+/* Force high-contrast text + borders inside agency shell */
+.agency-shell,
+.agency-shell * {
+  border-color: hsl(0 0% 100% / 0.35);
+}
+.agency-shell .text-muted-foreground,
+.agency-shell .text-slate-400,
+.agency-shell .text-slate-500,
+.agency-shell .text-gray-400,
+.agency-shell .text-gray-500,
+.agency-shell .text-zinc-400,
+.agency-shell .text-zinc-500,
+.agency-shell .text-neutral-400,
+.agency-shell .text-neutral-500 {
+  color: hsl(0 0% 92%);
+}
+
 /* ===== Producciones scope — Socialify brand ===== */
 .noeval-scope {
   --noeval-paper: #F5F1E8;       /* cream canvas (editorial paper) */
