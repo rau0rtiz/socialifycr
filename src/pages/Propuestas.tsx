@@ -98,6 +98,7 @@ const Propuestas = () => {
   const [html, setHtml] = useState('');
   const [isPublished, setIsPublished] = useState(true);
   const [kind, setKind] = useState<ProposalKind>('proposal');
+  const [planTarget, setPlanTarget] = useState<AgencyProposalListItem | null>(null);
 
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailTarget, setEmailTarget] = useState<AgencyProposalListItem | null>(null);
