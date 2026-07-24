@@ -537,27 +537,48 @@ export default function Pagos() {
                                 </SelectContent>
                               </Select>
                             </td>
-                            <td className="pl-3 pr-6 py-3 text-right">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  togglePaid.mutate({
-                                    client: i.client,
-                                    schedule: i.schedule,
-                                    current: i.record,
-                                    dueIso: i.dueIso,
-                                    amountWithIva: i.withIva,
-                                  })
-                                }
-                                className={cn(
-                                  'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all',
-                                  st === 'paid' && 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400',
-                                  st === 'overdue' && 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/15 dark:text-red-400',
-                                  st === 'pending' && 'bg-primary/10 text-primary hover:bg-primary/20',
-                                )}
-                              >
-                                {st === 'paid' ? 'Pagado' : st === 'overdue' ? 'Vencido' : 'Pendiente'}
-                              </button>
+                            <td className="pl-3 pr-6 py-3">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    togglePaid.mutate({
+                                      client: i.client,
+                                      schedule: i.schedule,
+                                      current: i.record,
+                                      dueIso: i.dueIso,
+                                      amountWithIva: i.withIva,
+                                    })
+                                  }
+                                  className={cn(
+                                    'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all',
+                                    st === 'paid' && 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400',
+                                    st === 'overdue' && 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/15 dark:text-red-400',
+                                    st === 'pending' && 'bg-primary/10 text-primary hover:bg-primary/20',
+                                  )}
+                                >
+                                  {st === 'paid' ? 'Pagado' : st === 'overdue' ? 'Vencido' : 'Pendiente'}
+                                </button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 gap-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground"
+                                  onClick={() =>
+                                    setManageRow({
+                                      client: i.client,
+                                      schedule: i.schedule,
+                                      dueIso: i.dueIso,
+                                      dueDay: i.dueDay,
+                                      amountWithIva: i.withIva,
+                                      ivaRate: i.ivaRate,
+                                      base: i.base,
+                                      record: i.record,
+                                    })
+                                  }
+                                >
+                                  <Settings2 className="h-3 w-3" /> Gestionar
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -568,6 +589,8 @@ export default function Pagos() {
               )}
             </div>
           </div>
+
+
 
           {/* Footer summary */}
           {ledger.length > 0 && (
