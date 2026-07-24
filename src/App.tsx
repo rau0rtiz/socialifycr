@@ -271,6 +271,14 @@ const App = () => (
                   } />
                   <Route path="/agencia/propuestas" element={<Navigate to="/agencia/documentacion" replace />} />
 
+                  <Route path="/agencia/pagos" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyPagos />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+
                   {/* Agency hub — internal CRM Agencia */}
                   <Route path="/agencia" element={
                     <ProtectedRoute>
