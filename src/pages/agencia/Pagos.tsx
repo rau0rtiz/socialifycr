@@ -580,9 +580,9 @@ export default function Pagos() {
                 ))}
               </div>
             </div>
-          )}
-        </div>
+        )}
       </div>
+
 
       {showNewClient && (
         <ClientDialog
