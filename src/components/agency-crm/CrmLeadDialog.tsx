@@ -213,20 +213,49 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label>Estado</Label>
-            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CRM_STATUS_OPTIONS.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Estado</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CRM_STATUS_OPTIONS.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Vendedor</Label>
+              <Select
+                value={form.assigned_to || '__none__'}
+                onValueChange={(v) => setForm({ ...form, assigned_to: v === '__none__' ? null : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sin asignar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin asignar</SelectItem>
+                  {team.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      <span className="inline-flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          {m.avatar_url && <AvatarImage src={m.avatar_url} alt={m.full_name || ''} />}
+                          <AvatarFallback className="text-[10px]">
+                            {getInitials(m.full_name, m.email)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {m.full_name || m.email}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {form.status === 'cliente' && (
