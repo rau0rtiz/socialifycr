@@ -200,9 +200,6 @@ export const CrmKanban = ({ leads, contractClients, search, onOpenLead }: Props)
                       <CheckCircle2 className="h-4 w-4 text-green-300 shrink-0" />
                       <div className="font-semibold text-sm truncate text-white">{c.name}</div>
                     </div>
-                    <div className="mt-1 text-[11px] text-white/70">
-                      {c.seller_name ? `Vendedor: ${c.seller_name}` : 'Contrato activo'}
-                    </div>
                     {c.start_date && (
                       <div className="mt-1 text-[10px] text-white/50">
                         Desde {format(parseISO(c.start_date), 'd MMM yyyy', { locale: es })}
