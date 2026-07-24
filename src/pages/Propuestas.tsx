@@ -554,8 +554,27 @@ const Propuestas = () => {
                   <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === 'report' ? 'Reporte mensual' : kind === 'content_plan' ? 'Plan de contenido - Mes' : 'Propuesta comercial'} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Cliente (opcional)</Label>
-                  <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Nombre del cliente" />
+                  <Label>Cliente</Label>
+                  <Select
+                    value={clientId || '__none__'}
+                    onValueChange={(v) => {
+                      if (v === '__none__') {
+                        setClientId('');
+                      } else {
+                        setClientId(v);
+                        const found = clientsList.find((c) => c.id === v);
+                        if (found) setClientName(found.name);
+                      }
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Seleccioná un cliente" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sin cliente</SelectItem>
+                      {clientsList.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="space-y-2">
