@@ -217,11 +217,14 @@ const Propuestas = () => {
       return;
     }
     try {
+      const matched = clientsList.find((c) => c.id === clientId);
+      const resolvedName = matched?.name || clientName.trim() || null;
       if (editing) {
         await updateMut.mutateAsync({
           id: editing.id,
           title: title.trim(),
-          client_name: clientName.trim() || null,
+          client_id: clientId || null,
+          client_name: resolvedName,
           html_content: html,
           is_published: isPublished,
           kind,
@@ -230,7 +233,8 @@ const Propuestas = () => {
       } else {
         await createMut.mutateAsync({
           title: title.trim(),
-          client_name: clientName.trim() || null,
+          client_id: clientId || null,
+          client_name: resolvedName,
           html_content: html,
           is_published: isPublished,
           kind,
