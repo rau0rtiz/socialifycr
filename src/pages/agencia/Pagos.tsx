@@ -496,6 +496,8 @@ function ClientDialog({
   const [currency, setCurrency] = useState(client?.currency || 'USD');
   const [notes, setNotes] = useState(client?.notes || '');
   const [active, setActive] = useState(client?.active ?? true);
+  const [ivaEnabled, setIvaEnabled] = useState(Number(client?.iva_rate || 0) > 0);
+  const [ivaRate, setIvaRate] = useState<number>(Number(client?.iva_rate || 13));
   const [drafts, setDrafts] = useState<DraftDate[]>(() =>
     existingDates.length
       ? existingDates.map(d => ({
@@ -510,7 +512,10 @@ function ClientDialog({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const effectiveIva = ivaEnabled ? ivaRate : 0;
   const monthlyTotal = drafts.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+  const monthlyTotalWithIva = monthlyTotal * (1 + effectiveIva / 100);
+
 
   const save = async () => {
     if (!name.trim()) {
