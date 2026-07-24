@@ -77,6 +77,16 @@ export default function Pagos() {
   });
   const [editClient, setEditClient] = useState<PayClient | null>(null);
   const [showNewClient, setShowNewClient] = useState(false);
+  const [manageRow, setManageRow] = useState<{
+    client: PayClient;
+    schedule: PayDate;
+    dueIso: string;
+    dueDay: number;
+    amountWithIva: number;
+    ivaRate: number;
+    base: number;
+    record: PayRecord | undefined;
+  } | null>(null);
 
   const periodIso = isoDate(monthDate);
 
