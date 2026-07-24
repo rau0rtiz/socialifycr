@@ -320,6 +320,32 @@
   color: hsl(0 0% 70%);
 }
 
+/* Producciones scope opts out of agency-shell white overrides (paper theme) */
+.agency-shell .noeval-scope,
+.agency-shell .noeval-scope * {
+  color: var(--noeval-ink);
+  border-color: var(--noeval-line);
+}
+.agency-shell .noeval-scope .text-noeval-ink { color: var(--noeval-ink); }
+.agency-shell .noeval-scope .text-noeval-cream { color: var(--noeval-cream); }
+.agency-shell .noeval-scope .text-noeval-accent { color: var(--noeval-accent); }
+.agency-shell .noeval-scope .text-noeval-muted { color: var(--noeval-muted); }
+.agency-shell .noeval-scope .text-noeval-taupe { color: var(--noeval-taupe); }
+.agency-shell .noeval-scope .text-white { color: #fff; }
+.agency-shell .noeval-scope button,
+.agency-shell .noeval-scope input,
+.agency-shell .noeval-scope textarea,
+.agency-shell .noeval-scope select,
+.agency-shell .noeval-scope [role="tab"] {
+  color: var(--noeval-ink);
+}
+.agency-shell .noeval-scope input::placeholder,
+.agency-shell .noeval-scope textarea::placeholder {
+  color: var(--noeval-muted);
+  opacity: 0.6;
+}
+
+
 /* ===== Producciones scope — Socialify brand ===== */
 .noeval-scope {
   --noeval-paper: #F5F1E8;       /* cream canvas (editorial paper) */
