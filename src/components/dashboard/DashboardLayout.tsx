@@ -17,7 +17,9 @@ export interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
   const { platformBrand, selectedClient, clientBrands } = useBrand();
-  
+  const { pathname } = useLocation();
+  const isAgencyHub = pathname.startsWith('/agencia');
+
   const clientBrand = selectedClient ? clientBrands[selectedClient.id] : null;
   const clientAccentColor = clientBrand?.accentColor || selectedClient?.accent_color || '217 91% 60%';
   const clientSecondaryColor = clientBrand?.secondaryColor || '199 89% 48%';
@@ -46,18 +48,26 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
 
   return (
     <SidebarProvider>
-      <div 
-        className="h-[100dvh] flex w-full bg-background overflow-hidden"
+      <div
+        className={cn(
+          'h-[100dvh] flex w-full overflow-hidden',
+          isAgencyHub ? 'agency-shell bg-background' : 'bg-background',
+        )}
         style={combinedStyle}
       >
-        <Sidebar />
+        {isAgencyHub ? <AgencySidebar /> : <Sidebar />}
         <div className="flex-1 flex flex-col min-w-0 h-full">
           <TopBar />
-           <main className="flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden relative dashboard-bg-decor overscroll-contain [-webkit-overflow-scrolling:touch]" key="main-content">
-             {children}
-           </main>
+          <main
+            className={cn(
+              'flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden relative overscroll-contain [-webkit-overflow-scrolling:touch]',
+              !isAgencyHub && 'dashboard-bg-decor',
+            )}
+            key="main-content"
+          >
+            {children}
+          </main>
         </div>
-        
       </div>
     </SidebarProvider>
   );
