@@ -1006,3 +1006,213 @@ function ClientDialog({
     </Dialog>
   );
 }
+
+
+// ---------- Manage Payment Dialog ----------
+
+function ManagePaymentDialog({
+  open,
+  onClose,
+  row,
+  periodIso,
+  onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  row: {
+    client: PayClient;
+    schedule: PayDate;
+    dueIso: string;
+    dueDay: number;
+    amountWithIva: number;
+    ivaRate: number;
+    base: number;
+    record: PayRecord | undefined;
+  };
+  periodIso: string;
+  onSaved: () => void;
+}) {
+  const sym = row.client.currency === 'CRC' ? '₡' : '$';
+  const [paid, setPaid] = useState(!!row.record?.paid);
+  const [amount, setAmount] = useState<number>(
+    Number(row.record?.amount ?? row.amountWithIva) || row.amountWithIva,
+  );
+  const [method, setMethod] = useState<string>(row.record?.payment_method || '');
+  const [paidAt, setPaidAt] = useState<string>(
+    row.record?.paid_at ? row.record.paid_at.slice(0, 10) : isoDate(new Date()),
+  );
+  const [notes, setNotes] = useState<string>(row.record?.notes || '');
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const payload: any = {
+        amount,
+        paid,
+        paid_at: paid ? new Date(paidAt).toISOString() : null,
+        payment_method: method || null,
+        notes: notes || null,
+      };
+      if (row.record) {
+        const { error } = await (supabase as any)
+          .from('agency_payment_records')
+          .update(payload)
+          .eq('id', row.record.id);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any).from('agency_payment_records').insert({
+          client_id: row.client.id,
+          schedule_id: row.schedule.id,
+          period: periodIso,
+          due_date: row.dueIso,
+          currency: row.client.currency,
+          ...payload,
+        });
+        if (error) throw error;
+      }
+      toast.success('Pago actualizado');
+      onSaved();
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || 'Error al guardar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!row.record) return;
+    if (!confirm('¿Eliminar este registro de pago?')) return;
+    setSaving(true);
+    try {
+      const { error } = await (supabase as any)
+        .from('agency_payment_records')
+        .delete()
+        .eq('id', row.record.id);
+      if (error) throw error;
+      toast.success('Registro eliminado');
+      onSaved();
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || 'Error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Gestionar pago</DialogTitle>
+          <div className="text-xs text-muted-foreground mt-1">
+            {row.client.name} · Vence día {row.dueDay}
+            {row.schedule.label ? ` · ${row.schedule.label}` : ''}
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2">
+            <div>
+              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                Marcar como pagado
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                {paid ? 'Registrado como cobrado' : 'Aún pendiente de cobro'}
+              </div>
+            </div>
+            <Checkbox checked={paid} onCheckedChange={(v) => setPaid(!!v)} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Monto ({sym})
+              </Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(Number(e.target.value))}
+                className="h-9 mt-1"
+              />
+              {row.ivaRate > 0 && (
+                <div className="text-[10px] text-muted-foreground mt-1">
+                  Base {sym}{row.base.toLocaleString()} · IVA {row.ivaRate}%
+                </div>
+              )}
+            </div>
+            <div>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Fecha de pago
+              </Label>
+              <Input
+                type="date"
+                value={paidAt}
+                onChange={(e) => setPaidAt(e.target.value)}
+                disabled={!paid}
+                className="h-9 mt-1"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Método de pago
+            </Label>
+            <Select value={method} onValueChange={setMethod}>
+              <SelectTrigger className="h-9 mt-1">
+                <SelectValue placeholder="Seleccioná un método" />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_METHODS.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Notas
+            </Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Referencia, comprobante, comentario..."
+              className="mt-1 min-h-[70px] text-sm"
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 sm:justify-between">
+          <div>
+            {row.record && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={remove}
+                disabled={saving}
+                className="text-destructive hover:text-destructive gap-1"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Eliminar
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={save} disabled={saving}>
+              {saving ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
