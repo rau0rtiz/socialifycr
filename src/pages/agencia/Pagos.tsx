@@ -247,212 +247,344 @@ export default function Pagos() {
   const shiftMonth = (delta: number) =>
     setMonthDate(new Date(monthDate.getFullYear(), monthDate.getMonth() + delta, 1));
 
+  // Flatten all installments into ledger rows, sorted by due day
+  const ledger = useMemo(() => {
+    const items: {
+      client: PayClient;
+      schedule: PayDate;
+      dueIso: string;
+      dueDay: number;
+      base: number;
+      withIva: number;
+      ivaRate: number;
+      record: PayRecord | undefined;
+    }[] = [];
+    rows.forEach(r => {
+      r.installments.forEach(i => {
+        items.push({
+          client: r.client,
+          schedule: i.date,
+          dueIso: i.dueIso,
+          dueDay: clampDay(monthDate.getFullYear(), monthDate.getMonth(), i.date.day_of_month),
+          base: i.base,
+          withIva: i.withIva,
+          ivaRate: r.ivaRate,
+          record: i.record,
+        });
+      });
+    });
+    return items.sort((a, b) => a.dueDay - b.dueDay);
+  }, [rows, monthDate]);
+
+  // Aggregated status buckets
+  const todayIso = isoDate(new Date());
+  const currentPeriodIso = isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const isCurrentMonth = periodIso === currentPeriodIso;
+
+  const statusOf = (dueIso: string, paid: boolean): 'paid' | 'overdue' | 'pending' => {
+    if (paid) return 'paid';
+    if (isCurrentMonth && dueIso < todayIso) return 'overdue';
+    return 'pending';
+  };
+
+  const bucketTotals = useMemo(() => {
+    const b: Record<string, { paid: number; pending: number; overdue: number; sym: string }> = {};
+    ledger.forEach(i => {
+      const cur = i.client.currency || 'USD';
+      const sym = cur === 'CRC' ? '₡' : '$';
+      b[cur] ??= { paid: 0, pending: 0, overdue: 0, sym };
+      const amt = i.record?.paid ? Number(i.record.amount || i.withIva) : i.withIva;
+      const st = statusOf(i.dueIso, !!i.record?.paid);
+      if (st === 'paid') b[cur].paid += amt;
+      else if (st === 'overdue') b[cur].overdue += amt;
+      else b[cur].pending += amt;
+    });
+    return b;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ledger, todayIso, isCurrentMonth]);
+
+  // Mini annual matrix — status per client across 6 surrounding months
+  const miniMonths = useMemo(() => {
+    return Array.from({ length: 6 }, (_, i) =>
+      new Date(monthDate.getFullYear(), monthDate.getMonth() - 2 + i, 1),
+    );
+  }, [monthDate]);
+
+  const monthPills = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monthDate.getFullYear(), monthDate.getMonth() - 3 + i, 1);
+      return d;
+    });
+  }, [monthDate]);
+
   return (
     <DashboardLayout>
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
-
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Pagos</h1>
-          <p className="text-sm text-muted-foreground">
-            Cobros recurrentes de clientes. Marcá cada pago cuando entre.
-          </p>
-        </div>
-        <Button onClick={() => setShowNewClient(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Nuevo cliente
-        </Button>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <Button variant="outline" size="icon" onClick={() => shiftMonth(-1)}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div className="min-w-[180px] text-center text-sm font-medium capitalize">
-          {monthLabel(monthDate)}
-        </div>
-        <Button variant="outline" size="icon" onClick={() => shiftMonth(1)}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        {Object.entries(totals).map(([cur, t]) => {
-          const symbol = cur === 'CRC' ? '₡' : '$';
-          const pct = t.due > 0 ? Math.round((t.paid / t.due) * 100) : 0;
-          return (
-            <Card key={cur} className="p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
-                <DollarSign className="h-3.5 w-3.5" /> Cobrado en {cur}
-              </div>
-              <div className="mt-1 text-2xl font-semibold">
-                {symbol}
-                {t.paid.toLocaleString()}{' '}
-                <span className="text-sm font-normal text-muted-foreground">
-                  / {symbol}
-                  {t.due.toLocaleString()}
-                </span>
-              </div>
-              <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full bg-emerald-500 transition-all"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <div className="text-[11px] text-muted-foreground mt-1">{pct}% cobrado</div>
-            </Card>
-          );
-        })}
-        {rows.length === 0 && !loadingClients && (
-          <Card className="p-4 sm:col-span-3 border-dashed">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" /> Agregá un cliente para empezar a llevar el control.
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-5 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">Gestión de Cobros</h1>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-0.5">
+                Panel de control financiero
+              </p>
             </div>
-          </Card>
-        )}
-      </div>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => setShowNewClient(true)} size="sm" className="gap-1.5 h-8">
+                <Plus className="h-3.5 w-3.5" /> Nuevo cliente
+              </Button>
+            </div>
+          </div>
 
-      <div className="space-y-3">
-        {rows.map(({ client, installments, totalDue, totalPaid, subtotal, ivaAmount, ivaRate }) => {
-          const symbol = client.currency === 'CRC' ? '₡' : '$';
-          const missing = installments.filter(i => !i.record?.paid).length;
-          const noSchedule = installments.length === 0;
-          return (
-            <Card key={client.id} className="p-4">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <div className="font-semibold text-foreground">{client.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {symbol}
-                    {totalPaid.toLocaleString()} / {symbol}
-                    {totalDue.toLocaleString()} este mes ·{' '}
-                    {noSchedule ? (
-                      <span className="text-amber-600 dark:text-amber-400">
-                        Sin fechas configuradas
-                      </span>
-                    ) : missing === 0 ? (
-                      <span className="text-emerald-600 dark:text-emerald-400">Al día</span>
-                    ) : (
-                      <span className="text-amber-600 dark:text-amber-400">
-                        {missing} pendiente{missing > 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </div>
-                  {ivaRate > 0 && (
-                    <div className="text-[11px] text-muted-foreground mt-0.5">
-                      Subtotal {symbol}{subtotal.toLocaleString()} + IVA {ivaRate}% ({symbol}{ivaAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })})
-                    </div>
+          {/* Month selector strip */}
+          <div className="px-6 py-3 bg-muted/30 border-b border-border flex items-center gap-2 overflow-x-auto">
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => shiftMonth(-1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {monthPills.map((d) => {
+              const active = d.getMonth() === monthDate.getMonth() && d.getFullYear() === monthDate.getFullYear();
+              const label = d.toLocaleDateString('es-CR', { month: 'short' }).replace('.', '').toUpperCase();
+              const year = d.getFullYear() !== new Date().getFullYear() ? ` ${String(d.getFullYear()).slice(2)}` : '';
+              return (
+                <button
+                  key={d.toISOString()}
+                  onClick={() => setMonthDate(new Date(d.getFullYear(), d.getMonth(), 1))}
+                  className={cn(
+                    'px-3 py-1 text-[11px] font-bold rounded-full transition-colors whitespace-nowrap',
+                    active
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-background',
                   )}
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setEditClient(client)} className="gap-1">
-                  <Pencil className="h-3.5 w-3.5" /> Editar
-                </Button>
+                >
+                  {active ? d.toLocaleDateString('es-CR', { month: 'long', year: 'numeric' }).toUpperCase() : `${label}${year}`}
+                </button>
+              );
+            })}
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => shiftMonth(1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex flex-col lg:flex-row">
+            {/* Left: Mini annual matrix + KPI */}
+            <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-border bg-muted/20 p-5">
+              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
+                Estado por cliente
+              </h3>
+              <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                {rows.length === 0 && !loadingClients && (
+                  <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5" /> Agregá un cliente.
+                  </div>
+                )}
+                {rows.map(({ client }) => {
+                  return (
+                    <button
+                      key={client.id}
+                      onClick={() => setEditClient(client)}
+                      className="w-full flex items-center justify-between gap-2 group text-left"
+                    >
+                      <span className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                        {client.name}
+                      </span>
+                      <div className="flex gap-1 shrink-0">
+                        {miniMonths.map((mDate) => {
+                          const mIso = isoDate(mDate);
+                          const isSel = mDate.getMonth() === monthDate.getMonth() && mDate.getFullYear() === monthDate.getFullYear();
+                          // We only have records for the selected month; approximate: dot filled if selected month has all paid
+                          if (!isSel) {
+                            return <span key={mIso} className="w-1.5 h-1.5 rounded-full bg-muted" />;
+                          }
+                          const clientLedger = ledger.filter(l => l.client.id === client.id);
+                          if (clientLedger.length === 0) {
+                            return <span key={mIso} className="w-1.5 h-1.5 rounded-full bg-muted ring-2 ring-muted/40" />;
+                          }
+                          const hasOverdue = clientLedger.some(l => statusOf(l.dueIso, !!l.record?.paid) === 'overdue');
+                          const allPaid = clientLedger.every(l => l.record?.paid);
+                          const cls = hasOverdue
+                            ? 'bg-red-500 ring-red-500/20'
+                            : allPaid
+                              ? 'bg-emerald-500 ring-emerald-500/20'
+                              : 'bg-primary ring-primary/20';
+                          return <span key={mIso} className={cn('w-1.5 h-1.5 rounded-full ring-2', cls)} />;
+                        })}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
-              {noSchedule ? (
-                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground bg-amber-500/5 border border-amber-500/20 rounded-md p-2">
-                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Configurá las fechas de
-                  cobro en "Editar".
+              <div className="mt-5 space-y-2">
+                {Object.entries(bucketTotals).map(([cur, t]) => (
+                  <div key={cur} className="rounded-xl bg-primary/5 border border-primary/15 p-3">
+                    <div className="text-[9px] font-bold text-primary uppercase tracking-widest">
+                      Pendiente {cur}
+                    </div>
+                    <div className="text-xl font-extrabold text-foreground tracking-tight mt-0.5">
+                      {t.sym}
+                      {(t.pending + t.overdue).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      Cobrado {t.sym}{t.paid.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </aside>
+
+            {/* Right: Detailed ledger */}
+            <div className="flex-1 min-w-0">
+              {ledger.length === 0 ? (
+                <div className="p-10 text-center text-sm text-muted-foreground">
+                  {rows.length === 0
+                    ? 'Sin clientes activos todavía.'
+                    : 'Ningún cliente tiene fechas configuradas para este mes.'}
                 </div>
               ) : (
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {installments.map(({ date, dueIso, record, base, withIva }) => {
-                    const paid = !!record?.paid;
-                    const isOverdue =
-                      !paid && dueIso < isoDate(new Date()) && periodIso === isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-                    return (
-                      <div
-                        key={date.id}
-                        className={cn(
-                          'group flex flex-col gap-2 rounded-lg border px-3 py-2 transition-colors',
-                          paid
-                            ? 'bg-emerald-500/10 border-emerald-500/30'
-                            : isOverdue
-                              ? 'bg-red-500/5 border-red-500/30'
-                              : 'bg-background border-border',
-                        )}
-                      >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            togglePaid.mutate({
-                              client,
-                              schedule: date,
-                              current: record,
-                              dueIso,
-                              amountWithIva: withIva,
-                            })
-                          }
-                          className="flex items-center gap-3 text-left"
-                        >
-                          {paid ? (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                          ) : (
-                            <Circle
-                              className={cn(
-                                'h-5 w-5 shrink-0',
-                                isOverdue ? 'text-red-500' : 'text-muted-foreground',
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="pl-6 pr-3 py-3 text-left text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Vence</th>
+                        <th className="px-3 py-3 text-left text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cliente / Concepto</th>
+                        <th className="px-3 py-3 text-right text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Monto</th>
+                        <th className="px-3 py-3 text-left text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Método</th>
+                        <th className="pl-3 pr-6 py-3 text-right text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {ledger.map((i) => {
+                        const paid = !!i.record?.paid;
+                        const st = statusOf(i.dueIso, paid);
+                        const sym = i.client.currency === 'CRC' ? '₡' : '$';
+                        const dueDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), i.dueDay);
+                        return (
+                          <tr key={i.client.id + i.schedule.id} className="hover:bg-muted/40 group transition-colors">
+                            <td className="pl-6 pr-3 py-3">
+                              <div className="text-xs font-bold text-foreground tabular-nums">
+                                {String(i.dueDay).padStart(2, '0')} {dueDate.toLocaleDateString('es-CR', { month: 'short' }).replace('.', '')}
+                              </div>
+                              {paid && i.record?.paid_at && (
+                                <div className="text-[10px] text-emerald-600 dark:text-emerald-500 mt-0.5">
+                                  ✓ {new Date(i.record.paid_at).toLocaleDateString('es-CR', { day: '2-digit', month: 'short' })}
+                                </div>
                               )}
-                            />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium">
-                              {symbol}
-                              {withIva.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                              {ivaRate > 0 && (
-                                <span className="text-[10px] text-muted-foreground font-normal ml-1">
-                                  (IVA incl.)
-                                </span>
+                            </td>
+                            <td className="px-3 py-3">
+                              <button
+                                onClick={() => setEditClient(i.client)}
+                                className="flex items-center gap-2.5 text-left group/name"
+                              >
+                                <span className={cn(
+                                  'w-1.5 h-1.5 rounded-full shrink-0',
+                                  st === 'paid' && 'bg-emerald-500',
+                                  st === 'overdue' && 'bg-red-500',
+                                  st === 'pending' && 'bg-primary',
+                                )} />
+                                <div className="min-w-0">
+                                  <div className="text-xs font-bold text-foreground group-hover/name:text-primary transition-colors truncate">
+                                    {i.client.name}
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground truncate">
+                                    {i.schedule.label || 'Cuota mensual'}
+                                    {i.ivaRate > 0 && ` · IVA ${i.ivaRate}%`}
+                                  </div>
+                                </div>
+                              </button>
+                            </td>
+                            <td className="px-3 py-3 text-right whitespace-nowrap">
+                              <span className="text-xs font-bold text-foreground tabular-nums">
+                                {sym}{i.withIva.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                              </span>
+                              {i.ivaRate > 0 && (
+                                <div className="text-[9px] text-muted-foreground">
+                                  base {sym}{i.base.toLocaleString()}
+                                </div>
                               )}
-                              {date.label && (
-                                <span className="text-xs text-muted-foreground font-normal ml-1">
-                                  · {date.label}
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[11px] text-muted-foreground">
-                              Vence día {clampDay(monthDate.getFullYear(), monthDate.getMonth(), date.day_of_month)}
-                              {paid && record?.paid_at && (
-                                <span className="ml-1">
-                                  · pagado {new Date(record.paid_at).toLocaleDateString('es-CR')}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                        <Select
-                          value={record?.payment_method || ''}
-                          onValueChange={(m) =>
-                            setMethod.mutate({
-                              client,
-                              schedule: date,
-                              current: record,
-                              dueIso,
-                              amountWithIva: withIva,
-                              method: m,
-                            })
-                          }
-                        >
-                          <SelectTrigger className="h-7 text-[11px] px-2">
-                            <SelectValue placeholder="Método de pago" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PAYMENT_METHODS.map(m => (
-                              <SelectItem key={m.value} value={m.value} className="text-xs">
-                                {m.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    );
-                  })}
+                            </td>
+                            <td className="px-3 py-3">
+                              <Select
+                                value={i.record?.payment_method || ''}
+                                onValueChange={(m) =>
+                                  setMethod.mutate({
+                                    client: i.client,
+                                    schedule: i.schedule,
+                                    current: i.record,
+                                    dueIso: i.dueIso,
+                                    amountWithIva: i.withIva,
+                                    method: m,
+                                  })
+                                }
+                              >
+                                <SelectTrigger className="h-7 text-[11px] px-2 border-transparent bg-transparent hover:bg-background hover:border-border focus:border-border w-[130px]">
+                                  <SelectValue placeholder="—" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {PAYMENT_METHODS.map(m => (
+                                    <SelectItem key={m.value} value={m.value} className="text-xs">
+                                      {m.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="pl-3 pr-6 py-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  togglePaid.mutate({
+                                    client: i.client,
+                                    schedule: i.schedule,
+                                    current: i.record,
+                                    dueIso: i.dueIso,
+                                    amountWithIva: i.withIva,
+                                  })
+                                }
+                                className={cn(
+                                  'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all',
+                                  st === 'paid' && 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400',
+                                  st === 'overdue' && 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/15 dark:text-red-400',
+                                  st === 'pending' && 'bg-primary/10 text-primary hover:bg-primary/20',
+                                )}
+                              >
+                                {st === 'paid' ? 'Pagado' : st === 'overdue' ? 'Vencido' : 'Pendiente'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
-            </Card>
-          );
-        })}
-      </div>
+            </div>
+          </div>
 
+          {/* Footer summary */}
+          {ledger.length > 0 && (
+            <div className="px-6 py-4 bg-muted/30 border-t border-border flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex gap-5 flex-wrap text-[10px] font-bold text-muted-foreground">
+                {Object.entries(bucketTotals).map(([cur, t]) => (
+                  <div key={cur} className="flex gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      PAGADO {t.sym}{t.paid.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      PENDIENTE {t.sym}{t.pending.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      VENCIDO {t.sym}{t.overdue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {showNewClient && (
         <ClientDialog
@@ -470,7 +602,6 @@ export default function Pagos() {
           existingDates={dates.filter(d => d.client_id === editClient.id)}
         />
       )}
-    </div>
     </DashboardLayout>
   );
 }
