@@ -7,7 +7,7 @@ import {
   useAgencyCrmLeads,
 } from '@/hooks/use-agency-crm-leads';
 import { Mail, Phone, GripVertical, User } from 'lucide-react';
-import { useInternalTeam } from '@/hooks/use-internal-team';
+import { InternalTeamMember, useInternalTeam } from '@/hooks/use-internal-team';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
@@ -31,8 +31,8 @@ const columnAccent: Record<AgencyCrmStatus, string> = {
 export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
   const { data: team = [] } = useInternalTeam();
   const teamById = useMemo(() => {
-    const m = new Map<string, string>();
-    team.forEach((t) => m.set(t.id, (t.full_name || t.email || '').split(' ')[0] || 'Sin nombre'));
+    const m = new Map<string, InternalTeamMember>();
+    team.forEach((t) => m.set(t.id, t));
     return m;
   }, [team]);
   const { updateLead } = useAgencyCrmLeads();
@@ -169,18 +169,33 @@ export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
                         {getLostReasonLabel(lead.lost_reason)}
                       </div>
                     )}
-                    {lead.assigned_to && teamById.get(lead.assigned_to) && (
-                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-primary/15 text-primary border border-primary/40 font-medium">
-                        <User className="h-3 w-3" /> {teamById.get(lead.assigned_to)}
-                      </div>
-                    )}
                     {lead.notes && (
                       <div className="mt-2 text-[11px] text-white/60 line-clamp-2">
                         {lead.notes}
                       </div>
                     )}
-                    <div className="mt-2 text-[10px] text-white/40 uppercase tracking-wider">
-                      {format(parseISO(lead.created_at), 'd MMM', { locale: es })}
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="text-[10px] text-white/40 uppercase tracking-wider">
+                        {format(parseISO(lead.created_at), 'd MMM', { locale: es })}
+                      </div>
+                      {lead.assigned_to && teamById.get(lead.assigned_to) && (
+                        <div
+                          className="h-7 w-7 rounded-full border border-white/20 bg-white/10 overflow-hidden shrink-0"
+                          title={teamById.get(lead.assigned_to)?.full_name || ''}
+                        >
+                          {teamById.get(lead.assigned_to)?.avatar_url ? (
+                            <img
+                              src={teamById.get(lead.assigned_to)?.avatar_url || ''}
+                              alt={teamById.get(lead.assigned_to)?.full_name || ''}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-white/80">
+                              <User className="h-3.5 w-3.5" />
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
