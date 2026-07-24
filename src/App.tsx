@@ -267,13 +267,14 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
-                  <Route path="/agencia/propuestas" element={
+                  <Route path="/agencia/documentacion" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <Propuestas />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
+                  <Route path="/agencia/propuestas" element={<Navigate to="/agencia/documentacion" replace />} />
                   <Route path="/ad-frameworks" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
