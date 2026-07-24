@@ -6,7 +6,8 @@ import {
   getLostReasonLabel,
   useAgencyCrmLeads,
 } from '@/hooks/use-agency-crm-leads';
-import { Mail, Phone, GripVertical } from 'lucide-react';
+import { Mail, Phone, GripVertical, User } from 'lucide-react';
+import { useInternalTeam } from '@/hooks/use-internal-team';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
@@ -28,6 +29,12 @@ const columnAccent: Record<AgencyCrmStatus, string> = {
 };
 
 export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
+  const { data: team = [] } = useInternalTeam();
+  const teamById = useMemo(() => {
+    const m = new Map<string, string>();
+    team.forEach((t) => m.set(t.id, (t.full_name || t.email || '').split(' ')[0] || 'Sin nombre'));
+    return m;
+  }, [team]);
   const { updateLead } = useAgencyCrmLeads();
   const { toast } = useToast();
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -160,6 +167,11 @@ export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
                     {lead.status === 'perdido' && lead.lost_reason && (
                       <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-red-500/20 text-red-300 border border-red-500/40 font-medium">
                         {getLostReasonLabel(lead.lost_reason)}
+                      </div>
+                    )}
+                    {lead.assigned_to && teamById.get(lead.assigned_to) && (
+                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-primary/15 text-primary border border-primary/40 font-medium">
+                        <User className="h-3 w-3" /> {teamById.get(lead.assigned_to)}
                       </div>
                     )}
                     {lead.notes && (
