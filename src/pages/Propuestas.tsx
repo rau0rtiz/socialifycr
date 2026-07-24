@@ -131,6 +131,7 @@ const Propuestas = () => {
   // Quick "Editar info" dialog state
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoTarget, setInfoTarget] = useState<AgencyProposalListItem | null>(null);
+  const [infoClientId, setInfoClientId] = useState<string>('');
   const [infoClientName, setInfoClientName] = useState('');
   const [infoContact, setInfoContact] = useState('');
   const [infoAmount, setInfoAmount] = useState('');
@@ -140,6 +141,7 @@ const Propuestas = () => {
 
   const openInfo = (p: AgencyProposalListItem) => {
     setInfoTarget(p);
+    setInfoClientId((p as any).client_id || '');
     setInfoClientName(p.client_name || '');
     setInfoContact(p.contact_point || '');
     setInfoAmount(p.amount != null ? String(p.amount) : '');
@@ -152,9 +154,11 @@ const Propuestas = () => {
     if (!infoTarget) return;
     setSavingInfo(true);
     try {
+      const matchedClient = clientsList.find((c) => c.id === infoClientId);
       await updateMut.mutateAsync({
         id: infoTarget.id,
-        client_name: infoClientName.trim() || null,
+        client_id: infoClientId || null,
+        client_name: matchedClient?.name || infoClientName.trim() || null,
         contact_point: infoContact.trim() || null,
         amount: infoAmount.trim() === '' ? null : Number(infoAmount),
         currency: infoCurrency,
