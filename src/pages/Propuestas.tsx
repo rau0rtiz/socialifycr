@@ -179,6 +179,7 @@ const Propuestas = () => {
     setEditing(null);
     setTitle('');
     setClientName('');
+    setClientId('');
     setHtml('');
     setIsPublished(true);
     setKind(initialKind);
@@ -189,6 +190,7 @@ const Propuestas = () => {
   const openEdit = async (p: AgencyProposalListItem) => {
     setEditing(p);
     setTitle(p.title);
+    setClientId((p as any).client_id || '');
     setClientName(p.client_name || '');
     setHtml('');
     setIsPublished(p.is_published);
@@ -206,6 +208,7 @@ const Propuestas = () => {
       setEditorHtmlLoading(false);
     }
   };
+
 
 
   const handleSave = async () => {
