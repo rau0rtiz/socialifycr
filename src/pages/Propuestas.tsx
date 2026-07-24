@@ -368,7 +368,7 @@ const Propuestas = () => {
             <Button variant="outline" onClick={() => openCreate('report')} className="gap-2">
               <BarChart3 className="h-4 w-4" /> Nuevo reporte
             </Button>
-            <Button onClick={() => openCreate('proposal')} className="gap-2">
+            <Button variant="outline" onClick={() => openCreate('proposal')} className="gap-2">
               <Plus className="h-4 w-4" /> Nueva propuesta
             </Button>
           </div>
