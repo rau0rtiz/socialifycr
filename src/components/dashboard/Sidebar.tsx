@@ -249,7 +249,7 @@ export const Sidebar = () => {
                       )}
                     >
                       <Briefcase className="h-4 w-4" />
-                      <span>CRM Agencia</span>
+                      <span>Marketing Tool</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

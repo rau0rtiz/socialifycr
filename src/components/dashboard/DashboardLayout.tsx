@@ -1,6 +1,6 @@
 import { ReactNode, CSSProperties } from 'react';
 import { useLocation } from 'react-router-dom';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Sidebar } from './Sidebar';
 import { AgencySidebar } from '@/components/agency/AgencySidebar';
 import { TopBar } from './TopBar';
@@ -58,6 +58,11 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
         {isAgencyHub ? <AgencySidebar /> : <Sidebar />}
         <div className="flex-1 flex flex-col min-w-0 h-full">
           {!isAgencyHub && <TopBar />}
+          {isAgencyHub && (
+            <header className="h-11 flex items-center gap-2 px-3 border-b border-border/60 shrink-0">
+              <SidebarTrigger className="text-foreground" />
+            </header>
+          )}
           <main
             className={cn(
               'flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden relative overscroll-contain [-webkit-overflow-scrolling:touch]',
