@@ -355,10 +355,10 @@ const Propuestas = () => {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileText className="h-6 w-6 text-primary" />
-              Propuestas y Reportes
+              Documentación
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Cargá HTML de una propuesta, reporte o plan de contenido y compartilo con un link o por correo.
+              Propuestas, reportes y planes de contenido compartibles con link o correo.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
