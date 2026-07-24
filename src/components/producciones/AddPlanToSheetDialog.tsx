@@ -46,7 +46,7 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
   const [sheetMode, setSheetMode] = useState<'new' | 'existing'>('new');
   const [existingSheetId, setExistingSheetId] = useState<string>('');
   const [newSheetTitle, setNewSheetTitle] = useState<string>('');
-  const [model, setModel] = useState<'claude-opus-4-5' | 'claude-sonnet-4-5'>('claude-opus-4-5');
+  const [model, setModel] = useState<string>('google/gemini-2.5-pro');
   const [replace, setReplace] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
