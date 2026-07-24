@@ -593,6 +593,7 @@ export type Database = {
       }
       agency_crm_leads: {
         Row: {
+          assigned_to: string | null
           created_at: string
           created_by: string | null
           email: string | null
@@ -616,6 +617,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_to?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -639,6 +641,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_to?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -661,7 +664,15 @@ export type Database = {
           status?: Database["public"]["Enums"]["agency_crm_status"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "agency_crm_leads_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       agency_invoices: {
         Row: {
