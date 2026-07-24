@@ -72,8 +72,8 @@ export const AgencySidebar = () => {
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
               Interno · Agencia
             </p>
-            <p className="font-wordmark uppercase text-foreground text-lg tracking-tight">
-              CRM Agencia
+            <p className="font-wordmark uppercase text-foreground text-base tracking-tight leading-tight">
+              Socialify Internal<br />Marketing Tool
             </p>
           </div>
         )}
