@@ -15,39 +15,9 @@ import { CrmKanban } from '@/components/agency-crm/CrmKanban';
 import { SellerCommissionsView } from '@/components/agency-crm/SellerCommissionsView';
 import { ClientsView } from '@/components/agency-crm/ClientsView';
 
-interface ContractClient {
-  name: string;
-  seller_name: string | null;
-  start_date: string | null;
-}
-
-const useContractClients = () => {
-  return useQuery({
-    queryKey: ['agency-contract-clients'],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('agency_contracts')
-        .select('customer_name, seller_name, start_date')
-        .order('start_date', { ascending: false });
-      if (error) throw error;
-      const map = new Map<string, ContractClient>();
-      for (const row of (data || []) as any[]) {
-        const name = (row.customer_name || '').trim();
-        if (!name) continue;
-        const key = name.toLowerCase();
-        if (!map.has(key)) {
-          map.set(key, { name, seller_name: row.seller_name, start_date: row.start_date });
-        }
-      }
-      return Array.from(map.values());
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-};
-
 const AgencyCRM = () => {
   const { leads, isLoading } = useAgencyCrmLeads();
-  const { data: contractClients = [], isLoading: loadingContracts } = useContractClients();
+
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AgencyCrmLead | null>(null);
