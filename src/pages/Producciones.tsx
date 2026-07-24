@@ -877,19 +877,10 @@ function ClientFolderCard({
         {/* Vignette bottom — strong gradient so text reads over the logo */}
         <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black via-black/85 to-transparent" />
 
-        {/* Count chip */}
-        <Badge variant="outline" className="absolute top-3 right-3 bg-black/60 border-white/20 text-white text-[10px] backdrop-blur">
-          {count}
-        </Badge>
-
         {/* Client name */}
         <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-          <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-accent mb-1">Cliente</div>
           <div className="font-serif text-base sm:text-lg text-white leading-tight truncate">
             {client.name}
-          </div>
-          <div className="text-[10px] text-white/60 mt-0.5">
-            {count === 0 ? 'Sin sheets' : count === 1 ? '1 sheet' : `${count} sheets`}
           </div>
         </div>
       </button>
