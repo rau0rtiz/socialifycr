@@ -37,7 +37,7 @@ const Archivos = lazy(() => import("./pages/Archivos"));
 const Accesos = lazy(() => import("./pages/Accesos"));
 const BusinessSetup = lazy(() => import("./pages/BusinessSetup"));
 const ClientDatabase = lazy(() => import("./pages/ClientDatabase"));
-const WidgetCatalogPage = lazy(() => import("./pages/WidgetCatalog"));
+
 
 const ActualizarFoto = lazy(() => import("./pages/ActualizarFoto"));
 const Funnel = lazy(() => import("./pages/Funnel"));
@@ -240,13 +240,6 @@ const App = () => (
                   } />
                   <Route path="/business-setup" element={<ProtectedRoute><BusinessSetup /></ProtectedRoute>} />
                   <Route path="/client-database" element={<ProtectedRoute><ClientDatabase /></ProtectedRoute>} />
-                  <Route path="/widget-catalog" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <WidgetCatalogPage />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
                   <Route path="/agencia/crm" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
@@ -310,13 +303,6 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <Archivos />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/agencia/widget-catalog" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <WidgetCatalogPage />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
