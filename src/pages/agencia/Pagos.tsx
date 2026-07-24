@@ -308,7 +308,7 @@ export default function Pagos() {
       </div>
 
       <div className="space-y-3">
-        {rows.map(({ client, installments, totalDue, totalPaid }) => {
+        {rows.map(({ client, installments, totalDue, totalPaid, subtotal, ivaAmount, ivaRate }) => {
           const symbol = client.currency === 'CRC' ? '₡' : '$';
           const missing = installments.filter(i => !i.record?.paid).length;
           const noSchedule = installments.length === 0;
@@ -333,6 +333,11 @@ export default function Pagos() {
                       </span>
                     )}
                   </div>
+                  {ivaRate > 0 && (
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      Subtotal {symbol}{subtotal.toLocaleString()} + IVA {ivaRate}% ({symbol}{ivaAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })})
+                    </div>
+                  )}
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setEditClient(client)} className="gap-1">
                   <Pencil className="h-3.5 w-3.5" /> Editar
@@ -346,60 +351,95 @@ export default function Pagos() {
                 </div>
               ) : (
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {installments.map(({ date, dueIso, record }) => {
+                  {installments.map(({ date, dueIso, record, base, withIva }) => {
                     const paid = !!record?.paid;
                     const isOverdue =
                       !paid && dueIso < isoDate(new Date()) && periodIso === isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
                     return (
-                      <button
+                      <div
                         key={date.id}
-                        onClick={() =>
-                          togglePaid.mutate({
-                            client,
-                            schedule: date,
-                            current: record,
-                            dueIso,
-                          })
-                        }
                         className={cn(
-                          'group flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
+                          'group flex flex-col gap-2 rounded-lg border px-3 py-2 transition-colors',
                           paid
-                            ? 'bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/15'
+                            ? 'bg-emerald-500/10 border-emerald-500/30'
                             : isOverdue
-                              ? 'bg-red-500/5 border-red-500/30 hover:bg-red-500/10'
-                              : 'bg-background border-border hover:bg-muted/40',
+                              ? 'bg-red-500/5 border-red-500/30'
+                              : 'bg-background border-border',
                         )}
                       >
-                        {paid ? (
-                          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        ) : (
-                          <Circle
-                            className={cn(
-                              'h-5 w-5 shrink-0',
-                              isOverdue ? 'text-red-500' : 'text-muted-foreground',
-                            )}
-                          />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium">
-                            {symbol}
-                            {Number(date.amount).toLocaleString()}
-                            {date.label && (
-                              <span className="text-xs text-muted-foreground font-normal ml-1">
-                                · {date.label}
-                              </span>
-                            )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            togglePaid.mutate({
+                              client,
+                              schedule: date,
+                              current: record,
+                              dueIso,
+                              amountWithIva: withIva,
+                            })
+                          }
+                          className="flex items-center gap-3 text-left"
+                        >
+                          {paid ? (
+                            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          ) : (
+                            <Circle
+                              className={cn(
+                                'h-5 w-5 shrink-0',
+                                isOverdue ? 'text-red-500' : 'text-muted-foreground',
+                              )}
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium">
+                              {symbol}
+                              {withIva.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                              {ivaRate > 0 && (
+                                <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                                  (IVA incl.)
+                                </span>
+                              )}
+                              {date.label && (
+                                <span className="text-xs text-muted-foreground font-normal ml-1">
+                                  · {date.label}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                              Vence día {clampDay(monthDate.getFullYear(), monthDate.getMonth(), date.day_of_month)}
+                              {paid && record?.paid_at && (
+                                <span className="ml-1">
+                                  · pagado {new Date(record.paid_at).toLocaleDateString('es-CR')}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-[11px] text-muted-foreground">
-                            Vence día {clampDay(monthDate.getFullYear(), monthDate.getMonth(), date.day_of_month)}
-                            {paid && record?.paid_at && (
-                              <span className="ml-1">
-                                · pagado {new Date(record.paid_at).toLocaleDateString('es-CR')}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </button>
+                        </button>
+                        <Select
+                          value={record?.payment_method || ''}
+                          onValueChange={(m) =>
+                            setMethod.mutate({
+                              client,
+                              schedule: date,
+                              current: record,
+                              dueIso,
+                              amountWithIva: withIva,
+                              method: m,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="h-7 text-[11px] px-2">
+                            <SelectValue placeholder="Método de pago" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PAYMENT_METHODS.map(m => (
+                              <SelectItem key={m.value} value={m.value} className="text-xs">
+                                {m.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     );
                   })}
                 </div>
@@ -408,6 +448,7 @@ export default function Pagos() {
           );
         })}
       </div>
+
 
       {showNewClient && (
         <ClientDialog
