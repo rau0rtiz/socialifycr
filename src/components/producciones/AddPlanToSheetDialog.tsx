@@ -270,8 +270,8 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
                 <Select value={model} onValueChange={(v) => setModel(v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="claude-opus-4-5">Claude Opus 4.5 (mejor)</SelectItem>
-                    <SelectItem value="claude-sonnet-4-5">Claude Sonnet 4.5 (más barato)</SelectItem>
+                    <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (mejor)</SelectItem>
+                    <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (más barato)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
