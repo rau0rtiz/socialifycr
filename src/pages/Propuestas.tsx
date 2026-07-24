@@ -590,7 +590,7 @@ const Propuestas = () => {
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={createMut.isPending || updateMut.isPending}>
               {(createMut.isPending || updateMut.isPending) && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {editing ? 'Guardar cambios' : (kind === 'report' ? 'Crear reporte' : 'Crear propuesta')}
+              {editing ? 'Guardar cambios' : (kind === 'report' ? 'Crear reporte' : kind === 'content_plan' ? 'Crear plan' : 'Crear propuesta')}
             </Button>
           </DialogFooter>
         </DialogContent>
