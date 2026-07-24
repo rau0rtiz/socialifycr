@@ -32,6 +32,7 @@ export interface AgencyCrmLead {
   status: AgencyCrmStatus;
   notes: string | null;
   created_by: string | null;
+  assigned_to: string | null;
   created_at: string;
   updated_at: string;
   // Venta
@@ -56,6 +57,7 @@ export interface CrmLeadInput {
   phone?: string | null;
   status?: AgencyCrmStatus;
   notes?: string | null;
+  assigned_to?: string | null;
   sale_package?: string | null;
   sale_includes?: string | null;
   sale_amount?: number | null;
@@ -120,6 +122,7 @@ const buildPayload = (input: Partial<CrmLeadInput>, opts: { setSaleClosedAt?: bo
   if (input.phone !== undefined) payload.phone = input.phone?.trim() || null;
   if (input.status !== undefined) payload.status = input.status;
   if (input.notes !== undefined) payload.notes = input.notes?.trim() || null;
+  if (input.assigned_to !== undefined) payload.assigned_to = input.assigned_to || null;
   if (input.sale_package !== undefined) payload.sale_package = input.sale_package?.trim() || null;
   if (input.sale_includes !== undefined) payload.sale_includes = input.sale_includes?.trim() || null;
   if (input.sale_amount !== undefined) payload.sale_amount = input.sale_amount ?? null;
