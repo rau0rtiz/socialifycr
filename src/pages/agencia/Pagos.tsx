@@ -19,6 +19,7 @@ interface PayClient {
   currency: string;
   notes: string | null;
   active: boolean;
+  iva_rate: number;
 }
 interface PayDate {
   id: string;
@@ -38,7 +39,18 @@ interface PayRecord {
   currency: string;
   paid: boolean;
   paid_at: string | null;
+  payment_method: string | null;
 }
+
+const PAYMENT_METHODS = [
+  { value: 'compra_click', label: 'Compra Click' },
+  { value: 'sinpe', label: 'SINPE' },
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'transferencia', label: 'Transferencia' },
+] as const;
+
+const methodLabel = (v: string | null | undefined) =>
+  PAYMENT_METHODS.find(m => m.value === v)?.label || '';
 
 const monthLabel = (d: Date) =>
   d.toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
