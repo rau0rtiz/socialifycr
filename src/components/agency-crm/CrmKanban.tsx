@@ -6,13 +6,11 @@ import {
   getLostReasonLabel,
   useAgencyCrmLeads,
 } from '@/hooks/use-agency-crm-leads';
-import { Mail, Phone, GripVertical, CheckCircle2, UserCircle2 } from 'lucide-react';
+import { Mail, Phone, GripVertical, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useInternalTeam, getInitials } from '@/hooks/use-internal-team';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ContractClient {
   name: string;
@@ -39,8 +37,6 @@ const columnAccent: Record<AgencyCrmStatus, string> = {
 export const CrmKanban = ({ leads, contractClients, search, onOpenLead }: Props) => {
   const { updateLead } = useAgencyCrmLeads();
   const { toast } = useToast();
-  const { data: team = [] } = useInternalTeam();
-  const teamById = useMemo(() => Object.fromEntries(team.map((m) => [m.id, m])), [team]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
 
@@ -187,37 +183,8 @@ export const CrmKanban = ({ leads, contractClients, search, onOpenLead }: Props)
                         {lead.notes}
                       </div>
                     )}
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <div className="text-[10px] text-white/40 uppercase tracking-wider">
-                        {format(parseISO(lead.created_at), 'd MMM', { locale: es })}
-                      </div>
-                      {(() => {
-                        const m = lead.assigned_to ? teamById[lead.assigned_to] : null;
-                        if (!m) {
-                          return (
-                            <span className="inline-flex items-center gap-1 text-[10px] text-white/40">
-                              <UserCircle2 className="h-3.5 w-3.5" /> Sin asignar
-                            </span>
-                          );
-                        }
-                        const label = m.full_name || m.email || '';
-                        return (
-                          <span
-                            className="inline-flex items-center gap-1.5 text-[10px] text-white/70"
-                            title={`Asignado a ${label}`}
-                          >
-                            <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                              {m.avatar_url && <AvatarImage src={m.avatar_url} alt={label} />}
-                              <AvatarFallback className="text-[9px] bg-primary/20 text-white">
-                                {getInitials(m.full_name, m.email)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="truncate max-w-[80px]">
-                              {(m.full_name || m.email || '').split(' ')[0]}
-                            </span>
-                          </span>
-                        );
-                      })()}
+                    <div className="mt-2 text-[10px] text-white/40 uppercase tracking-wider">
+                      {format(parseISO(lead.created_at), 'd MMM', { locale: es })}
                     </div>
                   </div>
                 ))}
@@ -232,9 +199,6 @@ export const CrmKanban = ({ leads, contractClients, search, onOpenLead }: Props)
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-green-300 shrink-0" />
                       <div className="font-semibold text-sm truncate text-white">{c.name}</div>
-                    </div>
-                    <div className="mt-1 text-[11px] text-white/70">
-                      {c.seller_name ? `Vendedor: ${c.seller_name}` : 'Contrato activo'}
                     </div>
                     {c.start_date && (
                       <div className="mt-1 text-[10px] text-white/50">
