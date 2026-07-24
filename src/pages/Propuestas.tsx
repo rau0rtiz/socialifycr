@@ -32,7 +32,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3 } from 'lucide-react';
+import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3, ClipboardList, Sparkles } from 'lucide-react';
+import { AddPlanToSheetDialog } from '@/components/producciones/AddPlanToSheetDialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
