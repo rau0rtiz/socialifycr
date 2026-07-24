@@ -202,6 +202,7 @@ const App = () => (
                   <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
                   <Route path="/propuesta/:slug" element={<PropuestaPublica />} />
                   <Route path="/reporte/:slug" element={<PropuestaPublica />} />
+                  <Route path="/plan/:slug" element={<PropuestaPublica />} />
                   <Route path="/privacidad" element={<Privacy />} />
                   <Route path="/terminos" element={<Terms />} />
                   <Route path="/eliminar-datos" element={<DataDeletion />} />
