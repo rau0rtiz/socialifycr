@@ -47,17 +47,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useClientFeatures } from '@/hooks/use-client-features';
 
-const managementMenuItems = [
-  { title: 'Clientes', url: '/clientes', icon: Users },
-  { title: 'Comunicaciones', url: '/comunicaciones', icon: Mail },
-  { title: 'Accesos', url: '/accesos', icon: KeyRound },
-  { title: 'Widget Catalog', url: '/widget-catalog', icon: Eye },
-  { title: 'CRM Agencia', url: '/agencia/crm', icon: UserPlus },
-  { title: 'Producciones', url: '/agencia/producciones', icon: Clapperboard },
-  { title: 'Documentación', url: '/agencia/documentacion', icon: FileText },
-  { title: 'Archivos', url: '/archivos', icon: FolderOpen },
-  { title: 'Ajustes del Dashboard', url: '/brand-settings', icon: Palette },
-];
+// Management is consolidated into a single "CRM Agencia" entry that leads to /agencia.
+
 
 export const Sidebar = () => {
   const location = useLocation();
