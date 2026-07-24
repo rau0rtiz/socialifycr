@@ -8,7 +8,7 @@ import {
   Mail,
   KeyRound,
   FolderOpen,
-  Eye,
+  
   Palette,
   ArrowLeft,
   LogOut,
