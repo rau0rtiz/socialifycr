@@ -799,6 +799,7 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          iva_rate: number
           monthly_amount: number
           name: string
           notes: string | null
@@ -809,6 +810,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          iva_rate?: number
           monthly_amount?: number
           name: string
           notes?: string | null
@@ -819,6 +821,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          iva_rate?: number
           monthly_amount?: number
           name?: string
           notes?: string | null
@@ -878,6 +881,7 @@ export type Database = {
           notes: string | null
           paid: boolean
           paid_at: string | null
+          payment_method: string | null
           period: string
           schedule_id: string | null
           updated_at: string
@@ -892,6 +896,7 @@ export type Database = {
           notes?: string | null
           paid?: boolean
           paid_at?: string | null
+          payment_method?: string | null
           period: string
           schedule_id?: string | null
           updated_at?: string
@@ -906,6 +911,7 @@ export type Database = {
           notes?: string | null
           paid?: boolean
           paid_at?: string | null
+          payment_method?: string | null
           period?: string
           schedule_id?: string | null
           updated_at?: string
