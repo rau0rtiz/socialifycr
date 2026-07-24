@@ -503,9 +503,10 @@ const Propuestas = () => {
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-5xl max-h-[92dvh] p-0 gap-0 flex flex-col">
           <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b shrink-0">
             <DialogTitle>
-              {editing
-                ? `Editar ${kind === 'report' ? 'reporte' : 'propuesta'}`
-                : `${kind === 'report' ? 'Nuevo reporte' : 'Nueva propuesta'}`}
+              {(() => {
+                const label = kind === 'report' ? 'reporte' : kind === 'content_plan' ? 'plan de contenido' : 'propuesta';
+                return editing ? `Editar ${label}` : `Nuevo ${label}`;
+              })()}
             </DialogTitle>
             <DialogDescription>
               Pegá el código HTML completo. Se mostrará tal cual en el link público.
@@ -521,12 +522,13 @@ const Propuestas = () => {
                     <SelectContent>
                       <SelectItem value="proposal">Propuesta</SelectItem>
                       <SelectItem value="report">Reporte</SelectItem>
+                      <SelectItem value="content_plan">Plan de contenido</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Título</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === 'report' ? 'Reporte mensual' : 'Propuesta comercial'} />
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === 'report' ? 'Reporte mensual' : kind === 'content_plan' ? 'Plan de contenido - Mes' : 'Propuesta comercial'} />
                 </div>
                 <div className="space-y-2">
                   <Label>Cliente (opcional)</Label>
