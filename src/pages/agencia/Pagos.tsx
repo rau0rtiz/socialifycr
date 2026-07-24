@@ -19,6 +19,7 @@ interface PayClient {
   currency: string;
   notes: string | null;
   active: boolean;
+  iva_rate: number;
 }
 interface PayDate {
   id: string;
@@ -38,7 +39,18 @@ interface PayRecord {
   currency: string;
   paid: boolean;
   paid_at: string | null;
+  payment_method: string | null;
 }
+
+const PAYMENT_METHODS = [
+  { value: 'compra_click', label: 'Compra Click' },
+  { value: 'sinpe', label: 'SINPE' },
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'transferencia', label: 'Transferencia' },
+] as const;
+
+const methodLabel = (v: string | null | undefined) =>
+  PAYMENT_METHODS.find(m => m.value === v)?.label || '';
 
 const monthLabel = (d: Date) =>
   d.toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
@@ -107,6 +119,7 @@ export default function Pagos() {
     return clients
       .filter(c => c.active)
       .map(c => {
+        const ivaRate = Number(c.iva_rate || 0);
         const cDates = dates
           .filter(d => d.client_id === c.id)
           .sort((a, b) => a.day_of_month - b.day_of_month);
@@ -114,18 +127,24 @@ export default function Pagos() {
           const day = clampDay(monthDate.getFullYear(), monthDate.getMonth(), d.day_of_month);
           const due = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
           const rec = records.find(r => r.schedule_id === d.id);
+          const base = Number(d.amount || 0);
+          const withIva = base * (1 + ivaRate / 100);
           return {
             date: d,
             dueIso: isoDate(due),
             record: rec,
+            base,
+            withIva,
           };
         });
-        const totalDue = installments.reduce((s, i) => s + Number(i.date.amount || 0), 0);
+        const totalDue = installments.reduce((s, i) => s + i.withIva, 0);
         const totalPaid = installments.reduce(
-          (s, i) => s + (i.record?.paid ? Number(i.record.amount || i.date.amount || 0) : 0),
+          (s, i) => s + (i.record?.paid ? Number(i.record.amount || i.withIva) : 0),
           0,
         );
-        return { client: c, installments, totalDue, totalPaid };
+        const subtotal = installments.reduce((s, i) => s + i.base, 0);
+        const ivaAmount = totalDue - subtotal;
+        return { client: c, installments, totalDue, totalPaid, subtotal, ivaAmount, ivaRate };
       });
   }, [clients, dates, records, monthDate]);
 
@@ -146,11 +165,13 @@ export default function Pagos() {
       schedule,
       current,
       dueIso,
+      amountWithIva,
     }: {
       client: PayClient;
       schedule: PayDate;
       current: PayRecord | undefined;
       dueIso: string;
+      amountWithIva: number;
     }) => {
       if (current) {
         const newPaid = !current.paid;
@@ -168,7 +189,7 @@ export default function Pagos() {
           schedule_id: schedule.id,
           period: periodIso,
           due_date: dueIso,
-          amount: schedule.amount,
+          amount: amountWithIva,
           currency: client.currency,
           paid: true,
           paid_at: new Date().toISOString(),
@@ -179,6 +200,47 @@ export default function Pagos() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['agency-pay-records', periodIso] }),
     onError: (e: any) => toast.error(e.message || 'Error'),
   });
+
+  const setMethod = useMutation({
+    mutationFn: async ({
+      client,
+      schedule,
+      current,
+      dueIso,
+      amountWithIva,
+      method,
+    }: {
+      client: PayClient;
+      schedule: PayDate;
+      current: PayRecord | undefined;
+      dueIso: string;
+      amountWithIva: number;
+      method: string;
+    }) => {
+      if (current) {
+        const { error } = await (supabase as any)
+          .from('agency_payment_records')
+          .update({ payment_method: method })
+          .eq('id', current.id);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any).from('agency_payment_records').insert({
+          client_id: client.id,
+          schedule_id: schedule.id,
+          period: periodIso,
+          due_date: dueIso,
+          amount: amountWithIva,
+          currency: client.currency,
+          paid: false,
+          payment_method: method,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['agency-pay-records', periodIso] }),
+    onError: (e: any) => toast.error(e.message || 'Error'),
+  });
+
 
   const shiftMonth = (delta: number) =>
     setMonthDate(new Date(monthDate.getFullYear(), monthDate.getMonth() + delta, 1));
@@ -246,7 +308,7 @@ export default function Pagos() {
       </div>
 
       <div className="space-y-3">
-        {rows.map(({ client, installments, totalDue, totalPaid }) => {
+        {rows.map(({ client, installments, totalDue, totalPaid, subtotal, ivaAmount, ivaRate }) => {
           const symbol = client.currency === 'CRC' ? '₡' : '$';
           const missing = installments.filter(i => !i.record?.paid).length;
           const noSchedule = installments.length === 0;
@@ -271,6 +333,11 @@ export default function Pagos() {
                       </span>
                     )}
                   </div>
+                  {ivaRate > 0 && (
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      Subtotal {symbol}{subtotal.toLocaleString()} + IVA {ivaRate}% ({symbol}{ivaAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })})
+                    </div>
+                  )}
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setEditClient(client)} className="gap-1">
                   <Pencil className="h-3.5 w-3.5" /> Editar
@@ -284,60 +351,95 @@ export default function Pagos() {
                 </div>
               ) : (
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {installments.map(({ date, dueIso, record }) => {
+                  {installments.map(({ date, dueIso, record, base, withIva }) => {
                     const paid = !!record?.paid;
                     const isOverdue =
                       !paid && dueIso < isoDate(new Date()) && periodIso === isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
                     return (
-                      <button
+                      <div
                         key={date.id}
-                        onClick={() =>
-                          togglePaid.mutate({
-                            client,
-                            schedule: date,
-                            current: record,
-                            dueIso,
-                          })
-                        }
                         className={cn(
-                          'group flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
+                          'group flex flex-col gap-2 rounded-lg border px-3 py-2 transition-colors',
                           paid
-                            ? 'bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/15'
+                            ? 'bg-emerald-500/10 border-emerald-500/30'
                             : isOverdue
-                              ? 'bg-red-500/5 border-red-500/30 hover:bg-red-500/10'
-                              : 'bg-background border-border hover:bg-muted/40',
+                              ? 'bg-red-500/5 border-red-500/30'
+                              : 'bg-background border-border',
                         )}
                       >
-                        {paid ? (
-                          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        ) : (
-                          <Circle
-                            className={cn(
-                              'h-5 w-5 shrink-0',
-                              isOverdue ? 'text-red-500' : 'text-muted-foreground',
-                            )}
-                          />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium">
-                            {symbol}
-                            {Number(date.amount).toLocaleString()}
-                            {date.label && (
-                              <span className="text-xs text-muted-foreground font-normal ml-1">
-                                · {date.label}
-                              </span>
-                            )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            togglePaid.mutate({
+                              client,
+                              schedule: date,
+                              current: record,
+                              dueIso,
+                              amountWithIva: withIva,
+                            })
+                          }
+                          className="flex items-center gap-3 text-left"
+                        >
+                          {paid ? (
+                            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          ) : (
+                            <Circle
+                              className={cn(
+                                'h-5 w-5 shrink-0',
+                                isOverdue ? 'text-red-500' : 'text-muted-foreground',
+                              )}
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium">
+                              {symbol}
+                              {withIva.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                              {ivaRate > 0 && (
+                                <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                                  (IVA incl.)
+                                </span>
+                              )}
+                              {date.label && (
+                                <span className="text-xs text-muted-foreground font-normal ml-1">
+                                  · {date.label}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                              Vence día {clampDay(monthDate.getFullYear(), monthDate.getMonth(), date.day_of_month)}
+                              {paid && record?.paid_at && (
+                                <span className="ml-1">
+                                  · pagado {new Date(record.paid_at).toLocaleDateString('es-CR')}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-[11px] text-muted-foreground">
-                            Vence día {clampDay(monthDate.getFullYear(), monthDate.getMonth(), date.day_of_month)}
-                            {paid && record?.paid_at && (
-                              <span className="ml-1">
-                                · pagado {new Date(record.paid_at).toLocaleDateString('es-CR')}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </button>
+                        </button>
+                        <Select
+                          value={record?.payment_method || ''}
+                          onValueChange={(m) =>
+                            setMethod.mutate({
+                              client,
+                              schedule: date,
+                              current: record,
+                              dueIso,
+                              amountWithIva: withIva,
+                              method: m,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="h-7 text-[11px] px-2">
+                            <SelectValue placeholder="Método de pago" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PAYMENT_METHODS.map(m => (
+                              <SelectItem key={m.value} value={m.value} className="text-xs">
+                                {m.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     );
                   })}
                 </div>
@@ -346,6 +448,7 @@ export default function Pagos() {
           );
         })}
       </div>
+
 
       {showNewClient && (
         <ClientDialog
@@ -393,6 +496,8 @@ function ClientDialog({
   const [currency, setCurrency] = useState(client?.currency || 'USD');
   const [notes, setNotes] = useState(client?.notes || '');
   const [active, setActive] = useState(client?.active ?? true);
+  const [ivaEnabled, setIvaEnabled] = useState(Number(client?.iva_rate || 0) > 0);
+  const [ivaRate, setIvaRate] = useState<number>(Number(client?.iva_rate || 13));
   const [drafts, setDrafts] = useState<DraftDate[]>(() =>
     existingDates.length
       ? existingDates.map(d => ({
@@ -407,7 +512,10 @@ function ClientDialog({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const effectiveIva = ivaEnabled ? ivaRate : 0;
   const monthlyTotal = drafts.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+  const monthlyTotalWithIva = monthlyTotal * (1 + effectiveIva / 100);
+
 
   const save = async () => {
     if (!name.trim()) {
@@ -426,6 +534,7 @@ function ClientDialog({
             notes: notes.trim() || null,
             active,
             monthly_amount: monthlyTotal,
+            iva_rate: effectiveIva,
           })
           .eq('id', clientId);
         if (error) throw error;
@@ -438,12 +547,14 @@ function ClientDialog({
             notes: notes.trim() || null,
             active,
             monthly_amount: monthlyTotal,
+            iva_rate: effectiveIva,
           })
           .select()
           .single();
         if (error) throw error;
         clientId = data.id;
       }
+
 
       // Sync dates: delete removed, upsert kept/new
       const keptIds = drafts.filter(d => d.id).map(d => d.id!) as string[];
@@ -568,14 +679,61 @@ function ClientDialog({
             </Label>
           </div>
 
+          <div className="rounded-md border border-border p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="iva-enabled"
+                checked={ivaEnabled}
+                onCheckedChange={v => setIvaEnabled(!!v)}
+              />
+              <Label htmlFor="iva-enabled" className="text-xs cursor-pointer">
+                Cobrar IVA
+              </Label>
+            </div>
+            {ivaEnabled && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs shrink-0">Tasa:</Label>
+                <Select
+                  value={String(ivaRate)}
+                  onValueChange={(v) => setIvaRate(v === 'custom' ? ivaRate : Number(v))}
+                >
+                  <SelectTrigger className="h-8 text-xs w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="13">13% (CR)</SelectItem>
+                    <SelectItem value="4">4%</SelectItem>
+                    <SelectItem value="2">2%</SelectItem>
+                    <SelectItem value="1">1%</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  value={ivaRate}
+                  onChange={e => setIvaRate(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+                  className="h-8 text-xs w-20"
+                />
+                <span className="text-xs text-muted-foreground">%</span>
+              </div>
+            )}
+          </div>
+
           <div>
             <div className="flex items-center justify-between mb-2">
               <Label className="text-xs">Fechas de cobro cada mes</Label>
               <span className="text-[11px] text-muted-foreground">
-                Total mensual: {currency === 'CRC' ? '₡' : '$'}
-                {monthlyTotal.toLocaleString()}
+                {ivaEnabled ? (
+                  <>Subtotal {currency === 'CRC' ? '₡' : '$'}{monthlyTotal.toLocaleString()} · Total con IVA {currency === 'CRC' ? '₡' : '$'}{monthlyTotalWithIva.toLocaleString(undefined, { maximumFractionDigits: 2 })}</>
+                ) : (
+                  <>Total mensual: {currency === 'CRC' ? '₡' : '$'}{monthlyTotal.toLocaleString()}</>
+                )}
               </span>
             </div>
+
             <div className="space-y-2">
               {drafts.map((d, idx) => (
                 <div key={d.key} className="flex items-center gap-2">
