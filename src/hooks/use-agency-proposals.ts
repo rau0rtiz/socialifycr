@@ -8,6 +8,7 @@ export type ProposalKind = 'proposal' | 'report' | 'content_plan';
 export interface AgencyProposal {
   id: string;
   title: string;
+  client_id: string | null;
   client_name: string | null;
   contact_point: string | null;
   amount: number | null;
