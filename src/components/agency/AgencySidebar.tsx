@@ -35,12 +35,12 @@ const items = [
   { title: 'Resumen', url: '/agencia', icon: LayoutDashboard, exact: true },
   { title: 'Clientes', url: '/agencia/clientes', icon: Users },
   { title: 'CRM', url: '/agencia/crm', icon: UserPlus },
+  { title: 'Pagos', url: '/agencia/pagos', icon: Wallet },
   { title: 'Producciones', url: '/agencia/producciones', icon: Clapperboard },
   { title: 'Documentación', url: '/agencia/documentacion', icon: FileText },
   { title: 'Comunicaciones', url: '/agencia/comunicaciones', icon: Mail },
   { title: 'Accesos', url: '/agencia/accesos', icon: KeyRound },
   { title: 'Archivos', url: '/agencia/archivos', icon: FolderOpen },
-  
   { title: 'Ajustes', url: '/agencia/ajustes', icon: Palette },
 ];
 
