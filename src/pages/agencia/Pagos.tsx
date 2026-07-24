@@ -119,6 +119,7 @@ export default function Pagos() {
     return clients
       .filter(c => c.active)
       .map(c => {
+        const ivaRate = Number(c.iva_rate || 0);
         const cDates = dates
           .filter(d => d.client_id === c.id)
           .sort((a, b) => a.day_of_month - b.day_of_month);
@@ -126,18 +127,24 @@ export default function Pagos() {
           const day = clampDay(monthDate.getFullYear(), monthDate.getMonth(), d.day_of_month);
           const due = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
           const rec = records.find(r => r.schedule_id === d.id);
+          const base = Number(d.amount || 0);
+          const withIva = base * (1 + ivaRate / 100);
           return {
             date: d,
             dueIso: isoDate(due),
             record: rec,
+            base,
+            withIva,
           };
         });
-        const totalDue = installments.reduce((s, i) => s + Number(i.date.amount || 0), 0);
+        const totalDue = installments.reduce((s, i) => s + i.withIva, 0);
         const totalPaid = installments.reduce(
-          (s, i) => s + (i.record?.paid ? Number(i.record.amount || i.date.amount || 0) : 0),
+          (s, i) => s + (i.record?.paid ? Number(i.record.amount || i.withIva) : 0),
           0,
         );
-        return { client: c, installments, totalDue, totalPaid };
+        const subtotal = installments.reduce((s, i) => s + i.base, 0);
+        const ivaAmount = totalDue - subtotal;
+        return { client: c, installments, totalDue, totalPaid, subtotal, ivaAmount, ivaRate };
       });
   }, [clients, dates, records, monthDate]);
 
@@ -158,11 +165,13 @@ export default function Pagos() {
       schedule,
       current,
       dueIso,
+      amountWithIva,
     }: {
       client: PayClient;
       schedule: PayDate;
       current: PayRecord | undefined;
       dueIso: string;
+      amountWithIva: number;
     }) => {
       if (current) {
         const newPaid = !current.paid;
@@ -180,7 +189,7 @@ export default function Pagos() {
           schedule_id: schedule.id,
           period: periodIso,
           due_date: dueIso,
-          amount: schedule.amount,
+          amount: amountWithIva,
           currency: client.currency,
           paid: true,
           paid_at: new Date().toISOString(),
@@ -191,6 +200,47 @@ export default function Pagos() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['agency-pay-records', periodIso] }),
     onError: (e: any) => toast.error(e.message || 'Error'),
   });
+
+  const setMethod = useMutation({
+    mutationFn: async ({
+      client,
+      schedule,
+      current,
+      dueIso,
+      amountWithIva,
+      method,
+    }: {
+      client: PayClient;
+      schedule: PayDate;
+      current: PayRecord | undefined;
+      dueIso: string;
+      amountWithIva: number;
+      method: string;
+    }) => {
+      if (current) {
+        const { error } = await (supabase as any)
+          .from('agency_payment_records')
+          .update({ payment_method: method })
+          .eq('id', current.id);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any).from('agency_payment_records').insert({
+          client_id: client.id,
+          schedule_id: schedule.id,
+          period: periodIso,
+          due_date: dueIso,
+          amount: amountWithIva,
+          currency: client.currency,
+          paid: false,
+          payment_method: method,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['agency-pay-records', periodIso] }),
+    onError: (e: any) => toast.error(e.message || 'Error'),
+  });
+
 
   const shiftMonth = (delta: number) =>
     setMonthDate(new Date(monthDate.getFullYear(), monthDate.getMonth() + delta, 1));
