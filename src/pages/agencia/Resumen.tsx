@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Users,
@@ -11,6 +10,7 @@ import {
   FileText,
   Mail,
   ArrowUpRight,
+  BarChart3,
   Loader2,
 } from 'lucide-react';
 
@@ -26,34 +26,34 @@ const KPI_META: Record<
   { label: string; icon: React.ElementType; href: string; hint: string }
 > = {
   clients: {
-    label: 'Clientes activos',
+    label: 'Clientes',
     icon: Users,
     href: '/agencia/clientes',
-    hint: 'Cuentas en la base',
+    hint: 'Cuentas activas',
   },
   crmLeads: {
-    label: 'Leads CRM',
+    label: 'Leads',
     icon: UserPlus,
     href: '/agencia/crm',
     hint: 'Pipeline abierto',
   },
   productions: {
-    label: 'Hojas de producción',
+    label: 'Producciones',
     icon: Clapperboard,
     href: '/agencia/producciones',
-    hint: 'En cualquier estado',
+    hint: 'Hojas en curso',
   },
   documents: {
     label: 'Documentos',
     icon: FileText,
     href: '/agencia/documentacion',
-    hint: 'Propuestas · reportes · planes',
+    hint: 'Propuestas · reportes',
   },
   communications: {
     label: 'Contactos',
     icon: Mail,
     href: '/agencia/comunicaciones',
-    hint: 'Leads en comunicaciones',
+    hint: 'Leads en comms',
   },
 };
 
@@ -65,20 +65,11 @@ const useAgencyKpis = () => {
       const [clients, crmLeads, productions, documents, communications] =
         await Promise.all([
           supabase.from('clients').select('id', { count: 'exact', head: true }),
-          supabase
-            .from('agency_crm_leads')
-            .select('id', { count: 'exact', head: true }),
-          supabase
-            .from('production_sheets')
-            .select('id', { count: 'exact', head: true }),
-          supabase
-            .from('agency_proposals')
-            .select('id', { count: 'exact', head: true }),
-          supabase
-            .from('funnel_leads')
-            .select('id', { count: 'exact', head: true }),
+          supabase.from('agency_crm_leads').select('id', { count: 'exact', head: true }),
+          supabase.from('production_sheets').select('id', { count: 'exact', head: true }),
+          supabase.from('agency_proposals').select('id', { count: 'exact', head: true }),
+          supabase.from('funnel_leads').select('id', { count: 'exact', head: true }),
         ]);
-
       return {
         clients: clients.count ?? 0,
         crmLeads: crmLeads.count ?? 0,
@@ -105,90 +96,116 @@ const AgencyResumen = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto space-y-8">
-        <header className="flex flex-col gap-2">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-            Interno · Agencia
-          </p>
-          <div className="flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
-                Resumen
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Vista rápida del estado interno de la agencia.
-              </p>
-            </div>
+      <div className="max-w-7xl mx-auto space-y-10">
+        {/* Header */}
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+              Interno · Agencia
+            </p>
+            <h1 className="mt-1 text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+              Resumen
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Monitor de métricas críticas y flujos activos.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))] animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+              Live
+            </span>
           </div>
         </header>
 
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {/* KPI Grid */}
+        <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {kpis.map((kpi) => (
             <Link
               key={kpi.key}
               to={kpi.href}
-              className="group"
+              className="agency-kpi group rounded-2xl border border-white/5 bg-card p-6 transition-colors hover:border-primary/30"
             >
-              <Card className="p-5 h-full border-border/60 hover:border-foreground/20 transition-colors bg-card">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="rounded-xl bg-foreground/[0.04] p-2.5">
-                    <kpi.icon className="h-4 w-4 text-foreground/70" />
-                  </div>
-                  <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
+              <div className="flex items-center justify-between">
+                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                  {kpi.label}
                 </div>
-                <div className="mt-6">
-                  <div className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">
-                    {isLoading ? (
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    ) : (
-                      kpi.value.toLocaleString('es-CR')
-                    )}
-                  </div>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-foreground">
-                      {kpi.label}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {kpi.hint}
-                  </p>
-                </div>
-              </Card>
+                <kpi.icon className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+              </div>
+              <div className="mt-4 text-4xl font-bold tracking-tighter text-foreground tabular-nums">
+                {isLoading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                ) : (
+                  kpi.value.toLocaleString('es-CR')
+                )}
+              </div>
+              <div className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                {kpi.hint}
+              </div>
             </Link>
           ))}
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Link to="/agencia/crm" className="group">
-            <Card className="p-6 h-full border-border/60 hover:border-foreground/20 transition-colors">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Ir al pipeline
-                </h2>
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Trabajá los leads, contratos y comisiones de la agencia.
-              </p>
-            </Card>
-          </Link>
-          <Link to="/agencia/producciones" className="group">
-            <Card className="p-6 h-full border-border/60 hover:border-foreground/20 transition-colors">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Hojas de producción
-                </h2>
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Revisá calendario de grabaciones y estados por cliente.
-              </p>
-            </Card>
-          </Link>
+        {/* Quick Actions */}
+        <section className="space-y-4">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            Accesos Estratégicos
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <QuickAction
+              to="/agencia/crm"
+              icon={BarChart3}
+              title="Abrir Pipeline Comercial"
+              description="Visualizá el flujo de conversión y gestioná leads, contratos y comisiones."
+            />
+            <QuickAction
+              to="/agencia/producciones"
+              icon={Clapperboard}
+              title="Consola de Producción"
+              description="Revisá calendario de grabaciones, estados y hojas por cliente."
+            />
+          </div>
         </section>
       </div>
     </DashboardLayout>
   );
 };
+
+const QuickAction = ({
+  to,
+  icon: Icon,
+  title,
+  description,
+}: {
+  to: string;
+  icon: React.ElementType;
+  title: string;
+  description: string;
+}) => (
+  <Link
+    to={to}
+    className="group relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-white/[0.02] to-transparent p-8 transition-all hover:border-primary/20"
+  >
+    <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-primary/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className="relative flex items-start justify-between gap-6">
+      <div className="space-y-5">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-black/40 text-primary transition-all group-hover:border-primary/40 group-hover:agency-glow">
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <h4 className="text-xl font-bold tracking-tight text-foreground">
+            {title}
+          </h4>
+          <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+        </div>
+      </div>
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-muted-foreground transition-all group-hover:border-primary/40 group-hover:text-primary">
+        <ArrowUpRight className="h-5 w-5" />
+      </div>
+    </div>
+  </Link>
+);
 
 export default AgencyResumen;
