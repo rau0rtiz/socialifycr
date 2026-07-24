@@ -679,14 +679,61 @@ function ClientDialog({
             </Label>
           </div>
 
+          <div className="rounded-md border border-border p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="iva-enabled"
+                checked={ivaEnabled}
+                onCheckedChange={v => setIvaEnabled(!!v)}
+              />
+              <Label htmlFor="iva-enabled" className="text-xs cursor-pointer">
+                Cobrar IVA
+              </Label>
+            </div>
+            {ivaEnabled && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs shrink-0">Tasa:</Label>
+                <Select
+                  value={String(ivaRate)}
+                  onValueChange={(v) => setIvaRate(v === 'custom' ? ivaRate : Number(v))}
+                >
+                  <SelectTrigger className="h-8 text-xs w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="13">13% (CR)</SelectItem>
+                    <SelectItem value="4">4%</SelectItem>
+                    <SelectItem value="2">2%</SelectItem>
+                    <SelectItem value="1">1%</SelectItem>
+                    <SelectItem value="custom">Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  value={ivaRate}
+                  onChange={e => setIvaRate(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+                  className="h-8 text-xs w-20"
+                />
+                <span className="text-xs text-muted-foreground">%</span>
+              </div>
+            )}
+          </div>
+
           <div>
             <div className="flex items-center justify-between mb-2">
               <Label className="text-xs">Fechas de cobro cada mes</Label>
               <span className="text-[11px] text-muted-foreground">
-                Total mensual: {currency === 'CRC' ? '₡' : '$'}
-                {monthlyTotal.toLocaleString()}
+                {ivaEnabled ? (
+                  <>Subtotal {currency === 'CRC' ? '₡' : '$'}{monthlyTotal.toLocaleString()} · Total con IVA {currency === 'CRC' ? '₡' : '$'}{monthlyTotalWithIva.toLocaleString(undefined, { maximumFractionDigits: 2 })}</>
+                ) : (
+                  <>Total mensual: {currency === 'CRC' ? '₡' : '$'}{monthlyTotal.toLocaleString()}</>
+                )}
               </span>
             </div>
+
             <div className="space-y-2">
               {drafts.map((d, idx) => (
                 <div key={d.key} className="flex items-center gap-2">
