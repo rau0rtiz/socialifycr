@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { renderDocumentSource } from '@/lib/jsx-document';
 
 const PropuestaPublica = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -55,7 +56,7 @@ const PropuestaPublica = () => {
   return (
     <iframe
       title={title}
-      srcDoc={html}
+      srcDoc={renderDocumentSource(html, title)}
       sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
       className="w-screen h-screen border-0 block"
     />

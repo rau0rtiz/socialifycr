@@ -33,6 +33,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { renderDocumentSource } from '@/lib/jsx-document';
 import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3, ClipboardList, Sparkles } from 'lucide-react';
 import { AddPlanToSheetDialog } from '@/components/producciones/AddPlanToSheetDialog';
 import { format } from 'date-fns';
@@ -579,7 +580,7 @@ const Propuestas = () => {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <Label>HTML</Label>
+                  <Label>HTML o JSX</Label>
                   <div className="inline-flex rounded-md border p-0.5 bg-muted/40">
                     <button
                       type="button"
@@ -601,20 +602,20 @@ const Propuestas = () => {
                   html.trim() ? (
                     <iframe
                       title="Vista previa propuesta"
-                      srcDoc={html}
+                      srcDoc={renderDocumentSource(html, title || 'Documento')}
                       sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
                       className="w-full h-[50dvh] min-h-[280px] rounded-md border bg-white"
                     />
                   ) : (
                     <div className="w-full h-[50dvh] min-h-[280px] rounded-md border border-dashed flex items-center justify-center text-sm text-muted-foreground text-center px-4">
-                      Pegá HTML en la pestaña "Código" para ver la vista previa.
+                      Pegá HTML o JSX en la pestaña "Código" para ver la vista previa.
                     </div>
                   )
                 ) : (
                   <Textarea
                     value={html}
                     onChange={(e) => setHtml(e.target.value)}
-                    placeholder="<html>...</html>"
+                    placeholder={'<html>...</html>  ó  export default function App() { return <div className="p-8">Hola</div>; }'}
                     className="h-[50dvh] min-h-[280px] font-mono text-xs"
                   />
                 )}
@@ -830,7 +831,7 @@ const Propuestas = () => {
               ) : previewHtml ? (
                 <iframe
                   title={`Vista previa ${previewTarget.title}`}
-                  srcDoc={previewHtml}
+                  srcDoc={renderDocumentSource(previewHtml, previewTarget.title)}
                   sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
                   className="w-full h-full bg-white"
                 />
