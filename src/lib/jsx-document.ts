@@ -111,7 +111,7 @@ export const buildJsxHtmlDocument = (source: string, title = 'Documento'): strin
 try {
   var __source = ${serializedCode};
   var __compiled = Babel.transform(__source, {
-    presets: ['react'],
+    presets: [['react', { runtime: 'classic' }]],
     sourceType: 'script',
     filename: 'documento.jsx'
   }).code;
