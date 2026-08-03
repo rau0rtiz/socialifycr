@@ -77,6 +77,10 @@ const normalizeJsx = (source: string): string => {
 
 export const buildJsxHtmlDocument = (source: string, title = 'Documento'): string => {
   const code = normalizeJsx(source);
+  // No interpolar JSX directamente dentro de un <script>: además de ser frágil
+  // con </script>, Babel Standalone intenta ejecutar los tags text/babel mediante
+  // appendChild y puede confundir @import dentro de templates CSS con un import JS.
+  const serializedCode = JSON.stringify(code).replace(/</g, '\\u003c');
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -103,14 +107,25 @@ export const buildJsxHtmlDocument = (source: string, title = 'Documento'): strin
   };
   window.onerror = function (m) { window.__showError(m); };
 </script>
-<script type="text/babel" data-presets="react">
-const { useState, useEffect, useMemo, useRef, useCallback, Fragment } = React;
-let __root = null;
-function __setRoot(c) { __root = c; }
+<script>
 try {
-${code}
-  if (!__root) throw new Error('No se encontró un componente para renderizar. Usá "export default function App() { ... }".');
-  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(__root));
+  var __source = ${serializedCode};
+  var __compiled = Babel.transform(__source, {
+    presets: [['react', { runtime: 'classic' }]],
+    sourceType: 'script',
+    filename: 'documento.jsx'
+  }).code;
+  var __runner = new Function(
+    'React',
+    'ReactDOM',
+    'mountNode',
+    'var __root = null; function __setRoot(c) { __root = c; }' +
+    'const { useState, useEffect, useMemo, useRef, useCallback, Fragment } = React;\\n' +
+    __compiled +
+    '\\nif (!__root) throw new Error(\\'No se encontró un componente para renderizar. Usá "export default function App() { ... }".\\');' +
+    '\\nReactDOM.createRoot(mountNode).render(React.createElement(__root));'
+  );
+  __runner(React, ReactDOM, document.getElementById('root'));
 } catch (err) {
   window.__showError(err && err.message ? err.message : err);
 }
