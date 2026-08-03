@@ -29,9 +29,18 @@ export const isJsxDocument = (source: string): boolean => {
 const normalizeJsx = (source: string): string => {
   let code = source;
 
-  // Quitar imports (los paquetes no existen en el iframe)
-  code = code.replace(/^[ \t]*import[\s\S]*?;[ \t]*$/gm, '');
-  code = code.replace(/^[ \t]*import\s+['"][^'"]+['"][ \t]*;?[ \t]*$/gm, '');
+  // Quitar imports (los paquetes no existen en el iframe).
+  // Soporta imports multilínea, con o sin punto y coma.
+  code = code.replace(
+    /^[ \t]*import\b[\s\S]*?\bfrom[ \t]*['"][^'"]*['"][ \t]*;?/gm,
+    ''
+  );
+  // import 'estilos.css';  /  import "x"
+  code = code.replace(/^[ \t]*import[ \t]*['"][^'"]+['"][ \t]*;?/gm, '');
+  // require(...) sueltos
+  code = code.replace(/^[ \t]*(?:const|let|var)\s+[\s\S]*?=\s*require\([^)]*\)[ \t]*;?/gm, '');
+  // export * from '...' / export { x } from '...'
+  code = code.replace(/^[ \t]*export\s+[\s\S]*?\bfrom[ \t]*['"][^'"]*['"][ \t]*;?/gm, '');
 
   // export default function Foo() {}  → function Foo(){}; __setRoot(Foo)
   const namedFn = code.match(/export\s+default\s+function\s+([A-Za-z0-9_$]+)/);
@@ -55,6 +64,13 @@ const normalizeJsx = (source: string): string => {
 
   // Quitar named exports sueltos
   code = code.replace(/export\s+(const|let|var|function|class)\s/g, '$1 ');
+  code = code.replace(/^[ \t]*export\s*\{[^}]*\}[ \t]*;?/gm, '');
+
+  // Red de seguridad: cualquier import residual rompería el script del iframe
+  code = code
+    .split('\n')
+    .filter((line) => !/^\s*import\s/.test(line))
+    .join('\n');
 
   return code;
 };
