@@ -64,6 +64,13 @@ const normalizeJsx = (source: string): string => {
 
   // Quitar named exports sueltos
   code = code.replace(/export\s+(const|let|var|function|class)\s/g, '$1 ');
+  code = code.replace(/^[ \t]*export\s*\{[^}]*\}[ \t]*;?/gm, '');
+
+  // Red de seguridad: cualquier import residual rompería el script del iframe
+  code = code
+    .split('\n')
+    .filter((line) => !/^\s*import\s/.test(line))
+    .join('\n');
 
   return code;
 };
