@@ -140,6 +140,10 @@ const BrandSettings = () => {
             </div>
           </CardContent>
         </Card>
+
+        <div className="mt-6">
+          <AgencyMetaConnection />
+        </div>
       </div>
     </DashboardLayout>
   );
