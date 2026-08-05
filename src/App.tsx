@@ -302,6 +302,20 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
+                  <Route path="/agencia/funnels" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyFunnels />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/funnels" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyFunnels />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/agencia/accesos" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireManage>
