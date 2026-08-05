@@ -54,7 +54,7 @@ const KPI_META: Record<
   leadsToday: {
     label: 'Leads hoy',
     icon: CalendarClock,
-    href: '/agencia/comunicaciones',
+    href: '/agencia/funnels',
     hint: 'Ingresados hoy (CR)',
   },
   communications: {
