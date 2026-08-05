@@ -12,6 +12,7 @@ import {
   ArrowUpRight,
   BarChart3,
   Loader2,
+  CalendarClock,
 } from 'lucide-react';
 
 type KpiKey =
@@ -19,7 +20,8 @@ type KpiKey =
   | 'crmLeads'
   | 'productions'
   | 'documents'
-  | 'communications';
+  | 'communications'
+  | 'leadsToday';
 
 const KPI_META: Record<
   KpiKey,
@@ -49,6 +51,12 @@ const KPI_META: Record<
     href: '/agencia/documentacion',
     hint: 'Propuestas · reportes',
   },
+  leadsToday: {
+    label: 'Leads hoy',
+    icon: CalendarClock,
+    href: '/agencia/comunicaciones',
+    hint: 'Ingresados hoy (CR)',
+  },
   communications: {
     label: 'Contactos',
     icon: Mail,
@@ -62,13 +70,24 @@ const useAgencyKpis = () => {
     queryKey: ['agency-hub-kpis'],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const [clients, crmLeads, productions, documents, communications] =
+      // Inicio del día en Costa Rica (UTC-6)
+      const now = new Date();
+      const cr = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+      const startCrIso = new Date(
+        Date.UTC(cr.getUTCFullYear(), cr.getUTCMonth(), cr.getUTCDate(), 6, 0, 0),
+      ).toISOString();
+
+      const [clients, crmLeads, productions, documents, communications, leadsToday] =
         await Promise.all([
           supabase.from('clients').select('id', { count: 'exact', head: true }),
           supabase.from('agency_crm_leads').select('id', { count: 'exact', head: true }),
           supabase.from('production_sheets').select('id', { count: 'exact', head: true }),
           supabase.from('agency_proposals').select('id', { count: 'exact', head: true }),
           supabase.from('funnel_leads').select('id', { count: 'exact', head: true }),
+          supabase
+            .from('funnel_leads')
+            .select('id', { count: 'exact', head: true })
+            .gte('created_at', startCrIso),
         ]);
       return {
         clients: clients.count ?? 0,
@@ -76,6 +95,7 @@ const useAgencyKpis = () => {
         productions: productions.count ?? 0,
         documents: documents.count ?? 0,
         communications: communications.count ?? 0,
+        leadsToday: leadsToday.count ?? 0,
       } as Record<KpiKey, number>;
     },
   });
@@ -119,7 +139,7 @@ const AgencyResumen = () => {
         </header>
 
         {/* KPI Grid */}
-        <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {kpis.map((kpi) => (
             <Link
               key={kpi.key}
