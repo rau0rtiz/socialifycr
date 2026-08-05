@@ -252,6 +252,9 @@ const AgencyLeadsContent = () => {
   const selectedFunnel = selectedFunnelId === 'unassigned'
     ? { name: 'Sin asignar' }
     : funnels.find((f: any) => f.id === selectedFunnelId);
+  // El funnel de landing pages no mide nivel de negocio ni Calendly
+  const isLpFunnel = (selectedFunnel as any)?.slug === 'lp-landing-pages';
+
   if (!selectedFunnelId) {
     return (
       <div className="space-y-6">
