@@ -760,6 +760,8 @@ export type Database = {
       agency_meta_connection: {
         Row: {
           access_token: string
+          ad_account_id: string | null
+          ad_account_name: string | null
           business_id: string | null
           connected_by: string | null
           created_at: string
@@ -771,6 +773,8 @@ export type Database = {
         }
         Insert: {
           access_token: string
+          ad_account_id?: string | null
+          ad_account_name?: string | null
           business_id?: string | null
           connected_by?: string | null
           created_at?: string
@@ -782,6 +786,8 @@ export type Database = {
         }
         Update: {
           access_token?: string
+          ad_account_id?: string | null
+          ad_account_name?: string | null
           business_id?: string | null
           connected_by?: string | null
           created_at?: string
@@ -3014,6 +3020,9 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          meta_ad_account_id: string | null
+          meta_campaign_id: string | null
+          meta_campaign_name: string | null
           name: string
           public_path: string | null
           slug: string
@@ -3024,6 +3033,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          meta_ad_account_id?: string | null
+          meta_campaign_id?: string | null
+          meta_campaign_name?: string | null
           name: string
           public_path?: string | null
           slug: string
@@ -3034,6 +3046,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          meta_ad_account_id?: string | null
+          meta_campaign_id?: string | null
+          meta_campaign_name?: string | null
           name?: string
           public_path?: string | null
           slug?: string
@@ -5607,6 +5622,18 @@ export type Database = {
         Returns: number
       }
       generate_ad_variants: { Args: { _campaign_id: string }; Returns: number }
+      get_agency_meta_status: {
+        Args: never
+        Returns: {
+          ad_account_id: string
+          ad_account_name: string
+          business_id: string
+          connected_at: string
+          id: string
+          token_expires_at: string
+          user_name: string
+        }[]
+      }
       get_client_invitation_public: {
         Args: { _token: string }
         Returns: {
