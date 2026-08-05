@@ -84,10 +84,27 @@ const getAnswerLabel = (key: string, value: string): string => {
   return answerLabels[key]?.[value] || value;
 };
 
+// Etiqueta de LP de origen (answers.landing_slug o source = 'landing:<slug>')
+const getLpTag = (lead: any): string | null => {
+  const a = (lead?.answers || {}) as Record<string, string>;
+  const slug = a.landing_slug || (a.source?.startsWith('landing:') ? a.source.slice('landing:'.length) : null);
+  return slug || null;
+};
+
+const lpTagLabels: Record<string, string> = {
+  medicion: 'Medición',
+  'agencia-diferente': 'Agencia Diferente',
+  'sistema-crecimiento': 'Sistema de Crecimiento',
+};
+
+const formatLpTag = (slug: string) =>
+  lpTagLabels[slug] ?? slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
 const AgencyLeadsContent = () => {
   const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
+  const [lpFilter, setLpFilter] = useState<string>('all');
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
