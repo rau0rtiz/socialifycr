@@ -84,10 +84,27 @@ const getAnswerLabel = (key: string, value: string): string => {
   return answerLabels[key]?.[value] || value;
 };
 
+// Etiqueta de LP de origen (answers.landing_slug o source = 'landing:<slug>')
+const getLpTag = (lead: any): string | null => {
+  const a = (lead?.answers || {}) as Record<string, string>;
+  const slug = a.landing_slug || (a.source?.startsWith('landing:') ? a.source.slice('landing:'.length) : null);
+  return slug || null;
+};
+
+const lpTagLabels: Record<string, string> = {
+  medicion: 'Medición',
+  'agencia-diferente': 'Agencia Diferente',
+  'sistema-crecimiento': 'Sistema de Crecimiento',
+};
+
+const formatLpTag = (slug: string) =>
+  lpTagLabels[slug] ?? slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
 const AgencyLeadsContent = () => {
   const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
+  const [lpFilter, setLpFilter] = useState<string>('all');
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -146,18 +163,25 @@ const AgencyLeadsContent = () => {
     enabled: !!selectedFunnelId,
   });
 
+  const lpTags = Array.from(
+    new Set(leads.map((l) => getLpTag(l)).filter(Boolean) as string[])
+  ).sort();
+
   const filtered = leads.filter((l) => {
     const matchesSearch = !search ||
       l.name.toLowerCase().includes(search.toLowerCase()) ||
       l.email.toLowerCase().includes(search.toLowerCase());
     const matchesLevel = levelFilter === 'all' || l.business_level === Number(levelFilter);
-    return matchesSearch && matchesLevel;
+    const matchesLp = lpFilter === 'all' || getLpTag(l) === lpFilter;
+    return matchesSearch && matchesLevel && matchesLp;
   });
 
   const exportCSV = () => {
-    const headers = ['Nombre', 'Email', 'Nivel', 'Industria', 'Ingresos', 'Calendly', 'Fecha'];
+    const headers = ['Nombre', 'Email', 'LP', 'Nivel', 'Industria', 'Ingresos', 'Calendly', 'Fecha'];
     const rows = filtered.map((l) => [
-      l.name, l.email, `${l.business_level} - ${levelNames[l.business_level]}`,
+      l.name, l.email,
+      getLpTag(l) ? formatLpTag(getLpTag(l)!) : '',
+      `${l.business_level} - ${levelNames[l.business_level]}`,
       l.industry || '', l.revenue_range || '',
       l.calendly_clicked ? 'Sí' : 'No',
       format(new Date(l.created_at), 'dd/MM/yyyy HH:mm'),
@@ -479,6 +503,17 @@ const AgencyLeadsContent = () => {
             ))}
           </SelectContent>
         </Select>
+        {lpTags.length > 0 && (
+          <Select value={lpFilter} onValueChange={setLpFilter}>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Landing page" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las LP</SelectItem>
+              {lpTags.map((t) => (
+                <SelectItem key={t} value={t}>{formatLpTag(t)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {leadsLoading ? (
@@ -534,6 +569,11 @@ const AgencyLeadsContent = () => {
 
                   {/* Tags row */}
                   <div className="flex flex-wrap gap-1">
+                    {getLpTag(lead) && (
+                      <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">
+                        LP · {formatLpTag(getLpTag(lead)!)}
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="text-[10px]" style={{ borderColor: levelColors[lead.business_level], color: levelColors[lead.business_level] }}>
                       {levelNames[lead.business_level]}
                     </Badge>
