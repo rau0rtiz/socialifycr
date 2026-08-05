@@ -6,6 +6,7 @@ import {
   Clapperboard,
   FileText,
   Mail,
+  Megaphone,
   KeyRound,
   FolderOpen,
   Wallet,
