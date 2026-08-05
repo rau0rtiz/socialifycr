@@ -163,12 +163,17 @@ const AgencyLeadsContent = () => {
     enabled: !!selectedFunnelId,
   });
 
+  const lpTags = Array.from(
+    new Set(leads.map((l) => getLpTag(l)).filter(Boolean) as string[])
+  ).sort();
+
   const filtered = leads.filter((l) => {
     const matchesSearch = !search ||
       l.name.toLowerCase().includes(search.toLowerCase()) ||
       l.email.toLowerCase().includes(search.toLowerCase());
     const matchesLevel = levelFilter === 'all' || l.business_level === Number(levelFilter);
-    return matchesSearch && matchesLevel;
+    const matchesLp = lpFilter === 'all' || getLpTag(l) === lpFilter;
+    return matchesSearch && matchesLevel && matchesLp;
   });
 
   const exportCSV = () => {
