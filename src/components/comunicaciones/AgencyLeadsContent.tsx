@@ -546,15 +546,17 @@ const AgencyLeadsContent = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Buscar por nombre o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
-        <Select value={levelFilter} onValueChange={setLevelFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Nivel" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los niveles</SelectItem>
-            {[1,2,3,4,5,6].map((n) => (
-              <SelectItem key={n} value={String(n)}>Nivel {n}: {levelNames[n]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!isLpFunnel && (
+          <Select value={levelFilter} onValueChange={setLevelFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Nivel" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los niveles</SelectItem>
+              {[1,2,3,4,5,6].map((n) => (
+                <SelectItem key={n} value={String(n)}>Nivel {n}: {levelNames[n]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         {lpTags.length > 0 && (
           <Select value={lpFilter} onValueChange={setLpFilter}>
             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Landing page" /></SelectTrigger>
