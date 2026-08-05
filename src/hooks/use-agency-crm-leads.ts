@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export type AgencyCrmStatus =
   | 'nuevo'
+  | 'no_calificado'
   | 'contactado'
   | 'en_conversacion'
   | 'agendado'
@@ -72,6 +73,7 @@ export interface CrmLeadInput {
 
 export const CRM_STATUS_OPTIONS: { value: AgencyCrmStatus; label: string; color: string }[] = [
   { value: 'nuevo', label: 'Nuevo', color: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+  { value: 'no_calificado', label: 'No calificado', color: 'bg-slate-500/15 text-slate-400 border-slate-500/30' },
   { value: 'contactado', label: 'Contactado', color: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
   { value: 'en_conversacion', label: 'En conversación', color: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
   { value: 'agendado', label: 'Agendado', color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' },

@@ -1,0 +1,1 @@
+ALTER TYPE public.agency_crm_status ADD VALUE IF NOT EXISTS 'no_calificado' AFTER 'nuevo';

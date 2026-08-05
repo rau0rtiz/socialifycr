@@ -21,6 +21,7 @@ interface Props {
 
 const columnAccent: Record<AgencyCrmStatus, string> = {
   nuevo: 'from-blue-500/40 to-blue-500/0',
+  no_calificado: 'from-slate-500/40 to-slate-500/0',
   contactado: 'from-purple-500/40 to-purple-500/0',
   en_conversacion: 'from-amber-500/40 to-amber-500/0',
   agendado: 'from-cyan-500/40 to-cyan-500/0',
