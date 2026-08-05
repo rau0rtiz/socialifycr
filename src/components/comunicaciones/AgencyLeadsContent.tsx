@@ -134,7 +134,9 @@ const AgencyLeadsContent = () => {
         .from('funnel_leads')
         .select('*')
         .order('created_at', { ascending: false });
-      if (selectedFunnelId) {
+      if (selectedFunnelId === 'unassigned') {
+        query = query.is('funnel_id', null);
+      } else if (selectedFunnelId) {
         query = query.eq('funnel_id', selectedFunnelId);
       }
       const { data, error } = await query;
