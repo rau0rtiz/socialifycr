@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Download, Calendar, CheckCircle2, ArrowLeft, Users, ExternalLink, Megaphone, Trash2, Mail, TrendingUp, BarChart3 } from 'lucide-react';
 import { FunnelCampaignSelector } from '@/components/comunicaciones/FunnelCampaignSelector';
+import { FunnelCampaignMetrics } from '@/components/comunicaciones/FunnelCampaignMetrics';
 import { format, subDays, isAfter } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { es } from 'date-fns/locale';
@@ -379,6 +380,15 @@ const AgencyLeadsContent = () => {
           <Download className="h-4 w-4" /> Exportar CSV
         </Button>
       </div>
+
+      {(selectedFunnel as any)?.meta_campaign_id && (
+        <FunnelCampaignMetrics
+          campaignId={(selectedFunnel as any).meta_campaign_id}
+          campaignName={(selectedFunnel as any).meta_campaign_name}
+          funnelLeads={leads.length}
+        />
+      )}
+
 
       {/* KPI Metrics Row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

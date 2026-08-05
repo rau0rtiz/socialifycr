@@ -223,3 +223,43 @@ export const useUpdateFunnelCampaign = () => {
     onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });
 };
+
+export interface AgencyMetaAd {
+  id: string;
+  name: string;
+  spend: number;
+  impressions: number;
+  clicks: number;
+  leads: number;
+  cpl: number | null;
+}
+
+export interface CampaignAdsResult {
+  connected: boolean;
+  datePreset?: string;
+  totals?: { spend: number; impressions: number; clicks: number; leads: number };
+  ads: AgencyMetaAd[];
+  error?: string;
+}
+
+/** Leads / CPL de una campaña + desglose por anuncio. */
+export const useAgencyMetaCampaignAds = (
+  campaignId?: string | null,
+  datePreset: string = 'last_30d',
+) =>
+  useQuery({
+    queryKey: ['agency-meta-campaign-ads', campaignId, datePreset],
+    enabled: !!campaignId,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<CampaignAdsResult> => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(FN('agency-meta'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ action: 'campaign-ads', campaignId, datePreset }),
+      });
+      const json = await res.json();
+      if (json.error && !json.ads) throw new Error(json.error);
+      return json as CampaignAdsResult;
+    },
+  });
