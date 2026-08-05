@@ -729,6 +729,12 @@ const AgencyLeadsContent = () => {
                       <div><span className="text-muted-foreground">Negocio / Marca:</span><p className="font-medium">{ans.brand}</p></div>
                     )}
                   </>
+                ) : isLp ? (
+                  <>
+                    {ans.empresa && (
+                      <div className="col-span-2"><span className="text-muted-foreground">Empresa:</span><p className="font-medium">{ans.empresa}</p></div>
+                    )}
+                  </>
                 ) : (
                   <>
                     <div>
