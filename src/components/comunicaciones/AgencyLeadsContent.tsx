@@ -217,7 +217,9 @@ const AgencyLeadsContent = () => {
     return { total: leads.length, last7, growthDelta, qualifiedRate, qualifiedCount, levelDist };
   }, [leads]);
 
-  const selectedFunnel = funnels.find((f: any) => f.id === selectedFunnelId);
+  const selectedFunnel = selectedFunnelId === 'unassigned'
+    ? { name: 'Sin asignar' }
+    : funnels.find((f: any) => f.id === selectedFunnelId);
   if (!selectedFunnelId) {
     return (
       <div className="space-y-6">
