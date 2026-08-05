@@ -235,10 +235,18 @@ const AgencyLeadsContent = () => {
     const qualifiedCount = leads.filter(l => l.business_level >= 4).length;
     const qualifiedRate = leads.length > 0 ? Math.round((qualifiedCount / leads.length) * 100) : 0;
 
+    // LP: calificación viene del formulario, no del nivel
+    const lpQualified = leads.filter(l => {
+      const a = (l.answers as any) || {};
+      return a.calificado === true || a.estado === 'calificado';
+    }).length;
+    const lpQualifiedRate = leads.length > 0 ? Math.round((lpQualified / leads.length) * 100) : 0;
+    const contactOnly = leads.filter(l => String(((l.answers as any) || {}).parcial) === 'true').length;
+
     const levelDist: Record<number, number> = {};
     leads.forEach(l => { levelDist[l.business_level] = (levelDist[l.business_level] || 0) + 1; });
 
-    return { total: leads.length, last7, growthDelta, qualifiedRate, qualifiedCount, levelDist };
+    return { total: leads.length, last7, growthDelta, qualifiedRate, qualifiedCount, levelDist, lpQualified, lpQualifiedRate, contactOnly };
   }, [leads]);
 
   const selectedFunnel = selectedFunnelId === 'unassigned'
