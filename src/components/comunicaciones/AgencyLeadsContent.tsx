@@ -380,6 +380,15 @@ const AgencyLeadsContent = () => {
         </Button>
       </div>
 
+      {(selectedFunnel as any)?.meta_campaign_id && (
+        <FunnelCampaignMetrics
+          campaignId={(selectedFunnel as any).meta_campaign_id}
+          campaignName={(selectedFunnel as any).meta_campaign_name}
+          funnelLeads={leads.length}
+        />
+      )}
+
+
       {/* KPI Metrics Row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {/* Total Leads */}
