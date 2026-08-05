@@ -569,6 +569,11 @@ const AgencyLeadsContent = () => {
 
                   {/* Tags row */}
                   <div className="flex flex-wrap gap-1">
+                    {String((lead.answers as any)?.parcial) === 'true' && (
+                      <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600">
+                        Solo contacto
+                      </Badge>
+                    )}
                     {getLpTag(lead) && (
                       <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">
                         LP · {formatLpTag(getLpTag(lead)!)}
