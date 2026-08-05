@@ -604,20 +604,26 @@ const AgencyLeadsContent = () => {
                     </Button>
                   </div>
 
-                  {/* Name + Level */}
+                  {/* Name */}
                   <div className="flex items-center gap-2.5 pr-8">
                     <div
                       className="h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
-                      style={{ backgroundColor: levelColors[lead.business_level] }}
+                      style={{ backgroundColor: isLpFunnel ? 'hsl(var(--primary))' : levelColors[lead.business_level] }}
                     >
-                      {lead.business_level}
+                      {isLpFunnel ? (lead.name?.[0]?.toUpperCase() || '?') : lead.business_level}
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{lead.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
-                      {(lead.answers as any)?.businessHandle && (
-                        <p className="text-[10px] text-muted-foreground/70 truncate">{(lead.answers as any).businessHandle}</p>
-                      )}
+                      {isLpFunnel
+                        ? ((lead.answers as any)?.empresa || lead.phone) && (
+                            <p className="text-[10px] text-muted-foreground/70 truncate">
+                              {(lead.answers as any)?.empresa || lead.phone}
+                            </p>
+                          )
+                        : (lead.answers as any)?.businessHandle && (
+                            <p className="text-[10px] text-muted-foreground/70 truncate">{(lead.answers as any).businessHandle}</p>
+                          )}
                     </div>
                   </div>
 
@@ -633,13 +639,32 @@ const AgencyLeadsContent = () => {
                         LP · {formatLpTag(getLpTag(lead)!)}
                       </Badge>
                     )}
-                    <Badge variant="outline" className="text-[10px]" style={{ borderColor: levelColors[lead.business_level], color: levelColors[lead.business_level] }}>
-                      {levelNames[lead.business_level]}
-                    </Badge>
-                    {lead.industry && (
-                      <Badge variant="secondary" className="text-[10px] capitalize">{lead.industry}</Badge>
+                    {isLpFunnel ? (
+                      (lead.answers as any)?.estado && String((lead.answers as any).parcial) !== 'true' && (
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] ${
+                            (lead.answers as any).estado === 'calificado'
+                              ? 'border-emerald-500/40 text-emerald-600'
+                              : 'border-muted-foreground/30 text-muted-foreground'
+                          }`}
+                        >
+                          {String((lead.answers as any).estado).replace(/_/g, ' ')}
+                        </Badge>
+                      )
+                    ) : (
+                      <Badge variant="outline" className="text-[10px]" style={{ borderColor: levelColors[lead.business_level], color: levelColors[lead.business_level] }}>
+                        {levelNames[lead.business_level]}
+                      </Badge>
                     )}
-                    {lead.calendly_clicked && (
+                    {isLpFunnel
+                      ? (lead.answers as any)?.sector && (
+                          <Badge variant="secondary" className="text-[10px] capitalize">{(lead.answers as any).sector}</Badge>
+                        )
+                      : lead.industry && (
+                          <Badge variant="secondary" className="text-[10px] capitalize">{lead.industry}</Badge>
+                        )}
+                    {!isLpFunnel && lead.calendly_clicked && (
                       <Badge className="text-[10px] bg-green-500/10 text-green-600 border-green-500/30" variant="outline">
                         <CheckCircle2 className="h-3 w-3 mr-0.5" /> Calendly
                       </Badge>
@@ -651,13 +676,18 @@ const AgencyLeadsContent = () => {
                     )}
                   </div>
 
-                  {/* Revenue + date */}
+                  {/* Revenue/facturación + date */}
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t">
-                    <span>{lead.revenue_range ? answerLabels.ingresos?.[lead.revenue_range] || lead.revenue_range : '—'}</span>
-                    <span className="flex items-center gap-1">
+                    <span className="truncate">
+                      {isLpFunnel
+                        ? ((lead.answers as any)?.facturacion || (lead.answers as any)?.presupuesto || '—')
+                        : (lead.revenue_range ? answerLabels.ingresos?.[lead.revenue_range] || lead.revenue_range : '—')}
+                    </span>
+                    <span className="flex items-center gap-1 shrink-0">
                       <Calendar className="h-3 w-3" />
                       {format(new Date(lead.created_at), 'dd MMM', { locale: es })}
                     </span>
+
                   </div>
                 </CardContent>
               </Card>
