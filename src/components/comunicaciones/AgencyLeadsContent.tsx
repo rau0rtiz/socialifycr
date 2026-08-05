@@ -413,7 +413,7 @@ const AgencyLeadsContent = () => {
           </CardContent>
         </Card>
 
-        {/* Qualified Rate (Level 4+) */}
+        {/* Calificados */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -421,13 +421,34 @@ const AgencyLeadsContent = () => {
                 <CheckCircle2 className="h-5 w-5 text-emerald-500" />
               </div>
               <div className="min-w-0">
-                <p className="text-2xl font-bold text-foreground">{kpiMetrics.qualifiedRate}%</p>
-                <p className="text-xs text-muted-foreground">Calificados ({kpiMetrics.qualifiedCount})</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {isLpFunnel ? kpiMetrics.lpQualifiedRate : kpiMetrics.qualifiedRate}%
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Calificados ({isLpFunnel ? kpiMetrics.lpQualified : kpiMetrics.qualifiedCount})
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {isLpFunnel && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <Users className="h-5 w-5 text-amber-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold text-foreground">{kpiMetrics.contactOnly}</p>
+                  <p className="text-xs text-muted-foreground">Solo contacto</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
 
       {/* Distribution Bars by Level */}
       <Card>
