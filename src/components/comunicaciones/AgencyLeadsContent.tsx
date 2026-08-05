@@ -177,15 +177,32 @@ const AgencyLeadsContent = () => {
   });
 
   const exportCSV = () => {
-    const headers = ['Nombre', 'Email', 'LP', 'Nivel', 'Industria', 'Ingresos', 'Calendly', 'Fecha'];
-    const rows = filtered.map((l) => [
-      l.name, l.email,
-      getLpTag(l) ? formatLpTag(getLpTag(l)!) : '',
-      `${l.business_level} - ${levelNames[l.business_level]}`,
-      l.industry || '', l.revenue_range || '',
-      l.calendly_clicked ? 'Sí' : 'No',
-      format(new Date(l.created_at), 'dd/MM/yyyy HH:mm'),
-    ]);
+    const headers = isLpFunnel
+      ? ['Nombre', 'Email', 'Teléfono', 'LP', 'Estado', 'Solo contacto', 'Empresa', 'Sector', 'Facturación', 'Pauta', 'Presupuesto', 'Urgencia', 'Fecha']
+      : ['Nombre', 'Email', 'LP', 'Nivel', 'Industria', 'Ingresos', 'Calendly', 'Fecha'];
+    const rows = filtered.map((l) => {
+      const a = (l.answers as any) || {};
+      if (isLpFunnel) {
+        return [
+          l.name, l.email, l.phone || '',
+          getLpTag(l) ? formatLpTag(getLpTag(l)!) : '',
+          a.estado ? String(a.estado).replace(/_/g, ' ') : '',
+          String(a.parcial) === 'true' ? 'Sí' : 'No',
+          a.empresa || '', a.sector || '', a.facturacion || '',
+          a.pauta_mensual || '', a.presupuesto || '', a.urgencia || '',
+          format(new Date(l.created_at), 'dd/MM/yyyy HH:mm'),
+        ];
+      }
+      return [
+        l.name, l.email,
+        getLpTag(l) ? formatLpTag(getLpTag(l)!) : '',
+        `${l.business_level} - ${levelNames[l.business_level]}`,
+        l.industry || '', l.revenue_range || '',
+        l.calendly_clicked ? 'Sí' : 'No',
+        format(new Date(l.created_at), 'dd/MM/yyyy HH:mm'),
+      ];
+    });
+
     const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -235,15 +252,26 @@ const AgencyLeadsContent = () => {
     const qualifiedCount = leads.filter(l => l.business_level >= 4).length;
     const qualifiedRate = leads.length > 0 ? Math.round((qualifiedCount / leads.length) * 100) : 0;
 
+    // LP: calificación viene del formulario, no del nivel
+    const lpQualified = leads.filter(l => {
+      const a = (l.answers as any) || {};
+      return a.calificado === true || a.estado === 'calificado';
+    }).length;
+    const lpQualifiedRate = leads.length > 0 ? Math.round((lpQualified / leads.length) * 100) : 0;
+    const contactOnly = leads.filter(l => String(((l.answers as any) || {}).parcial) === 'true').length;
+
     const levelDist: Record<number, number> = {};
     leads.forEach(l => { levelDist[l.business_level] = (levelDist[l.business_level] || 0) + 1; });
 
-    return { total: leads.length, last7, growthDelta, qualifiedRate, qualifiedCount, levelDist };
+    return { total: leads.length, last7, growthDelta, qualifiedRate, qualifiedCount, levelDist, lpQualified, lpQualifiedRate, contactOnly };
   }, [leads]);
 
   const selectedFunnel = selectedFunnelId === 'unassigned'
     ? { name: 'Sin asignar' }
     : funnels.find((f: any) => f.id === selectedFunnelId);
+  // El funnel de landing pages no mide nivel de negocio ni Calendly
+  const isLpFunnel = (selectedFunnel as any)?.slug === 'lp-landing-pages';
+
   if (!selectedFunnelId) {
     return (
       <div className="space-y-6">
@@ -385,7 +413,7 @@ const AgencyLeadsContent = () => {
           </CardContent>
         </Card>
 
-        {/* Qualified Rate (Level 4+) */}
+        {/* Calificados */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -393,15 +421,37 @@ const AgencyLeadsContent = () => {
                 <CheckCircle2 className="h-5 w-5 text-emerald-500" />
               </div>
               <div className="min-w-0">
-                <p className="text-2xl font-bold text-foreground">{kpiMetrics.qualifiedRate}%</p>
-                <p className="text-xs text-muted-foreground">Calificados ({kpiMetrics.qualifiedCount})</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {isLpFunnel ? kpiMetrics.lpQualifiedRate : kpiMetrics.qualifiedRate}%
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Calificados ({isLpFunnel ? kpiMetrics.lpQualified : kpiMetrics.qualifiedCount})
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {isLpFunnel && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <Users className="h-5 w-5 text-amber-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold text-foreground">{kpiMetrics.contactOnly}</p>
+                  <p className="text-xs text-muted-foreground">Solo contacto</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
+
       {/* Distribution Bars by Level */}
+      {!isLpFunnel && (
       <Card>
         <CardContent className="p-4 space-y-4">
           <div className="flex items-center justify-between gap-4">
@@ -488,21 +538,25 @@ const AgencyLeadsContent = () => {
           </div>
         </CardContent>
       </Card>
+      )}
+
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Buscar por nombre o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
-        <Select value={levelFilter} onValueChange={setLevelFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Nivel" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los niveles</SelectItem>
-            {[1,2,3,4,5,6].map((n) => (
-              <SelectItem key={n} value={String(n)}>Nivel {n}: {levelNames[n]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!isLpFunnel && (
+          <Select value={levelFilter} onValueChange={setLevelFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Nivel" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los niveles</SelectItem>
+              {[1,2,3,4,5,6].map((n) => (
+                <SelectItem key={n} value={String(n)}>Nivel {n}: {levelNames[n]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         {lpTags.length > 0 && (
           <Select value={lpFilter} onValueChange={setLpFilter}>
             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Landing page" /></SelectTrigger>
@@ -550,20 +604,26 @@ const AgencyLeadsContent = () => {
                     </Button>
                   </div>
 
-                  {/* Name + Level */}
+                  {/* Name */}
                   <div className="flex items-center gap-2.5 pr-8">
                     <div
                       className="h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
-                      style={{ backgroundColor: levelColors[lead.business_level] }}
+                      style={{ backgroundColor: isLpFunnel ? 'hsl(var(--primary))' : levelColors[lead.business_level] }}
                     >
-                      {lead.business_level}
+                      {isLpFunnel ? (lead.name?.[0]?.toUpperCase() || '?') : lead.business_level}
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{lead.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
-                      {(lead.answers as any)?.businessHandle && (
-                        <p className="text-[10px] text-muted-foreground/70 truncate">{(lead.answers as any).businessHandle}</p>
-                      )}
+                      {isLpFunnel
+                        ? ((lead.answers as any)?.empresa || lead.phone) && (
+                            <p className="text-[10px] text-muted-foreground/70 truncate">
+                              {(lead.answers as any)?.empresa || lead.phone}
+                            </p>
+                          )
+                        : (lead.answers as any)?.businessHandle && (
+                            <p className="text-[10px] text-muted-foreground/70 truncate">{(lead.answers as any).businessHandle}</p>
+                          )}
                     </div>
                   </div>
 
@@ -579,13 +639,32 @@ const AgencyLeadsContent = () => {
                         LP · {formatLpTag(getLpTag(lead)!)}
                       </Badge>
                     )}
-                    <Badge variant="outline" className="text-[10px]" style={{ borderColor: levelColors[lead.business_level], color: levelColors[lead.business_level] }}>
-                      {levelNames[lead.business_level]}
-                    </Badge>
-                    {lead.industry && (
-                      <Badge variant="secondary" className="text-[10px] capitalize">{lead.industry}</Badge>
+                    {isLpFunnel ? (
+                      (lead.answers as any)?.estado && String((lead.answers as any).parcial) !== 'true' && (
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] ${
+                            (lead.answers as any).estado === 'calificado'
+                              ? 'border-emerald-500/40 text-emerald-600'
+                              : 'border-muted-foreground/30 text-muted-foreground'
+                          }`}
+                        >
+                          {String((lead.answers as any).estado).replace(/_/g, ' ')}
+                        </Badge>
+                      )
+                    ) : (
+                      <Badge variant="outline" className="text-[10px]" style={{ borderColor: levelColors[lead.business_level], color: levelColors[lead.business_level] }}>
+                        {levelNames[lead.business_level]}
+                      </Badge>
                     )}
-                    {lead.calendly_clicked && (
+                    {isLpFunnel
+                      ? (lead.answers as any)?.sector && (
+                          <Badge variant="secondary" className="text-[10px] capitalize">{(lead.answers as any).sector}</Badge>
+                        )
+                      : lead.industry && (
+                          <Badge variant="secondary" className="text-[10px] capitalize">{lead.industry}</Badge>
+                        )}
+                    {!isLpFunnel && lead.calendly_clicked && (
                       <Badge className="text-[10px] bg-green-500/10 text-green-600 border-green-500/30" variant="outline">
                         <CheckCircle2 className="h-3 w-3 mr-0.5" /> Calendly
                       </Badge>
@@ -597,13 +676,18 @@ const AgencyLeadsContent = () => {
                     )}
                   </div>
 
-                  {/* Revenue + date */}
+                  {/* Revenue/facturación + date */}
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t">
-                    <span>{lead.revenue_range ? answerLabels.ingresos?.[lead.revenue_range] || lead.revenue_range : '—'}</span>
-                    <span className="flex items-center gap-1">
+                    <span className="truncate">
+                      {isLpFunnel
+                        ? ((lead.answers as any)?.facturacion || (lead.answers as any)?.presupuesto || '—')
+                        : (lead.revenue_range ? answerLabels.ingresos?.[lead.revenue_range] || lead.revenue_range : '—')}
+                    </span>
+                    <span className="flex items-center gap-1 shrink-0">
                       <Calendar className="h-3 w-3" />
                       {format(new Date(lead.created_at), 'dd MMM', { locale: es })}
                     </span>
+
                   </div>
                 </CardContent>
               </Card>
@@ -619,11 +703,17 @@ const AgencyLeadsContent = () => {
           {selectedLead && (() => {
             const ans = (selectedLead.answers as Record<string, any>) || {};
             const isWebContact = ans.source === 'website-contact-form';
+            const isLp = isLpFunnel || !!getLpTag(selectedLead);
             return (
             <div className="space-y-4 text-sm">
               {isWebContact && (
                 <Badge variant="outline" className="text-[10px] border-orange-400/40 text-orange-500 w-fit">
                   Formulario de contacto web
+                </Badge>
+              )}
+              {isLp && String(ans.parcial) === 'true' && (
+                <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 w-fit">
+                  Solo contacto · no terminó el formulario
                 </Badge>
               )}
               <div className="grid grid-cols-2 gap-3">
@@ -637,6 +727,12 @@ const AgencyLeadsContent = () => {
                     )}
                     {ans.brand && (
                       <div><span className="text-muted-foreground">Negocio / Marca:</span><p className="font-medium">{ans.brand}</p></div>
+                    )}
+                  </>
+                ) : isLp ? (
+                  <>
+                    {ans.empresa && (
+                      <div className="col-span-2"><span className="text-muted-foreground">Empresa:</span><p className="font-medium">{ans.empresa}</p></div>
                     )}
                   </>
                 ) : (
@@ -683,7 +779,7 @@ const AgencyLeadsContent = () => {
 
 
 
-              {!isWebContact && selectedLead.answers && Object.keys(selectedLead.answers).length > 0 && (
+              {!isWebContact && !isLp && selectedLead.answers && Object.keys(selectedLead.answers).length > 0 && (
                 <div>
                   <span className="text-muted-foreground font-medium">Respuestas del quiz:</span>
                   <div className="mt-2 space-y-3">
