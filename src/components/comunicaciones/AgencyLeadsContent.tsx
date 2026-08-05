@@ -503,6 +503,17 @@ const AgencyLeadsContent = () => {
             ))}
           </SelectContent>
         </Select>
+        {lpTags.length > 0 && (
+          <Select value={lpFilter} onValueChange={setLpFilter}>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Landing page" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las LP</SelectItem>
+              {lpTags.map((t) => (
+                <SelectItem key={t} value={t}>{formatLpTag(t)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {leadsLoading ? (
