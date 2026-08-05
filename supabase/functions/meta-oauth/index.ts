@@ -106,13 +106,23 @@ serve(async (req) => {
         });
       }
 
-      // Verify user has access to this client
-      const { data: hasAccess } = await supabase.rpc('has_client_access', { _client_id: clientId, _user_id: user.id });
-      if (!hasAccess) {
-        return new Response(JSON.stringify({ error: 'Access denied to this client' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      // Verify access: agency-level connection vs client-level connection
+      if (clientId === 'agency') {
+        const { data: isAgency } = await supabase.rpc('is_agency_member', { _user_id: user.id });
+        if (!isAgency) {
+          return new Response(JSON.stringify({ error: 'Solo miembros de la agencia' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      } else {
+        const { data: hasAccess } = await supabase.rpc('has_client_access', { _client_id: clientId, _user_id: user.id });
+        if (!hasAccess) {
+          return new Response(JSON.stringify({ error: 'Access denied to this client' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       console.log('Fetching accounts for client:', clientId);
