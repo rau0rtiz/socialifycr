@@ -569,6 +569,11 @@ const AgencyLeadsContent = () => {
 
                   {/* Tags row */}
                   <div className="flex flex-wrap gap-1">
+                    {getLpTag(lead) && (
+                      <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">
+                        LP · {formatLpTag(getLpTag(lead)!)}
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="text-[10px]" style={{ borderColor: levelColors[lead.business_level], color: levelColors[lead.business_level] }}>
                       {levelNames[lead.business_level]}
                     </Badge>
