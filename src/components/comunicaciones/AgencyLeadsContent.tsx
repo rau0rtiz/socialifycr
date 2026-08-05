@@ -177,9 +177,11 @@ const AgencyLeadsContent = () => {
   });
 
   const exportCSV = () => {
-    const headers = ['Nombre', 'Email', 'Nivel', 'Industria', 'Ingresos', 'Calendly', 'Fecha'];
+    const headers = ['Nombre', 'Email', 'LP', 'Nivel', 'Industria', 'Ingresos', 'Calendly', 'Fecha'];
     const rows = filtered.map((l) => [
-      l.name, l.email, `${l.business_level} - ${levelNames[l.business_level]}`,
+      l.name, l.email,
+      getLpTag(l) ? formatLpTag(getLpTag(l)!) : '',
+      `${l.business_level} - ${levelNames[l.business_level]}`,
       l.industry || '', l.revenue_range || '',
       l.calendly_clicked ? 'Sí' : 'No',
       format(new Date(l.created_at), 'dd/MM/yyyy HH:mm'),
