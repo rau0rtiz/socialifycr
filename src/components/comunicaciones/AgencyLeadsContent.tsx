@@ -693,6 +693,78 @@ const AgencyLeadsContent = () => {
                   </div>
                 </div>
               )}
+
+              {/* Respuestas del formulario de Landing Page */}
+              {(() => {
+                const lpKeys = [
+                  'empresa', 'sitio_web', 'sector', 'facturacion', 'pauta_mensual',
+                  'presupuesto', 'urgencia', 'decisor', 'vende_hoy', 'reto_90_dias', 'goal_90d',
+                ] as const;
+                const lpLabels: Record<string, string> = {
+                  empresa: 'Empresa',
+                  sitio_web: 'Sitio web / Instagram',
+                  sector: 'Sector',
+                  facturacion: 'Facturación mensual',
+                  pauta_mensual: 'Inversión en pauta',
+                  presupuesto: 'Presupuesto',
+                  urgencia: 'Urgencia',
+                  decisor: '¿Es quien decide?',
+                  vende_hoy: '¿Cómo vende hoy?',
+                  reto_90_dias: 'Reto a 90 días',
+                  goal_90d: 'Meta a 90 días',
+                };
+                const rows = lpKeys
+                  .filter((k) => ans[k] !== undefined && ans[k] !== null && String(ans[k]).trim() !== '')
+                  .map((k) => ({ k, label: lpLabels[k], value: String(ans[k]) }));
+                const hasStatus = ans.estado || ans.calificado !== undefined;
+                if (rows.length === 0 && !hasStatus) return null;
+                return (
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-muted-foreground font-medium">Formulario de la landing:</span>
+                      {ans.calificado !== undefined && (
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] ${ans.calificado ? 'border-emerald-500/40 text-emerald-600' : 'border-muted-foreground/30 text-muted-foreground'}`}
+                        >
+                          {ans.calificado ? 'Calificado' : 'No calificado'}
+                        </Badge>
+                      )}
+                      {ans.estado && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {String(ans.estado).replace(/_/g, ' ')}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="mt-2 space-y-2">
+                      {rows.map((r) => (
+                        <div key={r.k} className="rounded-lg bg-muted p-3">
+                          <p className="text-xs text-muted-foreground mb-1">{r.label}</p>
+                          <p className="font-medium text-sm break-words">{r.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {(ans.landing_url || ans.referrer) && (
+                      <div className="mt-2 space-y-1 text-xs">
+                        {ans.landing_url && (
+                          <a
+                            href={ans.landing_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline flex items-center gap-1 break-all"
+                          >
+                            <ExternalLink className="h-3 w-3 shrink-0" /> {ans.landing_url}
+                          </a>
+                        )}
+                        {ans.referrer && (
+                          <p className="text-muted-foreground break-all">Referrer: {ans.referrer}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {/* UTM Data */}
               {selectedLead.answers && (
                 (['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const)
