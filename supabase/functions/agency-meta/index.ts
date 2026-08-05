@@ -61,6 +61,54 @@ serve(async (req) => {
     const accountId = conn.ad_account_id.startsWith('act_') ? conn.ad_account_id : `act_${conn.ad_account_id}`;
     const datePreset: string = body.datePreset || 'last_30d';
 
+    const LEAD_TYPES = ['lead', 'onsite_conversion.lead_grouped', 'offsite_conversion.fb_pixel_lead'];
+    const extractLeads = (row: any) => {
+      const a = (row?.actions || []).find((x: any) => LEAD_TYPES.includes(x.action_type));
+      return Number(a?.value || 0);
+    };
+
+    if (action === 'campaign-ads') {
+      const campaignId = String(body.campaignId || '');
+      if (!campaignId) return json({ error: 'campaignId requerido' }, 400);
+
+      // Campaign-level totals
+      const cRes = await fetch(
+        `${GRAPH}/${campaignId}/insights?fields=spend,impressions,clicks,ctr,cpc,actions&date_preset=${datePreset}&access_token=${conn.access_token}`,
+      );
+      const cData = await cRes.json();
+      if (cData.error) return json({ connected: true, error: cData.error.message, ads: [] });
+      const cRow = cData.data?.[0] || {};
+      const totals = {
+        spend: Number(cRow.spend || 0),
+        impressions: Number(cRow.impressions || 0),
+        clicks: Number(cRow.clicks || 0),
+        leads: extractLeads(cRow),
+      };
+
+      // Ad-level breakdown
+      const aRes = await fetch(
+        `${GRAPH}/${campaignId}/insights?level=ad&fields=ad_id,ad_name,spend,impressions,clicks,actions&date_preset=${datePreset}&limit=200&access_token=${conn.access_token}`,
+      );
+      const aData = await aRes.json();
+      if (aData.error) return json({ connected: true, totals, ads: [], error: aData.error.message });
+
+      const ads = (aData.data || []).map((r: any) => {
+        const leads = extractLeads(r);
+        const spend = Number(r.spend || 0);
+        return {
+          id: r.ad_id,
+          name: r.ad_name,
+          spend,
+          impressions: Number(r.impressions || 0),
+          clicks: Number(r.clicks || 0),
+          leads,
+          cpl: leads > 0 ? spend / leads : null,
+        };
+      }).sort((a: any, b: any) => b.leads - a.leads);
+
+      return json({ connected: true, datePreset, totals, ads });
+    }
+
     if (action === 'ad-accounts') {
       const res = await fetch(`${GRAPH}/me/adaccounts?fields=id,name&limit=100&access_token=${conn.access_token}`);
       const data = await res.json();
