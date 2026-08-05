@@ -43,6 +43,7 @@ const ActualizarFoto = lazy(() => import("./pages/ActualizarFoto"));
 const Funnel = lazy(() => import("./pages/Funnel"));
 const AgencyLeads = lazy(() => import("./pages/AgencyLeads"));
 const Comunicaciones = lazy(() => import("./pages/Comunicaciones"));
+const AgencyFunnels = lazy(() => import("./pages/agencia/Funnels"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const Comisiones = lazy(() => import("./pages/Comisiones"));
 const AdFrameworks = lazy(() => import("./pages/AdFrameworks"));
