@@ -5723,6 +5723,7 @@ export type Database = {
     Enums: {
       agency_crm_status:
         | "nuevo"
+        | "no_calificado"
         | "contactado"
         | "en_conversacion"
         | "agendado"
@@ -5900,6 +5901,7 @@ export const Constants = {
     Enums: {
       agency_crm_status: [
         "nuevo",
+        "no_calificado",
         "contactado",
         "en_conversacion",
         "agendado",
