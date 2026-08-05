@@ -703,11 +703,17 @@ const AgencyLeadsContent = () => {
           {selectedLead && (() => {
             const ans = (selectedLead.answers as Record<string, any>) || {};
             const isWebContact = ans.source === 'website-contact-form';
+            const isLp = isLpFunnel || !!getLpTag(selectedLead);
             return (
             <div className="space-y-4 text-sm">
               {isWebContact && (
                 <Badge variant="outline" className="text-[10px] border-orange-400/40 text-orange-500 w-fit">
                   Formulario de contacto web
+                </Badge>
+              )}
+              {isLp && String(ans.parcial) === 'true' && (
+                <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 w-fit">
+                  Solo contacto · no terminó el formulario
                 </Badge>
               )}
               <div className="grid grid-cols-2 gap-3">
