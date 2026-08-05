@@ -38,6 +38,7 @@ const items = [
   { title: 'Pagos', url: '/agencia/pagos', icon: Wallet },
   { title: 'Producciones', url: '/agencia/producciones', icon: Clapperboard },
   { title: 'Documentación', url: '/agencia/documentacion', icon: FileText },
+  { title: 'Funnels', url: '/agencia/funnels', icon: Megaphone },
   { title: 'Comunicaciones', url: '/agencia/comunicaciones', icon: Mail },
   { title: 'Accesos', url: '/agencia/accesos', icon: KeyRound },
   { title: 'Archivos', url: '/agencia/archivos', icon: FolderOpen },
