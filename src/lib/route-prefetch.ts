@@ -17,6 +17,7 @@ const ROUTE_LOADERS: Record<string, Loader> = {
   '/client-database': () => import('@/pages/ClientDatabase'),
   '/clientes': () => import('@/pages/Clientes'),
   '/comunicaciones': () => import('@/pages/Comunicaciones'),
+  '/agencia/funnels': () => import('@/pages/agencia/Funnels'),
   '/accesos': () => import('@/pages/Accesos'),
   '/ad-frameworks': () => import('@/pages/AdFrameworks'),
   
