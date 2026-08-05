@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export type AgencyCrmStatus =
   | 'nuevo'
+  | 'no_calificado'
   | 'contactado'
   | 'en_conversacion'
   | 'agendado'
