@@ -265,6 +265,34 @@ const AgencyLeadsContent = () => {
               </CardContent>
             </Card>
           ))}
+
+          {((leadCounts as any).unassigned || 0) > 0 && (
+            <Card
+              className="cursor-pointer hover:border-primary/50 hover:shadow-md transition-all group border-dashed"
+              onClick={() => setSelectedFunnelId('unassigned')}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                    <Megaphone className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <Badge variant="secondary" className="text-xs">Histórico</Badge>
+                </div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                  Sin asignar
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Leads sin funnel vinculado
+                </p>
+                <div className="flex items-center justify-between mt-4 pt-3 border-t">
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>{(leadCounts as any).unassigned || 0} leads</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {funnels.length === 0 && (
