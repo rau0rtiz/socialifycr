@@ -779,7 +779,7 @@ const AgencyLeadsContent = () => {
 
 
 
-              {!isWebContact && selectedLead.answers && Object.keys(selectedLead.answers).length > 0 && (
+              {!isWebContact && !isLp && selectedLead.answers && Object.keys(selectedLead.answers).length > 0 && (
                 <div>
                   <span className="text-muted-foreground font-medium">Respuestas del quiz:</span>
                   <div className="mt-2 space-y-3">
