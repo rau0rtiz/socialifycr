@@ -3,11 +3,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Mail, Megaphone, FileText, Loader2, RefreshCw, Send } from 'lucide-react';
+import { Mail, FileText, Loader2, RefreshCw, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 const EmailsLogContent = lazy(() => import('@/components/comunicaciones/EmailsLogContent'));
-const AgencyLeadsContent = lazy(() => import('@/components/comunicaciones/AgencyLeadsContent'));
 const EmailTemplatesContent = lazy(() => import('@/components/comunicaciones/EmailTemplatesContent'));
 const CampaignsContent = lazy(() => import('@/components/comunicaciones/CampaignsContent'));
 
@@ -25,9 +24,6 @@ const Comunicaciones = () => {
     setRefreshing(true);
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['sent-emails'] }),
-      queryClient.invalidateQueries({ queryKey: ['funnel-leads'] }),
-      queryClient.invalidateQueries({ queryKey: ['funnel-lead-counts'] }),
-      queryClient.invalidateQueries({ queryKey: ['funnels'] }),
       queryClient.invalidateQueries({ queryKey: ['email-templates'] }),
       queryClient.invalidateQueries({ queryKey: ['email-campaigns'] }),
     ]);
@@ -45,7 +41,7 @@ const Comunicaciones = () => {
               Comunicaciones
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Gestión de correos y leads del funnel
+              Gestión de correos, plantillas y campañas
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="gap-2">
@@ -67,10 +63,6 @@ const Comunicaciones = () => {
               <Send className="h-4 w-4" />
               Campañas
             </TabsTrigger>
-            <TabsTrigger value="leads" className="gap-1.5">
-              <Megaphone className="h-4 w-4" />
-              Funnels
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="emails">
@@ -90,17 +82,12 @@ const Comunicaciones = () => {
               <CampaignsContent />
             </Suspense>
           </TabsContent>
-
-          <TabsContent value="leads">
-            <Suspense fallback={<Loader />}>
-              <AgencyLeadsContent />
-            </Suspense>
-          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
   );
 };
+
 
 export default Comunicaciones;
 
