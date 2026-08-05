@@ -177,15 +177,32 @@ const AgencyLeadsContent = () => {
   });
 
   const exportCSV = () => {
-    const headers = ['Nombre', 'Email', 'LP', 'Nivel', 'Industria', 'Ingresos', 'Calendly', 'Fecha'];
-    const rows = filtered.map((l) => [
-      l.name, l.email,
-      getLpTag(l) ? formatLpTag(getLpTag(l)!) : '',
-      `${l.business_level} - ${levelNames[l.business_level]}`,
-      l.industry || '', l.revenue_range || '',
-      l.calendly_clicked ? 'Sí' : 'No',
-      format(new Date(l.created_at), 'dd/MM/yyyy HH:mm'),
-    ]);
+    const headers = isLpFunnel
+      ? ['Nombre', 'Email', 'Teléfono', 'LP', 'Estado', 'Solo contacto', 'Empresa', 'Sector', 'Facturación', 'Pauta', 'Presupuesto', 'Urgencia', 'Fecha']
+      : ['Nombre', 'Email', 'LP', 'Nivel', 'Industria', 'Ingresos', 'Calendly', 'Fecha'];
+    const rows = filtered.map((l) => {
+      const a = (l.answers as any) || {};
+      if (isLpFunnel) {
+        return [
+          l.name, l.email, l.phone || '',
+          getLpTag(l) ? formatLpTag(getLpTag(l)!) : '',
+          a.estado ? String(a.estado).replace(/_/g, ' ') : '',
+          String(a.parcial) === 'true' ? 'Sí' : 'No',
+          a.empresa || '', a.sector || '', a.facturacion || '',
+          a.pauta_mensual || '', a.presupuesto || '', a.urgencia || '',
+          format(new Date(l.created_at), 'dd/MM/yyyy HH:mm'),
+        ];
+      }
+      return [
+        l.name, l.email,
+        getLpTag(l) ? formatLpTag(getLpTag(l)!) : '',
+        `${l.business_level} - ${levelNames[l.business_level]}`,
+        l.industry || '', l.revenue_range || '',
+        l.calendly_clicked ? 'Sí' : 'No',
+        format(new Date(l.created_at), 'dd/MM/yyyy HH:mm'),
+      ];
+    });
+
     const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
