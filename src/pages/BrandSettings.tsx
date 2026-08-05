@@ -6,6 +6,7 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { Button } from '@/components/ui/button';
 import { useBrand } from '@/contexts/BrandContext';
 import { ImageIcon, Save, Settings } from 'lucide-react';
+import { AgencyMetaConnection } from '@/components/agencia/AgencyMetaConnection';
 import { toast } from '@/hooks/use-toast';
 
 const BrandSettings = () => {
@@ -140,6 +141,10 @@ const BrandSettings = () => {
             </div>
           </CardContent>
         </Card>
+
+        <div className="mt-6">
+          <AgencyMetaConnection />
+        </div>
       </div>
     </DashboardLayout>
   );

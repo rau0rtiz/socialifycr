@@ -106,13 +106,23 @@ serve(async (req) => {
         });
       }
 
-      // Verify user has access to this client
-      const { data: hasAccess } = await supabase.rpc('has_client_access', { _client_id: clientId, _user_id: user.id });
-      if (!hasAccess) {
-        return new Response(JSON.stringify({ error: 'Access denied to this client' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      // Verify access: agency-level connection vs client-level connection
+      if (clientId === 'agency') {
+        const { data: isAgency } = await supabase.rpc('is_agency_member', { _user_id: user.id });
+        if (!isAgency) {
+          return new Response(JSON.stringify({ error: 'Solo miembros de la agencia' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      } else {
+        const { data: hasAccess } = await supabase.rpc('has_client_access', { _client_id: clientId, _user_id: user.id });
+        if (!hasAccess) {
+          return new Response(JSON.stringify({ error: 'Access denied to this client' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       console.log('Fetching accounts for client:', clientId);
@@ -238,7 +248,58 @@ serve(async (req) => {
       }
 
       const body = await req.json();
-      const { clientId, pageId, pageName, pageAccessToken, instagramId, adAccountId, tokenExpiresAt, accessToken, accountLabel } = body;
+      const { clientId, pageId, pageName, pageAccessToken, instagramId, adAccountId, adAccountName, tokenExpiresAt, accessToken, accountLabel, userName, userMetaId } = body;
+
+      // Agency-level Meta connection (used for agency campaign tracking on funnels)
+      if (clientId === 'agency') {
+        const { data: isAgency } = await supabase.rpc('is_agency_member', { _user_id: user.id });
+        if (!isAgency) {
+          return new Response(JSON.stringify({ error: 'Solo miembros de la agencia' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        if (!accessToken || !adAccountId) {
+          return new Response(JSON.stringify({ error: 'Falta el token o la cuenta publicitaria' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const payload = {
+          access_token: accessToken,
+          token_expires_at: tokenExpiresAt || null,
+          ad_account_id: adAccountId,
+          ad_account_name: adAccountName || null,
+          user_name: userName || null,
+          user_meta_id: userMetaId || null,
+          connected_by: user.id,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: existingAgency } = await supabase
+          .from('agency_meta_connection')
+          .select('id')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const agencyResult = existingAgency
+          ? await supabase.from('agency_meta_connection').update(payload).eq('id', existingAgency.id).select().single()
+          : await supabase.from('agency_meta_connection').insert(payload).select().single();
+
+        if (agencyResult.error) {
+          console.error('Agency connection error:', agencyResult.error);
+          return new Response(JSON.stringify({ error: 'No se pudo guardar la conexión de la agencia' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        return new Response(JSON.stringify({ success: true, agency: true, adAccountId, adAccountName }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       if (!clientId || !pageId || !pageName || !pageAccessToken) {
         return new Response(JSON.stringify({ error: 'Missing required fields' }), {

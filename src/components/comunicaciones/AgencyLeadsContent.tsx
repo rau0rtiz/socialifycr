@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Download, Calendar, CheckCircle2, ArrowLeft, Users, ExternalLink, Megaphone, Trash2, Mail, TrendingUp, BarChart3 } from 'lucide-react';
+import { FunnelCampaignSelector } from '@/components/comunicaciones/FunnelCampaignSelector';
 import { format, subDays, isAfter } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { es } from 'date-fns/locale';
@@ -297,6 +298,9 @@ const AgencyLeadsContent = () => {
                 {funnel.description && (
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{funnel.description}</p>
                 )}
+                <div className="mt-3">
+                  <FunnelCampaignSelector funnel={funnel} />
+                </div>
                 <div className="flex items-center justify-between mt-4 pt-3 border-t">
                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <Users className="h-4 w-4" />

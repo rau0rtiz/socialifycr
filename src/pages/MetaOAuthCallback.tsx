@@ -68,7 +68,7 @@ export const MetaOAuthCallback = () => {
     } else {
       // iPad/iOS fallback: store result and navigate back
       sessionStorage.setItem('meta_oauth_result', JSON.stringify(payload));
-      navigate('/clientes');
+      navigate(clientId === 'agency' ? '/agencia/ajustes' : '/clientes');
     }
   }, [searchParams, navigate]);
 
