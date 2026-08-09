@@ -58,6 +58,7 @@ const Propuestas = lazy(() => import("./pages/Propuestas"));
 const PropuestaPublica = lazy(() => import("./pages/PropuestaPublica"));
 const AgencyResumen = lazy(() => import("./pages/agencia/Resumen"));
 const AgencyPagos = lazy(() => import("./pages/agencia/Pagos"));
+const AgencyBaseDeDatos = lazy(() => import("./pages/agencia/BaseDeDatos"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -299,6 +300,13 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <Comunicaciones />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/base-de-datos" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyBaseDeDatos />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
