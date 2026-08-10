@@ -35,7 +35,7 @@ const DEFAULT_BLANK_HTML = `<!doctype html>
   </body>
 </html>`;
 
-type AudienceType = 'funnel_leads' | 'email_contacts';
+type AudienceType = 'funnel_leads' | 'email_contacts' | 'database';
 type Step = 'audience' | 'editor' | 'confirm';
 
 interface Recipient {
