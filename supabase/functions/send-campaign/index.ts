@@ -71,6 +71,11 @@ serve(async (req) => {
     type Recipient = { id: string; email: string; full_name: string | null };
     let contacts: Recipient[] = [];
 
+    // email_send_logs.contact_id is a uuid — database-wide audiences use synthetic
+    // ids (e.g. "db:mail@x.com"), so only pass through real uuids.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const contactUuid = (id: string | null | undefined) => (id && UUID_RE.test(id) ? id : null);
+
     if (Array.isArray(campaign.recipients_snapshot) && campaign.recipients_snapshot.length > 0) {
       contacts = (campaign.recipients_snapshot as any[]).map((r) => ({
         id: r.id || r.email,
@@ -78,6 +83,7 @@ serve(async (req) => {
         full_name: r.name || r.full_name || null,
       }));
     } else {
+
       let query = supabaseAdmin
         .from("email_contacts")
         .select("id, email, full_name")
