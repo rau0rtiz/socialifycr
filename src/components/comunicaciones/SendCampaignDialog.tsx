@@ -554,6 +554,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
                 <Select value={audienceType} onValueChange={(v) => { setAudienceType(v as AudienceType); setSelectedIds(new Set()); }}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="database">Base de datos (todos los correos)</SelectItem>
                     <SelectItem value="funnel_leads">Leads de Funnels</SelectItem>
                     <SelectItem value="email_contacts">Contactos de Email</SelectItem>
                   </SelectContent>
@@ -571,7 +572,25 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
                   </Select>
                 </div>
               )}
+              {audienceType === 'database' && (
+                <div className="space-y-1">
+                  <Label className="text-xs">Origen</Label>
+                  <Select value={dbSource} onValueChange={(v) => { setDbSource(v as SourceKey | 'all'); setSelectedIds(new Set()); }}>
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los orígenes</SelectItem>
+                      {SOURCES.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
+
+            {audienceType === 'database' && (
+              <p className="text-xs text-muted-foreground">
+                Correos únicos de todo el sistema (CRM, funnels/LP, listas, compradores, estudiantes y usuarios). Los desuscritos quedan excluidos automáticamente.
+              </p>
+            )}
 
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -585,9 +604,14 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
 
             <ScrollArea className="h-[240px] rounded-md border">
               <div className="p-1">
-                {filteredRecipients.length === 0 ? (
+                {audienceType === 'database' && loadingDatabase ? (
+                  <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Cargando base de datos...
+                  </div>
+                ) : filteredRecipients.length === 0 ? (
                   <p className="text-center text-sm text-muted-foreground py-8">No hay destinatarios</p>
                 ) : (
+
                   filteredRecipients.map(r => (
                     <label key={r.id} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors">
                       <Checkbox checked={selectedIds.has(r.id)} onCheckedChange={() => toggleRecipient(r.id)} />
