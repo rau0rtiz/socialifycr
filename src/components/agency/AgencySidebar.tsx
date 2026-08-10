@@ -63,7 +63,8 @@ export const AgencySidebar = () => {
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-border">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 pt-[max(1rem,env(safe-area-inset-top))]">
+
         <button
           onClick={() => go('/')}
           className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -83,7 +84,7 @@ export const AgencySidebar = () => {
         )}
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
         <SidebarGroup>
           <SidebarGroupLabel>Operación</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -92,7 +93,7 @@ export const AgencySidebar = () => {
                 const active = isActive(item);
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active}>
+                    <SidebarMenuButton asChild isActive={active} className="h-auto">
                       <a
                         href={item.url}
                         onMouseEnter={() => prefetchRoute(item.url)}
@@ -103,15 +104,16 @@ export const AgencySidebar = () => {
                           go(item.url);
                         }}
                         className={cn(
-                          'flex items-center gap-3 rounded-lg transition-colors relative',
+                          'flex items-center gap-3 rounded-lg transition-colors relative py-2.5 md:py-2',
                           active
                             ? 'bg-foreground/[0.06] text-foreground font-semibold before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-r-full before:bg-foreground'
                             : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground'
                         )}
                       >
                         <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                        <span className="truncate">{item.title}</span>
                       </a>
+
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -121,7 +123,7 @@ export const AgencySidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/60">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
