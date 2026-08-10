@@ -143,7 +143,7 @@ serve(async (req) => {
             if (await isEmailSuppressed(supabaseAdmin, contact.email)) {
               await supabaseAdmin.from("email_send_logs").insert({
                 campaign_id,
-                contact_id: contact.id,
+                contact_id: contactUuid(contact.id),
                 status: "skipped",
                 error_message: "suppressed",
               });
@@ -189,7 +189,7 @@ serve(async (req) => {
 
             await supabaseAdmin.from("email_send_logs").insert({
               campaign_id,
-              contact_id: contact.id,
+              contact_id: contactUuid(contact.id),
               status: "sent",
               resend_id: resData.id,
               sent_at: new Date().toISOString(),
@@ -207,7 +207,7 @@ serve(async (req) => {
           } catch (err: any) {
             await supabaseAdmin.from("email_send_logs").insert({
               campaign_id,
-              contact_id: contact.id,
+              contact_id: contactUuid(contact.id),
               status: "failed",
               error_message: err.message,
             });
