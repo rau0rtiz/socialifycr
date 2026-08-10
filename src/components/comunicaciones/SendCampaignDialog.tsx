@@ -15,6 +15,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { EmailTemplate } from '@/hooks/use-email-templates';
+import { SOURCES, useDatabaseContacts, type SourceKey } from '@/hooks/use-database-contacts';
 
 interface Props {
   open: boolean;
