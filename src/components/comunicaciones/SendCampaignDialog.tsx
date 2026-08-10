@@ -86,6 +86,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   const [step, setStep] = useState<Step>('audience');
   const [audienceType, setAudienceType] = useState<AudienceType>('funnel_leads');
   const [selectedFunnelId, setSelectedFunnelId] = useState<string>('all');
+  const [dbSource, setDbSource] = useState<SourceKey | 'all'>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [recipientSearch, setRecipientSearch] = useState('');
   const [campaignName, setCampaignName] = useState('');
@@ -216,7 +217,26 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
     enabled: open && !isOutboundMode && audienceType === 'email_contacts',
   });
 
-  const allRecipients: Recipient[] = audienceType === 'funnel_leads' ? (funnelLeads || []) : (emailContacts || []);
+  // Full agency database (CRM + funnels/LP + lists + buyers + students + users), deduped by email
+  const { data: databaseContacts, isLoading: loadingDatabase } = useDatabaseContacts(
+    open && !isOutboundMode && audienceType === 'database',
+  );
+
+  const databaseRecipients: Recipient[] = useMemo(() => {
+    const rows = databaseContacts?.rows || [];
+    const suppressed = databaseContacts?.suppressedSet || new Set<string>();
+    return rows
+      .filter(r => !suppressed.has(r.email))
+      .filter(r => dbSource === 'all' || r.sources.has(dbSource))
+      .map(r => ({ id: `db:${r.email}`, name: r.name || '', email: r.email }));
+  }, [databaseContacts, dbSource]);
+
+  const allRecipients: Recipient[] =
+    audienceType === 'funnel_leads'
+      ? (funnelLeads || [])
+      : audienceType === 'email_contacts'
+        ? (emailContacts || [])
+        : databaseRecipients;
 
   const filteredRecipients = useMemo(() => {
     if (!recipientSearch) return allRecipients;
