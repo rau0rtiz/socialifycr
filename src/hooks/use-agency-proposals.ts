@@ -18,6 +18,8 @@ export interface AgencyProposal {
   html_content: string;
   slug: string;
   is_published: boolean;
+  view_count: number;
+  last_viewed_at: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
