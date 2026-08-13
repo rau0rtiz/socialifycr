@@ -993,10 +993,12 @@ export type Database = {
           id: string
           is_published: boolean
           kind: string
+          last_viewed_at: string | null
           package_type: string | null
           slug: string
           title: string
           updated_at: string
+          view_count: number
         }
         Insert: {
           amount?: number | null
@@ -1010,10 +1012,12 @@ export type Database = {
           id?: string
           is_published?: boolean
           kind?: string
+          last_viewed_at?: string | null
           package_type?: string | null
           slug: string
           title: string
           updated_at?: string
+          view_count?: number
         }
         Update: {
           amount?: number | null
@@ -1027,10 +1031,12 @@ export type Database = {
           id?: string
           is_published?: boolean
           kind?: string
+          last_viewed_at?: string | null
           package_type?: string | null
           slug?: string
           title?: string
           updated_at?: string
+          view_count?: number
         }
         Relationships: [
           {
@@ -5742,6 +5748,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      register_proposal_view: { Args: { _slug: string }; Returns: undefined }
       sync_mindcoach_commission_from_sale_id: {
         Args: { _sale_id: string }
         Returns: undefined
