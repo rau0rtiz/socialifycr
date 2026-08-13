@@ -451,6 +451,18 @@ const Propuestas = () => {
                       </span>
                       <span>·</span>
                       <span>{format(new Date(p.created_at), "d MMM yyyy", { locale: es })}</span>
+                      <span>·</span>
+                      <span
+                        className="inline-flex items-center gap-1 font-medium text-foreground"
+                        title={
+                          p.last_viewed_at
+                            ? `Última vista: ${format(new Date(p.last_viewed_at), "d MMM yyyy HH:mm", { locale: es })}`
+                            : 'Sin vistas todavía'
+                        }
+                      >
+                        <Eye className="h-3 w-3" />
+                        {p.view_count ?? 0} {(p.view_count ?? 0) === 1 ? 'vista' : 'vistas'}
+                      </span>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0 space-y-2">
