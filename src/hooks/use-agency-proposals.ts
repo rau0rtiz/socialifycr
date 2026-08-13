@@ -18,6 +18,8 @@ export interface AgencyProposal {
   html_content: string;
   slug: string;
   is_published: boolean;
+  view_count: number;
+  last_viewed_at: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -42,7 +44,7 @@ export const useAgencyProposals = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('agency_proposals')
-        .select('id,title,client_id,client_name,contact_point,amount,currency,package_type,kind,slug,is_published,created_by,created_at,updated_at')
+        .select('id,title,client_id,client_name,contact_point,amount,currency,package_type,kind,slug,is_published,view_count,last_viewed_at,created_by,created_at,updated_at')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as AgencyProposalListItem[];
