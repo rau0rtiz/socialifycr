@@ -29,6 +29,8 @@ const PropuestaPublica = () => {
       setHtml(row.html_content || '');
       setState('ok');
       document.title = row.title;
+      // Registrar la vista (no bloquea el render)
+      supabase.rpc('register_proposal_view', { _slug: slug }).then(() => {});
     };
     load();
     return () => {
