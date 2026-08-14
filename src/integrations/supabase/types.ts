@@ -2655,6 +2655,65 @@ export type Database = {
           },
         ]
       }
+      document_views: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device: string | null
+          duration_seconds: number
+          id: string
+          ip_hash: string | null
+          last_ping_at: string
+          proposal_id: string
+          referrer: string | null
+          session_token: string
+          slug: string
+          user_agent: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          duration_seconds?: number
+          id?: string
+          ip_hash?: string | null
+          last_ping_at?: string
+          proposal_id: string
+          referrer?: string | null
+          session_token: string
+          slug: string
+          user_agent?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          duration_seconds?: number
+          id?: string
+          ip_hash?: string | null
+          last_ping_at?: string
+          proposal_id?: string
+          referrer?: string | null
+          session_token?: string
+          slug?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_views_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "agency_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_campaigns: {
         Row: {
           client_id: string

@@ -36,6 +36,7 @@ import { toast } from 'sonner';
 import { renderDocumentSource } from '@/lib/jsx-document';
 import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3, ClipboardList, Sparkles } from 'lucide-react';
 import { AddPlanToSheetDialog } from '@/components/producciones/AddPlanToSheetDialog';
+import DocumentViewsDialog from '@/components/propuestas/DocumentViewsDialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -122,6 +123,7 @@ const Propuestas = () => {
   const [sendingEmail, setSendingEmail] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<AgencyProposalListItem | null>(null);
+  const [viewsTargetId, setViewsTargetId] = useState<string | null>(null);
   const [previewTarget, setPreviewTarget] = useState<AgencyProposalListItem | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -510,6 +512,9 @@ const Propuestas = () => {
                     <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => openEmail(p)}>
                       <Mail className="h-3.5 w-3.5" /> Enviar
                     </Button>
+                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => setViewsTargetId(p.id)}>
+                      <Eye className="h-3.5 w-3.5" /> Vistas
+                    </Button>
                     {p.kind === 'content_plan' && (
                       <Button size="sm" className="gap-1.5 h-8 bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setPlanTarget(p)}>
                         <Sparkles className="h-3.5 w-3.5" /> A hoja de producción
@@ -864,6 +869,12 @@ const Propuestas = () => {
         planId={planTarget?.id ?? null}
         planTitle={planTarget?.title ?? ''}
         defaultClientName={planTarget?.client_name ?? null}
+      />
+
+      <DocumentViewsDialog
+        proposalId={viewsTargetId}
+        title={proposals.find((p) => p.id === viewsTargetId)?.title}
+        onClose={() => setViewsTargetId(null)}
       />
     </DashboardLayout>
   );
