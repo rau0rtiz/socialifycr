@@ -1,11 +1,18 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Eye, Loader2, MapPin, Monitor, Timer, Users, Link as LinkIcon } from 'lucide-react';
-import { formatInTimeZone } from 'date-fns-tz';
-import { es } from 'date-fns/locale';
 import { useDocumentViews, formatDuration } from '@/hooks/use-document-views';
 
-const TZ = 'America/Costa_Rica';
+const formatCR = (iso: string) =>
+  new Date(iso).toLocaleString('es-CR', {
+    timeZone: 'America/Costa_Rica',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
 
 interface Props {
   proposalId: string | null;
