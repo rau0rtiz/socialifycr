@@ -63,3 +63,6 @@ verify_jwt = false
 [functions.generate-shots-from-plan]
 verify_jwt = true
 
+[functions.track-document-view]
+verify_jwt = false
+
