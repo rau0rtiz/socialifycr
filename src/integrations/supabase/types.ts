@@ -5832,6 +5832,7 @@ export type Database = {
         | "agendado"
         | "cliente"
         | "perdido"
+        | "en_seguimiento"
       client_role:
         | "account_manager"
         | "editor"
@@ -6010,6 +6011,7 @@ export const Constants = {
         "agendado",
         "cliente",
         "perdido",
+        "en_seguimiento",
       ],
       client_role: [
         "account_manager",
