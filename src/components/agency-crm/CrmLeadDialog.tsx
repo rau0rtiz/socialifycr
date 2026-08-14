@@ -447,6 +447,8 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
             </div>
           )}
 
+          {lead && <LeadDocumentsSection leadId={lead.id} leadName={lead.name} />}
+
           <div className="space-y-2">
             <Label>Información adicional</Label>
             <Textarea
@@ -456,6 +458,7 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
               rows={4}
             />
           </div>
+
         </div>
         <DialogFooter className="gap-2 sm:justify-between">
           {lead ? (
