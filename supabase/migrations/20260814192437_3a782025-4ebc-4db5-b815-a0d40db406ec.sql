@@ -1,0 +1,2 @@
+ALTER TABLE public.agency_proposals ADD COLUMN IF NOT EXISTS crm_lead_id uuid REFERENCES public.agency_crm_leads(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_agency_proposals_crm_lead_id ON public.agency_proposals(crm_lead_id);
