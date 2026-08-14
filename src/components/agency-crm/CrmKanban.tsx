@@ -29,6 +29,20 @@ const columnAccent: Record<AgencyCrmStatus, string> = {
   perdido: 'from-red-500/40 to-red-500/0',
 };
 
+const COLUMN_ORDER: AgencyCrmStatus[] = [
+  'nuevo',
+  'contactado',
+  'en_conversacion',
+  'agendado',
+  'cliente',
+  'perdido',
+  'no_calificado',
+];
+
+const ORDERED_COLUMNS = COLUMN_ORDER
+  .map((v) => CRM_STATUS_OPTIONS.find((o) => o.value === v))
+  .filter(Boolean) as typeof CRM_STATUS_OPTIONS;
+
 export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
   const { data: team = [] } = useInternalTeam();
   const teamById = useMemo(() => {
@@ -81,7 +95,7 @@ export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
   return (
     <div className="overflow-x-auto -mx-4 md:-mx-6 px-4 md:px-6 pb-4">
       <div className="flex gap-4 min-w-max">
-        {CRM_STATUS_OPTIONS.map((col) => {
+        {ORDERED_COLUMNS.map((col) => {
           const status = col.value;
           const items = columns[status] || [];
           const isOver = overCol === status;
