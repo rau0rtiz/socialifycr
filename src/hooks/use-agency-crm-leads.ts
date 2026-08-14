@@ -8,6 +8,7 @@ export type AgencyCrmStatus =
   | 'contactado'
   | 'en_conversacion'
   | 'agendado'
+  | 'en_seguimiento'
   | 'cliente'
   | 'perdido';
 
@@ -77,6 +78,7 @@ export const CRM_STATUS_OPTIONS: { value: AgencyCrmStatus; label: string; color:
   { value: 'contactado', label: 'Contactado', color: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
   { value: 'en_conversacion', label: 'En conversación', color: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
   { value: 'agendado', label: 'Agendado', color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' },
+  { value: 'en_seguimiento', label: 'En seguimiento', color: 'bg-rose-500/15 text-rose-400 border-rose-500/30' },
   { value: 'cliente', label: 'Cliente', color: 'bg-green-500/15 text-green-400 border-green-500/30' },
   { value: 'perdido', label: 'Perdido', color: 'bg-red-500/15 text-red-400 border-red-500/30' },
 ];
