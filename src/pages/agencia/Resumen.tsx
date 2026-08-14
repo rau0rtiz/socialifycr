@@ -116,25 +116,31 @@ const AgencyResumen = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto space-y-10">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <header className="flex flex-wrap items-end justify-between gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-6 py-5">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
               Interno · Agencia
             </p>
-            <h1 className="mt-1 text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
+            <h1 className="mt-1 text-2xl md:text-3xl font-bold tracking-tight text-foreground">
               Resumen
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Monitor de métricas críticas y flujos activos.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))] animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-              Live
-            </span>
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-medium text-foreground">Agencia Socialify</p>
+              <p className="text-xs text-muted-foreground">Dashboard administrativo</p>
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                Live
+              </span>
+            </div>
           </div>
         </header>
 
@@ -144,15 +150,15 @@ const AgencyResumen = () => {
             <Link
               key={kpi.key}
               to={kpi.href}
-              className="agency-kpi group rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/30"
+              className="agency-card agency-kpi group p-5"
             >
               <div className="flex items-center justify-between">
-                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
                   {kpi.label}
                 </div>
                 <kpi.icon className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
               </div>
-              <div className="mt-4 text-4xl font-bold tracking-tighter text-foreground tabular-nums">
+              <div className="mt-4 text-3xl font-bold tracking-tight text-foreground tabular-nums">
                 {isLoading ? (
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 ) : (
@@ -168,9 +174,9 @@ const AgencyResumen = () => {
 
         {/* Quick Actions */}
         <section className="space-y-4">
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-            Accesos Estratégicos
-          </h3>
+          <h2 className="text-lg font-bold tracking-tight text-foreground">
+            Accesos rápidos
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <QuickAction
               to="/agencia/crm"
@@ -204,28 +210,28 @@ const QuickAction = ({
 }) => (
   <Link
     to={to}
-    className="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 transition-all hover:border-primary/20"
+    className="group relative overflow-hidden rounded-2xl border border-border bg-background p-8 transition-colors hover:border-primary/50"
   >
-    <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-primary/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-    <div className="relative flex items-start justify-between gap-6">
+    <div className="flex items-start justify-between gap-6">
       <div className="space-y-5">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-muted text-primary transition-all group-hover:border-primary/40 group-hover:agency-glow">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-card text-primary transition-transform group-hover:scale-110">
           <Icon className="h-6 w-6" />
         </div>
         <div>
-          <h4 className="text-xl font-bold tracking-tight text-foreground">
+          <h3 className="text-xl font-bold tracking-tight text-foreground">
             {title}
-          </h4>
+          </h3>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
             {description}
           </p>
         </div>
       </div>
-      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-all group-hover:border-primary/40 group-hover:text-primary">
-        <ArrowUpRight className="h-5 w-5" />
+      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors group-hover:border-primary/50 group-hover:text-primary">
+        <ArrowUpRight className="h-4 w-4" />
       </div>
     </div>
   </Link>
 );
+
 
 export default AgencyResumen;

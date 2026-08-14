@@ -62,7 +62,7 @@ export const AgencySidebar = () => {
     item.exact ? pathname === item.url : pathname.startsWith(item.url);
 
   return (
-    <SidebarComponent collapsible="icon" className="border-r border-border">
+    <SidebarComponent collapsible="icon" className="border-r border-border bg-sidebar">
       <SidebarHeader className="p-4 pt-[max(1rem,env(safe-area-inset-top))]">
 
         <button
@@ -72,21 +72,29 @@ export const AgencySidebar = () => {
           <ArrowLeft className="h-3.5 w-3.5" />
           {!collapsed && <span>Volver al dashboard</span>}
         </button>
-        {!collapsed && (
-          <div className="mt-3 flex flex-col gap-0.5">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-              Interno · Agencia
-            </p>
-            <p className="font-wordmark uppercase text-foreground text-base tracking-tight leading-tight">
-              Socialify Internal<br />Marketing Tool
-            </p>
-          </div>
-        )}
+        <div className="mt-3 flex items-center gap-2.5">
+          <div className="h-8 w-8 shrink-0 rounded-xl bg-primary" />
+          {!collapsed && (
+            <div className="flex flex-col leading-tight">
+              <span
+                data-agency-display
+                className="text-base font-bold tracking-tight text-foreground"
+              >
+                Socialify
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+                Internal tool
+              </span>
+            </div>
+          )}
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
         <SidebarGroup>
-          <SidebarGroupLabel>Operación</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+            Operación
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
@@ -104,14 +112,19 @@ export const AgencySidebar = () => {
                           go(item.url);
                         }}
                         className={cn(
-                          'flex items-center gap-3 rounded-lg transition-colors relative py-2.5 md:py-2',
+                          'flex items-center gap-3 rounded-xl transition-colors relative py-2.5 md:py-2',
                           active
-                            ? 'bg-foreground/[0.06] text-foreground font-semibold before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-r-full before:bg-foreground'
-                            : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground'
+                            ? 'bg-accent text-foreground font-semibold'
+                            : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                         )}
                       >
-                        <item.icon className="h-4 w-4" />
+                        <item.icon
+                          className={cn('h-4 w-4', active ? 'text-primary' : 'opacity-70')}
+                        />
                         <span className="truncate">{item.title}</span>
+                        {active && !collapsed && (
+                          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                        )}
                       </a>
 
                     </SidebarMenuButton>
@@ -122,6 +135,7 @@ export const AgencySidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
 
       <SidebarFooter className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/60">
         <SidebarMenu>
