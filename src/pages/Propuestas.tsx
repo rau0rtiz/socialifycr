@@ -870,6 +870,12 @@ const Propuestas = () => {
         planTitle={planTarget?.title ?? ''}
         defaultClientName={planTarget?.client_name ?? null}
       />
+
+      <DocumentViewsDialog
+        proposalId={viewsTargetId}
+        title={proposals.find((p) => p.id === viewsTargetId)?.title}
+        onClose={() => setViewsTargetId(null)}
+      />
     </DashboardLayout>
   );
 };
