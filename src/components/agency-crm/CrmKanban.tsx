@@ -25,6 +25,7 @@ const columnAccent: Record<AgencyCrmStatus, string> = {
   contactado: 'from-purple-500/40 to-purple-500/0',
   en_conversacion: 'from-amber-500/40 to-amber-500/0',
   agendado: 'from-cyan-500/40 to-cyan-500/0',
+  en_seguimiento: 'from-rose-500/40 to-rose-500/0',
   cliente: 'from-green-500/40 to-green-500/0',
   perdido: 'from-red-500/40 to-red-500/0',
 };
@@ -34,6 +35,7 @@ const COLUMN_ORDER: AgencyCrmStatus[] = [
   'contactado',
   'en_conversacion',
   'agendado',
+  'en_seguimiento',
   'cliente',
   'perdido',
   'no_calificado',
