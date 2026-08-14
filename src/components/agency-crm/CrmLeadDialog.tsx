@@ -22,6 +22,8 @@ import {
 } from '@/hooks/use-agency-crm-leads';
 import { useInternalTeam, getInitials } from '@/hooks/use-internal-team';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LeadDocumentsSection } from './LeadDocumentsSection';
+
 
 import { useToast } from '@/hooks/use-toast';
 import {
