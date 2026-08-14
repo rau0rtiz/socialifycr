@@ -22,6 +22,8 @@ import {
 } from '@/hooks/use-agency-crm-leads';
 import { useInternalTeam, getInitials } from '@/hooks/use-internal-team';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LeadDocumentsSection } from './LeadDocumentsSection';
+
 
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -447,6 +449,8 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
             </div>
           )}
 
+          {lead && <LeadDocumentsSection leadId={lead.id} leadName={lead.name} />}
+
           <div className="space-y-2">
             <Label>Información adicional</Label>
             <Textarea
@@ -456,6 +460,7 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
               rows={4}
             />
           </div>
+
         </div>
         <DialogFooter className="gap-2 sm:justify-between">
           {lead ? (

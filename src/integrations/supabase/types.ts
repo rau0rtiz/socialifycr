@@ -988,6 +988,7 @@ export type Database = {
           contact_point: string | null
           created_at: string
           created_by: string | null
+          crm_lead_id: string | null
           currency: string | null
           html_content: string
           id: string
@@ -1007,6 +1008,7 @@ export type Database = {
           contact_point?: string | null
           created_at?: string
           created_by?: string | null
+          crm_lead_id?: string | null
           currency?: string | null
           html_content?: string
           id?: string
@@ -1026,6 +1028,7 @@ export type Database = {
           contact_point?: string | null
           created_at?: string
           created_by?: string | null
+          crm_lead_id?: string | null
           currency?: string | null
           html_content?: string
           id?: string
@@ -1044,6 +1047,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_proposals_crm_lead_id_fkey"
+            columns: ["crm_lead_id"]
+            isOneToOne: false
+            referencedRelation: "agency_crm_leads"
             referencedColumns: ["id"]
           },
         ]
