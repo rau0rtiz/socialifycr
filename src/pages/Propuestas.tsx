@@ -122,6 +122,7 @@ const Propuestas = () => {
   const [sendingEmail, setSendingEmail] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<AgencyProposalListItem | null>(null);
+  const [viewsTargetId, setViewsTargetId] = useState<string | null>(null);
   const [previewTarget, setPreviewTarget] = useState<AgencyProposalListItem | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [previewLoading, setPreviewLoading] = useState(false);
