@@ -431,109 +431,99 @@ const Propuestas = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {sorted.map((p) => (
-              <Card key={p.id} className="flex flex-col hover:shadow-md hover:border-primary/40 transition-all">
-                <button
-                  type="button"
-                  onClick={() => setPreviewTarget(p)}
-                  className="text-left"
-                >
+              <Card key={p.id} className="group flex flex-col overflow-hidden rounded-xl border-border/70 shadow-sm transition-all hover:shadow-md hover:border-primary/40">
+                <button type="button" onClick={() => setPreviewTarget(p)} className="text-left flex-1">
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base leading-snug line-clamp-2">{p.title}</CardTitle>
-                      {p.is_published ? (
-                        <span title="Publicada" className="text-emerald-600 shrink-0"><Eye className="h-4 w-4" /></span>
-                      ) : (
-                        <span title="Oculta" className="text-muted-foreground shrink-0"><EyeOff className="h-4 w-4" /></span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : p.kind === 'content_plan' ? 'bg-amber-500/10 text-amber-600' : 'bg-primary/10 text-primary'}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : p.kind === 'content_plan' ? 'bg-amber-500/10 text-amber-600' : 'bg-primary/10 text-primary'}`}>
                         {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : p.kind === 'content_plan' ? <ClipboardList className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
                         {p.kind === 'report' ? 'Reporte' : p.kind === 'content_plan' ? 'Plan' : 'Propuesta'}
                       </span>
-                      <span>·</span>
-                      <span>{format(new Date(p.created_at), "d MMM yyyy", { locale: es })}</span>
-                      <span>·</span>
-                      <span
-                        className="inline-flex items-center gap-1 font-medium text-foreground"
-                        title={
-                          p.last_viewed_at
-                            ? `Última vista: ${format(new Date(p.last_viewed_at), "d MMM yyyy HH:mm", { locale: es })}`
-                            : 'Sin vistas todavía'
-                        }
-                      >
-                        <Eye className="h-3 w-3" />
-                        {p.view_count ?? 0} {(p.view_count ?? 0) === 1 ? 'vista' : 'vistas'}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0 space-y-2">
-                    <div className="grid grid-cols-1 gap-1.5 text-sm">
-                      <div className="flex items-center gap-2 text-foreground">
-                        <UserIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <span className="truncate font-medium">{p.client_name || 'Sin cliente'}</span>
-                      </div>
-                      {p.contact_point && (
-                        <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                          <Info className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">{p.contact_point}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between gap-2 pt-1">
-                        {p.amount != null ? (
-                          <span className="inline-flex items-center gap-1 text-sm font-semibold">
-                            <DollarSign className="h-3.5 w-3.5 text-emerald-600" />
-                            {formatMoney(p.amount, p.currency)}
-                          </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                          title={
+                            p.last_viewed_at
+                              ? `Última vista: ${format(new Date(p.last_viewed_at), "d MMM yyyy HH:mm", { locale: es })}`
+                              : 'Sin vistas todavía'
+                          }
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          {p.view_count ?? 0} {(p.view_count ?? 0) === 1 ? 'vista' : 'vistas'}
+                        </span>
+                        {p.is_published ? (
+                          <span title="Publicada" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         ) : (
-                          <span className="text-xs text-muted-foreground">Sin monto</span>
+                          <span title="Oculta" className="text-muted-foreground"><EyeOff className="h-3.5 w-3.5" /></span>
                         )}
-                        {p.package_type && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                            <PackageIcon className="h-3 w-3" />
-                            {PACKAGE_LABELS[p.package_type]}
-                          </span>
-                        )}
+                      </div>
+                    </div>
+
+                    <CardTitle className="text-base font-bold leading-tight line-clamp-2 pt-2">{p.title}</CardTitle>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {p.client_name ? `Cliente: ${p.client_name}` : 'Sin cliente'}
+                      {p.contact_point ? ` · ${p.contact_point}` : ''}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/60">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Fecha</p>
+                        <p className="text-sm font-medium">{format(new Date(p.created_at), "d MMM yyyy", { locale: es })}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Monto / Paquete</p>
+                        <p className="text-sm font-medium truncate">
+                          {p.amount != null ? formatMoney(p.amount, p.currency) : '—'}
+                          {p.package_type ? ` · ${PACKAGE_LABELS[p.package_type]}` : ''}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
                 </button>
-                <CardContent className="pt-0 pb-4 mt-auto">
-                  <div className="flex flex-wrap gap-1.5 border-t pt-3">
-                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => setPreviewTarget(p)}>
+
+                <div className="mt-auto border-t bg-muted/40 p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" className="flex-1 h-8 gap-1.5 text-xs font-semibold" onClick={() => setPreviewTarget(p)}>
                       <Monitor className="h-3.5 w-3.5" /> Vista previa
                     </Button>
-                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => openInfo(p)}>
-                      <Info className="h-3.5 w-3.5" /> Editar info
-                    </Button>
-                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => copyLink(p)}>
-                      <Copy className="h-3.5 w-3.5" /> Link
-                    </Button>
-                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => openEmail(p)}>
-                      <Mail className="h-3.5 w-3.5" /> Enviar
-                    </Button>
-                    <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => setViewsTargetId(p.id)}>
-                      <Eye className="h-3.5 w-3.5" /> Vistas
-                    </Button>
-                    {p.kind === 'content_plan' && (
-                      <Button size="sm" className="gap-1.5 h-8 bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setPlanTarget(p)}>
-                        <Sparkles className="h-3.5 w-3.5" /> A hoja de producción
+                    {p.kind === 'content_plan' ? (
+                      <Button size="sm" variant="outline" className="flex-1 h-8 gap-1.5 text-xs font-semibold border-primary/60 text-primary hover:bg-primary/10" onClick={() => setPlanTarget(p)}>
+                        <Sparkles className="h-3.5 w-3.5" /> Producción
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" className="flex-1 h-8 gap-1.5 text-xs font-semibold" onClick={() => openEmail(p)}>
+                        <Mail className="h-3.5 w-3.5" /> Enviar
                       </Button>
                     )}
-                    <Button size="sm" variant="ghost" className="gap-1.5 h-8" onClick={() => openEdit(p)} title="Editar HTML">
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="gap-1.5 h-8 text-destructive hover:text-destructive ml-auto"
-                      onClick={() => setDeleteTarget(p)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
                   </div>
-                </CardContent>
+                  <div className="flex items-center justify-between px-0.5">
+                    <div className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Editar info" onClick={() => openInfo(p)}>
+                        <Info className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Copiar link" onClick={() => copyLink(p)}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Enviar por correo" onClick={() => openEmail(p)}>
+                        <Mail className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" title="Ver vistas" onClick={() => setViewsTargetId(p.id)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-primary" title="Editar HTML" onClick={() => openEdit(p)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" title="Borrar" onClick={() => setDeleteTarget(p)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </Card>
+
             ))}
           </div>
         )}
