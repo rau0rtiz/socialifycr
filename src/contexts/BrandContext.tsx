@@ -73,7 +73,7 @@ const getInitialPlatformBrand = (): PlatformBrand => {
   }
   return {
     name: 'Socialify',
-    logoUrl: 'https://chqhyqylnbtwyzhjkxlu.supabase.co/storage/v1/object/public/content-images/imgdb/general/1779672705393-favicon.png',
+    logoUrl: '/__l5e/assets-v1/b3c21682-0657-43a9-b60c-4fa3cbcab85c/socialify-logo.png',
     primaryColor: '222 47% 11%',
     accentColor: '217 91% 60%',
     secondaryColor: '199 89% 48%',
