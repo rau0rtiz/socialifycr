@@ -237,6 +237,7 @@ export default function ProduccionPublica() {
                       {shot.script && <FieldRow label="Guión">{shot.script}</FieldRow>}
                       {shot.cta && <FieldRow label="CTA">{shot.cta}</FieldRow>}
                       {shot.tech_notes && <FieldRow label="Notas técnicas">{shot.tech_notes}</FieldRow>}
+                      {shot.file_names && <FieldRow label="Archivos">{shot.file_names}</FieldRow>}
                     </div>
                   </div>
                 </article>
