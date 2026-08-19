@@ -228,6 +228,17 @@ export function PieceCard({
           </div>
         )}
 
+        {local.file_names && (
+          <div className="mt-3 pt-3 border-t border-noeval-line/40">
+            <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-muted mb-1">🗂 Archivos</div>
+            <div className="flex flex-wrap gap-1.5">
+              {local.file_names.split(/[\n,]+/).map((f) => f.trim()).filter(Boolean).map((f, i) => (
+                <span key={i} className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-noeval-cream border border-noeval-line/60 text-noeval-ink">{f}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {shot.clickup_url && (
           <a
             href={shot.clickup_url}
