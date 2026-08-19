@@ -737,6 +737,16 @@ export default function ProduccionSheet() {
                                 <div className="text-sm text-noeval-ink whitespace-pre-wrap">{s.tech_notes}</div>
                               </div>
                             )}
+                            {s.file_names && (
+                              <div className="mt-2 pt-2 border-t border-noeval-line/60">
+                                <div className="text-[9px] tracking-[0.3em] uppercase text-noeval-muted mb-1">🗂 Archivos</div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {s.file_names.split(/[\n,]+/).map((f) => f.trim()).filter(Boolean).map((f, i) => (
+                                    <span key={i} className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-noeval-cream border border-noeval-line/60 text-noeval-ink">{f}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );

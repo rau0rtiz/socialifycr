@@ -30,6 +30,7 @@ interface PublicSheetData {
     hook: string | null;
     cta: string | null;
     tech_notes: string | null;
+    file_names: string | null;
     done: boolean;
     sort_order: number;
   }>;
