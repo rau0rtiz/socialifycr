@@ -109,7 +109,7 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
     queryFn: async () => {
       const { data, error } = await supabase
         .from('production_sheet_shots')
-        .select('id, concept, description, content_type, platform, hook, script, cta, tech_notes, done, sort_order, clickup_task_id')
+        .select('id, concept, description, content_type, platform, hook, script, cta, tech_notes, file_names, done, sort_order, clickup_task_id')
         .eq('sheet_id', sheetId)
         .order('sort_order');
       if (error) throw error;
