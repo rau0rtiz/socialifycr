@@ -41,6 +41,7 @@ type Shot = {
   script: string | null;
   cta: string | null;
   tech_notes: string | null;
+  file_names: string | null;
   done: boolean;
   sort_order: number;
   clickup_task_id: string | null;
@@ -67,6 +68,7 @@ function buildPreviewDescription(s: Shot): string {
   if (s.script) lines.push(`📝 ${s.script}`);
   if (s.cta) lines.push(`🎯 CTA: ${s.cta}`);
   if (s.tech_notes) lines.push(`🎥 ${s.tech_notes}`);
+  if (s.file_names) lines.push(`🗂 ${s.file_names.split(/[\n,]+/).map((f) => f.trim()).filter(Boolean).join(', ')}`);
   return lines.join(' · ');
 }
 
@@ -107,7 +109,7 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
     queryFn: async () => {
       const { data, error } = await supabase
         .from('production_sheet_shots')
-        .select('id, concept, description, content_type, platform, hook, script, cta, tech_notes, done, sort_order, clickup_task_id')
+        .select('id, concept, description, content_type, platform, hook, script, cta, tech_notes, file_names, done, sort_order, clickup_task_id')
         .eq('sheet_id', sheetId)
         .order('sort_order');
       if (error) throw error;

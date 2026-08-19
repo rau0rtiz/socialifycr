@@ -4630,6 +4630,7 @@ export type Database = {
           description: string
           done: boolean
           duration_estimate: string | null
+          file_names: string | null
           hook: string | null
           id: string
           is_draft: boolean
@@ -4655,6 +4656,7 @@ export type Database = {
           description?: string
           done?: boolean
           duration_estimate?: string | null
+          file_names?: string | null
           hook?: string | null
           id?: string
           is_draft?: boolean
@@ -4680,6 +4682,7 @@ export type Database = {
           description?: string
           done?: boolean
           duration_estimate?: string | null
+          file_names?: string | null
           hook?: string | null
           id?: string
           is_draft?: boolean

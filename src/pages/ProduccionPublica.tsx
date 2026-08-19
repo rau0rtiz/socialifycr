@@ -30,6 +30,7 @@ interface PublicSheetData {
     hook: string | null;
     cta: string | null;
     tech_notes: string | null;
+    file_names: string | null;
     done: boolean;
     sort_order: number;
   }>;
@@ -236,6 +237,7 @@ export default function ProduccionPublica() {
                       {shot.script && <FieldRow label="Guión">{shot.script}</FieldRow>}
                       {shot.cta && <FieldRow label="CTA">{shot.cta}</FieldRow>}
                       {shot.tech_notes && <FieldRow label="Notas técnicas">{shot.tech_notes}</FieldRow>}
+                      {shot.file_names && <FieldRow label="Archivos">{shot.file_names}</FieldRow>}
                     </div>
                   </div>
                 </article>

@@ -43,6 +43,10 @@ function buildDescription(shot: any, sheet: any): string {
   if (shot.script) lines.push('**📝 Guion / Copy:**', shot.script, '');
   if (shot.cta) lines.push(`**🎯 CTA:** ${shot.cta}`);
   if (shot.tech_notes) lines.push('', '**🎥 Notas técnicas:**', shot.tech_notes);
+  if (shot.file_names) {
+    const files = String(shot.file_names).split(/[\n,]+/).map((f: string) => f.trim()).filter(Boolean);
+    if (files.length) lines.push('', '**🗂 Nombres de archivo:**', ...files.map((f: string) => `- ${f}`));
+  }
   lines.push('', '---');
   if (sheet.shoot_date) lines.push(`📅 Grabado: ${sheet.shoot_date}`);
   if (sheet.location) lines.push(`📍 Locación: ${sheet.location}`);
