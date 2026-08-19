@@ -101,6 +101,7 @@ export function PieceCard({
       if (local.hook !== (shot.hook || '')) patch.hook = local.hook;
       if (local.cta !== (shot.cta || '')) patch.cta = local.cta;
       if (local.tech_notes !== (shot.tech_notes || '')) patch.tech_notes = local.tech_notes;
+      if (local.file_names !== (shot.file_names || '')) patch.file_names = local.file_names;
       if (Object.keys(patch).length) onChange(patch);
     }, 800);
     return () => clearTimeout(t);
@@ -440,6 +441,16 @@ export function PieceCard({
             value={local.tech_notes}
             onChange={(e) => setLocal({ ...local, tech_notes: e.target.value })}
             placeholder="Cámara, ángulos, wardrobe, props, locación específica…"
+            rows={2}
+            className="bg-transparent border-0 text-sm resize-none px-0 focus-visible:ring-0"
+          />
+        </div>
+        <div className="bg-noeval-cream/50 rounded-xl p-3 border border-noeval-line/60">
+          <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1.5 block">🗂 Nombres de archivo (opcional)</Label>
+          <Textarea
+            value={local.file_names}
+            onChange={(e) => setLocal({ ...local, file_names: e.target.value })}
+            placeholder="Uno por línea: IMG_0234.MOV, reel-hook-v2.mp4…"
             rows={2}
             className="bg-transparent border-0 text-sm resize-none px-0 focus-visible:ring-0"
           />
