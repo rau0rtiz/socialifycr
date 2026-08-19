@@ -1,0 +1,1 @@
+ALTER TABLE public.production_sheet_shots ADD COLUMN IF NOT EXISTS file_names text;
