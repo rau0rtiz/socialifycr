@@ -237,7 +237,20 @@ export default function ProduccionPublica() {
                       {shot.script && <FieldRow label="Guión">{shot.script}</FieldRow>}
                       {shot.cta && <FieldRow label="CTA">{shot.cta}</FieldRow>}
                       {shot.tech_notes && <FieldRow label="Notas técnicas">{shot.tech_notes}</FieldRow>}
-                      {shot.file_names && <FieldRow label="Archivos">{shot.file_names}</FieldRow>}
+                      {shot.file_names && (
+                        <FieldRow label="Archivos">
+                          <div className="flex flex-wrap gap-1.5 pt-0.5">
+                            {shot.file_names.split(/[\n,]+/).map((f) => f.trim()).filter(Boolean).map((f, i) => (
+                              <span
+                                key={i}
+                                className="inline-flex items-center text-[11px] font-medium px-2.5 py-1 rounded-lg bg-noeval-cream border border-noeval-line/80 text-noeval-ink shadow-[0_1px_0_rgba(33,33,33,0.04)]"
+                              >
+                                {f}
+                              </span>
+                            ))}
+                          </div>
+                        </FieldRow>
+                      )}
                     </div>
                   </div>
                 </article>
