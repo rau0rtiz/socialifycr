@@ -41,6 +41,7 @@ type Shot = {
   script: string | null;
   cta: string | null;
   tech_notes: string | null;
+  file_names: string | null;
   done: boolean;
   sort_order: number;
   clickup_task_id: string | null;
@@ -67,6 +68,7 @@ function buildPreviewDescription(s: Shot): string {
   if (s.script) lines.push(`📝 ${s.script}`);
   if (s.cta) lines.push(`🎯 CTA: ${s.cta}`);
   if (s.tech_notes) lines.push(`🎥 ${s.tech_notes}`);
+  if (s.file_names) lines.push(`🗂 ${s.file_names.split(/[\n,]+/).map((f) => f.trim()).filter(Boolean).join(', ')}`);
   return lines.join(' · ');
 }
 
