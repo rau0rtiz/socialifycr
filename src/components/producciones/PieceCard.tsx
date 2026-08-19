@@ -76,6 +76,7 @@ export function PieceCard({
     hook: shot.hook || '',
     cta: shot.cta || '',
     tech_notes: shot.tech_notes || '',
+    file_names: shot.file_names || '',
   });
 
   useEffect(() => {
@@ -85,6 +86,7 @@ export function PieceCard({
       hook: shot.hook || '',
       cta: shot.cta || '',
       tech_notes: shot.tech_notes || '',
+      file_names: shot.file_names || '',
     });
   }, [shot.id]);
 

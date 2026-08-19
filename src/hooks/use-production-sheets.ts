@@ -60,6 +60,7 @@ export interface SheetShot {
   hook: string | null;
   cta: string | null;
   tech_notes: string | null;
+  file_names: string | null;
   recorded_at: string | null;
   clickup_task_id: string | null;
   clickup_url: string | null;
