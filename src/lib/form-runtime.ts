@@ -48,17 +48,20 @@ const RUNTIME_CSS = `
   ul.sform-opts { list-style: none !important; padding-left: 0 !important; margin: 4px 0 0 0 !important; }
   ul.sform-opts li::before { content: none !important; }
   .sform-cb {
-    cursor: pointer; display: inline-block; width: 18px; height: 18px; border-radius: 6px;
-    border: 1.5px solid rgba(26,25,22,.3); background: #fff; vertical-align: middle;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 6px;
+    border: 1.5px solid rgba(26,25,22,.3); background: transparent; vertical-align: middle;
     position: relative; transition: all .12s; box-sizing: border-box; flex: none;
+    color: #E9772C; font-size: 15px; font-weight: 700; line-height: 1;
   }
   .sform-cb:hover { border-color: rgba(233,119,44,.7); }
-  .sform-cb[data-on="1"] { background: #E9772C; border-color: #E9772C; }
+  .sform-cb[data-on="1"] { background: transparent; border-color: transparent; }
   .sform-cb[data-on="1"]::after {
-    content: ""; position: absolute; left: 50%; top: 47%;
-    width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0;
-    transform: translate(-50%, -55%) rotate(45deg);
+    content: "✓"; position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    color: #E9772C;
   }
+
 
   .sform-dot { cursor: pointer; transition: all .12s; }
   .sform-dot[data-on="1"] { background: #E9772C !important; border-color: #E9772C !important; color: #fff !important; font-weight: 700; }
