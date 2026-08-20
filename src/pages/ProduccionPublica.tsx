@@ -99,6 +99,10 @@ export default function ProduccionPublica() {
   }
 
   const { sheet, client, team, shots, wardrobe } = data;
+  const displayShots = [...shots].sort((a, b) => {
+    if (a.done === b.done) return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    return a.done ? 1 : -1;
+  });
   const total = shots.length;
   const recorded = shots.filter((s) => s.done).length;
   const pct = total ? Math.round((recorded / total) * 100) : 0;
@@ -185,14 +189,14 @@ export default function ProduccionPublica() {
         {/* PIEZAS */}
         <section>
           <SectionHeader badge="Piezas" title="Contenido a grabar" />
-          {shots.length === 0 ? (
+          {displayShots.length === 0 ? (
             <div className="border border-dashed border-noeval-line rounded-2xl p-10 text-center bg-noeval-surface">
               <Film className="h-8 w-8 mx-auto text-noeval-muted/60 mb-2" />
               <p className="text-noeval-muted text-sm">Aún no hay piezas en esta hoja.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {shots.map((shot, idx) => (
+              {displayShots.map((shot, idx) => (
                 <article
                   key={shot.id}
                   className={`rounded-2xl bg-noeval-surface border transition shadow-[0_1px_2px_rgba(33,33,33,0.04)] ${

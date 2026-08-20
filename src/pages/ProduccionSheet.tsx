@@ -182,9 +182,13 @@ export default function ProduccionSheet() {
   const pct = total ? Math.round((recorded / total) * 100) : 0;
 
   const filteredShots = useMemo(() => {
-    if (filter === 'pending') return visibleShots.filter(s => !s.done);
-    if (filter === 'recorded') return visibleShots.filter(s => s.done);
-    return visibleShots;
+    let list = visibleShots;
+    if (filter === 'pending') list = visibleShots.filter(s => !s.done);
+    if (filter === 'recorded') list = visibleShots.filter(s => s.done);
+    return [...list].sort((a, b) => {
+      if (a.done === b.done) return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+      return a.done ? 1 : -1;
+    });
   }, [visibleShots, filter]);
 
   const handleAddPiece = () => {
