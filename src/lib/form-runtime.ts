@@ -323,12 +323,66 @@ const RUNTIME_JS = String.raw`
 </script>
 `;
 
+/**
+ * Puente para documentos "wizard" (formularios paginados que traen su propio
+ * motor y exponen `window.__sformWizard`). No transformamos nada del DOM:
+ * solo conectamos autosave y envío por postMessage.
+ */
+const WIZARD_BRIDGE = String.raw`
+<style id="sform-wizard-style">
+  .sform-done {
+    position: fixed; inset: 0; z-index: 100000; background: rgba(18,17,16,.96); color: #F6F1E8;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px;
+    text-align: center; padding: 32px; font-family: 'Inter', system-ui, sans-serif;
+  }
+  .sform-done h2 { font-size: 24px; font-weight: 800; font-family: 'Sora', system-ui, sans-serif; }
+  .sform-done p { font-size: 14px; color: rgba(246,241,232,.72); max-width: 420px; }
+</style>
+<script id="sform-wizard-bridge">
+(function () {
+  var post = function (msg) { try { parent.postMessage(msg, '*'); } catch (e) {} };
+  var start = function () {
+    var api = window.__sformWizard;
+    if (!api) return setTimeout(start, 60);
+    api.onChange = function (answers, name, email) {
+      post({ type: 'sform:change', answers: answers, name: name, email: email });
+    };
+    api.onSubmit = function (answers, name, email, html) {
+      post({ type: 'sform:submit', answers: answers, name: name, email: email, html: html });
+    };
+    window.addEventListener('message', function (ev) {
+      var d = ev.data || {};
+      if (d.type === 'sform:restore') { try { api.setAnswers(d.answers || []); } catch (e) {} }
+      if (d.type === 'sform:error') {
+        if (api.fail) api.fail();
+        try { alert(d.message || 'No se pudo enviar. Intentá de nuevo.'); } catch (e) {}
+      }
+      if (d.type === 'sform:submitted') {
+        var done = document.createElement('div');
+        done.className = 'sform-done';
+        done.innerHTML = '<h2>¡Listo, gracias!</h2><p>Recibimos tus respuestas. Te vamos a escribir con los siguientes pasos.</p>';
+        document.body.appendChild(done);
+      }
+    });
+    post({ type: 'sform:ready', wizard: true });
+  };
+  start();
+})();
+</script>
+`;
+
+/** Detecta formularios que traen su propio motor paginado. */
+export const isWizardForm = (source: string): boolean => /__sformWizard/.test(source || '');
+
 /** Inyecta el runtime interactivo dentro del HTML del formulario. */
 export const buildFormDocument = (source: string, title = 'Formulario'): string => {
   const base = source && source.trim()
     ? source
     : `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>${title}</title></head><body><div class="f"><div class="q">Formulario vacío</div></div></body></html>`;
-  const injection = RUNTIME_CSS + RUNTIME_JS;
-  if (/<\/body>/i.test(base)) return base.replace(/<\/body>/i, `${injection}</body>`);
+  const injection = isWizardForm(base) ? WIZARD_BRIDGE : RUNTIME_CSS + RUNTIME_JS;
+  // Se inyecta en el ÚLTIMO </body> para no romper scripts que lo mencionen como texto.
+  const at = base.toLowerCase().lastIndexOf('</body>');
+  if (at >= 0) return `${base.slice(0, at)}${injection}${base.slice(at)}`;
   return base + injection;
 };
+
