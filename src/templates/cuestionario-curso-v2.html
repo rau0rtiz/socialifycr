@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light only">
+<meta name="theme-color" content="#F6F1E8">
+<title>Cuestionario · Producción de curso online · Socialify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F6F1E8; --paper:#FFFFFF; --ink:#1A1916; --muted:#6E6A62; --faint:#9C968B;
+    --orange:#E9772C; --orange-ink:#BE5314; --void:#121110;
+    --line:rgba(26,25,22,.12); --card:#FBFAF8; --soft:rgba(233,119,44,.09);
+    --display:'Sora', system-ui, -apple-system, sans-serif;
+    --body:'Inter', system-ui, -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    background:var(--cream); color:var(--ink);
+    font-family:var(--body); font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+
+  /* ---------- barra superior ---------- */
+  .top{
+    position:sticky; top:0; z-index:30; background:var(--cream); box-shadow:0 6px 14px -12px rgba(26,25,22,.5);
+    padding:14px 0 0;
+  }
+  .col{max-width:600px; margin:0 auto; padding:0 max(18px, env(safe-area-inset-left));}
+  .topin{display:flex; align-items:center; justify-content:space-between; gap:14px; padding-bottom:11px;}
+  .wm{font-family:var(--display); font-weight:800; font-size:17px; letter-spacing:-.02em;}
+  .wm i{color:var(--orange); font-style:normal;}
+  .step{font-size:12.5px; color:var(--faint); text-align:right; letter-spacing:.02em;}
+  .track{height:3px; background:rgba(26,25,22,.09); border-radius:99px; overflow:hidden;}
+  .fill{height:100%; width:0%; background:var(--orange); border-radius:99px; transition:width .35s cubic-bezier(.4,0,.2,1);}
+
+  /* ---------- lienzo ---------- */
+  main{padding:26px 0 calc(120px + env(safe-area-inset-bottom));}
+  .pane{animation:in .32s cubic-bezier(.2,.7,.3,1);}
+  @keyframes in{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
+  @media (prefers-reduced-motion:reduce){ .pane{animation:none;} .fill{transition:none;} }
+
+  .kick{font-family:var(--display); font-weight:700; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--orange); margin-bottom:9px;}
+  h1{font-family:var(--display); font-weight:800; font-size:clamp(27px,7.4vw,38px); line-height:1.13; letter-spacing:-.03em;}
+  h2{font-family:var(--display); font-weight:700; font-size:clamp(23px,6vw,30px); line-height:1.18; letter-spacing:-.03em;}
+  .sub{margin-top:12px; color:var(--muted); font-size:16px;}
+  .sub b{color:var(--ink); font-weight:600;}
+
+  /* ---------- tarjeta de pregunta ---------- */
+  .qc{
+    background:var(--paper); border:1px solid var(--line); border-radius:20px;
+    padding:20px 18px; margin-top:16px;
+    box-shadow:0 1px 2px rgba(26,25,22,.03);
+  }
+  .qc:first-of-type{margin-top:26px;}
+  .lbl{font-size:16.5px; font-weight:600; line-height:1.4; letter-spacing:-.01em;}
+  .lbl b{font-weight:700;}
+  .hint{display:block; font-weight:400; color:var(--faint); font-size:14px; margin-top:5px; line-height:1.45;}
+  .body{margin-top:15px;}
+
+  /* campos de texto */
+  textarea, input[type=text]{
+    width:100%; font-family:var(--body); font-size:16px; line-height:1.5; color:var(--ink);
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:13px 14px;
+  }
+  textarea{min-height:92px; resize:vertical; display:block;}
+  textarea.big{min-height:124px;}
+  textarea:focus, input[type=text]:focus{outline:none; border-color:var(--orange); background:#fff;}
+  ::placeholder{color:var(--faint);}
+
+  /* chips */
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    font-family:var(--body); font-size:14.5px; color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-radius:999px; padding:10px 15px; cursor:pointer;
+    min-height:42px; display:inline-flex; align-items:center; gap:7px;
+    -webkit-tap-highlight-color:transparent; transition:all .13s; line-height:1.2;
+  }
+  .chip:hover{border-color:rgba(233,119,44,.45);}
+  .chip.on{background:var(--orange); border-color:var(--orange); color:#fff; font-weight:600;}
+
+  /* filas con descripción */
+  .rows{display:grid; gap:9px;}
+  .row{
+    display:flex; gap:12px; align-items:flex-start; cursor:pointer; -webkit-tap-highlight-color:transparent;
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:13px 14px; transition:all .13s;
+  }
+  .row .bx{
+    flex:none; width:21px; height:21px; margin-top:1px; border-radius:7px;
+    border:1.6px solid rgba(233,119,44,.5); background:#fff; transition:all .12s;
+  }
+  .row.on{background:var(--soft); border-color:rgba(233,119,44,.42);}
+  .row.on .bx{
+    background:var(--orange) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6L9 17l-5-5'/></svg>") center/72% no-repeat;
+    border-color:var(--orange);
+  }
+  .row .t{font-size:15.5px; line-height:1.4;}
+  .row .t b{font-weight:600;}
+  .row .t em{font-style:normal; color:var(--faint); display:block; font-size:14px; margin-top:2px;}
+
+  /* escala */
+  .scale{display:flex; align-items:center; gap:8px; justify-content:space-between;}
+  .dot{
+    flex:1; max-width:56px; height:48px; border-radius:14px; border:1px solid var(--line); background:var(--card);
+    font-family:var(--display); font-weight:700; font-size:15px; color:var(--muted); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:all .13s;
+  }
+  .dot.on{background:var(--orange); border-color:var(--orange); color:#fff;}
+  .ends{display:flex; justify-content:space-between; font-size:13px; color:var(--faint); margin-top:9px;}
+
+  /* trio de números */
+  .trio{display:grid; gap:14px;}
+  @media (min-width:520px){ .trio{grid-template-columns:1fr 1fr 1fr;} }
+  .trio label{display:block; font-size:13.5px; color:var(--muted); margin-bottom:6px;}
+
+  /* inventario */
+  .inv{display:grid; gap:10px;}
+  .invgrp{font-family:var(--display); font-weight:700; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--orange-ink); margin:8px 0 0;}
+  .invgrp:first-child{margin-top:0;}
+  .invrow{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px;}
+  .invrow .t{font-size:15px; line-height:1.35; margin-bottom:9px;}
+  .invrow .t em{font-style:normal; color:var(--faint);}
+  .seg{display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;}
+  .seg button{
+    font-family:var(--body); font-size:13px; color:var(--muted); background:#fff; cursor:pointer;
+    border:1px solid var(--line); border-radius:10px; min-height:38px; padding:4px; transition:all .12s;
+  }
+  .seg button.on{background:var(--orange); border-color:var(--orange); color:#fff; font-weight:600;}
+  @media (min-width:560px){
+    .invrow{display:grid; grid-template-columns:1fr 232px; gap:14px; align-items:center;}
+    .invrow .t{margin-bottom:0;}
+  }
+
+  /* servicios */
+  .svc + .svc{margin-top:20px;}
+  .svch{font-family:var(--display); font-weight:700; font-size:15px; margin-bottom:10px; display:flex; align-items:center; gap:9px;}
+  .svch span{font-family:var(--display); font-size:9.5px; letter-spacing:.13em; text-transform:uppercase; font-weight:700; color:var(--orange-ink); background:rgba(233,119,44,.11); padding:3px 9px; border-radius:999px;}
+
+  /* nota */
+  .note{
+    border-left:2px solid var(--orange); padding:4px 0 4px 14px; font-size:14.5px; color:var(--muted); margin-top:18px;
+  }
+  .note b{color:var(--ink); font-weight:600;}
+
+  .dark{background:var(--void); color:var(--cream); border-radius:20px; padding:24px 20px; margin-top:22px;}
+  .dark h3{font-family:var(--display); font-weight:700; font-size:19px; margin-bottom:10px;}
+  .dark p{font-size:15px; color:rgba(246,241,232,.76);} .dark p + p{margin-top:10px;}
+  .dark b{color:var(--cream); font-weight:600;}
+  .dark ul{list-style:none; margin-top:14px; display:grid; gap:9px;}
+  .dark li{font-size:15px; color:rgba(246,241,232,.76); padding-left:18px; position:relative;}
+  .dark li::before{content:""; position:absolute; left:0; top:9px; width:6px; height:6px; border-radius:50%; background:var(--orange);}
+
+  /* ---------- navegación ---------- */
+  .nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    background:linear-gradient(to top, var(--cream) 62%, rgba(246,241,232,0));
+    padding:22px 0 calc(16px + env(safe-area-inset-bottom)); pointer-events:none;
+  }
+  .navin{pointer-events:auto; max-width:600px; margin:0 auto; padding:0 max(18px, env(safe-area-inset-left)); display:flex; gap:10px;}
+  .btn{
+    flex:1; font-family:var(--display); font-weight:700; font-size:15.5px; cursor:pointer;
+    border:0; border-radius:15px; padding:16px 20px; min-height:54px;
+    background:var(--ink); color:var(--cream); -webkit-tap-highlight-color:transparent;
+    display:flex; align-items:center; justify-content:center; gap:8px; transition:transform .1s;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn.ghost{flex:0 0 auto; width:56px; background:#fff; color:var(--ink); border:1px solid var(--line); padding:0;}
+  .btn[hidden]{display:none;}
+  .arrow{width:9px; height:9px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(135deg); margin-left:2px;}
+
+  .toast{
+    position:fixed; left:50%; bottom:104px; transform:translateX(-50%) translateY(8px); z-index:40;
+    background:var(--void); color:var(--cream); font-size:14px; padding:11px 18px; border-radius:999px;
+    opacity:0; pointer-events:none; transition:all .25s;
+  }
+  .toast.on{opacity:1; transform:translateX(-50%);}
+
+  .miss{display:grid; gap:8px; margin-top:18px;}
+  .missit{
+    display:flex; align-items:center; gap:10px; background:var(--paper); border:1px solid var(--line);
+    border-radius:13px; padding:12px 14px; font-size:15px; cursor:pointer;
+  }
+  .missit b{font-family:var(--display); font-weight:700; color:var(--orange); font-size:13px;}
+  .ok{display:flex; align-items:center; gap:10px; font-size:15px; color:var(--muted); margin-top:18px;}
+  .ok .tick{width:22px; height:22px; border-radius:50%; background:var(--orange) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6L9 17l-5-5'/></svg>") center/70% no-repeat; flex:none;}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="col">
+    <div class="topin">
+      <div class="wm">socialify<i>.</i></div>
+      <div class="step" id="stepLbl">Producción de curso online</div>
+    </div>
+    <div class="track"><div class="fill" id="bar"></div></div>
+  </div>
+</div>
+
+<main class="col" id="main"></main>
+
+<div class="nav">
+  <div class="navin">
+    <button class="btn ghost" id="back" hidden aria-label="Atrás">←</button>
+    <button class="btn" id="next">Empezar</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+var STEPS=[
+{t:'El negocio hoy', s:'En qué etapa están de verdad. De aquí sale si el curso es el siguiente paso lógico.', q:[
+  {k:'area', l:'¿A qué se dedica el negocio y hace cuánto opera?', p:'Una o dos líneas'},
+  {k:'rows', l:'¿En qué etapa están?', o:[
+    ['Idea','todavía no facturamos'],['Arrancando','primeras ventas, sin consistencia'],
+    ['Funcionando','ingresos estables, pero dependen de mi tiempo'],['Establecido','equipo y operación corriendo'],
+    ['En crecimiento','vendemos más de lo que podemos atender']]},
+  {k:'chips', l:'¿Cómo genera dinero hoy?', h:'Marcá todo lo que aplique.', o:['Servicio uno a uno','Talleres presenciales','Producto físico','Membresía','Algo digital','Todavía nada']},
+  {k:'chips', l:'Facturación mensual promedio', h:'En USD. Nos dice qué tan grande puede ser el proyecto.', o:['Menos de $5k','$5k – $15k','$15k – $40k','Más de $40k','Prefiero no decir']},
+  {k:'chips', l:'¿De dónde vienen los clientes hoy?', o:['Referidos','Redes orgánico','Pauta pagada','Google','Alianzas','Presencial']},
+  {k:'chips', l:'¿Qué papel va a jugar el curso?', o:['Ingreso principal nuevo','Complemento','Puerta a un servicio caro','Dejar de vender horas','Monetizar audiencia','Autoridad']},
+  {k:'area', l:'¿Por qué un curso y por qué ahora?', p:'Qué cambió o qué los empujó a decidirlo'},
+  {k:'line', l:'¿Quién más del equipo va a estar metido?', p:'Nombre y rol'}
+]},
+
+{t:'Quién enseña', s:'De dónde sale la autoridad y qué tan caliente está la gente que ya los sigue.', q:[
+  {k:'area', l:'¿Quién va a ser la cara del curso?', p:'Nombre, rol y por qué tiene autoridad en el tema'},
+  {k:'chips', l:'¿Ya ha enseñado esto antes?', o:['Sí, cobrando','Sí, gratis o informal','Nunca formalmente']},
+  {k:'scale', l:'¿Qué tan cómoda se siente frente a cámara?', lo:'Incómoda', hi:'Natural'},
+  {k:'line', l:'¿Cuántas horas por semana puede dedicarle?', p:'Ej: 6 horas'},
+  {k:'trio', l:'Audiencia actual', h:'Llená solo lo que aplique.', o:['Seguidores IG / TikTok','Lista de correos','Comunidad WhatsApp']},
+  {k:'chips', l:'¿Qué tan activa está esa audiencia?', o:['Responden bien','Poca interacción','Abandonada','No tenemos']},
+  {k:'area', l:'¿Ya vendieron algo digital antes?', p:'Qué fue, cuánto vendieron y a qué precio'}
+]},
+
+{t:'Qué ya tienen listo', s:'Marcá el estado real de cada cosa. Esto define cuánto trabajo hay — y qué no cotizamos porque ya existe.', q:[
+  {k:'inv', rows:[
+    ['g','Contenido'],
+    ['r','Temario y estructura del curso',''],
+    ['r','Contenido ya grabado','talleres o clases pasadas'],
+    ['r','Presentaciones o slides',''],
+    ['r','Material descargable','plantillas, workbook'],
+    ['g','Marca'],
+    ['r','Logo e identidad visual',''],
+    ['r','Manual de marca',''],
+    ['r','Fotos y video de marca',''],
+    ['r','Testimonios o casos documentados',''],
+    ['g','Tecnología'],
+    ['r','Sitio web',''],
+    ['r','Plataforma de cursos elegida',''],
+    ['r','Cobro en línea','pasarela, cobro internacional'],
+    ['r','Herramienta de correos con lista',''],
+    ['r','Business Manager de Meta propio',''],
+    ['r','Cuenta de Google Ads','']
+  ]},
+  {k:'area', l:'De lo que está listo, ¿dónde lo tienen?', p:'Carpeta, Drive, enlaces — y quién nos puede dar accesos'}
+]},
+
+{t:'El curso', s:'La promesa define todo lo demás: el contenido, el precio y el ángulo de la pauta.', q:[
+  {k:'area', l:'¿Qué va a poder hacer el estudiante al terminar que hoy no puede?', h:'En una frase.'},
+  {k:'line', l:'Nombre del curso', p:'O tentativo / todavía sin nombre'},
+  {k:'area', l:'¿Qué NO va a cubrir el curso?', h:'Marcar el límite ahora evita que crezca solo después.'},
+  {k:'chips', l:'¿Qué tan práctico es?', o:['Teoría aplicada','Paso a paso con ejercicios','Implementación guiada']},
+  {k:'chips', l:'¿Qué se lleva además de los videos?', o:['Plantillas','Workbook','Certificado','Comunidad','Sesiones en vivo','1 a 1','Bonos','Actualizaciones']}
+]},
+
+{t:'A quién le venden', s:'Sin esto no se puede calcular presupuesto de pauta ni escribir un solo anuncio.', q:[
+  {k:'area', l:'Describí al estudiante ideal', p:'Edad, ocupación, país, situación actual, qué lo tiene atascado', big:1},
+  {k:'area', l:'¿Cuál es el dolor que los hace buscar una solución hoy?', h:'Con las palabras que ellos usarían, no las de ustedes.'},
+  {k:'chips', l:'¿Dónde está esa gente?', o:['Instagram','TikTok','Facebook','YouTube','LinkedIn','Google','Grupos y comunidades']},
+  {k:'chips', l:'Mercado objetivo', o:['Costa Rica','Centroamérica','México','Latinoamérica','Hispanos en EE.UU.']},
+  {k:'area', l:'¿Contra quién compiten y por qué los escogerían a ustedes?', p:'Otros cursos o personas que enseñan algo parecido, y a qué precio si lo saben'}
+]},
+
+{t:'Tamaño y formato', s:'Esta es la parte que más pesa en el costo de producción.', q:[
+  {k:'chips', l:'¿Cuántas horas de material final debería tener?', h:'Horas de video terminado que el estudiante va a ver.', o:['Menos de 2 h','2 – 4 h','4 – 8 h','8 – 15 h','Más de 15 h','No tengo idea']},
+  {k:'line', l:'Si no saben las horas: ¿cuántas lecciones y de cuántos minutos?', p:'Ej: 24 lecciones de 8 minutos'},
+  {k:'chips', l:'¿Qué formato tienen en la cabeza?', o:['Cámara a persona','Pantalla grabada','Slides narradas','Mixto','Demostrativo','En vivo grabado']},
+  {k:'rows', l:'Nivel de producción esperado', o:[
+    ['Simple y directo','una cámara, buen audio, edición limpia'],
+    ['Intermedio','dos cámaras, gráficos, animaciones'],
+    ['Alto','set diseñado, motion graphics, B-roll'],
+    ['No sé','recomiéndennos según presupuesto']]},
+  {k:'chips', l:'¿Dónde se grabaría?', o:['En sus instalaciones','Estudio','Otra locación','Fuera del GAM']},
+  {k:'line', l:'¿Cuántos días seguidos pueden grabar?', p:'Ej: 2 días'},
+  {k:'chips', l:'¿Quién escribe el contenido?', o:['Nosotros, completo','Nosotros el fondo, ustedes la estructura','Ustedes, con entrevistas']}
+]},
+
+{t:'Qué necesitan de nosotros', s:'Marcá todo lo que quieran que coticemos. Si no están seguros, marcá igual y lo conversamos.', q:[
+  {k:'svc', g:[
+    ['Marca','Base',['Libro de marca','Identidad del curso','Naming','Plantillas gráficas','Ya tenemos marca']],
+    ['Producción','Video',['Guion y estructura','Grabación','Edición','Motion graphics','Slides','Material descargable','Fotografía','VSL y tráiler','Subtítulos']],
+    ['Plataforma y web','Montaje',['Montaje en plataforma','Elegir plataforma','Página de ventas','Sitio web completo','Pasarela de pago','Área de miembros','Certificados']],
+    ['Flujo de venta','Conversión',['Embudo completo','Lead magnet','Secuencia de correos','Automatización WhatsApp','Guion de ventas','Webinar','Dashboard hasta venta']],
+    ['Tráfico','Escala',['Pauta Meta','Pauta Google','Contenido orgánico','Reels mensuales','Manejo de redes','SEO','Afiliados','Email marketing']],
+    ['Acompañamiento','Operación',['Asesoría comercial','Capacitación al equipo','Reportes y reuniones','Soporte al estudiante']]
+  ]},
+  {k:'area', l:'De todo eso, ¿qué 3 cosas son las que no pueden faltar?', p:'1.\n2.\n3.'},
+  {k:'line', l:'¿Qué van a hacer ustedes internamente?', p:'Lo que asumen sin nuestra ayuda'}
+]},
+
+{t:'Tiempos', s:'La urgencia cambia el plan y el precio. Preferimos saberlo antes, no después.', q:[
+  {k:'chips', l:'¿Cuándo quieren tener el curso a la venta?', o:['Menos de 1 mes','1 – 2 meses','3 – 4 meses','5 – 6 meses','Este año','Explorando']},
+  {k:'line', l:'Fecha exacta, si ya la tienen', p:'Ej: 15 de noviembre'},
+  {k:'chips', l:'¿Hay algo que amarre esa fecha?', o:['Un evento','Temporada del negocio','Ya lo anunciamos','Presupuesto que vence','Nada, meta interna']},
+  {k:'chips', l:'¿Lanzar completo o por partes?', o:['Todo listo antes de vender','Preventa','Por módulos']},
+  {k:'note', txt:'<b>Nota honesta:</b> un curso de 4–8 horas bien producido toma entre 8 y 12 semanas desde el arranque hasta la venta. Si su fecha es más agresiva se puede, pero se recorta alcance o sube el costo.'},
+  {k:'line', l:'¿Quién aprueba de su lado y qué tan rápido?', p:'Las aprobaciones lentas atrasan más que la producción'}
+]},
+
+{t:'Precio y números', s:'Con esto sabemos si el proyecto cierra matemáticamente antes de gastar un colón.', q:[
+  {k:'chips', l:'¿A cuánto piensan vender el curso?', o:['Menos de $50','$50 – $150','$150 – $400','$400 – $1,000','Más de $1,000','No sé']},
+  {k:'chips', l:'Modelo de venta', o:['Pago único','Con cuotas','Suscripción','Curso + servicio','Varios niveles']},
+  {k:'trio', l:'Meta de los primeros 90 días', o:['Estudiantes','Facturación USD','Punto de equilibrio']},
+  {k:'chips', l:'Inversión para producción y montaje', h:'Pago único al proyecto.', o:['Menos de $3k','$3k – $6k','$6k – $12k','$12k – $25k','Más de $25k','Sin definir']},
+  {k:'chips', l:'Presupuesto mensual de pauta', h:'Se paga directo a Meta o Google, aparte del servicio.', o:['Menos de $500','$500 – $1.5k','$1.5k – $3k','$3k – $6k','Más de $6k','Sin definir']},
+  {k:'line', l:'¿Cuántos meses pueden sostener esa pauta sin depender de las ventas?', p:'Ej: 4 meses'},
+  {k:'line', l:'¿Quién atiende los mensajes de gente interesada?', p:'Nombre y cuántas horas al día'}
+]},
+
+{t:'Retos y decisión', s:'Contestá esta parte con franqueza. Es la que más nos sirve.', q:[
+  {k:'area', l:'¿Cuál es el reto más grande para sacar esto adelante?'},
+  {k:'chips', l:'¿Qué les preocupa?', o:['Tiempo para grabar','Que nadie compre','Cuánto cobrar','La cámara','Contenido desordenado','Lo técnico','No recuperar la inversión','Quedar a medias']},
+  {k:'area', l:'¿Ya intentaron algo de esto antes? ¿Qué pasó?', h:'Incluí trabajos con otras agencias, aunque no hayan salido bien.'},
+  {k:'area', l:'Si en 6 meses esto fuera un éxito rotundo, ¿qué habría pasado?'},
+  {k:'chips', l:'¿Quién aprueba el presupuesto?', o:['Yo solo','Yo y un socio','Junta o comité','Otra persona']},
+  {k:'chips', l:'¿Están hablando con otros proveedores?', o:['Sí','No','Prefiero no decir']},
+  {k:'area', l:'Cualquier cosa que no preguntamos y deberíamos saber'}
+]}
+];
+
+var A={}, i=0, N=STEPS.length;
+var main=document.getElementById('main'), bar=document.getElementById('bar'),
+    lbl=document.getElementById('stepLbl'), back=document.getElementById('back'), next=document.getElementById('next');
+
+function el(t,c,h){var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;}
+function key(s,q){return s+'-'+q;}
+
+function toast(m){var t=document.getElementById('toast'); t.textContent=m; t.classList.add('on');
+  setTimeout(function(){t.classList.remove('on');},2000);}
+
+/* ---------- render ---------- */
+function render(){
+  main.innerHTML='';
+  var p=el('div','pane');
+
+  if(i===0){ p.appendChild(intro()); }
+  else if(i===N+1){ p.appendChild(outro()); }
+  else{
+    var st=STEPS[i-1];
+    p.appendChild(el('div','kick','Paso '+i+' de '+N));
+    p.appendChild(el('h2',null,st.t));
+    p.appendChild(el('p','sub',st.s));
+    st.q.forEach(function(q,qi){ p.appendChild(card(q,i-1,qi)); });
+  }
+
+  main.appendChild(p);
+  bar.style.width=(i/(N+1)*100)+'%';
+  lbl.textContent = i===0 ? 'Producción de curso online' : (i===N+1 ? 'Último paso' : STEPS[i-1].t);
+  back.hidden = i===0;
+  next.textContent = i===0 ? 'Empezar' : (i===N ? 'Terminar' : (i===N+1 ? 'Enviar respuestas' : 'Siguiente'));
+  next.className = 'btn';
+  next.hidden = (i===N+1) && !window.__sformWizard;
+  window.scrollTo({top:0, behavior: i===0?'auto':'smooth'});
+}
+
+function intro(){
+  var d=document.createDocumentFragment();
+  d.appendChild(el('div','kick','Cuestionario'));
+  d.appendChild(el('h1',null,'Antes de cotizar, necesitamos entender el curso de verdad'));
+  d.appendChild(el('p','sub','Son <b>10 pasos cortos</b>, unos 15 minutos. Con esto armamos un plan de acción y una propuesta económica reales — no un número inventado.'));
+  var k=el('div','dark');
+  k.appendChild(el('h3',null,'Cómo funciona'));
+  var u=el('ul');
+  ['Una sección por pantalla. Podés devolverte cuando querás.',
+   'Si algo no lo saben todavía, dejalo en blanco — eso también nos dice algo.',
+   'Al terminar repasamos las respuestas juntos en una llamada.'].forEach(function(x){u.appendChild(el('li',null,x));});
+  k.appendChild(u); d.appendChild(k);
+
+  var c=el('div','qc');
+  c.appendChild(el('div','lbl','¿Quién nos está escribiendo?'));
+  var b=el('div','body');
+  [['nombre','Nombre y empresa'],['rol','Rol'],['wa','WhatsApp'],['mail','Correo']].forEach(function(f){
+    var inp=el('input'); inp.type='text'; inp.placeholder=f[1]; inp.value=A[f[0]]||'';
+    inp.style.marginBottom='9px';
+    inp.oninput=function(){A[f[0]]=inp.value;};
+    b.appendChild(inp);
+  });
+  c.appendChild(b); d.appendChild(c);
+  return d;
+}
+
+function outro(){
+  var d=document.createDocumentFragment();
+  d.appendChild(el('div','kick','Último paso'));
+  d.appendChild(el('h2',null,'Listo, eso es todo.'));
+
+  var miss=[];
+  STEPS.forEach(function(st,si){
+    var has=false;
+    st.q.forEach(function(q,qi){ if(val(si,qi)) has=true; });
+    if(!has) miss.push([si,st.t]);
+  });
+
+  if(miss.length){
+    d.appendChild(el('p','sub','Estos pasos quedaron en blanco. Podés completarlos ahora o dejarlos así.'));
+    var m=el('div','miss');
+    miss.forEach(function(x){
+      var it=el('div','missit','<b>'+(x[0]+1)+'</b><span>'+x[1]+'</span>');
+      it.onclick=function(){ i=x[0]+1; render(); };
+      m.appendChild(it);
+    });
+    d.appendChild(m);
+  } else {
+    d.appendChild(el('p','sub','Contestaron todos los pasos.'));
+    d.appendChild(el('div','ok','<span class="tick"></span><span>Cuestionario completo</span>'));
+  }
+
+  var k=el('div','dark');
+  k.appendChild(el('h3',null,'Qué sigue'));
+  k.appendChild(el('p',null,'Armamos una <b>propuesta integral</b>: plan por fases, alcance de producción, cronograma con fecha realista e inversión desglosada.'));
+  k.appendChild(el('p',null,'Antes de enviarla agendamos <b>una llamada de 30 minutos</b> para repasar sus respuestas. Ahí les decimos con franqueza qué hacer, qué posponer y qué no vale la pena.'));
+  d.appendChild(k);
+
+  return d;
+}
+
+/* ---------- tarjetas por tipo ---------- */
+function card(q,si,qi){
+  if(q.k==='note'){ return el('div','note',q.txt); }
+  var c=el('div','qc');
+  if(q.l){
+    var L=el('div','lbl',q.l);
+    if(q.h) L.appendChild(el('span','hint',q.h));
+    c.appendChild(L);
+  }
+  var b=el('div','body'); c.appendChild(b);
+  var k=key(si,qi);
+
+  if(q.k==='area'){
+    var ta=el('textarea'); if(q.big) ta.className='big';
+    ta.placeholder=q.p||'Escribí aquí'; ta.value=A[k]||'';
+    ta.oninput=function(){A[k]=ta.value;};
+    b.appendChild(ta);
+  }
+
+  if(q.k==='line'){
+    var inp=el('input'); inp.type='text'; inp.placeholder=q.p||'Escribí aquí'; inp.value=A[k]||'';
+    inp.oninput=function(){A[k]=inp.value;};
+    b.appendChild(inp);
+  }
+
+  if(q.k==='chips'){
+    var box=el('div','chips'); A[k]=A[k]||[];
+    q.o.forEach(function(o){
+      var ch=el('button','chip',o);
+      if(A[k].indexOf(o)>=0) ch.classList.add('on');
+      ch.onclick=function(){
+        var ix=A[k].indexOf(o);
+        if(ix>=0){A[k].splice(ix,1); ch.classList.remove('on');}
+        else {A[k].push(o); ch.classList.add('on');}
+      };
+      box.appendChild(ch);
+    });
+    b.appendChild(box);
+  }
+
+  if(q.k==='rows'){
+    var rs=el('div','rows'); A[k]=A[k]||[];
+    q.o.forEach(function(o){
+      var r=el('div','row');
+      r.appendChild(el('span','bx'));
+      r.appendChild(el('span','t','<b>'+o[0]+'</b>'+(o[1]?'<em>'+o[1]+'</em>':'')));
+      if(A[k].indexOf(o[0])>=0) r.classList.add('on');
+      r.onclick=function(){
+        var ix=A[k].indexOf(o[0]);
+        if(ix>=0){A[k].splice(ix,1); r.classList.remove('on');}
+        else {A[k].push(o[0]); r.classList.add('on');}
+      };
+      rs.appendChild(r);
+    });
+    b.appendChild(rs);
+  }
+
+  if(q.k==='scale'){
+    var s=el('div','scale');
+    for(var n=1;n<=5;n++){(function(n){
+      var d=el('button','dot',n);
+      if(A[k]===n) d.classList.add('on');
+      d.onclick=function(){ A[k]=n;
+        s.querySelectorAll('.dot').forEach(function(x){x.classList.remove('on');});
+        d.classList.add('on'); };
+      s.appendChild(d);
+    })(n);}
+    b.appendChild(s);
+    b.appendChild(el('div','ends','<span>'+q.lo+'</span><span>'+q.hi+'</span>'));
+  }
+
+  if(q.k==='trio'){
+    var t=el('div','trio'); A[k]=A[k]||{};
+    q.o.forEach(function(o){
+      var w=el('div'); w.appendChild(el('label',null,o));
+      var inp=el('input'); inp.type='text'; inp.placeholder='—'; inp.value=A[k][o]||'';
+      inp.oninput=function(){A[k][o]=inp.value;};
+      w.appendChild(inp); t.appendChild(w);
+    });
+    b.appendChild(t);
+  }
+
+  if(q.k==='inv'){
+    var box=el('div','inv'); A[k]=A[k]||{};
+    q.rows.forEach(function(r){
+      if(r[0]==='g'){ box.appendChild(el('div','invgrp',r[1])); return; }
+      var name=r[1];
+      var row=el('div','invrow');
+      row.appendChild(el('div','t',name+(r[2]?' <em>— '+r[2]+'</em>':'')));
+      var seg=el('div','seg');
+      ['Listo','A medias','No existe'].forEach(function(v){
+        var bt=el('button',null,v);
+        if(A[k][name]===v) bt.classList.add('on');
+        bt.onclick=function(){
+          A[k][name]=v;
+          seg.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+          bt.classList.add('on');
+        };
+        seg.appendChild(bt);
+      });
+      row.appendChild(seg); box.appendChild(row);
+    });
+    b.appendChild(box);
+  }
+
+  if(q.k==='svc'){
+    A[k]=A[k]||{};
+    q.g.forEach(function(g){
+      var s=el('div','svc');
+      s.appendChild(el('div','svch',g[0]+' <span>'+g[1]+'</span>'));
+      var box=el('div','chips'); A[k][g[0]]=A[k][g[0]]||[];
+      g[2].forEach(function(o){
+        var ch=el('button','chip',o);
+        if(A[k][g[0]].indexOf(o)>=0) ch.classList.add('on');
+        ch.onclick=function(){
+          var arr=A[k][g[0]], ix=arr.indexOf(o);
+          if(ix>=0){arr.splice(ix,1); ch.classList.remove('on');}
+          else {arr.push(o); ch.classList.add('on');}
+        };
+        box.appendChild(ch);
+      });
+      s.appendChild(box); b.appendChild(s);
+    });
+  }
+
+  return c;
+}
+
+/* ---------- valores y texto ---------- */
+function val(si,qi){
+  var v=A[key(si,qi)];
+  if(v==null) return '';
+  if(typeof v==='number') return String(v);
+  if(typeof v==='string') return v.trim();
+  if(Array.isArray(v)) return v.join(', ');
+  var out=[];
+  Object.keys(v).forEach(function(kk){
+    var x=v[kk];
+    if(Array.isArray(x)){ if(x.length) out.push(kk+': '+x.join(', ')); }
+    else if(String(x).trim()) out.push(kk+': '+x);
+  });
+  return out.join(' · ');
+}
+
+function text(){
+  var out=[], head=[];
+  ['nombre','rol','wa','mail'].forEach(function(f){ if(A[f]&&A[f].trim()) head.push(A[f].trim()); });
+  if(head.length) out.push(head.join(' · '));
+  STEPS.forEach(function(st,si){
+    var lines=[];
+    st.q.forEach(function(q,qi){
+      if(q.k==='note') return;
+      var v=val(si,qi);
+      if(v) lines.push('• '+(q.l?q.l+': ':'')+v);
+    });
+    if(lines.length) out.push('*'+st.t+'*\n'+lines.join('\n'));
+  });
+  if(!out.length) return '';
+  return 'Cuestionario de curso online — Socialify\n\n'+out.join('\n\n');
+}
+
+/* ---------- API para el runtime de formularios de Socialify ---------- */
+var API = {
+  onChange: null,
+  onSubmit: null,
+  submitting: false,
+  contact: function(){ return { name: (A.nombre||'').trim(), email: (A.mail||'').trim() }; },
+  getAnswers: function(){
+    var out=[];
+    [['nombre','Nombre y empresa'],['rol','Rol'],['wa','WhatsApp'],['mail','Correo']].forEach(function(f){
+      out.push({ id:f[0], label:f[1], type:'contact', value:(A[f[0]]||'').trim() });
+    });
+    STEPS.forEach(function(st,si){
+      st.q.forEach(function(q,qi){
+        if(q.k==='note') return;
+        out.push({ id:key(si,qi), label:(st.t+' · '+(q.l||'Campo')), type:q.k, value:val(si,qi) });
+      });
+    });
+    return out;
+  },
+  setAnswers: function(list){
+    (list||[]).forEach(function(a){
+      if(!a || a.value==null || a.value==='') return;
+      if(a.id==='nombre'||a.id==='rol'||a.id==='wa'||a.id==='mail'){ A[a.id]=a.value; return; }
+      var m=/^(\d+)-(\d+)$/.exec(a.id); if(!m) return;
+      var st=STEPS[+m[1]]; if(!st) return;
+      var q=st.q[+m[2]]; if(!q) return;
+      var k=a.id, v=String(a.value);
+      if(q.k==='area'||q.k==='line'){ A[k]=v; }
+      else if(q.k==='chips'||q.k==='rows'){ A[k]=v.split(', ').filter(Boolean); }
+      else if(q.k==='scale'){ A[k]=parseInt(v,10)||null; }
+      else if(q.k==='trio'||q.k==='inv'){
+        A[k]=A[k]||{};
+        v.split(' · ').forEach(function(p){ var ix=p.indexOf(': '); if(ix>0) A[k][p.slice(0,ix)]=p.slice(ix+2); });
+      }
+      else if(q.k==='svc'){
+        A[k]=A[k]||{};
+        v.split(' · ').forEach(function(p){ var ix=p.indexOf(': '); if(ix>0) A[k][p.slice(0,ix)]=p.slice(ix+2).split(', ').filter(Boolean); });
+      }
+    });
+    render();
+  },
+  goTo: function(n){ i=Math.max(0, Math.min(N+1, n)); render(); },
+  html: function(){
+    var esc=function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    var c=API.contact();
+    var parts=['<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Cuestionario · curso online</title>',
+      '<link href="https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">',
+      '<style>body{background:#F6F1E8;color:#1A1916;font-family:Inter,system-ui,sans-serif;margin:0;padding:34px 18px;}',
+      '.w{max-width:660px;margin:0 auto;}h1{font-family:Sora,sans-serif;font-size:26px;letter-spacing:-.03em;margin:0 0 4px;}',
+      '.meta{color:#6E6A62;font-size:14px;margin-bottom:26px;}h2{font-family:Sora,sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#BE5314;margin:26px 0 10px;}',
+      '.qa{background:#fff;border:1px solid rgba(26,25,22,.12);border-radius:14px;padding:13px 15px;margin-bottom:9px;}',
+      '.q{font-size:13px;color:#6E6A62;margin-bottom:4px;}.a{font-size:15.5px;white-space:pre-wrap;}</style></head><body><div class="w">',
+      '<h1>Cuestionario · Producción de curso online</h1>',
+      '<div class="meta">'+esc([c.name, A.rol, A.wa, c.email].filter(function(x){return x&&String(x).trim();}).join(' · '))+' — '+esc(new Date().toLocaleString('es-CR'))+'</div>'];
+    STEPS.forEach(function(st,si){
+      var rows=[];
+      st.q.forEach(function(q,qi){
+        if(q.k==='note') return;
+        var v=val(si,qi); if(!v) return;
+        rows.push('<div class="qa"><div class="q">'+esc(q.l||'Campo')+'</div><div class="a">'+esc(v)+'</div></div>');
+      });
+      if(rows.length) parts.push('<h2>'+esc(st.t)+'</h2>'+rows.join(''));
+    });
+    parts.push('</div></body></html>');
+    return parts.join('');
+  }
+};
+window.__sformWizard = API;
+
+var chTimer=null;
+var ping=function(){
+  if(!API.onChange) return;
+  if(chTimer) clearTimeout(chTimer);
+  chTimer=setTimeout(function(){
+    var c=API.contact();
+    API.onChange(API.getAnswers(), c.name, c.email);
+  }, 450);
+};
+document.addEventListener('input', ping, true);
+document.addEventListener('click', ping, true);
+
+next.onclick=function(){
+  if(i===N+1){
+    if(!API.onSubmit) return;
+    if(API.submitting) return;
+    var c=API.contact();
+    if(!c.name){ toast('Poné tu nombre en el primer paso.'); API.goTo(0); return; }
+    API.submitting=true;
+    next.textContent='Enviando…';
+    API.onSubmit(API.getAnswers(), c.name, c.email, API.html());
+    return;
+  }
+  if(i<N+1){ i++; render(); }
+};
+back.onclick=function(){ if(i>0){ i--; render(); } };
+render();
+})();
+</script>
+</body>
+</html>
