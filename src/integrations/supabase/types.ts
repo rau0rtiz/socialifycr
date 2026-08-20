@@ -2665,6 +2665,53 @@ export type Database = {
           },
         ]
       }
+      document_form_responses: {
+        Row: {
+          answers: Json
+          created_at: string
+          html_snapshot: string | null
+          id: string
+          proposal_id: string
+          respondent_email: string | null
+          respondent_name: string | null
+          slug: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          html_snapshot?: string | null
+          id?: string
+          proposal_id: string
+          respondent_email?: string | null
+          respondent_name?: string | null
+          slug: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          html_snapshot?: string | null
+          id?: string
+          proposal_id?: string
+          respondent_email?: string | null
+          respondent_name?: string | null
+          slug?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_form_responses_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "agency_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_views: {
         Row: {
           browser: string | null
