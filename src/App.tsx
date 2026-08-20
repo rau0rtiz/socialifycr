@@ -207,6 +207,7 @@ const App = () => (
                   <Route path="/propuesta/:slug" element={<PropuestaPublica />} />
                   <Route path="/reporte/:slug" element={<PropuestaPublica />} />
                   <Route path="/plan/:slug" element={<PropuestaPublica />} />
+                  <Route path="/formulario/:slug" element={<FormularioPublico />} />
                   <Route path="/privacidad" element={<Privacy />} />
                   <Route path="/terminos" element={<Terms />} />
                   <Route path="/eliminar-datos" element={<DataDeletion />} />
