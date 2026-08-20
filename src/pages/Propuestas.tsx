@@ -85,8 +85,8 @@ const formatMoney = (amount: number | null, currency: string | null) => {
 };
 
 const PUBLIC_BASE_URL = 'https://app.socialifycr.com';
-const KIND_PATH: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan', form: 'formulario' };
-const KIND_LABEL: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan de contenido', form: 'formulario' };
+const KIND_PATH: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan', form: 'formulario', email: 'correo' };
+const KIND_LABEL: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan de contenido', form: 'formulario', email: 'correo' };
 const buildShareUrl = (slug: string, kind: ProposalKind = 'proposal') =>
   `${PUBLIC_BASE_URL}/${KIND_PATH[kind] ?? 'propuesta'}/${slug}`;
 
@@ -155,6 +155,7 @@ const Propuestas = () => {
   const [sendingEmail, setSendingEmail] = useState(false);
 
   const [emailPreviewOpen, setEmailPreviewOpen] = useState(false);
+  const [emailDocTarget, setEmailDocTarget] = useState<AgencyProposalListItem | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<AgencyProposalListItem | null>(null);
   const [viewsTargetId, setViewsTargetId] = useState<string | null>(null);
@@ -226,6 +227,11 @@ const Propuestas = () => {
   };
 
   const openEdit = async (p: AgencyProposalListItem) => {
+    if (p.kind === 'email') {
+      setEmailDocTarget(p);
+      setEmailPreviewOpen(true);
+      return;
+    }
     setEditing(p);
     setTitle(p.title);
     setClientId((p as any).client_id || '');
@@ -401,7 +407,7 @@ const Propuestas = () => {
   );
 
   const counts = useMemo(() => {
-    const c: Record<'all' | ProposalKind, number> = { all: proposals.length, proposal: 0, report: 0, content_plan: 0, form: 0 };
+    const c: Record<'all' | ProposalKind, number> = { all: proposals.length, proposal: 0, report: 0, content_plan: 0, form: 0, email: 0 };
     for (const p of proposals) {
       const k = ((p.kind as ProposalKind) || 'proposal');
       c[k] = (c[k] || 0) + 1;
@@ -423,8 +429,8 @@ const Propuestas = () => {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setEmailPreviewOpen(true)} className="gap-2">
-              <Mail className="h-4 w-4" /> Preview de correo
+            <Button variant="outline" onClick={() => { setEmailDocTarget(null); setEmailPreviewOpen(true); }} className="gap-2">
+              <Mail className="h-4 w-4" /> Nuevo correo
             </Button>
             <Button variant="outline" onClick={() => openCreate('form')} className="gap-2">
               <ListChecks className="h-4 w-4" /> Nuevo formulario
@@ -441,7 +447,12 @@ const Propuestas = () => {
           </div>
         </div>
 
-        <EmailPreviewDialog open={emailPreviewOpen} onOpenChange={setEmailPreviewOpen} />
+        <EmailPreviewDialog
+          open={emailPreviewOpen}
+          onOpenChange={(v) => { setEmailPreviewOpen(v); if (!v) setEmailDocTarget(null); }}
+          target={emailDocTarget}
+          publicBaseUrl={PUBLIC_BASE_URL}
+        />
 
         <Tabs value={kindFilter} onValueChange={(v) => setKindFilter(v as 'all' | ProposalKind)}>
           <TabsList>
@@ -457,6 +468,9 @@ const Propuestas = () => {
             </TabsTrigger>
             <TabsTrigger value="form" className="gap-1.5">
               <ListChecks className="h-3.5 w-3.5" /> Formularios ({counts.form})
+            </TabsTrigger>
+            <TabsTrigger value="email" className="gap-1.5">
+              <Mail className="h-3.5 w-3.5" /> Correos ({counts.email})
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -481,9 +495,9 @@ const Propuestas = () => {
                 <button type="button" onClick={() => setPreviewTarget(p)} className="text-left flex-1">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : p.kind === 'content_plan' ? 'bg-amber-500/10 text-amber-600' : p.kind === 'form' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-primary/10 text-primary'}`}>
-                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : p.kind === 'content_plan' ? <ClipboardList className="h-3 w-3" /> : p.kind === 'form' ? <ListChecks className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-                        {p.kind === 'report' ? 'Reporte' : p.kind === 'content_plan' ? 'Plan' : p.kind === 'form' ? 'Formulario' : 'Propuesta'}
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : p.kind === 'content_plan' ? 'bg-amber-500/10 text-amber-600' : p.kind === 'form' ? 'bg-emerald-500/10 text-emerald-600' : p.kind === 'email' ? 'bg-violet-500/10 text-violet-600' : 'bg-primary/10 text-primary'}`}>
+                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : p.kind === 'content_plan' ? <ClipboardList className="h-3 w-3" /> : p.kind === 'form' ? <ListChecks className="h-3 w-3" /> : p.kind === 'email' ? <Mail className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                        {p.kind === 'report' ? 'Reporte' : p.kind === 'content_plan' ? 'Plan' : p.kind === 'form' ? 'Formulario' : p.kind === 'email' ? 'Correo' : 'Propuesta'}
                       </span>
                       <div className="flex items-center gap-2 shrink-0">
                         <span
