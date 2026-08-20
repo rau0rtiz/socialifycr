@@ -119,7 +119,7 @@ const FormularioPublico = () => {
       ref={frameRef}
       title={title}
       srcDoc={doc}
-      sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
+      sandbox="allow-popups allow-forms allow-scripts"
       className="w-screen h-screen border-0 block"
     />
   );

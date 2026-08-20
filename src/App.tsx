@@ -56,6 +56,7 @@ const ProduccionPublica = lazy(() => import("./pages/ProduccionPublica"));
 const SellerCrm = lazy(() => import("./pages/SellerCrm"));
 const Propuestas = lazy(() => import("./pages/Propuestas"));
 const PropuestaPublica = lazy(() => import("./pages/PropuestaPublica"));
+const FormularioPublico = lazy(() => import("./pages/FormularioPublico"));
 const AgencyResumen = lazy(() => import("./pages/agencia/Resumen"));
 const AgencyPagos = lazy(() => import("./pages/agencia/Pagos"));
 const AgencyBaseDeDatos = lazy(() => import("./pages/agencia/BaseDeDatos"));
@@ -207,6 +208,7 @@ const App = () => (
                   <Route path="/propuesta/:slug" element={<PropuestaPublica />} />
                   <Route path="/reporte/:slug" element={<PropuestaPublica />} />
                   <Route path="/plan/:slug" element={<PropuestaPublica />} />
+                  <Route path="/formulario/:slug" element={<FormularioPublico />} />
                   <Route path="/privacidad" element={<Privacy />} />
                   <Route path="/terminos" element={<Terms />} />
                   <Route path="/eliminar-datos" element={<DataDeletion />} />
