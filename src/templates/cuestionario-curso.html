@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>Cuestionario de descubrimiento · Producción de curso online · Socialify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --cream:#F6F1E8; --paper:#FFFFFF; --ink:#1A1916; --muted:#6E6A62; --faint:#9C968B;
+    --orange:#E9772C; --orange-ink:#BE5314; --void:#121110;
+    --line:rgba(26,25,22,.14); --card:#FBFAF8;
+    --display:'Sora', system-ui, sans-serif;
+    --body:'Inter', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  @page{ size:Letter; margin:14mm 15mm 16mm; }
+
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:var(--body); font-size:10.2px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- portada ---------- */
+  .cover{ height:243mm; display:flex; flex-direction:column; page-break-after:always; }
+  .cover .top{flex:none;}
+  .cover .mid{flex:1; display:flex; flex-direction:column; justify-content:center;}
+  .wm{font-family:var(--display); font-weight:800; font-size:19px; letter-spacing:-.02em; line-height:1;}
+  .wm i{color:var(--orange); font-style:normal;}
+  .cover h1{
+    font-family:var(--display); font-weight:800; font-size:38px; line-height:1.1;
+    letter-spacing:-.028em; margin-bottom:16px;
+  }
+  .mark{position:relative; display:inline-block;}
+  .mark::after{
+    content:""; position:absolute; left:-2%; right:-2%; bottom:.06em; height:.40em;
+    background:var(--orange); opacity:.85; z-index:-1; border-radius:3px; transform:rotate(-.8deg);
+  }
+  .cover .sub{font-size:13px; color:var(--muted); max-width:118mm;}
+  .cover .sub b{color:var(--ink); font-weight:600;}
+  .coverbox{
+    background:var(--void); color:var(--cream); border-radius:16px; padding:20px 22px; margin-top:28px;
+  }
+  .coverbox .t{font-family:var(--display); font-weight:700; font-size:14px; margin-bottom:8px;}
+  .coverbox p{font-size:11px; color:rgba(246,241,232,.76);}
+  .coverbox ul{list-style:none; margin-top:12px; display:grid; gap:7px;}
+  .coverbox li{font-size:11px; color:rgba(246,241,232,.76); padding-left:16px; position:relative;}
+  .coverbox li::before{content:""; position:absolute; left:0; top:6px; width:6px; height:6px; border-radius:50%; background:var(--orange);}
+  .coverbox li b{color:var(--cream); font-weight:700;}
+
+  .idgrid{display:grid; grid-template-columns:1fr 1fr; gap:0 18px; margin-top:26px;}
+  .idgrid .f{margin-top:12px;}
+
+  /* ---------- estructura ---------- */
+  .block{ margin-bottom:20px; }
+  .f, .svc, .callout, .dark, .cols, .cols3, ul.opts, .idgrid{ page-break-inside:avoid; }
+  .kicker, .secnote, .rule, h3{ page-break-after:avoid; }
+  .sec-open{ page-break-before:always; }
+
+  .kicker{
+    display:flex; align-items:baseline; gap:9px; margin-bottom:3px;
+  }
+  .kicker .n{
+    font-family:var(--display); font-weight:800; font-size:10px; color:#fff; background:var(--orange);
+    border-radius:50%; width:19px; height:19px; display:flex; align-items:center; justify-content:center;
+    line-height:1; flex:none; position:relative; top:2px;
+  }
+  h2{font-family:var(--display); font-weight:700; font-size:16.5px; letter-spacing:-.02em;}
+  .secnote{font-size:10px; color:var(--faint); margin:2px 0 14px 28px; font-style:italic;}
+  .rule{height:1px; background:var(--line); margin:0 0 14px;}
+
+  h3{
+    font-family:var(--display); font-weight:700; font-size:11.5px; letter-spacing:-.01em;
+    margin:0 0 8px;
+  }
+  .q{font-size:10.4px; font-weight:500; margin-bottom:5px;}
+  .q .hint{font-weight:400; color:var(--faint);}
+
+  /* líneas para escribir */
+  .f{margin-bottom:11px;}
+  .lines{border-bottom:1px solid var(--line); height:16px;}
+  .lines + .lines{margin-top:0;}
+  .l1 .lines:nth-child(n+2){display:none;}
+  .box-write{
+    border:1px solid var(--line); border-radius:10px; background:var(--card);
+    height:52px; margin-top:2px;
+  }
+  .box-write.tall{height:76px;}
+  .box-write.short{height:36px;}
+
+  /* opciones */
+  ul.opts{list-style:none; display:grid; gap:6px;}
+  ul.opts.two{grid-template-columns:1fr 1fr; gap:6px 16px;}
+  ul.opts.three{grid-template-columns:1fr 1fr 1fr; gap:6px 14px;}
+  ul.opts li{display:flex; gap:8px; align-items:flex-start; font-size:10.2px; line-height:1.35;}
+  ul.opts li::before{
+    content:""; flex:none; width:11px; height:11px; margin-top:2.5px;
+    border:1.4px solid var(--orange); border-radius:3px; background:#fff;
+  }
+  ul.opts li b{font-weight:600;}
+  ul.opts li em{font-style:normal; color:var(--faint);}
+
+  .fill{display:inline-block; border-bottom:1px solid var(--line); min-width:44px;}
+  .fill.w{min-width:110px;}
+
+  /* tarjetas de servicios */
+  .svc{border:1px solid var(--line); border-radius:12px; padding:12px 13px; background:var(--card); page-break-inside:avoid;}
+  .svc + .svc{margin-top:9px;}
+  .svc .sh{font-family:var(--display); font-weight:700; font-size:11px; margin-bottom:7px; display:flex; align-items:center; gap:7px;}
+  .svc .sh span{
+    font-family:var(--display); font-size:8.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--orange-ink); background:rgba(233,119,44,.11); padding:2px 7px; border-radius:999px; font-weight:700;
+  }
+
+  /* nota / callout */
+  .callout{
+    border-left:2px solid var(--orange); padding:2px 0 2px 11px; font-size:10px; color:var(--muted); margin:10px 0;
+  }
+  .callout b{color:var(--ink); font-weight:600;}
+  .dark{background:var(--void); color:var(--cream); border-radius:14px; padding:16px 18px; page-break-inside:avoid;}
+  .dark h3{color:var(--cream); font-size:13px; margin-bottom:6px;}
+  .dark p{font-size:10.2px; color:rgba(246,241,232,.76);}
+  .dark p + p{margin-top:7px;}
+  .dark b{color:var(--cream); font-weight:600;}
+
+  .scale{display:flex; gap:6px; align-items:center; margin-top:3px;}
+  .scale .dot{
+    width:19px; height:19px; border:1.4px solid var(--line); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:8.5px; color:var(--faint); background:#fff;
+  }
+  .scale .lab{font-size:9px; color:var(--faint); margin:0 4px;}
+
+  .stat{width:100%; border-collapse:collapse; font-size:10px;}
+  .stat tr{page-break-inside:avoid;}
+  .stat thead{display:table-header-group;}
+  .stat th{
+    font-family:var(--display); font-weight:700; font-size:8px; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--faint); padding:0 0 6px; text-align:center; width:58px;
+  }
+  .stat th:first-child{text-align:left; width:auto;}
+  .stat td{padding:5.5px 0; border-bottom:1px solid var(--line); vertical-align:middle;}
+  .stat td.c{text-align:center;}
+  .stat tr.grp td{
+    border-bottom:0; padding:11px 0 3px; font-family:var(--display); font-weight:700;
+    font-size:8.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--orange-ink);
+  }
+  .stat tr.grp:first-child td{padding-top:2px;}
+  .stat .cb{display:inline-block; width:11px; height:11px; border:1.4px solid var(--orange); border-radius:3px; background:#fff;}
+  .stat td em{font-style:normal; color:var(--faint);}
+
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:0 20px;}
+  .cols3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 16px;}
+
+  .rank{display:grid; gap:6px;}
+  .rank li{list-style:none; display:flex; gap:8px; align-items:center; font-size:10.2px;}
+  .rank li::before{
+    content:""; flex:none; width:17px; height:17px; border:1.4px solid var(--orange);
+    border-radius:5px; background:#fff;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- ============ PORTADA ============ -->
+<div class="cover">
+  <div class="top"><div class="wm">socialify<i>.</i></div></div>
+  <div class="mid">
+    <h1>Antes de cotizar,<br>necesitamos entender<br>el <span class="mark">curso de verdad</span></h1>
+    <p class="sub">Este cuestionario nos da lo necesario para armar un <b>plan de acción y una propuesta económica reales</b> — no un número inventado. Entre más concreto lo contestés, más precisa sale la cotización.</p>
+
+    <div class="coverbox">
+      <div class="t">Cómo llenarlo</div>
+      <p>Tomate entre 20 y 30 minutos. No hay respuestas incorrectas y no todo tiene que estar resuelto: si algo todavía no lo sabés, escribí <b>"no sé todavía"</b> — eso también es información útil para nosotros.</p>
+      <ul>
+        <li><b>Marcá las casillas</b> que apliquen. Podés marcar varias.</li>
+        <li><b>Sé específico con los números</b> (horas, fechas, montos). Un rango sirve; un "depende" no.</li>
+        <li><b>Si hay más de una persona decidiendo,</b> llénenlo juntos o anoten dónde no están de acuerdo.</li>
+      </ul>
+    </div>
+
+    <div class="idgrid">
+      <div class="f"><div class="q">Nombre y empresa</div><div class="lines"></div></div>
+      <div class="f"><div class="q">Quién llena este documento / rol</div><div class="lines"></div></div>
+      <div class="f"><div class="q">WhatsApp y correo</div><div class="lines"></div></div>
+      <div class="f"><div class="q">Fecha</div><div class="lines"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 1. EL NEGOCIO HOY ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">1</span><h2>El negocio hoy</h2></div>
+  <div class="secnote">En qué etapa están de verdad. De aquí sale si el curso es el siguiente paso lógico o si hay algo que resolver antes.</div>
+  <div class="rule"></div>
+
+  <div class="f"><div class="q">¿A qué se dedica el negocio y hace cuánto opera? <span class="hint">Una o dos líneas.</span></div><div class="box-write short"></div></div>
+
+  <div class="cols">
+    <div class="f"><div class="q"><b>¿En qué etapa están?</b></div>
+      <ul class="opts">
+        <li><b>Idea</b> <em>— todavía no facturamos</em></li>
+        <li><b>Arrancando</b> <em>— primeras ventas, sin consistencia</em></li>
+        <li><b>Funcionando</b> <em>— ingresos estables, pero dependen de mi tiempo</em></li>
+        <li><b>Establecido</b> <em>— equipo y operación corriendo</em></li>
+        <li><b>En crecimiento</b> <em>— vendemos más de lo que podemos atender</em></li>
+      </ul>
+    </div>
+    <div class="f"><div class="q">¿Cómo genera dinero hoy el negocio?</div>
+      <ul class="opts">
+        <li>Servicio uno a uno / consultoría</li>
+        <li>Formación presencial o talleres</li>
+        <li>Producto físico o tienda</li>
+        <li>Membresía o suscripción</li>
+        <li>Ya vendemos algo digital</li>
+        <li>Todavía no genera ingresos</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="f"><div class="q">Facturación mensual promedio <span class="hint">— rango, en USD</span></div>
+      <ul class="opts two">
+        <li>Menos de $5,000</li>
+        <li>$5,000 – $15,000</li>
+        <li>$15,000 – $40,000</li>
+        <li>Más de $40,000</li>
+        <li>Prefiero no decirlo</li>
+      </ul>
+    </div>
+    <div class="f"><div class="q">¿De dónde vienen los clientes hoy? <span class="hint">Marcá los que aporten más.</span></div>
+      <ul class="opts two">
+        <li>Referidos</li>
+        <li>Redes orgánico</li>
+        <li>Pauta pagada</li>
+        <li>Búsqueda en Google</li>
+        <li>Alianzas</li>
+        <li>Presencial / local</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="f"><div class="q">¿Cuántas personas son en el equipo y quién apoyaría este proyecto? <span class="hint">Nombre y rol de quien va a estar metido.</span></div><div class="box-write short"></div></div>
+    <div class="f"><div class="q">¿Qué papel va a jugar el curso dentro del negocio?</div>
+      <ul class="opts">
+        <li>Nueva fuente principal de ingresos</li>
+        <li>Complemento a lo que ya vendemos</li>
+        <li>Puerta de entrada a un servicio más caro</li>
+        <li>Dejar de vender horas / escalar sin más tiempo</li>
+        <li>Monetizar la audiencia que ya tenemos</li>
+        <li>Posicionamiento y autoridad</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="f"><div class="q"><b>¿Por qué un curso y por qué ahora?</b> <span class="hint">Qué cambió o qué los empujó a decidirlo.</span></div><div class="box-write"></div></div>
+    <div class="f"><div class="q">¿Se los ha pedido la gente?</div>
+      <ul class="opts">
+        <li>Sí, nos lo piden seguido</li>
+        <li>Alguna vez lo han mencionado</li>
+        <li>No, la idea es nuestra</li>
+      </ul>
+      <div class="q" style="margin-top:9px;">¿Hay algo que el negocio tenga que resolver antes de meterse en esto? <span class="hint">Sé franco.</span></div>
+      <div class="lines"></div><div class="lines"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. QUIÉN ENSEÑA ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">2</span><h2>Quién enseña y qué audiencia hay</h2></div>
+  <div class="secnote">De dónde sale la autoridad y qué tan caliente está la gente que ya los sigue.</div>
+  <div class="rule"></div>
+
+  <div class="f"><div class="q">¿Quién va a ser la cara del curso? <span class="hint">Nombre, rol y por qué esa persona tiene autoridad en el tema.</span></div><div class="box-write short"></div></div>
+
+  <div class="cols">
+    <div class="f"><div class="q">¿Esa persona ya ha enseñado esto antes? <span class="hint">Talleres, charlas, mentorías, clases.</span></div>
+      <ul class="opts">
+        <li>Sí, varias veces y cobrando</li>
+        <li>Sí, pero gratis o informal</li>
+        <li>Nunca de forma estructurada</li>
+      </ul>
+      <div class="q" style="margin-top:9px;">¿Cuántas horas por semana puede dedicarle al proyecto? <span class="fill"></span></div>
+    </div>
+    <div class="f"><div class="q">¿Qué tan cómoda se siente frente a cámara?</div>
+      <div class="scale">
+        <span class="lab">Incómoda</span>
+        <span class="dot">1</span><span class="dot">2</span><span class="dot">3</span><span class="dot">4</span><span class="dot">5</span>
+        <span class="lab">Natural</span>
+      </div>
+      <div class="q" style="margin-top:9px;">¿Hay más de un instructor o invitados? ¿Quiénes? <span class="fill w"></span></div>
+    </div>
+  </div>
+
+  <div class="f"><div class="q">Audiencia actual — llená solo lo que aplique:</div>
+    <div class="cols3">
+      <div class="f"><div class="q" style="font-weight:400; color:var(--muted);">Seguidores Instagram / TikTok</div><div class="lines"></div></div>
+      <div class="f"><div class="q" style="font-weight:400; color:var(--muted);">Lista de correos (contactos)</div><div class="lines"></div></div>
+      <div class="f"><div class="q" style="font-weight:400; color:var(--muted);">Comunidad WhatsApp / grupo</div><div class="lines"></div></div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="f"><div class="q">¿Qué tan activa está esa audiencia?</div>
+      <ul class="opts">
+        <li>Publicamos y responden bien</li>
+        <li>Publicamos, pero hay poca interacción</li>
+        <li>La cuenta está abandonada</li>
+        <li>No tenemos audiencia todavía</li>
+      </ul>
+    </div>
+    <div class="f"><div class="q">¿Ya han vendido algo digital antes? <span class="hint">Curso, taller pagado, ebook, membresía. Si sí: cuánto vendieron y a qué precio.</span></div><div class="box-write"></div></div>
+  </div>
+</div>
+
+<!-- ============ 3. INVENTARIO ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">3</span><h2>Qué ya tienen listo</h2></div>
+  <div class="secnote">Marcá el estado real de cada cosa. Esto es lo que define cuánto trabajo hay de verdad — y lo que no cotizamos porque ya existe.</div>
+  <div class="rule"></div>
+
+  <table class="stat">
+    <thead><tr><th>&nbsp;</th><th>Listo y usable</th><th>A medias</th><th>No existe</th></tr></thead>
+
+    <tr class="grp"><td colspan="4">Contenido del curso</td></tr>
+    <tr><td>Temario y estructura del curso</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Guiones o notas de cada lección</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Contenido ya grabado reutilizable <em>— talleres, clases pasadas</em></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Presentaciones o slides</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Material descargable <em>— plantillas, workbook, ejercicios</em></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+
+    <tr class="grp"><td colspan="4">Marca y activos</td></tr>
+    <tr><td>Logo e identidad visual</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Manual de marca <em>— colores, tipografías, uso</em></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Fotografía y video de marca</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Testimonios o casos de éxito documentados</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+
+    <tr class="grp"><td colspan="4">Venta y tecnología</td></tr>
+    <tr><td>Sitio web</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Página de ventas del curso</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Plataforma de cursos elegida</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Cobro en línea <em>— pasarela, cobro internacional</em></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Herramienta de correos con lista cargada</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Business Manager de Meta propio</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Cuenta de Google Ads</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>CRM o forma de dar seguimiento a interesados</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+
+    <tr class="grp"><td colspan="4">Decisiones tomadas</td></tr>
+    <tr><td>Precio del curso definido</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Embudo de venta definido <em>— cómo llega la gente a comprar</em></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+    <tr><td>Fecha de lanzamiento comprometida</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td></tr>
+  </table>
+
+  <div class="f" style="margin-top:14px;"><div class="q">De lo que marcaron como <b>"listo y usable"</b>, ¿dónde está y cómo nos lo pueden compartir? <span class="hint">Carpeta, Drive, enlaces.</span></div><div class="box-write short"></div></div>
+</div>
+
+<!-- ============ 2. EL CURSO ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">4</span><h2>El curso: promesa y resultado</h2></div>
+  <div class="secnote">Esto define todo lo demás: el contenido, el precio y el ángulo de la pauta.</div>
+  <div class="rule"></div>
+
+  <div class="f"><div class="q">En una frase: <b>¿qué va a poder hacer el estudiante al terminar el curso que hoy no puede hacer?</b></div><div class="box-write"></div></div>
+
+  <div class="f"><div class="q">Nombre del curso <span class="hint">(o nombre tentativo / "todavía sin nombre")</span></div><div class="lines"></div></div>
+
+  <div class="cols">
+    <div class="f"><div class="q">¿Qué <b>no</b> va a cubrir el curso? <span class="hint">Marcar el límite ahora evita que crezca solo después.</span></div><div class="box-write short"></div></div>
+    <div class="f"><div class="q">¿Qué tan práctico es? </div>
+      <ul class="opts">
+        <li>Puro conocimiento / teoría aplicada</li>
+        <li>Paso a paso con ejercicios</li>
+        <li>Implementación guiada con acompañamiento</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="f"><div class="q">¿Cuántos módulos o unidades imaginan? <span class="hint">Un aproximado sirve.</span> <span class="fill w"></span></div></div>
+
+  <div class="f"><div class="q">¿Qué se lleva el estudiante además de los videos?</div>
+    <ul class="opts three">
+      <li>Plantillas / herramientas descargables</li>
+      <li>Workbook o cuaderno de trabajo</li>
+      <li>Certificado</li>
+      <li>Comunidad o grupo privado</li>
+      <li>Sesiones en vivo de preguntas</li>
+      <li>Acompañamiento 1 a 1</li>
+      <li>Bonos o módulos extra</li>
+      <li>Actualizaciones de por vida</li>
+      <li>Otro: <span class="fill"></span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============ 3. AUDIENCIA ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">5</span><h2>A quién le van a vender</h2></div>
+  <div class="secnote">Sin esto no se puede calcular presupuesto de pauta ni escribir un solo anuncio.</div>
+  <div class="rule"></div>
+
+  <div class="f"><div class="q">Describí al estudiante ideal: <span class="hint">edad, ocupación, país, situación actual, qué lo tiene atascado.</span></div><div class="box-write tall"></div></div>
+
+  <div class="f"><div class="q">¿Cuál es el dolor que los hace buscar una solución <b>hoy</b>? <span class="hint">Escribilo con las palabras que ellos usarían, no con las de ustedes.</span></div><div class="box-write"></div></div>
+
+  <div class="cols">
+    <div class="f"><div class="q">¿Dónde está esa gente?</div>
+      <ul class="opts">
+        <li>Instagram</li><li>TikTok</li><li>Facebook</li>
+        <li>YouTube</li><li>LinkedIn</li><li>Buscando en Google</li>
+        <li>Grupos o comunidades <em>— ¿cuáles?</em></li>
+      </ul>
+    </div>
+    <div class="f"><div class="q">Mercado objetivo</div>
+      <ul class="opts">
+        <li>Costa Rica</li>
+        <li>Centroamérica</li>
+        <li>México</li>
+        <li>Latinoamérica completa</li>
+        <li>Hispanos en Estados Unidos</li>
+        <li>Otro: <span class="fill"></span></li>
+      </ul>
+      <div class="q" style="margin-top:9px;">Idioma del curso: <span class="fill w"></span></div>
+    </div>
+  </div>
+
+  <div class="f"><div class="q">¿Contra quién compiten? <span class="hint">Nombres de otros cursos o personas que enseñan algo parecido, y a qué precio si lo saben.</span></div><div class="box-write short"></div></div>
+
+  <div class="f"><div class="q">¿Por qué alguien los escogería a ustedes y no a esa competencia?</div><div class="box-write short"></div></div>
+</div>
+
+<!-- ============ 4. TAMAÑO ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">6</span><h2>Tamaño y formato del curso</h2></div>
+  <div class="secnote">Esta sección es la que más pesa en el costo de producción. Sé lo más concreto posible.</div>
+  <div class="rule"></div>
+
+  <div class="f"><div class="q"><b>¿Cuántas horas de material final creen que debería tener el curso?</b> <span class="hint">Horas de video terminado que el estudiante va a ver.</span></div>
+    <ul class="opts three">
+      <li><b>Menos de 2 h</b> <em>— minicurso</em></li>
+      <li><b>2 – 4 h</b> <em>— curso corto</em></li>
+      <li><b>4 – 8 h</b> <em>— curso estándar</em></li>
+      <li><b>8 – 15 h</b> <em>— programa completo</em></li>
+      <li><b>Más de 15 h</b> <em>— formación extensa</em></li>
+      <li>No tengo idea <em>— ayúdennos a definirlo</em></li>
+    </ul>
+  </div>
+
+  <div class="callout">Si no saben las horas, contesten esto: <b>¿cuántas lecciones imaginan y de cuántos minutos cada una?</b> <span class="fill w"></span> lecciones × <span class="fill"></span> min.</div>
+
+  <div class="f"><div class="q">¿Qué formato tiene en la cabeza para las clases?</div>
+    <ul class="opts two">
+      <li><b>Cámara a persona</b> — hablando a cámara en set o locación</li>
+      <li><b>Pantalla grabada</b> — tutorial de software o herramienta</li>
+      <li><b>Presentación con voz</b> — slides narradas</li>
+      <li><b>Mixto</b> — cámara + pantalla + slides</li>
+      <li><b>Demostrativo</b> — mostrando un proceso, taller o práctica</li>
+      <li><b>En vivo grabado</b> — se dicta en vivo y luego se edita</li>
+    </ul>
+  </div>
+
+  <div class="cols">
+    <div class="f"><div class="q">Nivel de producción esperado</div>
+      <ul class="opts">
+        <li><b>Simple y directo</b> — una cámara, buen audio, edición limpia</li>
+        <li><b>Intermedio</b> — dos cámaras, gráficos, animaciones de apoyo</li>
+        <li><b>Alto</b> — set diseñado, motion graphics, B-roll</li>
+        <li>No sé — recomiéndennos según presupuesto</li>
+      </ul>
+    </div>
+    <div class="f"><div class="q">¿Dónde se grabaría?</div>
+      <ul class="opts">
+        <li>En sus instalaciones</li>
+        <li>Estudio (que lo consigamos nosotros)</li>
+        <li>Locación específica: <span class="fill"></span></li>
+        <li>Fuera del GAM <em>— aplican viáticos</em></li>
+      </ul>
+      <div class="q" style="margin-top:9px;">¿Cuántos días seguidos pueden dedicar a grabar? <span class="fill"></span></div>
+    </div>
+  </div>
+
+  <div class="f"><div class="q">¿Quién escribe el contenido de las lecciones?</div>
+    <ul class="opts three">
+      <li>Ellos, completo</li>
+      <li>Ellos el fondo, nosotros la estructura</li>
+      <li>Nosotros, a partir de entrevistas</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============ 5. SERVICIOS ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">7</span><h2>Qué necesitan de nosotros</h2></div>
+  <div class="secnote">Marcá todo lo que quieran que cotizemos. Si no están seguros, marcá igual y lo conversamos.</div>
+  <div class="rule"></div>
+
+  <div class="svc">
+    <div class="sh">Marca e identidad <span>Base</span></div>
+    <ul class="opts two">
+      <li>Libro de marca completo <em>— logo, colores, tipografía, uso</em></li>
+      <li>Identidad solo para el curso <em>— sub-marca</em></li>
+      <li>Naming del curso y de los módulos</li>
+      <li>Plantillas gráficas <em>— portadas, slides, carátulas</em></li>
+      <li>Ya tenemos marca, no necesitamos nada</li>
+      <li>Refresco de marca existente</li>
+    </ul>
+  </div>
+
+  <div class="svc">
+    <div class="sh">Producción de contenido <span>Producción</span></div>
+    <ul class="opts two">
+      <li>Guion y estructura pedagógica del curso</li>
+      <li>Grabación de video de todas las lecciones</li>
+      <li>Edición completa de las lecciones</li>
+      <li>Motion graphics y animaciones de apoyo</li>
+      <li>Diseño de las presentaciones / slides</li>
+      <li>Diseño de material descargable <em>— workbook, plantillas</em></li>
+      <li>Fotografía para marketing del curso</li>
+      <li>Video de venta (VSL) y tráiler del curso</li>
+      <li>Subtítulos y accesibilidad</li>
+      <li>Locución o doblaje</li>
+    </ul>
+  </div>
+
+  <div class="svc">
+    <div class="sh">Plataforma y web <span>Montaje</span></div>
+    <ul class="opts two">
+      <li>Montaje del curso en plataforma <em>— subir, ordenar, configurar</em></li>
+      <li>Recomendación y configuración de la plataforma</li>
+      <li>Creación de la página de ventas del curso</li>
+      <li>Creación del sitio web completo de la marca</li>
+      <li>Pasarela de pago y facturación</li>
+      <li>Configuración de dominio y correos</li>
+      <li>Área de miembros / comunidad privada</li>
+      <li>Certificados automáticos</li>
+    </ul>
+  </div>
+
+  <div class="svc">
+    <div class="sh">Flujo de venta y automatización <span>Conversión</span></div>
+    <ul class="opts two">
+      <li>Diseño del embudo de venta completo</li>
+      <li>Página de captura y lead magnet</li>
+      <li>Secuencia de correos <em>— nutrición y venta</em></li>
+      <li>Automatizaciones de WhatsApp</li>
+      <li>Guion de ventas para quien atiende los mensajes</li>
+      <li>Webinar o clase gratuita de venta</li>
+      <li>Medición: dashboard de anuncio → venta</li>
+      <li>Recuperación de carritos abandonados</li>
+    </ul>
+  </div>
+
+  <div class="svc">
+    <div class="sh">Tráfico y crecimiento <span>Escala</span></div>
+    <ul class="opts two">
+      <li>Estrategia y manejo de pauta en Meta</li>
+      <li>Estrategia y manejo de pauta en Google / YouTube</li>
+      <li>Estrategia de contenido orgánico en redes</li>
+      <li>Producción de contenido para redes <em>— reels mensuales</em></li>
+      <li>Manejo y publicación de redes sociales</li>
+      <li>Optimización SEO del sitio</li>
+      <li>Alianzas, afiliados o influencers</li>
+      <li>Email marketing recurrente</li>
+    </ul>
+  </div>
+
+  <div class="svc">
+    <div class="sh">Acompañamiento <span>Operación</span></div>
+    <ul class="opts two">
+      <li>Asesoría comercial y de negocio</li>
+      <li>Capacitación al equipo interno</li>
+      <li>Reportes y reuniones periódicas</li>
+      <li>Soporte al estudiante <em>— lo asumen ustedes o nosotros</em></li>
+    </ul>
+  </div>
+
+  <div class="f" style="margin-top:12px;"><div class="q">De todo lo que marcaste, <b>¿cuáles son las 3 cosas sin las que el proyecto no arranca?</b> Ordenalas 1, 2, 3.</div>
+    <ul class="rank">
+      <li><span class="fill w"></span></li>
+      <li><span class="fill w"></span></li>
+      <li><span class="fill w"></span></li>
+    </ul>
+  </div>
+
+  <div class="f"><div class="q">¿Qué van a hacer ustedes internamente? <span class="hint">Qué tienen equipo o tiempo para asumir sin nuestra ayuda.</span></div><div class="box-write short"></div></div>
+</div>
+
+<!-- ============ 6. TIEMPOS ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">8</span><h2>Tiempos: qué tan pronto</h2></div>
+  <div class="secnote">La urgencia cambia el plan y el precio. Preferimos saberlo antes, no después.</div>
+  <div class="rule"></div>
+
+  <div class="cols">
+    <div class="f"><div class="q"><b>¿Cuándo quieren tener el curso a la venta?</b></div>
+      <ul class="opts">
+        <li>Lo antes posible <em>— menos de 1 mes</em></li>
+        <li>En 1 – 2 meses</li>
+        <li>En 3 – 4 meses</li>
+        <li>En 5 – 6 meses</li>
+        <li>Este año, sin fecha fija</li>
+        <li>Todavía explorando la idea</li>
+      </ul>
+      <div class="q" style="margin-top:9px;">Fecha exacta si ya la tienen: <span class="fill w"></span></div>
+    </div>
+    <div class="f"><div class="q">¿Hay algo que amarre esa fecha?</div>
+      <ul class="opts">
+        <li>Un evento o feria</li>
+        <li>Temporada del negocio <em>— alta o baja</em></li>
+        <li>Un compromiso ya anunciado a la audiencia</li>
+        <li>Presupuesto que vence</li>
+        <li>Nada, es una meta interna</li>
+        <li>Otro: <span class="fill"></span></li>
+      </ul>
+      <div class="q" style="margin-top:9px;">¿Cuándo pueden arrancar? <span class="fill w"></span></div>
+    </div>
+  </div>
+
+  <div class="f"><div class="q">¿Prefieren lanzar completo o por partes?</div>
+    <ul class="opts three">
+      <li><b>Todo listo antes de vender</b></li>
+      <li><b>Preventa</b> y se produce mientras corre</li>
+      <li><b>Por módulos</b>, se libera semana a semana</li>
+    </ul>
+  </div>
+
+  <div class="callout"><b>Nota honesta:</b> un curso de 4–8 horas bien producido normalmente toma entre 8 y 12 semanas desde el arranque hasta la venta, contando guion, grabación, edición, montaje y embudo. Si su fecha es más agresiva que eso, se puede — pero se recorta alcance o sube el costo. Decirlo ahora nos ahorra el problema después.</div>
+
+  <div class="f"><div class="q">¿Quién de su lado va a ser el punto de contacto y qué tan rápido puede aprobar cosas? <span class="hint">Las aprobaciones lentas son la razón número uno por la que se atrasan estos proyectos.</span></div><div class="box-write short"></div></div>
+</div>
+
+<!-- ============ 7. PRECIO Y META ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">9</span><h2>Precio, meta y números</h2></div>
+  <div class="secnote">Con esto sabemos si el proyecto cierra matemáticamente antes de gastar un colón.</div>
+  <div class="rule"></div>
+
+  <div class="cols">
+    <div class="f"><div class="q">¿A cuánto piensan vender el curso?</div>
+      <ul class="opts">
+        <li>Menos de $50</li>
+        <li>$50 – $150</li>
+        <li>$150 – $400</li>
+        <li>$400 – $1,000</li>
+        <li>Más de $1,000</li>
+        <li>No sé — necesito recomendación</li>
+      </ul>
+    </div>
+    <div class="f"><div class="q">Modelo de venta</div>
+      <ul class="opts">
+        <li>Pago único</li>
+        <li>Pago único + opción de cuotas</li>
+        <li>Suscripción mensual</li>
+        <li>Curso + servicio o consultoría</li>
+        <li>Varios niveles de precio</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="f"><div class="q">Meta concreta de los primeros 90 días después del lanzamiento:</div>
+    <div class="cols3">
+      <div class="f"><div class="q" style="font-weight:400; color:var(--muted);">Estudiantes</div><div class="lines"></div></div>
+      <div class="f"><div class="q" style="font-weight:400; color:var(--muted);">Facturación en USD</div><div class="lines"></div></div>
+      <div class="f"><div class="q" style="font-weight:400; color:var(--muted);">Punto de equilibrio <span class="hint">(cuánto es "no perdí")</span></div><div class="lines"></div></div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="f"><div class="q">Rango de inversión que tienen para <b>producción y montaje</b> <span class="hint">(pago único al proyecto)</span></div>
+      <ul class="opts">
+        <li>Menos de $3,000</li>
+        <li>$3,000 – $6,000</li>
+        <li>$6,000 – $12,000</li>
+        <li>$12,000 – $25,000</li>
+        <li>Más de $25,000</li>
+        <li>Aún sin definir</li>
+      </ul>
+    </div>
+    <div class="f"><div class="q">Presupuesto mensual para <b>pauta publicitaria</b> <span class="hint">(se paga directo a Meta o Google, aparte del servicio)</span></div>
+      <ul class="opts">
+        <li>Menos de $500 al mes</li>
+        <li>$500 – $1,500 al mes</li>
+        <li>$1,500 – $3,000 al mes</li>
+        <li>$3,000 – $6,000 al mes</li>
+        <li>Más de $6,000 al mes</li>
+        <li>Aún sin definir</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="f"><div class="q">¿Por cuántos meses pueden sostener esa inversión en pauta sin depender de que el curso ya esté vendiendo? <span class="fill w"></span></div></div>
+
+  <div class="f"><div class="q">¿Quién va a atender los mensajes y llamadas de gente interesada, y cuántas horas al día? <span class="hint">Esta suele ser la parte que rompe el embudo, no la pauta.</span></div><div class="box-write short"></div></div>
+</div>
+
+<!-- ============ 10. ACCESOS ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">10</span><h2>Accesos, cobro y material existente</h2></div>
+  <div class="secnote">Complemento del inventario de la sección 3: el detalle de lo que ya está montado.</div>
+  <div class="rule"></div>
+
+  <div class="cols">
+    <div class="f"><div class="q">Detallá las herramientas que marcaron como existentes: <span class="hint">¿En qué está hecha la web? ¿Cuál plataforma de cursos? ¿Cuál herramienta de correos?</span></div><div class="box-write tall"></div></div>
+    <div class="f"><div class="q">¿Tienen accesos de administrador de todo? <span class="hint">Si algo lo maneja un tercero, decinos quién.</span></div><div class="box-write short"></div>
+      <div class="q" style="margin-top:8px;">¿Quién puede darnos los accesos y qué tan rápido? <span class="fill w"></span></div>
+    </div>
+  </div>
+
+  <div class="f"><div class="q">¿Cómo cobran hoy y a qué países necesitan poder cobrarle? <span class="hint">Importante si venden fuera de Costa Rica: tarjeta internacional, SINPE, PayPal, Stripe.</span></div><div class="box-write short"></div></div>
+
+  <div class="f"><div class="q">¿Hay material gráfico, fotos o video que ya podamos usar? ¿Dónde está y quién lo produjo?</div><div class="box-write short"></div></div>
+</div>
+
+<!-- ============ 9. RETOS ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">11</span><h2>Retos, miedos y lo que ya se intentó</h2></div>
+  <div class="secnote">Contestá esta parte con franqueza. Es la que más nos sirve.</div>
+  <div class="rule"></div>
+
+  <div class="f"><div class="q"><b>¿Cuál es el reto más grande que ven para sacar este curso adelante?</b></div><div class="box-write"></div></div>
+
+  <div class="f"><div class="q">Marcá lo que les preocupa:</div>
+    <ul class="opts two">
+      <li>No tener tiempo para grabar</li>
+      <li>Que nadie lo compre</li>
+      <li>No saber cuánto cobrar</li>
+      <li>Sentirse incómodo frente a cámara</li>
+      <li>No tener el contenido ordenado</li>
+      <li>Que la parte técnica se complique</li>
+      <li>Que la inversión no se recupere</li>
+      <li>Que el proyecto se quede a medias</li>
+      <li>No tener audiencia suficiente</li>
+      <li>Otro: <span class="fill"></span></li>
+    </ul>
+  </div>
+
+  <div class="f"><div class="q">¿Ya intentaron algo de esto antes? ¿Qué pasó? <span class="hint">Incluí trabajos con otras agencias o freelancers, aunque no hayan salido bien.</span></div><div class="box-write"></div></div>
+
+  <div class="f"><div class="q">Si dentro de 6 meses este proyecto fuera un éxito rotundo, <b>¿qué habría pasado exactamente?</b></div><div class="box-write"></div></div>
+
+  <div class="f"><div class="q">¿Y qué sería para ustedes un fracaso?</div><div class="box-write short"></div></div>
+</div>
+
+<!-- ============ 10. DECISIÓN ============ -->
+<div class="block">
+  <div class="kicker"><span class="n">12</span><h2>Decisión y siguiente paso</h2></div>
+  <div class="rule"></div>
+
+  <div class="cols">
+    <div class="f"><div class="q">¿Quién decide y aprueba el presupuesto?</div>
+      <ul class="opts">
+        <li>Yo solo</li>
+        <li>Yo con un socio</li>
+        <li>Junta directiva o comité</li>
+        <li>Otra persona: <span class="fill"></span></li>
+      </ul>
+      <div class="q" style="margin-top:9px;">¿Está esa persona al tanto de este proceso?</div>
+      <ul class="opts two"><li>Sí</li><li>Todavía no</li></ul>
+    </div>
+    <div class="f"><div class="q">¿Están hablando con otros proveedores?</div>
+      <ul class="opts"><li>Sí</li><li>No</li><li>Prefiero no decir</li></ul>
+      <div class="q" style="margin-top:9px;">¿Qué necesitan ver en la propuesta para decir que sí?</div>
+      <div class="lines"></div><div class="lines"></div>
+    </div>
+  </div>
+
+  <div class="f"><div class="q">Cualquier cosa que no preguntamos y que deberíamos saber:</div><div class="box-write tall"></div></div>
+
+  <div class="dark" style="margin-top:16px;">
+    <h3>Qué sigue</h3>
+    <p>Con esto armamos una <b>propuesta integral</b>: plan de acción por fases, alcance de producción, cronograma con fecha de lanzamiento realista e inversión desglosada por bloque de trabajo.</p>
+    <p>Antes de enviarla agendamos <b>una llamada de 30 minutos</b> para repasar sus respuestas — ahí es donde se afina el alcance y donde les vamos a decir con franqueza qué recomendamos hacer, qué recomendamos posponer y qué no vale la pena hacer del todo.</p>
+    <p style="margin-top:12px;"><b>Devolvenos el cuestionario por WhatsApp o correo</b> y coordinamos la llamada esta misma semana.</p>
+  </div>
+
+  <div style="margin-top:22px;">
+    <h3 style="font-size:12.5px; margin-bottom:10px;">Espacio para notas</h3>
+    <div class="lines"></div><div class="lines"></div><div class="lines"></div><div class="lines"></div>
+    <div class="lines"></div><div class="lines"></div><div class="lines"></div><div class="lines"></div>
+    <div class="lines"></div><div class="lines"></div><div class="lines"></div><div class="lines"></div>
+  </div>
+
+  <div style="margin-top:30px; text-align:center;">
+    <div class="wm" style="font-size:16px;">socialify<i>.</i></div>
+    <p style="font-size:10px; color:var(--muted); margin-top:6px;">Producimos y lanzamos infoproductos con medición hasta la venta.</p>
+    <p style="font-size:10px; color:var(--faint); margin-top:3px;">socialifycr.com · WhatsApp +506 6317 3431</p>
+  </div>
+</div>
+
+</body>
+</html>
