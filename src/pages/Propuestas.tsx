@@ -132,7 +132,7 @@ const Propuestas = () => {
   const [kind, setKind] = useState<ProposalKind>('proposal');
   const [planTarget, setPlanTarget] = useState<AgencyProposalListItem | null>(null);
   const [responsesTargetId, setResponsesTargetId] = useState<string | null>(null);
-  const [templateId, setTemplateId] = useState<string>('cuestionario-curso');
+  const [templateId, setTemplateId] = useState<string>('cuestionario-curso-v2');
   const { data: responseCounts = {} } = useFormResponseCounts();
 
   const { data: clientsList = [] } = useQuery({
@@ -215,7 +215,7 @@ const Propuestas = () => {
     setClientName('');
     setClientId('');
     setHtml(initialKind === 'form' ? FORM_TEMPLATES[0].html : '');
-    setTemplateId('cuestionario-curso');
+    setTemplateId('cuestionario-curso-v2');
     setIsPublished(true);
     setKind(initialKind);
     setEditorPreview(false);
