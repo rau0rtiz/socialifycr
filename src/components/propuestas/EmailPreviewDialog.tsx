@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Mail, Send, Upload, Code2, Monitor, Smartphone } from 'lucide-react';
+import { Loader2, Mail, Send, Upload, Code2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -19,7 +18,6 @@ const EmailPreviewDialog = ({ open, onOpenChange }: Props) => {
   const [subject, setSubject] = useState('[Preview] Correo de prueba');
   const [to, setTo] = useState('');
   const [sending, setSending] = useState(false);
-  const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [fileName, setFileName] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -118,27 +116,20 @@ const EmailPreviewDialog = ({ open, onOpenChange }: Props) => {
           </div>
 
           <div className="space-y-2">
-            <Tabs value={device} onValueChange={(v) => setDevice(v as 'desktop' | 'mobile')}>
-              <TabsList>
-                <TabsTrigger value="desktop" className="gap-1.5"><Monitor className="h-3.5 w-3.5" /> Escritorio</TabsTrigger>
-                <TabsTrigger value="mobile" className="gap-1.5"><Smartphone className="h-3.5 w-3.5" /> Móvil</TabsTrigger>
-              </TabsList>
-              <TabsContent value="desktop" />
-              <TabsContent value="mobile" />
-            </Tabs>
-            <div className="rounded-xl border bg-muted/30 p-3 flex justify-center">
-              <div
-                className="bg-white rounded-lg overflow-hidden border transition-all"
-                style={{ width: device === 'mobile' ? 380 : '100%', height: 420 }}
-              >
-                {html.trim() ? (
-                  <iframe srcDoc={html} title="Preview del correo" sandbox="" className="w-full h-full border-0" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground text-center px-6">
-                    Pegá o cargá el HTML para ver la vista previa.
-                  </div>
-                )}
-              </div>
+            <Label className="text-xs">Vista previa (igual que se ve online)</Label>
+            <div className="rounded-xl border overflow-hidden bg-white h-[60vh]">
+              {html.trim() ? (
+                <iframe
+                  srcDoc={html}
+                  title="Preview del correo"
+                  sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
+                  className="w-full h-full border-0 bg-white"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground text-center px-6">
+                  Pegá o cargá el HTML para ver la vista previa.
+                </div>
+              )}
             </div>
           </div>
         </div>
