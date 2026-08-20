@@ -39,12 +39,19 @@ import FormResponsesDialog from '@/components/propuestas/FormResponsesDialog';
 import { useFormResponseCounts } from '@/hooks/use-form-responses';
 import { buildFormDocument } from '@/lib/form-runtime';
 import cuestionarioCursoTemplate from '@/templates/cuestionario-curso.html?raw';
+import cuestionarioCursoV2Template from '@/templates/cuestionario-curso-v2.html?raw';
 
 const FORM_TEMPLATES: { id: string; label: string; description: string; html: string }[] = [
   {
+    id: 'cuestionario-curso-v2',
+    label: 'Cuestionario paginado · Curso online',
+    description: 'Formato por pasos (una sección por pantalla), barra de progreso y envío al final. Recomendado.',
+    html: cuestionarioCursoV2Template,
+  },
+  {
     id: 'cuestionario-curso',
-    label: 'Cuestionario · Producción de curso online',
-    description: 'Descubrimiento completo: negocio, instructor, inventario, alcance y presupuesto.',
+    label: 'Cuestionario clásico · Producción de curso online',
+    description: 'Documento largo tipo impresión: negocio, instructor, inventario, alcance y presupuesto.',
     html: cuestionarioCursoTemplate,
   },
   {
@@ -54,6 +61,7 @@ const FORM_TEMPLATES: { id: string; label: string; description: string; html: st
     html: '',
   },
 ];
+
 import { AddPlanToSheetDialog } from '@/components/producciones/AddPlanToSheetDialog';
 import DocumentViewsDialog from '@/components/propuestas/DocumentViewsDialog';
 import { format } from 'date-fns';
