@@ -64,6 +64,7 @@ const FORM_TEMPLATES: { id: string; label: string; description: string; html: st
 
 import { AddPlanToSheetDialog } from '@/components/producciones/AddPlanToSheetDialog';
 import DocumentViewsDialog from '@/components/propuestas/DocumentViewsDialog';
+import EmailPreviewDialog from '@/components/propuestas/EmailPreviewDialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -152,6 +153,8 @@ const Propuestas = () => {
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
+
+  const [emailPreviewOpen, setEmailPreviewOpen] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<AgencyProposalListItem | null>(null);
   const [viewsTargetId, setViewsTargetId] = useState<string | null>(null);
@@ -420,6 +423,9 @@ const Propuestas = () => {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setEmailPreviewOpen(true)} className="gap-2">
+              <Mail className="h-4 w-4" /> Preview de correo
+            </Button>
             <Button variant="outline" onClick={() => openCreate('form')} className="gap-2">
               <ListChecks className="h-4 w-4" /> Nuevo formulario
             </Button>
@@ -434,6 +440,8 @@ const Propuestas = () => {
             </Button>
           </div>
         </div>
+
+        <EmailPreviewDialog open={emailPreviewOpen} onOpenChange={setEmailPreviewOpen} />
 
         <Tabs value={kindFilter} onValueChange={(v) => setKindFilter(v as 'all' | ProposalKind)}>
           <TabsList>
