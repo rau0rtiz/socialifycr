@@ -48,14 +48,18 @@ const RUNTIME_CSS = `
   ul.sform-opts { list-style: none !important; padding-left: 0 !important; margin: 4px 0 0 0 !important; }
   ul.sform-opts li::before { content: none !important; }
   .sform-cb {
-    cursor: pointer; display: inline-block; width: 15px; height: 15px; border-radius: 5px;
-    border: 1.4px solid rgba(26,25,22,.3); vertical-align: middle; position: relative; transition: all .12s;
+    cursor: pointer; display: inline-block; width: 18px; height: 18px; border-radius: 6px;
+    border: 1.5px solid rgba(26,25,22,.3); background: #fff; vertical-align: middle;
+    position: relative; transition: all .12s; box-sizing: border-box; flex: none;
   }
+  .sform-cb:hover { border-color: rgba(233,119,44,.7); }
   .sform-cb[data-on="1"] { background: #E9772C; border-color: #E9772C; }
   .sform-cb[data-on="1"]::after {
-    content: ""; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px;
-    border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(42deg);
+    content: ""; position: absolute; left: 50%; top: 47%;
+    width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0;
+    transform: translate(-50%, -55%) rotate(45deg);
   }
+
   .sform-dot { cursor: pointer; transition: all .12s; }
   .sform-dot[data-on="1"] { background: #E9772C !important; border-color: #E9772C !important; color: #fff !important; font-weight: 700; }
   .sform-bar {
