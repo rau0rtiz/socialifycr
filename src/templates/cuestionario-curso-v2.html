@@ -658,6 +658,7 @@ var API = {
     return parts.join('');
   }
 };
+API.fail=function(){ API.submitting=false; next.textContent='Enviar respuestas'; };
 window.__sformWizard = API;
 
 var chTimer=null;
