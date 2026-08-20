@@ -66,3 +66,6 @@ verify_jwt = true
 [functions.track-document-view]
 verify_jwt = false
 
+[functions.submit-form-response]
+verify_jwt = false
+
