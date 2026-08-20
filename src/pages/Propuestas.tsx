@@ -155,6 +155,7 @@ const Propuestas = () => {
   const [sendingEmail, setSendingEmail] = useState(false);
 
   const [emailPreviewOpen, setEmailPreviewOpen] = useState(false);
+  const [emailDocTarget, setEmailDocTarget] = useState<AgencyProposalListItem | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<AgencyProposalListItem | null>(null);
   const [viewsTargetId, setViewsTargetId] = useState<string | null>(null);
@@ -226,6 +227,11 @@ const Propuestas = () => {
   };
 
   const openEdit = async (p: AgencyProposalListItem) => {
+    if (p.kind === 'email') {
+      setEmailDocTarget(p);
+      setEmailPreviewOpen(true);
+      return;
+    }
     setEditing(p);
     setTitle(p.title);
     setClientId((p as any).client_id || '');
@@ -423,8 +429,8 @@ const Propuestas = () => {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setEmailPreviewOpen(true)} className="gap-2">
-              <Mail className="h-4 w-4" /> Preview de correo
+            <Button variant="outline" onClick={() => { setEmailDocTarget(null); setEmailPreviewOpen(true); }} className="gap-2">
+              <Mail className="h-4 w-4" /> Nuevo correo
             </Button>
             <Button variant="outline" onClick={() => openCreate('form')} className="gap-2">
               <ListChecks className="h-4 w-4" /> Nuevo formulario
@@ -441,7 +447,12 @@ const Propuestas = () => {
           </div>
         </div>
 
-        <EmailPreviewDialog open={emailPreviewOpen} onOpenChange={setEmailPreviewOpen} />
+        <EmailPreviewDialog
+          open={emailPreviewOpen}
+          onOpenChange={(v) => { setEmailPreviewOpen(v); if (!v) setEmailDocTarget(null); }}
+          target={emailDocTarget}
+          publicBaseUrl={PUBLIC_BASE_URL}
+        />
 
         <Tabs value={kindFilter} onValueChange={(v) => setKindFilter(v as 'all' | ProposalKind)}>
           <TabsList>
