@@ -380,7 +380,9 @@ export const buildFormDocument = (source: string, title = 'Formulario'): string 
     ? source
     : `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>${title}</title></head><body><div class="f"><div class="q">Formulario vacío</div></div></body></html>`;
   const injection = isWizardForm(base) ? WIZARD_BRIDGE : RUNTIME_CSS + RUNTIME_JS;
-  if (/<\/body>/i.test(base)) return base.replace(/<\/body>/i, `${injection}</body>`);
+  // Se inyecta en el ÚLTIMO </body> para no romper scripts que lo mencionen como texto.
+  const at = base.toLowerCase().lastIndexOf('</body>');
+  if (at >= 0) return `${base.slice(0, at)}${injection}${base.slice(at)}`;
   return base + injection;
 };
 
