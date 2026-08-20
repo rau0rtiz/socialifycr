@@ -537,7 +537,7 @@ export default function ProduccionSheet() {
                         Cambiá el filtro a <em>Todas</em> para reordenar.
                       </div>
                     )}
-                    {filteredShots.map((shot) => {
+                    {filteredShots.map((shot, shotIndex) => {
                       const canDrag = filter === 'all';
                       const isDragging = dragShotId === shot.id;
                       const showDropLine = dropBeforeShotId === shot.id && dragShotId && dragShotId !== shot.id;
@@ -559,7 +559,7 @@ export default function ProduccionSheet() {
                               return;
                             }
                             e.preventDefault();
-                            const list = shots.map(s => s.id).filter(id => id !== dragShotId);
+                            const list = filteredShots.map(s => s.id).filter(id => id !== dragShotId);
                             const targetIdx = list.indexOf(shot.id);
                             if (targetIdx === -1) { setDropBeforeShotId(null); setDragShotId(null); return; }
                             list.splice(targetIdx, 0, dragShotId);
@@ -575,15 +575,15 @@ export default function ProduccionSheet() {
                           )}
                           <PieceCard
                             shot={shot}
-                            index={shots.indexOf(shot)}
+                            index={shotIndex}
                             canDrag={canDrag}
-                            canMoveUp={canDrag && shots.indexOf(shot) > 0}
-                            canMoveDown={canDrag && shots.indexOf(shot) < shots.length - 1}
+                            canMoveUp={canDrag && shotIndex > 0}
+                            canMoveDown={canDrag && shotIndex < filteredShots.length - 1}
                             onMove={(dir) => {
-                              const idx = shots.indexOf(shot);
+                              const idx = shotIndex;
                               const targetIdx = dir === 'up' ? idx - 1 : idx + 1;
-                              if (targetIdx < 0 || targetIdx >= shots.length) return;
-                              const list = shots.map(s => s.id);
+                              if (targetIdx < 0 || targetIdx >= filteredShots.length) return;
+                              const list = filteredShots.map(s => s.id);
                               [list[idx], list[targetIdx]] = [list[targetIdx], list[idx]];
                               const items = list.map((id, i) => ({ id, sort_order: (i + 1) * 10 }));
                               reorderShots.mutate({ sheet_id: sheetId, items });
@@ -605,7 +605,7 @@ export default function ProduccionSheet() {
                         onDrop={(e) => {
                           e.preventDefault();
                           if (!dragShotId) return;
-                          const list = shots.map(s => s.id).filter(id => id !== dragShotId);
+                          const list = filteredShots.map(s => s.id).filter(id => id !== dragShotId);
                           list.push(dragShotId);
                           const items = list.map((id, i) => ({ id, sort_order: (i + 1) * 10 }));
                           setDragShotId(null);
