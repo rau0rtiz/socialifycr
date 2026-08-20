@@ -484,9 +484,9 @@ const Propuestas = () => {
                 <button type="button" onClick={() => setPreviewTarget(p)} className="text-left flex-1">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : p.kind === 'content_plan' ? 'bg-amber-500/10 text-amber-600' : p.kind === 'form' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-primary/10 text-primary'}`}>
-                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : p.kind === 'content_plan' ? <ClipboardList className="h-3 w-3" /> : p.kind === 'form' ? <ListChecks className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-                        {p.kind === 'report' ? 'Reporte' : p.kind === 'content_plan' ? 'Plan' : p.kind === 'form' ? 'Formulario' : 'Propuesta'}
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : p.kind === 'content_plan' ? 'bg-amber-500/10 text-amber-600' : p.kind === 'form' ? 'bg-emerald-500/10 text-emerald-600' : p.kind === 'email' ? 'bg-violet-500/10 text-violet-600' : 'bg-primary/10 text-primary'}`}>
+                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : p.kind === 'content_plan' ? <ClipboardList className="h-3 w-3" /> : p.kind === 'form' ? <ListChecks className="h-3 w-3" /> : p.kind === 'email' ? <Mail className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                        {p.kind === 'report' ? 'Reporte' : p.kind === 'content_plan' ? 'Plan' : p.kind === 'form' ? 'Formulario' : p.kind === 'email' ? 'Correo' : 'Propuesta'}
                       </span>
                       <div className="flex items-center gap-2 shrink-0">
                         <span
