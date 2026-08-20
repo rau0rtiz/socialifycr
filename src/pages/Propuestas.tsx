@@ -85,8 +85,8 @@ const formatMoney = (amount: number | null, currency: string | null) => {
 };
 
 const PUBLIC_BASE_URL = 'https://app.socialifycr.com';
-const KIND_PATH: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan', form: 'formulario' };
-const KIND_LABEL: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan de contenido', form: 'formulario' };
+const KIND_PATH: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan', form: 'formulario', email: 'correo' };
+const KIND_LABEL: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan de contenido', form: 'formulario', email: 'correo' };
 const buildShareUrl = (slug: string, kind: ProposalKind = 'proposal') =>
   `${PUBLIC_BASE_URL}/${KIND_PATH[kind] ?? 'propuesta'}/${slug}`;
 
@@ -401,7 +401,7 @@ const Propuestas = () => {
   );
 
   const counts = useMemo(() => {
-    const c: Record<'all' | ProposalKind, number> = { all: proposals.length, proposal: 0, report: 0, content_plan: 0, form: 0 };
+    const c: Record<'all' | ProposalKind, number> = { all: proposals.length, proposal: 0, report: 0, content_plan: 0, form: 0, email: 0 };
     for (const p of proposals) {
       const k = ((p.kind as ProposalKind) || 'proposal');
       c[k] = (c[k] || 0) + 1;
@@ -457,6 +457,9 @@ const Propuestas = () => {
             </TabsTrigger>
             <TabsTrigger value="form" className="gap-1.5">
               <ListChecks className="h-3.5 w-3.5" /> Formularios ({counts.form})
+            </TabsTrigger>
+            <TabsTrigger value="email" className="gap-1.5">
+              <Mail className="h-3.5 w-3.5" /> Correos ({counts.email})
             </TabsTrigger>
           </TabsList>
         </Tabs>

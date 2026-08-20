@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type PackageType = 'monthly' | 'quarterly' | 'one_time';
-export type ProposalKind = 'proposal' | 'report' | 'content_plan' | 'form';
+export type ProposalKind = 'proposal' | 'report' | 'content_plan' | 'form' | 'email';
 
 export interface AgencyProposal {
   id: string;
