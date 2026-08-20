@@ -56,6 +56,7 @@ const ProduccionPublica = lazy(() => import("./pages/ProduccionPublica"));
 const SellerCrm = lazy(() => import("./pages/SellerCrm"));
 const Propuestas = lazy(() => import("./pages/Propuestas"));
 const PropuestaPublica = lazy(() => import("./pages/PropuestaPublica"));
+const FormularioPublico = lazy(() => import("./pages/FormularioPublico"));
 const AgencyResumen = lazy(() => import("./pages/agencia/Resumen"));
 const AgencyPagos = lazy(() => import("./pages/agencia/Pagos"));
 const AgencyBaseDeDatos = lazy(() => import("./pages/agencia/BaseDeDatos"));
