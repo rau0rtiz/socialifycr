@@ -34,7 +34,26 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { renderDocumentSource } from '@/lib/jsx-document';
-import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3, ClipboardList, Sparkles } from 'lucide-react';
+import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3, ClipboardList, Sparkles, Inbox, ListChecks } from 'lucide-react';
+import FormResponsesDialog from '@/components/propuestas/FormResponsesDialog';
+import { useFormResponseCounts } from '@/hooks/use-form-responses';
+import { buildFormDocument } from '@/lib/form-runtime';
+import cuestionarioCursoTemplate from '@/templates/cuestionario-curso.html?raw';
+
+const FORM_TEMPLATES: { id: string; label: string; description: string; html: string }[] = [
+  {
+    id: 'cuestionario-curso',
+    label: 'Cuestionario · Producción de curso online',
+    description: 'Descubrimiento completo: negocio, instructor, inventario, alcance y presupuesto.',
+    html: cuestionarioCursoTemplate,
+  },
+  {
+    id: 'blank',
+    label: 'En blanco (pegar HTML)',
+    description: 'Pegá tu propio HTML. Las cajas .box-write, .lines, .fill, ul.opts, .cb y .scale se vuelven interactivas.',
+    html: '',
+  },
+];
 import { AddPlanToSheetDialog } from '@/components/producciones/AddPlanToSheetDialog';
 import DocumentViewsDialog from '@/components/propuestas/DocumentViewsDialog';
 import { format } from 'date-fns';
@@ -57,7 +76,8 @@ const formatMoney = (amount: number | null, currency: string | null) => {
 };
 
 const PUBLIC_BASE_URL = 'https://app.socialifycr.com';
-const KIND_PATH: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan' };
+const KIND_PATH: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan', form: 'formulario' };
+const KIND_LABEL: Record<ProposalKind, string> = { proposal: 'propuesta', report: 'reporte', content_plan: 'plan de contenido', form: 'formulario' };
 const buildShareUrl = (slug: string, kind: ProposalKind = 'proposal') =>
   `${PUBLIC_BASE_URL}/${KIND_PATH[kind] ?? 'propuesta'}/${slug}`;
 
@@ -103,6 +123,9 @@ const Propuestas = () => {
   const [isPublished, setIsPublished] = useState(true);
   const [kind, setKind] = useState<ProposalKind>('proposal');
   const [planTarget, setPlanTarget] = useState<AgencyProposalListItem | null>(null);
+  const [responsesTargetId, setResponsesTargetId] = useState<string | null>(null);
+  const [templateId, setTemplateId] = useState<string>('cuestionario-curso');
+  const { data: responseCounts = {} } = useFormResponseCounts();
 
   const { data: clientsList = [] } = useQuery({
     queryKey: ['doc-clients-list'],
@@ -183,7 +206,8 @@ const Propuestas = () => {
     setTitle('');
     setClientName('');
     setClientId('');
-    setHtml('');
+    setHtml(initialKind === 'form' ? FORM_TEMPLATES[0].html : '');
+    setTemplateId('cuestionario-curso');
     setIsPublished(true);
     setKind(initialKind);
     setEditorPreview(false);
@@ -232,7 +256,7 @@ const Propuestas = () => {
           is_published: isPublished,
           kind,
         });
-        toast.success(kind === 'report' ? 'Reporte actualizado' : kind === 'content_plan' ? 'Plan actualizado' : 'Propuesta actualizada');
+        toast.success(`Se actualizó el ${KIND_LABEL[kind]}`);
       } else {
         await createMut.mutateAsync({
           title: title.trim(),
@@ -242,7 +266,7 @@ const Propuestas = () => {
           is_published: isPublished,
           kind,
         });
-        toast.success(kind === 'report' ? 'Reporte creado' : kind === 'content_plan' ? 'Plan creado' : 'Propuesta creada');
+        toast.success(`Se creó el ${KIND_LABEL[kind]}`);
       }
       setEditorOpen(false);
     } catch (err) {
@@ -366,7 +390,7 @@ const Propuestas = () => {
   );
 
   const counts = useMemo(() => {
-    const c: Record<'all' | ProposalKind, number> = { all: proposals.length, proposal: 0, report: 0, content_plan: 0 };
+    const c: Record<'all' | ProposalKind, number> = { all: proposals.length, proposal: 0, report: 0, content_plan: 0, form: 0 };
     for (const p of proposals) {
       const k = ((p.kind as ProposalKind) || 'proposal');
       c[k] = (c[k] || 0) + 1;
@@ -388,6 +412,9 @@ const Propuestas = () => {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => openCreate('form')} className="gap-2">
+              <ListChecks className="h-4 w-4" /> Nuevo formulario
+            </Button>
             <Button variant="outline" onClick={() => openCreate('content_plan')} className="gap-2">
               <ClipboardList className="h-4 w-4" /> Nuevo plan
             </Button>
@@ -412,6 +439,9 @@ const Propuestas = () => {
             <TabsTrigger value="content_plan" className="gap-1.5">
               <ClipboardList className="h-3.5 w-3.5" /> Planes ({counts.content_plan})
             </TabsTrigger>
+            <TabsTrigger value="form" className="gap-1.5">
+              <ListChecks className="h-3.5 w-3.5" /> Formularios ({counts.form})
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -435,9 +465,9 @@ const Propuestas = () => {
                 <button type="button" onClick={() => setPreviewTarget(p)} className="text-left flex-1">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : p.kind === 'content_plan' ? 'bg-amber-500/10 text-amber-600' : 'bg-primary/10 text-primary'}`}>
-                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : p.kind === 'content_plan' ? <ClipboardList className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-                        {p.kind === 'report' ? 'Reporte' : p.kind === 'content_plan' ? 'Plan' : 'Propuesta'}
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${p.kind === 'report' ? 'bg-blue-500/10 text-blue-600' : p.kind === 'content_plan' ? 'bg-amber-500/10 text-amber-600' : p.kind === 'form' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-primary/10 text-primary'}`}>
+                        {p.kind === 'report' ? <BarChart3 className="h-3 w-3" /> : p.kind === 'content_plan' ? <ClipboardList className="h-3 w-3" /> : p.kind === 'form' ? <ListChecks className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                        {p.kind === 'report' ? 'Reporte' : p.kind === 'content_plan' ? 'Plan' : p.kind === 'form' ? 'Formulario' : 'Propuesta'}
                       </span>
                       <div className="flex items-center gap-2 shrink-0">
                         <span
@@ -451,6 +481,15 @@ const Propuestas = () => {
                           <Eye className="h-3.5 w-3.5" />
                           {p.view_count ?? 0} {(p.view_count ?? 0) === 1 ? 'vista' : 'vistas'}
                         </span>
+                        {p.kind === 'form' && (
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${(responseCounts[p.id] ?? 0) > 0 ? 'bg-emerald-500/15 text-emerald-600' : 'bg-muted text-muted-foreground'}`}
+                            title="Respuestas recibidas"
+                          >
+                            <Inbox className="h-3 w-3" />
+                            {responseCounts[p.id] ?? 0}
+                          </span>
+                        )}
                         {p.is_published ? (
                           <span title="Publicada" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         ) : (
@@ -487,7 +526,11 @@ const Propuestas = () => {
                     <Button size="sm" className="flex-1 h-8 gap-1.5 text-xs font-semibold" onClick={() => setPreviewTarget(p)}>
                       <Monitor className="h-3.5 w-3.5" /> Vista previa
                     </Button>
-                    {p.kind === 'content_plan' ? (
+                    {p.kind === 'form' ? (
+                      <Button size="sm" variant="outline" className="flex-1 h-8 gap-1.5 text-xs font-semibold border-emerald-500/60 text-emerald-600 hover:bg-emerald-500/10" onClick={() => setResponsesTargetId(p.id)}>
+                        <Inbox className="h-3.5 w-3.5" /> Respuestas ({responseCounts[p.id] ?? 0})
+                      </Button>
+                    ) : p.kind === 'content_plan' ? (
                       <Button size="sm" variant="outline" className="flex-1 h-8 gap-1.5 text-xs font-semibold border-primary/60 text-primary hover:bg-primary/10" onClick={() => setPlanTarget(p)}>
                         <Sparkles className="h-3.5 w-3.5" /> Producción
                       </Button>
@@ -534,13 +577,12 @@ const Propuestas = () => {
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-5xl max-h-[92dvh] p-0 gap-0 flex flex-col">
           <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b shrink-0">
             <DialogTitle>
-              {(() => {
-                const label = kind === 'report' ? 'reporte' : kind === 'content_plan' ? 'plan de contenido' : 'propuesta';
-                return editing ? `Editar ${label}` : `Nuevo ${label}`;
-              })()}
+              {editing ? `Editar ${KIND_LABEL[kind]}` : `Nuevo ${KIND_LABEL[kind]}`}
             </DialogTitle>
             <DialogDescription>
-              Pegá el código HTML completo. Se mostrará tal cual en el link público.
+              {kind === 'form'
+                ? 'Elegí una plantilla, ponele nombre y compartila por link o correo. El cliente la llena y le da Enviar.'
+                : 'Pegá el código HTML completo. Se mostrará tal cual en el link público.'}
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4">
@@ -554,6 +596,7 @@ const Propuestas = () => {
                       <SelectItem value="proposal">Propuesta</SelectItem>
                       <SelectItem value="report">Reporte</SelectItem>
                       <SelectItem value="content_plan">Plan de contenido</SelectItem>
+                      <SelectItem value="form">Formulario</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -585,6 +628,29 @@ const Propuestas = () => {
                   </Select>
                 </div>
               </div>
+              {kind === 'form' && !editing && (
+                <div className="space-y-2">
+                  <Label>Plantilla</Label>
+                  <Select
+                    value={templateId}
+                    onValueChange={(v) => {
+                      setTemplateId(v);
+                      const t = FORM_TEMPLATES.find((x) => x.id === v);
+                      setHtml(t?.html ?? '');
+                    }}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {FORM_TEMPLATES.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {FORM_TEMPLATES.find((t) => t.id === templateId)?.description}
+                  </p>
+                </div>
+              )}
               <div className="space-y-2">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <Label>HTML o JSX</Label>
@@ -609,7 +675,7 @@ const Propuestas = () => {
                   html.trim() ? (
                     <iframe
                       title="Vista previa propuesta"
-                      srcDoc={renderDocumentSource(html, title || 'Documento')}
+                      srcDoc={kind === 'form' ? buildFormDocument(html, title || 'Formulario') : renderDocumentSource(html, title || 'Documento')}
                       sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
                       className="w-full h-[50dvh] min-h-[280px] rounded-md border bg-white"
                     />
@@ -640,7 +706,7 @@ const Propuestas = () => {
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={createMut.isPending || updateMut.isPending}>
               {(createMut.isPending || updateMut.isPending) && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {editing ? 'Guardar cambios' : (kind === 'report' ? 'Crear reporte' : kind === 'content_plan' ? 'Crear plan' : 'Crear propuesta')}
+              {editing ? 'Guardar cambios' : `Crear ${KIND_LABEL[kind]}`}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -838,7 +904,7 @@ const Propuestas = () => {
               ) : previewHtml ? (
                 <iframe
                   title={`Vista previa ${previewTarget.title}`}
-                  srcDoc={renderDocumentSource(previewHtml, previewTarget.title)}
+                  srcDoc={previewTarget.kind === 'form' ? buildFormDocument(previewHtml, previewTarget.title) : renderDocumentSource(previewHtml, previewTarget.title)}
                   sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
                   className="w-full h-full bg-white"
                 />
@@ -859,6 +925,12 @@ const Propuestas = () => {
         planId={planTarget?.id ?? null}
         planTitle={planTarget?.title ?? ''}
         defaultClientName={planTarget?.client_name ?? null}
+      />
+
+      <FormResponsesDialog
+        proposalId={responsesTargetId}
+        title={proposals.find((p) => p.id === responsesTargetId)?.title}
+        onClose={() => setResponsesTargetId(null)}
       />
 
       <DocumentViewsDialog
