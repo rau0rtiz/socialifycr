@@ -30,6 +30,8 @@ import {
 } from '@/hooks/use-production-sheets';
 import { SendToClickUpDialog } from '@/components/producciones/SendToClickUpDialog';
 import { SendSummaryEmailDialog } from '@/components/producciones/SendSummaryEmailDialog';
+import { ShareStoryDialog } from '@/components/producciones/ShareStoryDialog';
+import { buildStoryReceipt } from '@/lib/story-receipt';
 import { GenerateShotsDialog } from '@/components/producciones/GenerateShotsDialog';
 import { PieceCard } from '@/components/producciones/PieceCard';
 import { SheetThumbnailUploader } from '@/components/producciones/SheetThumbnailUploader';
@@ -99,6 +101,8 @@ export default function ProduccionSheet() {
   const [shareCopied, setShareCopied] = useState(false);
   const [clickupOpen, setClickupOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [storyOpen, setStoryOpen] = useState(false);
+  const [clientLogo, setClientLogo] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
 
 
@@ -157,8 +161,8 @@ export default function ProduccionSheet() {
   // Load client name
   useEffect(() => {
     if (!data?.sheet?.client_id) return;
-    supabase.from('clients').select('name').eq('id', data.sheet.client_id).maybeSingle()
-      .then(({ data: c }) => setClientName(c?.name || ''));
+    supabase.from('clients').select('name, logo_url').eq('id', data.sheet.client_id).maybeSingle()
+      .then(({ data: c }) => { setClientName(c?.name || ''); setClientLogo((c as any)?.logo_url || null); });
   }, [data?.sheet?.client_id]);
 
   // Auto-save header fields
@@ -502,6 +506,14 @@ export default function ProduccionSheet() {
                       <Mail className="h-3.5 w-3.5" /> Correo
                     </button>
                     <button
+                      onClick={() => setStoryOpen(true)}
+                      disabled={recordedShots.length === 0}
+                      className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-noeval-ink"
+                      title="Compartir recibo como historia"
+                    >
+                      <Share2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Historia</span>
+                    </button>
+                    <button
                       onClick={() => window.print()}
                       className="hidden sm:flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition"
                       title="Imprimir / PDF"
@@ -652,6 +664,9 @@ export default function ProduccionSheet() {
                   <div className="flex items-center gap-2">
                     <Button variant="outline" onClick={() => setEmailOpen(true)} disabled={recordedShots.length === 0} className="border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream">
                       <Mail className="h-4 w-4 mr-1.5" /> Enviar por correo
+                    </Button>
+                    <Button variant="outline" onClick={() => setStoryOpen(true)} disabled={recordedShots.length === 0} className="border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream">
+                      <Share2 className="h-4 w-4 mr-1.5" /> Compartir historia
                     </Button>
                     <Button variant="outline" onClick={() => window.print()} className="border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream">
                       <Printer className="h-4 w-4 mr-1.5" /> Imprimir / PDF
@@ -827,6 +842,18 @@ export default function ProduccionSheet() {
             }}
             open={clickupOpen}
             onClose={() => setClickupOpen(false)}
+          />
+          <ShareStoryDialog
+            open={storyOpen}
+            onClose={() => setStoryOpen(false)}
+            data={buildStoryReceipt({
+              sheetId,
+              title: local.title,
+              shootDate: local.shoot_date,
+              clientName,
+              clientLogo,
+              shots: shots as any,
+            })}
           />
           <SendSummaryEmailDialog
             open={emailOpen}
