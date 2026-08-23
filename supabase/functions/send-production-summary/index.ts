@@ -143,7 +143,7 @@ function buildHtml({ sheet, clientName, shots, includeTechNotes, recipientName }
 </body></html>`;
 }
 
-function buildReceiptHtml({ sheet, clientName, shots, recipientName }: any): string {
+function buildReceiptHtml({ sheet, clientName, shots, recipientName, shareUrl }: any): string {
   const recorded = shots.filter((s: any) => s.done);
   const folio = String(sheet.id || '').replace(/-/g, '').slice(0, 8).toUpperCase();
 
@@ -220,6 +220,11 @@ function buildReceiptHtml({ sheet, clientName, shots, recipientName }: any): str
           </table>
         </td></tr>
 
+        ${shareUrl ? `<tr><td style="padding:4px 24px 20px;text-align:center;">
+          <a href="${shareUrl}" style="display:inline-block;background:#e85d3a;color:#ffffff;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;font-weight:bold;letter-spacing:0.08em;text-transform:uppercase;padding:14px 26px;border-radius:999px;">Ver y compartir mi recibo</a>
+          <div style="font-size:11px;color:#8b7355;margin-top:10px;letter-spacing:0.05em;">Compartilo en tus historias</div>
+        </td></tr>` : ''}
+
         ${sheet.notes ? `<tr><td style="padding:0 24px 16px;">
           <div style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#8b7355;margin-bottom:6px;">Notas</div>
           <div style="font-size:12px;color:#1a1a1a;white-space:pre-wrap;line-height:1.5;">${esc(sheet.notes)}</div>
@@ -280,8 +285,11 @@ serve(async (req) => {
     const clientName = client?.name || '';
 
     const isReceipt = format === 'receipt';
+    const shareUrl = sheet.public_share_enabled && sheet.public_share_token
+      ? `https://app.socialifycr.com/recibo/${sheet.public_share_token}`
+      : null;
     const html = isReceipt
-      ? buildReceiptHtml({ sheet, clientName, shots, recipientName })
+      ? buildReceiptHtml({ sheet, clientName, shots, recipientName, shareUrl })
       : buildHtml({
           sheet,
           clientName,
