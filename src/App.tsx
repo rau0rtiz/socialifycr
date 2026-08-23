@@ -53,6 +53,7 @@ const AgencyCRM = lazy(() => import("./pages/AgencyCRM"));
 const Producciones = lazy(() => import("./pages/Producciones"));
 const ProduccionSheet = lazy(() => import("./pages/ProduccionSheet"));
 const ProduccionPublica = lazy(() => import("./pages/ProduccionPublica"));
+const ReciboPublico = lazy(() => import("./pages/ReciboPublico"));
 const SellerCrm = lazy(() => import("./pages/SellerCrm"));
 const Propuestas = lazy(() => import("./pages/Propuestas"));
 const PropuestaPublica = lazy(() => import("./pages/PropuestaPublica"));
@@ -175,6 +176,7 @@ const App = () => (
                     <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
                     <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
                     <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
+                    <Route path="/recibo/:token" element={<ReciboPublico />} />
                     <Route path="/privacidad" element={<Privacy />} />
                     <Route path="/terminos" element={<Terms />} />
                     <Route path="/eliminar-datos" element={<DataDeletion />} />
@@ -205,6 +207,7 @@ const App = () => (
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/invitacion/:token" element={<Invitacion />} />
                   <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
+                    <Route path="/recibo/:token" element={<ReciboPublico />} />
                   <Route path="/propuesta/:slug" element={<PropuestaPublica />} />
                   <Route path="/reporte/:slug" element={<PropuestaPublica />} />
                   <Route path="/plan/:slug" element={<PropuestaPublica />} />
