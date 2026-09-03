@@ -61,6 +61,7 @@ const FormularioPublico = lazy(() => import("./pages/FormularioPublico"));
 const AgencyResumen = lazy(() => import("./pages/agencia/Resumen"));
 const AgencyPagos = lazy(() => import("./pages/agencia/Pagos"));
 const AgencyBaseDeDatos = lazy(() => import("./pages/agencia/BaseDeDatos"));
+const PortalSelect = lazy(() => import("./pages/PortalSelect"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
