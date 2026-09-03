@@ -80,12 +80,12 @@ export const Sidebar = () => {
 
   const handleClientView = () => {
     if (selectedClient) {
-      transitionNavigate(`/?preview=${selectedClient.id}`);
+      transitionNavigate(`/dashboard?preview=${selectedClient.id}`);
     }
   };
 
   const handleExitPreview = () => {
-    transitionNavigate('/');
+    transitionNavigate('/dashboard');
   };
 
   // In preview mode, behave like a client — respect feature flags
@@ -93,7 +93,7 @@ export const Sidebar = () => {
 
   // Build menu items based on feature flags
   const menuItems: { title: string; url: string; icon: React.ElementType; dataTour?: string }[] = [
-    { title: 'Dashboard', url: isPreviewMode ? `/?preview=${searchParams.get('preview')}` : '/', icon: LayoutDashboard },
+    { title: 'Dashboard', url: isPreviewMode ? `/dashboard?preview=${searchParams.get('preview')}` : '/dashboard', icon: LayoutDashboard },
   ];
 
   // CRM de vendedores — visible para setters/closers (su pantalla principal) y managers (supervisión)

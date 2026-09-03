@@ -171,7 +171,7 @@ const Comisiones = () => {
   }
 
   if (!hasAccess) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   if (!selectedClient) {

@@ -226,7 +226,7 @@ const Dashboard = () => {
   } as React.CSSProperties;
 
   const handleExitPreview = () => {
-    navigate('/');
+    navigate('/dashboard');
   };
 
   return (

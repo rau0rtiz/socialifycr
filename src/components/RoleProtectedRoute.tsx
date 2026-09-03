@@ -23,11 +23,11 @@ export const RoleProtectedRoute = ({
   }
 
   if (requireManage && !canManage) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   if (requireAgency && !isAgency) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

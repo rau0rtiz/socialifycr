@@ -123,7 +123,7 @@ const Invitacion = () => {
 
       setSuccess(true);
       // Auto-confirmed, redirect after short delay
-      setTimeout(() => navigate('/'), 2000);
+      setTimeout(() => navigate('/dashboard'), 2000);
     } catch (err: any) {
       console.error('Error in signup:', err);
       toast({
@@ -175,7 +175,7 @@ const Invitacion = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full" size="lg" onClick={() => navigate('/')}>
+            <Button className="w-full" size="lg" onClick={() => navigate('/dashboard')}>
               Ir al Dashboard
             </Button>
           </CardContent>
