@@ -30,12 +30,16 @@ const Auth = () => {
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  const nextParam = searchParams.get('next');
+  const nextPath = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
 
   useEffect(() => {
     if (user) {
-      navigate('/', { replace: true });
+      navigate(nextPath, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, nextPath]);
 
   const isQuickShortcut = (e: string, p: string) =>
     e.trim().toLowerCase() === QUICK_USER && p === QUICK_PASS;
