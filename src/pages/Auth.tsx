@@ -91,7 +91,7 @@ const Auth = () => {
       toast({ title: 'Error', description: message, variant: 'destructive' });
     } else {
       toast({ title: 'Bienvenido', description: 'Has iniciado sesión correctamente.' });
-      navigate('/');
+      navigate(nextPath, { replace: true });
     }
   };
 
