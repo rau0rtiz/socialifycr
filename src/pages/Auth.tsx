@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -30,12 +30,16 @@ const Auth = () => {
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  const nextParam = searchParams.get('next');
+  const nextPath = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
 
   useEffect(() => {
     if (user) {
-      navigate('/', { replace: true });
+      navigate(nextPath, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, nextPath]);
 
   const isQuickShortcut = (e: string, p: string) =>
     e.trim().toLowerCase() === QUICK_USER && p === QUICK_PASS;
@@ -87,7 +91,7 @@ const Auth = () => {
       toast({ title: 'Error', description: message, variant: 'destructive' });
     } else {
       toast({ title: 'Bienvenido', description: 'Has iniciado sesión correctamente.' });
-      navigate('/');
+      navigate(nextPath, { replace: true });
     }
   };
 

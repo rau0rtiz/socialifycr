@@ -145,7 +145,7 @@ const AcceptInvite = () => {
       });
 
       // Redirect after a short delay
-      setTimeout(() => navigate('/'), 2000);
+      setTimeout(() => navigate('/dashboard'), 2000);
     } catch (err: any) {
       console.error('Error accepting invitation:', err);
       toast({

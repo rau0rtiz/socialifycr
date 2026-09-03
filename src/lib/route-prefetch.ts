@@ -6,7 +6,7 @@
 type Loader = () => Promise<unknown>;
 
 const ROUTE_LOADERS: Record<string, Loader> = {
-  '/': () => import('@/pages/Dashboard'),
+  '/dashboard': () => import('@/pages/Dashboard'),
   '/ventas': () => import('@/pages/Ventas'),
   '/ordenes': () => import('@/pages/Ordenes'),
   

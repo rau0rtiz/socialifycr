@@ -61,6 +61,7 @@ const FormularioPublico = lazy(() => import("./pages/FormularioPublico"));
 const AgencyResumen = lazy(() => import("./pages/agencia/Resumen"));
 const AgencyPagos = lazy(() => import("./pages/agencia/Pagos"));
 const AgencyBaseDeDatos = lazy(() => import("./pages/agencia/BaseDeDatos"));
+const PortalSelect = lazy(() => import("./pages/PortalSelect"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
@@ -216,7 +217,8 @@ const App = () => (
                   <Route path="/privacidad" element={<Privacy />} />
                   <Route path="/terminos" element={<Terms />} />
                   <Route path="/eliminar-datos" element={<DataDeletion />} />
-                  <Route path="/" element={<ProtectedRoute><SellerHomeGate /></ProtectedRoute>} />
+                  <Route path="/" element={<PortalSelect />} />
+                  <Route path="/dashboard" element={<ProtectedRoute><SellerHomeGate /></ProtectedRoute>} />
                   <Route path="/mis-leads" element={<ProtectedRoute><SellerCrm /></ProtectedRoute>} />
                   {/* Agency-only routes */}
                   <Route path="/brand-settings" element={
