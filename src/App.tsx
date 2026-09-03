@@ -216,7 +216,8 @@ const App = () => (
                   <Route path="/privacidad" element={<Privacy />} />
                   <Route path="/terminos" element={<Terms />} />
                   <Route path="/eliminar-datos" element={<DataDeletion />} />
-                  <Route path="/" element={<ProtectedRoute><SellerHomeGate /></ProtectedRoute>} />
+                  <Route path="/" element={<PortalSelect />} />
+                  <Route path="/dashboard" element={<ProtectedRoute><SellerHomeGate /></ProtectedRoute>} />
                   <Route path="/mis-leads" element={<ProtectedRoute><SellerCrm /></ProtectedRoute>} />
                   {/* Agency-only routes */}
                   <Route path="/brand-settings" element={
