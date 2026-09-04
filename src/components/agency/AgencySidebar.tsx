@@ -42,6 +42,7 @@ const items = [
   { title: 'Documentación', url: '/agencia/documentacion', icon: FileText },
   { title: 'Funnels', url: '/agencia/funnels', icon: Megaphone },
   { title: 'Base de datos', url: '/agencia/base-de-datos', icon: Database },
+  { title: 'Bases de datos de clientes', url: '/agencia/bases-de-datos-clientes', icon: Users },
   { title: 'Comunicaciones', url: '/agencia/comunicaciones', icon: Mail },
   { title: 'Accesos', url: '/agencia/accesos', icon: KeyRound },
   { title: 'Archivos', url: '/agencia/archivos', icon: FolderOpen },
