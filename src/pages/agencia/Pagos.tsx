@@ -17,7 +17,8 @@ import { PaymentClientDialog, SystemClient } from '@/components/agency-payments/
 export default function Pagos() {
   const [monthDate, setMonthDate] = useState(() => {
     const n = new Date();
-    return new Date(n.getFullYear(), n.getMonth(), 1);
+    const cur = new Date(n.getFullYear(), n.getMonth(), 1);
+    return cur < PAYMENTS_START ? PAYMENTS_START : cur;
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
