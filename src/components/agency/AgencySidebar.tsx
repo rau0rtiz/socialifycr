@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { useAuth } from '@/contexts/AuthContext';
 import { AGENCY_NAV, isNavActive, type AgencyNavItem } from './nav-items';
+import socialifyLogo from '@/assets/socialify-wordmark.png.asset.json';
 
 export const AgencySidebar = () => {
   const { pathname } = useLocation();
