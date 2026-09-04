@@ -85,7 +85,7 @@ const PurchasesTab = ({ studentId, clientId }: { studentId: string; clientId: st
   if (sales.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <ShoppingBag className="h-8 w-8 text-muted-foreground/40 mb-2" />
+        <ShoppingBag className="h-8 w-8 text-muted-foreground mb-2" />
         <p className="text-sm text-muted-foreground">No hay compras registradas</p>
       </div>
     );
@@ -172,7 +172,7 @@ const AttendanceTab = ({ studentId, clientId }: { studentId: string; clientId: s
   if (records.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <ClipboardList className="h-8 w-8 text-muted-foreground/40 mb-2" />
+        <ClipboardList className="h-8 w-8 text-muted-foreground mb-2" />
         <p className="text-sm text-muted-foreground">No hay registros de asistencia</p>
       </div>
     );

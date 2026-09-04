@@ -145,9 +145,9 @@ const VariantsSection = ({ productId, clientId, productCurrency }: { productId: 
 
       {schemes.length === 0 && !adding && (
         <div className="text-center py-4 rounded-lg border border-dashed border-border/50">
-          <CreditCard className="h-5 w-5 text-muted-foreground/30 mx-auto mb-1.5" />
+          <CreditCard className="h-5 w-5 text-muted-foreground mx-auto mb-1.5" />
           <p className="text-[11px] text-muted-foreground">Sin variantes</p>
-          <p className="text-[10px] text-muted-foreground/70 mt-0.5">Agrega variantes con diferentes precios y opciones de cuotas</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Agrega variantes con diferentes precios y opciones de cuotas</p>
         </div>
       )}
     </div>
@@ -281,7 +281,7 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
             {/* Stock indicator (oculto para Speak Up) */}
             {!isSpeakUpCard && (
               isService ? (
-                <span className="text-[10px] text-muted-foreground/60 italic">Sin inventario</span>
+                <span className="text-[10px] text-muted-foreground italic">Sin inventario</span>
               ) : p.track_stock ? (
                 <span className={cn(
                   'text-[10px] font-semibold px-1.5 py-0.5 rounded-full inline-flex items-center gap-1',
@@ -294,12 +294,12 @@ const ProductCard = ({ p, allSchemes, onClick }: { p: ClientProduct; allSchemes:
                   {stockOut ? 'Sin stock' : `${p.stock_quantity}${p.stock_unit ? ` ${p.stock_unit}` : ''}`}
                 </span>
               ) : (
-                <span className="text-[10px] text-muted-foreground/60">Inventario desactivado</span>
+                <span className="text-[10px] text-muted-foreground">Inventario desactivado</span>
               )
             )}
           </div>
         </div>
-        <div className="text-muted-foreground/30 group-hover:text-primary/50 transition-colors shrink-0">
+        <div className="text-muted-foreground group-hover:text-primary/50 transition-colors shrink-0">
           <Pencil className="h-3.5 w-3.5" />
         </div>
       </div>
@@ -328,9 +328,9 @@ const StockSection = ({ product, clientId }: { product: ClientProduct; clientId:
   if (!product.track_stock) {
     return (
       <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-4 text-center">
-        <Boxes className="h-5 w-5 text-muted-foreground/40 mx-auto mb-1.5" />
+        <Boxes className="h-5 w-5 text-muted-foreground mx-auto mb-1.5" />
         <p className="text-xs text-muted-foreground">Inventario desactivado para este producto.</p>
-        <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+        <p className="text-[11px] text-muted-foreground mt-0.5">
           Editá el producto y activá "Llevar control de inventario" para empezar a registrar entradas y salidas.
         </p>
       </div>
@@ -578,7 +578,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
           {products.length > 0 && (
             <div className="space-y-2">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
@@ -588,7 +588,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
                 {search && (
                   <button
                     onClick={() => setSearch('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -637,7 +637,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
           ) : products.length === 0 ? (
             <div className="text-center py-10">
               <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
-                <Package className="h-5 w-5 text-muted-foreground/40" />
+                <Package className="h-5 w-5 text-muted-foreground" />
               </div>
               <p className="text-sm font-medium text-muted-foreground">{isSpeakUpMain ? 'Sin servicios' : 'Sin productos ni servicios'}</p>
               <p className="text-xs text-muted-foreground mt-1">{isSpeakUpMain ? 'Agregá servicios para vincularlos con ventas.' : 'Agregá productos o servicios para vincularlos con ventas.'}</p>
@@ -647,7 +647,7 @@ export const ProductsManager = ({ clientId }: ProductsManagerProps) => {
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-8">
-              <Search className="h-5 w-5 text-muted-foreground/30 mx-auto mb-2" />
+              <Search className="h-5 w-5 text-muted-foreground mx-auto mb-2" />
               <p className="text-xs text-muted-foreground">Ningún resultado para los filtros aplicados.</p>
               {hasFilters && (
                 <Button size="sm" variant="ghost" className="mt-2 h-7 text-[11px]" onClick={() => { setSearch(''); setTypeFilter('all'); setStockFilter('all'); }}>

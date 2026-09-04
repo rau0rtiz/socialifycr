@@ -205,7 +205,7 @@ const AgencyLeads = () => {
                       {lead.calendly_clicked ? (
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/40" />
+                        <XCircle className="h-4 w-4 text-muted-foreground" />
                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">

@@ -90,7 +90,7 @@ const EmailTemplatesContent = () => {
         {customTemplates.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <FileText className="h-10 w-10 text-muted-foreground/50 mb-3" />
+              <FileText className="h-10 w-10 text-muted-foreground mb-3" />
               <p className="text-muted-foreground text-sm">No hay plantillas personalizadas aún</p>
               <Button variant="outline" size="sm" className="mt-3 gap-1" onClick={() => openEditor(null)}>
                 <Plus className="h-3 w-3" /> Crear primera plantilla

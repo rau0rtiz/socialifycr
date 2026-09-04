@@ -59,7 +59,7 @@ export const LaunchView = ({ framework, campaignId, variants, onOpenVariant }: P
   if (phases.length === 0) {
     return (
       <Card className="p-12 text-center space-y-3">
-        <Rocket className="h-10 w-10 mx-auto text-muted-foreground/40" />
+        <Rocket className="h-10 w-10 mx-auto text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           Este lanzamiento no tiene fases configuradas todavía. Agrégalas desde "Editar dimensiones".
         </p>

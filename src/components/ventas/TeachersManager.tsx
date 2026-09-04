@@ -140,7 +140,7 @@ export const TeachersManager = ({ clientId }: TeachersManagerProps) => {
           ) : teachers.length === 0 ? (
             <div className="text-center py-10">
               <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
-                <GraduationCap className="h-5 w-5 text-muted-foreground/40" />
+                <GraduationCap className="h-5 w-5 text-muted-foreground" />
               </div>
               <p className="text-sm font-medium text-muted-foreground">Sin profesores</p>
               <p className="text-xs text-muted-foreground mt-1">Agrega profesores para asignarlos a ventas.</p>

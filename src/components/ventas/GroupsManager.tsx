@@ -113,7 +113,7 @@ export const GroupsManager = ({ clientId }: GroupsManagerProps) => {
       {groups.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <Users className="h-8 w-8 text-muted-foreground/50 mb-2" />
+            <Users className="h-8 w-8 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">No hay grupos creados</p>
             <p className="text-xs text-muted-foreground mt-1">Crea un grupo para organizar tus clases grupales</p>
           </CardContent>

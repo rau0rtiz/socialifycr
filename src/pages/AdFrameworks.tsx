@@ -88,7 +88,7 @@ const AdFrameworks = () => {
           <div className="text-muted-foreground text-sm py-12 text-center">Cargando frameworks...</div>
         ) : !frameworks || frameworks.length === 0 ? (
           <Card className="p-12 text-center space-y-3">
-            <Layers className="h-12 w-12 mx-auto text-muted-foreground/50" />
+            <Layers className="h-12 w-12 mx-auto text-muted-foreground" />
             <h3 className="font-semibold">Sin frameworks todavía</h3>
             <p className="text-sm text-muted-foreground">Crea tu primer framework para empezar a planificar campañas estructuradas.</p>
             {canManage && (

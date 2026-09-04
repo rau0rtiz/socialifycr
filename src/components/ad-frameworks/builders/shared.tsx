@@ -222,7 +222,7 @@ export const DimensionRow = ({
   return (
     <Card className="p-2 group">
       <div className="flex items-center gap-2">
-        <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+        <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
         {indexBadge && (
           <span className="text-[10px] font-bold rounded-full bg-muted px-1.5 py-0.5 shrink-0">
             {indexBadge}

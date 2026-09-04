@@ -120,7 +120,7 @@ export const TissueInventoryView = ({ clientId }: { clientId: string }) => {
                         {p.photo_url ? (
                           <img src={p.photo_url} alt={p.name} className="absolute inset-0 w-full h-full object-cover" />
                         ) : (
-                          <Package className="h-10 w-10 text-muted-foreground/30 absolute inset-0 m-auto" />
+                          <Package className="h-10 w-10 text-muted-foreground absolute inset-0 m-auto" />
                         )}
                         <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
                           <Badge variant="secondary" className="text-[10px]">{vs.length} var.</Badge>

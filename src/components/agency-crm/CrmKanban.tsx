@@ -169,7 +169,7 @@ export const CrmKanban = ({ leads, search, onOpenLead }: Props) => {
                           )}
                         </div>
                       </div>
-                      <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0 mt-0.5 group-hover:text-muted-foreground" />
+                      <GripVertical className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5 group-hover:text-muted-foreground" />
                     </div>
 
                     {/* Badges */}

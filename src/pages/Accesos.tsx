@@ -303,7 +303,7 @@ const Accesos = () => {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1.5">
-                                <Circle className={`h-2.5 w-2.5 fill-current ${isActive ? 'text-emerald-500' : lastSignIn ? 'text-amber-500' : 'text-muted-foreground/40'}`} />
+                                <Circle className={`h-2.5 w-2.5 fill-current ${isActive ? 'text-emerald-500' : lastSignIn ? 'text-amber-500' : 'text-muted-foreground'}`} />
                                 <span className={`text-sm ${isActive ? 'text-emerald-600 dark:text-emerald-400' : lastSignIn ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
                                   {isActive ? 'Activo' : lastSignIn ? 'Inactivo' : 'Nunca'}
                                 </span>

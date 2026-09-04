@@ -78,9 +78,9 @@ const CampaignsContent = () => {
       ) : sorted.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <CalendarClock className="h-10 w-10 text-muted-foreground/50 mb-3" />
+            <CalendarClock className="h-10 w-10 text-muted-foreground mb-3" />
             <p className="text-muted-foreground text-sm">No hay campañas todavía</p>
-            <p className="text-xs text-muted-foreground/70 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Empieza con <strong>Nueva campaña</strong> arriba o usa una <strong>Plantilla</strong>.
             </p>
           </CardContent>

@@ -869,7 +869,7 @@ const ContentCard = ({
               </div>
             )}
 
-            <span className="text-muted-foreground/60 ml-auto">
+            <span className="text-muted-foreground ml-auto">
               {format(new Date(post.date), 'dd MMM yyyy', { locale: es })}
             </span>
           </div>
