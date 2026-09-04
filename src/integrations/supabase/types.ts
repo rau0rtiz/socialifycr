@@ -802,10 +802,20 @@ export type Database = {
       agency_payment_clients: {
         Row: {
           active: boolean
+          anchor_month: string | null
+          billing_address: string | null
+          billing_email: string | null
+          billing_frequency: string
+          billing_name: string | null
+          billing_phone: string | null
+          billing_tax_id: string | null
+          client_id: string | null
           created_at: string
           currency: string
           id: string
+          invoice_day: number | null
           iva_rate: number
+          logo_url: string | null
           monthly_amount: number
           name: string
           notes: string | null
@@ -813,10 +823,20 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          anchor_month?: string | null
+          billing_address?: string | null
+          billing_email?: string | null
+          billing_frequency?: string
+          billing_name?: string | null
+          billing_phone?: string | null
+          billing_tax_id?: string | null
+          client_id?: string | null
           created_at?: string
           currency?: string
           id?: string
+          invoice_day?: number | null
           iva_rate?: number
+          logo_url?: string | null
           monthly_amount?: number
           name: string
           notes?: string | null
@@ -824,16 +844,34 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          anchor_month?: string | null
+          billing_address?: string | null
+          billing_email?: string | null
+          billing_frequency?: string
+          billing_name?: string | null
+          billing_phone?: string | null
+          billing_tax_id?: string | null
+          client_id?: string | null
           created_at?: string
           currency?: string
           id?: string
+          invoice_day?: number | null
           iva_rate?: number
+          logo_url?: string | null
           monthly_amount?: number
           name?: string
           notes?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "agency_payment_clients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       agency_payment_dates: {
         Row: {
