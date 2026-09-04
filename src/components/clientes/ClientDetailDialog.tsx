@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlatformConnections } from './PlatformConnections';
-import { Palette, Link2, Calendar, ImageIcon, Save, Loader2, Info } from 'lucide-react';
+import { Palette, Link2, Calendar, ImageIcon, Save, Loader2 } from 'lucide-react';
 import { useBrand } from '@/contexts/BrandContext';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
