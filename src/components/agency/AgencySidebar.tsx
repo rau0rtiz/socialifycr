@@ -67,8 +67,13 @@ export const AgencySidebar = () => {
 
   return (
     <SidebarComponent collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader className="p-4 pt-[max(1rem,env(safe-area-inset-top))]">
-        <div className="flex items-center gap-2.5">
+      <SidebarHeader
+        className={cn(
+          'pt-[max(1rem,env(safe-area-inset-top))]',
+          collapsed ? 'px-0 pb-2' : 'p-4',
+        )}
+      >
+        <div className={cn('flex items-center', collapsed ? 'justify-center' : 'gap-2.5')}>
           {!collapsed ? (
             <img
               src={socialifyLogo.url}
@@ -76,7 +81,11 @@ export const AgencySidebar = () => {
               className="h-4 w-auto object-contain object-left drop-shadow-[0_0_10px_hsl(var(--primary)/0.25)]"
             />
           ) : (
-            <div className="h-8 w-8 shrink-0 rounded-xl bg-primary agency-glow" />
+            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary agency-glow">
+              <span className="font-display text-[13px] font-bold leading-none text-primary-foreground">
+                s
+              </span>
+            </div>
           )}
         </div>
       </SidebarHeader>
@@ -92,7 +101,7 @@ export const AgencySidebar = () => {
             Operación
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="group-data-[collapsible=icon]/sidebar:items-center group-data-[collapsible=icon]/sidebar:gap-1.5">
               {AGENCY_NAV.map((item) => {
                 const active = isNavActive(item, pathname);
                 return (
@@ -113,7 +122,12 @@ export const AgencySidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border/70 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <SidebarFooter
+        className={cn(
+          'border-t border-sidebar-border/70 pb-[max(1rem,env(safe-area-inset-bottom))]',
+          collapsed ? 'px-0 pt-2' : 'p-4',
+        )}
+      >
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
