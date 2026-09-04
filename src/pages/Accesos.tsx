@@ -211,6 +211,7 @@ const Accesos = ({ embedded = false }: { embedded?: boolean } = {}) => {
   });
 
   const body = (
+    <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -525,6 +526,7 @@ const Accesos = ({ embedded = false }: { embedded?: boolean } = {}) => {
         currentAvatarUrl={avatarDialog.avatarUrl}
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ['admin-client-members'] })}
       />
+    </>
   );
 
   return embedded ? body : <DashboardLayout>{body}</DashboardLayout>;
