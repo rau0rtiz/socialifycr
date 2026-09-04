@@ -79,7 +79,7 @@ export const AgencyTopBar = () => {
                   if (e.key === 'Escape') setOpen(false);
                 }}
                 placeholder="Buscar sección..."
-                className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
+                className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
               />
             </div>
             {open && results.length > 0 && (

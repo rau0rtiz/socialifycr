@@ -73,7 +73,7 @@ export const AgencySidebar = () => {
               >
                 Socialify
               </span>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 Internal tool
               </span>
             </div>
@@ -83,7 +83,7 @@ export const AgencySidebar = () => {
 
       <SidebarContent className="overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Operación
           </SidebarGroupLabel>
           <SidebarGroupContent>
