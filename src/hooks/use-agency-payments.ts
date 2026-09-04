@@ -64,6 +64,12 @@ export const fmtMoney = (n: number, currency: string) =>
 export const isoDate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+/** El módulo de pagos arranca en setiembre 2026 — nada anterior se cuenta. */
+export const PAYMENTS_START = new Date(2026, 8, 1);
+export const PAYMENTS_START_ISO = isoDate(PAYMENTS_START);
+export const monthBeforeStart = (m: Date) =>
+  m.getFullYear() < 2026 || (m.getFullYear() === 2026 && m.getMonth() < 8);
+
 export const monthLabel = (d: Date) =>
   d.toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
 
@@ -151,6 +157,7 @@ export const useAgencyPayments = (monthDate: Date) => {
   const records = recordsQ.data || [];
 
   const buildInstallments = (month: Date, onlyActive = true): Installment[] => {
+    if (monthBeforeStart(month)) return [];
     const period = isoDate(new Date(month.getFullYear(), month.getMonth(), 1));
     const out: Installment[] = [];
     clients
