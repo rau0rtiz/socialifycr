@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card } from '@/components/ui/card';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import {
   useAgencyPayments,
   Installment,
@@ -12,8 +11,7 @@ import {
   monthBeforeStart,
 } from '@/hooks/use-agency-payments';
 import { MonthHeader } from '@/components/agency-payments/MonthHeader';
-import { OverdueStrip } from '@/components/agency-payments/OverdueStrip';
-import { PaymentClientRow } from '@/components/agency-payments/PaymentClientRow';
+import { PaymentTimeline } from '@/components/agency-payments/PaymentTimeline';
 import { PaymentClientDialog, SystemClient } from '@/components/agency-payments/PaymentClientDialog';
 
 export default function Pagos() {
