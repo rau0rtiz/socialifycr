@@ -101,7 +101,7 @@ export const AgencySidebar = () => {
             Operación
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="group-data-[collapsible=icon]/sidebar:items-center group-data-[collapsible=icon]/sidebar:gap-1.5">
               {AGENCY_NAV.map((item) => {
                 const active = isNavActive(item, pathname);
                 return (
@@ -122,7 +122,12 @@ export const AgencySidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border/70 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <SidebarFooter
+        className={cn(
+          'border-t border-sidebar-border/70 pb-[max(1rem,env(safe-area-inset-bottom))]',
+          collapsed ? 'px-0 pt-2' : 'p-4',
+        )}
+      >
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
