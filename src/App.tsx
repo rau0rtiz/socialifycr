@@ -351,13 +351,7 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
-                  <Route path="/archivos" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <Archivos />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
+                  <Route path="/archivos" element={<Navigate to="/agencia/ajustes?tab=archivos" replace />} />
                   {/* External PIN-protected image DB */}
                   <Route path="/imgdb" element={<ImageDBPinGate />} />
                   <Route path="/actualizar-foto" element={<ProtectedRoute><ActualizarFoto /></ProtectedRoute>} />
