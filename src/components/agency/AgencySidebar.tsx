@@ -43,7 +43,7 @@ export const AgencySidebar = () => {
       className={cn(
         'relative flex items-center rounded-xl transition-all',
         collapsed
-          ? '!h-10 !w-10 !justify-center !p-0'
+          ? '!size-9 !justify-center !gap-0 !p-0'
           : 'gap-3 py-2.5 px-3 md:py-2',
         active
           ? 'bg-primary/12 font-semibold text-foreground agency-neon'
@@ -91,7 +91,7 @@ export const AgencySidebar = () => {
       </SidebarHeader>
 
       <SidebarContent className="overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
-        <SidebarGroup>
+        <SidebarGroup className="group-data-[collapsible=icon]/sidebar:p-0">
           <SidebarGroupLabel
             className={cn(
               'text-[10px] uppercase tracking-[0.2em] text-muted-foreground',
@@ -101,16 +101,19 @@ export const AgencySidebar = () => {
             Operación
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="group-data-[collapsible=icon]/sidebar:items-center group-data-[collapsible=icon]/sidebar:gap-1.5">
+            <SidebarMenu className="group-data-[collapsible=icon]/sidebar:items-stretch group-data-[collapsible=icon]/sidebar:gap-1.5">
               {AGENCY_NAV.map((item) => {
                 const active = isNavActive(item, pathname);
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem
+                    key={item.title}
+                    className="group-data-[collapsible=icon]/sidebar:flex group-data-[collapsible=icon]/sidebar:w-full group-data-[collapsible=icon]/sidebar:justify-center"
+                  >
                     <SidebarMenuButton
                       asChild
                       isActive={active}
                       tooltip={item.title}
-                      className="h-auto group-data-[collapsible=icon]/sidebar:mx-auto"
+                      className="h-auto"
                     >
                       {renderLink(item, active)}
                     </SidebarMenuButton>
@@ -128,13 +131,13 @@ export const AgencySidebar = () => {
           collapsed ? 'px-0 pt-2' : 'p-4',
         )}
       >
-        <SidebarMenu>
-          <SidebarMenuItem>
+        <SidebarMenu className="group-data-[collapsible=icon]/sidebar:items-stretch">
+          <SidebarMenuItem className="group-data-[collapsible=icon]/sidebar:flex group-data-[collapsible=icon]/sidebar:w-full group-data-[collapsible=icon]/sidebar:justify-center">
             <SidebarMenuButton
               tooltip="Cerrar sesión"
               className={cn(
                 'text-muted-foreground hover:text-foreground transition-all',
-                collapsed && '!h-10 !w-10 !justify-center !p-0 mx-auto',
+                collapsed && '!size-9 !justify-center !gap-0 !p-0',
               )}
               onClick={async () => {
                 await signOut();
