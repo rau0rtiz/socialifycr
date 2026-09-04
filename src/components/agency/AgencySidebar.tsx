@@ -81,11 +81,11 @@ export const AgencySidebar = () => {
               className="h-4 w-auto object-contain object-left drop-shadow-[0_0_10px_hsl(var(--primary)/0.25)]"
             />
           ) : (
-            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary agency-glow">
-              <span className="font-display text-[13px] font-bold leading-none text-primary-foreground">
-                s
-              </span>
-            </div>
+            <img
+              src="https://chqhyqylnbtwyzhjkxlu.supabase.co/storage/v1/object/public/content-images/imgdb/general/1779672705393-favicon.png"
+              alt="Socialify"
+              className="h-7 w-7 shrink-0 rounded-lg object-contain drop-shadow-[0_0_10px_hsl(var(--primary)/0.35)]"
+            />
           )}
         </div>
       </SidebarHeader>
