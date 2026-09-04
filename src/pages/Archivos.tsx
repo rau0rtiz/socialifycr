@@ -399,9 +399,8 @@ const ArchivosLoader = () => (
   </div>
 );
 
-const Archivos = () => {
+export const ArchivosContent = () => {
   return (
-    <DashboardLayout>
       <Tabs defaultValue="imagenes" className="space-y-4">
         <div className="flex items-center gap-3">
           <FolderOpen className="h-5 w-5 text-muted-foreground" />
@@ -424,8 +423,13 @@ const Archivos = () => {
           <DocumentsManager />
         </TabsContent>
       </Tabs>
-    </DashboardLayout>
   );
 };
+
+const Archivos = () => (
+  <DashboardLayout>
+    <ArchivosContent />
+  </DashboardLayout>
+);
 
 export default Archivos;

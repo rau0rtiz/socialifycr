@@ -25,7 +25,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const DataDeletion = lazy(() => import("./pages/DataDeletion"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ImageDB = lazy(() => import("./pages/ImageDB"));
-const Archivos = lazy(() => import("./pages/Archivos"));
+
 const Accesos = lazy(() => import("./pages/Accesos"));
 const ActualizarFoto = lazy(() => import("./pages/ActualizarFoto"));
 const Funnel = lazy(() => import("./pages/Funnel"));
@@ -316,13 +316,7 @@ const App = () => (
                     </ProtectedRoute>
                   } />
                   <Route path="/agencia/accesos" element={<Navigate to="/agencia/ajustes?tab=accesos" replace />} />
-                  <Route path="/agencia/archivos" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <Archivos />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
+                  <Route path="/agencia/archivos" element={<Navigate to="/agencia/ajustes?tab=archivos" replace />} />
                   <Route path="/agencia/ajustes" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
@@ -357,13 +351,7 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
-                  <Route path="/archivos" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <Archivos />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
+                  <Route path="/archivos" element={<Navigate to="/agencia/ajustes?tab=archivos" replace />} />
                   {/* External PIN-protected image DB */}
                   <Route path="/imgdb" element={<ImageDBPinGate />} />
                   <Route path="/actualizar-foto" element={<ProtectedRoute><ActualizarFoto /></ProtectedRoute>} />
