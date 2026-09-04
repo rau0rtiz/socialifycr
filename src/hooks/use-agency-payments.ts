@@ -221,13 +221,14 @@ export const useAgencyPayments = (monthDate: Date) => {
 
   /** Totals per currency for the selected month. */
   const totalsByCurrency = useMemo(() => {
-    const t: Record<string, { billed: number; paid: number; pending: number }> = {};
+    const t: Record<string, { billed: number; paid: number; pending: number; iva: number }> = {};
     monthRows.filter(r => r.bills).forEach(r => {
       const cur = r.client.currency || 'USD';
-      t[cur] ??= { billed: 0, paid: 0, pending: 0 };
+      t[cur] ??= { billed: 0, paid: 0, pending: 0, iva: 0 };
       t[cur].billed += r.totalDue;
       t[cur].paid += r.totalPaid;
       t[cur].pending += Math.max(r.totalDue - r.totalPaid, 0);
+      t[cur].iva += r.ivaAmount;
     });
     return t;
   }, [monthRows]);
