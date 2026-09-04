@@ -116,6 +116,101 @@ const AgencyResumen = () => {
 
   return (
     <DashboardLayout>
+      <div className="mx-auto max-w-[1600px] space-y-5">
+        {/* Hero */}
+        <section className="agency-card relative overflow-hidden p-6 md:p-8">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
+          <div className="relative flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary shadow-[0_0_10px_hsl(var(--primary))]" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                  Live · Interno agencia
+                </p>
+              </div>
+              <h2
+                data-agency-display
+                className="mt-3 text-3xl font-bold tracking-tight text-foreground md:text-4xl"
+              >
+                Panel de control Socialify
+              </h2>
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+                Métricas críticas, cobros del mes y producciones en curso en una sola vista.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                to="/agencia/crm"
+                className="flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90 agency-glow"
+              >
+                <BarChart3 className="h-3.5 w-3.5" /> Pipeline
+              </Link>
+              <Link
+                to="/agencia/producciones"
+                className="flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+              >
+                <Clapperboard className="h-3.5 w-3.5" /> Producciones
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* KPIs */}
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          {kpis.map((kpi) => (
+            <Link key={kpi.key} to={kpi.href} className="agency-card agency-kpi group p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                  {kpi.label}
+                </div>
+                <kpi.icon className="h-4 w-4 text-muted-foreground/50 transition-colors group-hover:text-primary" />
+              </div>
+              <div
+                data-agency-display
+                className="mt-3 text-3xl font-bold tracking-tight tabular-nums text-foreground"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                ) : (
+                  kpi.value.toLocaleString('es-CR')
+                )}
+              </div>
+              <div className="mt-1.5 text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                {kpi.hint}
+              </div>
+            </Link>
+          ))}
+        </section>
+
+        {/* Main grid: chart + clientes | rail */}
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="space-y-5">
+            <LeadsOverTimeChart />
+            <CurrentClientsCard />
+          </div>
+          <HubRail />
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default AgencyResumen;
+
+  const { data, isLoading } = useAgencyKpis();
+
+  const kpis = useMemo(
+    () =>
+      (Object.keys(KPI_META) as KpiKey[]).map((k) => ({
+        key: k,
+        value: data?.[k] ?? 0,
+        ...KPI_META[k],
+      })),
+    [data],
+  );
+
+  return (
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-6 py-5">
