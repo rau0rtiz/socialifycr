@@ -11,19 +11,11 @@ import { BrandProvider } from "@/contexts/BrandContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
-import { SellerHomeGate } from "@/components/SellerHomeGate";
 import { Loader2 } from 'lucide-react';
-import MindCoachMasterclass from "./pages/MindCoachMasterclass";
 
 // Lazy-loaded pages
-const Dashboard = lazy(() => import("./pages/Dashboard"));
 const BrandSettings = lazy(() => import("./pages/BrandSettings"));
 const Clientes = lazy(() => import("./pages/Clientes"));
-const Ventas = lazy(() => import("./pages/Ventas"));
-const Ordenes = lazy(() => import("./pages/Ordenes"));
-const SpeakUpReportes = lazy(() => import("./pages/SpeakUpReportes"));
-
-const Historial = lazy(() => import("./pages/Historial"));
 const Auth = lazy(() => import("./pages/Auth"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const Invitacion = lazy(() => import("./pages/Invitacion"));
@@ -35,17 +27,11 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ImageDB = lazy(() => import("./pages/ImageDB"));
 const Archivos = lazy(() => import("./pages/Archivos"));
 const Accesos = lazy(() => import("./pages/Accesos"));
-const BusinessSetup = lazy(() => import("./pages/BusinessSetup"));
-const ClientDatabase = lazy(() => import("./pages/ClientDatabase"));
-
-
 const ActualizarFoto = lazy(() => import("./pages/ActualizarFoto"));
 const Funnel = lazy(() => import("./pages/Funnel"));
-const AgencyLeads = lazy(() => import("./pages/AgencyLeads"));
 const Comunicaciones = lazy(() => import("./pages/Comunicaciones"));
 const AgencyFunnels = lazy(() => import("./pages/agencia/Funnels"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
-const Comisiones = lazy(() => import("./pages/Comisiones"));
 const AdFrameworks = lazy(() => import("./pages/AdFrameworks"));
 const AdFrameworkDetail = lazy(() => import("./pages/AdFrameworkDetail"));
 const AdCampaignCanvas = lazy(() => import("./pages/AdCampaignCanvas"));
@@ -54,13 +40,13 @@ const Producciones = lazy(() => import("./pages/Producciones"));
 const ProduccionSheet = lazy(() => import("./pages/ProduccionSheet"));
 const ProduccionPublica = lazy(() => import("./pages/ProduccionPublica"));
 const ReciboPublico = lazy(() => import("./pages/ReciboPublico"));
-const SellerCrm = lazy(() => import("./pages/SellerCrm"));
 const Propuestas = lazy(() => import("./pages/Propuestas"));
 const PropuestaPublica = lazy(() => import("./pages/PropuestaPublica"));
 const FormularioPublico = lazy(() => import("./pages/FormularioPublico"));
 const AgencyResumen = lazy(() => import("./pages/agencia/Resumen"));
 const AgencyPagos = lazy(() => import("./pages/agencia/Pagos"));
 const AgencyBaseDeDatos = lazy(() => import("./pages/agencia/BaseDeDatos"));
+const AgencyClientDatabases = lazy(() => import("./pages/agencia/BasesDeDatosClientes"));
 const PortalSelect = lazy(() => import("./pages/PortalSelect"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
