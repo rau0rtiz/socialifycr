@@ -9,11 +9,13 @@ import {
   Clapperboard,
   FileText,
   Mail,
-  ArrowUpRight,
   BarChart3,
   Loader2,
   CalendarClock,
 } from 'lucide-react';
+import { LeadsOverTimeChart } from '@/components/agency/LeadsOverTimeChart';
+import { CurrentClientsCard } from '@/components/agency/CurrentClientsCard';
+import { HubRail } from '@/components/agency/HubRail';
 
 type KpiKey =
   | 'clients'
