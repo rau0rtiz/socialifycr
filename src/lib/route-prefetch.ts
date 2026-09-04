@@ -6,25 +6,20 @@
 type Loader = () => Promise<unknown>;
 
 const ROUTE_LOADERS: Record<string, Loader> = {
-  '/dashboard': () => import('@/pages/Dashboard'),
-  '/ventas': () => import('@/pages/Ventas'),
-  '/ordenes': () => import('@/pages/Ordenes'),
-  
-  '/comisiones': () => import('@/pages/Comisiones'),
-  '/funnel': () => import('@/pages/Funnel'),
-  '/agency-leads': () => import('@/pages/AgencyLeads'),
-  '/business-setup': () => import('@/pages/BusinessSetup'),
-  '/client-database': () => import('@/pages/ClientDatabase'),
-  '/clientes': () => import('@/pages/Clientes'),
-  '/comunicaciones': () => import('@/pages/Comunicaciones'),
+  '/agencia': () => import('@/pages/agencia/Resumen'),
+  '/agencia/clientes': () => import('@/pages/Clientes'),
+  '/agencia/crm': () => import('@/pages/AgencyCRM'),
+  '/agencia/pagos': () => import('@/pages/agencia/Pagos'),
+  '/agencia/producciones': () => import('@/pages/Producciones'),
+  '/agencia/documentacion': () => import('@/pages/Propuestas'),
   '/agencia/funnels': () => import('@/pages/agencia/Funnels'),
   '/agencia/base-de-datos': () => import('@/pages/agencia/BaseDeDatos'),
-  '/accesos': () => import('@/pages/Accesos'),
+  '/agencia/bases-de-datos-clientes': () => import('@/pages/agencia/BasesDeDatosClientes'),
+  '/agencia/comunicaciones': () => import('@/pages/Comunicaciones'),
+  '/agencia/accesos': () => import('@/pages/Accesos'),
+  '/agencia/archivos': () => import('@/pages/Archivos'),
+  '/agencia/ajustes': () => import('@/pages/BrandSettings'),
   '/ad-frameworks': () => import('@/pages/AdFrameworks'),
-  
-  '/historial': () => import('@/pages/Historial'),
-  '/archivos': () => import('@/pages/Archivos'),
-  '/brand-settings': () => import('@/pages/BrandSettings'),
 };
 
 const prefetched = new Set<string>();

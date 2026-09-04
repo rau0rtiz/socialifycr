@@ -33,13 +33,14 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
 
   const nextParam = searchParams.get('next');
-  const nextPath = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
+  const nextPath = nextParam && nextParam.startsWith('/') ? nextParam : '/agencia';
+  const blocked = searchParams.get('blocked') === '1';
 
   useEffect(() => {
-    if (user) {
+    if (user && !blocked) {
       navigate(nextPath, { replace: true });
     }
-  }, [user, navigate, nextPath]);
+  }, [user, navigate, nextPath, blocked]);
 
   const isQuickShortcut = (e: string, p: string) =>
     e.trim().toLowerCase() === QUICK_USER && p === QUICK_PASS;
@@ -134,9 +135,17 @@ const Auth = () => {
             loading="eager"
             decoding="async"
           />
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mt-1">
+            Acceso interno de la agencia
+          </p>
         </CardHeader>
 
         <CardContent>
+          {blocked && (
+            <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              Este acceso es solo para el equipo interno de Socialify.
+            </div>
+          )}
           {mode === 'login' ? (
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">

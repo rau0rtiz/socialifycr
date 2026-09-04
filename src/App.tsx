@@ -11,19 +11,11 @@ import { BrandProvider } from "@/contexts/BrandContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
-import { SellerHomeGate } from "@/components/SellerHomeGate";
 import { Loader2 } from 'lucide-react';
-import MindCoachMasterclass from "./pages/MindCoachMasterclass";
 
 // Lazy-loaded pages
-const Dashboard = lazy(() => import("./pages/Dashboard"));
 const BrandSettings = lazy(() => import("./pages/BrandSettings"));
 const Clientes = lazy(() => import("./pages/Clientes"));
-const Ventas = lazy(() => import("./pages/Ventas"));
-const Ordenes = lazy(() => import("./pages/Ordenes"));
-const SpeakUpReportes = lazy(() => import("./pages/SpeakUpReportes"));
-
-const Historial = lazy(() => import("./pages/Historial"));
 const Auth = lazy(() => import("./pages/Auth"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const Invitacion = lazy(() => import("./pages/Invitacion"));
@@ -35,17 +27,11 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ImageDB = lazy(() => import("./pages/ImageDB"));
 const Archivos = lazy(() => import("./pages/Archivos"));
 const Accesos = lazy(() => import("./pages/Accesos"));
-const BusinessSetup = lazy(() => import("./pages/BusinessSetup"));
-const ClientDatabase = lazy(() => import("./pages/ClientDatabase"));
-
-
 const ActualizarFoto = lazy(() => import("./pages/ActualizarFoto"));
 const Funnel = lazy(() => import("./pages/Funnel"));
-const AgencyLeads = lazy(() => import("./pages/AgencyLeads"));
 const Comunicaciones = lazy(() => import("./pages/Comunicaciones"));
 const AgencyFunnels = lazy(() => import("./pages/agencia/Funnels"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
-const Comisiones = lazy(() => import("./pages/Comisiones"));
 const AdFrameworks = lazy(() => import("./pages/AdFrameworks"));
 const AdFrameworkDetail = lazy(() => import("./pages/AdFrameworkDetail"));
 const AdCampaignCanvas = lazy(() => import("./pages/AdCampaignCanvas"));
@@ -54,13 +40,13 @@ const Producciones = lazy(() => import("./pages/Producciones"));
 const ProduccionSheet = lazy(() => import("./pages/ProduccionSheet"));
 const ProduccionPublica = lazy(() => import("./pages/ProduccionPublica"));
 const ReciboPublico = lazy(() => import("./pages/ReciboPublico"));
-const SellerCrm = lazy(() => import("./pages/SellerCrm"));
 const Propuestas = lazy(() => import("./pages/Propuestas"));
 const PropuestaPublica = lazy(() => import("./pages/PropuestaPublica"));
 const FormularioPublico = lazy(() => import("./pages/FormularioPublico"));
 const AgencyResumen = lazy(() => import("./pages/agencia/Resumen"));
 const AgencyPagos = lazy(() => import("./pages/agencia/Pagos"));
 const AgencyBaseDeDatos = lazy(() => import("./pages/agencia/BaseDeDatos"));
+const AgencyClientDatabases = lazy(() => import("./pages/agencia/BasesDeDatosClientes"));
 const PortalSelect = lazy(() => import("./pages/PortalSelect"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
@@ -218,30 +204,21 @@ const App = () => (
                   <Route path="/terminos" element={<Terms />} />
                   <Route path="/eliminar-datos" element={<DataDeletion />} />
                   <Route path="/" element={<PortalSelect />} />
-                  <Route path="/dashboard" element={<ProtectedRoute><SellerHomeGate /></ProtectedRoute>} />
-                  <Route path="/mis-leads" element={<ProtectedRoute><SellerCrm /></ProtectedRoute>} />
+                  {/* Portal cliente descontinuado — ver docs/PORTAL-CLIENTE-ARCHIVADO.md */}
+                  <Route path="/dashboard" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/mis-leads" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/ventas" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/ordenes" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/reportes" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/asistencia" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/comisiones" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/business-setup" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/masterclass" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/historial" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/brand-settings" element={<Navigate to="/agencia/ajustes" replace />} />
+                  <Route path="/clientes" element={<Navigate to="/agencia/clientes" replace />} />
+                  <Route path="/client-database" element={<Navigate to="/agencia/bases-de-datos-clientes" replace />} />
                   {/* Agency-only routes */}
-                  <Route path="/brand-settings" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <BrandSettings />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/clientes" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <Clientes />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/historial" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <Historial />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
                   <Route path="/accesos" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireManage>
@@ -249,8 +226,14 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
-                  <Route path="/business-setup" element={<ProtectedRoute><BusinessSetup /></ProtectedRoute>} />
-                  <Route path="/client-database" element={<ProtectedRoute><ClientDatabase /></ProtectedRoute>} />
+                  <Route path="/agencia/bases-de-datos-clientes" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyClientDatabases />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+
                   <Route path="/agencia/crm" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
@@ -373,11 +356,6 @@ const App = () => (
                       <AdCampaignCanvas />
                     </ProtectedRoute>
                   } />
-                  <Route path="/masterclass" element={
-                    <ProtectedRoute>
-                      <MindCoachMasterclass />
-                    </ProtectedRoute>
-                  } />
                   <Route path="/image-db" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
@@ -394,12 +372,6 @@ const App = () => (
                   } />
                   {/* External PIN-protected image DB */}
                   <Route path="/imgdb" element={<ImageDBPinGate />} />
-                  {/* Shared routes */}
-                  <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
-                  <Route path="/ordenes" element={<ProtectedRoute><Ordenes /></ProtectedRoute>} />
-                  <Route path="/reportes" element={<ProtectedRoute><SpeakUpReportes /></ProtectedRoute>} />
-                  
-                  <Route path="/comisiones" element={<ProtectedRoute><Comisiones /></ProtectedRoute>} />
                   <Route path="/actualizar-foto" element={<ProtectedRoute><ActualizarFoto /></ProtectedRoute>} />
                   <Route path="/roadmap" element={<Funnel />} />
                   <Route path="/comunicaciones" element={

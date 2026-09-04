@@ -39,8 +39,8 @@ type LeadRecord = {
 const STATUS_LABELS: Record<string, string> = { scheduled: 'Agendado', confirmed: 'Confirmado', completed: 'Completado', sold: 'Vendido', not_sold: 'No vendido', no_show: 'No se presentó', rescheduled: 'Reagendado' };
 const STATUS_COLORS: Record<string, string> = { scheduled: 'bg-blue-500/10 text-blue-600 border-blue-200', confirmed: 'bg-emerald-500/10 text-emerald-600 border-emerald-200', completed: 'bg-gray-500/10 text-gray-600 border-gray-200', sold: 'bg-green-500/10 text-green-700 border-green-200', not_sold: 'bg-red-500/10 text-red-600 border-red-200', no_show: 'bg-orange-500/10 text-orange-600 border-orange-200', rescheduled: 'bg-yellow-500/10 text-yellow-700 border-yellow-200' };
 
-const ClientDatabase = () => {
-  const { selectedClient } = useBrand();
+const BasesDeDatosClientes = () => {
+  const { selectedClient, clients, clientsLoading, setSelectedClient } = useBrand();
   const clientId = selectedClient?.id ?? null;
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
@@ -404,15 +404,32 @@ const ClientDatabase = () => {
     setDeletePassword('');
   };
 
+  const clientPicker = (
+    <Select
+      value={selectedClient?.id || ''}
+      onValueChange={(id) => setSelectedClient(clients.find(c => c.id === id) || null)}
+    >
+      <SelectTrigger className="w-[220px] h-9 text-sm">
+        <SelectValue placeholder={clientsLoading ? 'Cargando clientes...' : 'Elegir cliente'} />
+      </SelectTrigger>
+      <SelectContent>
+        {clients.map(c => (
+          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   if (!selectedClient) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-[60vh]">
           <Card className="max-w-md w-full">
-            <CardHeader className="text-center">
+            <CardHeader className="text-center items-center">
               <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-              <CardTitle className="text-lg">Selecciona un cliente</CardTitle>
-              <p className="text-sm text-muted-foreground">Selecciona un cliente para ver su base de datos.</p>
+              <CardTitle className="text-lg">Bases de datos de clientes</CardTitle>
+              <p className="text-sm text-muted-foreground mb-3">Elegí un cliente para ver su base de datos.</p>
+              {clientPicker}
             </CardHeader>
           </Card>
         </div>
@@ -440,16 +457,19 @@ const ClientDatabase = () => {
   return (
     <DashboardLayout>
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : isAlmaBendita ? 'Base de Clientas' : 'Base de Clientes'}</h1>
             {isPageLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           </div>
-          {isSpkUp && (
-            <Button size="sm" onClick={openNewStudent} className="gap-1.5 h-8 text-xs">
-              <Plus className="h-3.5 w-3.5" /> Nuevo estudiante
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {clientPicker}
+            {isSpkUp && (
+              <Button size="sm" onClick={openNewStudent} className="gap-1.5 h-8 text-xs">
+                <Plus className="h-3.5 w-3.5" /> Nuevo estudiante
+              </Button>
+            )}
+          </div>
         </div>
 
         {isPageLoading && hasNoData ? (
@@ -883,4 +903,4 @@ const ClientDatabase = () => {
   );
 };
 
-export default ClientDatabase;
+export default BasesDeDatosClientes;
