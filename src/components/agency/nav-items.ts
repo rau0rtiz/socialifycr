@@ -6,7 +6,6 @@ import {
   FileText,
   Mail,
   Megaphone,
-  KeyRound,
   FolderOpen,
   Wallet,
   Database,
@@ -31,7 +30,6 @@ export const AGENCY_NAV: AgencyNavItem[] = [
   { title: 'Base de datos', url: '/agencia/base-de-datos', icon: Database },
   { title: 'Bases de datos de clientes', url: '/agencia/bases-de-datos-clientes', icon: Users },
   { title: 'Comunicaciones', url: '/agencia/comunicaciones', icon: Mail },
-  { title: 'Accesos', url: '/agencia/accesos', icon: KeyRound },
   { title: 'Archivos', url: '/agencia/archivos', icon: FolderOpen },
   { title: 'Ajustes', url: '/agencia/ajustes', icon: Palette },
 ];
