@@ -82,7 +82,12 @@ export const AgencySidebar = () => {
 
       <SidebarContent className="overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          <SidebarGroupLabel
+            className={cn(
+              'text-[10px] uppercase tracking-[0.2em] text-muted-foreground',
+              collapsed && 'sr-only',
+            )}
+          >
             Operación
           </SidebarGroupLabel>
           <SidebarGroupContent>
