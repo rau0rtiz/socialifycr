@@ -9,11 +9,13 @@ interface Props {
   onToday: () => void;
   totals: Record<string, { billed: number; paid: number; pending: number }>;
   onNewClient: () => void;
+  /** Desactiva la flecha de mes anterior (mes cero = setiembre 2026). */
+  canPrev?: boolean;
 }
 
 const CURRENCIES = ['CRC', 'USD'];
 
-export const MonthHeader = ({ monthDate, onShift, onToday, totals, onNewClient }: Props) => {
+export const MonthHeader = ({ monthDate, onShift, onToday, totals, onNewClient, canPrev = true }: Props) => {
   const isCurrent =
     isoDate(new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)) ===
     isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
