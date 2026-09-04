@@ -5,11 +5,12 @@ import { Label } from '@/components/ui/label';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Button } from '@/components/ui/button';
 import { useBrand } from '@/contexts/BrandContext';
-import { ImageIcon, Save, Settings, KeyRound, Palette } from 'lucide-react';
+import { ImageIcon, Save, Settings, KeyRound, Palette, FolderOpen } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useSearchParams } from 'react-router-dom';
 import { useUserRole } from '@/hooks/use-user-role';
 import Accesos from '@/pages/Accesos';
+import { ArchivosContent } from '@/pages/Archivos';
 import { AgencyMetaConnection } from '@/components/agencia/AgencyMetaConnection';
 import { toast } from '@/hooks/use-toast';
 
@@ -17,7 +18,8 @@ const BrandSettings = () => {
   const { platformBrand, setPlatformBrand, saveBrandSettings, hasUnsavedChanges } = useBrand();
   const { canManage } = useUserRole();
   const [params, setParams] = useSearchParams();
-  const tab = params.get('tab') === 'accesos' && canManage ? 'accesos' : 'marca';
+  const requested = params.get('tab');
+  const tab = requested === 'archivos' ? 'archivos' : requested === 'accesos' && canManage ? 'accesos' : 'marca';
 
   const handleSave = () => {
     saveBrandSettings();
@@ -46,6 +48,7 @@ const BrandSettings = () => {
         <Tabs value={tab} onValueChange={(v) => setParams(v === 'marca' ? {} : { tab: v }, { replace: true })} className="space-y-6">
           <TabsList>
             <TabsTrigger value="marca" className="gap-2"><Palette className="h-4 w-4" />Marca</TabsTrigger>
+            <TabsTrigger value="archivos" className="gap-2"><FolderOpen className="h-4 w-4" />Archivos</TabsTrigger>
             {canManage && (
               <TabsTrigger value="accesos" className="gap-2"><KeyRound className="h-4 w-4" />Accesos</TabsTrigger>
             )}
@@ -162,6 +165,10 @@ const BrandSettings = () => {
         </Card>
 
           <AgencyMetaConnection />
+          </TabsContent>
+
+          <TabsContent value="archivos">
+            <ArchivosContent />
           </TabsContent>
 
           {canManage && (
