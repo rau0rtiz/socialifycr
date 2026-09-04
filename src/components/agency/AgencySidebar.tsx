@@ -42,7 +42,10 @@ export const AgencySidebar = () => {
         go(item.url);
       }}
       className={cn(
-        'relative flex items-center gap-3 rounded-xl py-2.5 transition-all md:py-2',
+        'relative flex items-center rounded-xl transition-all',
+        collapsed
+          ? 'h-10 w-10 justify-center p-0 mx-auto'
+          : 'gap-3 py-2.5 px-3 md:py-2',
         active
           ? 'bg-primary/12 font-semibold text-foreground agency-neon'
           : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
@@ -54,7 +57,7 @@ export const AgencySidebar = () => {
           active ? 'text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.8)]' : 'opacity-70',
         )}
       />
-      <span className="truncate">{item.title}</span>
+      {!collapsed && <span className="truncate">{item.title}</span>}
       {active && !collapsed && (
         <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
       )}
