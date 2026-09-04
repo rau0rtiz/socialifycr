@@ -14,7 +14,6 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,7 +41,10 @@ export const AgencySidebar = () => {
         go(item.url);
       }}
       className={cn(
-        'relative flex items-center gap-3 rounded-xl py-2.5 transition-all md:py-2',
+        'relative flex items-center rounded-xl transition-all',
+        collapsed
+          ? '!h-10 !w-10 !justify-center !p-0'
+          : 'gap-3 py-2.5 px-3 md:py-2',
         active
           ? 'bg-primary/12 font-semibold text-foreground agency-neon'
           : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
@@ -54,9 +56,11 @@ export const AgencySidebar = () => {
           active ? 'text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.8)]' : 'opacity-70',
         )}
       />
-      <span className="truncate">{item.title}</span>
-      {active && !collapsed && (
-        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+      <span className="truncate group-data-[collapsible=icon]/sidebar:hidden">
+        {item.title}
+      </span>
+      {active && (
+        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))] group-data-[collapsible=icon]/sidebar:hidden" />
       )}
     </a>
   );
@@ -79,7 +83,12 @@ export const AgencySidebar = () => {
 
       <SidebarContent className="overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          <SidebarGroupLabel
+            className={cn(
+              'text-[10px] uppercase tracking-[0.2em] text-muted-foreground',
+              collapsed && 'sr-only',
+            )}
+          >
             Operación
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -88,15 +97,13 @@ export const AgencySidebar = () => {
                 const active = isNavActive(item, pathname);
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active} className="h-auto">
-                      {collapsed ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>{renderLink(item, active)}</TooltipTrigger>
-                          <TooltipContent side="right">{item.title}</TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        renderLink(item, active)
-                      )}
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      tooltip={item.title}
+                      className="h-auto group-data-[collapsible=icon]/sidebar:mx-auto"
+                    >
+                      {renderLink(item, active)}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -110,14 +117,20 @@ export const AgencySidebar = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="text-muted-foreground hover:text-foreground"
+              tooltip="Cerrar sesión"
+              className={cn(
+                'text-muted-foreground hover:text-foreground transition-all',
+                collapsed && '!h-10 !w-10 !justify-center !p-0 mx-auto',
+              )}
               onClick={async () => {
                 await signOut();
                 navigate('/auth');
               }}
             >
-              <LogOut className="h-4 w-4" />
-              <span>Cerrar sesión</span>
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span className="truncate group-data-[collapsible=icon]/sidebar:hidden">
+                Cerrar sesión
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
