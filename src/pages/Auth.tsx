@@ -135,9 +135,17 @@ const Auth = () => {
             loading="eager"
             decoding="async"
           />
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mt-1">
+            Acceso interno de la agencia
+          </p>
         </CardHeader>
 
         <CardContent>
+          {blocked && (
+            <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              Este acceso es solo para el equipo interno de Socialify.
+            </div>
+          )}
           {mode === 'login' ? (
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
