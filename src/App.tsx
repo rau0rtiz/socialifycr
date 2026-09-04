@@ -316,13 +316,7 @@ const App = () => (
                     </ProtectedRoute>
                   } />
                   <Route path="/agencia/accesos" element={<Navigate to="/agencia/ajustes?tab=accesos" replace />} />
-                  <Route path="/agencia/archivos" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <Archivos />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
+                  <Route path="/agencia/archivos" element={<Navigate to="/agencia/ajustes?tab=archivos" replace />} />
                   <Route path="/agencia/ajustes" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>

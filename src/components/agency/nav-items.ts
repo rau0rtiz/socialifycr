@@ -6,7 +6,7 @@ import {
   FileText,
   Mail,
   Megaphone,
-  FolderOpen,
+  
   Wallet,
   Database,
   Palette,
