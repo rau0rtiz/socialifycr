@@ -1,6 +1,6 @@
-import { useMemo, useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, Search, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { useProfile, ProfileDialog } from '@/components/dashboard/ProfileDialog';
@@ -14,9 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { AGENCY_NAV, agencyRouteTitle } from './nav-items';
-import { prefetchRoute } from '@/lib/route-prefetch';
-import { cn } from '@/lib/utils';
+import { agencyRouteTitle } from './nav-items';
 
 /**
  * Top bar of the agency hub: section title, section search, notifications
@@ -28,27 +26,12 @@ export const AgencyTopBar = () => {
   const { signOut } = useAuth();
   const { data: profile } = useProfile();
   const [profileOpen, setProfileOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const [open, setOpen] = useState(false);
-  const [, startTransition] = useTransition();
 
   const title = agencyRouteTitle(pathname);
   const displayName = profile?.full_name || profile?.email || 'Usuario';
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : displayName[0]?.toUpperCase() || '?';
-
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return AGENCY_NAV.filter((i) => i.title.toLowerCase().includes(q)).slice(0, 6);
-  }, [query]);
-
-  const go = (url: string) => {
-    setOpen(false);
-    setQuery('');
-    startTransition(() => navigate(url));
-  };
 
   return (
     <>
@@ -63,45 +46,7 @@ export const AgencyTopBar = () => {
             {title}
           </h1>
 
-          <div className="relative ml-auto hidden min-w-0 max-w-sm flex-1 sm:block">
-            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 transition-colors focus-within:border-primary/60">
-              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <input
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setOpen(true);
-                }}
-                onFocus={() => setOpen(true)}
-                onBlur={() => window.setTimeout(() => setOpen(false), 120)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && results[0]) go(results[0].url);
-                  if (e.key === 'Escape') setOpen(false);
-                }}
-                placeholder="Buscar sección..."
-                className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-            {open && results.length > 0 && (
-              <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-popover p-1.5 shadow-xl">
-                {results.map((item) => (
-                  <button
-                    key={item.url}
-                    onMouseEnter={() => prefetchRoute(item.url)}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => go(item.url)}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  >
-                    <item.icon className="h-4 w-4 text-primary" />
-                    <span className="truncate">{item.title}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-
-          <div className={cn('flex items-center gap-1.5 sm:gap-2', 'ml-auto sm:ml-0')}>
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             <NotificationsPanel />
 
             <DropdownMenu>
