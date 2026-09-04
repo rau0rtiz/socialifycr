@@ -22,6 +22,16 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
   const { pathname } = useLocation();
   const isAgencyHub = pathname.startsWith('/agencia');
 
+  // The agency hub is always dark. The class lives on <html> so portalled
+  // surfaces (dialogs, dropdowns, toasts) inherit the same dark tokens.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isAgencyHub) root.classList.add('agency-theme', 'dark');
+    else root.classList.remove('agency-theme', 'dark');
+    return () => root.classList.remove('agency-theme', 'dark');
+  }, [isAgencyHub]);
+
+
   const clientBrand = selectedClient ? clientBrands[selectedClient.id] : null;
   const clientAccentColor = clientBrand?.accentColor || selectedClient?.accent_color || '217 91% 60%';
   const clientSecondaryColor = clientBrand?.secondaryColor || '199 89% 48%';
