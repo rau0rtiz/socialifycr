@@ -60,7 +60,7 @@ const roleLabels: Record<string, { label: string; color: string }> = {
   editor: { label: 'Editor', color: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20' },
 };
 
-const Accesos = () => {
+const Accesos = ({ embedded = false }: { embedded?: boolean } = {}) => {
   const { user } = useAuth();
   const { systemRole } = useUserRole();
   const queryClient = useQueryClient();
@@ -210,15 +210,19 @@ const Accesos = () => {
       m.role.toLowerCase().includes(term);
   });
 
-  return (
-    <DashboardLayout>
+  const body = (
+    <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Control de Accesos</h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Gestiona todos los usuarios con acceso a la plataforma
-            </p>
+            {!embedded && (
+              <>
+                <h1 className="text-2xl font-bold text-foreground">Control de Accesos</h1>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Gestiona todos los usuarios con acceso a la plataforma
+                </p>
+              </>
+            )}
           </div>
           <div className="flex gap-2">
             <div className="relative">
@@ -522,8 +526,10 @@ const Accesos = () => {
         currentAvatarUrl={avatarDialog.avatarUrl}
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ['admin-client-members'] })}
       />
-    </DashboardLayout>
+    </>
   );
+
+  return embedded ? body : <DashboardLayout>{body}</DashboardLayout>;
 };
 
 export default Accesos;

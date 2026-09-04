@@ -315,13 +315,7 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
-                  <Route path="/agencia/accesos" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireManage>
-                        <Accesos />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
+                  <Route path="/agencia/accesos" element={<Navigate to="/agencia/ajustes?tab=accesos" replace />} />
                   <Route path="/agencia/archivos" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>

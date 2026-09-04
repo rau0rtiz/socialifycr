@@ -5,12 +5,19 @@ import { Label } from '@/components/ui/label';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Button } from '@/components/ui/button';
 import { useBrand } from '@/contexts/BrandContext';
-import { ImageIcon, Save, Settings } from 'lucide-react';
+import { ImageIcon, Save, Settings, KeyRound, Palette } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useSearchParams } from 'react-router-dom';
+import { useUserRole } from '@/hooks/use-user-role';
+import Accesos from '@/pages/Accesos';
 import { AgencyMetaConnection } from '@/components/agencia/AgencyMetaConnection';
 import { toast } from '@/hooks/use-toast';
 
 const BrandSettings = () => {
   const { platformBrand, setPlatformBrand, saveBrandSettings, hasUnsavedChanges } = useBrand();
+  const { canManage } = useUserRole();
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'accesos' && canManage ? 'accesos' : 'marca';
 
   const handleSave = () => {
     saveBrandSettings();
@@ -22,17 +29,29 @@ const BrandSettings = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl">
+      <div className="max-w-5xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-semibold text-foreground">Ajustes del Dashboard</h1>
-            <p className="text-sm md:text-base text-muted-foreground">Personaliza la apariencia de Socialify</p>
+            <p className="text-sm md:text-base text-muted-foreground">Marca de la plataforma y control de accesos</p>
           </div>
-          <Button onClick={handleSave} disabled={!hasUnsavedChanges} className="gap-2">
-            <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">Guardar</span>
-          </Button>
+          {tab === 'marca' && (
+            <Button onClick={handleSave} disabled={!hasUnsavedChanges} className="gap-2">
+              <Save className="h-4 w-4" />
+              <span className="hidden sm:inline">Guardar</span>
+            </Button>
+          )}
         </div>
+
+        <Tabs value={tab} onValueChange={(v) => setParams(v === 'marca' ? {} : { tab: v }, { replace: true })} className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="marca" className="gap-2"><Palette className="h-4 w-4" />Marca</TabsTrigger>
+            {canManage && (
+              <TabsTrigger value="accesos" className="gap-2"><KeyRound className="h-4 w-4" />Accesos</TabsTrigger>
+            )}
+          </TabsList>
+
+          <TabsContent value="marca" className="space-y-6">
 
         <Card>
           <CardHeader>
@@ -142,9 +161,15 @@ const BrandSettings = () => {
           </CardContent>
         </Card>
 
-        <div className="mt-6">
           <AgencyMetaConnection />
-        </div>
+          </TabsContent>
+
+          {canManage && (
+            <TabsContent value="accesos">
+              <Accesos embedded />
+            </TabsContent>
+          )}
+        </Tabs>
       </div>
     </DashboardLayout>
   );
