@@ -16,6 +16,7 @@ import {
 import { LeadsOverTimeChart } from '@/components/agency/LeadsOverTimeChart';
 import { CurrentClientsCard } from '@/components/agency/CurrentClientsCard';
 import { HubRail } from '@/components/agency/HubRail';
+import { useProfile } from '@/components/dashboard/ProfileDialog';
 
 type KpiKey =
   | 'clients'
@@ -103,8 +104,28 @@ const useAgencyKpis = () => {
   });
 };
 
+const greetingForHour = (hour: number) => {
+  if (hour < 12) return 'Buenos días';
+  if (hour < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+};
+
 const AgencyResumen = () => {
   const { data, isLoading } = useAgencyKpis();
+  const { data: profile } = useProfile();
+
+  const greeting = useMemo(() => {
+    const hour = parseInt(
+      new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        hour12: false,
+        timeZone: 'America/Costa_Rica',
+      }).format(new Date()),
+      10,
+    );
+    const firstName = (profile?.full_name || 'Raul').trim().split(' ')[0];
+    return `${greetingForHour(hour)}, ${firstName}`;
+  }, [profile?.full_name]);
 
   const kpis = useMemo(
     () =>
@@ -124,17 +145,11 @@ const AgencyResumen = () => {
           <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
           <div className="relative flex flex-wrap items-end justify-between gap-6">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary shadow-[0_0_10px_hsl(var(--primary))]" />
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-                  Live · Interno agencia
-                </p>
-              </div>
               <h2
                 data-agency-display
-                className="mt-3 text-3xl font-bold tracking-tight text-foreground md:text-4xl"
+                className="text-3xl font-bold tracking-tight text-foreground md:text-4xl"
               >
-                Panel de control Socialify
+                {greeting}
               </h2>
               <p className="mt-2 max-w-xl text-sm text-muted-foreground">
                 Métricas críticas, cobros del mes y producciones en curso en una sola vista.
