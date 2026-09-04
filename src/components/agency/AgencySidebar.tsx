@@ -117,9 +117,10 @@ export const AgencySidebar = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
+              tooltip="Cerrar sesión"
               className={cn(
                 'text-muted-foreground hover:text-foreground transition-all',
-                collapsed && 'h-10 w-10 justify-center p-0 mx-auto',
+                collapsed && '!h-10 !w-10 !justify-center !p-0 mx-auto',
               )}
               onClick={async () => {
                 await signOut();
@@ -127,7 +128,9 @@ export const AgencySidebar = () => {
               }}
             >
               <LogOut className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>Cerrar sesión</span>}
+              <span className="truncate group-data-[collapsible=icon]/sidebar:hidden">
+                Cerrar sesión
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
