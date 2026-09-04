@@ -33,13 +33,14 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
 
   const nextParam = searchParams.get('next');
-  const nextPath = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
+  const nextPath = nextParam && nextParam.startsWith('/') ? nextParam : '/agencia';
+  const blocked = searchParams.get('blocked') === '1';
 
   useEffect(() => {
-    if (user) {
+    if (user && !blocked) {
       navigate(nextPath, { replace: true });
     }
-  }, [user, navigate, nextPath]);
+  }, [user, navigate, nextPath, blocked]);
 
   const isQuickShortcut = (e: string, p: string) =>
     e.trim().toLowerCase() === QUICK_USER && p === QUICK_PASS;
