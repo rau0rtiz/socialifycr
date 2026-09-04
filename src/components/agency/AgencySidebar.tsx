@@ -1,20 +1,5 @@
 import { useTransition } from 'react';
-import {
-  LayoutDashboard,
-  Users,
-  UserPlus,
-  Clapperboard,
-  FileText,
-  Mail,
-  Megaphone,
-  KeyRound,
-  FolderOpen,
-  Wallet,
-  Database,
-  Palette,
-  ArrowLeft,
-  LogOut,
-} from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Sidebar as SidebarComponent,
@@ -29,25 +14,11 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { useAuth } from '@/contexts/AuthContext';
-
-const items = [
-  { title: 'Resumen', url: '/agencia', icon: LayoutDashboard, exact: true },
-  { title: 'Clientes', url: '/agencia/clientes', icon: Users },
-  { title: 'CRM', url: '/agencia/crm', icon: UserPlus },
-  { title: 'Pagos', url: '/agencia/pagos', icon: Wallet },
-  { title: 'Producciones', url: '/agencia/producciones', icon: Clapperboard },
-  { title: 'Documentación', url: '/agencia/documentacion', icon: FileText },
-  { title: 'Funnels', url: '/agencia/funnels', icon: Megaphone },
-  { title: 'Base de datos', url: '/agencia/base-de-datos', icon: Database },
-  { title: 'Bases de datos de clientes', url: '/agencia/bases-de-datos-clientes', icon: Users },
-  { title: 'Comunicaciones', url: '/agencia/comunicaciones', icon: Mail },
-  { title: 'Accesos', url: '/agencia/accesos', icon: KeyRound },
-  { title: 'Archivos', url: '/agencia/archivos', icon: FolderOpen },
-  { title: 'Ajustes', url: '/agencia/ajustes', icon: Palette },
-];
+import { AGENCY_NAV, isNavActive, type AgencyNavItem } from './nav-items';
 
 export const AgencySidebar = () => {
   const { pathname } = useLocation();
@@ -59,15 +30,41 @@ export const AgencySidebar = () => {
 
   const go = (url: string) => startTransition(() => navigate(url));
 
-  const isActive = (item: (typeof items)[number]) =>
-    item.exact ? pathname === item.url : pathname.startsWith(item.url);
+  const renderLink = (item: AgencyNavItem, active: boolean) => (
+    <a
+      href={item.url}
+      onMouseEnter={() => prefetchRoute(item.url)}
+      onFocus={() => prefetchRoute(item.url)}
+      onTouchStart={() => prefetchRoute(item.url)}
+      onClick={(e) => {
+        e.preventDefault();
+        go(item.url);
+      }}
+      className={cn(
+        'relative flex items-center gap-3 rounded-xl py-2.5 transition-all md:py-2',
+        active
+          ? 'bg-primary/12 font-semibold text-foreground agency-neon'
+          : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
+      )}
+    >
+      <item.icon
+        className={cn(
+          'h-4 w-4 shrink-0 transition-colors',
+          active ? 'text-primary drop-shadow-[0_0_6px_hsl(var(--primary)/0.8)]' : 'opacity-70',
+        )}
+      />
+      <span className="truncate">{item.title}</span>
+      {active && !collapsed && (
+        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+      )}
+    </a>
+  );
 
   return (
-    <SidebarComponent collapsible="icon" className="border-r border-border bg-sidebar">
+    <SidebarComponent collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="p-4 pt-[max(1rem,env(safe-area-inset-top))]">
-
         <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 shrink-0 rounded-xl bg-primary" />
+          <div className="h-8 w-8 shrink-0 rounded-xl bg-primary agency-glow" />
           {!collapsed && (
             <div className="flex flex-col leading-tight">
               <span
@@ -91,36 +88,19 @@ export const AgencySidebar = () => {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => {
-                const active = isActive(item);
+              {AGENCY_NAV.map((item) => {
+                const active = isNavActive(item, pathname);
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={active} className="h-auto">
-                      <a
-                        href={item.url}
-                        onMouseEnter={() => prefetchRoute(item.url)}
-                        onFocus={() => prefetchRoute(item.url)}
-                        onTouchStart={() => prefetchRoute(item.url)}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          go(item.url);
-                        }}
-                        className={cn(
-                          'flex items-center gap-3 rounded-xl transition-colors relative py-2.5 md:py-2',
-                          active
-                            ? 'bg-accent text-foreground font-semibold'
-                            : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-                        )}
-                      >
-                        <item.icon
-                          className={cn('h-4 w-4', active ? 'text-primary' : 'opacity-70')}
-                        />
-                        <span className="truncate">{item.title}</span>
-                        {active && !collapsed && (
-                          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
-                        )}
-                      </a>
-
+                      {collapsed ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>{renderLink(item, active)}</TooltipTrigger>
+                          <TooltipContent side="right">{item.title}</TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        renderLink(item, active)
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -130,8 +110,7 @@ export const AgencySidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-
-      <SidebarFooter className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/60">
+      <SidebarFooter className="border-t border-sidebar-border/70 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
