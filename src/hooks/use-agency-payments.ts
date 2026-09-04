@@ -232,14 +232,16 @@ export const useAgencyPayments = (monthDate: Date) => {
     return t;
   }, [monthRows]);
 
-  /** Unpaid installments from the 12 previous months whose due date has passed. */
+  /** Unpaid installments whose due date has passed (nothing before PAYMENTS_START counts). */
   const overdue = useMemo(() => {
     const todayIso = isoDate(new Date());
     const items: Installment[] = [];
     for (let i = 1; i <= 12; i++) {
       const m = new Date(monthDate.getFullYear(), monthDate.getMonth() - i, 1);
+      if (monthBeforeStart(m)) break;
       buildInstallments(m).forEach(inst => {
         if (inst.withIva <= 0) return;
+        if (inst.dueIso < PAYMENTS_START_ISO) return;
         if (inst.dueIso >= todayIso) return;
         if (inst.record?.paid) return;
         items.push(inst);
