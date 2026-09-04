@@ -883,4 +883,4 @@ const BasesDeDatosClientes = () => {
   );
 };
 
-export default ClientDatabase;
+export default BasesDeDatosClientes;
