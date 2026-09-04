@@ -63,40 +63,43 @@ export const AgencyTopBar = () => {
             {title}
           </h1>
 
-          <Popover open={open && results.length > 0} onOpenChange={setOpen}>
-            <PopoverAnchor asChild>
-              <div className="ml-auto hidden min-w-0 max-w-sm flex-1 items-center gap-2 rounded-full border border-border bg-card px-4 py-2 transition-colors focus-within:border-primary/60 sm:flex">
-                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <input
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setOpen(true);
-                  }}
-                  onFocus={() => setOpen(true)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && results[0]) go(results[0].url);
-                    if (e.key === 'Escape') setOpen(false);
-                  }}
-                  placeholder="Buscar sección..."
-                  className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
-                />
+          <div className="relative ml-auto hidden min-w-0 max-w-sm flex-1 sm:block">
+            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 transition-colors focus-within:border-primary/60">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setOpen(true);
+                }}
+                onFocus={() => setOpen(true)}
+                onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && results[0]) go(results[0].url);
+                  if (e.key === 'Escape') setOpen(false);
+                }}
+                placeholder="Buscar sección..."
+                className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
+              />
+            </div>
+            {open && results.length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-popover p-1.5 shadow-xl">
+                {results.map((item) => (
+                  <button
+                    key={item.url}
+                    onMouseEnter={() => prefetchRoute(item.url)}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => go(item.url)}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <item.icon className="h-4 w-4 text-primary" />
+                    <span className="truncate">{item.title}</span>
+                  </button>
+                ))}
               </div>
-            </PopoverAnchor>
-            <PopoverContent align="end" className="w-72 p-1.5">
-              {results.map((item) => (
-                <button
-                  key={item.url}
-                  onMouseEnter={() => prefetchRoute(item.url)}
-                  onClick={() => go(item.url)}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                >
-                  <item.icon className="h-4 w-4 text-primary" />
-                  <span className="truncate">{item.title}</span>
-                </button>
-              ))}
-            </PopoverContent>
-          </Popover>
+            )}
+          </div>
+
 
           <div className={cn('flex items-center gap-1.5 sm:gap-2', 'ml-auto sm:ml-0')}>
             <NotificationsPanel />
