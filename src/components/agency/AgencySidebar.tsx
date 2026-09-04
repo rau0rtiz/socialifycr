@@ -118,14 +118,17 @@ export const AgencySidebar = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="text-muted-foreground hover:text-foreground"
+              className={cn(
+                'text-muted-foreground hover:text-foreground transition-all',
+                collapsed && 'h-10 w-10 justify-center p-0 mx-auto',
+              )}
               onClick={async () => {
                 await signOut();
                 navigate('/auth');
               }}
             >
-              <LogOut className="h-4 w-4" />
-              <span>Cerrar sesión</span>
+              <LogOut className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>Cerrar sesión</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
