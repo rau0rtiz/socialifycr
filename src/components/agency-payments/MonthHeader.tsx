@@ -53,7 +53,7 @@ export const MonthHeader = ({ monthDate, onShift, onToday, totals, onNewClient, 
 
       <div className="grid gap-3 sm:grid-cols-2">
         {CURRENCIES.map(cur => {
-          const t = totals[cur] || { billed: 0, paid: 0, pending: 0 };
+          const t = totals[cur] || { billed: 0, paid: 0, pending: 0, iva: 0 };
           return (
             <Card key={cur} className="p-4">
               <div className="flex items-baseline justify-between">
@@ -76,6 +76,17 @@ export const MonthHeader = ({ monthDate, onShift, onToday, totals, onNewClient, 
                   </div>
                 </div>
               </div>
+              <div className="mt-2 flex items-center justify-between rounded-md bg-sky-500/10 px-2 py-1.5 text-xs">
+                <span className="text-muted-foreground">IVA del mes (a pagar)</span>
+                <span className="font-mono font-semibold text-sky-700 dark:text-sky-400">
+                  {fmtMoney(t.iva, cur)}
+                </span>
+              </div>
+              {t.iva > 0 && (
+                <p className="mt-1.5 text-[10px] text-muted-foreground">
+                  Neto sin IVA: {fmtMoney(t.billed - t.iva, cur)}
+                </p>
+              )}
             </Card>
           );
         })}
