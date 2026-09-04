@@ -83,31 +83,20 @@ export default function Pagos() {
           onNewClient={openNew}
         />
 
-        <OverdueStrip items={overdue} onMarkPaid={markPaid} />
-
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : monthRows.length === 0 ? (
-          <Card className="p-10 text-center">
-            <Users className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">Sin clientes activos. Agregá el primero.</p>
-          </Card>
         ) : (
-          <div className="space-y-2">
-            {monthRows.map(row => (
-              <PaymentClientRow
-                key={row.client.id}
-                row={row}
-                logo={logoOf(row.client)}
-                monthDate={monthDate}
-                onEdit={() => openEdit(row.client.id)}
-                onTogglePaid={togglePaid}
-                onSetMethod={setMethod}
-              />
-            ))}
-          </div>
+          <PaymentTimeline
+            rows={monthRows}
+            overdue={overdue}
+            logoOf={logoOf}
+            monthDate={monthDate}
+            onEdit={openEdit}
+            onTogglePaid={togglePaid}
+            onSetMethod={setMethod}
+          />
         )}
       </div>
 
