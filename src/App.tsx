@@ -204,30 +204,21 @@ const App = () => (
                   <Route path="/terminos" element={<Terms />} />
                   <Route path="/eliminar-datos" element={<DataDeletion />} />
                   <Route path="/" element={<PortalSelect />} />
-                  <Route path="/dashboard" element={<ProtectedRoute><SellerHomeGate /></ProtectedRoute>} />
-                  <Route path="/mis-leads" element={<ProtectedRoute><SellerCrm /></ProtectedRoute>} />
+                  {/* Portal cliente descontinuado — ver docs/PORTAL-CLIENTE-ARCHIVADO.md */}
+                  <Route path="/dashboard" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/mis-leads" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/ventas" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/ordenes" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/reportes" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/asistencia" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/comisiones" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/business-setup" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/masterclass" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/historial" element={<Navigate to="/agencia" replace />} />
+                  <Route path="/brand-settings" element={<Navigate to="/agencia/ajustes" replace />} />
+                  <Route path="/clientes" element={<Navigate to="/agencia/clientes" replace />} />
+                  <Route path="/client-database" element={<Navigate to="/agencia/bases-de-datos-clientes" replace />} />
                   {/* Agency-only routes */}
-                  <Route path="/brand-settings" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <BrandSettings />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/clientes" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <Clientes />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/historial" element={
-                    <ProtectedRoute>
-                      <RoleProtectedRoute requireAgency>
-                        <Historial />
-                      </RoleProtectedRoute>
-                    </ProtectedRoute>
-                  } />
                   <Route path="/accesos" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireManage>
@@ -235,8 +226,14 @@ const App = () => (
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
-                  <Route path="/business-setup" element={<ProtectedRoute><BusinessSetup /></ProtectedRoute>} />
-                  <Route path="/client-database" element={<ProtectedRoute><ClientDatabase /></ProtectedRoute>} />
+                  <Route path="/agencia/bases-de-datos-clientes" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyClientDatabases />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+
                   <Route path="/agencia/crm" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
