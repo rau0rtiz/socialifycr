@@ -7,7 +7,7 @@ interface Props {
   monthDate: Date;
   onShift: (delta: number) => void;
   onToday: () => void;
-  totals: Record<string, { billed: number; paid: number; pending: number }>;
+  totals: Record<string, { billed: number; paid: number; pending: number; iva: number }>;
   onNewClient: () => void;
   /** Desactiva la flecha de mes anterior (mes cero = setiembre 2026). */
   canPrev?: boolean;
