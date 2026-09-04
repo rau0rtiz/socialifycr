@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverAnchor } from '@/components/ui/popover';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { AGENCY_NAV, agencyRouteTitle } from './nav-items';
 import { prefetchRoute } from '@/lib/route-prefetch';
