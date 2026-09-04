@@ -66,14 +66,7 @@ export const AgencySidebar = () => {
     <SidebarComponent collapsible="icon" className="border-r border-border bg-sidebar">
       <SidebarHeader className="p-4 pt-[max(1rem,env(safe-area-inset-top))]">
 
-        <button
-          onClick={() => go('/')}
-          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          {!collapsed && <span>Volver al dashboard</span>}
-        </button>
-        <div className="mt-3 flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5">
           <div className="h-8 w-8 shrink-0 rounded-xl bg-primary" />
           {!collapsed && (
             <div className="flex flex-col leading-tight">
