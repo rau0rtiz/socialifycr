@@ -8,6 +8,8 @@ import {
   useAgencyPayments,
   Installment,
   PayClient,
+  PAYMENTS_START,
+  monthBeforeStart,
 } from '@/hooks/use-agency-payments';
 import { MonthHeader } from '@/components/agency-payments/MonthHeader';
 import { OverdueStrip } from '@/components/agency-payments/OverdueStrip';
