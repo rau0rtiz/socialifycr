@@ -1,13 +1,15 @@
-import { ReactNode, CSSProperties } from 'react';
+import { ReactNode, CSSProperties, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Sidebar } from './Sidebar';
 import { AgencySidebar } from '@/components/agency/AgencySidebar';
+import { AgencyTopBar } from '@/components/agency/AgencyTopBar';
 import { TopBar } from './TopBar';
 
 import { useBrand } from '@/contexts/BrandContext';
 import { isProduccionesHost } from '@/lib/host-mode';
 import { cn } from '@/lib/utils';
+
 
 
 export interface DashboardLayoutProps {
