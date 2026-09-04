@@ -39,8 +39,8 @@ type LeadRecord = {
 const STATUS_LABELS: Record<string, string> = { scheduled: 'Agendado', confirmed: 'Confirmado', completed: 'Completado', sold: 'Vendido', not_sold: 'No vendido', no_show: 'No se presentó', rescheduled: 'Reagendado' };
 const STATUS_COLORS: Record<string, string> = { scheduled: 'bg-blue-500/10 text-blue-600 border-blue-200', confirmed: 'bg-emerald-500/10 text-emerald-600 border-emerald-200', completed: 'bg-gray-500/10 text-gray-600 border-gray-200', sold: 'bg-green-500/10 text-green-700 border-green-200', not_sold: 'bg-red-500/10 text-red-600 border-red-200', no_show: 'bg-orange-500/10 text-orange-600 border-orange-200', rescheduled: 'bg-yellow-500/10 text-yellow-700 border-yellow-200' };
 
-const ClientDatabase = () => {
-  const { selectedClient } = useBrand();
+const BasesDeDatosClientes = () => {
+  const { selectedClient, clients, clientsLoading, setSelectedClient } = useBrand();
   const clientId = selectedClient?.id ?? null;
   const isSpkUp = selectedClient?.name?.toLowerCase().includes('speak up');
   const isAlmaBendita = selectedClient?.name?.toLowerCase().includes('alma bendita');
