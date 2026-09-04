@@ -404,15 +404,32 @@ const BasesDeDatosClientes = () => {
     setDeletePassword('');
   };
 
+  const clientPicker = (
+    <Select
+      value={selectedClient?.id || ''}
+      onValueChange={(id) => setSelectedClient(clients.find(c => c.id === id) || null)}
+    >
+      <SelectTrigger className="w-[220px] h-9 text-sm">
+        <SelectValue placeholder={clientsLoading ? 'Cargando clientes...' : 'Elegir cliente'} />
+      </SelectTrigger>
+      <SelectContent>
+        {clients.map(c => (
+          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   if (!selectedClient) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-[60vh]">
           <Card className="max-w-md w-full">
-            <CardHeader className="text-center">
+            <CardHeader className="text-center items-center">
               <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-              <CardTitle className="text-lg">Selecciona un cliente</CardTitle>
-              <p className="text-sm text-muted-foreground">Selecciona un cliente para ver su base de datos.</p>
+              <CardTitle className="text-lg">Bases de datos de clientes</CardTitle>
+              <p className="text-sm text-muted-foreground mb-3">Elegí un cliente para ver su base de datos.</p>
+              {clientPicker}
             </CardHeader>
           </Card>
         </div>
