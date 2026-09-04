@@ -423,8 +423,13 @@ export const ArchivosContent = () => {
           <DocumentsManager />
         </TabsContent>
       </Tabs>
-    </DashboardLayout>
   );
 };
+
+const Archivos = () => (
+  <DashboardLayout>
+    <ArchivosContent />
+  </DashboardLayout>
+);
 
 export default Archivos;
