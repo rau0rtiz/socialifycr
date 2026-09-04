@@ -65,7 +65,11 @@ export const PaymentClientRow = ({ row, logo, monthDate, onEdit, onTogglePaid, o
             {Number(client.iva_rate) > 0 && (
               <Badge variant="outline" className="text-[10px] h-5">IVA {Number(client.iva_rate)}%</Badge>
             )}
-            {hasBilling && <FileText className="h-3.5 w-3.5 text-muted-foreground" title="Datos de facturación completos" />}
+            {hasBilling && (
+              <span title="Datos de facturación registrados">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+              </span>
+            )}
           </div>
 
           {bills ? (
