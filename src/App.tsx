@@ -356,11 +356,6 @@ const App = () => (
                       <AdCampaignCanvas />
                     </ProtectedRoute>
                   } />
-                  <Route path="/masterclass" element={
-                    <ProtectedRoute>
-                      <MindCoachMasterclass />
-                    </ProtectedRoute>
-                  } />
                   <Route path="/image-db" element={
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
@@ -377,12 +372,6 @@ const App = () => (
                   } />
                   {/* External PIN-protected image DB */}
                   <Route path="/imgdb" element={<ImageDBPinGate />} />
-                  {/* Shared routes */}
-                  <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
-                  <Route path="/ordenes" element={<ProtectedRoute><Ordenes /></ProtectedRoute>} />
-                  <Route path="/reportes" element={<ProtectedRoute><SpeakUpReportes /></ProtectedRoute>} />
-                  
-                  <Route path="/comisiones" element={<ProtectedRoute><Comisiones /></ProtectedRoute>} />
                   <Route path="/actualizar-foto" element={<ProtectedRoute><ActualizarFoto /></ProtectedRoute>} />
                   <Route path="/roadmap" element={<Funnel />} />
                   <Route path="/comunicaciones" element={
