@@ -64,6 +64,12 @@ export const fmtMoney = (n: number, currency: string) =>
 export const isoDate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+/** El módulo de pagos arranca en setiembre 2026 — nada anterior se cuenta. */
+export const PAYMENTS_START = new Date(2026, 8, 1);
+export const PAYMENTS_START_ISO = isoDate(PAYMENTS_START);
+export const monthBeforeStart = (m: Date) =>
+  m.getFullYear() < 2026 || (m.getFullYear() === 2026 && m.getMonth() < 8);
+
 export const monthLabel = (d: Date) =>
   d.toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
 
@@ -151,6 +157,7 @@ export const useAgencyPayments = (monthDate: Date) => {
   const records = recordsQ.data || [];
 
   const buildInstallments = (month: Date, onlyActive = true): Installment[] => {
+    if (monthBeforeStart(month)) return [];
     const period = isoDate(new Date(month.getFullYear(), month.getMonth(), 1));
     const out: Installment[] = [];
     clients
@@ -225,14 +232,16 @@ export const useAgencyPayments = (monthDate: Date) => {
     return t;
   }, [monthRows]);
 
-  /** Unpaid installments from the 12 previous months whose due date has passed. */
+  /** Unpaid installments whose due date has passed (nothing before PAYMENTS_START counts). */
   const overdue = useMemo(() => {
     const todayIso = isoDate(new Date());
     const items: Installment[] = [];
     for (let i = 1; i <= 12; i++) {
       const m = new Date(monthDate.getFullYear(), monthDate.getMonth() - i, 1);
+      if (monthBeforeStart(m)) break;
       buildInstallments(m).forEach(inst => {
         if (inst.withIva <= 0) return;
+        if (inst.dueIso < PAYMENTS_START_ISO) return;
         if (inst.dueIso >= todayIso) return;
         if (inst.record?.paid) return;
         items.push(inst);

@@ -8,6 +8,8 @@ import {
   useAgencyPayments,
   Installment,
   PayClient,
+  PAYMENTS_START,
+  monthBeforeStart,
 } from '@/hooks/use-agency-payments';
 import { MonthHeader } from '@/components/agency-payments/MonthHeader';
 import { OverdueStrip } from '@/components/agency-payments/OverdueStrip';
@@ -17,7 +19,8 @@ import { PaymentClientDialog, SystemClient } from '@/components/agency-payments/
 export default function Pagos() {
   const [monthDate, setMonthDate] = useState(() => {
     const n = new Date();
-    return new Date(n.getFullYear(), n.getMonth(), 1);
+    const cur = new Date(n.getFullYear(), n.getMonth(), 1);
+    return cur < PAYMENTS_START ? PAYMENTS_START : cur;
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -68,8 +71,16 @@ export default function Pagos() {
       <div className="space-y-5">
         <MonthHeader
           monthDate={monthDate}
-          onShift={(d) => setMonthDate(new Date(monthDate.getFullYear(), monthDate.getMonth() + d, 1))}
-          onToday={() => setMonthDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1))}
+          canPrev={!monthBeforeStart(new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1))}
+          onShift={(d) => {
+            const next = new Date(monthDate.getFullYear(), monthDate.getMonth() + d, 1);
+            setMonthDate(monthBeforeStart(next) ? PAYMENTS_START : next);
+          }}
+          onToday={() => {
+            const n = new Date();
+            const cur = new Date(n.getFullYear(), n.getMonth(), 1);
+            setMonthDate(cur < PAYMENTS_START ? PAYMENTS_START : cur);
+          }}
           totals={totalsByCurrency}
           onNewClient={openNew}
         />

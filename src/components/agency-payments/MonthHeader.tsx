@@ -9,11 +9,13 @@ interface Props {
   onToday: () => void;
   totals: Record<string, { billed: number; paid: number; pending: number }>;
   onNewClient: () => void;
+  /** Desactiva la flecha de mes anterior (mes cero = setiembre 2026). */
+  canPrev?: boolean;
 }
 
 const CURRENCIES = ['CRC', 'USD'];
 
-export const MonthHeader = ({ monthDate, onShift, onToday, totals, onNewClient }: Props) => {
+export const MonthHeader = ({ monthDate, onShift, onToday, totals, onNewClient, canPrev = true }: Props) => {
   const isCurrent =
     isoDate(new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)) ===
     isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -32,7 +34,7 @@ export const MonthHeader = ({ monthDate, onShift, onToday, totals, onNewClient }
         </div>
         <div className="flex items-center gap-2">
           <div className="inline-flex items-center gap-1 border rounded-lg bg-card">
-            <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => onShift(-1)} aria-label="Mes anterior">
+            <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => onShift(-1)} disabled={!canPrev} aria-label="Mes anterior">
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <button onClick={onToday} className="px-3 min-w-[150px] text-center">
