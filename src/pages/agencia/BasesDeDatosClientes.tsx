@@ -457,16 +457,19 @@ const BasesDeDatosClientes = () => {
   return (
     <DashboardLayout>
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-foreground">{isSpkUp ? 'Base de Estudiantes' : isAlmaBendita ? 'Base de Clientas' : 'Base de Clientes'}</h1>
             {isPageLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           </div>
-          {isSpkUp && (
-            <Button size="sm" onClick={openNewStudent} className="gap-1.5 h-8 text-xs">
-              <Plus className="h-3.5 w-3.5" /> Nuevo estudiante
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {clientPicker}
+            {isSpkUp && (
+              <Button size="sm" onClick={openNewStudent} className="gap-1.5 h-8 text-xs">
+                <Plus className="h-3.5 w-3.5" /> Nuevo estudiante
+              </Button>
+            )}
+          </div>
         </div>
 
         {isPageLoading && hasNoData ? (
