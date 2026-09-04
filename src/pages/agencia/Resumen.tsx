@@ -9,11 +9,13 @@ import {
   Clapperboard,
   FileText,
   Mail,
-  ArrowUpRight,
   BarChart3,
   Loader2,
   CalendarClock,
 } from 'lucide-react';
+import { LeadsOverTimeChart } from '@/components/agency/LeadsOverTimeChart';
+import { CurrentClientsCard } from '@/components/agency/CurrentClientsCard';
+import { HubRail } from '@/components/agency/HubRail';
 
 type KpiKey =
   | 'clients'
@@ -116,122 +118,83 @@ const AgencyResumen = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-6 py-5">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-              Interno · Agencia
-            </p>
-            <h1 className="mt-1 text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-              Resumen
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Monitor de métricas críticas y flujos activos.
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-foreground">Agencia Socialify</p>
-              <p className="text-xs text-muted-foreground">Dashboard administrativo</p>
+      <div className="mx-auto max-w-[1600px] space-y-5">
+        {/* Hero */}
+        <section className="agency-card relative overflow-hidden p-6 md:p-8">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
+          <div className="relative flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary shadow-[0_0_10px_hsl(var(--primary))]" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                  Live · Interno agencia
+                </p>
+              </div>
+              <h2
+                data-agency-display
+                className="mt-3 text-3xl font-bold tracking-tight text-foreground md:text-4xl"
+              >
+                Panel de control Socialify
+              </h2>
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+                Métricas críticas, cobros del mes y producciones en curso en una sola vista.
+              </p>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-                Live
-              </span>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                to="/agencia/crm"
+                className="flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-primary-foreground transition-opacity hover:opacity-90 agency-glow"
+              >
+                <BarChart3 className="h-3.5 w-3.5" /> Pipeline
+              </Link>
+              <Link
+                to="/agencia/producciones"
+                className="flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+              >
+                <Clapperboard className="h-3.5 w-3.5" /> Producciones
+              </Link>
             </div>
           </div>
-        </header>
+        </section>
 
-        {/* KPI Grid */}
-        <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* KPIs */}
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
           {kpis.map((kpi) => (
-            <Link
-              key={kpi.key}
-              to={kpi.href}
-              className="agency-card agency-kpi group p-5"
-            >
+            <Link key={kpi.key} to={kpi.href} className="agency-card agency-kpi group p-4">
               <div className="flex items-center justify-between">
                 <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
                   {kpi.label}
                 </div>
-                <kpi.icon className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                <kpi.icon className="h-4 w-4 text-muted-foreground/50 transition-colors group-hover:text-primary" />
               </div>
-              <div className="mt-4 text-3xl font-bold tracking-tight text-foreground tabular-nums">
+              <div
+                data-agency-display
+                className="mt-3 text-3xl font-bold tracking-tight tabular-nums text-foreground"
+              >
                 {isLoading ? (
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 ) : (
                   kpi.value.toLocaleString('es-CR')
                 )}
               </div>
-              <div className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground/70">
+              <div className="mt-1.5 text-[10px] uppercase tracking-widest text-muted-foreground/70">
                 {kpi.hint}
               </div>
             </Link>
           ))}
         </section>
 
-        {/* Quick Actions */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold tracking-tight text-foreground">
-            Accesos rápidos
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <QuickAction
-              to="/agencia/crm"
-              icon={BarChart3}
-              title="Abrir Pipeline Comercial"
-              description="Visualizá el flujo de conversión y gestioná leads, contratos y comisiones."
-            />
-            <QuickAction
-              to="/agencia/producciones"
-              icon={Clapperboard}
-              title="Consola de Producción"
-              description="Revisá calendario de grabaciones, estados y hojas por cliente."
-            />
+        {/* Main grid: chart + clientes | rail */}
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="space-y-5">
+            <LeadsOverTimeChart />
+            <CurrentClientsCard />
           </div>
-        </section>
+          <HubRail />
+        </div>
       </div>
     </DashboardLayout>
   );
 };
-
-const QuickAction = ({
-  to,
-  icon: Icon,
-  title,
-  description,
-}: {
-  to: string;
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}) => (
-  <Link
-    to={to}
-    className="group relative overflow-hidden rounded-2xl border border-border bg-background p-8 transition-colors hover:border-primary/50"
-  >
-    <div className="flex items-start justify-between gap-6">
-      <div className="space-y-5">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-card text-primary transition-transform group-hover:scale-110">
-          <Icon className="h-6 w-6" />
-        </div>
-        <div>
-          <h3 className="text-xl font-bold tracking-tight text-foreground">
-            {title}
-          </h3>
-          <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-            {description}
-          </p>
-        </div>
-      </div>
-      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors group-hover:border-primary/50 group-hover:text-primary">
-        <ArrowUpRight className="h-4 w-4" />
-      </div>
-    </div>
-  </Link>
-);
-
 
 export default AgencyResumen;

@@ -1,13 +1,15 @@
-import { ReactNode, CSSProperties } from 'react';
+import { ReactNode, CSSProperties, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Sidebar } from './Sidebar';
 import { AgencySidebar } from '@/components/agency/AgencySidebar';
+import { AgencyTopBar } from '@/components/agency/AgencyTopBar';
 import { TopBar } from './TopBar';
 
 import { useBrand } from '@/contexts/BrandContext';
 import { isProduccionesHost } from '@/lib/host-mode';
 import { cn } from '@/lib/utils';
+
 
 
 export interface DashboardLayoutProps {
@@ -19,6 +21,16 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
   const { platformBrand, selectedClient, clientBrands } = useBrand();
   const { pathname } = useLocation();
   const isAgencyHub = pathname.startsWith('/agencia');
+
+  // The agency hub is always dark. The class lives on <html> so portalled
+  // surfaces (dialogs, dropdowns, toasts) inherit the same dark tokens.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isAgencyHub) root.classList.add('agency-theme', 'dark');
+    else root.classList.remove('agency-theme', 'dark');
+    return () => root.classList.remove('agency-theme', 'dark');
+  }, [isAgencyHub]);
+
 
   const clientBrand = selectedClient ? clientBrands[selectedClient.id] : null;
   const clientAccentColor = clientBrand?.accentColor || selectedClient?.accent_color || '217 91% 60%';
@@ -60,12 +72,7 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
           {!isAgencyHub && <TopBar />}
           {isAgencyHub && (
             <>
-              <header className="flex items-center gap-2 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] border-b border-border/60 shrink-0">
-                <SidebarTrigger className="h-10 w-10 text-foreground md:h-8 md:w-8" />
-                <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground md:hidden">
-                  Menú
-                </span>
-              </header>
+              <AgencyTopBar />
               {/* Thumb-reachable trigger on phones */}
               <SidebarTrigger
                 aria-label="Abrir menú"
