@@ -72,12 +72,7 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
           {!isAgencyHub && <TopBar />}
           {isAgencyHub && (
             <>
-              <header className="flex items-center gap-2 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] border-b border-border/60 shrink-0">
-                <SidebarTrigger className="h-10 w-10 text-foreground md:h-8 md:w-8" />
-                <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground md:hidden">
-                  Menú
-                </span>
-              </header>
+              <AgencyTopBar />
               {/* Thumb-reachable trigger on phones */}
               <SidebarTrigger
                 aria-label="Abrir menú"
