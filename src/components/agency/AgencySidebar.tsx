@@ -98,15 +98,13 @@ export const AgencySidebar = () => {
                 const active = isNavActive(item, pathname);
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active} className="h-auto">
-                      {collapsed ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>{renderLink(item, active)}</TooltipTrigger>
-                          <TooltipContent side="right">{item.title}</TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        renderLink(item, active)
-                      )}
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      tooltip={item.title}
+                      className="h-auto group-data-[collapsible=icon]/sidebar:mx-auto"
+                    >
+                      {renderLink(item, active)}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
