@@ -80,7 +80,7 @@ export const PaymentClientRow = ({ row, logo, monthDate, onEdit, onTogglePaid, o
               <div className="mt-2 space-y-1.5">
                 {items.map(inst => {
                   const paid = !!inst.record?.paid;
-                  const overdue = !paid && inst.dueIso < new Date().toISOString().slice(0, 10);
+                  const overdue = !paid && inst.withIva > 0 && inst.dueIso < new Date().toISOString().slice(0, 10);
                   return (
                     <div
                       key={inst.schedule.id}
