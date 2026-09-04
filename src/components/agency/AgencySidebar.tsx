@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { useAuth } from '@/contexts/AuthContext';
 import { AGENCY_NAV, isNavActive, type AgencyNavItem } from './nav-items';
+import socialifyLogo from '@/assets/socialify-wordmark.png.asset.json';
 
 export const AgencySidebar = () => {
   const { pathname } = useLocation();
@@ -64,19 +65,19 @@ export const AgencySidebar = () => {
     <SidebarComponent collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="p-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 shrink-0 rounded-xl bg-primary agency-glow" />
-          {!collapsed && (
-            <div className="flex flex-col leading-tight">
-              <span
-                data-agency-display
-                className="text-base font-bold tracking-tight text-foreground"
-              >
-                Socialify
-              </span>
+          {!collapsed ? (
+            <div className="flex flex-col gap-1 leading-tight">
+              <img
+                src={socialifyLogo.url}
+                alt="Socialify"
+                className="h-6 w-auto object-contain object-left drop-shadow-[0_0_10px_hsl(var(--primary)/0.25)]"
+              />
               <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 Internal tool
               </span>
             </div>
+          ) : (
+            <div className="h-8 w-8 shrink-0 rounded-xl bg-primary agency-glow" />
           )}
         </div>
       </SidebarHeader>

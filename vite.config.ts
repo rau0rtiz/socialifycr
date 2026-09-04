@@ -8,6 +8,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      "/__l5e": {
+        target: "https://id-preview--c84ad710-29f7-4d7c-8e46-4e2cb332710e.lovable.app",
+        changeOrigin: true,
+      },
+    },
   },
   define: {
     __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
