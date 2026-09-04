@@ -121,7 +121,7 @@ export const TaskCard = ({ task, accentColor, onClick, onToggleDone, onDelete }:
               {formatDate(parseISO(task.due_date!), 'd MMM', { locale: es })}
             </span>
           ) : (
-            <span className="text-[10px] text-muted-foreground/60 italic">Sin fecha</span>
+            <span className="text-[10px] text-muted-foreground italic">Sin fecha</span>
           )}
         </div>
       </div>

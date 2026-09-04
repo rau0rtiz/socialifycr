@@ -119,7 +119,7 @@ const AdFrameworkDetail = () => {
           <h2 className="font-semibold text-lg mb-3">Campañas</h2>
           {!canCreateCampaign ? (
             <Card className="p-8 text-center space-y-2">
-              <Sparkles className="h-8 w-8 mx-auto text-muted-foreground/50" />
+              <Sparkles className="h-8 w-8 mx-auto text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                 {isLegacy
                   ? 'Configura al menos un valor en cada dimensión antes de crear una campaña.'

@@ -83,7 +83,7 @@ export const PhotoCapture = ({ value, onChange, folder, className, size = 'md' }
             </button>
           </>
         ) : (
-          <Camera className="h-6 w-6 text-muted-foreground/60" />
+          <Camera className="h-6 w-6 text-muted-foreground" />
         )}
       </div>
       <div className="flex flex-col gap-2">

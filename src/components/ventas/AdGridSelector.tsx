@@ -93,9 +93,9 @@ export const AdGridSelector = ({
   if (ads.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <ImageIcon className="h-10 w-10 text-muted-foreground/40 mb-3" />
+        <ImageIcon className="h-10 w-10 text-muted-foreground mb-3" />
         <p className="text-sm text-muted-foreground">No hay anuncios disponibles</p>
-        <p className="text-xs text-muted-foreground/60 mt-1">Conecta una cuenta publicitaria para vincular anuncios</p>
+        <p className="text-xs text-muted-foreground mt-1">Conecta una cuenta publicitaria para vincular anuncios</p>
       </div>
     );
   }
@@ -188,7 +188,7 @@ export const AdGridSelector = ({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
+                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
                   </div>
                 )}
               </div>

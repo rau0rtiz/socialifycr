@@ -37,7 +37,7 @@ type LeadRecord = {
 };
 
 const STATUS_LABELS: Record<string, string> = { scheduled: 'Agendado', confirmed: 'Confirmado', completed: 'Completado', sold: 'Vendido', not_sold: 'No vendido', no_show: 'No se presentó', rescheduled: 'Reagendado' };
-const STATUS_COLORS: Record<string, string> = { scheduled: 'bg-blue-500/10 text-blue-600 border-blue-200', confirmed: 'bg-emerald-500/10 text-emerald-600 border-emerald-200', completed: 'bg-gray-500/10 text-gray-600 border-gray-200', sold: 'bg-green-500/10 text-green-700 border-green-200', not_sold: 'bg-red-500/10 text-red-600 border-red-200', no_show: 'bg-orange-500/10 text-orange-600 border-orange-200', rescheduled: 'bg-yellow-500/10 text-yellow-700 border-yellow-200' };
+const STATUS_COLORS: Record<string, string> = { scheduled: 'bg-blue-500/10 text-blue-600 border-blue-200', confirmed: 'bg-emerald-500/10 text-emerald-600 border-emerald-200', completed: 'bg-white/10 text-white border-white/20', sold: 'bg-green-500/10 text-green-700 border-green-200', not_sold: 'bg-red-500/10 text-red-600 border-red-200', no_show: 'bg-orange-500/10 text-orange-600 border-orange-200', rescheduled: 'bg-yellow-500/10 text-yellow-700 border-yellow-200' };
 
 const BasesDeDatosClientes = () => {
   const { selectedClient, clients, clientsLoading, setSelectedClient } = useBrand();
@@ -607,7 +607,7 @@ const BasesDeDatosClientes = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={`text-[10px] ${s.status === 'active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-gray-500/10 text-gray-600 border-gray-200'}`}>
+                        <Badge variant="outline" className={`text-[10px] ${s.status === 'active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-white/10 text-white border-white/20'}`}>
                           {s.status === 'active' ? 'Activo' : 'Inactivo'}
                         </Badge>
                       </TableCell>

@@ -339,7 +339,7 @@ export const CustomerDetailDialog = ({ customer, clientId, open, onOpenChange }:
                 <section>
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Direcciones {addresses.length > 0 && <span className="text-muted-foreground/70">({addresses.length})</span>}
+                      Direcciones {addresses.length > 0 && <span className="text-muted-foreground">({addresses.length})</span>}
                     </h3>
                     <Button
                       size="sm"
@@ -401,7 +401,7 @@ export const CustomerDetailDialog = ({ customer, clientId, open, onOpenChange }:
               <TabsContent value="orders" className="px-6 py-4 space-y-3 mt-0">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Órdenes {orders.length > 0 && <span className="text-muted-foreground/70">({orders.length})</span>}
+                    Órdenes {orders.length > 0 && <span className="text-muted-foreground">({orders.length})</span>}
                   </h3>
                   <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={handleExportOrders} disabled={orders.length === 0}>
                     <Download className="h-3 w-3" />
@@ -411,7 +411,7 @@ export const CustomerDetailDialog = ({ customer, clientId, open, onOpenChange }:
 
                 {orders.length === 0 ? (
                   <div className="text-center py-10 border border-dashed rounded-md">
-                    <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                    <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">No hay órdenes registradas para este cliente</p>
                   </div>
                 ) : (
@@ -473,7 +473,7 @@ export const CustomerDetailDialog = ({ customer, clientId, open, onOpenChange }:
               {/* ─────────── COMPRAS (sales legacy) ─────────── */}
               <TabsContent value="purchases" className="px-6 py-4 space-y-3 mt-0">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Historial de compras {purchases.length > 0 && <span className="text-muted-foreground/70">({purchases.length})</span>}
+                  Historial de compras {purchases.length > 0 && <span className="text-muted-foreground">({purchases.length})</span>}
                 </h3>
                 {purchases.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No hay compras registradas para este cliente.</p>

@@ -262,14 +262,14 @@ export const AttendanceTracker = ({ clientId }: AttendanceTrackerProps) => {
       {!selectedGroupId ? (
         <Card className="border-dashed border-border/50">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Users className="h-10 w-10 text-muted-foreground/30 mb-3" />
+            <Users className="h-10 w-10 text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground">Selecciona un grupo para tomar asistencia</p>
           </CardContent>
         </Card>
       ) : groupStudents.length === 0 ? (
         <Card className="border-dashed border-border/50">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Users className="h-10 w-10 text-muted-foreground/30 mb-3" />
+            <Users className="h-10 w-10 text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground">No hay alumnos inscritos en este grupo</p>
           </CardContent>
         </Card>

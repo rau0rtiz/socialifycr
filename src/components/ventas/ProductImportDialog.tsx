@@ -272,7 +272,7 @@ export const ProductImportDialog = ({ open, onOpenChange, clientId }: Props) => 
                   fileName ? 'border-primary/40 bg-primary/5' : 'border-muted-foreground/20 hover:border-muted-foreground/40 bg-muted/20'
                 )}
               >
-                <FileText className={cn('h-6 w-6 mx-auto mb-1.5', fileName ? 'text-primary' : 'text-muted-foreground/50')} />
+                <FileText className={cn('h-6 w-6 mx-auto mb-1.5', fileName ? 'text-primary' : 'text-muted-foreground')} />
                 {fileName ? (
                   <>
                     <p className="text-xs font-medium">{fileName}</p>

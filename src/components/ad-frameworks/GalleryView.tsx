@@ -257,7 +257,7 @@ const GalleryCard = ({
           <CreativeIcon className="h-12 w-12 opacity-30" style={{ color: accent }} />
         )}
         {!thumb && !CreativeIcon && (
-          <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
+          <ImageIcon className="h-10 w-10 text-muted-foreground" />
         )}
 
         {/* Status dot top-right */}

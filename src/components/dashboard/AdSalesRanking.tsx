@@ -161,7 +161,7 @@ export const AdSalesRanking = ({ clientId, hasAdAccount, datePreset: externalPre
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
                       </div>
                     )}
                     {/* Position */}

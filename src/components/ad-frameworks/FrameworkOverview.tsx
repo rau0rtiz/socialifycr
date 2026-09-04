@@ -165,7 +165,7 @@ const LaunchOverview = ({ framework }: { framework: AdFrameworkWithDimensions })
                     </div>
                     {desc && <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{desc}</p>}
                   </div>
-                  {i < phases.length - 1 && <span className="text-muted-foreground/50">→</span>}
+                  {i < phases.length - 1 && <span className="text-muted-foreground">→</span>}
                 </div>
               );
             })}

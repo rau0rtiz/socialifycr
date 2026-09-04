@@ -10,7 +10,7 @@ export const CurrentClientsCard = () => {
     <section className="agency-card p-5 md:p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/70">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
             Clientes actuales
           </p>
           <h2 data-agency-display className="mt-1 text-lg font-bold text-foreground">
@@ -48,7 +48,7 @@ export const CurrentClientsCard = () => {
                 <p className="truncate text-xs font-semibold text-foreground group-hover:text-primary">
                   {c.name}
                 </p>
-                <p className="truncate text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
+                <p className="truncate text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                   {c.industry || 'Cliente'}
                 </p>
               </div>

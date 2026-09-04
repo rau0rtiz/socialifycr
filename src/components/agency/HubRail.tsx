@@ -47,7 +47,7 @@ const RailCard = ({
 );
 
 const Empty = ({ label }: { label: string }) => (
-  <p className="py-3 text-center text-xs text-muted-foreground/70">{label}</p>
+  <p className="py-3 text-center text-xs text-muted-foreground">{label}</p>
 );
 
 /** Pagos por cobrar del mes + atrasados. */
@@ -143,7 +143,7 @@ const ProductionsBlock = () => {
                   : '—'}
               </span>
             </div>
-            <p className="truncate text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
+            <p className="truncate text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
               {nameOf(s.client_id)}
             </p>
           </div>

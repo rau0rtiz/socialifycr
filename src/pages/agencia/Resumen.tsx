@@ -165,7 +165,7 @@ const AgencyResumen = () => {
                 <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
                   {kpi.label}
                 </div>
-                <kpi.icon className="h-4 w-4 text-muted-foreground/50 transition-colors group-hover:text-primary" />
+                <kpi.icon className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
               </div>
               <div
                 data-agency-display
@@ -177,7 +177,7 @@ const AgencyResumen = () => {
                   kpi.value.toLocaleString('es-CR')
                 )}
               </div>
-              <div className="mt-1.5 text-[10px] uppercase tracking-widest text-muted-foreground/70">
+              <div className="mt-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
                 {kpi.hint}
               </div>
             </Link>

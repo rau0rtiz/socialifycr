@@ -452,7 +452,7 @@ export const ProductFormDialog = ({
                     <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
                   ) : (
                     <>
-                      <Camera className="h-5 w-5 text-muted-foreground/50" />
+                      <Camera className="h-5 w-5 text-muted-foreground" />
                       <span className="text-[10px] text-muted-foreground mt-1">Subir</span>
                     </>
                   )}

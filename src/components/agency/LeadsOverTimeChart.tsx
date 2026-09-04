@@ -49,7 +49,7 @@ export const LeadsOverTimeChart = ({ days = 30 }: { days?: number }) => {
     <section className="agency-card p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/70">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
             Leads en el tiempo
           </p>
           <h2

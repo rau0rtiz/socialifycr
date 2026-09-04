@@ -42,7 +42,7 @@ export const AwarenessView = ({ framework, campaignId, variants, onOpenVariant }
   if (levels.length === 0) {
     return (
       <Card className="p-12 text-center space-y-3">
-        <Target className="h-10 w-10 mx-auto text-muted-foreground/40" />
+        <Target className="h-10 w-10 mx-auto text-muted-foreground" />
         <p className="text-sm text-muted-foreground">Configura los niveles de awareness desde "Editar dimensiones".</p>
       </Card>
     );

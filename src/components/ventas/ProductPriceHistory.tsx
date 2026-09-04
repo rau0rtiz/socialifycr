@@ -27,9 +27,9 @@ export const ProductPriceHistory = ({ productId }: Props) => {
   if (history.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 p-4 text-center">
-        <History className="h-5 w-5 text-muted-foreground/40 mx-auto mb-1.5" />
+        <History className="h-5 w-5 text-muted-foreground mx-auto mb-1.5" />
         <p className="text-xs text-muted-foreground">Sin cambios registrados.</p>
-        <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+        <p className="text-[10px] text-muted-foreground mt-0.5">
           El historial se registra automáticamente cuando edites el precio o costo.
         </p>
       </div>
@@ -59,7 +59,7 @@ export const ProductPriceHistory = ({ productId }: Props) => {
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-muted-foreground w-12">Precio:</span>
                 <span className="text-muted-foreground line-through text-[11px]">{fmt(h.old_price, h.currency)}</span>
-                <ArrowRight className="h-3 w-3 text-muted-foreground/60" />
+                <ArrowRight className="h-3 w-3 text-muted-foreground" />
                 <span className="font-semibold text-[11px]">{fmt(h.new_price, h.currency)}</span>
                 {pricePct != null && (
                   <span className={cn(
@@ -77,7 +77,7 @@ export const ProductPriceHistory = ({ productId }: Props) => {
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-[10px] text-muted-foreground w-12">Costo:</span>
                 <span className="text-muted-foreground line-through text-[11px]">{fmt(h.old_cost, h.currency)}</span>
-                <ArrowRight className="h-3 w-3 text-muted-foreground/60" />
+                <ArrowRight className="h-3 w-3 text-muted-foreground" />
                 <span className="font-semibold text-[11px]">{fmt(h.new_cost, h.currency)}</span>
               </div>
             )}

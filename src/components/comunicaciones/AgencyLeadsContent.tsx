@@ -631,12 +631,12 @@ const AgencyLeadsContent = () => {
                       <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
                       {isLpFunnel
                         ? ((lead.answers as any)?.empresa || lead.phone) && (
-                            <p className="text-[10px] text-muted-foreground/70 truncate">
+                            <p className="text-[10px] text-muted-foreground truncate">
                               {(lead.answers as any)?.empresa || lead.phone}
                             </p>
                           )
                         : (lead.answers as any)?.businessHandle && (
-                            <p className="text-[10px] text-muted-foreground/70 truncate">{(lead.answers as any).businessHandle}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{(lead.answers as any).businessHandle}</p>
                           )}
                     </div>
                   </div>

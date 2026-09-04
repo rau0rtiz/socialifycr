@@ -655,7 +655,7 @@ const CalendarView = ({
               key={key}
               className={cn(
                 'min-h-[100px] border rounded p-1 text-xs',
-                !isCurrentMonth && 'bg-muted/20 text-muted-foreground/50',
+                !isCurrentMonth && 'bg-muted/20 text-muted-foreground',
                 isToday && 'border-primary border-2',
               )}
             >
@@ -716,7 +716,7 @@ const CalendarView = ({
 // ============================================================
 const DueChip = ({ dueDate, status, compact = false }: { dueDate: string | null; status: VariantStatus; compact?: boolean }) => {
   if (!dueDate) {
-    return compact ? <span className="text-[10px] text-muted-foreground/60 italic">Sin fecha</span> : null;
+    return compact ? <span className="text-[10px] text-muted-foreground italic">Sin fecha</span> : null;
   }
   const d = parseISO(dueDate);
   const days = differenceInCalendarDays(d, new Date());
@@ -786,11 +786,11 @@ const VariantCard = ({
           <div className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             <CreativeIcon className="h-3 w-3" /> {creative.label}
             {variant.creative_type === 'carousel' && slideCount > 0 && (
-              <span className="text-muted-foreground/70">· {slideCount} slides</span>
+              <span className="text-muted-foreground">· {slideCount} slides</span>
             )}
           </div>
         ) : (
-          <div className="text-[10px] font-medium text-muted-foreground/60 italic uppercase tracking-wider">Sin tipo</div>
+          <div className="text-[10px] font-medium text-muted-foreground italic uppercase tracking-wider">Sin tipo</div>
         )}
         {variant.assets.length > 0 && (
           <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
@@ -806,7 +806,7 @@ const VariantCard = ({
             {variant.due_date ? (
               <DueChip dueDate={variant.due_date} status={variant.status} />
             ) : (
-              <span className="text-[10px] text-muted-foreground/60 italic flex items-center gap-1 px-1.5 py-0.5 rounded border border-dashed">
+              <span className="text-[10px] text-muted-foreground italic flex items-center gap-1 px-1.5 py-0.5 rounded border border-dashed">
                 <CalendarIcon className="h-2.5 w-2.5" /> Asignar fecha
               </span>
             )}
@@ -829,7 +829,7 @@ const VariantCard = ({
 
       {/* Hook */}
       <div>
-        <div className="text-[9px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-0.5">Hook</div>
+        <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Hook</div>
         <p className="text-xs line-clamp-3 font-semibold leading-snug">
           {variant.hook_text || <span className="text-muted-foreground italic font-normal">Sin hook escrito</span>}
         </p>
@@ -837,13 +837,13 @@ const VariantCard = ({
 
       {/* Copy */}
       <div className="flex-1 min-h-0">
-        <div className="text-[9px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-0.5">Copy</div>
+        <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Copy</div>
         {variant.copy ? (
           <p className="text-[11px] text-muted-foreground line-clamp-4 leading-snug whitespace-pre-wrap">
             {variant.copy}
           </p>
         ) : (
-          <p className="text-[11px] text-muted-foreground/50 italic">Sin copy</p>
+          <p className="text-[11px] text-muted-foreground italic">Sin copy</p>
         )}
       </div>
 
@@ -854,7 +854,7 @@ const VariantCard = ({
             → {variant.cta}
           </span>
         ) : (
-          <span className="text-[10px] text-muted-foreground/50 italic">Sin CTA</span>
+          <span className="text-[10px] text-muted-foreground italic">Sin CTA</span>
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={stop}>

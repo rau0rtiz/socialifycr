@@ -111,7 +111,7 @@ const FormatColumn = ({
           const v = variantMap[`${angle.id}|${format.id}|${h.id}`];
           return (
             <div key={h.id}>
-              <div className="text-[10px] text-muted-foreground/70 mb-1 px-0.5 truncate">{h.label}</div>
+              <div className="text-[10px] text-muted-foreground mb-1 px-0.5 truncate">{h.label}</div>
               {v ? renderVariant(v) : (
                 <button
                   onClick={onCreateMissing}
@@ -190,7 +190,7 @@ const AngleColumn = ({
                 const v = variantMap[`${angle.id}|${f.id}|${h.id}`];
                 return (
                   <div key={h.id}>
-                    <div className="text-[10px] text-muted-foreground/70 mb-1 px-0.5 truncate">{h.label}</div>
+                    <div className="text-[10px] text-muted-foreground mb-1 px-0.5 truncate">{h.label}</div>
                     {v ? renderVariant(v) : (
                       <button
                         onClick={onCreateMissing}

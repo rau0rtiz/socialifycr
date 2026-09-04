@@ -94,7 +94,7 @@ export const ReferenceCard = ({ reference }: Props) => {
         ) : (
           <button
             onClick={() => setEditing(true)}
-            className="text-xs text-muted-foreground/60 italic hover:text-muted-foreground text-left"
+            className="text-xs text-muted-foreground italic hover:text-muted-foreground text-left"
           >
             + Agregar nota
           </button>
