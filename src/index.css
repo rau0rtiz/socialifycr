@@ -548,3 +548,32 @@ html.agency-theme .agency-neon,
 .noeval-scope.noeval-studio .bg-white { background-color: #1F1F1F; }
 .noeval-scope.noeval-studio .bg-noeval-taupe\/30,
 .noeval-scope.noeval-studio .bg-noeval-taupe\/40 { background-color: rgba(245, 241, 232, 0.08); }
+
+/* Producciones — tarjetas fluidas: la tipografía escala con el ancho real de
+   la tarjeta, así se ve igual de bien en móvil, iPad o pantallas anchas. */
+.noeval-scope .prod-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+@media (min-width: 640px) {
+  .noeval-scope .prod-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+}
+@media (min-width: 1024px) {
+  .noeval-scope .prod-grid { grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); }
+}
+.noeval-scope .prod-card { container-type: inline-size; }
+.noeval-scope .prod-eyebrow {
+  font-size: clamp(7px, 3.4cqw, 10px);
+  letter-spacing: 0.3em;
+  line-height: 1.3;
+}
+.noeval-scope .prod-title {
+  font-size: clamp(0.85rem, 10cqw, 1.5rem);
+  line-height: 0.95;
+}
+.noeval-scope .prod-meta {
+  font-size: clamp(8px, 4cqw, 11px);
+  line-height: 1.35;
+}
+.noeval-scope .prod-pad { padding: clamp(0.6rem, 5cqw, 1.25rem); }
