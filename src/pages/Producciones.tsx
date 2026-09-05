@@ -465,7 +465,7 @@ export default function Producciones() {
                     onDragLeave={() => setDropBeforeSheetId(prev => prev === s.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnSheet(s.id); }}
                     onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
-                    className={`group relative aspect-[4/5] overflow-hidden rounded-2xl border bg-noeval-ink hover:shadow-xl transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
+                    className={`group relative aspect-[4/5] overflow-hidden rounded-[26px] border-[3px] bg-black shadow-[0_18px_50px_-24px_rgba(0,0,0,0.85)] hover:shadow-[0_24px_60px_-22px_rgba(0,0,0,0.95)] transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-black'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
                     {/* Thumbnail or placeholder */}
                     {s.thumbnail_url ? (
@@ -473,17 +473,17 @@ export default function Producciones() {
                         src={s.thumbnail_url}
                         alt={s.title}
                         loading="lazy"
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700"
                       />
                     ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-noeval-slate to-noeval-ink flex flex-col items-center justify-center text-noeval-taupe/60">
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-[#141414] to-black flex flex-col items-center justify-center text-white/50">
                         <Film className="h-10 w-10 mb-2" />
                         <span className="text-[10px] tracking-[0.3em] uppercase">Sin portada</span>
                       </div>
                     )}
 
-                    {/* Bottom gradient overlay */}
-                    <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
+                    {/* Cinematic scrim */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
 
                     {/* Top overlay: drag + logo + upload */}
                     <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2">
