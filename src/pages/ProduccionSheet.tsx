@@ -706,14 +706,14 @@ export default function ProduccionSheet() {
                       Resumen de lo grabado hoy. Listo para imprimir o exportar.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={() => setEmailOpen(true)} disabled={recordedShots.length === 0} className="border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream">
+                  <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 lg:w-auto">
+                    <Button variant="outline" onClick={() => setEmailOpen(true)} disabled={recordedShots.length === 0} className="border-noeval-ink !bg-transparent !text-noeval-ink hover:!bg-noeval-ink hover:!text-noeval-cream disabled:!bg-transparent disabled:!text-noeval-muted disabled:opacity-60">
                       <Mail className="h-4 w-4 mr-1.5" /> Enviar por correo
                     </Button>
-                    <Button variant="outline" onClick={() => setStoryOpen(true)} disabled={recordedShots.length === 0} className="border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream">
+                    <Button variant="outline" onClick={() => setStoryOpen(true)} disabled={recordedShots.length === 0} className="border-noeval-ink !bg-transparent !text-noeval-ink hover:!bg-noeval-ink hover:!text-noeval-cream disabled:!bg-transparent disabled:!text-noeval-muted disabled:opacity-60">
                       <Share2 className="h-4 w-4 mr-1.5" /> Compartir historia
                     </Button>
-                    <Button variant="outline" onClick={() => window.print()} className="border-noeval-ink text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream">
+                    <Button variant="outline" onClick={() => window.print()} className="border-noeval-ink !bg-transparent !text-noeval-ink hover:!bg-noeval-ink hover:!text-noeval-cream">
                       <Printer className="h-4 w-4 mr-1.5" /> Imprimir / PDF
                     </Button>
                   </div>
