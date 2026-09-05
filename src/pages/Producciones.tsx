@@ -271,7 +271,7 @@ export default function Producciones() {
           {!clientFilter && !search && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-serif text-2xl text-noeval-ink">Carpetas de clientes</h2>
+                <h2 className="font-serif text-xl sm:text-2xl text-noeval-ink">Carpetas de clientes</h2>
                 <Button size="sm" variant="outline" onClick={() => setCreatingClient(true)}>
                   <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo cliente
                 </Button>
@@ -301,10 +301,10 @@ export default function Producciones() {
                 })}
                 <button
                   onClick={() => setCreatingClient(true)}
-                  className="aspect-square rounded-2xl bg-noeval-ink/5 border-2 border-dashed border-noeval-ink/25 hover:border-noeval-accent hover:bg-noeval-accent/5 transition-all flex flex-col items-center justify-center text-noeval-muted hover:text-noeval-accent"
+                  className="prod-card aspect-square rounded-2xl bg-noeval-ink/5 border-2 border-dashed border-noeval-ink/25 hover:border-noeval-accent hover:bg-noeval-accent/5 transition-all flex flex-col items-center justify-center text-noeval-muted hover:text-noeval-accent p-2 text-center"
                 >
-                  <Plus className="h-9 w-9 mb-1.5" />
-                  <span className="text-xs tracking-[0.2em] uppercase font-medium">Nuevo cliente</span>
+                  <Plus className="h-7 w-7 sm:h-9 sm:w-9 mb-1.5" />
+                  <span className="prod-eyebrow uppercase font-medium">Nuevo cliente</span>
                 </button>
               </div>
             </div>
@@ -412,7 +412,7 @@ export default function Producciones() {
             <div className="flex items-end justify-between gap-3 mb-3">
               <div>
                 {!clientFilter && (
-                  <h2 className="font-serif text-2xl text-noeval-ink">
+                  <h2 className="font-serif text-xl sm:text-2xl text-noeval-ink">
                     {search ? 'Resultados' : 'Sheets recientes'}
                   </h2>
                 )}
@@ -844,7 +844,7 @@ function ClientFolderCard({
   };
 
   return (
-    <div className="group relative aspect-square overflow-hidden rounded-2xl border border-noeval-line bg-noeval-ink hover:shadow-xl transition-all">
+    <div className="prod-card group relative aspect-square overflow-hidden rounded-2xl border border-noeval-line bg-noeval-ink hover:shadow-xl transition-all">
       <button onClick={onOpen} className="absolute inset-0 text-left w-full h-full">
         {/* Dark backdrop */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-noeval-ink to-black" />
@@ -862,7 +862,7 @@ function ClientFolderCard({
         )}
         {!client.logo_url && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="font-serif text-6xl uppercase tracking-wide text-white/25">
+            <div className="font-serif text-[clamp(1.75rem,22cqw,3.75rem)] uppercase tracking-wide text-white/25">
               {client.name.slice(0, 2)}
             </div>
           </div>
@@ -873,7 +873,7 @@ function ClientFolderCard({
 
         {/* Client name */}
         <div className="prod-pad absolute inset-x-0 bottom-0">
-          <div className="font-serif text-base sm:text-lg text-white leading-tight truncate">
+          <div className="prod-title font-serif text-white truncate">
             {client.name}
           </div>
         </div>
