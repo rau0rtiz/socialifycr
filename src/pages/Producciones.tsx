@@ -482,7 +482,7 @@ export default function Producciones() {
                     )}
 
                     {/* Cinematic scrim */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black via-black/70 to-transparent" />
 
                     {/* Top overlay: drag + logo + upload */}
                     <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2">
