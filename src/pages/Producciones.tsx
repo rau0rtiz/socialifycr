@@ -235,13 +235,13 @@ export default function Producciones() {
                     sheets
                   </span>
                 </h1>
-                <p className="text-noeval-taupe mt-3 text-sm max-w-xl">
+                <p className="text-noeval-taupe mt-2 sm:mt-3 text-[13px] sm:text-sm max-w-xl">
                   Drive de hojas de producción por cliente. Guarda, edita, asigna equipo y envía a ClickUp cuando esté listo.
                 </p>
               </div>
               <Button
                 onClick={() => setCreating(true)}
-                className="bg-noeval-cream text-noeval-ink hover:bg-white shrink-0"
+                className="bg-noeval-cream text-noeval-ink hover:bg-white shrink-0 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4 mr-1.5" /> Nuevo sheet
               </Button>
