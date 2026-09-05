@@ -260,7 +260,7 @@ export default function Producciones() {
               />
             </div>
             {clientFilter && (
-              <Button variant="outline" onClick={() => setClientFilter(null)}>
+              <Button variant="outline" className="w-full sm:w-auto shrink-0" onClick={() => setClientFilter(null)}>
                 <ArrowLeft className="h-4 w-4 mr-1.5" />
                 Todas las carpetas
               </Button>
