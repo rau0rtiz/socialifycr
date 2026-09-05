@@ -357,7 +357,7 @@ export default function Producciones() {
                     onDragOver={(e) => { if (dragging && dragging.id !== f.id) { e.preventDefault(); setDropTarget(f.id); } }}
                     onDragLeave={() => setDropTarget(prev => prev === f.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnFolder(f.id); }}
-                    className={`group relative aspect-[4/5] overflow-hidden rounded-2xl border cursor-grab active:cursor-grabbing transition-all hover:shadow-xl ${dropTarget === f.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === f.id ? 'opacity-50' : ''}`}
+                    className={`prod-card group relative aspect-[4/5] overflow-hidden rounded-2xl border cursor-grab active:cursor-grabbing transition-all hover:shadow-xl ${dropTarget === f.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === f.id ? 'opacity-50' : ''}`}
                   >
                     <button
                       onClick={() => setFolderPath([...folderPath, { id: f.id, name: f.name }])}
