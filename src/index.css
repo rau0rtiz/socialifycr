@@ -553,14 +553,9 @@ html.agency-theme .agency-neon,
    la tarjeta, así se ve igual de bien en móvil, iPad o pantallas anchas. */
 .noeval-scope .prod-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.75rem;
-}
-@media (min-width: 640px) {
-  .noeval-scope .prod-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
-}
-@media (min-width: 1024px) {
-  .noeval-scope .prod-grid { grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); }
+  /* Columnas relativas al ancho disponible: sirve en móvil, iPad y escritorio */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(145px, 20%)), 1fr));
+  gap: clamp(0.6rem, 1.4vw, 1rem);
 }
 .noeval-scope .prod-card { container-type: inline-size; }
 .noeval-scope .prod-eyebrow {

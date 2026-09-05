@@ -221,15 +221,15 @@ export default function Producciones() {
       <div className="noeval-scope noeval-studio min-h-screen">
         <div className="w-full max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-5 sm:space-y-6">
           {/* Header */}
-          <div className="noeval-slate relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-9">
+          <div className="prod-card noeval-slate relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-9">
             <div className="noeval-stripe absolute inset-x-0 top-0 h-2 sm:h-3" />
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mt-4">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 sm:gap-4 mt-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 sm:gap-3 text-noeval-taupe text-[10px] sm:text-[11px] tracking-[0.32em] sm:tracking-[0.42em] uppercase font-medium">
                   <span className="w-2 h-2 rounded-full bg-noeval-accent animate-pulse shrink-0" />
                   Plan de producción
                 </div>
-                <h1 className="font-serif font-semibold text-[clamp(1.8rem,7vw,3.75rem)] uppercase tracking-[0.06em] text-noeval-cream mt-2 sm:mt-3 leading-none">
+                <h1 className="font-serif font-semibold text-[clamp(1.6rem,11cqw,3.75rem)] uppercase tracking-[0.04em] text-noeval-cream mt-2 sm:mt-3 leading-none break-words">
                   Producciones
                   <span className="font-script normal-case text-noeval-accent text-[0.5em] ml-2">
                     sheets
@@ -241,7 +241,7 @@ export default function Producciones() {
               </div>
               <Button
                 onClick={() => setCreating(true)}
-                className="bg-noeval-cream text-noeval-ink hover:bg-white shrink-0 w-full sm:w-auto"
+                className="bg-noeval-cream text-noeval-ink hover:bg-white shrink-0 w-full lg:w-auto"
               >
                 <Plus className="h-4 w-4 mr-1.5" /> Nuevo sheet
               </Button>
