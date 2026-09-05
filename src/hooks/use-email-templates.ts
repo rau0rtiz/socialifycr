@@ -7,6 +7,7 @@ export interface EmailTemplate {
   name: string;
   slug: string;
   subject: string;
+  preview_text: string | null;
   html_content: string;
   description: string | null;
   category: string;
@@ -26,7 +27,7 @@ export const useEmailTemplates = () => {
         .order('category', { ascending: true })
         .order('name', { ascending: true });
       if (error) throw error;
-      return (data || []) as EmailTemplate[];
+      return (data || []) as unknown as EmailTemplate[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -43,6 +44,7 @@ export const useUpsertEmailTemplate = () => {
             name: template.name,
             slug: template.slug,
             subject: template.subject,
+            preview_text: template.preview_text ?? null,
             html_content: template.html_content,
             description: template.description,
             variables: template.variables as any,
@@ -57,6 +59,7 @@ export const useUpsertEmailTemplate = () => {
             name: template.name!,
             slug: template.slug!,
             subject: template.subject!,
+            preview_text: template.preview_text ?? null,
             html_content: template.html_content!,
             description: template.description,
             category: template.category || 'custom',

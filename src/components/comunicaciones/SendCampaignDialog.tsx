@@ -91,6 +91,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
   const [recipientSearch, setRecipientSearch] = useState('');
   const [campaignName, setCampaignName] = useState('');
   const [editedSubject, setEditedSubject] = useState('');
+  const [editedPreviewText, setEditedPreviewText] = useState('');
   const [editedHtml, setEditedHtml] = useState('');
   const [editedMessage, setEditedMessage] = useState('');
   const [editorTab, setEditorTab] = useState('preview');
@@ -154,6 +155,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         const vars = buildLeadVariables(leadContext);
         setCampaignName(template.name);
         setEditedSubject(replaceVariables(template.subject, vars));
+        setEditedPreviewText(replaceVariables(template.preview_text || '', vars));
         setEditedHtml(replaceVariables(template.html_content, vars));
         setEditedMessage(vars.custom_intro || '');
       } else {
@@ -161,6 +163,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         setSelectedIds(new Set());
         setCampaignName(template.name);
         setEditedSubject(template.subject);
+        setEditedPreviewText(template.preview_text || '');
         setEditedHtml(template.html_content);
         setEditedMessage('');
       }
@@ -169,6 +172,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
       setSelectedIds(new Set());
       setCampaignName('');
       setEditedSubject('');
+      setEditedPreviewText('');
       setEditedHtml(DEFAULT_BLANK_HTML);
       setEditedMessage('');
     }
@@ -289,12 +293,14 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
           batch.map(async (r) => {
             const personalizedHtml = replaceVariables(editedHtml, { name: r.name, email: r.email, link: '' });
             const personalizedSubject = replaceVariables(editedSubject, { name: r.name, email: r.email });
+            const personalizedPreview = replaceVariables(editedPreviewText, { name: r.name, email: r.email });
 
             const { error } = await supabase.functions.invoke('send-notification-email', {
               body: {
                 to: r.email,
                 toName: r.name,
                 subject: personalizedSubject,
+                previewText: personalizedPreview || null,
                 html: personalizedHtml,
               },
             });
@@ -371,6 +377,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
         if (v.key.trim()) customVarMap[v.key.trim()] = v.value;
       }
       const finalSubject = replaceVariables(editedSubject, customVarMap);
+      const finalPreviewText = replaceVariables(editedPreviewText, customVarMap).trim() || null;
       const finalHtml = replaceVariables(editedHtml, customVarMap);
 
       const recipientsSnapshot = selectedRecipients.map((r) => ({
@@ -385,6 +392,7 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
           client_id: anyClient.id,
           name: finalName + (sendMode === 'scheduled' ? ' (programada)' : ''),
           subject: finalSubject,
+          preview_text: finalPreviewText,
           html_content: finalHtml,
           target_tags: [],
           recipients_snapshot: recipientsSnapshot,
@@ -461,6 +469,17 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
             <div className="space-y-1">
               <Label className="text-xs">Asunto</Label>
               <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} className="h-9" />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Texto de vista previa (preview text)</Label>
+              <Input
+                value={editedPreviewText}
+                onChange={e => setEditedPreviewText(e.target.value)}
+                placeholder="Línea que se ve junto al asunto en la bandeja de entrada"
+                maxLength={160}
+                className="h-9"
+              />
             </div>
 
             {/* Editable intro */}
@@ -652,6 +671,17 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} placeholder="Asunto del correo" className="h-9" />
             </div>
 
+            <div className="space-y-1">
+              <Label className="text-xs">Texto de vista previa (preview text)</Label>
+              <Input
+                value={editedPreviewText}
+                onChange={e => setEditedPreviewText(e.target.value)}
+                placeholder="Línea que se ve junto al asunto en la bandeja de entrada"
+                maxLength={160}
+                className="h-9"
+              />
+            </div>
+
             {/* Side-by-side HTML editor + live preview */}
             <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
               <div className="flex flex-col min-h-0">
@@ -781,6 +811,9 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
             <div className="p-4 rounded-lg bg-muted space-y-3">
               <div><p className="text-xs text-muted-foreground">{template ? 'Plantilla' : 'Campaña'}</p><p className="font-medium text-sm">{template?.name || campaignName.trim() || editedSubject || '(sin nombre)'}</p></div>
               <div><p className="text-xs text-muted-foreground">Asunto</p><p className="font-medium text-sm">{editedSubject}</p></div>
+              {editedPreviewText.trim() && (
+                <div><p className="text-xs text-muted-foreground">Texto de vista previa</p><p className="font-medium text-sm">{editedPreviewText}</p></div>
+              )}
               <div><p className="text-xs text-muted-foreground">Destinatarios</p><p className="font-medium text-sm">{selectedRecipients.length} personas</p></div>
             </div>
 

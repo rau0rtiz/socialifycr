@@ -12,6 +12,7 @@ import {
   injectUnsubscribeFooter as injectFooter,
   isEmailSuppressed,
 } from "../_shared/unsubscribe.ts";
+import { injectPreheader } from "../_shared/preheader.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -128,6 +129,11 @@ serve(async (req) => {
           let basePersonalizedHtml = campaign.html_content
             .replace(/\{\{name\}\}/g, contact.full_name || "")
             .replace(/\{\{email\}\}/g, contact.email);
+
+          const personalizedPreview = (campaign.preview_text || "")
+            .replace(/\{\{name\}\}/g, contact.full_name || "")
+            .replace(/\{\{email\}\}/g, contact.email);
+          basePersonalizedHtml = injectPreheader(basePersonalizedHtml, personalizedPreview);
 
           const { data: emailRecord } = await supabaseAdmin.from("sent_emails").insert({
             recipient_email: contact.email,
