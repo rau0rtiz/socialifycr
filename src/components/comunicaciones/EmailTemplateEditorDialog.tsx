@@ -21,6 +21,7 @@ export const EmailTemplateEditorDialog = ({ open, onOpenChange, template, onSave
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [subject, setSubject] = useState('');
+  const [previewText, setPreviewText] = useState('');
   const [description, setDescription] = useState('');
   const [htmlContent, setHtmlContent] = useState('');
   const [variables, setVariables] = useState<{ key: string; label: string }[]>([]);
@@ -37,6 +38,7 @@ export const EmailTemplateEditorDialog = ({ open, onOpenChange, template, onSave
       setName(template?.name || '');
       setSlug(template?.slug || '');
       setSubject(template?.subject || '');
+      setPreviewText(template?.preview_text || '');
       setDescription(template?.description || '');
       setHtmlContent(template?.html_content || '');
       setVariables(template?.variables || []);
@@ -80,6 +82,7 @@ export const EmailTemplateEditorDialog = ({ open, onOpenChange, template, onSave
       name,
       slug,
       subject,
+      preview_text: previewText.trim() || null,
       html_content: htmlContent,
       description: description || null,
       category: template?.category || 'custom',
@@ -126,6 +129,17 @@ export const EmailTemplateEditorDialog = ({ open, onOpenChange, template, onSave
         <div className="space-y-1">
           <Label>Asunto</Label>
           <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Asunto del correo" />
+        </div>
+
+        <div className="space-y-1">
+          <Label>Texto de vista previa (preview text)</Label>
+          <Input
+            value={previewText}
+            onChange={e => setPreviewText(e.target.value)}
+            placeholder="Línea que se muestra junto al asunto en la bandeja de entrada"
+            maxLength={160}
+          />
+          <p className="text-xs text-muted-foreground">Opcional. Ideal entre 40 y 90 caracteres.</p>
         </div>
 
         <div className="space-y-1">
