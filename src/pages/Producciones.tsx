@@ -509,29 +509,24 @@ export default function Producciones() {
                       </div>
                     </div>
 
-                    {/* Bottom content */}
-                    <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 text-white">
-                      <Badge variant="outline" className={`text-[9px] mb-2 ${STATUS_TONE[s.status]}`}>
-                        {STATUS_LABEL[s.status]}
-                      </Badge>
-                      <div className="font-serif text-base sm:text-lg leading-tight line-clamp-2 drop-shadow">
+                    {/* Poster-style content */}
+                    <div className="absolute inset-x-0 bottom-0 px-4 pb-5 sm:px-5 sm:pb-6 text-center text-white">
+                      <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.34em] text-white/85">
+                        {clientMap[s.client_id] || 'Socialify'}
+                      </div>
+                      <div className="font-serif uppercase leading-[0.92] tracking-[0.01em] text-xl sm:text-2xl mt-1.5 line-clamp-3 drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
                         {s.title}
                       </div>
-                      <div className="mt-1.5 space-y-0.5 text-[10px] sm:text-[11px] text-white/80">
-                        <div className="flex items-center gap-1.5 truncate">
-                          <Folder className="h-3 w-3 shrink-0" /> {clientMap[s.client_id] || '—'}
-                        </div>
-                        {s.shoot_date && (
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="h-3 w-3 shrink-0" />
-                            {format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es })}
-                          </div>
-                        )}
-                        {s.location && (
-                          <div className="flex items-center gap-1.5 truncate">
-                            <MapPin className="h-3 w-3 shrink-0" /> {s.location}
-                          </div>
-                        )}
+                      <div className="mt-2 text-[10px] sm:text-[11px] text-white/60 leading-snug">
+                        {[
+                          s.shoot_date ? format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es }) : null,
+                          s.location || null,
+                        ].filter(Boolean).join(' · ') || 'Sin fecha definida'}
+                      </div>
+                      <div className="mt-3 flex justify-center">
+                        <Badge variant="outline" className={`text-[9px] ${STATUS_TONE[s.status]}`}>
+                          {STATUS_LABEL[s.status]}
+                        </Badge>
                       </div>
                     </div>
                   </div>
