@@ -12,6 +12,7 @@ import {
   injectUnsubscribeFooter,
   isEmailSuppressed,
 } from "../_shared/unsubscribe.ts";
+import { injectPreheader } from "../_shared/preheader.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -34,7 +35,7 @@ serve(async (req) => {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 
   try {
-    const { to, toName, subject, html, sentBy, clientId } = await req.json();
+    const { to, toName, subject, html, previewText, sentBy, clientId } = await req.json();
 
     // Skip if recipient is suppressed (unsubscribed/bounced)
     if (await isEmailSuppressed(supabaseAdmin, to)) {
@@ -48,7 +49,7 @@ serve(async (req) => {
     // Generate unsubscribe link (reuses existing token if present)
     const unsubUrl = await generateUnsubscribeUrl(supabaseAdmin, to);
     const unsubFooter = buildUnsubscribeFooter(unsubUrl);
-    const htmlWithUnsub = injectUnsubscribeFooter(html, unsubFooter);
+    const htmlWithUnsub = injectUnsubscribeFooter(injectPreheader(html, previewText), unsubFooter);
 
     // Insert sent_emails record first to get the ID for tracking pixel
     const { data: emailRecord, error: insertErr } = await supabaseAdmin.from("sent_emails").insert({
