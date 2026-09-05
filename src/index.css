@@ -413,6 +413,48 @@ html.agency-theme .agency-neon,
 .noeval-scope .border-noeval-line { border-color: var(--noeval-line); }
 .noeval-scope .border-noeval-accent { border-color: var(--noeval-accent); }
 
+/* Remap shadcn tokens inside the paper scope so default component variants
+   (outline buttons, inputs, selects, cards) stay legible even when the agency
+   dark theme is active on <html>. */
+.noeval-scope {
+  --background: 40 33% 93%;
+  --foreground: 0 0% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+  --primary: 12 79% 57%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 22% 91%;
+  --secondary-foreground: 0 0% 10%;
+  --muted: 40 22% 91%;
+  --muted-foreground: 0 0% 38%;
+  --accent: 40 22% 91%;
+  --accent-foreground: 0 0% 10%;
+  --border: 0 0% 87%;
+  --input: 0 0% 84%;
+  --ring: 12 79% 57%;
+  color-scheme: light;
+}
+.noeval-scope.noeval-dark,
+.noeval-scope.noeval-studio {
+  --background: 0 0% 8%;
+  --foreground: 40 33% 94%;
+  --card: 0 0% 12%;
+  --card-foreground: 40 33% 94%;
+  --popover: 0 0% 12%;
+  --popover-foreground: 40 33% 94%;
+  --secondary: 0 0% 16%;
+  --secondary-foreground: 40 33% 94%;
+  --muted: 0 0% 16%;
+  --muted-foreground: 0 0% 68%;
+  --accent: 0 0% 16%;
+  --accent-foreground: 40 33% 94%;
+  --border: 0 0% 20%;
+  --input: 0 0% 22%;
+  color-scheme: dark;
+}
+
 /* Dark tone variant for production sheets — swaps paper/surface to deep ink
    and inverts ink/cream so all existing bg-noeval-* / text-noeval-* classes
    remain legible without touching component markup. */
