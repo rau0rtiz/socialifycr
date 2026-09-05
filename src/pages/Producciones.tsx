@@ -276,7 +276,7 @@ export default function Producciones() {
                   <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo cliente
                 </Button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+              <div className="prod-grid">
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
                   return (
@@ -345,7 +345,7 @@ export default function Producciones() {
 
           {/* Sub-folders (inside a client, not searching) */}
           {clientFilter && !search && subFolders.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+            <div className="prod-grid">
               {subFolders.map((f) => {
                 const count = folderSheetCount[f.id] || 0;
                 return (
@@ -378,9 +378,9 @@ export default function Producciones() {
                         </Badge>
                       </div>
                       {/* Bottom label */}
-                      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-                        <div className="text-[9px] tracking-[0.3em] uppercase text-white/50 mb-1">Carpeta</div>
-                        <div className="font-serif text-base sm:text-lg text-white leading-tight line-clamp-2 pr-8">
+                      <div className="prod-pad absolute inset-x-0 bottom-0">
+                        <div className="prod-eyebrow uppercase text-white/50 mb-1">Carpeta</div>
+                        <div className="prod-title font-serif text-white line-clamp-2 pr-7">
                           {f.name}
                         </div>
                       </div>
@@ -449,7 +449,7 @@ export default function Producciones() {
                 </p>
               </div>
             ) : view === 'grid' ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+              <div className="prod-grid">
                 {filteredSheets.map((s) => (
                   <div
                     key={s.id}
@@ -465,7 +465,7 @@ export default function Producciones() {
                     onDragLeave={() => setDropBeforeSheetId(prev => prev === s.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnSheet(s.id); }}
                     onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
-                    className={`group relative aspect-[4/5] overflow-hidden rounded-[26px] border-[3px] bg-black shadow-[0_18px_50px_-24px_rgba(0,0,0,0.85)] hover:shadow-[0_24px_60px_-22px_rgba(0,0,0,0.95)] transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-black'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
+                    className={`prod-card group relative aspect-[4/5] overflow-hidden rounded-[22px] sm:rounded-[26px] border-[3px] bg-black shadow-[0_18px_50px_-24px_rgba(0,0,0,0.85)] hover:shadow-[0_24px_60px_-22px_rgba(0,0,0,0.95)] transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-black'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
                     {/* Thumbnail or placeholder */}
                     {s.thumbnail_url ? (
@@ -509,20 +509,20 @@ export default function Producciones() {
                     </div>
 
                     {/* Poster-style content */}
-                    <div className="absolute inset-x-0 bottom-0 px-4 pb-5 sm:px-5 sm:pb-6 text-center text-white">
-                      <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.34em] text-white/85">
+                    <div className="prod-pad absolute inset-x-0 bottom-0 text-center text-white">
+                      <div className="prod-eyebrow font-bold uppercase text-white/85 truncate">
                         {clientMap[s.client_id] || 'Socialify'}
                       </div>
-                      <div className="font-serif uppercase leading-[0.92] tracking-[0.01em] text-xl sm:text-2xl mt-1.5 line-clamp-3 drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
+                      <div className="prod-title font-serif uppercase tracking-[0.01em] mt-1.5 line-clamp-3 drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
                         {s.title}
                       </div>
-                      <div className="mt-2 text-[10px] sm:text-[11px] text-white/60 leading-snug">
+                      <div className="prod-meta mt-1.5 text-white/60">
                         {[
                           s.shoot_date ? format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es }) : null,
                           s.location || null,
                         ].filter(Boolean).join(' · ') || 'Sin fecha definida'}
                       </div>
-                      <div className="mt-3 flex justify-center">
+                      <div className="mt-2 sm:mt-3 flex justify-center">
                         <Badge variant="outline" className={`text-[9px] ${STATUS_TONE[s.status]}`}>
                           {STATUS_LABEL[s.status]}
                         </Badge>
@@ -872,7 +872,7 @@ function ClientFolderCard({
         <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black via-black/85 to-transparent" />
 
         {/* Client name */}
-        <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+        <div className="prod-pad absolute inset-x-0 bottom-0">
           <div className="font-serif text-base sm:text-lg text-white leading-tight truncate">
             {client.name}
           </div>
