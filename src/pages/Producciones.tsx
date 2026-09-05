@@ -218,7 +218,7 @@ export default function Producciones() {
 
   return (
     <DashboardLayout>
-      <div className="noeval-scope min-h-screen">
+      <div className="noeval-scope noeval-studio min-h-screen">
         <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 space-y-6">
           {/* Header */}
           <div className="noeval-slate relative overflow-hidden rounded-2xl p-6 md:p-9">
@@ -425,7 +425,7 @@ export default function Producciones() {
                   type="button"
                   onClick={() => setView('grid')}
                   title="Vista de cuadrícula"
-                  className={`p-1.5 rounded-md transition ${view === 'grid' ? 'bg-noeval-ink text-noeval-cream' : 'text-noeval-muted hover:text-noeval-ink'}`}
+                  className={`p-1.5 rounded-md transition ${view === 'grid' ? 'bg-noeval-accent text-white' : 'text-noeval-muted hover:text-noeval-ink'}`}
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </button>
@@ -433,7 +433,7 @@ export default function Producciones() {
                   type="button"
                   onClick={() => setView('list')}
                   title="Vista de lista"
-                  className={`p-1.5 rounded-md transition ${view === 'list' ? 'bg-noeval-ink text-noeval-cream' : 'text-noeval-muted hover:text-noeval-ink'}`}
+                  className={`p-1.5 rounded-md transition ${view === 'list' ? 'bg-noeval-accent text-white' : 'text-noeval-muted hover:text-noeval-ink'}`}
                 >
                   <List className="h-4 w-4" />
                 </button>
@@ -465,7 +465,7 @@ export default function Producciones() {
                     onDragLeave={() => setDropBeforeSheetId(prev => prev === s.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnSheet(s.id); }}
                     onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
-                    className={`group relative aspect-[4/5] overflow-hidden rounded-2xl border bg-noeval-ink hover:shadow-xl transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
+                    className={`group relative aspect-[4/5] overflow-hidden rounded-[26px] border-[3px] bg-black shadow-[0_18px_50px_-24px_rgba(0,0,0,0.85)] hover:shadow-[0_24px_60px_-22px_rgba(0,0,0,0.95)] transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-black'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
                     {/* Thumbnail or placeholder */}
                     {s.thumbnail_url ? (
@@ -473,17 +473,16 @@ export default function Producciones() {
                         src={s.thumbnail_url}
                         alt={s.title}
                         loading="lazy"
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700"
                       />
                     ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-noeval-slate to-noeval-ink flex flex-col items-center justify-center text-noeval-taupe/60">
-                        <Film className="h-10 w-10 mb-2" />
-                        <span className="text-[10px] tracking-[0.3em] uppercase">Sin portada</span>
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-[#141414] to-black flex flex-col items-center justify-start pt-10 text-white/35">
+                        <Film className="h-9 w-9" />
                       </div>
                     )}
 
-                    {/* Bottom gradient overlay */}
-                    <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
+                    {/* Cinematic scrim */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
 
                     {/* Top overlay: drag + logo + upload */}
                     <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2">
@@ -509,29 +508,24 @@ export default function Producciones() {
                       </div>
                     </div>
 
-                    {/* Bottom content */}
-                    <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 text-white">
-                      <Badge variant="outline" className={`text-[9px] mb-2 ${STATUS_TONE[s.status]}`}>
-                        {STATUS_LABEL[s.status]}
-                      </Badge>
-                      <div className="font-serif text-base sm:text-lg leading-tight line-clamp-2 drop-shadow">
+                    {/* Poster-style content */}
+                    <div className="absolute inset-x-0 bottom-0 px-4 pb-5 sm:px-5 sm:pb-6 text-center text-white">
+                      <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.34em] text-white/85">
+                        {clientMap[s.client_id] || 'Socialify'}
+                      </div>
+                      <div className="font-serif uppercase leading-[0.92] tracking-[0.01em] text-xl sm:text-2xl mt-1.5 line-clamp-3 drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
                         {s.title}
                       </div>
-                      <div className="mt-1.5 space-y-0.5 text-[10px] sm:text-[11px] text-white/80">
-                        <div className="flex items-center gap-1.5 truncate">
-                          <Folder className="h-3 w-3 shrink-0" /> {clientMap[s.client_id] || '—'}
-                        </div>
-                        {s.shoot_date && (
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="h-3 w-3 shrink-0" />
-                            {format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es })}
-                          </div>
-                        )}
-                        {s.location && (
-                          <div className="flex items-center gap-1.5 truncate">
-                            <MapPin className="h-3 w-3 shrink-0" /> {s.location}
-                          </div>
-                        )}
+                      <div className="mt-2 text-[10px] sm:text-[11px] text-white/60 leading-snug">
+                        {[
+                          s.shoot_date ? format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es }) : null,
+                          s.location || null,
+                        ].filter(Boolean).join(' · ') || 'Sin fecha definida'}
+                      </div>
+                      <div className="mt-3 flex justify-center">
+                        <Badge variant="outline" className={`text-[9px] ${STATUS_TONE[s.status]}`}>
+                          {STATUS_LABEL[s.status]}
+                        </Badge>
                       </div>
                     </div>
                   </div>

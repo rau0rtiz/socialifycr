@@ -523,3 +523,28 @@ html.agency-theme .agency-neon,
   .no-print { display: none !important; }
   .grabado-stamp { opacity: 1; }
 }
+
+/* Producciones (drive de hojas) — tono estudio oscuro, texto claro.
+   Mantiene los bloques "slate" oscuros y aclara el cuerpo del texto. */
+.noeval-scope.noeval-studio {
+  --noeval-paper: #0F0F0F;
+  --noeval-surface: #1A1A1A;
+  --noeval-ink: #F5F1E8;
+  --noeval-cream: #FAF8F2;
+  --noeval-taupe: #CFC8B8;
+  --noeval-muted: #A6A199;
+  --noeval-line: rgba(245, 241, 232, 0.12);
+  background-image:
+    radial-gradient(circle at 16% -8%, rgba(232, 93, 58, 0.12), transparent 44%),
+    radial-gradient(circle at 100% 100%, rgba(245, 241, 232, 0.04), transparent 55%);
+}
+.noeval-scope.noeval-studio .noeval-slate {
+  background: #161616;
+  color: var(--noeval-cream);
+  box-shadow: 0 24px 60px -32px rgba(0, 0, 0, 0.8);
+}
+.noeval-scope.noeval-studio .bg-noeval-ink { background-color: #121212; }
+.noeval-scope.noeval-studio .bg-noeval-cream { background-color: #1A1A1A; }
+.noeval-scope.noeval-studio .bg-white { background-color: #1F1F1F; }
+.noeval-scope.noeval-studio .bg-noeval-taupe\/30,
+.noeval-scope.noeval-studio .bg-noeval-taupe\/40 { background-color: rgba(245, 241, 232, 0.08); }
