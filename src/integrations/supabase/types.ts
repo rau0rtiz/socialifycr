@@ -2821,6 +2821,7 @@ export type Database = {
           id: string
           name: string
           opened_count: number
+          preview_text: string | null
           recipients_snapshot: Json | null
           scheduled_at: string | null
           scheduled_for: string | null
@@ -2843,6 +2844,7 @@ export type Database = {
           id?: string
           name: string
           opened_count?: number
+          preview_text?: string | null
           recipients_snapshot?: Json | null
           scheduled_at?: string | null
           scheduled_for?: string | null
@@ -2865,6 +2867,7 @@ export type Database = {
           id?: string
           name?: string
           opened_count?: number
+          preview_text?: string | null
           recipients_snapshot?: Json | null
           scheduled_at?: string | null
           scheduled_for?: string | null
@@ -3058,6 +3061,7 @@ export type Database = {
           html_content: string
           id: string
           name: string
+          preview_text: string | null
           slug: string
           status: string
           subject: string
@@ -3071,6 +3075,7 @@ export type Database = {
           html_content?: string
           id?: string
           name: string
+          preview_text?: string | null
           slug: string
           status?: string
           subject?: string
@@ -3084,6 +3089,7 @@ export type Database = {
           html_content?: string
           id?: string
           name?: string
+          preview_text?: string | null
           slug?: string
           status?: string
           subject?: string
