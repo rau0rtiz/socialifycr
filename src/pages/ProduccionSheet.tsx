@@ -19,6 +19,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -164,6 +168,31 @@ export default function ProduccionSheet() {
     supabase.from('clients').select('name, logo_url').eq('id', data.sheet.client_id).maybeSingle()
       .then(({ data: c }) => { setClientName(c?.name || ''); setClientLogo((c as any)?.logo_url || null); });
   }, [data?.sheet?.client_id]);
+
+  // Clientes disponibles para reasignar la hoja
+  const { data: allClients } = useQuery({
+    queryKey: ['produccion-clients-select'],
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from('clients')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return rows as { id: string; name: string }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const handleChangeClient = async (newClientId: string) => {
+    if (!data?.sheet || newClientId === data.sheet.client_id) return;
+    try {
+      // La hoja cambia de carpeta de cliente → sale de cualquier subcarpeta previa
+      await update.mutateAsync({ id: sheetId, client_id: newClientId, folder_id: null } as any);
+      toast.success('Cliente actualizado');
+    } catch (e: any) {
+      toast.error(e.message || 'No pude cambiar el cliente');
+    }
+  };
 
   // Auto-save header fields
   useEffect(() => {
@@ -348,9 +377,25 @@ export default function ProduccionSheet() {
               <div className="noeval-paper-hero relative overflow-hidden rounded-2xl p-5 sm:p-8 md:p-10">
                 <div className="absolute inset-x-0 top-0 h-1.5 bg-noeval-accent" />
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 text-noeval-muted text-[10px] tracking-[0.42em] uppercase font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent animate-pulse" />
-                    <span className="truncate text-noeval-ink/60">Hoja de contenido · {clientName}</span>
+                  <div className="flex items-center gap-2 text-noeval-muted text-[10px] tracking-[0.42em] uppercase font-semibold min-w-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-noeval-accent animate-pulse shrink-0" />
+                    <span className="truncate text-noeval-ink/60">Hoja de contenido ·</span>
+                    <Select
+                      value={data!.sheet.client_id}
+                      onValueChange={handleChangeClient}
+                      disabled={update.isPending}
+                    >
+                      <SelectTrigger className="h-7 w-auto min-w-[9rem] max-w-[16rem] gap-1.5 border-noeval-line bg-transparent px-2 text-[10px] uppercase tracking-[0.2em] text-noeval-ink">
+                        <SelectValue placeholder="Cliente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(allClients || []).map((c) => (
+                          <SelectItem key={c.id} value={c.id} className="text-xs">
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <span className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted/70 font-medium">
                     Producción de redes sociales
