@@ -219,29 +219,29 @@ export default function Producciones() {
   return (
     <DashboardLayout>
       <div className="noeval-scope noeval-studio min-h-screen">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 space-y-6">
+        <div className="w-full max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-5 sm:space-y-6">
           {/* Header */}
-          <div className="noeval-slate relative overflow-hidden rounded-2xl p-6 md:p-9">
-            <div className="noeval-stripe absolute inset-x-0 top-0 h-3" />
-            <div className="flex items-start justify-between gap-4 mt-4">
-              <div>
-                <div className="flex items-center gap-3 text-noeval-taupe text-[11px] tracking-[0.42em] uppercase font-medium">
-                  <span className="w-2 h-2 rounded-full bg-noeval-accent animate-pulse" />
+          <div className="prod-card noeval-slate relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-9">
+            <div className="noeval-stripe absolute inset-x-0 top-0 h-2 sm:h-3" />
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 sm:gap-4 mt-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 sm:gap-3 text-noeval-taupe text-[10px] sm:text-[11px] tracking-[0.32em] sm:tracking-[0.42em] uppercase font-medium">
+                  <span className="w-2 h-2 rounded-full bg-noeval-accent animate-pulse shrink-0" />
                   Plan de producción
                 </div>
-                <h1 className="font-serif font-semibold text-4xl md:text-6xl uppercase tracking-[0.08em] text-noeval-cream mt-3 leading-none">
+                <h1 className="font-serif font-semibold text-[clamp(1.6rem,11cqw,3.75rem)] uppercase tracking-[0.04em] text-noeval-cream mt-2 sm:mt-3 leading-none break-words">
                   Producciones
                   <span className="font-script normal-case text-noeval-accent text-[0.5em] ml-2">
                     sheets
                   </span>
                 </h1>
-                <p className="text-noeval-taupe mt-3 text-sm max-w-xl">
+                <p className="text-noeval-taupe mt-2 sm:mt-3 text-[13px] sm:text-sm max-w-xl">
                   Drive de hojas de producción por cliente. Guarda, edita, asigna equipo y envía a ClickUp cuando esté listo.
                 </p>
               </div>
               <Button
                 onClick={() => setCreating(true)}
-                className="bg-noeval-cream text-noeval-ink hover:bg-white shrink-0"
+                className="bg-noeval-cream text-noeval-ink hover:bg-white shrink-0 w-full lg:w-auto"
               >
                 <Plus className="h-4 w-4 mr-1.5" /> Nuevo sheet
               </Button>
@@ -249,8 +249,8 @@ export default function Producciones() {
           </div>
 
           {/* Search */}
-          <div className="flex gap-2 items-center">
-            <div className="relative flex-1">
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-noeval-muted" />
               <Input
                 value={search}
@@ -260,7 +260,7 @@ export default function Producciones() {
               />
             </div>
             {clientFilter && (
-              <Button variant="outline" onClick={() => setClientFilter(null)}>
+              <Button variant="outline" className="w-full sm:w-auto shrink-0" onClick={() => setClientFilter(null)}>
                 <ArrowLeft className="h-4 w-4 mr-1.5" />
                 Todas las carpetas
               </Button>
@@ -271,12 +271,12 @@ export default function Producciones() {
           {!clientFilter && !search && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-serif text-2xl text-noeval-ink">Carpetas de clientes</h2>
+                <h2 className="font-serif text-xl sm:text-2xl text-noeval-ink">Carpetas de clientes</h2>
                 <Button size="sm" variant="outline" onClick={() => setCreatingClient(true)}>
                   <Plus className="h-3.5 w-3.5 mr-1" /> Nuevo cliente
                 </Button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+              <div className="prod-grid">
                 {clients.map((c) => {
                   const count = sheetsByClient[c.id]?.length || 0;
                   return (
@@ -301,10 +301,10 @@ export default function Producciones() {
                 })}
                 <button
                   onClick={() => setCreatingClient(true)}
-                  className="aspect-square rounded-2xl bg-noeval-ink/5 border-2 border-dashed border-noeval-ink/25 hover:border-noeval-accent hover:bg-noeval-accent/5 transition-all flex flex-col items-center justify-center text-noeval-muted hover:text-noeval-accent"
+                  className="prod-card aspect-square rounded-2xl bg-noeval-ink/5 border-2 border-dashed border-noeval-ink/25 hover:border-noeval-accent hover:bg-noeval-accent/5 transition-all flex flex-col items-center justify-center text-noeval-muted hover:text-noeval-accent p-2 text-center"
                 >
-                  <Plus className="h-9 w-9 mb-1.5" />
-                  <span className="text-xs tracking-[0.2em] uppercase font-medium">Nuevo cliente</span>
+                  <Plus className="h-7 w-7 sm:h-9 sm:w-9 mb-1.5" />
+                  <span className="prod-eyebrow uppercase font-medium">Nuevo cliente</span>
                 </button>
               </div>
             </div>
@@ -345,7 +345,7 @@ export default function Producciones() {
 
           {/* Sub-folders (inside a client, not searching) */}
           {clientFilter && !search && subFolders.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+            <div className="prod-grid">
               {subFolders.map((f) => {
                 const count = folderSheetCount[f.id] || 0;
                 return (
@@ -357,7 +357,7 @@ export default function Producciones() {
                     onDragOver={(e) => { if (dragging && dragging.id !== f.id) { e.preventDefault(); setDropTarget(f.id); } }}
                     onDragLeave={() => setDropTarget(prev => prev === f.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnFolder(f.id); }}
-                    className={`group relative aspect-[4/5] overflow-hidden rounded-2xl border cursor-grab active:cursor-grabbing transition-all hover:shadow-xl ${dropTarget === f.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === f.id ? 'opacity-50' : ''}`}
+                    className={`prod-card group relative aspect-[4/5] overflow-hidden rounded-2xl border cursor-grab active:cursor-grabbing transition-all hover:shadow-xl ${dropTarget === f.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-noeval-line'} ${dragging?.id === f.id ? 'opacity-50' : ''}`}
                   >
                     <button
                       onClick={() => setFolderPath([...folderPath, { id: f.id, name: f.name }])}
@@ -378,9 +378,9 @@ export default function Producciones() {
                         </Badge>
                       </div>
                       {/* Bottom label */}
-                      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-                        <div className="text-[9px] tracking-[0.3em] uppercase text-white/50 mb-1">Carpeta</div>
-                        <div className="font-serif text-base sm:text-lg text-white leading-tight line-clamp-2 pr-8">
+                      <div className="prod-pad absolute inset-x-0 bottom-0">
+                        <div className="prod-eyebrow uppercase text-white/50 mb-1">Carpeta</div>
+                        <div className="prod-title font-serif text-white line-clamp-2 pr-7">
                           {f.name}
                         </div>
                       </div>
@@ -412,7 +412,7 @@ export default function Producciones() {
             <div className="flex items-end justify-between gap-3 mb-3">
               <div>
                 {!clientFilter && (
-                  <h2 className="font-serif text-2xl text-noeval-ink">
+                  <h2 className="font-serif text-xl sm:text-2xl text-noeval-ink">
                     {search ? 'Resultados' : 'Sheets recientes'}
                   </h2>
                 )}
@@ -449,7 +449,7 @@ export default function Producciones() {
                 </p>
               </div>
             ) : view === 'grid' ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+              <div className="prod-grid">
                 {filteredSheets.map((s) => (
                   <div
                     key={s.id}
@@ -465,7 +465,7 @@ export default function Producciones() {
                     onDragLeave={() => setDropBeforeSheetId(prev => prev === s.id ? null : prev)}
                     onDrop={(e) => { e.preventDefault(); handleDropOnSheet(s.id); }}
                     onClick={() => navigate(`${produccionesBasePath()}/${s.id}`)}
-                    className={`group relative aspect-[4/5] overflow-hidden rounded-[26px] border-[3px] bg-black shadow-[0_18px_50px_-24px_rgba(0,0,0,0.85)] hover:shadow-[0_24px_60px_-22px_rgba(0,0,0,0.95)] transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-black'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
+                    className={`prod-card group relative aspect-[4/5] overflow-hidden rounded-[22px] sm:rounded-[26px] border-[3px] bg-black shadow-[0_18px_50px_-24px_rgba(0,0,0,0.85)] hover:shadow-[0_24px_60px_-22px_rgba(0,0,0,0.95)] transition-all cursor-pointer ${dropBeforeSheetId === s.id ? 'border-noeval-accent ring-2 ring-noeval-accent' : 'border-black'} ${dragging?.id === s.id ? 'opacity-50' : ''}`}
                   >
                     {/* Thumbnail or placeholder */}
                     {s.thumbnail_url ? (
@@ -509,20 +509,20 @@ export default function Producciones() {
                     </div>
 
                     {/* Poster-style content */}
-                    <div className="absolute inset-x-0 bottom-0 px-4 pb-5 sm:px-5 sm:pb-6 text-center text-white">
-                      <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.34em] text-white/85">
+                    <div className="prod-pad absolute inset-x-0 bottom-0 text-center text-white">
+                      <div className="prod-eyebrow font-bold uppercase text-white/85 truncate">
                         {clientMap[s.client_id] || 'Socialify'}
                       </div>
-                      <div className="font-serif uppercase leading-[0.92] tracking-[0.01em] text-xl sm:text-2xl mt-1.5 line-clamp-3 drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
+                      <div className="prod-title font-serif uppercase tracking-[0.01em] mt-1.5 line-clamp-3 drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
                         {s.title}
                       </div>
-                      <div className="mt-2 text-[10px] sm:text-[11px] text-white/60 leading-snug">
+                      <div className="prod-meta mt-1.5 text-white/60">
                         {[
                           s.shoot_date ? format(parseISO(s.shoot_date), "d MMM yyyy", { locale: es }) : null,
                           s.location || null,
                         ].filter(Boolean).join(' · ') || 'Sin fecha definida'}
                       </div>
-                      <div className="mt-3 flex justify-center">
+                      <div className="mt-2 sm:mt-3 flex justify-center">
                         <Badge variant="outline" className={`text-[9px] ${STATUS_TONE[s.status]}`}>
                           {STATUS_LABEL[s.status]}
                         </Badge>
@@ -844,7 +844,7 @@ function ClientFolderCard({
   };
 
   return (
-    <div className="group relative aspect-square overflow-hidden rounded-2xl border border-noeval-line bg-noeval-ink hover:shadow-xl transition-all">
+    <div className="prod-card group relative aspect-square overflow-hidden rounded-2xl border border-noeval-line bg-noeval-ink hover:shadow-xl transition-all">
       <button onClick={onOpen} className="absolute inset-0 text-left w-full h-full">
         {/* Dark backdrop */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-noeval-ink to-black" />
@@ -862,7 +862,7 @@ function ClientFolderCard({
         )}
         {!client.logo_url && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="font-serif text-6xl uppercase tracking-wide text-white/25">
+            <div className="font-serif text-[clamp(1.75rem,22cqw,3.75rem)] uppercase tracking-wide text-white/25">
               {client.name.slice(0, 2)}
             </div>
           </div>
@@ -872,8 +872,8 @@ function ClientFolderCard({
         <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black via-black/85 to-transparent" />
 
         {/* Client name */}
-        <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-          <div className="font-serif text-base sm:text-lg text-white leading-tight truncate">
+        <div className="prod-pad absolute inset-x-0 bottom-0">
+          <div className="prod-title font-serif text-white truncate">
             {client.name}
           </div>
         </div>
