@@ -476,9 +476,8 @@ export default function Producciones() {
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700"
                       />
                     ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-[#141414] to-black flex flex-col items-center justify-center text-white/50">
-                        <Film className="h-10 w-10 mb-2" />
-                        <span className="text-[10px] tracking-[0.3em] uppercase">Sin portada</span>
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#242424] via-[#141414] to-black flex flex-col items-center justify-start pt-10 text-white/35">
+                        <Film className="h-9 w-9" />
                       </div>
                     )}
 
