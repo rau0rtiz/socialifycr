@@ -425,7 +425,7 @@ export default function Producciones() {
                   type="button"
                   onClick={() => setView('grid')}
                   title="Vista de cuadrícula"
-                  className={`p-1.5 rounded-md transition ${view === 'grid' ? 'bg-noeval-ink text-noeval-cream' : 'text-noeval-muted hover:text-noeval-ink'}`}
+                  className={`p-1.5 rounded-md transition ${view === 'grid' ? 'bg-noeval-accent text-white' : 'text-noeval-muted hover:text-noeval-ink'}`}
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </button>
@@ -433,7 +433,7 @@ export default function Producciones() {
                   type="button"
                   onClick={() => setView('list')}
                   title="Vista de lista"
-                  className={`p-1.5 rounded-md transition ${view === 'list' ? 'bg-noeval-ink text-noeval-cream' : 'text-noeval-muted hover:text-noeval-ink'}`}
+                  className={`p-1.5 rounded-md transition ${view === 'list' ? 'bg-noeval-accent text-white' : 'text-noeval-muted hover:text-noeval-ink'}`}
                 >
                   <List className="h-4 w-4" />
                 </button>
