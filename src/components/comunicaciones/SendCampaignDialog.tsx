@@ -471,6 +471,17 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} className="h-9" />
             </div>
 
+            <div className="space-y-1">
+              <Label className="text-xs">Texto de vista previa (preview text)</Label>
+              <Input
+                value={editedPreviewText}
+                onChange={e => setEditedPreviewText(e.target.value)}
+                placeholder="Línea que se ve junto al asunto en la bandeja de entrada"
+                maxLength={160}
+                className="h-9"
+              />
+            </div>
+
             {/* Editable intro */}
             <div className="space-y-1">
               <Label className="text-xs">Intro del email (basado en nivel {leadContext?.business_level})</Label>
@@ -660,6 +671,17 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
               <Input value={editedSubject} onChange={e => setEditedSubject(e.target.value)} placeholder="Asunto del correo" className="h-9" />
             </div>
 
+            <div className="space-y-1">
+              <Label className="text-xs">Texto de vista previa (preview text)</Label>
+              <Input
+                value={editedPreviewText}
+                onChange={e => setEditedPreviewText(e.target.value)}
+                placeholder="Línea que se ve junto al asunto en la bandeja de entrada"
+                maxLength={160}
+                className="h-9"
+              />
+            </div>
+
             {/* Side-by-side HTML editor + live preview */}
             <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
               <div className="flex flex-col min-h-0">
@@ -789,6 +811,9 @@ export const SendCampaignDialog = ({ open, onOpenChange, template, preselectedRe
             <div className="p-4 rounded-lg bg-muted space-y-3">
               <div><p className="text-xs text-muted-foreground">{template ? 'Plantilla' : 'Campaña'}</p><p className="font-medium text-sm">{template?.name || campaignName.trim() || editedSubject || '(sin nombre)'}</p></div>
               <div><p className="text-xs text-muted-foreground">Asunto</p><p className="font-medium text-sm">{editedSubject}</p></div>
+              {editedPreviewText.trim() && (
+                <div><p className="text-xs text-muted-foreground">Texto de vista previa</p><p className="font-medium text-sm">{editedPreviewText}</p></div>
+              )}
               <div><p className="text-xs text-muted-foreground">Destinatarios</p><p className="font-medium text-sm">{selectedRecipients.length} personas</p></div>
             </div>
 
