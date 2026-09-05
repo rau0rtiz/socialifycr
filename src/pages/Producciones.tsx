@@ -249,8 +249,8 @@ export default function Producciones() {
           </div>
 
           {/* Search */}
-          <div className="flex gap-2 items-center">
-            <div className="relative flex-1">
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-noeval-muted" />
               <Input
                 value={search}
