@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { injectPreheader } from "../_shared/preheader.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -249,7 +250,7 @@ serve(async (req) => {
     if (!RESEND_API_KEY || !LOVABLE_API_KEY) throw new Error("Missing email configuration");
 
     const body = await req.json();
-    const { sheetId, recipientEmail, recipientName, subject, includeTechNotes, format } = body;
+    const { sheetId, recipientEmail, recipientName, subject, previewText, includeTechNotes, format } = body;
 
     if (!sheetId || !recipientEmail) {
       return new Response(JSON.stringify({ error: "sheetId and recipientEmail are required" }), {
@@ -288,7 +289,7 @@ serve(async (req) => {
     const shareUrl = sheet.public_share_enabled && sheet.public_share_token
       ? `https://app.socialifycr.com/recibo/${sheet.public_share_token}`
       : null;
-    const html = isReceipt
+    let html = isReceipt
       ? buildReceiptHtml({ sheet, clientName, shots, recipientName, shareUrl })
       : buildHtml({
           sheet,
@@ -297,6 +298,8 @@ serve(async (req) => {
           includeTechNotes: !!includeTechNotes,
           recipientName,
         });
+
+    html = injectPreheader(html, previewText);
 
     const finalSubject = subject?.trim() || (isReceipt
       ? `Comprobante de entrega · ${sheet.title || clientName}`

@@ -19,6 +19,7 @@ export function SendSummaryEmailDialog({ open, onClose, sheetId, defaultSubject 
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [subject, setSubject] = useState(defaultSubject || '');
+  const [previewText, setPreviewText] = useState('');
   const [includeTech, setIncludeTech] = useState(false);
   const [format, setFormat] = useState<'receipt' | 'editorial'>('receipt');
   const [sending, setSending] = useState(false);
@@ -38,6 +39,7 @@ export function SendSummaryEmailDialog({ open, onClose, sheetId, defaultSubject 
           recipientEmail: email,
           recipientName: name || null,
           subject: subject || null,
+          previewText: previewText.trim() || null,
           includeTechNotes: includeTech,
           format,
         },
@@ -46,7 +48,7 @@ export function SendSummaryEmailDialog({ open, onClose, sheetId, defaultSubject 
       if (data?.error) throw new Error(data.error);
       toast.success(`Correo enviado a ${emails.length} destinatario${emails.length !== 1 ? 's' : ''}`);
       onClose();
-      setEmail(''); setName(''); setSubject(defaultSubject || ''); setIncludeTech(false);
+      setEmail(''); setName(''); setSubject(defaultSubject || ''); setPreviewText(''); setIncludeTech(false);
     } catch (e: any) {
       toast.error(e?.message || 'No se pudo enviar el correo');
     } finally {
@@ -104,6 +106,17 @@ export function SendSummaryEmailDialog({ open, onClose, sheetId, defaultSubject 
               placeholder={defaultSubject || 'Resumen de producción'}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="preview" className="text-xs">Texto de vista previa (opcional)</Label>
+            <Input
+              id="preview"
+              placeholder="Línea que se ve junto al asunto en la bandeja"
+              value={previewText}
+              onChange={(e) => setPreviewText(e.target.value)}
+              maxLength={160}
             />
           </div>
 
