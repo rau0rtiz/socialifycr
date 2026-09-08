@@ -346,7 +346,19 @@ export const useAgencyPayments = (monthDate: Date) => {
         .from('agency_payment_clients')
         .update({ monthly_amount: total })
         .eq('id', clientId);
+
+      // Sincronizar montos de cobros aún no pagados con el nuevo monto del tracto.
+      const ivaRate = Number((client as any).iva_rate || 0);
+      for (const t of tracts) {
+        if (!t.id) continue;
+        await (supabase as any)
+          .from('agency_payment_records')
+          .update({ amount: Number(t.amount || 0) * (1 + ivaRate / 100) })
+          .eq('schedule_id', t.id)
+          .eq('paid', false);
+      }
     },
+
     onSuccess: () => {
       invalidate();
       toast.success('Cliente guardado');
