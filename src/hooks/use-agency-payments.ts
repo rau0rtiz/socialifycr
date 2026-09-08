@@ -134,6 +134,11 @@ export interface Installment {
   record?: PayRecord;
 }
 
+/** El monto vigente: si ya está pagado se respeta lo cobrado, si no manda el tracto. */
+export const dueAmount = (inst: Installment) =>
+  inst.record?.paid ? Number(inst.record.amount ?? inst.withIva) : inst.withIva;
+
+
 export const useAgencyPayments = (monthDate: Date) => {
   const qc = useQueryClient();
   const periodIso = isoDate(new Date(monthDate.getFullYear(), monthDate.getMonth(), 1));
