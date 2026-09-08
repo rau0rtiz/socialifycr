@@ -386,7 +386,7 @@ export const useAgencyPayments = (monthDate: Date) => {
       patch,
     }: {
       inst: Installment;
-      patch: Partial<Pick<PayRecord, 'paid' | 'paid_at' | 'payment_method' | 'amount' | 'notes'>>;
+      patch: Partial<Pick<PayRecord, 'paid' | 'paid_at' | 'payment_method' | 'amount' | 'notes' | 'status'>>;
     }) => {
       if (inst.record) {
         const { error } = await (supabase as any)
@@ -403,6 +403,7 @@ export const useAgencyPayments = (monthDate: Date) => {
           amount: inst.withIva,
           currency: inst.client.currency,
           paid: false,
+          status: 'al_cobro',
           ...patch,
         });
         if (error) throw error;
@@ -412,16 +413,21 @@ export const useAgencyPayments = (monthDate: Date) => {
     onError: (e: any) => toast.error(e.message || 'Error'),
   });
 
-  const togglePaid = (inst: Installment) => {
-    const next = !inst.record?.paid;
+  const setStatus = (inst: Installment, status: PayStatus) => {
+    const paid = status === 'pagado';
     upsertRecord.mutate({
       inst,
       patch: {
-        paid: next,
-        paid_at: next ? new Date().toISOString() : null,
-        amount: inst.record?.amount ?? inst.withIva,
+        status,
+        paid,
+        paid_at: paid ? (inst.record?.paid_at || new Date().toISOString()) : null,
+        amount: paid ? (inst.record?.amount ?? inst.withIva) : inst.withIva,
       },
     });
+  };
+
+  const togglePaid = (inst: Installment) => {
+    setStatus(inst, inst.record?.paid ? 'al_cobro' : 'pagado');
   };
 
   return {
@@ -436,6 +442,8 @@ export const useAgencyPayments = (monthDate: Date) => {
     saveClient,
     deleteClient,
     upsertRecord,
+    setStatus,
     togglePaid,
+
   };
 };
