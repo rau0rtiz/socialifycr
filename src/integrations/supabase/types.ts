@@ -360,6 +360,56 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_billing_profiles: {
+        Row: {
+          billing_address: string | null
+          billing_email: string | null
+          billing_name: string | null
+          billing_phone: string | null
+          billing_tax_id: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          label: string
+          payment_client_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_address?: string | null
+          billing_email?: string | null
+          billing_name?: string | null
+          billing_phone?: string | null
+          billing_tax_id?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          payment_client_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_address?: string | null
+          billing_email?: string | null
+          billing_name?: string | null
+          billing_phone?: string | null
+          billing_tax_id?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          payment_client_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_billing_profiles_payment_client_id_fkey"
+            columns: ["payment_client_id"]
+            isOneToOne: false
+            referencedRelation: "agency_payment_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_collections: {
         Row: {
           amount: number
@@ -928,6 +978,7 @@ export type Database = {
           payment_method: string | null
           period: string
           schedule_id: string | null
+          status: string
           updated_at: string
         }
         Insert: {
@@ -943,6 +994,7 @@ export type Database = {
           payment_method?: string | null
           period: string
           schedule_id?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -958,6 +1010,7 @@ export type Database = {
           payment_method?: string | null
           period?: string
           schedule_id?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: [
