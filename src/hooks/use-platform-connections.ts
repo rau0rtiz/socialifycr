@@ -34,11 +34,8 @@ export const usePlatformConnections = (clientId: string | null) => {
       if (!clientId) return [];
 
       const { data, error } = await supabase
-        .from('platform_connections')
-        .select('id,client_id,platform,status,token_expires_at,platform_user_id,platform_page_id,platform_page_name,connected_by,created_at,updated_at,instagram_account_id,ad_account_id,permissions')
-        .eq('client_id', clientId)
-        .eq('status', 'active')
-        .order('created_at', { ascending: true });
+        .rpc('get_safe_platform_connections', { _client_id: clientId });
+
 
       if (error) {
         console.error('Error fetching platform connections:', error);
