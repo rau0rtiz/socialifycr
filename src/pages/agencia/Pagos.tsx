@@ -94,7 +94,7 @@ export default function Pagos() {
             logoOf={logoOf}
             monthDate={monthDate}
             onEdit={openEdit}
-            onTogglePaid={togglePaid}
+            onSetStatus={setStatus}
             onSetMethod={setMethod}
           />
         )}
