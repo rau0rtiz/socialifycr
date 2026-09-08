@@ -32,6 +32,8 @@ export interface PayDate {
   sort_order: number;
 }
 
+export type PayStatus = 'al_cobro' | 'contactado' | 'pagado';
+
 export interface PayRecord {
   id: string;
   client_id: string;
@@ -44,7 +46,29 @@ export interface PayRecord {
   paid_at: string | null;
   payment_method: string | null;
   notes: string | null;
+  status: PayStatus;
 }
+
+export interface BillingProfile {
+  id: string;
+  payment_client_id: string;
+  label: string;
+  billing_name: string | null;
+  billing_tax_id: string | null;
+  billing_email: string | null;
+  billing_phone: string | null;
+  billing_address: string | null;
+  is_default: boolean;
+}
+
+export const PAY_STATUSES: Array<{ value: PayStatus; label: string }> = [
+  { value: 'al_cobro', label: 'Al cobro' },
+  { value: 'contactado', label: 'Contactado' },
+  { value: 'pagado', label: 'Pagado' },
+];
+
+export const statusOf = (r?: PayRecord): PayStatus =>
+  r?.paid ? 'pagado' : (r?.status as PayStatus) || 'al_cobro';
 
 export const PAYMENT_METHODS = [
   { value: 'compra_click', label: 'Compra Click' },
@@ -55,6 +79,7 @@ export const PAYMENT_METHODS = [
 
 export const methodLabel = (v?: string | null) =>
   PAYMENT_METHODS.find(m => m.value === v)?.label || '';
+
 
 export const symbolOf = (currency: string) => (currency === 'CRC' ? '₡' : '$');
 
@@ -108,6 +133,11 @@ export interface Installment {
   withIva: number;
   record?: PayRecord;
 }
+
+/** El monto vigente: si ya está pagado se respeta lo cobrado, si no manda el tracto. */
+export const dueAmount = (inst: Installment) =>
+  inst.record?.paid ? Number(inst.record.amount ?? inst.withIva) : inst.withIva;
+
 
 export const useAgencyPayments = (monthDate: Date) => {
   const qc = useQueryClient();
@@ -316,7 +346,19 @@ export const useAgencyPayments = (monthDate: Date) => {
         .from('agency_payment_clients')
         .update({ monthly_amount: total })
         .eq('id', clientId);
+
+      // Sincronizar montos de cobros aún no pagados con el nuevo monto del tracto.
+      const ivaRate = Number((client as any).iva_rate || 0);
+      for (const t of tracts) {
+        if (!t.id) continue;
+        await (supabase as any)
+          .from('agency_payment_records')
+          .update({ amount: Number(t.amount || 0) * (1 + ivaRate / 100) })
+          .eq('schedule_id', t.id)
+          .eq('paid', false);
+      }
     },
+
     onSuccess: () => {
       invalidate();
       toast.success('Cliente guardado');
@@ -344,7 +386,7 @@ export const useAgencyPayments = (monthDate: Date) => {
       patch,
     }: {
       inst: Installment;
-      patch: Partial<Pick<PayRecord, 'paid' | 'paid_at' | 'payment_method' | 'amount' | 'notes'>>;
+      patch: Partial<Pick<PayRecord, 'paid' | 'paid_at' | 'payment_method' | 'amount' | 'notes' | 'status'>>;
     }) => {
       if (inst.record) {
         const { error } = await (supabase as any)
@@ -361,6 +403,7 @@ export const useAgencyPayments = (monthDate: Date) => {
           amount: inst.withIva,
           currency: inst.client.currency,
           paid: false,
+          status: 'al_cobro',
           ...patch,
         });
         if (error) throw error;
@@ -370,16 +413,21 @@ export const useAgencyPayments = (monthDate: Date) => {
     onError: (e: any) => toast.error(e.message || 'Error'),
   });
 
-  const togglePaid = (inst: Installment) => {
-    const next = !inst.record?.paid;
+  const setStatus = (inst: Installment, status: PayStatus) => {
+    const paid = status === 'pagado';
     upsertRecord.mutate({
       inst,
       patch: {
-        paid: next,
-        paid_at: next ? new Date().toISOString() : null,
-        amount: inst.record?.amount ?? inst.withIva,
+        status,
+        paid,
+        paid_at: paid ? (inst.record?.paid_at || new Date().toISOString()) : null,
+        amount: paid ? (inst.record?.amount ?? inst.withIva) : inst.withIva,
       },
     });
+  };
+
+  const togglePaid = (inst: Installment) => {
+    setStatus(inst, inst.record?.paid ? 'al_cobro' : 'pagado');
   };
 
   return {
@@ -394,6 +442,8 @@ export const useAgencyPayments = (monthDate: Date) => {
     saveClient,
     deleteClient,
     upsertRecord,
+    setStatus,
     togglePaid,
+
   };
 };

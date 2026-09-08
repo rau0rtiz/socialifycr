@@ -1,7 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -14,12 +13,30 @@ import { cn } from '@/lib/utils';
 import {
   Installment,
   PayClient,
+  PayStatus,
   PAYMENT_METHODS,
+  PAY_STATUSES,
+  dueAmount,
   fmtMoney,
   isoDate,
-  monthLabel,
+  statusOf,
 } from '@/hooks/use-agency-payments';
 import { MonthRow } from './PaymentClientRow';
+
+const statusStyles: Record<PayStatus, { active: string; idle: string }> = {
+  al_cobro: {
+    active: 'bg-amber-500 border-amber-500 text-black hover:bg-amber-500/90',
+    idle: 'bg-transparent border-amber-500/40 text-amber-400 hover:bg-amber-500/10',
+  },
+  contactado: {
+    active: 'bg-sky-500 border-sky-500 text-black hover:bg-sky-500/90',
+    idle: 'bg-transparent border-sky-500/40 text-sky-400 hover:bg-sky-500/10',
+  },
+  pagado: {
+    active: 'bg-emerald-500 border-emerald-500 text-black hover:bg-emerald-500/90',
+    idle: 'bg-transparent border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10',
+  },
+};
 
 interface Props {
   rows: MonthRow[];
@@ -27,9 +44,10 @@ interface Props {
   logoOf: (c: PayClient) => string | null;
   monthDate: Date;
   onEdit: (id: string) => void;
-  onTogglePaid: (inst: Installment) => void;
+  onSetStatus: (inst: Installment, status: PayStatus) => void;
   onSetMethod: (inst: Installment, method: string) => void;
 }
+
 
 const initials = (name: string) =>
   name
@@ -103,7 +121,7 @@ export const PaymentTimeline = ({
   logoOf,
   monthDate,
   onEdit,
-  onTogglePaid,
+  onSetStatus,
   onSetMethod,
 }: Props) => {
   const allItems: Installment[] = [
@@ -228,7 +246,7 @@ export const PaymentTimeline = ({
 
                         <div className="text-right min-w-[100px]">
                           <div className="text-sm font-mono font-semibold">
-                            {fmtMoney(inst.record?.amount ?? inst.withIva, inst.client.currency)}
+                            {fmtMoney(dueAmount(inst), inst.client.currency)}
                           </div>
                           {Number(inst.client.iva_rate) > 0 && (
                             <div className="text-[10px] text-muted-foreground">
@@ -238,12 +256,25 @@ export const PaymentTimeline = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Checkbox
-                          checked={paid}
-                          onCheckedChange={() => onTogglePaid(inst)}
-                          aria-label="Marcar pagado"
-                        />
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {PAY_STATUSES.map(s => {
+                          const active = statusOf(inst.record) === s.value;
+                          return (
+                            <Button
+                              key={s.value}
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onSetStatus(inst, s.value)}
+                              className={cn(
+                                'h-7 px-2.5 text-[11px] font-semibold border transition-colors',
+                                active ? statusStyles[s.value].active : statusStyles[s.value].idle,
+                              )}
+                            >
+                              {s.value === 'pagado' && <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
+                              {s.label}
+                            </Button>
+                          );
+                        })}
                         <Button
                           size="icon"
                           variant="ghost"
@@ -254,6 +285,7 @@ export const PaymentTimeline = ({
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                       </div>
+
                     </div>
                   );
                 })}

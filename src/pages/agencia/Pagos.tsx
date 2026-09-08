@@ -25,7 +25,7 @@ export default function Pagos() {
 
   const {
     clients, dates, monthRows, totalsByCurrency, overdue, isLoading,
-    saveClient, deleteClient, upsertRecord, togglePaid,
+    saveClient, deleteClient, upsertRecord, setStatus,
   } = useAgencyPayments(monthDate);
 
   const { data: systemClients = [] } = useQuery({
@@ -94,7 +94,7 @@ export default function Pagos() {
             logoOf={logoOf}
             monthDate={monthDate}
             onEdit={openEdit}
-            onTogglePaid={togglePaid}
+            onSetStatus={setStatus}
             onSetMethod={setMethod}
           />
         )}
