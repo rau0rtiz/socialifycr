@@ -1,7 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -14,12 +13,30 @@ import { cn } from '@/lib/utils';
 import {
   Installment,
   PayClient,
+  PayStatus,
   PAYMENT_METHODS,
+  PAY_STATUSES,
+  dueAmount,
   fmtMoney,
   isoDate,
-  monthLabel,
+  statusOf,
 } from '@/hooks/use-agency-payments';
 import { MonthRow } from './PaymentClientRow';
+
+const statusStyles: Record<PayStatus, { active: string; idle: string }> = {
+  al_cobro: {
+    active: 'bg-amber-500 border-amber-500 text-black hover:bg-amber-500/90',
+    idle: 'bg-transparent border-amber-500/40 text-amber-400 hover:bg-amber-500/10',
+  },
+  contactado: {
+    active: 'bg-sky-500 border-sky-500 text-black hover:bg-sky-500/90',
+    idle: 'bg-transparent border-sky-500/40 text-sky-400 hover:bg-sky-500/10',
+  },
+  pagado: {
+    active: 'bg-emerald-500 border-emerald-500 text-black hover:bg-emerald-500/90',
+    idle: 'bg-transparent border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10',
+  },
+};
 
 interface Props {
   rows: MonthRow[];
@@ -27,9 +44,10 @@ interface Props {
   logoOf: (c: PayClient) => string | null;
   monthDate: Date;
   onEdit: (id: string) => void;
-  onTogglePaid: (inst: Installment) => void;
+  onSetStatus: (inst: Installment, status: PayStatus) => void;
   onSetMethod: (inst: Installment, method: string) => void;
 }
+
 
 const initials = (name: string) =>
   name
