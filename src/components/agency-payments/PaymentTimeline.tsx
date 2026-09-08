@@ -121,7 +121,7 @@ export const PaymentTimeline = ({
   logoOf,
   monthDate,
   onEdit,
-  onTogglePaid,
+  onSetStatus,
   onSetMethod,
 }: Props) => {
   const allItems: Installment[] = [
