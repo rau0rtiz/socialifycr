@@ -14,7 +14,7 @@ export interface PlatformConnection {
   permissions: any;
   token_expires_at: string | null;
   connected_by: string | null;
-  account_label: string | null;
+  account_label?: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
