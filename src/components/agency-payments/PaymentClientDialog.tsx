@@ -293,36 +293,14 @@ export const PaymentClientDialog = ({
 
           <Separator />
 
-          {/* Datos de facturación */}
+          {/* Datos de facturación (libreta de fichas) */}
+          <BillingProfilesEditor paymentClientId={client?.id || null} />
+
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Datos de facturación</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <Label className="text-xs">Razón social / Nombre</Label>
-                <Input className="mt-1.5" value={form.billing_name || ''} onChange={e => set({ billing_name: e.target.value })} />
-              </div>
-              <div>
-                <Label className="text-xs">Cédula jurídica</Label>
-                <Input className="mt-1.5" value={form.billing_tax_id || ''} onChange={e => set({ billing_tax_id: e.target.value })} placeholder="3-101-000000" />
-              </div>
-              <div>
-                <Label className="text-xs">Teléfono</Label>
-                <Input className="mt-1.5" value={form.billing_phone || ''} onChange={e => set({ billing_phone: e.target.value })} placeholder="8888-8888" />
-              </div>
-              <div className="col-span-2">
-                <Label className="text-xs">Correo</Label>
-                <Input type="email" className="mt-1.5" value={form.billing_email || ''} onChange={e => set({ billing_email: e.target.value })} />
-              </div>
-              <div className="col-span-2">
-                <Label className="text-xs">Dirección</Label>
-                <Textarea className="mt-1.5 min-h-[60px] text-sm" value={form.billing_address || ''} onChange={e => set({ billing_address: e.target.value })} />
-              </div>
-              <div className="col-span-2">
-                <Label className="text-xs">Notas internas</Label>
-                <Textarea className="mt-1.5 min-h-[50px] text-sm" value={form.notes || ''} onChange={e => set({ notes: e.target.value })} />
-              </div>
-            </div>
+            <Label className="text-xs">Notas internas</Label>
+            <Textarea className="mt-1.5 min-h-[50px] text-sm" value={form.notes || ''} onChange={e => set({ notes: e.target.value })} />
           </div>
+
         </div>
 
         <DialogFooter className="gap-2">
