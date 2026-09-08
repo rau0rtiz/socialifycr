@@ -228,7 +228,7 @@ export const PaymentTimeline = ({
 
                         <div className="text-right min-w-[100px]">
                           <div className="text-sm font-mono font-semibold">
-                            {fmtMoney(inst.record?.amount ?? inst.withIva, inst.client.currency)}
+                            {fmtMoney(dueAmount(inst), inst.client.currency)}
                           </div>
                           {Number(inst.client.iva_rate) > 0 && (
                             <div className="text-[10px] text-muted-foreground">
@@ -238,12 +238,25 @@ export const PaymentTimeline = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Checkbox
-                          checked={paid}
-                          onCheckedChange={() => onTogglePaid(inst)}
-                          aria-label="Marcar pagado"
-                        />
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {PAY_STATUSES.map(s => {
+                          const active = statusOf(inst.record) === s.value;
+                          return (
+                            <Button
+                              key={s.value}
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onSetStatus(inst, s.value)}
+                              className={cn(
+                                'h-7 px-2.5 text-[11px] font-semibold border transition-colors',
+                                active ? statusStyles[s.value].active : statusStyles[s.value].idle,
+                              )}
+                            >
+                              {s.value === 'pagado' && <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
+                              {s.label}
+                            </Button>
+                          );
+                        })}
                         <Button
                           size="icon"
                           variant="ghost"
@@ -254,6 +267,7 @@ export const PaymentTimeline = ({
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                       </div>
+
                     </div>
                   );
                 })}
