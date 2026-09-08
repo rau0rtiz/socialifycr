@@ -32,6 +32,8 @@ export interface PayDate {
   sort_order: number;
 }
 
+export type PayStatus = 'al_cobro' | 'contactado' | 'pagado';
+
 export interface PayRecord {
   id: string;
   client_id: string;
@@ -44,7 +46,29 @@ export interface PayRecord {
   paid_at: string | null;
   payment_method: string | null;
   notes: string | null;
+  status: PayStatus;
 }
+
+export interface BillingProfile {
+  id: string;
+  payment_client_id: string;
+  label: string;
+  billing_name: string | null;
+  billing_tax_id: string | null;
+  billing_email: string | null;
+  billing_phone: string | null;
+  billing_address: string | null;
+  is_default: boolean;
+}
+
+export const PAY_STATUSES: Array<{ value: PayStatus; label: string }> = [
+  { value: 'al_cobro', label: 'Al cobro' },
+  { value: 'contactado', label: 'Contactado' },
+  { value: 'pagado', label: 'Pagado' },
+];
+
+export const statusOf = (r?: PayRecord): PayStatus =>
+  r?.paid ? 'pagado' : (r?.status as PayStatus) || 'al_cobro';
 
 export const PAYMENT_METHODS = [
   { value: 'compra_click', label: 'Compra Click' },
@@ -55,6 +79,7 @@ export const PAYMENT_METHODS = [
 
 export const methodLabel = (v?: string | null) =>
   PAYMENT_METHODS.find(m => m.value === v)?.label || '';
+
 
 export const symbolOf = (currency: string) => (currency === 'CRC' ? '₡' : '$');
 
