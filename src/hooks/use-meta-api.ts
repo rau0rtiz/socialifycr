@@ -219,12 +219,10 @@ export const useMetaApi = (clientId: string | null) => {
   const getConnection = useCallback(async (): Promise<MetaConnection | null> => {
     if (!clientId) return null;
 
-    const { data, error } = await supabase
-      .from('platform_connections')
-      .select('id,client_id,platform,status,token_expires_at,platform_user_id,platform_page_id,platform_page_name,connected_by,created_at,updated_at,instagram_account_id,ad_account_id,permissions')
-      .eq('client_id', clientId)
-      .eq('platform', 'meta')
-      .maybeSingle();
+    const { data: rows, error } = await supabase
+      .rpc('get_safe_platform_connections', { _client_id: clientId });
+    const data = (rows || []).find((c: any) => c.platform === 'meta') ?? null;
+
 
     if (error) {
       console.error('Error fetching connection:', error);
