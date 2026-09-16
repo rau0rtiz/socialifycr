@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowLeft, CalendarClock, ChevronDown, Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio, User } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CalendarClock, ChevronDown, Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio, User, BotOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import {
   useOffersFingerprint,
   useSendMessage,
   useUpdateConversation,
+  useUpdateContactAutomation,
   useUpdateDraft,
   INTAKE_LABELS,
   type ContactIntake,
@@ -26,6 +27,7 @@ import {
   type MsgDraft,
   type Stage,
 } from '@/hooks/use-messaging';
+import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { DraftCard } from './DraftCard';
 
@@ -120,6 +122,7 @@ export const InboxPanel = () => {
   const generate = useGenerateDraft();
   const updateDraft = useUpdateDraft();
   const updateConv = useUpdateConversation();
+  const updateAutomation = useUpdateContactAutomation();
   const send = useSendMessage();
   const { toast } = useToast();
 
@@ -293,6 +296,9 @@ export const InboxPanel = () => {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-[13px] font-medium text-foreground">{nm}</span>
+                    {c.msg_contacts?.do_not_contact && (
+                      <BotOff className="h-3 w-3 shrink-0 text-destructive" aria-label="Ari en pausa" />
+                    )}
                     {c.unread_count > 0 && (
                       <Badge className="ml-auto h-4 px-1.5 text-[10px]">{c.unread_count}</Badge>
                     )}
@@ -508,6 +514,10 @@ export const InboxPanel = () => {
             draft={draft}
             lastMessage={lastMessage}
             onStage={(v) => updateConv.mutate({ id: activeConv.id, patch: { stage: v } })}
+            paused={Boolean(activeConv.msg_contacts?.do_not_contact)}
+            onPausedChange={(v) =>
+              activeConv.contact_id && updateAutomation.mutate({ contactId: activeConv.contact_id, paused: v })
+            }
           />
         )}
       </div>
@@ -525,6 +535,10 @@ export const InboxPanel = () => {
                 draft={draft}
                 lastMessage={lastMessage}
                 onStage={(v) => updateConv.mutate({ id: activeConv.id, patch: { stage: v } })}
+                paused={Boolean(activeConv.msg_contacts?.do_not_contact)}
+                onPausedChange={(v) =>
+                  activeConv.contact_id && updateAutomation.mutate({ contactId: activeConv.contact_id, paused: v })
+                }
               />
             </div>
           )}
@@ -540,11 +554,15 @@ const FichaBody = ({
   draft,
   lastMessage,
   onStage,
+  paused,
+  onPausedChange,
 }: {
   conv: InboxRow;
   draft: MsgDraft | null | undefined;
   lastMessage: { occurred_at: string } | null;
   onStage: (v: Stage) => void;
+  paused: boolean;
+  onPausedChange: (v: boolean) => void;
 }) => (
   <div className="space-y-4">
     <div className="flex flex-col items-center gap-2 text-center">
