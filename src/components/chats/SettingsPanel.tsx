@@ -211,9 +211,9 @@ export const SettingsPanel = () => {
               <Button
                 size="sm"
                 className="h-8 text-xs"
-                disabled={save.isPending || !manual.trim()}
+                disabled={saveDraft.isPending || !manual.trim()}
                 onClick={() =>
-                  save.mutate(
+                  saveDraft.mutate(
                     {
                       manual,
                       toneNotes: tone.trim(),
