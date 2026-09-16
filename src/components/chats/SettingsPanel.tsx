@@ -6,16 +6,21 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRole } from '@/hooks/use-user-role';
 import {
+  useDeleteOffer,
   useMsgKnowledge,
   useMsgOffers,
   useMsgSettings,
   usePublishKnowledge,
   useSaveKnowledgeDraft,
+  useSaveOffer,
   useUpdateMsgSettings,
   type BotMode,
+  type OfferInput,
 } from '@/hooks/use-messaging';
 
 const offerBadge = (status: string) =>
@@ -32,6 +37,9 @@ export const SettingsPanel = () => {
   const update = useUpdateMsgSettings();
   const publish = usePublishKnowledge();
   const saveDraft = useSaveKnowledgeDraft();
+  const saveOffer = useSaveOffer();
+  const deleteOffer = useDeleteOffer();
+  const [offerForm, setOfferForm] = useState<OfferInput | null>(null);
   const { canManage } = useUserRole();
   const { toast } = useToast();
 
@@ -115,11 +123,18 @@ export const SettingsPanel = () => {
       </div>
 
       <div className="agency-card space-y-3 rounded-2xl p-5">
-        <div>
-          <p className="text-sm font-semibold text-foreground">Catálogo de precios</p>
-          <p className="text-xs text-muted-foreground">
-            Solo los precios publicados se le entregan al setter. Los pendientes esperan tu aprobación.
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Catálogo de precios</p>
+            <p className="text-xs text-muted-foreground">
+              Solo los precios publicados se le entregan al setter. Los pendientes esperan tu aprobación.
+            </p>
+          </div>
+          {canManage && !offerForm && (
+            <Button size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={() => setOfferForm({ label: '', currency: 'USD', status: 'pendiente' })}>
+              <Plus className="h-3.5 w-3.5" /> Agregar
+            </Button>
+          )}
         </div>
         <div className="space-y-2">
           {(offers ?? []).map((o) => (
@@ -134,10 +149,145 @@ export const SettingsPanel = () => {
                   {o.tax_note ? ` ${o.tax_note}` : ''}
                 </span>
                 <Badge variant="outline" className={offerBadge(o.status)}>{o.status}</Badge>
+                {canManage && (
+                  <>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() =>
+                        setOfferForm({
+                          id: o.id,
+                          label: o.label,
+                          detail: o.detail ?? '',
+                          price: o.price,
+                          currency: o.currency,
+                          tax_note: o.tax_note ?? '',
+                          status: o.status as OfferInput['status'],
+                        })
+                      }
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-destructive"
+                      disabled={deleteOffer.isPending}
+                      onClick={() =>
+                        deleteOffer.mutate(o.id, {
+                          onSuccess: () => toast({ title: 'Precio eliminado' }),
+                          onError: (e) => toast({ title: 'No se pudo eliminar', description: (e as Error).message, variant: 'destructive' }),
+                        })
+                      }
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           ))}
         </div>
+
+        {offerForm && (
+          <div className="space-y-3 rounded-xl border border-border/40 bg-background/40 p-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Nombre</Label>
+                <Input
+                  value={offerForm.label}
+                  onChange={(e) => setOfferForm({ ...offerForm, label: e.target.value })}
+                  className="h-9 text-xs"
+                  placeholder="Acompañamiento de marketing"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Detalle</Label>
+                <Input
+                  value={offerForm.detail ?? ''}
+                  onChange={(e) => setOfferForm({ ...offerForm, detail: e.target.value })}
+                  className="h-9 text-xs"
+                  placeholder="Alcance según propuesta aprobada"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Monto</Label>
+                <Input
+                  type="number"
+                  value={offerForm.price ?? ''}
+                  onChange={(e) => setOfferForm({ ...offerForm, price: e.target.value === '' ? null : Number(e.target.value) })}
+                  className="h-9 text-xs"
+                  placeholder="1200"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Moneda</Label>
+                <Input
+                  value={offerForm.currency ?? 'USD'}
+                  onChange={(e) => setOfferForm({ ...offerForm, currency: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Nota de impuestos</Label>
+                <Input
+                  value={offerForm.tax_note ?? ''}
+                  onChange={(e) => setOfferForm({ ...offerForm, tax_note: e.target.value })}
+                  className="h-9 text-xs"
+                  placeholder="+ IVA"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Estado</Label>
+                <Select
+                  value={offerForm.status ?? 'pendiente'}
+                  onValueChange={(v) => setOfferForm({ ...offerForm, status: v as OfferInput['status'] })}
+                >
+                  <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="publicado">Publicado</SelectItem>
+                    <SelectItem value="pendiente">Pendiente</SelectItem>
+                    <SelectItem value="historico">Histórico</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                disabled={saveOffer.isPending || !offerForm.label.trim()}
+                onClick={() =>
+                  saveOffer.mutate(
+                    {
+                      ...offerForm,
+                      label: offerForm.label.trim(),
+                      detail: offerForm.detail?.trim() || null,
+                      tax_note: offerForm.tax_note?.trim() || null,
+                      currency: (offerForm.currency || 'USD').trim().toUpperCase(),
+                    },
+                    {
+                      onSuccess: () => {
+                        setOfferForm(null);
+                        toast({ title: 'Catálogo actualizado', description: 'Los borradores anteriores quedan obsoletos si cambiaste precios publicados.' });
+                      },
+                      onError: (e) => toast({ title: 'No se pudo guardar', description: (e as Error).message, variant: 'destructive' }),
+                    },
+                  )
+                }
+              >
+                Guardar
+              </Button>
+              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setOfferForm(null)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+        {!canManage && (
+          <p className="text-[11px] text-amber-300">Solo el dueño o un administrador puede cambiar los precios.</p>
+        )}
       </div>
 
       <div className="agency-card space-y-3 rounded-2xl p-5">

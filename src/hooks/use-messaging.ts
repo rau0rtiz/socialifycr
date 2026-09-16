@@ -73,6 +73,52 @@ export const useMsgOffers = () =>
     ...CACHE,
   });
 
+export interface OfferInput {
+  id?: string;
+  label: string;
+  detail?: string | null;
+  price?: number | null;
+  currency?: string;
+  tax_note?: string | null;
+  status?: 'publicado' | 'pendiente' | 'historico';
+  sort_order?: number;
+}
+
+/** Alta y edición del catálogo de precios: solo administradores (validado en base de datos). */
+export const useSaveOffer = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (offer: OfferInput) => {
+      const { id, ...rest } = offer;
+      if (id) {
+        const { error } = await supabase.from('msg_offers').update(rest as never).eq('id', id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('msg_offers').insert(rest as never);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['msg-offers'] });
+      qc.invalidateQueries({ queryKey: ['msg-offers-fingerprint'] });
+    },
+  });
+};
+
+export const useDeleteOffer = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('msg_offers').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['msg-offers'] });
+      qc.invalidateQueries({ queryKey: ['msg-offers-fingerprint'] });
+    },
+  });
+};
+
 export const useMsgKnowledge = () =>
   useQuery({
     queryKey: ['msg-knowledge'],
