@@ -71,7 +71,11 @@ Deno.serve(async (req) => {
     }
 
 
-    const identity = (conv as any).msg_contact_identities as { external_id: string; receiving_account_id: string };
+    const identity = (conv as any).msg_contact_identities as {
+      external_id: string;
+      receiving_account_id: string;
+      username?: string | null;
+    };
 
     const { data: contactRow } = await admin
       .from('msg_contacts')
