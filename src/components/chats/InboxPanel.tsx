@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
