@@ -166,6 +166,13 @@ export function mentionsMoney(reply: string) {
   return /\b1[.,]?200\b|\b500\b/.test(flat);
 }
 
+const AUDIO_PATTERN = /^\[(audio|nota de voz|mensaje de voz)/i;
+
+export function audioReceived(history: HistoryMessage[]) {
+  const lastFromContact = [...history].reverse().find((m) => m.author === 'externo' || m.author === 'contacto');
+  return AUDIO_PATTERN.test((lastFromContact?.body ?? '').trim());
+}
+
 function formatOffers(offers: OfferRow[]) {
   if (!offers.length) return 'No hay precios publicados. No mencionés ningún monto.';
   return offers
