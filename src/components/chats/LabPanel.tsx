@@ -223,6 +223,44 @@ export const LabPanel = () => {
                     {past.notes ? ` · ${past.notes}` : ''}
                   </p>
                 )}
+                {past && (r ? r.auto_result === 'requiere_humano' : past.auto_result === 'requiere_humano') && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border/30 pt-2">
+                    <span className="text-[10px] text-muted-foreground">Tu revisión:</span>
+                    <Button
+                      size="sm"
+                      variant={past.human_verdict === 'aprobado' ? 'default' : 'outline'}
+                      className="h-7 gap-1 text-[10px]"
+                      disabled={verdict.isPending}
+                      onClick={() =>
+                        verdict.mutate({
+                          runId: past.id,
+                          verdict: past.human_verdict === 'aprobado' ? null : 'aprobado',
+                        })
+                      }
+                    >
+                      <Check className="h-3 w-3" /> Correcto
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={past.human_verdict === 'rechazado' ? 'destructive' : 'outline'}
+                      className="h-7 gap-1 text-[10px]"
+                      disabled={verdict.isPending}
+                      onClick={() =>
+                        verdict.mutate({
+                          runId: past.id,
+                          verdict: past.human_verdict === 'rechazado' ? null : 'rechazado',
+                        })
+                      }
+                    >
+                      <X className="h-3 w-3" /> Con problema
+                    </Button>
+                    {past.human_verdict && (
+                      <span className="text-[10px] text-muted-foreground">
+                        Marcado como {past.human_verdict === 'aprobado' ? 'correcto' : 'con problema'}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
