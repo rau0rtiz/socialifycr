@@ -253,3 +253,43 @@ export const useHoverState = () => {
   const [hovered, setHovered] = useState<string | null>(null);
   return { hovered, setHovered };
 };
+
+/**
+ * Marca de Socialify en 3D: la "s" del favicon armada con dos arcos low-poly
+ * y el punto naranja como esfera facetada. Gira despacio sobre sí misma.
+ * NOTA-MODELO: un GLB con la tipografía exacta subiría la fidelidad.
+ */
+export const LogoMark = ({ still = false }: { still?: boolean }) => {
+  const g = useRef<THREE.Group>(null);
+  useFrame((state, delta) => {
+    if (!g.current) return;
+    const dt = Math.min(delta, 0.05);
+    if (!still) {
+      // Balanceo suave: nunca queda de canto (se leería como una línea).
+      const t = state.clock.elapsedTime;
+      const target = Math.sin(t * 0.45) * 0.55;
+      g.current.rotation.y += (target - g.current.rotation.y) * (1 - Math.exp(-2 * dt));
+      g.current.position.y = Math.sin(t * 0.7) * 0.1;
+    }
+  });
+
+  const arc = (rotZ: number, x: number, y: number) => (
+    <mesh position={[x, y, 0]} rotation={[0, 0, rotZ]} castShadow receiveShadow>
+      {/* torus parcial = trazo curvo de la "s", con pocos segmentos (low poly) */}
+      <torusGeometry args={[0.34, 0.14, 6, 12, Math.PI * 1.15]} />
+      <meshStandardMaterial {...matte(COL.stone)} />
+    </mesh>
+  );
+
+  return (
+    <group ref={g}>
+      {arc(Math.PI * 0.35, -0.04, 0.31)}
+      {arc(Math.PI * 1.35, 0.04, -0.31)}
+      {/* Punto naranja del favicon */}
+      <mesh position={[0.62, -0.5, 0]} castShadow>
+        <icosahedronGeometry args={[0.17, 0]} />
+        <meshStandardMaterial {...matte(COL.orange, { roughness: 0.6 })} />
+      </mesh>
+    </group>
+  );
+};
