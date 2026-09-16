@@ -95,6 +95,10 @@ Deno.serve(async (req) => {
       },
       { onConflict: 'channel,external_account_id' },
     );
+    if (saved.error) {
+      console.error('calendly-setup: no se pudo guardar la clave de firma', saved.error);
+      return json({ error: 'No se pudo guardar la clave de firma', details: saved.error.message }, 500);
+    }
 
     return json({ ok: true, subscription: (created.data as any)?.resource?.uri ?? null });
   } catch (err) {
