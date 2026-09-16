@@ -210,8 +210,8 @@ Deno.serve(async (req) => {
         facts: p.facts ?? [],
         fit_signals: { fit: p.fit, ...(p.fit_signals ?? {}) },
         suggested_action: p.suggested_action ?? 'responder',
-        needs_human: Boolean(p.needs_human),
-        needs_human_reason: p.needs_human_reason ?? null,
+        needs_human: needsHuman,
+        needs_human_reason: needsHumanReason,
         model: result.model,
         knowledge_version: knowledge.version,
         knowledge_is_draft: !knowledge.is_published,
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
         conversation_version: conversation?.version ?? null,
         offers_fingerprint: (fingerprint as string) ?? null,
         human_takeover_at: conversation?.human_takeover_at ?? null,
-        validations: {},
+        validations: priceLeak ? { price_leak: true } : {},
         created_by: userId,
       })
       .select('*')
