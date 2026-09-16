@@ -20,8 +20,9 @@ type ViewMode = 'clasica' | 'tres_d';
 const AgencyResumen = () => {
   const { data: profile } = useProfile();
   const [view, setView] = useState<ViewMode>(
-    () => ((localStorage.getItem('agency-resumen-view') as ViewMode) ?? 'clasica'),
+    () => ((localStorage.getItem('agency-resumen-view') as ViewMode) ?? 'tres_d'),
   );
+
 
   useEffect(() => {
     localStorage.setItem('agency-resumen-view', view);
