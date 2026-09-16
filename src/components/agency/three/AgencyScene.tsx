@@ -70,7 +70,7 @@ const Scene = ({
     </Environment>
 
     <CursorTilt still={still}>
-      <group position={[0, -1.7, 0]} scale={1.04}>
+      <group position={[-0.1, -1.6, 0]} scale={0.95}>
         <Platforms />
         <PropsCluster />
         <FloatingShapes still={still} />
@@ -130,7 +130,7 @@ export const AgencyScene = ({
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ position: [0, 2.9, 11], fov: 40 }}
+      camera={{ position: [0, 2.9, 13], fov: 40 }}
       gl={{ antialias: true }}
       onCreated={({ gl }) => {
         gl.setClearColor(COL.carbon);
