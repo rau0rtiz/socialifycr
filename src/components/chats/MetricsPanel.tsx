@@ -1,7 +1,13 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock } from 'lucide-react';
-import { useMsgMetrics, useRecentAppointments } from '@/hooks/use-messaging';
+import { Button } from '@/components/ui/button';
+import { CalendarClock, RefreshCw } from 'lucide-react';
+import {
+  useAppointmentsRealtime,
+  useMsgMetrics,
+  useRecentAppointments,
+  useSyncCalendly,
+} from '@/hooks/use-messaging';
 
 const fmt = (iso: string | null) =>
   iso
@@ -17,6 +23,8 @@ const fmt = (iso: string | null) =>
 export const MetricsPanel = () => {
   const { data, isLoading } = useMsgMetrics();
   const { data: appts, isLoading: loadingAppts } = useRecentAppointments();
+  const sync = useSyncCalendly();
+  useAppointmentsRealtime();
 
   if (isLoading) return <Skeleton className="h-40 w-full rounded-2xl" />;
 
@@ -45,9 +53,21 @@ export const MetricsPanel = () => {
       </div>
 
       <div className="agency-card rounded-2xl p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <CalendarClock className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Últimas citas de Calendly</h3>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Últimas citas de Calendly</h3>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => sync.mutate(30)}
+            disabled={sync.isPending}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${sync.isPending ? 'animate-spin' : ''}`} />
+            {sync.isPending ? 'Buscando citas…' : 'Traer citas de Calendly'}
+          </Button>
         </div>
         {loadingAppts ? (
           <Skeleton className="h-24 w-full rounded-xl" />

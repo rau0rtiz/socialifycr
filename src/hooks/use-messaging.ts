@@ -654,3 +654,47 @@ export const useSyncInstagramInbox = () => {
     onError: (e: Error) => toast.error(e.message || 'No se pudo sincronizar la bandeja'),
   });
 };
+
+/** Recupera de Calendly las citas que no entraron por aviso y las cruza con los chats. */
+export const useSyncCalendly = () => {
+  const qc = useQueryClient();
+  return useMutation<
+    { revisadas?: number; nuevas?: number; vinculadas?: number; canceladas?: number },
+    Error,
+    number | void
+  >({
+    mutationFn: async (days) => {
+      const { data, error } = await supabase.functions.invoke('calendly-sync', { body: { days: days ?? 30 } });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error(String((data as any).error));
+      return data as { revisadas?: number; nuevas?: number; vinculadas?: number };
+    },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['msg-appointments'] });
+      qc.invalidateQueries({ queryKey: ['msg-metrics'] });
+      qc.invalidateQueries({ queryKey: ['msg-conversations'] });
+      toast.success(
+        `Citas al día: ${res?.nuevas ?? 0} nuevas (${res?.vinculadas ?? 0} amarradas a un chat) de ${res?.revisadas ?? 0} revisadas.`,
+      );
+    },
+    onError: (e: Error) => toast.error(e.message || 'No se pudieron traer las citas de Calendly'),
+  });
+};
+
+/** Refresca citas e indicadores en el momento en que Calendly avisa de una agenda. */
+export const useAppointmentsRealtime = () => {
+  const qc = useQueryClient();
+  useEffect(() => {
+    const channel = supabase
+      .channel('msg-appointments-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'msg_appointments' }, () => {
+        qc.invalidateQueries({ queryKey: ['msg-appointments'] });
+        qc.invalidateQueries({ queryKey: ['msg-metrics'] });
+        qc.invalidateQueries({ queryKey: ['msg-conversations'] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+};
