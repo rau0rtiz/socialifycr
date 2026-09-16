@@ -155,7 +155,7 @@ export const useMsgMetrics = () =>
     queryKey: ['msg-metrics'],
     queryFn: async () => {
       const [convs, appts, runs] = await Promise.all([
-        supabase.from('msg_conversations').select('stage, is_demo'),
+        supabase.from('msg_conversations').select('stage, is_demo, human_takeover_at'),
         supabase.from('msg_appointments').select('status, conversation_id'),
         supabase.from('msg_agent_runs').select('outcome, is_simulation'),
       ]);
