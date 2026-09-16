@@ -181,13 +181,29 @@ Deno.serve(async (req) => {
       .select('id')
       .maybeSingle();
 
-    // Un borrador nuevo deja obsoletos los anteriores de la misma conversación.
-    if (conversationId) {
-      await admin
+    // Un solo borrador vivo por conversación: se reescribe en el mismo lugar.
+    let existingDraftId: string | null = null;
+    if (conversationId && !isSimulation) {
+      const { data: prev } = await admin
         .from('msg_drafts')
-        .update({ status: 'obsoleto', stale_reason: 'Se generó un borrador nuevo' })
+        .select('id')
         .eq('conversation_id', conversationId)
-        .in('status', ['pendiente', 'editado']);
+        .eq('is_simulation', false)
+        .in('status', ['pendiente', 'editado', 'obsoleto'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      existingDraftId = prev?.id ?? null;
+      if (existingDraftId) {
+        // Cualquier otro sobrante queda descartado para que no se apilen.
+        await admin
+          .from('msg_drafts')
+          .update({ status: 'descartado', stale_reason: 'Reemplazado por el borrador al día' })
+          .eq('conversation_id', conversationId)
+          .eq('is_simulation', false)
+          .in('status', ['pendiente', 'editado', 'obsoleto'])
+          .neq('id', existingDraftId);
+      }
     }
 
     const p = result.proposal;
@@ -202,13 +218,13 @@ Deno.serve(async (req) => {
         ? 'Dio precio sin que lo pidieran. Revisá la respuesta: primero hay que entender el negocio.'
         : (p.needs_human_reason ?? null);
 
-    const { data: draft, error: draftErr } = await admin
-      .from('msg_drafts')
-      .insert({
+    const payloadRow = {
         conversation_id: conversationId,
         agent_run_id: run?.id ?? null,
         is_simulation: isSimulation,
         status: 'pendiente',
+        stale_reason: null,
+        edited_reply: null,
         intent: p.intent ?? 'desconocido',
         proposed_reply: p.reply,
         facts: p.facts ?? [],
@@ -226,9 +242,11 @@ Deno.serve(async (req) => {
         human_takeover_at: conversation?.human_takeover_at ?? null,
         validations: { ...(priceLeak ? { price_leak: true } : {}), ...(audioIn ? { audio: 'derivar_humano' } : {}) },
         created_by: userId,
-      })
-      .select('*')
-      .maybeSingle();
+    };
+
+    const { data: draft, error: draftErr } = existingDraftId
+      ? await admin.from('msg_drafts').update(payloadRow).eq('id', existingDraftId).select('*').maybeSingle()
+      : await admin.from('msg_drafts').insert(payloadRow).select('*').maybeSingle();
 
     if (draftErr) return json({ error: draftErr.message }, 400);
 
