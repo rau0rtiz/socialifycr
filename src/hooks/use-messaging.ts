@@ -229,7 +229,7 @@ export const useSendMessage = () => {
 
 // ---------- Fase 2: borradores del setter ----------
 
-export type DraftStatus = 'pendiente' | 'editado' | 'descartado' | 'obsoleto';
+export type DraftStatus = 'pendiente' | 'editado' | 'descartado' | 'obsoleto' | 'enviado';
 
 export interface MsgDraft {
   id: string;
