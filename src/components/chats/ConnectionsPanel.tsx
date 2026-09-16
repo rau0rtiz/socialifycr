@@ -1,7 +1,8 @@
-import { Instagram, MessageCircle, CalendarClock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Instagram, MessageCircle, CalendarClock, AlertCircle, CheckCircle2, RefreshCw, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useChannelConnections, type ConnStatus } from '@/hooks/use-messaging';
+import { useChannelConnections, useSyncInstagramInbox, type ConnStatus } from '@/hooks/use-messaging';
 
 const STATUS_LABEL: Record<ConnStatus, string> = {
   pendiente: 'Pendiente',
@@ -22,6 +23,7 @@ const statusClass = (s: ConnStatus) =>
 
 export const ConnectionsPanel = () => {
   const { data: connections, isLoading } = useChannelConnections();
+  const sync = useSyncInstagramInbox();
 
   if (isLoading) {
     return (
