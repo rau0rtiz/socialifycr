@@ -57,6 +57,19 @@ interface Props {
   lead?: AgencyCrmLead | null;
 }
 
+const INTAKE_FIELDS: Array<[string, string]> = [
+  ['nombre', 'Nombre'],
+  ['correo', 'Correo'],
+  ['instagram', 'Instagram'],
+  ['whatsapp', 'WhatsApp'],
+  ['presupuesto', 'Presupuesto mensual'],
+  ['etapa_negocio', 'Etapa del negocio'],
+  ['reto', 'Principal reto'],
+  ['cuando_empezar', 'Cuándo quiere empezar'],
+  ['invierte_publicidad', 'Invierte en publicidad'],
+  ['como_nos_conocio', 'Cómo nos conoció'],
+];
+
 export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
   const { createLead, updateLead, deleteLead } = useAgencyCrmLeads();
   const { data: team = [] } = useInternalTeam();
@@ -450,6 +463,24 @@ export const CrmLeadDialog = ({ open, onOpenChange, lead }: Props) => {
           )}
 
           {lead && <LeadDocumentsSection leadId={lead.id} leadName={lead.name} />}
+
+          {lead?.intake && Object.keys(lead.intake).length > 0 && (
+            <div className="space-y-2">
+              <Label>Formulario de agenda</Label>
+              <div className="grid gap-2 rounded-xl border border-border/50 bg-muted/20 p-3 sm:grid-cols-2">
+                {INTAKE_FIELDS.filter(([k]) => !!(lead.intake as Record<string, string>)[k]).map(([k, label]) => (
+                  <div key={k}>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+                    <p className="break-words text-xs text-foreground">
+                      {k === 'instagram'
+                        ? `@${String((lead.intake as Record<string, string>)[k]).replace(/^@/, '')}`
+                        : String((lead.intake as Record<string, string>)[k])}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Información adicional</Label>

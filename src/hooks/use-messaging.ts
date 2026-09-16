@@ -148,6 +148,34 @@ export const useMsgTestCases = () =>
     ...CACHE,
   });
 
+/** Datos que llegan del formulario de agenda (enrutamiento de Calendly). */
+export interface ContactIntake {
+  nombre?: string | null;
+  correo?: string | null;
+  instagram?: string | null;
+  whatsapp?: string | null;
+  presupuesto?: string | null;
+  etapa_negocio?: string | null;
+  reto?: string | null;
+  cuando_empezar?: string | null;
+  invierte_publicidad?: string | null;
+  como_nos_conocio?: string | null;
+  respuestas?: Array<{ question: string; answer: string }>;
+  actualizado_en?: string | null;
+}
+
+export const INTAKE_LABELS: Array<{ key: keyof ContactIntake; label: string }> = [
+  { key: 'whatsapp', label: 'WhatsApp' },
+  { key: 'correo', label: 'Correo' },
+  { key: 'instagram', label: 'Instagram' },
+  { key: 'presupuesto', label: 'Presupuesto mensual' },
+  { key: 'etapa_negocio', label: 'Etapa del negocio' },
+  { key: 'reto', label: 'Principal reto' },
+  { key: 'cuando_empezar', label: 'Cuándo quiere empezar' },
+  { key: 'invierte_publicidad', label: 'Invierte en publicidad' },
+  { key: 'como_nos_conocio', label: 'Cómo nos conoció' },
+];
+
 export interface InboxRow {
   id: string;
   channel: string;
@@ -157,6 +185,7 @@ export interface InboxRow {
   bot_mode: BotMode;
   unread_count: number;
   last_inbound_at: string | null;
+  // (ContactIntake se define arriba de esta interfaz)
   is_demo: boolean;
   assignee_id: string | null;
   version: number;
@@ -167,6 +196,9 @@ export interface InboxRow {
     do_not_contact: boolean;
     avatar_url?: string | null;
     profile_url?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    intake?: ContactIntake | null;
   } | null;
   msg_contact_identities?: { username: string | null; external_id: string } | null;
 }
@@ -177,7 +209,7 @@ export const useMsgConversations = (filters?: { channel?: string; stage?: Stage;
     queryFn: async () => {
       let q = supabase
         .from('msg_conversations')
-        .select('id, channel, stage, intent, fit, bot_mode, unread_count, last_inbound_at, is_demo, assignee_id, version, human_takeover_at, msg_contacts(display_name, business_name, do_not_contact, avatar_url, profile_url), msg_contact_identities(username, external_id)')
+        .select('id, channel, stage, intent, fit, bot_mode, unread_count, last_inbound_at, is_demo, assignee_id, version, human_takeover_at, msg_contacts(display_name, business_name, do_not_contact, avatar_url, profile_url, email, phone, intake), msg_contact_identities(username, external_id)')
         .order('last_inbound_at', { ascending: false, nullsFirst: false })
         .limit(100);
       if (filters?.channel) q = q.eq('channel', filters.channel as never);
