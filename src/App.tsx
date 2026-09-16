@@ -52,6 +52,7 @@ const PortalSelect = lazy(() => import("./pages/PortalSelect"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
+const InstagramOAuthCallback = lazy(() => import("./pages/InstagramOAuthCallback").then(m => ({ default: m.InstagramOAuthCallback })));
 const YouTubeOAuthCallback = lazy(() => import("./pages/YouTubeOAuthCallback").then(m => ({ default: m.YouTubeOAuthCallback })));
 const TikTokOAuthCallback = lazy(() => import("./pages/TikTokOAuthCallback").then(m => ({ default: m.TikTokOAuthCallback })));
 const LinkedInOAuthCallback = lazy(() => import("./pages/LinkedInOAuthCallback").then(m => ({ default: m.LinkedInOAuthCallback })));
@@ -163,6 +164,7 @@ const App = () => (
                     <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
                     <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
                     <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
+                    <Route path="/oauth/instagram/callback" element={<InstagramOAuthCallback />} />
                     <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
                     <Route path="/recibo/:token" element={<ReciboPublico />} />
                     <Route path="/privacidad" element={<Privacy />} />
@@ -383,6 +385,7 @@ const App = () => (
                   <Route path="/oauth/youtube/callback" element={<YouTubeOAuthCallback />} />
                   <Route path="/oauth/tiktok/callback" element={<TikTokOAuthCallback />} />
                   <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
+                  <Route path="/oauth/instagram/callback" element={<InstagramOAuthCallback />} />
                   <Route path="*" element={<NotFound />} />
                   </Routes>
                   )}
