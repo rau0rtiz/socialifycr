@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     if (isSimulation && useDraftKnowledge) {
       const { data } = await admin
         .from('msg_knowledge_versions')
-        .select('version, manual, tone_notes, examples, is_published')
+        .select('version, manual, tone_notes, rules, examples, is_published')
         .order('version', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
     } else {
       const { data } = await admin
         .from('msg_knowledge_versions')
-        .select('version, manual, tone_notes, examples, is_published')
+        .select('version, manual, tone_notes, rules, examples, is_published')
         .eq('is_published', true)
         .order('version', { ascending: false })
         .limit(1)
@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
     const ctx: AgentContext = {
       manual: knowledge.manual,
       toneNotes: settings?.tone_notes ?? knowledge.tone_notes,
+      rules: Array.isArray(knowledge.rules) ? knowledge.rules : [],
       examples: knowledge.examples,
       offers: offers ?? [],
       bookingUrl: settings?.booking_url ?? 'https://socialifycr.com/agendar',
