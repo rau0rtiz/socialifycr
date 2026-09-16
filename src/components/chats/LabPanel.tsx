@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   useGenerateDraft,
   useMsgTestCases,
+  useMsgTestRuns,
   useRunTests,
   type MsgDraft,
   type TestResult,
@@ -35,6 +36,7 @@ const RESULT_LABEL: Record<string, string> = {
 
 export const LabPanel = () => {
   const { data: cases, isLoading } = useMsgTestCases();
+  const { data: pastRuns } = useMsgTestRuns();
   const generate = useGenerateDraft();
   const runTests = useRunTests();
   const { toast } = useToast();
@@ -87,6 +89,13 @@ export const LabPanel = () => {
   if (isLoading) return <Skeleton className="h-64 w-full rounded-2xl" />;
 
   const resultFor = (id: string) => results?.find((r) => r.test_case_id === id);
+  // Última corrida guardada (persiste aunque recargues la página)
+  const lastRunFor = (id: string) =>
+    (pastRuns ?? []).find((r) => r.test_case_id === id) as
+      | { auto_result: string; notes: string | null; created_at: string; knowledge_version: number | null }
+      | undefined;
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica', dateStyle: 'short', timeStyle: 'short' });
 
   return (
     <div className="space-y-4">
@@ -139,6 +148,10 @@ export const LabPanel = () => {
               Los casos de conversación se evalúan automáticamente. Los de infraestructura (webhooks, citas, permisos) quedan
               marcados para revisión humana.
             </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              <span className="text-red-300">Crítico</span> = si ese caso falla, el bot no debería usarse (por ejemplo dar
+              precio sin que lo pidan). Abajo de cada caso queda la última vez que se corrió.
+            </p>
           </div>
           <Button size="sm" variant="outline" className="h-9 gap-1 text-xs" disabled={runTests.isPending} onClick={run}>
             <Play className="h-3.5 w-3.5" /> {runTests.isPending ? 'Corriendo…' : 'Correr los casos'}
@@ -159,6 +172,7 @@ export const LabPanel = () => {
         <div className="space-y-2">
           {(cases ?? []).map((c) => {
             const r = resultFor(c.id);
+            const past = lastRunFor(c.id);
             return (
               <div key={c.id} className="rounded-xl border border-border/40 bg-background/40 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -170,8 +184,11 @@ export const LabPanel = () => {
                     {c.is_critical && (
                       <Badge variant="outline" className="border-red-500/40 bg-red-500/10 text-red-300 text-[10px]">Crítico</Badge>
                     )}
-                    <Badge variant="outline" className={`text-[10px] ${r ? resultBadge(r.auto_result) : ''}`}>
-                      {r ? RESULT_LABEL[r.auto_result] : 'Sin correr'}
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] ${r ? resultBadge(r.auto_result) : past ? resultBadge(past.auto_result) : ''}`}
+                    >
+                      {r ? RESULT_LABEL[r.auto_result] : past ? RESULT_LABEL[past.auto_result] ?? past.auto_result : 'Sin correr'}
                     </Badge>
                   </div>
                 </div>
@@ -189,6 +206,13 @@ export const LabPanel = () => {
                 {r?.latency_ms != null && (
                   <p className="mt-1 text-[10px] text-muted-foreground">
                     {r.latency_ms} ms{r.usage?.total_tokens ? ` · ${r.usage.total_tokens} tokens` : ''} · acción {r.suggested_action}
+                  </p>
+                )}
+                {!r && past && (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    Última corrida: {fmt(past.created_at)}
+                    {past.knowledge_version ? ` · manual v${past.knowledge_version}` : ''}
+                    {past.notes ? ` · ${past.notes}` : ''}
                   </p>
                 )}
               </div>
