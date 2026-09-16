@@ -242,9 +242,11 @@ Deno.serve(async (req) => {
         human_takeover_at: conversation?.human_takeover_at ?? null,
         validations: { ...(priceLeak ? { price_leak: true } : {}), ...(audioIn ? { audio: 'derivar_humano' } : {}) },
         created_by: userId,
-      })
-      .select('*')
-      .maybeSingle();
+    };
+
+    const { data: draft, error: draftErr } = existingDraftId
+      ? await admin.from('msg_drafts').update(payloadRow).eq('id', existingDraftId).select('*').maybeSingle()
+      : await admin.from('msg_drafts').insert(payloadRow).select('*').maybeSingle();
 
     if (draftErr) return json({ error: draftErr.message }, 400);
 
