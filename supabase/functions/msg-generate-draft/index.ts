@@ -67,13 +67,14 @@ Deno.serve(async (req) => {
       if (!conv) return json({ error: 'Sin acceso a esa conversación' }, 403);
       conversation = conv;
 
-      const { data: msgs } = await authed
+      const { data: recentMsgs } = await authed
         .from('msg_messages')
         .select('author, body, occurred_at, is_draft')
         .eq('conversation_id', conversationId)
         .eq('is_draft', false)
-        .order('occurred_at', { ascending: true })
+        .order('occurred_at', { ascending: false })
         .limit(40);
+      const msgs = (recentMsgs ?? []).slice().reverse();
       history = (msgs ?? []).map((m: any) => ({ author: m.author, body: m.body ?? '', occurred_at: m.occurred_at }));
 
       const { data: c } = await authed

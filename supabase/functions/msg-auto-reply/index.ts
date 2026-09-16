@@ -80,13 +80,15 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (contactRow?.do_not_contact) return json({ skipped: 'no_contactar' });
 
-    const { data: msgs } = await admin
+    const { data: recentMsgs } = await admin
       .from('msg_messages')
       .select('author, body, occurred_at, direction, is_draft')
       .eq('conversation_id', conversationId)
       .eq('is_draft', false)
-      .order('occurred_at', { ascending: true })
+      .order('occurred_at', { ascending: false })
       .limit(40);
+    // Traemos los 40 más recientes y los devolvemos a orden cronológico.
+    const msgs = (recentMsgs ?? []).slice().reverse();
     const history: HistoryMessage[] = (msgs ?? []).map((m: any) => ({
       author: m.author,
       body: m.body ?? '',
