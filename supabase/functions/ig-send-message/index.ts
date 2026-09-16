@@ -57,12 +57,31 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!secret?.access_token) return json({ error: 'Instagram no está conectado' }, 400);
 
+    // Si el mensaje lleva un enlace de Calendly (formulario de enrutamiento incluido),
+    // le pegamos etiquetas de seguimiento para amarrar la cita a esta conversación exacta.
+    const CALENDLY_RE = /https?:\/\/(?:www\.)?calendly\.com\/[^\s)]+/i;
+    const linkMatch = text.match(CALENDLY_RE);
+    let sentText = text;
+    let taggedUrl: string | null = null;
+    if (linkMatch) {
+      try {
+        const url = new URL(linkMatch[0]);
+        url.searchParams.set('utm_source', 'socialify_chat');
+        url.searchParams.set('utm_medium', 'instagram_dm');
+        url.searchParams.set('utm_content', conversationId);
+        taggedUrl = url.toString();
+        sentText = text.replace(linkMatch[0], taggedUrl);
+      } catch {
+        taggedUrl = linkMatch[0];
+      }
+    }
+
     const res = await fetch(`https://graph.instagram.com/v21.0/me/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         recipient: { id: identity.external_id },
-        message: { text },
+        message: { text: sentText },
         access_token: secret.access_token,
       }),
     });
@@ -81,7 +100,7 @@ Deno.serve(async (req) => {
       external_message_id: result?.message_id ?? null,
       direction: 'outbound',
       author,
-      body: text,
+      body: sentText,
       delivery_status: 'enviado',
       sent_by: user.id,
       occurred_at: nowIso,
@@ -89,12 +108,11 @@ Deno.serve(async (req) => {
     if (msgErr) console.error('outbound message insert error', msgErr);
 
     // Si el mensaje ofrece un enlace de Calendly, lo registramos para atribuir la cita.
-    const linkMatch = text.match(/https?:\/\/(?:www\.)?calendly\.com\/[^\s)]+/i);
-    if (linkMatch) {
+    if (taggedUrl) {
       await admin.from('msg_link_offers').insert({
         conversation_id: conversationId,
         message_id: inserted?.id ?? null,
-        url: linkMatch[0],
+        url: taggedUrl,
         offered_by: author,
         offered_at: nowIso,
       });
