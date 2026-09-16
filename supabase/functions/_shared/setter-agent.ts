@@ -157,8 +157,6 @@ export function priceAsked(history: HistoryMessage[]) {
   return PRICE_PATTERNS.some((re) => re.test(body));
 }
 
-const MONEY_RE = /(\$|usd|dolar|colones|crc|₡)|\b\d{3,4}(?:[.,]\d{3})?\s*(?:\+?\s*iva)?\b/i;
-
 export function mentionsMoney(reply: string) {
   const flat = normalize(reply);
   if (/(\$|usd|dolares|dolar|colones|crc|₡)/.test(flat)) return true;
@@ -178,6 +176,9 @@ function formatOffers(offers: OfferRow[]) {
 }
 
 export function buildSystemPrompt(ctx: AgentContext) {
+  const askedPrice = priceAsked(ctx.history);
+  const customRules = (ctx.rules ?? []).filter((r) => typeof r === 'string' && r.trim().length);
+
   return `${ctx.manual}
 
 TONO
