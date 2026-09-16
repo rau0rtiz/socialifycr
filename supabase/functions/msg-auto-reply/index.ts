@@ -8,6 +8,7 @@ import {
   type HistoryMessage,
 } from '../_shared/setter-agent.ts';
 import { scheduleFirstFollowup } from '../_shared/followups.ts';
+import { notifyHumanNeeded } from '../_shared/human-alert.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,7 +58,7 @@ Deno.serve(async (req) => {
     const { data: conv } = await admin
       .from('msg_conversations')
       .select(
-        'id, channel, stage, version, human_takeover_at, contact_id, is_demo, msg_contact_identities!inner(external_id, receiving_account_id)',
+        'id, channel, stage, version, human_takeover_at, contact_id, is_demo, msg_contact_identities!inner(external_id, receiving_account_id, username)',
       )
       .eq('id', conversationId)
       .maybeSingle();
@@ -70,7 +71,11 @@ Deno.serve(async (req) => {
     }
 
 
-    const identity = (conv as any).msg_contact_identities as { external_id: string; receiving_account_id: string };
+    const identity = (conv as any).msg_contact_identities as {
+      external_id: string;
+      receiving_account_id: string;
+      username?: string | null;
+    };
 
     const { data: contactRow } = await admin
       .from('msg_contacts')
@@ -202,6 +207,14 @@ Deno.serve(async (req) => {
     // Si hay que derivar a humano, queda como borrador y NO se envía.
     if (needsHuman) {
       await admin.from('msg_drafts').insert(draftRow);
+      await notifyHumanNeeded({
+        conversationId,
+        contactName: contactRow?.display_name ?? null,
+        handle: identity.username ?? null,
+        reason: needsHumanReason ?? 'Ari pidió revisión humana.',
+        lastMessage: last?.body ?? null,
+        draftReply: p.reply ?? null,
+      });
       return json({ sent: false, reason: 'requiere_revision_humana' });
     }
 
@@ -257,6 +270,14 @@ Deno.serve(async (req) => {
         status: 'pendiente',
         needs_human: true,
         needs_human_reason: `Instagram rechazó el envío automático: ${sendResult?.error?.message ?? 'error desconocido'}`,
+      });
+      await notifyHumanNeeded({
+        conversationId,
+        contactName: contactRow?.display_name ?? null,
+        handle: identity.username ?? null,
+        reason: `Instagram rechazó el envío automático: ${sendResult?.error?.message ?? 'error desconocido'}`,
+        lastMessage: last?.body ?? null,
+        draftReply: p.reply ?? null,
       });
       return json({ sent: false, reason: 'instagram_rechazo', detail: sendResult?.error?.message ?? null });
     }
