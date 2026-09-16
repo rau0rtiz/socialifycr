@@ -1,4 +1,4 @@
-import { Instagram, MessageCircle, CalendarClock, AlertCircle } from 'lucide-react';
+import { Instagram, MessageCircle, CalendarClock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChannelConnections, type ConnStatus } from '@/hooks/use-messaging';
