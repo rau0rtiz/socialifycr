@@ -56,7 +56,14 @@ Deno.serve(async (req) => {
           tokenType = 'long_lived';
           expiresIn = typeof ex.expires_in === 'number' ? ex.expires_in : null;
         } else {
-          console.error('IG exchange failed', ex.error);
+          // Código 452: el token ya es de larga duración (generado desde la UI de Meta).
+          const exCode = ex?.error?.code;
+          const exSubcode = ex?.error?.error_subcode;
+          if (exCode === 452 || exSubcode === 2207055) {
+            tokenType = 'long_lived';
+          } else {
+            console.error('IG exchange failed', ex.error);
+          }
         }
       } catch (e) {
         console.error('IG exchange error', e);
