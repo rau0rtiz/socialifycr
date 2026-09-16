@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,6 +96,7 @@ export const InboxPanel = () => {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [text, setText] = useState('');
+  const [draftOpen, setDraftOpen] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const { data: conversations, isLoading } = useMsgConversations({
@@ -133,6 +134,11 @@ export const InboxPanel = () => {
 
   const activeConv = conversations?.find((c) => c.id === selected);
   const stale = draft ? staleReason(draft, activeConv, fingerprint) : null;
+
+  // Cada borrador nuevo arranca colapsado para no tapar el chat.
+  useEffect(() => {
+    setDraftOpen(false);
+  }, [draft?.id]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' });
@@ -337,36 +343,79 @@ export const InboxPanel = () => {
             </div>
 
             {draft && draft.status !== 'descartado' && (
-              <div className="border-t border-border/40 p-3">
-                <DraftCard
-                  draft={draft}
-                  stale={stale}
-                  regenerating={generate.isPending}
-                  onRegenerate={runGenerate}
-                  saving={updateDraft.isPending}
-                  onSave={(t) => updateDraft.mutate({ id: draft.id, patch: { edited_reply: t, status: 'editado' } })}
-                  onDiscard={() => updateDraft.mutate({ id: draft.id, patch: { status: 'descartado' } })}
-                />
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    className="h-8 gap-1.5 text-xs"
-                    disabled={send.isPending || !!stale}
-                    onClick={() => runSend(draft.edited_reply || draft.proposed_reply)}
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                    Enviar borrador ahora
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs"
-                    onClick={() => setText(draft.edited_reply || draft.proposed_reply)}
-                  >
-                    Pasar al cuadro de envío
-                  </Button>
+              draftOpen ? (
+                <div className="border-t border-border/40 p-3">
+                  <DraftCard
+                    draft={draft}
+                    stale={stale}
+                    regenerating={generate.isPending}
+                    onRegenerate={runGenerate}
+                    saving={updateDraft.isPending}
+                    onSave={(t) => updateDraft.mutate({ id: draft.id, patch: { edited_reply: t, status: 'editado' } })}
+                    onDiscard={() => updateDraft.mutate({ id: draft.id, patch: { status: 'descartado' } })}
+                  />
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      className="h-8 gap-1.5 text-xs"
+                      disabled={send.isPending || !!stale}
+                      onClick={() => runSend(draft.edited_reply || draft.proposed_reply)}
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      Enviar borrador ahora
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      onClick={() => setText(draft.edited_reply || draft.proposed_reply)}
+                    >
+                      Pasar al cuadro de envío
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="ml-auto h-8 gap-1 text-xs text-muted-foreground"
+                      onClick={() => setDraftOpen(false)}
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                      Ocultar
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className={`border-t px-3 py-2 ${stale ? 'border-red-500/40 bg-red-500/10' : 'bg-primary/[0.05]'}`}>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setDraftOpen(true)}
+                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                    >
+                      <Sparkle className={`h-3.5 w-3.5 shrink-0 ${stale ? 'text-red-300' : 'text-primary'}`} />
+                      <span className="shrink-0 text-xs font-semibold text-foreground">Borrador de Ari</span>
+                      {stale ? (
+                        <span className="flex min-w-0 items-center gap-1 text-[11px] text-red-300">
+                          <AlertTriangle className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{stale}</span>
+                        </span>
+                      ) : (
+                        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                          {draft.edited_reply || draft.proposed_reply}
+                        </span>
+                      )}
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    </button>
+                    <Button
+                      size="sm"
+                      className="h-7 shrink-0 gap-1 text-[11px]"
+                      disabled={send.isPending || !!stale}
+                      onClick={() => runSend(draft.edited_reply || draft.proposed_reply)}
+                    >
+                      <Send className="h-3 w-3" />
+                      Enviar
+                    </Button>
+                  </div>
+                </div>
+              )
             )}
 
             <div className="border-t border-border/40 p-3">
