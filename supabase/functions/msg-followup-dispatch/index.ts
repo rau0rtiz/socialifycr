@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { callSetterModel, type HistoryMessage } from '../_shared/setter-agent.ts';
+import { buildRollingContext } from '../_shared/conversation-summary.ts';
 import { FOLLOWUP_RULES, cancelPendingFollowups, scheduleFollowupJob } from '../_shared/followups.ts';
 import { notifyHumanNeeded } from '../_shared/human-alert.ts';
 
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
 
       const { data: conv } = await admin
         .from('msg_conversations')
-        .select('id, channel, stage, version, contact_id, is_demo, msg_contact_identities!inner(external_id, receiving_account_id)')
+        .select('id, channel, stage, version, contact_id, is_demo, context_summary, context_summary_at, msg_contact_identities!inner(external_id, receiving_account_id)')
         .eq('id', job.conversation_id)
         .maybeSingle();
 
@@ -166,7 +167,14 @@ Deno.serve(async (req) => {
         offers: (offers ?? []) as any,
         bookingUrl: settings.booking_url ?? '',
         contact: contact ?? null,
-        history,
+        ...(await buildRollingContext(
+          admin,
+          lovableKey,
+          conv.id,
+          history,
+          (conv as any).context_summary ?? null,
+          (conv as any).context_summary_at ?? null,
+        )),
         channel: 'instagram',
         stage: conv.stage,
       });
