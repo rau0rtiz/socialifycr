@@ -157,6 +157,7 @@ export interface InboxRow {
   bot_mode: BotMode;
   unread_count: number;
   last_inbound_at: string | null;
+  // (ContactIntake se define arriba de esta interfaz)
   is_demo: boolean;
   assignee_id: string | null;
   version: number;
