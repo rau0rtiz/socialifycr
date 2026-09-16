@@ -23,6 +23,8 @@ const fmt = (iso: string | null) =>
 export const MetricsPanel = () => {
   const { data, isLoading } = useMsgMetrics();
   const { data: appts, isLoading: loadingAppts } = useRecentAppointments();
+  const sync = useSyncCalendly();
+  useAppointmentsRealtime();
 
   if (isLoading) return <Skeleton className="h-40 w-full rounded-2xl" />;
 
