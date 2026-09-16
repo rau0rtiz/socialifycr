@@ -173,6 +173,16 @@ Deno.serve(async (req) => {
 
       const reply = (result.proposal?.reply ?? '').trim().slice(0, 950);
       if (!reply || result.proposal?.needs_human) {
+        if (result.proposal?.needs_human) {
+          await notifyHumanNeeded({
+            conversationId: conv.id,
+            contactName: (contact as any)?.display_name ?? null,
+            handle: (identity as any)?.username ?? null,
+            reason: result.proposal?.needs_human_reason ?? 'Ari pidió revisión humana durante un seguimiento.',
+            lastMessage: history[history.length - 1]?.body ?? null,
+            draftReply: result.proposal?.reply ?? null,
+          });
+        }
         await finish('cancelado', result.proposal?.needs_human ? 'requiere_humano' : 'sin_texto');
         continue;
       }
