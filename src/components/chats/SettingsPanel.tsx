@@ -31,13 +31,30 @@ export const SettingsPanel = () => {
   const { data: knowledge } = useMsgKnowledge();
   const update = useUpdateMsgSettings();
   const publish = usePublishKnowledge();
+  const saveDraft = useSaveKnowledgeDraft();
   const { canManage } = useUserRole();
   const { toast } = useToast();
+
+  const [editing, setEditing] = useState(false);
+  const [manual, setManual] = useState('');
+  const [tone, setTone] = useState('');
+  const [rules, setRules] = useState('');
+
+  const latest = knowledge?.[0];
+  const currentRules = Array.isArray(latest?.rules) ? (latest.rules as string[]) : [];
+
+  const startEditing = () => {
+    setManual(latest?.manual ?? '');
+    setTone(latest?.tone_notes ?? '');
+    setRules(currentRules.join('\n'));
+    setEditing(true);
+  };
 
   const save = (patch: Parameters<typeof update.mutate>[0]) =>
     update.mutate(patch, {
       onError: (e) => toast({ title: 'No se pudo guardar', description: (e as Error).message, variant: 'destructive' }),
     });
+
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-2xl" />;
 
