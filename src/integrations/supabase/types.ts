@@ -4280,6 +4280,108 @@ export type Database = {
           },
         ]
       }
+      msg_drafts: {
+        Row: {
+          agent_run_id: string | null
+          conversation_id: string | null
+          conversation_version: number | null
+          created_at: string
+          created_by: string | null
+          edited_reply: string | null
+          facts: Json
+          fit_signals: Json
+          human_takeover_at: string | null
+          id: string
+          intent: Database["public"]["Enums"]["msg_intent"]
+          is_simulation: boolean
+          knowledge_is_draft: boolean
+          knowledge_version: number | null
+          latency_ms: number | null
+          model: string | null
+          needs_human: boolean
+          needs_human_reason: string | null
+          offers_fingerprint: string | null
+          proposed_reply: string
+          stale_reason: string | null
+          status: string
+          suggested_action: string
+          updated_at: string
+          usage: Json | null
+          validations: Json
+        }
+        Insert: {
+          agent_run_id?: string | null
+          conversation_id?: string | null
+          conversation_version?: number | null
+          created_at?: string
+          created_by?: string | null
+          edited_reply?: string | null
+          facts?: Json
+          fit_signals?: Json
+          human_takeover_at?: string | null
+          id?: string
+          intent?: Database["public"]["Enums"]["msg_intent"]
+          is_simulation?: boolean
+          knowledge_is_draft?: boolean
+          knowledge_version?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          needs_human?: boolean
+          needs_human_reason?: string | null
+          offers_fingerprint?: string | null
+          proposed_reply?: string
+          stale_reason?: string | null
+          status?: string
+          suggested_action?: string
+          updated_at?: string
+          usage?: Json | null
+          validations?: Json
+        }
+        Update: {
+          agent_run_id?: string | null
+          conversation_id?: string | null
+          conversation_version?: number | null
+          created_at?: string
+          created_by?: string | null
+          edited_reply?: string | null
+          facts?: Json
+          fit_signals?: Json
+          human_takeover_at?: string | null
+          id?: string
+          intent?: Database["public"]["Enums"]["msg_intent"]
+          is_simulation?: boolean
+          knowledge_is_draft?: boolean
+          knowledge_version?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          needs_human?: boolean
+          needs_human_reason?: string | null
+          offers_fingerprint?: string | null
+          proposed_reply?: string
+          stale_reason?: string | null
+          status?: string
+          suggested_action?: string
+          updated_at?: string
+          usage?: Json | null
+          validations?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msg_drafts_agent_run_id_fkey"
+            columns: ["agent_run_id"]
+            isOneToOne: false
+            referencedRelation: "msg_agent_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "msg_drafts_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "msg_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       msg_followup_jobs: {
         Row: {
           cancel_reason: string | null
@@ -6717,6 +6819,8 @@ export type Database = {
         }
         Returns: number
       }
+      msg_offers_fingerprint: { Args: never; Returns: string }
+      msg_publish_knowledge: { Args: { p_version: number }; Returns: undefined }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {

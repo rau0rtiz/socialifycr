@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,6 +10,7 @@ import {
   useMsgKnowledge,
   useMsgOffers,
   useMsgSettings,
+  usePublishKnowledge,
   useUpdateMsgSettings,
   type BotMode,
 } from '@/hooks/use-messaging';
@@ -25,6 +27,7 @@ export const SettingsPanel = () => {
   const { data: offers } = useMsgOffers();
   const { data: knowledge } = useMsgKnowledge();
   const update = useUpdateMsgSettings();
+  const publish = usePublishKnowledge();
   const { canManage } = useUserRole();
   const { toast } = useToast();
 
@@ -123,10 +126,30 @@ export const SettingsPanel = () => {
             <p className="text-sm font-semibold text-foreground">Manual comercial</p>
             <p className="text-xs text-muted-foreground">Versión {knowledge?.[0]?.version ?? '—'}</p>
           </div>
-          <Badge variant="outline" className={knowledge?.[0]?.is_published ? offerBadge('publicado') : offerBadge('pendiente')}>
-            {knowledge?.[0]?.is_published ? 'Publicado' : 'Borrador'}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={knowledge?.[0]?.is_published ? offerBadge('publicado') : offerBadge('pendiente')}>
+              {knowledge?.[0]?.is_published ? 'Publicado' : 'Borrador'}
+            </Badge>
+            {canManage && knowledge?.[0] && !knowledge[0].is_published && (
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                disabled={publish.isPending}
+                onClick={() =>
+                  publish.mutate(knowledge[0].version, {
+                    onSuccess: () => toast({ title: 'Manual publicado', description: 'El setter ya puede usarlo en conversaciones reales.' }),
+                    onError: (e) => toast({ title: 'No se pudo publicar', description: (e as Error).message, variant: 'destructive' }),
+                  })
+                }
+              >
+                Publicar
+              </Button>
+            )}
+          </div>
         </div>
+        <p className="text-[11px] text-muted-foreground">
+          En conversaciones reales el setter solo usa una versión publicada. En el laboratorio podés probar el borrador.
+        </p>
         <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-xl border border-border/40 bg-background/40 p-4 text-xs text-muted-foreground">
 {knowledge?.[0]?.manual ?? 'Sin manual cargado.'}
         </pre>

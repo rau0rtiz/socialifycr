@@ -112,6 +112,8 @@ export interface InboxRow {
   last_inbound_at: string | null;
   is_demo: boolean;
   assignee_id: string | null;
+  version: number;
+  human_takeover_at: string | null;
   msg_contacts: { display_name: string | null; business_name: string | null; do_not_contact: boolean } | null;
 }
 
@@ -121,7 +123,7 @@ export const useMsgConversations = (filters?: { channel?: string; stage?: Stage;
     queryFn: async () => {
       let q = supabase
         .from('msg_conversations')
-        .select('id, channel, stage, intent, fit, bot_mode, unread_count, last_inbound_at, is_demo, assignee_id, msg_contacts(display_name, business_name, do_not_contact)')
+        .select('id, channel, stage, intent, fit, bot_mode, unread_count, last_inbound_at, is_demo, assignee_id, version, human_takeover_at, msg_contacts(display_name, business_name, do_not_contact)')
         .order('last_inbound_at', { ascending: false, nullsFirst: false })
         .limit(100);
       if (filters?.channel) q = q.eq('channel', filters.channel as never);
@@ -147,6 +149,165 @@ export const useMsgMessages = (conversationId: string | null) =>
       return data ?? [];
     },
     enabled: !!conversationId,
+    staleTime: 30 * 1000,
+  });
+
+// ---------- Fase 2: borradores del setter ----------
+
+export type DraftStatus = 'pendiente' | 'editado' | 'descartado' | 'obsoleto';
+
+export interface MsgDraft {
+  id: string;
+  conversation_id: string | null;
+  agent_run_id: string | null;
+  is_simulation: boolean;
+  status: DraftStatus;
+  intent: string;
+  proposed_reply: string;
+  edited_reply: string | null;
+  facts: Array<{ field: string; value: string; source_message_index: number; confidence: string }>;
+  fit_signals: Record<string, string>;
+  suggested_action: string;
+  needs_human: boolean;
+  needs_human_reason: string | null;
+  model: string | null;
+  knowledge_version: number | null;
+  knowledge_is_draft: boolean;
+  latency_ms: number | null;
+  usage: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | null;
+  conversation_version: number | null;
+  offers_fingerprint: string | null;
+  human_takeover_at: string | null;
+  stale_reason: string | null;
+  created_at: string;
+}
+
+/** Huella de los precios publicados: si cambia, los borradores quedan obsoletos. */
+export const useOffersFingerprint = () =>
+  useQuery({
+    queryKey: ['msg-offers-fingerprint'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('msg_offers_fingerprint');
+      if (error) throw error;
+      return data as string;
+    },
+    staleTime: 60 * 1000,
+  });
+
+export const useConversationDraft = (conversationId: string | null) =>
+  useQuery({
+    queryKey: ['msg-draft', conversationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('msg_drafts')
+        .select('*')
+        .eq('conversation_id', conversationId!)
+        .in('status', ['pendiente', 'editado', 'obsoleto'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as unknown as MsgDraft | null;
+    },
+    enabled: !!conversationId,
+    staleTime: 15 * 1000,
+  });
+
+export const useGenerateDraft = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      conversationId?: string;
+      simulation?: { messages: Array<{ author: string; body: string }>; contact?: Record<string, unknown> };
+      useDraftKnowledge?: boolean;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('msg-generate-draft', { body: input });
+      if (error) {
+        const detail = await (error as { context?: Response }).context?.json?.().catch(() => null);
+        throw new Error(detail?.error ?? error.message);
+      }
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      return data as { draft: MsgDraft; proposal: Record<string, unknown>; latency_ms: number };
+    },
+    onSuccess: (_d, vars) => {
+      if (vars.conversationId) qc.invalidateQueries({ queryKey: ['msg-draft', vars.conversationId] });
+      qc.invalidateQueries({ queryKey: ['msg-metrics'] });
+    },
+  });
+};
+
+export const useUpdateDraft = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<{ edited_reply: string; status: DraftStatus; stale_reason: string }> }) => {
+      const { error } = await supabase.from('msg_drafts').update(patch).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['msg-draft'] }),
+  });
+};
+
+/** Publicar el manual comercial: solo administradores (validado en base de datos). */
+export const usePublishKnowledge = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (version: number) => {
+      const { error } = await supabase.rpc('msg_publish_knowledge', { p_version: version });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['msg-knowledge'] }),
+  });
+};
+
+export interface TestResult {
+  test_case_id: string;
+  title: string;
+  is_critical: boolean;
+  auto_result: 'pass' | 'fail' | 'requiere_humano' | 'error';
+  failures?: string[];
+  notes?: string | null;
+  reply?: string;
+  intent?: string;
+  suggested_action?: string;
+  needs_human?: boolean;
+  latency_ms?: number;
+  usage?: { total_tokens?: number } | null;
+}
+
+export const useRunTests = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { useDraftKnowledge?: boolean; testCaseIds?: string[] }) => {
+      const { data, error } = await supabase.functions.invoke('msg-run-tests', { body: input });
+      if (error) {
+        const detail = await (error as { context?: Response }).context?.json?.().catch(() => null);
+        throw new Error(detail?.error ?? error.message);
+      }
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      return data as {
+        summary: {
+          total: number; pass: number; fail: number; requiere_humano: number; error: number;
+          criticos_fallidos: number; knowledge_version: number; knowledge_is_draft: boolean; model: string;
+        };
+        results: TestResult[];
+      };
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['msg-test-runs'] }),
+  });
+};
+
+export const useMsgTestRuns = () =>
+  useQuery({
+    queryKey: ['msg-test-runs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('msg_test_runs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data ?? [];
+    },
     staleTime: 30 * 1000,
   });
 
