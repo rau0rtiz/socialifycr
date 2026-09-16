@@ -33,7 +33,45 @@ export type AgentContext = {
   history: HistoryMessage[];
   channel?: string | null;
   stage?: string | null;
+  appointments?: AppointmentInfo[] | null;
 };
+
+export type AppointmentInfo = {
+  event_name?: string | null;
+  starts_at?: string | null;
+  status?: string | null;
+  host_name?: string | null;
+  invitee_name?: string | null;
+  invitee_email?: string | null;
+  match_confidence?: string | null;
+  match_source?: string | null;
+};
+
+export function formatAppointments(appts?: AppointmentInfo[] | null) {
+  if (!appts || !appts.length) return null;
+  return appts
+    .map((a) => {
+      const when = a.starts_at
+        ? new Date(a.starts_at).toLocaleString('es-CR', {
+            timeZone: 'America/Costa_Rica',
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            hour: 'numeric',
+            minute: '2-digit',
+          })
+        : 'sin fecha';
+      const bits = [
+        `- ${a.event_name ?? 'Cita'}: ${when} (hora Costa Rica)`,
+        `estado ${a.status ?? 'activa'}`,
+        a.host_name ? `atiende ${a.host_name}` : null,
+        a.invitee_name ? `agendó ${a.invitee_name}` : null,
+        a.match_confidence ? `coincidencia ${a.match_confidence}` : null,
+      ].filter(Boolean);
+      return bits.join(', ');
+    })
+    .join('\n');
+}
 
 export type Proposal = {
   intent: 'marketing' | 'produccion' | 'desconocido' | 'otro';
