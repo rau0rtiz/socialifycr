@@ -380,7 +380,7 @@ export const InboxPanel = () => {
 
             {draft && draft.status !== 'descartado' && (
               draftOpen ? (
-                <div className="border-t border-border/40 p-3">
+                <div className="max-h-[42dvh] overflow-y-auto border-t border-border/40 p-3">
                   <DraftCard
                     draft={draft}
                     stale={stale}

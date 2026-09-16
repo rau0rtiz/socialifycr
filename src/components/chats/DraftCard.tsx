@@ -37,7 +37,7 @@ export const DraftCard = ({ draft, stale, onRegenerate, regenerating, onSave, on
   const fit = draft.fit_signals ?? {};
 
   return (
-    <div className="rounded-2xl border border-primary/30 bg-primary/[0.04] p-4">
+    <div className="min-w-0 break-words rounded-2xl border border-primary/30 bg-primary/[0.04] p-3 sm:p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <Badge className="gap-1 text-[10px]"><Sparkle className="h-3 w-3" /> Borrador de IA</Badge>
         <Badge variant="outline" className="text-[10px] capitalize">{draft.intent}</Badge>
@@ -113,7 +113,7 @@ export const DraftCard = ({ draft, stale, onRegenerate, regenerating, onSave, on
             <Trash2 className="h-3.5 w-3.5" /> Descartar
           </Button>
         )}
-        <span className="ml-auto text-[10px] text-muted-foreground">
+        <span className="ml-auto hidden text-[10px] text-muted-foreground sm:inline">
           {draft.model} · manual v{draft.knowledge_version} · {draft.latency_ms ?? '—'} ms
           {draft.usage?.total_tokens ? ` · ${draft.usage.total_tokens} tokens` : ''}
         </span>
