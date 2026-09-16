@@ -225,6 +225,58 @@ Deno.serve(async (req) => {
 
           if (!identityId || !contactId) continue;
 
+          // Sincronización con el CRM de la agencia: cada contacto de Instagram
+          // crea (o actualiza) un lead vinculado por msg_contact_id.
+          try {
+            const { data: contactRow } = await admin
+              .from('msg_contacts')
+              .select('display_name, profile_url')
+              .eq('id', contactId)
+              .maybeSingle();
+            const { data: identityRow } = await admin
+              .from('msg_contact_identities')
+              .select('username')
+              .eq('id', identityId)
+              .maybeSingle();
+            const igUser = identityRow?.username ? `@${identityRow.username}` : null;
+            const leadName = contactRow?.display_name ?? igUser ?? 'Contacto de Instagram';
+            const crmNotes = [
+              'Llegó por DM de Instagram (Chats).',
+              igUser ? `Usuario: ${igUser}` : null,
+              contactRow?.profile_url ? `Perfil: ${contactRow.profile_url}` : null,
+            ]
+              .filter(Boolean)
+              .join('\n');
+
+            const { data: existingLead } = await admin
+              .from('agency_crm_leads')
+              .select('id, name, notes')
+              .eq('msg_contact_id', contactId)
+              .maybeSingle();
+
+            if (existingLead) {
+              // Actualiza el nombre cuando el perfil ya trae nombre real.
+              const updates: Record<string, string> = {};
+              if (leadName && leadName !== existingLead.name && !leadName.startsWith('Contacto de Instagram')) {
+                updates.name = leadName;
+              }
+              if (Object.keys(updates).length) {
+                await admin.from('agency_crm_leads').update(updates).eq('id', existingLead.id);
+              }
+            } else {
+              await admin.from('agency_crm_leads').insert({
+                name: leadName,
+                status: 'nuevo',
+                notes: crmNotes,
+                msg_contact_id: contactId,
+              });
+            }
+          } catch (crmErr) {
+            // No bloquea la recepción del mensaje si el CRM falla.
+            console.error('crm sync error', crmErr);
+          }
+
+
           // 2. Conversación (única por identidad). Nuevo mensaje entrante → versión +1 (borradores quedan obsoletos).
           const nowIso = new Date().toISOString();
           const occurredAt = typeof event.timestamp === 'number' ? new Date(event.timestamp).toISOString() : nowIso;
