@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, FlaskConical, Play, Sparkle, X } from 'lucide-react';
+import { Check, FlaskConical, Loader2, Play, Sparkle, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,6 +76,8 @@ export const LabPanel = () => {
     );
   };
 
+  const [runningCaseId, setRunningCaseId] = useState<string | null>(null);
+
   const run = () =>
     runTests.mutate(
       { useDraftKnowledge },
@@ -87,6 +89,25 @@ export const LabPanel = () => {
         onError: (e) => toast({ title: 'No se pudieron correr las pruebas', description: (e as Error).message, variant: 'destructive' }),
       },
     );
+
+  // Corre un solo caso y actualiza su resultado sin borrar los demás
+  const runOne = (id: string) => {
+    setRunningCaseId(id);
+    runTests.mutate(
+      { useDraftKnowledge, testCaseIds: [id] },
+      {
+        onSuccess: (d) => {
+          setResults((prev) => {
+            const rest = (prev ?? []).filter((x) => !d.results.some((n) => n.test_case_id === x.test_case_id));
+            return [...rest, ...d.results];
+          });
+        },
+        onError: (e) => toast({ title: 'No se pudo correr el caso', description: (e as Error).message, variant: 'destructive' }),
+        onSettled: () => setRunningCaseId(null),
+      },
+    );
+  };
+
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-2xl" />;
 
@@ -201,6 +222,20 @@ export const LabPanel = () => {
                     >
                       {r ? RESULT_LABEL[r.auto_result] : past ? RESULT_LABEL[past.auto_result] ?? past.auto_result : 'Sin correr'}
                     </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 text-[10px]"
+                      disabled={runTests.isPending}
+                      onClick={() => runOne(c.id)}
+                    >
+                      {runningCaseId === c.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Play className="h-3 w-3" />
+                      )}
+                      Correr este
+                    </Button>
                   </div>
                 </div>
                 {(() => {
