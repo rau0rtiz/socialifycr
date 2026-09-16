@@ -1,6 +1,6 @@
 // Global kill switch for AI features (OCR, insights, reports).
 // Rows live in public.ai_switches and are toggled from the agency dashboard.
-export type AiFeature = "ocr" | "insights" | "reports";
+export type AiFeature = "ocr" | "insights" | "reports" | "production_ai";
 
 export async function aiFeatureEnabled(feature: AiFeature): Promise<boolean> {
   try {
