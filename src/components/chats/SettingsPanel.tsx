@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -11,6 +13,7 @@ import {
   useMsgOffers,
   useMsgSettings,
   usePublishKnowledge,
+  useSaveKnowledgeDraft,
   useUpdateMsgSettings,
   type BotMode,
 } from '@/hooks/use-messaging';
