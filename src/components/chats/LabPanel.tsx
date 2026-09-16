@@ -92,7 +92,14 @@ export const LabPanel = () => {
   // Última corrida guardada (persiste aunque recargues la página)
   const lastRunFor = (id: string) =>
     (pastRuns ?? []).find((r) => r.test_case_id === id) as
-      | { auto_result: string; notes: string | null; created_at: string; knowledge_version: number | null }
+      | {
+          id: string;
+          auto_result: string;
+          human_verdict: string | null;
+          notes: string | null;
+          created_at: string;
+          knowledge_version: number | null;
+        }
       | undefined;
   const fmt = (iso: string) =>
     new Date(iso).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica', dateStyle: 'short', timeStyle: 'short' });
@@ -150,7 +157,8 @@ export const LabPanel = () => {
             </p>
             <p className="mt-1 text-[11px] text-muted-foreground">
               <span className="text-red-300">Crítico</span> = si ese caso falla, el bot no debería usarse (por ejemplo dar
-              precio sin que lo pidan). Abajo de cada caso queda la última vez que se corrió.
+              precio sin que lo pidan). Los de <span className="text-sky-300">revisión humana</span> no se pueden medir solos:
+              leé la nota, comprobá que eso sea cierto y marcalo Correcto o Con problema.
             </p>
           </div>
           <Button size="sm" variant="outline" className="h-9 gap-1 text-xs" disabled={runTests.isPending} onClick={run}>
