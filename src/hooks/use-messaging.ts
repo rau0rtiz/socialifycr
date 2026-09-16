@@ -637,7 +637,7 @@ export const useMsgMetrics = () =>
 /** Trae a la bandeja las conversaciones que ya estaban en Instagram (no responde nada). */
 export const useSyncInstagramInbox = () => {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutation<{ mensajes_importados?: number; conversaciones_nuevas?: number }, Error, number>({
     mutationFn: async (days = 5) => {
       const { data, error } = await supabase.functions.invoke('ig-sync-inbox', { body: { days } });
       if (error) throw error;
