@@ -72,8 +72,12 @@ Deno.serve(async (req) => {
       // Quién atiende la cita (el enrutamiento puede mandarla al calendario de Lucía).
       const membership = Array.isArray(scheduled?.event_memberships) ? scheduled.event_memberships[0] : null;
       const tracking = payload?.tracking ?? {};
-      const inviteeName: string | null = payload?.name ?? null;
-      const inviteeEmail: string | null = payload?.email ?? null;
+      // Respuestas del formulario de enrutamiento (nombre, correo, IG, WhatsApp, presupuesto…).
+      const submissionUri: string | null = payload?.routing_form_submission ?? null;
+      const intake: Intake | null = submissionUri ? await fetchRoutingAnswers(submissionUri) : null;
+
+      const inviteeName: string | null = payload?.name ?? intake?.nombre ?? null;
+      const inviteeEmail: string | null = payload?.email ?? intake?.correo ?? null;
 
       // ── Atribución ──────────────────────────────────────────────────
       // Ari comparte socialifycr.com/agendar (el formulario de enrutamiento va embebido),
