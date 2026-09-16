@@ -23,12 +23,16 @@ import socialifyLogo from '@/assets/socialify-wordmark.png.asset.json';
 export const AgencySidebar = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { state } = useSidebar();
-  const collapsed = state === 'collapsed';
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  // En celular el menú se abre como panel completo: nunca en modo iconos.
+  const collapsed = !isMobile && state === 'collapsed';
   const { signOut } = useAuth();
   const [, startTransition] = useTransition();
 
-  const go = (url: string) => startTransition(() => navigate(url));
+  const go = (url: string) => {
+    if (isMobile) setOpenMobile(false);
+    startTransition(() => navigate(url));
+  };
 
   const renderLink = (item: AgencyNavItem, active: boolean) => (
     <a
