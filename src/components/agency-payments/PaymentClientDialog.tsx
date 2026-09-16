@@ -73,7 +73,8 @@ export const PaymentClientDialog = ({
   const set = (patch: Partial<PayClient>) => setForm(f => ({ ...f, ...patch }));
 
   const linkedLogo = systemClients.find(c => c.id === form.client_id)?.logo_url || null;
-  const previewLogo = form.logo_url || linkedLogo;
+  const resolveLogo = usePrivateUrls([form.logo_url, linkedLogo]);
+  const previewLogo = resolveLogo(form.logo_url || linkedLogo);
   const total = rows.reduce((s, r) => s + Number(r.amount || 0), 0);
   const symbol = form.currency === 'CRC' ? '₡' : '$';
 
