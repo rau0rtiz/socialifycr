@@ -50,8 +50,8 @@ const Scene = ({
     <fog attach="fog" args={[COL.carbon, 14, 34]} />
     <ambientLight intensity={0.55} />
     <directionalLight
-      position={[6, 9, 6]}
-      intensity={1.5}
+      position={[6, 9, 7]}
+      intensity={1.9}
       castShadow
       shadow-mapSize-width={1024}
       shadow-mapSize-height={1024}
@@ -70,13 +70,13 @@ const Scene = ({
     </Environment>
 
     <CursorTilt still={still}>
-      <group position={[0, -1.5, 0]}>
+      <group position={[0, -1.7, 0]} scale={1.04}>
         <Platforms />
         <PropsCluster />
         <FloatingShapes still={still} />
 
         <Hotspot
-          position={[-1.6, 1.9, -0.1]}
+          position={[-1.55, 2.15, 0.05]}
           hovered={hovered === 'camara'}
           onHover={(v) => onHover(v ? 'camara' : null)}
           onActivate={() => onActivate('camara')}
@@ -94,7 +94,7 @@ const Scene = ({
         </Hotspot>
 
         <Hotspot
-          position={[1.5, 1.1, 1.5]}
+          position={[1.35, 1.05, 2]}
           hovered={hovered === 'megafono'}
           onHover={(v) => onHover(v ? 'megafono' : null)}
           onActivate={() => onActivate('megafono')}
@@ -130,7 +130,7 @@ export const AgencyScene = ({
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ position: [0, 2.6, 12], fov: 42 }}
+      camera={{ position: [0, 2.9, 11], fov: 40 }}
       gl={{ antialias: true }}
       onCreated={({ gl }) => {
         gl.setClearColor(COL.carbon);

@@ -10,8 +10,8 @@ import * as THREE from 'three';
 
 // Paleta: carbón mate + naranja Socialify.
 export const COL = {
-  carbon: '#1c1a19',
-  carbonLight: '#2a2725',
+  carbon: '#1a1817',
+  carbonLight: '#332f2c',
   stone: '#d8d0c4',
   orange: '#e85d3a',
   orangeDeep: '#c94a2b',
