@@ -67,29 +67,69 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (existing) return json({ received: true, ignored: 'duplicado' });
 
-      // Atribución: el enlace ofrecido más reciente que aún no tiene cita.
-      const { data: offer } = await admin
-        .from('msg_link_offers')
-        .select('id, conversation_id')
-        .is('matched_appointment_id', null)
-        .order('offered_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // ── Atribución ──────────────────────────────────────────────────
+      // 1) Cruce exacto: el enlace que sale del chat lleva utm_content = id de la conversación.
+      //    Funciona igual con el formulario de enrutamiento y con el calendario final
+      //    (el de Lucía o el de Raúl), porque Calendly arrastra el seguimiento.
+      const tracking = payload?.tracking ?? {};
+      const utmConv: string | null =
+        typeof tracking?.utm_content === 'string' && /^[0-9a-f-]{36}$/i.test(tracking.utm_content)
+          ? tracking.utm_content
+          : null;
 
+      let offerId: string | null = null;
       let conversationId: string | null = null;
       let contactId: string | null = null;
       let matchSource = 'sin_enlace';
 
-      if (offer) {
-        conversationId = offer.conversation_id;
-        matchSource = 'enlace_chat';
+      if (utmConv) {
         const { data: conv } = await admin
           .from('msg_conversations')
-          .select('contact_id')
-          .eq('id', offer.conversation_id)
+          .select('id, contact_id')
+          .eq('id', utmConv)
           .maybeSingle();
-        contactId = conv?.contact_id ?? null;
+        if (conv) {
+          conversationId = conv.id;
+          contactId = conv.contact_id;
+          matchSource = 'enlace_chat';
+          const { data: byConv } = await admin
+            .from('msg_link_offers')
+            .select('id')
+            .eq('conversation_id', conv.id)
+            .is('matched_appointment_id', null)
+            .order('offered_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          offerId = byConv?.id ?? null;
+        }
       }
+
+      // 2) Respaldo: enlace ofrecido sin cita en los últimos 14 días (enlaces viejos sin etiqueta).
+      if (!conversationId) {
+        const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: offer } = await admin
+          .from('msg_link_offers')
+          .select('id, conversation_id')
+          .is('matched_appointment_id', null)
+          .gte('offered_at', since)
+          .order('offered_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (offer) {
+          offerId = offer.id;
+          conversationId = offer.conversation_id;
+          matchSource = 'enlace_chat';
+          const { data: conv } = await admin
+            .from('msg_conversations')
+            .select('contact_id')
+            .eq('id', offer.conversation_id)
+            .maybeSingle();
+          contactId = conv?.contact_id ?? null;
+        }
+      }
+
+      // Quién atiende la cita (el enrutamiento puede mandarla al calendario de Lucía).
+      const membership = Array.isArray(scheduled?.event_memberships) ? scheduled.event_memberships[0] : null;
 
       const { data: appt, error: apptErr } = await admin
         .from('msg_appointments')
@@ -99,6 +139,11 @@ Deno.serve(async (req) => {
           conversation_id: conversationId,
           event_name: scheduled?.name ?? null,
           invitee_email: payload?.email ?? null,
+          invitee_name: payload?.name ?? null,
+          host_name: membership?.user_name ?? null,
+          host_email: membership?.user_email ?? null,
+          routing_form_uri: payload?.routing_form_submission ?? null,
+          tracking,
           starts_at: scheduled?.start_time ?? null,
           timezone: payload?.timezone ?? 'America/Costa_Rica',
           status: 'activa',
