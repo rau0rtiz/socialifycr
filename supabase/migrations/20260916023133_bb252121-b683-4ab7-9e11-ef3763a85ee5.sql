@@ -1,0 +1,1 @@
+alter table public.msg_test_runs add column if not exists reply text;

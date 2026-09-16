@@ -4728,6 +4728,7 @@ export type Database = {
           id: string
           knowledge_version: number | null
           notes: string | null
+          reply: string | null
           run_by: string | null
           test_case_id: string
         }
@@ -4739,6 +4740,7 @@ export type Database = {
           id?: string
           knowledge_version?: number | null
           notes?: string | null
+          reply?: string | null
           run_by?: string | null
           test_case_id: string
         }
@@ -4750,6 +4752,7 @@ export type Database = {
           id?: string
           knowledge_version?: number | null
           notes?: string | null
+          reply?: string | null
           run_by?: string | null
           test_case_id?: string
         }

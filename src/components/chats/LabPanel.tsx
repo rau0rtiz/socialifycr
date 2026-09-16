@@ -99,6 +99,7 @@ export const LabPanel = () => {
           auto_result: string;
           human_verdict: string | null;
           notes: string | null;
+          reply: string | null;
           created_at: string;
           knowledge_version: number | null;
         }
@@ -202,10 +203,35 @@ export const LabPanel = () => {
                     </Badge>
                   </div>
                 </div>
-                {r?.reply && (
-                  <p className="mt-2 whitespace-pre-wrap rounded-lg border border-border/30 bg-background/60 p-2 text-[11px] text-foreground">
-                    {r.reply}
-                  </p>
+                {(() => {
+                  const msgs = ((c.inputs as { messages?: { author?: string; body?: string }[] } | null)?.messages ?? []) as {
+                    author?: string;
+                    body?: string;
+                  }[];
+                  if (!msgs.length) return null;
+                  return (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-[10px] text-muted-foreground hover:text-foreground">
+                        Ver conversación de prueba ({msgs.length} mensajes)
+                      </summary>
+                      <div className="mt-1 space-y-1 rounded-lg border border-border/30 bg-background/60 p-2">
+                        {msgs.map((m, i) => (
+                          <p key={i} className="text-[11px] text-foreground">
+                            <span className="font-semibold text-muted-foreground">
+                              {m.author === 'externo' ? 'Contacto' : m.author === 'bot' ? 'Bot' : 'Humano'}:
+                            </span>{' '}
+                            {m.body}
+                          </p>
+                        ))}
+                      </div>
+                    </details>
+                  );
+                })()}
+                {(r?.reply ?? past?.reply) && (
+                  <div className="mt-2 rounded-lg border border-border/30 bg-background/60 p-2">
+                    <p className="mb-1 text-[10px] font-semibold text-muted-foreground">Respuesta del bot:</p>
+                    <p className="whitespace-pre-wrap text-[11px] text-foreground">{r?.reply ?? past?.reply}</p>
+                  </div>
                 )}
                 {!!r?.failures?.length && (
                   <p className="mt-1 text-[11px] text-red-300">{r.failures.join(' · ')}</p>
@@ -219,11 +245,18 @@ export const LabPanel = () => {
                   </p>
                 )}
                 {!r && past && (
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    Última corrida: {fmt(past.created_at)}
-                    {past.knowledge_version ? ` · manual v${past.knowledge_version}` : ''}
-                    {past.notes ? ` · ${past.notes}` : ''}
-                  </p>
+                  <div className="mt-1 space-y-1">
+                    {past.auto_result === 'requiere_humano' && past.notes && (
+                      <p className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-2 text-[11px] text-sky-200">
+                        Qué revisar: {past.notes}
+                      </p>
+                    )}
+                    <p className="text-[10px] text-muted-foreground">
+                      Última corrida: {fmt(past.created_at)}
+                      {past.knowledge_version ? ` · manual v${past.knowledge_version}` : ''}
+                      {past.auto_result !== 'requiere_humano' && past.notes ? ` · ${past.notes}` : ''}
+                    </p>
+                  </div>
                 )}
                 {past && (r ? r.auto_result === 'requiere_humano' : past.auto_result === 'requiere_humano') && (
                   <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border/30 pt-2">
