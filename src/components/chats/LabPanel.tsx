@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FlaskConical, Play, Sparkle } from 'lucide-react';
+import { Check, FlaskConical, Play, Sparkle, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import {
   useMsgTestCases,
   useMsgTestRuns,
   useRunTests,
+  useSetHumanVerdict,
   type MsgDraft,
   type TestResult,
 } from '@/hooks/use-messaging';
