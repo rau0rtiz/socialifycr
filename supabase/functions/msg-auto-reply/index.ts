@@ -105,13 +105,19 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!knowledge) return json({ skipped: 'sin_manual_publicado' });
 
-    const [{ data: offers }, { data: fingerprint }] = await Promise.all([
+    const [{ data: offers }, { data: fingerprint }, { data: appts }] = await Promise.all([
       admin
         .from('msg_offers')
         .select('label, intent, price, currency, tax_note, scope_note, detail, sort_order')
         .eq('status', 'publicado')
         .order('sort_order'),
       admin.rpc('msg_offers_fingerprint'),
+      admin
+        .from('msg_appointments')
+        .select('event_name, starts_at, status, host_name, invitee_name, invitee_email, match_confidence, match_source')
+        .or(`conversation_id.eq.${conversationId},contact_id.eq.${conv.contact_id}`)
+        .order('starts_at', { ascending: false })
+        .limit(5),
     ]);
 
     const ctx: AgentContext = {
