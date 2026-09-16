@@ -160,7 +160,14 @@ export interface InboxRow {
   assignee_id: string | null;
   version: number;
   human_takeover_at: string | null;
-  msg_contacts: { display_name: string | null; business_name: string | null; do_not_contact: boolean } | null;
+  msg_contacts: {
+    display_name: string | null;
+    business_name: string | null;
+    do_not_contact: boolean;
+    avatar_url?: string | null;
+    profile_url?: string | null;
+  } | null;
+  msg_contact_identities?: { username: string | null; external_id: string } | null;
 }
 
 export const useMsgConversations = (filters?: { channel?: string; stage?: Stage; unreadOnly?: boolean }) =>
@@ -169,7 +176,7 @@ export const useMsgConversations = (filters?: { channel?: string; stage?: Stage;
     queryFn: async () => {
       let q = supabase
         .from('msg_conversations')
-        .select('id, channel, stage, intent, fit, bot_mode, unread_count, last_inbound_at, is_demo, assignee_id, version, human_takeover_at, msg_contacts(display_name, business_name, do_not_contact)')
+        .select('id, channel, stage, intent, fit, bot_mode, unread_count, last_inbound_at, is_demo, assignee_id, version, human_takeover_at, msg_contacts(display_name, business_name, do_not_contact, avatar_url, profile_url), msg_contact_identities(username, external_id)')
         .order('last_inbound_at', { ascending: false, nullsFirst: false })
         .limit(100);
       if (filters?.channel) q = q.eq('channel', filters.channel as never);
@@ -197,6 +204,28 @@ export const useMsgMessages = (conversationId: string | null) =>
     enabled: !!conversationId,
     staleTime: 30 * 1000,
   });
+
+/** Envía un mensaje escrito por una persona del equipo por el canal real. */
+export const useSendMessage = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversationId, text }: { conversationId: string; text: string }) => {
+      const { data, error } = await supabase.functions.invoke('ig-send-message', {
+        body: { conversationId, text },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['msg-messages', vars.conversationId] });
+      qc.invalidateQueries({ queryKey: ['msg-conversations'] });
+      qc.invalidateQueries({ queryKey: ['msg-draft', vars.conversationId] });
+    },
+  });
+};
+
+
 
 // ---------- Fase 2: borradores del setter ----------
 

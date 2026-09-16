@@ -4208,6 +4208,7 @@ export type Database = {
       }
       msg_contacts: {
         Row: {
+          avatar_url: string | null
           business_name: string | null
           consent_evidence: Json | null
           created_at: string
@@ -4223,6 +4224,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           business_name?: string | null
           consent_evidence?: Json | null
           created_at?: string
@@ -4238,6 +4240,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           business_name?: string | null
           consent_evidence?: Json | null
           created_at?: string
