@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ChevronDown, Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ChevronDown, Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,11 @@ import {
   type MsgDraft,
   type Stage,
 } from '@/hooks/use-messaging';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { DraftCard } from './DraftCard';
+
+// Alto flexible: ocupa la pantalla disponible en cualquier dispositivo.
+const PANEL_H = 'h-[max(420px,calc(100dvh-280px))]';
 
 const staleReason = (
   draft: MsgDraft,
@@ -97,6 +101,9 @@ export const InboxPanel = () => {
   const [selected, setSelected] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [draftOpen, setDraftOpen] = useState(false);
+  // En pantallas chicas se ve una sola cosa: lista o chat.
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
+  const [fichaOpen, setFichaOpen] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const { data: conversations, isLoading } = useMsgConversations({
@@ -182,9 +189,9 @@ export const InboxPanel = () => {
   if (isLoading) {
     return (
       <div className="grid gap-4 lg:grid-cols-[300px_1fr_280px]">
-        <Skeleton className="h-[560px] w-full rounded-2xl" />
-        <Skeleton className="h-[560px] w-full rounded-2xl" />
-        <Skeleton className="hidden h-[560px] w-full rounded-2xl lg:block" />
+        <Skeleton className={`${PANEL_H} w-full rounded-2xl`} />
+        <Skeleton className={`${PANEL_H} hidden w-full rounded-2xl lg:block`} />
+        <Skeleton className={`${PANEL_H} hidden w-full rounded-2xl lg:block`} />
       </div>
     );
   }
@@ -207,7 +214,11 @@ export const InboxPanel = () => {
   return (
     <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)_280px]">
       {/* Columna 1: conversaciones */}
-      <div className="agency-card flex h-[620px] flex-col rounded-2xl">
+      <div
+        className={`agency-card ${PANEL_H} flex-col rounded-2xl ${
+          mobileView === 'chat' ? 'hidden lg:flex' : 'flex'
+        }`}
+      >
         <div className="space-y-2 border-b border-border/40 p-3">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -251,7 +262,7 @@ export const InboxPanel = () => {
             return (
               <button
                 key={c.id}
-                onClick={() => { setSelected(c.id); setText(''); }}
+                onClick={() => { setSelected(c.id); setText(''); setMobileView('chat'); }}
                 className={`mb-1 flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition ${
                   active ? 'bg-primary/10 ring-1 ring-primary/40' : 'hover:bg-muted/40'
                 }`}
@@ -281,13 +292,26 @@ export const InboxPanel = () => {
       </div>
 
       {/* Columna 2: chat */}
-      <div className="agency-card flex h-[620px] flex-col rounded-2xl">
+      <div
+        className={`agency-card ${PANEL_H} flex-col rounded-2xl ${
+          mobileView === 'list' ? 'hidden lg:flex' : 'flex'
+        }`}
+      >
         {!activeConv ? (
           <p className="p-4 text-xs text-muted-foreground">Elegí una conversación.</p>
         ) : (
           <>
-            <div className="flex items-center gap-3 border-b border-border/40 p-3">
-              <Avatar className="h-9 w-9">
+            <div className="flex items-center gap-2 border-b border-border/40 p-3 sm:gap-3">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 shrink-0 lg:hidden"
+                onClick={() => setMobileView('list')}
+                aria-label="Volver a la lista"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Avatar className="h-9 w-9 shrink-0">
                 <AvatarImage src={activeConv.msg_contacts?.avatar_url ?? undefined} alt={displayLabel(activeConv)} />
                 <AvatarFallback className="text-[11px]">{initials(displayLabel(activeConv))}</AvatarFallback>
               </Avatar>
@@ -299,14 +323,23 @@ export const InboxPanel = () => {
                 </p>
               </div>
               <Button
+                size="icon"
+                variant="ghost"
+                className="ml-auto h-8 w-8 shrink-0 lg:hidden"
+                onClick={() => setFichaOpen(true)}
+                aria-label="Ver ficha del contacto"
+              >
+                <User className="h-4 w-4" />
+              </Button>
+              <Button
                 size="sm"
                 variant="outline"
-                className="ml-auto h-8 gap-1 text-xs"
+                className="ml-auto h-8 gap-1 text-xs lg:ml-0"
                 disabled={generate.isPending}
                 onClick={runGenerate}
               >
                 <Sparkle className="h-3.5 w-3.5" />
-                {generate.isPending ? 'Generando…' : 'Borrador de Ari'}
+                <span className="hidden sm:inline">{generate.isPending ? 'Generando…' : 'Borrador de Ari'}</span>
               </Button>
             </div>
 
@@ -446,103 +479,137 @@ export const InboxPanel = () => {
         )}
       </div>
 
-      {/* Columna 3: ficha del contacto */}
-      <div className="agency-card hidden h-[620px] flex-col overflow-y-auto rounded-2xl p-4 lg:flex">
+      {/* Columna 3: ficha del contacto (pantallas grandes) */}
+      <div className={`agency-card ${PANEL_H} hidden flex-col overflow-y-auto rounded-2xl p-4 lg:flex`}>
         {!activeConv ? (
           <p className="text-xs text-muted-foreground">Sin conversación abierta.</p>
         ) : (
-          <div className="space-y-4">
-            <div className="flex flex-col items-center gap-2 text-center">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={activeConv.msg_contacts?.avatar_url ?? undefined} alt={displayLabel(activeConv)} />
-                <AvatarFallback>{initials(displayLabel(activeConv))}</AvatarFallback>
-              </Avatar>
-              <p className="text-sm font-semibold text-foreground">{displayLabel(activeConv)}</p>
-              {subLabel(activeConv) && (
-                <p className="text-[11px] text-muted-foreground">{subLabel(activeConv)}</p>
-              )}
-              {activeConv.msg_contacts?.business_name && (
-                <p className="text-[11px] text-muted-foreground">{activeConv.msg_contacts.business_name}</p>
-              )}
-              {activeConv.msg_contacts?.profile_url && (
-                <a
-                  href={activeConv.msg_contacts.profile_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-[11px] text-primary underline-offset-2 hover:underline"
-                >
-                  Ver perfil <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Etapa</p>
-              <Select
-                value={activeConv.stage}
-                onValueChange={(v) => updateConv.mutate({ id: activeConv.id, patch: { stage: v as Stage } })}
-              >
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {STAGES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2 text-[11px]">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground">Canal</span>
-                <span className="capitalize text-foreground">{activeConv.channel}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground">Intención</span>
-                <span className="capitalize text-foreground">{activeConv.intent}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground">Encaje</span>
-                <span className="capitalize text-foreground">{activeConv.fit}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground">Bot</span>
-                <span className="capitalize text-foreground">{activeConv.bot_mode}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground">Último mensaje</span>
-                <span className="text-foreground">{lastMessage ? hourOf(lastMessage.occurred_at) : '—'}</span>
-              </div>
-              {activeConv.human_takeover_at && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground">Control humano</span>
-                  <span className="text-foreground">{hourOf(activeConv.human_takeover_at)}</span>
-                </div>
-              )}
-            </div>
-
-            {!!draft?.facts?.length && (
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Datos detectados por Ari
-                </p>
-                <div className="space-y-1">
-                  {draft.facts.map((f, i) => (
-                    <div key={`${f.field}-${i}`} className="rounded-lg border border-border/40 bg-background/40 px-2 py-1.5">
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{f.field}</p>
-                      <p className="text-[11px] text-foreground">{f.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <p className="flex items-start gap-1.5 rounded-lg border border-border/40 bg-background/40 p-2 text-[10px] text-muted-foreground">
-              <MessageCircle className="mt-0.5 h-3 w-3 shrink-0" />
-              El bot sigue en modo borrador: nada sale a Instagram sin que vos lo mandés.
-            </p>
-          </div>
+          <FichaBody
+            conv={activeConv}
+            draft={draft}
+            lastMessage={lastMessage}
+            onStage={(v) => updateConv.mutate({ id: activeConv.id, patch: { stage: v } })}
+          />
         )}
       </div>
+
+      {/* Ficha como panel deslizante en pantallas chicas */}
+      <Sheet open={fichaOpen} onOpenChange={setFichaOpen}>
+        <SheetContent side="right" className="w-[320px] overflow-y-auto sm:w-[380px]">
+          <SheetHeader>
+            <SheetTitle>Ficha del contacto</SheetTitle>
+          </SheetHeader>
+          {activeConv && (
+            <div className="mt-4">
+              <FichaBody
+                conv={activeConv}
+                draft={draft}
+                lastMessage={lastMessage}
+                onStage={(v) => updateConv.mutate({ id: activeConv.id, patch: { stage: v } })}
+              />
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
+
+// Ficha del contacto, reutilizada en la columna lateral y en el panel móvil.
+const FichaBody = ({
+  conv,
+  draft,
+  lastMessage,
+  onStage,
+}: {
+  conv: InboxRow;
+  draft: MsgDraft | null | undefined;
+  lastMessage: { occurred_at: string } | null;
+  onStage: (v: Stage) => void;
+}) => (
+  <div className="space-y-4">
+    <div className="flex flex-col items-center gap-2 text-center">
+      <Avatar className="h-16 w-16">
+        <AvatarImage src={conv.msg_contacts?.avatar_url ?? undefined} alt={displayLabel(conv)} />
+        <AvatarFallback>{initials(displayLabel(conv))}</AvatarFallback>
+      </Avatar>
+      <p className="text-sm font-semibold text-foreground">{displayLabel(conv)}</p>
+      {subLabel(conv) && <p className="text-[11px] text-muted-foreground">{subLabel(conv)}</p>}
+      {conv.msg_contacts?.business_name && (
+        <p className="text-[11px] text-muted-foreground">{conv.msg_contacts.business_name}</p>
+      )}
+      {conv.msg_contacts?.profile_url && (
+        <a
+          href={conv.msg_contacts.profile_url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-[11px] text-primary underline-offset-2 hover:underline"
+        >
+          Ver perfil <ExternalLink className="h-3 w-3" />
+        </a>
+      )}
+    </div>
+
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Etapa</p>
+      <Select value={conv.stage} onValueChange={(v) => onStage(v as Stage)}>
+        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {STAGES.map((s) => (
+            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+
+    <div className="space-y-2 text-[11px]">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-muted-foreground">Canal</span>
+        <span className="capitalize text-foreground">{conv.channel}</span>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-muted-foreground">Intención</span>
+        <span className="capitalize text-foreground">{conv.intent}</span>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-muted-foreground">Encaje</span>
+        <span className="capitalize text-foreground">{conv.fit}</span>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-muted-foreground">Bot</span>
+        <span className="capitalize text-foreground">{conv.bot_mode}</span>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-muted-foreground">Último mensaje</span>
+        <span className="text-foreground">{lastMessage ? hourOf(lastMessage.occurred_at) : '—'}</span>
+      </div>
+      {conv.human_takeover_at && (
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-muted-foreground">Control humano</span>
+          <span className="text-foreground">{hourOf(conv.human_takeover_at)}</span>
+        </div>
+      )}
+    </div>
+
+    {!!draft?.facts?.length && (
+      <div className="space-y-1.5">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Datos detectados por Ari
+        </p>
+        <div className="space-y-1">
+          {draft.facts.map((f, i) => (
+            <div key={`${f.field}-${i}`} className="rounded-lg border border-border/40 bg-background/40 px-2 py-1.5">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{f.field}</p>
+              <p className="text-[11px] text-foreground">{f.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <p className="flex items-start gap-1.5 rounded-lg border border-border/40 bg-background/40 p-2 text-[10px] text-muted-foreground">
+      <MessageCircle className="mt-0.5 h-3 w-3 shrink-0" />
+      El bot sigue en modo borrador: nada sale a Instagram sin que vos lo mandés.
+    </p>
+  </div>
+);
