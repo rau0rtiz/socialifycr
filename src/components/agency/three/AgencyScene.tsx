@@ -77,7 +77,6 @@ const Scene = ({
 
         <Hotspot
           position={[-1.6, 1.9, -0.1]}
-          label="Producciones"
           hovered={hovered === 'camara'}
           onHover={(v) => onHover(v ? 'camara' : null)}
           onActivate={() => onActivate('camara')}
@@ -87,7 +86,6 @@ const Scene = ({
 
         <Hotspot
           position={[1.4, 1.8, -0.5]}
-          label="CRM"
           hovered={hovered === 'computadora'}
           onHover={(v) => onHover(v ? 'computadora' : null)}
           onActivate={() => onActivate('computadora')}
@@ -97,7 +95,6 @@ const Scene = ({
 
         <Hotspot
           position={[1.5, 1.1, 1.5]}
-          label="Funnels"
           hovered={hovered === 'megafono'}
           onHover={(v) => onHover(v ? 'megafono' : null)}
           onActivate={() => onActivate('megafono')}
@@ -141,7 +138,6 @@ export const AgencyScene = ({
       onPointerMissed={() => setHovered(null)}
       style={{ cursor: hovered ? 'pointer' : 'default' }}
       fallback={null}
-      onError={() => setFailed(true)}
     >
       <Suspense fallback={null}>
         <Scene

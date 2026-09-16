@@ -30,14 +30,12 @@ const matte = (color: string, extra: Partial<THREE.MeshStandardMaterialParameter
 export const Hotspot = ({
   children,
   position,
-  label,
   onActivate,
   hovered,
   onHover,
 }: {
   children: React.ReactNode;
   position: [number, number, number];
-  label: string;
   onActivate: () => void;
   hovered: boolean;
   onHover: (v: boolean) => void;
@@ -62,7 +60,6 @@ export const Hotspot = ({
         e.stopPropagation();
         onActivate();
       }}
-      aria-label={label}
     >
       {children}
     </group>
