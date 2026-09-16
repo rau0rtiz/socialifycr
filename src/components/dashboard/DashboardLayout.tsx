@@ -1,6 +1,6 @@
 import { ReactNode, CSSProperties, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { Sidebar } from './Sidebar';
 import { AgencySidebar } from '@/components/agency/AgencySidebar';
 import { AgencyTopBar } from '@/components/agency/AgencyTopBar';
