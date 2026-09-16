@@ -216,11 +216,14 @@ Deno.serve(async (req) => {
     let sentText = text;
     let taggedUrl: string | null = null;
     if (linkMatch) {
+      // Enlace limpio, sin UTM: el sitio de marketing no los procesa y el
+      // enlace modificado queda raro. La cita se amarra después por las
+      // respuestas del formulario de enrutamiento (IG, correo, nombre).
       try {
         const url = new URL(linkMatch[0]);
-        url.searchParams.set('utm_source', 'socialify_chat');
-        url.searchParams.set('utm_medium', 'instagram_dm');
-        url.searchParams.set('utm_content', conversationId);
+        ['utm_source', 'utm_medium', 'utm_content', 'utm_campaign', 'utm_term'].forEach((k) =>
+          url.searchParams.delete(k),
+        );
         taggedUrl = url.toString();
         sentText = text.replace(linkMatch[0], taggedUrl);
       } catch {
