@@ -437,7 +437,7 @@ export function runChecks(
   const flat = strip(reply);
 
   // Guardarraíl: nunca dar precio si no lo pidieron textualmente.
-  if (history.length && !priceAsked(history) && mentionsMoney(reply)) {
+  if (history.length && !priceAllowed(history) && mentionsMoney(reply)) {
     failures.push('Dio precio sin que lo pidieran: primero hay que entender el negocio');
   }
 
