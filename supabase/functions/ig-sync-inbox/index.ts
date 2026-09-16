@@ -50,10 +50,31 @@ Deno.serve(async (req) => {
     if (!secret?.access_token) return json({ error: 'Instagram no está conectado' }, 400);
     const token = secret.access_token;
 
-    const { data: me } = await fetch(`${GRAPH}/me?fields=id,username&access_token=${token}`)
-      .then(async (r) => ({ data: await r.json().catch(() => null) }))
-      .catch(() => ({ data: null }));
-    const receivingAccountId = String(me?.id ?? secret.external_account_id ?? '');
+    const meRes = await fetch(`${GRAPH}/me?fields=id,username&access_token=${token}`);
+    const me = meRes.ok ? await meRes.json().catch(() => null) : null;
+
+    // La cuenta propia puede aparecer con varios identificadores (app-scoped, IGSID).
+    // Juntamos todos para no confundirla con el contacto del otro lado.
+    const { data: knownIdentities } = await admin
+      .from('msg_contact_identities')
+      .select('receiving_account_id')
+      .eq('channel', 'instagram');
+    const selfIds = new Set<string>(
+      [
+        me?.id ? String(me.id) : null,
+        secret.external_account_id ? String(secret.external_account_id) : null,
+        ...(knownIdentities ?? []).map((r: any) => (r?.receiving_account_id ? String(r.receiving_account_id) : null)),
+      ].filter(Boolean) as string[],
+    );
+    const selfUsername = me?.username ? String(me.username).toLowerCase() : null;
+
+    // Para guardar usamos el mismo identificador que usa el receptor en vivo.
+    const receivingAccountId =
+      (knownIdentities ?? [])
+        .map((r: any) => (r?.receiving_account_id ? String(r.receiving_account_id) : null))
+        .find((id: string | null) => id && id !== String(me?.id ?? '')) ??
+      (secret.external_account_id ? String(secret.external_account_id) : null) ??
+      (me?.id ? String(me.id) : '');
     if (!receivingAccountId) return json({ error: 'No se pudo identificar la cuenta de Instagram' }, 400);
 
     // 1. Conversaciones de la bandeja de Instagram.
@@ -76,7 +97,11 @@ Deno.serve(async (req) => {
       if (updated && updated < since) continue;
 
       const participants: any[] = Array.isArray(conv?.participants?.data) ? conv.participants.data : [];
-      const other = participants.find((p) => String(p?.id) !== receivingAccountId);
+      const other = participants.find(
+        (p) =>
+          !selfIds.has(String(p?.id)) &&
+          (!selfUsername || String(p?.username ?? '').toLowerCase() !== selfUsername),
+      );
       const senderId = other?.id ? String(other.id) : null;
       if (!senderId) {
         skipped.push(conv?.id ?? 'sin_id');
@@ -175,7 +200,7 @@ Deno.serve(async (req) => {
       // 4. Mensajes históricos: idempotentes por id de Instagram. No dispara al bot.
       for (const m of messages) {
         const fromId = m?.from?.id ? String(m.from.id) : null;
-        const outbound = fromId === receivingAccountId;
+        const outbound = Boolean(fromId && selfIds.has(fromId));
         const bodyText: string =
           typeof m?.message === 'string' && m.message.trim() ? m.message : '[Adjunto]';
         const { error: insErr } = await admin.from('msg_messages').upsert(
@@ -201,7 +226,7 @@ Deno.serve(async (req) => {
       // 5. Estado de la conversación según el último mensaje importado.
       const lastMsg = messages[messages.length - 1];
       const lastAt = lastMsg?.created_time ? new Date(lastMsg.created_time).toISOString() : null;
-      const lastFromUs = String(lastMsg?.from?.id ?? '') === receivingAccountId;
+      const lastFromUs = selfIds.has(String(lastMsg?.from?.id ?? ''));
       if (lastAt) {
         await admin
           .from('msg_conversations')
