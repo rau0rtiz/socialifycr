@@ -259,6 +259,22 @@ export const usePublishKnowledge = () => {
   });
 };
 
+export const useSaveKnowledgeDraft = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { manual: string; toneNotes: string; rules: string[] }) => {
+      const { data, error } = await supabase.rpc('msg_save_knowledge_draft', {
+        p_manual: payload.manual,
+        p_tone_notes: payload.toneNotes,
+        p_rules: payload.rules,
+      });
+      if (error) throw error;
+      return data as number;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['msg-knowledge'] }),
+  });
+};
+
 export interface TestResult {
   test_case_id: string;
   title: string;
