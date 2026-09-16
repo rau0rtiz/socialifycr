@@ -651,6 +651,7 @@ export type Database = {
           lost_at: string | null
           lost_objection: string | null
           lost_reason: string | null
+          msg_contact_id: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -675,6 +676,7 @@ export type Database = {
           lost_at?: string | null
           lost_objection?: string | null
           lost_reason?: string | null
+          msg_contact_id?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -699,6 +701,7 @@ export type Database = {
           lost_at?: string | null
           lost_objection?: string | null
           lost_reason?: string | null
+          msg_contact_id?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -720,6 +723,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_crm_leads_msg_contact_id_fkey"
+            columns: ["msg_contact_id"]
+            isOneToOne: false
+            referencedRelation: "msg_contacts"
             referencedColumns: ["id"]
           },
         ]
