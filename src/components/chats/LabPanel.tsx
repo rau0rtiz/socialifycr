@@ -76,6 +76,8 @@ export const LabPanel = () => {
     );
   };
 
+  const [runningCaseId, setRunningCaseId] = useState<string | null>(null);
+
   const run = () =>
     runTests.mutate(
       { useDraftKnowledge },
@@ -87,6 +89,25 @@ export const LabPanel = () => {
         onError: (e) => toast({ title: 'No se pudieron correr las pruebas', description: (e as Error).message, variant: 'destructive' }),
       },
     );
+
+  // Corre un solo caso y actualiza su resultado sin borrar los demás
+  const runOne = (id: string) => {
+    setRunningCaseId(id);
+    runTests.mutate(
+      { useDraftKnowledge, testCaseIds: [id] },
+      {
+        onSuccess: (d) => {
+          setResults((prev) => {
+            const rest = (prev ?? []).filter((x) => !d.results.some((n) => n.test_case_id === x.test_case_id));
+            return [...rest, ...d.results];
+          });
+        },
+        onError: (e) => toast({ title: 'No se pudo correr el caso', description: (e as Error).message, variant: 'destructive' }),
+        onSettled: () => setRunningCaseId(null),
+      },
+    );
+  };
+
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-2xl" />;
 
