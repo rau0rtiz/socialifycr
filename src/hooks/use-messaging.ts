@@ -190,6 +190,7 @@ export interface InboxRow {
   assignee_id: string | null;
   version: number;
   human_takeover_at: string | null;
+  contact_id: string | null;
   msg_contacts: {
     display_name: string | null;
     business_name: string | null;
@@ -209,7 +210,7 @@ export const useMsgConversations = (filters?: { channel?: string; stage?: Stage;
     queryFn: async () => {
       let q = supabase
         .from('msg_conversations')
-        .select('id, channel, stage, intent, fit, bot_mode, unread_count, last_inbound_at, is_demo, assignee_id, version, human_takeover_at, msg_contacts(display_name, business_name, do_not_contact, avatar_url, profile_url, email, phone, intake), msg_contact_identities(username, external_id)')
+        .select('id, channel, stage, intent, fit, bot_mode, unread_count, last_inbound_at, is_demo, assignee_id, version, human_takeover_at, contact_id, msg_contacts(display_name, business_name, do_not_contact, avatar_url, profile_url, email, phone, intake), msg_contact_identities(username, external_id)')
         .order('last_inbound_at', { ascending: false, nullsFirst: false })
         .limit(100);
       if (filters?.channel) q = q.eq('channel', filters.channel as never);
@@ -306,6 +307,21 @@ export const useUpdateConversation = () => {
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<{ stage: Stage; unread_count: number }> }) => {
       const { error } = await supabase.from('msg_conversations').update(patch as never).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['msg-conversations'] }),
+  });
+};
+
+/** Marca "Ari en pausa" sobre un contacto (do_not_contact). */
+export const useUpdateContactAutomation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ contactId, paused }: { contactId: string; paused: boolean }) => {
+      const { error } = await supabase
+        .from('msg_contacts')
+        .update({ do_not_contact: paused } as never)
+        .eq('id', contactId);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['msg-conversations'] }),
