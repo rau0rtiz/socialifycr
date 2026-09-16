@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, FlaskConical, Play, Sparkle, X } from 'lucide-react';
+import { Check, FlaskConical, Loader2, Play, Sparkle, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
