@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import {
+  audioReceived,
   callSetterModel,
   mentionsMoney,
   priceAsked,
@@ -193,10 +194,13 @@ Deno.serve(async (req) => {
 
     // Guardarraíl: si nadie preguntó por precio y la respuesta trae montos, exige revisión humana.
     const priceLeak = history.length > 0 && !priceAsked(history) && mentionsMoney(p.reply ?? '');
-    const needsHuman = Boolean(p.needs_human) || priceLeak;
-    const needsHumanReason = priceLeak
-      ? 'Dio precio sin que lo pidieran. Revisá la respuesta: primero hay que entender el negocio.'
-      : (p.needs_human_reason ?? null);
+    const audioIn = history.length > 0 && audioReceived(history);
+    const needsHuman = Boolean(p.needs_human) || priceLeak || audioIn;
+    const needsHumanReason = audioIn
+      ? 'La persona envió un audio de voz. Ari no lo escucha: revisalo vos y respondé.'
+      : priceLeak
+        ? 'Dio precio sin que lo pidieran. Revisá la respuesta: primero hay que entender el negocio.'
+        : (p.needs_human_reason ?? null);
 
     const { data: draft, error: draftErr } = await admin
       .from('msg_drafts')
@@ -220,7 +224,7 @@ Deno.serve(async (req) => {
         conversation_version: conversation?.version ?? null,
         offers_fingerprint: (fingerprint as string) ?? null,
         human_takeover_at: conversation?.human_takeover_at ?? null,
-        validations: priceLeak ? { price_leak: true } : {},
+        validations: { ...(priceLeak ? { price_leak: true } : {}), ...(audioIn ? { audio: 'derivar_humano' } : {}) },
         created_by: userId,
       })
       .select('*')
