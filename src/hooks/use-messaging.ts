@@ -373,6 +373,20 @@ export const useMsgTestRuns = () =>
     staleTime: 30 * 1000,
   });
 
+export const useSetHumanVerdict = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { runId: string; verdict: 'aprobado' | 'rechazado' | null }) => {
+      const { error } = await supabase
+        .from('msg_test_runs')
+        .update({ human_verdict: input.verdict })
+        .eq('id', input.runId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['msg-test-runs'] }),
+  });
+};
+
 export const useMsgMetrics = () =>
   useQuery({
     queryKey: ['msg-metrics'],
