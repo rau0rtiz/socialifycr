@@ -479,6 +479,9 @@ export interface MsgAppointment {
   host_name: string | null;
   host_email: string | null;
   invitee_name: string | null;
+  match_confidence: string | null;
+  match_reason: string | null;
+  match_confirmed_at: string | null;
 }
 
 /** Citas vinculadas a una conversación (vienen de los avisos de Calendly). */
@@ -488,7 +491,9 @@ export const useConversationAppointments = (conversationId: string | null) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from('msg_appointments')
-        .select('id, event_name, invitee_email, invitee_name, starts_at, status, match_source, host_name, host_email')
+        .select(
+          'id, event_name, invitee_email, invitee_name, starts_at, status, match_source, host_name, host_email, match_confidence, match_reason, match_confirmed_at',
+        )
         .eq('conversation_id', conversationId!)
         .order('starts_at', { ascending: false });
       if (error) throw error;
@@ -497,6 +502,37 @@ export const useConversationAppointments = (conversationId: string | null) =>
     enabled: !!conversationId,
     staleTime: 60 * 1000,
   });
+
+/** Confirmar o descartar a mano el cruce de una cita con este chat. */
+export const useConfirmAppointmentMatch = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, confirm }: { id: string; confirm: boolean }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const patch = confirm
+        ? {
+            match_confidence: 'alta',
+            match_confirmed_at: new Date().toISOString(),
+            match_confirmed_by: auth.user?.id ?? null,
+          }
+        : {
+            conversation_id: null,
+            contact_id: null,
+            match_source: 'sin_enlace',
+            match_confidence: null,
+            match_reason: 'Un integrante del equipo descartó la coincidencia con ese chat.',
+            match_confirmed_at: new Date().toISOString(),
+            match_confirmed_by: auth.user?.id ?? null,
+          };
+      const { error } = await supabase.from('msg_appointments').update(patch).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['msg-appointments'] });
+      qc.invalidateQueries({ queryKey: ['msg-metrics'] });
+    },
+  });
+};
 
 export const useMsgMetrics = () =>
   useQuery({
