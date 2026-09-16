@@ -646,7 +646,17 @@ const ApptsSection = ({ conversationId }: { conversationId: string }) => {
               {' · '}
               {a.status === 'cancelada' ? 'Cancelada' : 'Activa'}
             </p>
-            {a.invitee_email && <p className="text-[10px] text-muted-foreground">{a.invitee_email}</p>}
+            {(a.host_name || a.host_email) && (
+              <p className="text-[10px] text-muted-foreground">
+                Atiende: {a.host_name ?? a.host_email}
+              </p>
+            )}
+            {a.invitee_email && (
+              <p className="truncate text-[10px] text-muted-foreground">
+                {a.invitee_name ? `${a.invitee_name} · ` : ''}
+                {a.invitee_email}
+              </p>
+            )}
             {a.match_source === 'sin_enlace' && (
               <p className="text-[10px] text-muted-foreground">Vino directo de Calendly (sin enlace del chat).</p>
             )}

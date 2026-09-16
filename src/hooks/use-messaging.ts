@@ -476,6 +476,9 @@ export interface MsgAppointment {
   starts_at: string | null;
   status: string;
   match_source: string | null;
+  host_name: string | null;
+  host_email: string | null;
+  invitee_name: string | null;
 }
 
 /** Citas vinculadas a una conversación (vienen de los avisos de Calendly). */
@@ -485,7 +488,7 @@ export const useConversationAppointments = (conversationId: string | null) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from('msg_appointments')
-        .select('id, event_name, invitee_email, starts_at, status, match_source')
+        .select('id, event_name, invitee_email, invitee_name, starts_at, status, match_source, host_name, host_email')
         .eq('conversation_id', conversationId!)
         .order('starts_at', { ascending: false });
       if (error) throw error;
