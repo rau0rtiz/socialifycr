@@ -321,6 +321,20 @@ Deno.serve(async (req) => {
             .from('channel_connections')
             .update({ status: 'conectado', last_event_at: nowIso, last_error: null })
             .eq('channel', 'instagram');
+
+          // 5. Respuesta automática (solo si el modo automático y los envíos están activos).
+          try {
+            const autoRes = await fetch(`${supabaseUrl}/functions/v1/msg-auto-reply`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
+              body: JSON.stringify({ conversationId: conversation.id }),
+            });
+            const autoBody = await autoRes.json().catch(() => ({}));
+            console.log('auto-reply', autoRes.status, JSON.stringify(autoBody));
+          } catch (autoErr) {
+            console.error('auto-reply call failed', autoErr);
+          }
+
         }
       }
 
