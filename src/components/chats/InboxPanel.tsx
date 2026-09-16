@@ -303,8 +303,17 @@ export const InboxPanel = () => {
           <p className="p-4 text-xs text-muted-foreground">Elegí una conversación.</p>
         ) : (
           <>
-            <div className="flex items-center gap-3 border-b border-border/40 p-3">
-              <Avatar className="h-9 w-9">
+            <div className="flex items-center gap-2 border-b border-border/40 p-3 sm:gap-3">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 shrink-0 lg:hidden"
+                onClick={() => setMobileView('list')}
+                aria-label="Volver a la lista"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Avatar className="h-9 w-9 shrink-0">
                 <AvatarImage src={activeConv.msg_contacts?.avatar_url ?? undefined} alt={displayLabel(activeConv)} />
                 <AvatarFallback className="text-[11px]">{initials(displayLabel(activeConv))}</AvatarFallback>
               </Avatar>
@@ -316,14 +325,23 @@ export const InboxPanel = () => {
                 </p>
               </div>
               <Button
+                size="icon"
+                variant="ghost"
+                className="ml-auto h-8 w-8 shrink-0 lg:hidden"
+                onClick={() => setFichaOpen(true)}
+                aria-label="Ver ficha del contacto"
+              >
+                <User className="h-4 w-4" />
+              </Button>
+              <Button
                 size="sm"
                 variant="outline"
-                className="ml-auto h-8 gap-1 text-xs"
+                className="ml-auto h-8 gap-1 text-xs lg:ml-0"
                 disabled={generate.isPending}
                 onClick={runGenerate}
               >
                 <Sparkle className="h-3.5 w-3.5" />
-                {generate.isPending ? 'Generando…' : 'Borrador de Ari'}
+                <span className="hidden sm:inline">{generate.isPending ? 'Generando…' : 'Borrador de Ari'}</span>
               </Button>
             </div>
 
