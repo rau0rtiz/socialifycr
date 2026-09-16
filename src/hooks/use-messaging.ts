@@ -167,6 +167,9 @@ export interface InboxRow {
     do_not_contact: boolean;
     avatar_url?: string | null;
     profile_url?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    intake?: ContactIntake | null;
   } | null;
   msg_contact_identities?: { username: string | null; external_id: string } | null;
 }
