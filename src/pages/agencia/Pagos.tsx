@@ -13,6 +13,7 @@ import {
 import { MonthHeader } from '@/components/agency-payments/MonthHeader';
 import { PaymentTimeline } from '@/components/agency-payments/PaymentTimeline';
 import { PaymentClientDialog, SystemClient } from '@/components/agency-payments/PaymentClientDialog';
+import { usePrivateUrls } from '@/lib/private-storage';
 
 export default function Pagos() {
   const [monthDate, setMonthDate] = useState(() => {
@@ -38,8 +39,15 @@ export default function Pagos() {
     staleTime: 1000 * 60 * 10,
   });
 
-  const logoOf = (c: PayClient) =>
+  const rawLogo = (c: PayClient) =>
     c.logo_url || systemClients.find(s => s.id === c.client_id)?.logo_url || null;
+
+  const resolveLogo = usePrivateUrls([
+    ...clients.map(c => c.logo_url),
+    ...systemClients.map(s => s.logo_url),
+  ]);
+
+  const logoOf = (c: PayClient) => resolveLogo(rawLogo(c));
 
   const editing = useMemo(
     () => (editingId ? clients.find(c => c.id === editingId) || null : null),
