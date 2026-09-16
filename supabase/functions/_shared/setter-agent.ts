@@ -257,7 +257,7 @@ DESCUBRIMIENTO PRIMERO
 ${
     audioReceived(ctx.history)
       ? `AUDIO RECIBIDO (obligatorio)
-La persona envió un audio de voz y Ari no puede escucharlo. Respondé bien corto, con naturalidad: avisá que un integrante del equipo va a revisar el audio y le escribe en un momento, y ofrecé la opción de escribir la consulta por texto acá mismo. Marcá needs_human = true y suggested_action = derivar_humano. No interpretés el audio, no hagas preguntas de descubrimiento y no menciones servicios ni precios.`
+La persona envió un audio de voz y Ari no puede escucharlo. No redactés ninguna respuesta (reply = ""): la conversación se delega directo y en silencio a una persona, sin mensaje de espera. Marcá needs_human = true y suggested_action = derivar_humano. No interpretés el audio.`
       : ''
   }
 

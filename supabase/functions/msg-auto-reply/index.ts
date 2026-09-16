@@ -108,6 +108,32 @@ Deno.serve(async (req) => {
     }
 
 
+    // Audio de voz: delegación directa y silenciosa a una persona.
+    // Sin llamada a la IA, sin mensaje de "esperá un momento": se pausa Ari y se avisa por correo.
+    if (audioReceived(history)) {
+      const now = new Date().toISOString();
+      await admin
+        .from('msg_conversations')
+        .update({ human_takeover_at: now, updated_at: now })
+        .eq('id', conversationId);
+      await admin.from('msg_agent_runs').insert({
+        conversation_id: conversationId,
+        is_simulation: false,
+        outcome: 'derivado_humano',
+        proposal: null,
+        validations: { auto: true, motivo: 'audio_de_voz' },
+      });
+      await notifyHumanNeeded({
+        conversationId,
+        contactName: contactRow?.display_name ?? null,
+        handle: identity.username ?? null,
+        reason: 'La persona envió un audio de voz. Ari no lo escucha ni responde: revisalo y contestale vos.',
+        lastMessage: last?.body ?? null,
+        draftReply: null,
+      });
+      return json({ sent: false, reason: 'audio_delegado_humano' });
+    }
+
     // Manual comercial publicado (nunca el borrador en conversaciones reales).
     const { data: knowledge } = await admin
       .from('msg_knowledge_versions')
