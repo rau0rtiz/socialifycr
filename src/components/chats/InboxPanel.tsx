@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowLeft, ChevronDown, Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio, User } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CalendarClock, ChevronDown, Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import {
+  useConversationAppointments,
   useConversationDraft,
   useGenerateDraft,
   useMsgConversations,
@@ -592,6 +593,8 @@ const FichaBody = ({
         </div>
       )}
     </div>
+
+    <ApptsSection conversationId={conv.id} />
 
     {!!draft?.facts?.length && (
       <div className="space-y-1.5">
