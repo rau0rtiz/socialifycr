@@ -8,6 +8,7 @@ import {
   type HistoryMessage,
 } from '../_shared/setter-agent.ts';
 import { scheduleFirstFollowup } from '../_shared/followups.ts';
+import { buildRollingContext } from '../_shared/conversation-summary.ts';
 import { notifyHumanNeeded } from '../_shared/human-alert.ts';
 
 const corsHeaders = {
@@ -58,7 +59,7 @@ Deno.serve(async (req) => {
     const { data: conv } = await admin
       .from('msg_conversations')
       .select(
-        'id, channel, stage, version, human_takeover_at, contact_id, is_demo, msg_contact_identities!inner(external_id, receiving_account_id, username)',
+        'id, channel, stage, version, human_takeover_at, contact_id, is_demo, context_summary, context_summary_at, msg_contact_identities!inner(external_id, receiving_account_id, username)',
       )
       .eq('id', conversationId)
       .maybeSingle();
@@ -140,7 +141,14 @@ Deno.serve(async (req) => {
       offers: offers ?? [],
       bookingUrl: settings?.booking_url ?? 'https://socialifycr.com/agendar',
       contact: contactRow ?? null,
-      history,
+      ...(await buildRollingContext(
+        admin,
+        lovableKey!,
+        conversationId,
+        history,
+        (conv as any).context_summary ?? null,
+        (conv as any).context_summary_at ?? null,
+      )),
       channel: conv.channel,
       stage: conv.stage ?? 'nuevo',
       appointments: appts ?? [],
