@@ -210,9 +210,9 @@ export const useMsgMessages = (conversationId: string | null) =>
 export const useSendMessage = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ conversationId, text }: { conversationId: string; text: string }) => {
+    mutationFn: async ({ conversationId, text, author }: { conversationId: string; text: string; author?: 'humano' | 'bot' }) => {
       const { data, error } = await supabase.functions.invoke('ig-send-message', {
-        body: { conversationId, text },
+        body: { conversationId, text, author },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -458,22 +458,55 @@ export const useSetHumanVerdict = () => {
   });
 };
 
+export interface MsgAppointment {
+  id: string;
+  event_name: string | null;
+  invitee_email: string | null;
+  starts_at: string | null;
+  status: string;
+  match_source: string | null;
+}
+
+/** Citas vinculadas a una conversación (vienen de los avisos de Calendly). */
+export const useConversationAppointments = (conversationId: string | null) =>
+  useQuery({
+    queryKey: ['msg-appointments', conversationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('msg_appointments')
+        .select('id, event_name, invitee_email, starts_at, status, match_source')
+        .eq('conversation_id', conversationId!)
+        .order('starts_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as MsgAppointment[];
+    },
+    enabled: !!conversationId,
+    staleTime: 60 * 1000,
+  });
+
 export const useMsgMetrics = () =>
   useQuery({
     queryKey: ['msg-metrics'],
     queryFn: async () => {
-      const [convs, appts, runs] = await Promise.all([
+      const [convs, appts, runs, links] = await Promise.all([
         supabase.from('msg_conversations').select('stage, is_demo, human_takeover_at'),
-        supabase.from('msg_appointments').select('status, conversation_id'),
+        supabase.from('msg_appointments').select('status, conversation_id, match_source'),
         supabase.from('msg_agent_runs').select('outcome, is_simulation'),
+        supabase.from('msg_link_offers').select('id, matched_appointment_id'),
       ]);
       const real = (convs.data ?? []).filter((c) => !c.is_demo);
       const count = (s: string) => real.filter((c) => c.stage === s).length;
       const appointments = appts.data ?? [];
+      const offers = links.data ?? [];
+      const ofrecidos = offers.length;
+      const agendadas = appointments.filter((a) => a.status === 'activa' && a.match_source === 'enlace_chat').length;
       return {
         conversaciones: real.length,
         calificados: count('calificado'),
         enlacesEnviados: count('enlace_enviado'),
+        enlacesOfrecidos: ofrecidos,
+        citasAgendadas: appointments.filter((a) => a.status === 'activa').length,
+        tasaConversion: ofrecidos > 0 ? Math.round((agendadas / ofrecidos) * 100) : 0,
         citasVinculadas: appointments.filter((a) => a.status === 'activa' && a.conversation_id).length,
         cancelaciones: appointments.filter((a) => a.status === 'cancelada').length,
         atencionHumana: real.filter((c) => !!c.human_takeover_at).length,
