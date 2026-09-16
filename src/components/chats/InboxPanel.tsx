@@ -144,7 +144,11 @@ export const InboxPanel = () => {
                       <span>{new Date(m.occurred_at).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica' })}</span>
                       {m.is_draft && <Badge variant="outline" className="text-[10px]">Borrador</Badge>}
                     </div>
-                    <p className="text-sm text-foreground whitespace-pre-wrap">{m.body}</p>
+                    {m.body && /^\[.+\]$/.test(m.body.trim()) ? (
+                      <p className="text-sm italic text-muted-foreground">{m.body} — delegar a humano</p>
+                    ) : (
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{m.body}</p>
+                    )}
                   </div>
                 ))}
                 {!messages?.length && <p className="text-xs text-muted-foreground">Sin mensajes registrados.</p>}
