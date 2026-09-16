@@ -284,12 +284,12 @@ La persona envió un audio de voz y Ari no puede escucharlo. No redactés ningun
 
 ${
     askedPrice
-      ? `PRECIOS VIGENTES (la persona SÍ preguntó por precio: podés mencionarlos)
+      ? `PRECIOS HABILITADOS EN ESTE TURNO (lo pidieron o ya hubo descubrimiento suficiente)
 ${formatOffers(ctx.offers)}
-Marketing arranca desde USD 1.200 + IVA. La pauta es aparte, desde USD 500 por plataforma utilizada, pagada directo a la plataforma. Cualquier otro monto NO existe: no lo mencionés ni lo insinués.`
+Frase válida: nuestros paquetes de mercadeo van de los USD 1.200 en adelante, según la cantidad de contenido. NUNCA menciones costos de pauta: eso lo explica Lu en la llamada. Cerrá preguntando si ese nivel de inversión está dentro de lo previsto, o proponiendo la llamada de 30 minutos con Lu. Cualquier otro monto NO existe.`
       : `PRECIOS (referencia interna — PROHIBIDO mencionarlos en este turno)
 ${formatOffers(ctx.offers)}
-La persona NO preguntó por precio en su último mensaje. En esta respuesta no podés incluir ningún monto, moneda, cifra, rango ni frase tipo "arranca desde". Si mencionás un monto, la respuesta está mal.`
+Todavía estás en descubrimiento y no preguntaron precio. En esta respuesta no podés incluir ningún monto, moneda, cifra, rango ni frase tipo "arranca desde". Si mencionás un monto, la respuesta está mal.`
   }
 
 AGENDA
