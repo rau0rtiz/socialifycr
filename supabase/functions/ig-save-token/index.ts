@@ -16,10 +16,18 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => null);
-    const accessToken = typeof body?.accessToken === 'string' ? body.accessToken.trim() : '';
-    const appSecret = typeof body?.appSecret === 'string' ? body.appSecret.trim() : '';
+    // El token puede venir del flujo OAuth (body) o del almacén seguro (env).
+    let accessToken = typeof body?.accessToken === 'string' ? body.accessToken.trim() : '';
+    let appSecret = typeof body?.appSecret === 'string' ? body.appSecret.trim() : '';
+    const fromVault = !accessToken;
+    if (fromVault) {
+      accessToken = (Deno.env.get('IG_PAGE_ACCESS_TOKEN') ?? '').trim();
+      appSecret = (Deno.env.get('IG_APP_SECRET') ?? '').trim();
+    }
     if (!accessToken || accessToken.length < 20) {
-      return json({ error: 'Token de acceso inválido o faltante' }, 400);
+      return json({ error: fromVault
+        ? 'No hay token guardado en el almacén seguro. Guardalo primero desde el formulario de secretos.'
+        : 'Token de acceso inválido o faltante' }, 400);
     }
 
     // 1. Validar el token contra la API de Instagram.
@@ -48,7 +56,14 @@ Deno.serve(async (req) => {
           tokenType = 'long_lived';
           expiresIn = typeof ex.expires_in === 'number' ? ex.expires_in : null;
         } else {
-          console.error('IG exchange failed', ex.error);
+          // Código 452: el token ya es de larga duración (generado desde la UI de Meta).
+          const exCode = ex?.error?.code;
+          const exSubcode = ex?.error?.error_subcode;
+          if (exCode === 452 || exSubcode === 2207055) {
+            tokenType = 'long_lived';
+          } else {
+            console.error('IG exchange failed', ex.error);
+          }
         }
       } catch (e) {
         console.error('IG exchange error', e);
