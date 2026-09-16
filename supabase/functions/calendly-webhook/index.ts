@@ -294,6 +294,88 @@ Deno.serve(async (req) => {
           .neq('stage', 'no_interesado');
       }
 
+      // ── Completar el perfil del contacto y su lead en el CRM ────────
+      if (intake && contactId) {
+        const { data: contact } = await admin
+          .from('msg_contacts')
+          .select('id, display_name, email, phone, business_name, intake, crm_lead_id, notes')
+          .eq('id', contactId)
+          .maybeSingle();
+        if (contact) {
+          const merged = { ...(contact.intake ?? {}), ...intake };
+          await admin
+            .from('msg_contacts')
+            .update({
+              display_name: contact.display_name ?? intake.nombre ?? null,
+              email: contact.email ?? intake.correo ?? null,
+              phone: contact.phone ?? intake.whatsapp ?? null,
+              intake: merged,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', contact.id);
+
+          const notes = intakeToNotes(intake);
+          if (contact.crm_lead_id) {
+            const { data: lead } = await admin
+              .from('agency_crm_leads')
+              .select('id, email, phone, notes, status, intake')
+              .eq('id', contact.crm_lead_id)
+              .maybeSingle();
+            if (lead) {
+              const keepNotes = (lead.notes ?? '').includes('— Formulario de agenda —')
+                ? lead.notes
+                : [lead.notes, notes].filter(Boolean).join('\n\n');
+              await admin
+                .from('agency_crm_leads')
+                .update({
+                  email: lead.email ?? intake.correo ?? null,
+                  phone: lead.phone ?? intake.whatsapp ?? null,
+                  notes: keepNotes,
+                  intake: { ...(lead.intake ?? {}), ...intake },
+                  status: lead.status === 'cliente' || lead.status === 'perdido' ? lead.status : 'agendado',
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', lead.id);
+            }
+          }
+        }
+      } else if (intake && !contactId) {
+        // Cita sin chat: igual dejamos el lead en el CRM con todo el contexto del formulario.
+        const phoneDigits = digitsOnly(intake.whatsapp);
+        const { data: lead } = await admin
+          .from('agency_crm_leads')
+          .select('id, notes, intake, status')
+          .or(
+            [
+              intake.correo ? `email.eq.${intake.correo}` : null,
+              phoneDigits ? `phone.ilike.%${phoneDigits.slice(-8)}%` : null,
+            ].filter(Boolean).join(','),
+          )
+          .limit(1)
+          .maybeSingle();
+        const notes = intakeToNotes(intake);
+        if (lead) {
+          await admin
+            .from('agency_crm_leads')
+            .update({
+              notes: (lead.notes ?? '').includes('— Formulario de agenda —') ? lead.notes : [lead.notes, notes].filter(Boolean).join('\n\n'),
+              intake: { ...(lead.intake ?? {}), ...intake },
+              status: lead.status === 'cliente' || lead.status === 'perdido' ? lead.status : 'agendado',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', lead.id);
+        } else {
+          await admin.from('agency_crm_leads').insert({
+            name: intake.nombre ?? inviteeName ?? 'Agenda sin nombre',
+            email: intake.correo ?? inviteeEmail ?? null,
+            phone: intake.whatsapp ?? null,
+            status: 'agendado',
+            notes,
+            intake,
+          });
+        }
+      }
+
       return json({ received: true, appointment: appt.id, attributed: !!conversationId, host: membership?.user_email ?? null });
     }
 
