@@ -1149,6 +1149,33 @@ export type Database = {
           },
         ]
       }
+      ai_switches: {
+        Row: {
+          description: string | null
+          enabled: boolean
+          feature: string
+          label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          enabled?: boolean
+          feature: string
+          label: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          enabled?: boolean
+          feature?: string
+          label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       archived_stories: {
         Row: {
           captured_at: string
