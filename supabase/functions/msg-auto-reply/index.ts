@@ -95,6 +95,15 @@ Deno.serve(async (req) => {
     if (!history.length) return json({ skipped: 'sin_mensajes' });
     const last = (msgs ?? [])[msgs!.length - 1] as any;
     if (last?.direction !== 'inbound') return json({ skipped: 'ultimo_no_entrante' });
+    // Ari retoma en cuanto la persona vuelve a escribir después de la intervención humana.
+    // Solo se hace a un lado si el humano escribió y la persona todavía no contestó.
+    if (
+      conv.human_takeover_at &&
+      new Date(conv.human_takeover_at).getTime() > new Date(last.occurred_at).getTime()
+    ) {
+      return json({ skipped: 'control_humano' });
+    }
+
 
     // Manual comercial publicado (nunca el borrador en conversaciones reales).
     const { data: knowledge } = await admin
