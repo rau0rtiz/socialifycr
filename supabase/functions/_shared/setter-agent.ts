@@ -142,6 +142,9 @@ const PRICE_PATTERNS = [
   /\bmensualidad/i,
   /\bfee\b/i,
   /\bvalor\b/i,
+  /\bcobr/i,
+  /\bpagar\b/i,
+  /\bpaquetes? cuesta/i,
 ];
 
 const normalize = (s: string) =>
