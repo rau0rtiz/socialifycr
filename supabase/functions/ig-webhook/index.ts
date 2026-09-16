@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
 
           const { data: existingIdentity } = await admin
             .from('msg_contact_identities')
-            .select('id, contact_id')
+            .select('id, contact_id, username')
             .eq('channel', 'instagram')
             .eq('receiving_account_id', receivingAccountId)
             .eq('external_id', senderId)
@@ -132,9 +132,35 @@ Deno.serve(async (req) => {
             identityId = existingIdentity.id;
             contactId = existingIdentity.contact_id;
           } else {
+            // Perfil público del remitente (usuario y foto) para verlo en la bandeja.
+            let profile: { username?: string; name?: string; profile_pic?: string } = {};
+            try {
+              const { data: secret } = await admin
+                .from('channel_secrets')
+                .select('access_token')
+                .eq('channel', 'instagram')
+                .order('updated_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              if (secret?.access_token) {
+                const res = await fetch(
+                  `https://graph.instagram.com/v21.0/${senderId}?fields=name,username,profile_pic&access_token=${secret.access_token}`,
+                );
+                const body = await res.json().catch(() => ({}));
+                if (res.ok) profile = body ?? {};
+                else console.error('ig profile fetch error', body);
+              }
+            } catch (e) {
+              console.error('ig profile fetch failed', e);
+            }
+
             const { data: newContact, error: contactErr } = await admin
               .from('msg_contacts')
-              .insert({ display_name: null })
+              .insert({
+                display_name: profile.username ? `@${profile.username}` : (profile.name ?? null),
+                avatar_url: profile.profile_pic ?? null,
+                profile_url: profile.username ? `https://instagram.com/${profile.username}` : null,
+              })
               .select('id')
               .single();
             if (contactErr || !newContact) {
@@ -149,6 +175,7 @@ Deno.serve(async (req) => {
                 channel: 'instagram',
                 receiving_account_id: receivingAccountId,
                 external_id: senderId,
+                username: profile.username ?? null,
               })
               .select('id')
               .single();
@@ -184,13 +211,13 @@ Deno.serve(async (req) => {
           });
 
           // 3. Mensaje (idempotente por mid)
-          await admin.from('msg_messages').upsert(
+          const { error: msgErr } = await admin.from('msg_messages').upsert(
             {
               conversation_id: conversation.id,
               receiving_account_id: receivingAccountId,
               external_message_id: mid ?? null,
-              direction: 'entrante',
-              author: 'contacto',
+              direction: 'inbound',
+              author: 'externo',
               body: bodyText,
               attachments,
               delivery_status: 'recibido',
@@ -198,6 +225,7 @@ Deno.serve(async (req) => {
             },
             { onConflict: 'receiving_account_id,external_message_id', ignoreDuplicates: true },
           );
+          if (msgErr) console.error('message insert error', msgErr);
 
           // 4. La conexión demostró que funciona
           await admin
