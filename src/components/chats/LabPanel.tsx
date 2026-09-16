@@ -148,6 +148,10 @@ export const LabPanel = () => {
               Los casos de conversación se evalúan automáticamente. Los de infraestructura (webhooks, citas, permisos) quedan
               marcados para revisión humana.
             </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              <span className="text-red-300">Crítico</span> = si ese caso falla, el bot no debería usarse (por ejemplo dar
+              precio sin que lo pidan). Abajo de cada caso queda la última vez que se corrió.
+            </p>
           </div>
           <Button size="sm" variant="outline" className="h-9 gap-1 text-xs" disabled={runTests.isPending} onClick={run}>
             <Play className="h-3.5 w-3.5" /> {runTests.isPending ? 'Corriendo…' : 'Correr los casos'}
@@ -168,6 +172,7 @@ export const LabPanel = () => {
         <div className="space-y-2">
           {(cases ?? []).map((c) => {
             const r = resultFor(c.id);
+            const past = lastRunFor(c.id);
             return (
               <div key={c.id} className="rounded-xl border border-border/40 bg-background/40 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
