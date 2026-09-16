@@ -60,7 +60,21 @@ export const ConnectionsPanel = () => {
               <li>Ari solo escribe borradores: nunca responde ni agenda por su cuenta.</li>
               <li>Los audios se derivan a una persona del equipo.</li>
             </ul>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Button size="sm" variant="outline" onClick={() => sync.mutate(5)} disabled={sync.isPending}>
+                {sync.isPending ? (
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                )}
+                Traer últimos 5 días
+              </Button>
+              <span className="text-[11px] text-muted-foreground">
+                Importa las conversaciones que ya estaban en Instagram. No responde nada.
+              </span>
+            </div>
           </div>
+
         ) : (
           <div className="rounded-xl border border-border/40 bg-background/40 p-4 text-xs text-muted-foreground space-y-2">
             <p className="flex items-center gap-2 text-foreground">
