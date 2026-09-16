@@ -3,6 +3,7 @@ import {
   buildComfortexUserMessage,
   callComfortexAI,
 } from '../_shared/comfortex-reply.ts';
+import { aiFeatureEnabled, aiDisabledResponse } from '../_shared/ai-switch.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +15,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
+    if (!(await aiFeatureEnabled('insights'))) {
+      return aiDisabledResponse(corsHeaders);
+    }
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

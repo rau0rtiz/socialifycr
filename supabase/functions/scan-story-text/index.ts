@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { aiFeatureEnabled, aiDisabledResponse } from "../_shared/ai-switch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,10 @@ serve(async (req) => {
   }
 
   try {
+    if (!(await aiFeatureEnabled("ocr"))) {
+      return aiDisabledResponse(corsHeaders);
+    }
+
     const { imageUrl } = await req.json();
     if (!imageUrl) {
       return new Response(JSON.stringify({ error: "imageUrl is required" }), {

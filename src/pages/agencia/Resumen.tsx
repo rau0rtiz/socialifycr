@@ -5,6 +5,7 @@ import { Clapperboard, BarChart3 } from 'lucide-react';
 import { LeadsOverTimeChart } from '@/components/agency/LeadsOverTimeChart';
 import { CurrentClientsCard } from '@/components/agency/CurrentClientsCard';
 import { HubRail } from '@/components/agency/HubRail';
+import { AiSwitchesCard } from '@/components/agency/AiSwitchesCard';
 import { useProfile } from '@/components/dashboard/ProfileDialog';
 
 const greetingForHour = (hour: number) => {
@@ -70,7 +71,10 @@ const AgencyResumen = () => {
             <LeadsOverTimeChart />
             <CurrentClientsCard />
           </div>
-          <HubRail />
+          <div className="space-y-5">
+            <HubRail />
+            <AiSwitchesCard />
+          </div>
         </div>
       </div>
     </DashboardLayout>

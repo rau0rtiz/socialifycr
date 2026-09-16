@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
+import { aiFeatureEnabled, aiDisabledResponse } from '../_shared/ai-switch.ts';
 
 const InputSchema = z.object({
   sheet_id: z.string().uuid(),
@@ -43,6 +44,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
+    if (!(await aiFeatureEnabled('production_ai'))) {
+      return aiDisabledResponse(corsHeaders as Record<string, string>);
+    }
+
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return json({ error: 'Unauthorized' }, 401);
