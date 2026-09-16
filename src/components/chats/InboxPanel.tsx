@@ -569,6 +569,20 @@ const FichaBody = ({
       )}
     </div>
 
+    <div className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 ${
+      paused ? 'border-destructive/40 bg-destructive/5' : 'border-border/60'
+    }`}>
+      <div className="min-w-0">
+        <p className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+          <BotOff className="h-3.5 w-3.5" /> Ari en pausa
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          {paused ? 'Ari no responde ni da seguimiento a este contacto.' : 'Ari puede responder a este contacto.'}
+        </p>
+      </div>
+      <Switch checked={paused} onCheckedChange={onPausedChange} />
+    </div>
+
     <div className="space-y-1.5">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Etapa</p>
       <Select value={conv.stage} onValueChange={(v) => onStage(v as Stage)}>
