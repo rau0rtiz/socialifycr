@@ -200,6 +200,17 @@ export function priceAsked(history: HistoryMessage[]) {
   return PRICE_PATTERNS.some((re) => re.test(body));
 }
 
+// Cuántos mensajes escribió el contacto: sirve para saber si ya hubo descubrimiento suficiente.
+export function contactTurns(history: HistoryMessage[]) {
+  return history.filter((m) => m.author === 'externo' || m.author === 'contacto').length;
+}
+
+// Ari puede tirar el rango de precio de motu propio recién cuando ya hubo descubrimiento
+// (varios turnos del contacto), o cuando lo piden textualmente.
+export function priceAllowed(history: HistoryMessage[]) {
+  return priceAsked(history) || contactTurns(history) >= 4;
+}
+
 export function mentionsMoney(reply: string) {
   const flat = normalize(reply);
   if (/(\$|usd|dolares|dolar|colones|crc|₡)/.test(flat)) return true;
@@ -226,7 +237,7 @@ function formatOffers(offers: OfferRow[]) {
 }
 
 export function buildSystemPrompt(ctx: AgentContext) {
-  const askedPrice = priceAsked(ctx.history);
+  const askedPrice = priceAllowed(ctx.history);
   const customRules = (ctx.rules ?? []).filter((r) => typeof r === 'string' && r.trim().length);
 
   return `${ctx.manual}
@@ -248,11 +259,20 @@ REGLAS DE CONVERSACIÓN (obligatorias)
 - Si el último mensaje del contacto es un audio de voz, derivá a un humano: needs_human = true y suggested_action = derivar_humano. No interpretés el audio ni hagás preguntas de descubrimiento.
 ${customRules.length ? customRules.map((r) => `- ${r}`).join('\n') : ''}
 
-DESCUBRIMIENTO PRIMERO
-- Tu trabajo inicial es entender el negocio: a qué se dedica, qué vende, qué está haciendo hoy y qué quiere lograr.
-- El precio NO se ofrece por iniciativa propia. Solo lo decís si la persona lo pide textualmente (precio, cuánto cuesta, costo, tarifas, presupuesto, cotización, inversión).
-- Preguntas como "¿qué paquetes tienen?", "me interesa", "mandame info" NO son pedidos de precio: explicá el enfoque en una o dos oraciones y hacé una sola pregunta de descubrimiento, sin ningún monto, sin "desde", sin rangos.
-- Cuando sí piden precio, respondelo directo y completo, sin rodeos.
+DESCUBRIMIENTO EN 4 PASOS (uno por turno, en este orden exacto)
+1. Qué necesita: "solo contenido" o "servicios de marketing digital" (dicho así, con esas palabras).
+2. En qué consiste su empresa.
+3. Cuál es su meta.
+4. Qué ha hecho hasta hoy en marketing o contenido y cómo le ha ido.
+- Una sola pregunta por turno. Si ya te dieron un dato, no lo volvás a preguntar: saltá al paso siguiente.
+- Recién cuando tenés los 4 pasos cubiertos pasás al rango de precio y a la llamada con Lu.
+- Si preguntan precio antes, dalo igual y seguí con el paso de descubrimiento que quedaba pendiente.
+- No repitas el nombre de la persona en cada mensaje: se saluda por nombre una sola vez, al inicio de la conversación, y después nunca más.
+
+DESCARTE AMABLE (red flags claros)
+- Si la persona deja claro que está apenas empezando, que no ha vendido lo suficiente en el tiempo o que la idea todavía no está probada, no la empujés a la llamada: cerrá bonito.
+- En ese caso: reconocé el proyecto, explicá corto que el marketing amplifica una oferta ya validada, dejá una recomendación general y útil (por ejemplo validar con ventas directas, contenido propio constante, hablar con clientes) y ofrecé retomar cuando ya haya tracción.
+- Nada elaborado ni un plan detallado: una dirección genérica de valor, cálida y sin sonar a rechazo. suggested_action = responder, fit = improbable.
 
 ${
     audioReceived(ctx.history)
@@ -264,12 +284,12 @@ La persona envió un audio de voz y Ari no puede escucharlo. No redactés ningun
 
 ${
     askedPrice
-      ? `PRECIOS VIGENTES (la persona SÍ preguntó por precio: podés mencionarlos)
+      ? `PRECIOS HABILITADOS EN ESTE TURNO (lo pidieron o ya hubo descubrimiento suficiente)
 ${formatOffers(ctx.offers)}
-Marketing arranca desde USD 1.200 + IVA. La pauta es aparte, desde USD 500 por plataforma utilizada, pagada directo a la plataforma. Cualquier otro monto NO existe: no lo mencionés ni lo insinués.`
+Frase válida: nuestros paquetes de mercadeo van de los USD 1.200 en adelante, según la cantidad de contenido. NUNCA menciones costos de pauta: eso lo explica Lu en la llamada. Cerrá preguntando si ese nivel de inversión está dentro de lo previsto, o proponiendo la llamada de 30 minutos con Lu. Cualquier otro monto NO existe.`
       : `PRECIOS (referencia interna — PROHIBIDO mencionarlos en este turno)
 ${formatOffers(ctx.offers)}
-La persona NO preguntó por precio en su último mensaje. En esta respuesta no podés incluir ningún monto, moneda, cifra, rango ni frase tipo "arranca desde". Si mencionás un monto, la respuesta está mal.`
+Todavía estás en descubrimiento y no preguntaron precio. En esta respuesta no podés incluir ningún monto, moneda, cifra, rango ni frase tipo "arranca desde". Si mencionás un monto, la respuesta está mal.`
   }
 
 AGENDA
@@ -417,7 +437,7 @@ export function runChecks(
   const flat = strip(reply);
 
   // Guardarraíl: nunca dar precio si no lo pidieron textualmente.
-  if (history.length && !priceAsked(history) && mentionsMoney(reply)) {
+  if (history.length && !priceAllowed(history) && mentionsMoney(reply)) {
     failures.push('Dio precio sin que lo pidieran: primero hay que entender el negocio');
   }
 
