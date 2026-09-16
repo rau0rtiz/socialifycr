@@ -57,9 +57,10 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!secret?.access_token) return json({ error: 'Instagram no está conectado' }, 400);
 
-    // Si el mensaje lleva un enlace de Calendly (formulario de enrutamiento incluido),
-    // le pegamos etiquetas de seguimiento para amarrar la cita a esta conversación exacta.
-    const CALENDLY_RE = /https?:\/\/(?:www\.)?calendly\.com\/[^\s)]+/i;
+    // Enlace de agenda: la página propia (socialifycr.com/agendar, con el formulario de
+    // enrutamiento embebido) o un enlace directo de Calendly. Le pegamos etiquetas de
+    // seguimiento para amarrar la cita a esta conversación exacta.
+    const CALENDLY_RE = /https?:\/\/(?:www\.)?(?:calendly\.com\/[^\s)]+|socialifycr\.com\/agendar[^\s)]*)/i;
     const linkMatch = text.match(CALENDLY_RE);
     let sentText = text;
     let taggedUrl: string | null = null;

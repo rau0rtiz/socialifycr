@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import {
   useConversationAppointments,
+  useConfirmAppointmentMatch,
   useConversationDraft,
   useGenerateDraft,
   useMsgConversations,
@@ -622,6 +623,7 @@ const FichaBody = ({
 // Citas agendadas vinculadas a esta conversación (llegan desde Calendly).
 const ApptsSection = ({ conversationId }: { conversationId: string }) => {
   const { data: appts } = useConversationAppointments(conversationId);
+  const confirmMatch = useConfirmAppointmentMatch();
   if (!appts?.length) return null;
   return (
     <div className="space-y-1.5">
@@ -659,6 +661,33 @@ const ApptsSection = ({ conversationId }: { conversationId: string }) => {
             )}
             {a.match_source === 'sin_enlace' && (
               <p className="text-[10px] text-muted-foreground">Vino directo de Calendly (sin enlace del chat).</p>
+            )}
+            {a.match_reason && (
+              <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                {a.match_confidence === 'alta' ? 'Coincidencia segura' : 'Coincidencia probable'}: {a.match_reason}
+              </p>
+            )}
+            {a.match_source === 'enlace_chat' && a.match_confidence !== 'alta' && !a.match_confirmed_at && (
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-6 px-2 text-[10px]"
+                  disabled={confirmMatch.isPending}
+                  onClick={() => confirmMatch.mutate({ id: a.id, confirm: true })}
+                >
+                  Es de este chat
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-[10px]"
+                  disabled={confirmMatch.isPending}
+                  onClick={() => confirmMatch.mutate({ id: a.id, confirm: false })}
+                >
+                  No es de acá
+                </Button>
+              </div>
             )}
           </div>
         ))}

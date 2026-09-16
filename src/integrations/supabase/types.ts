@@ -4117,6 +4117,10 @@ export type Database = {
           id: string
           invitee_email: string | null
           invitee_name: string | null
+          match_confidence: string | null
+          match_confirmed_at: string | null
+          match_confirmed_by: string | null
+          match_reason: string | null
           match_source: string | null
           raw_payload: Json | null
           rescheduled_from: string | null
@@ -4138,6 +4142,10 @@ export type Database = {
           id?: string
           invitee_email?: string | null
           invitee_name?: string | null
+          match_confidence?: string | null
+          match_confirmed_at?: string | null
+          match_confirmed_by?: string | null
+          match_reason?: string | null
           match_source?: string | null
           raw_payload?: Json | null
           rescheduled_from?: string | null
@@ -4159,6 +4167,10 @@ export type Database = {
           id?: string
           invitee_email?: string | null
           invitee_name?: string | null
+          match_confidence?: string | null
+          match_confirmed_at?: string | null
+          match_confirmed_by?: string | null
+          match_reason?: string | null
           match_source?: string | null
           raw_payload?: Json | null
           rescheduled_from?: string | null
