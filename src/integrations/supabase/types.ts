@@ -4317,6 +4317,8 @@ export type Database = {
           bot_mode: Database["public"]["Enums"]["msg_bot_mode"]
           channel: Database["public"]["Enums"]["msg_channel"]
           contact_id: string
+          context_summary: string | null
+          context_summary_at: string | null
           created_at: string
           fit: Database["public"]["Enums"]["msg_fit"]
           human_takeover_at: string | null
@@ -4337,6 +4339,8 @@ export type Database = {
           bot_mode?: Database["public"]["Enums"]["msg_bot_mode"]
           channel: Database["public"]["Enums"]["msg_channel"]
           contact_id: string
+          context_summary?: string | null
+          context_summary_at?: string | null
           created_at?: string
           fit?: Database["public"]["Enums"]["msg_fit"]
           human_takeover_at?: string | null
@@ -4357,6 +4361,8 @@ export type Database = {
           bot_mode?: Database["public"]["Enums"]["msg_bot_mode"]
           channel?: Database["public"]["Enums"]["msg_channel"]
           contact_id?: string
+          context_summary?: string | null
+          context_summary_at?: string | null
           created_at?: string
           fit?: Database["public"]["Enums"]["msg_fit"]
           human_takeover_at?: string | null

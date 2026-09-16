@@ -31,6 +31,8 @@ export type AgentContext = {
     do_not_contact?: boolean | null;
   } | null;
   history: HistoryMessage[];
+  // Resumen rodante de los mensajes anteriores (ver _shared/conversation-summary.ts).
+  summary?: string | null;
   channel?: string | null;
   stage?: string | null;
   appointments?: AppointmentInfo[] | null;
@@ -315,7 +317,14 @@ Etapa actual: ${ctx.stage ?? 'nuevo'}
 DATOS CONOCIDOS DEL CONTACTO
 ${known}
 
-HISTORIAL (índices para referenciar hechos)
+${
+    ctx.summary
+      ? `RESUMEN DE LA CONVERSACIÓN HASTA AHORA (mensajes anteriores, ya procesados)
+${ctx.summary}
+
+`
+      : ''
+  }ÚLTIMOS MENSAJES (índices para referenciar hechos)
 ${history}
 
 Generá la propuesta de respuesta al último mensaje del contacto.`;
