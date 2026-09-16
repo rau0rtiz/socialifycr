@@ -23,7 +23,6 @@ import {
   type Stage,
 } from '@/hooks/use-messaging';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { DraftCard } from './DraftCard';
 
 // Alto flexible: ocupa la pantalla disponible en cualquier dispositivo.
@@ -105,7 +104,6 @@ export const InboxPanel = () => {
   // En pantallas chicas se ve una sola cosa: lista o chat.
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
   const [fichaOpen, setFichaOpen] = useState(false);
-  const isMobile = useIsMobile();
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const { data: conversations, isLoading } = useMsgConversations({
@@ -191,9 +189,9 @@ export const InboxPanel = () => {
   if (isLoading) {
     return (
       <div className="grid gap-4 lg:grid-cols-[300px_1fr_280px]">
-        <Skeleton className="h-[560px] w-full rounded-2xl" />
-        <Skeleton className="h-[560px] w-full rounded-2xl" />
-        <Skeleton className="hidden h-[560px] w-full rounded-2xl lg:block" />
+        <Skeleton className={`${PANEL_H} w-full rounded-2xl`} />
+        <Skeleton className={`${PANEL_H} hidden w-full rounded-2xl lg:block`} />
+        <Skeleton className={`${PANEL_H} hidden w-full rounded-2xl lg:block`} />
       </div>
     );
   }
