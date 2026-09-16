@@ -1,7 +1,13 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock } from 'lucide-react';
-import { useMsgMetrics, useRecentAppointments } from '@/hooks/use-messaging';
+import { Button } from '@/components/ui/button';
+import { CalendarClock, RefreshCw } from 'lucide-react';
+import {
+  useAppointmentsRealtime,
+  useMsgMetrics,
+  useRecentAppointments,
+  useSyncCalendly,
+} from '@/hooks/use-messaging';
 
 const fmt = (iso: string | null) =>
   iso
