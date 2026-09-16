@@ -222,6 +222,20 @@ export const LabPanel = () => {
                     >
                       {r ? RESULT_LABEL[r.auto_result] : past ? RESULT_LABEL[past.auto_result] ?? past.auto_result : 'Sin correr'}
                     </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 text-[10px]"
+                      disabled={runTests.isPending}
+                      onClick={() => runOne(c.id)}
+                    >
+                      {runningCaseId === c.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Play className="h-3 w-3" />
+                      )}
+                      Correr este
+                    </Button>
                   </div>
                 </div>
                 {(() => {
