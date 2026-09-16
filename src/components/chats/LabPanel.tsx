@@ -1,12 +1,92 @@
-import { FlaskConical } from 'lucide-react';
+import { useState } from 'react';
+import { FlaskConical, Play, Sparkle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMsgTestCases } from '@/hooks/use-messaging';
+import { useToast } from '@/hooks/use-toast';
+import {
+  useGenerateDraft,
+  useMsgTestCases,
+  useRunTests,
+  type MsgDraft,
+  type TestResult,
+} from '@/hooks/use-messaging';
+import { DraftCard } from './DraftCard';
+
+const resultBadge = (r: string) =>
+  r === 'pass'
+    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+    : r === 'fail'
+      ? 'border-red-500/40 bg-red-500/10 text-red-300'
+      : r === 'error'
+        ? 'border-orange-500/40 bg-orange-500/10 text-orange-300'
+        : 'border-sky-500/40 bg-sky-500/10 text-sky-300';
+
+const RESULT_LABEL: Record<string, string> = {
+  pass: 'Pasó',
+  fail: 'Falló',
+  error: 'Error',
+  requiere_humano: 'Revisión humana',
+};
 
 export const LabPanel = () => {
   const { data: cases, isLoading } = useMsgTestCases();
+  const generate = useGenerateDraft();
+  const runTests = useRunTests();
+  const { toast } = useToast();
+
+  const [useDraftKnowledge, setUseDraftKnowledge] = useState(true);
+  const [name, setName] = useState('');
+  const [business, setBusiness] = useState('');
+  const [script, setScript] = useState('Hola, quiero más información');
+  const [draft, setDraft] = useState<MsgDraft | null>(null);
+  const [results, setResults] = useState<TestResult[] | null>(null);
+  const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
+
+  const simulate = () => {
+    const messages = script
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const m = line.match(/^(contacto|bot|humano)\s*:\s*(.*)$/i);
+        return m ? { author: m[1].toLowerCase() === 'contacto' ? 'externo' : m[1].toLowerCase(), body: m[2] } : { author: 'externo', body: line };
+      });
+    if (!messages.length) {
+      toast({ title: 'Escribí al menos un mensaje', variant: 'destructive' });
+      return;
+    }
+    generate.mutate(
+      {
+        simulation: { messages, contact: { display_name: name || null, business_name: business || null } },
+        useDraftKnowledge,
+      },
+      {
+        onSuccess: (d) => setDraft(d.draft),
+        onError: (e) => toast({ title: 'No se pudo generar', description: (e as Error).message, variant: 'destructive' }),
+      },
+    );
+  };
+
+  const run = () =>
+    runTests.mutate(
+      { useDraftKnowledge },
+      {
+        onSuccess: (d) => {
+          setResults(d.results);
+          setSummary(d.summary as unknown as Record<string, unknown>);
+        },
+        onError: (e) => toast({ title: 'No se pudieron correr las pruebas', description: (e as Error).message, variant: 'destructive' }),
+      },
+    );
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-2xl" />;
+
+  const resultFor = (id: string) => results?.find((r) => r.test_case_id === id);
 
   return (
     <div className="space-y-4">
@@ -17,29 +97,103 @@ export const LabPanel = () => {
         <div className="space-y-1">
           <p className="text-sm font-semibold text-foreground">Laboratorio</p>
           <p className="text-xs text-muted-foreground">
-            Acá quedan los casos de prueba con los que se valida el setter. Las simulaciones corren aisladas y no cuentan en los
-            indicadores. Todavía no hay modelo de IA conectado, así que no se pueden ejecutar: eso llega en la fase 3.
+            Usa el mismo motor que la bandeja, con datos aislados: nada de acá toca conversaciones reales ni los indicadores.
+            Acá sí podés probar el manual en borrador; en conversaciones reales se exige una versión publicada.
           </p>
         </div>
       </div>
 
-      <div className="agency-card space-y-2 rounded-2xl p-5">
-        <p className="text-sm font-semibold text-foreground">Casos de prueba ({cases?.length ?? 0})</p>
+      <div className="agency-card space-y-3 rounded-2xl p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-semibold text-foreground">Simular una conversación</p>
+          <div className="flex items-center gap-2">
+            <Switch checked={useDraftKnowledge} onCheckedChange={setUseDraftKnowledge} />
+            <Label className="text-xs">Usar manual en borrador</Label>
+          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del contacto (opcional)" className="h-9 text-xs" />
+          <Input value={business} onChange={(e) => setBusiness(e.target.value)} placeholder="Negocio (opcional)" className="h-9 text-xs" />
+        </div>
+        <Textarea
+          value={script}
+          onChange={(e) => setScript(e.target.value)}
+          rows={5}
+          className="text-sm"
+          placeholder={'Una línea por mensaje. Podés prefijar con "contacto:", "bot:" o "humano:".'}
+        />
+        <div className="flex items-center gap-2">
+          <Button size="sm" className="h-9 gap-1 text-xs" disabled={generate.isPending} onClick={simulate}>
+            <Sparkle className="h-3.5 w-3.5" /> {generate.isPending ? 'Generando…' : 'Generar borrador'}
+          </Button>
+          <span className="text-[11px] text-muted-foreground">Una línea por mensaje. El último debe ser del contacto.</span>
+        </div>
+        {draft && <DraftCard draft={draft} stale={null} onRegenerate={simulate} regenerating={generate.isPending} />}
+      </div>
+
+      <div className="agency-card space-y-3 rounded-2xl p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Casos de prueba ({cases?.length ?? 0})</p>
+            <p className="text-xs text-muted-foreground">
+              Los casos de conversación se evalúan automáticamente. Los de infraestructura (webhooks, citas, permisos) quedan
+              marcados para revisión humana.
+            </p>
+          </div>
+          <Button size="sm" variant="outline" className="h-9 gap-1 text-xs" disabled={runTests.isPending} onClick={run}>
+            <Play className="h-3.5 w-3.5" /> {runTests.isPending ? 'Corriendo…' : 'Correr los casos'}
+          </Button>
+        </div>
+
+        {summary && (
+          <div className="flex flex-wrap gap-2 text-[11px]">
+            <Badge variant="outline" className={resultBadge('pass')}>Pasaron: {String(summary.pass)}</Badge>
+            <Badge variant="outline" className={resultBadge('fail')}>Fallaron: {String(summary.fail)}</Badge>
+            <Badge variant="outline" className={resultBadge('requiere_humano')}>Revisión humana: {String(summary.requiere_humano)}</Badge>
+            <Badge variant="outline" className={resultBadge('error')}>Errores: {String(summary.error)}</Badge>
+            <Badge variant="outline">Críticos fallidos: {String(summary.criticos_fallidos)}</Badge>
+            <Badge variant="outline">{String(summary.model)} · manual v{String(summary.knowledge_version)}</Badge>
+          </div>
+        )}
+
         <div className="space-y-2">
-          {(cases ?? []).map((c) => (
-            <div key={c.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/40 bg-background/40 p-3">
-              <div className="min-w-0">
-                <p className="text-sm text-foreground">{c.title}</p>
-                <p className="text-[11px] text-muted-foreground">{c.expectation}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {c.is_critical && (
-                  <Badge variant="outline" className="border-red-500/40 bg-red-500/10 text-red-300 text-[10px]">Crítico</Badge>
+          {(cases ?? []).map((c) => {
+            const r = resultFor(c.id);
+            return (
+              <div key={c.id} className="rounded-xl border border-border/40 bg-background/40 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm text-foreground">{c.title}</p>
+                    <p className="text-[11px] text-muted-foreground">{c.expectation}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {c.is_critical && (
+                      <Badge variant="outline" className="border-red-500/40 bg-red-500/10 text-red-300 text-[10px]">Crítico</Badge>
+                    )}
+                    <Badge variant="outline" className={`text-[10px] ${r ? resultBadge(r.auto_result) : ''}`}>
+                      {r ? RESULT_LABEL[r.auto_result] : 'Sin correr'}
+                    </Badge>
+                  </div>
+                </div>
+                {r?.reply && (
+                  <p className="mt-2 whitespace-pre-wrap rounded-lg border border-border/30 bg-background/60 p-2 text-[11px] text-foreground">
+                    {r.reply}
+                  </p>
                 )}
-                <Badge variant="outline" className="text-[10px]">Sin correr</Badge>
+                {!!r?.failures?.length && (
+                  <p className="mt-1 text-[11px] text-red-300">{r.failures.join(' · ')}</p>
+                )}
+                {r?.notes && r.auto_result !== 'fail' && (
+                  <p className="mt-1 text-[11px] text-muted-foreground">{r.notes}</p>
+                )}
+                {r?.latency_ms != null && (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    {r.latency_ms} ms{r.usage?.total_tokens ? ` · ${r.usage.total_tokens} tokens` : ''} · acción {r.suggested_action}
+                  </p>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

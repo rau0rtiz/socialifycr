@@ -1,9 +1,36 @@
 import { useState } from 'react';
-import { Inbox, Filter } from 'lucide-react';
+import { Inbox, Filter, Sparkle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMsgConversations, useMsgMessages, type Stage } from '@/hooks/use-messaging';
+import { useToast } from '@/hooks/use-toast';
+import {
+  useConversationDraft,
+  useGenerateDraft,
+  useMsgConversations,
+  useMsgMessages,
+  useOffersFingerprint,
+  useUpdateDraft,
+  type MsgDraft,
+  type Stage,
+} from '@/hooks/use-messaging';
+import { DraftCard } from './DraftCard';
+
+const staleReason = (
+  draft: MsgDraft,
+  conv: { version: number; human_takeover_at: string | null } | undefined,
+  fingerprint: string | undefined,
+) => {
+  if (draft.status === 'obsoleto') return draft.stale_reason ?? 'El borrador quedó obsoleto.';
+  if (conv && draft.conversation_version != null && conv.version !== draft.conversation_version)
+    return 'La conversación cambió después de generar el borrador.';
+  if (conv && (conv.human_takeover_at ?? null) !== (draft.human_takeover_at ?? null))
+    return 'Una persona tomó control de la conversación.';
+  if (fingerprint && draft.offers_fingerprint && fingerprint !== draft.offers_fingerprint)
+    return 'Los precios publicados cambiaron.';
+  return null;
+};
 
 const STAGES: { value: Stage; label: string }[] = [
   { value: 'nuevo', label: 'Nuevo' },
@@ -24,6 +51,22 @@ export const InboxPanel = () => {
     channel: channel === 'todos' ? undefined : channel,
   });
   const { data: messages } = useMsgMessages(selected);
+  const { data: draft } = useConversationDraft(selected);
+  const { data: fingerprint } = useOffersFingerprint();
+  const generate = useGenerateDraft();
+  const updateDraft = useUpdateDraft();
+  const { toast } = useToast();
+
+  const activeConv = conversations?.find((c) => c.id === selected);
+  const stale = draft ? staleReason(draft, activeConv, fingerprint) : null;
+
+  const runGenerate = () => {
+    if (!selected) return;
+    generate.mutate(
+      { conversationId: selected },
+      { onError: (e) => toast({ title: 'No se pudo generar el borrador', description: (e as Error).message, variant: 'destructive' }) },
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -105,6 +148,28 @@ export const InboxPanel = () => {
                   </div>
                 ))}
                 {!messages?.length && <p className="text-xs text-muted-foreground">Sin mensajes registrados.</p>}
+
+                <div className="border-t border-border/40 pt-3">
+                  <Button size="sm" className="h-9 gap-1 text-xs" disabled={generate.isPending} onClick={runGenerate}>
+                    <Sparkle className="h-3.5 w-3.5" />
+                    {generate.isPending ? 'Generando…' : draft ? 'Generar otro borrador' : 'Generar borrador'}
+                  </Button>
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    Genera una propuesta para revisar. No envía nada ni confirma citas.
+                  </p>
+                </div>
+
+                {draft && draft.status !== 'descartado' && (
+                  <DraftCard
+                    draft={draft}
+                    stale={stale}
+                    regenerating={generate.isPending}
+                    onRegenerate={runGenerate}
+                    saving={updateDraft.isPending}
+                    onSave={(text) => updateDraft.mutate({ id: draft.id, patch: { edited_reply: text, status: 'editado' } })}
+                    onDiscard={() => updateDraft.mutate({ id: draft.id, patch: { status: 'descartado' } })}
+                  />
+                )}
               </div>
             )}
           </div>
