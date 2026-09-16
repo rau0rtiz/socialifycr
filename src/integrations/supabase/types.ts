@@ -4112,14 +4112,19 @@ export type Database = {
           created_at: string
           event_name: string | null
           external_uri: string
+          host_email: string | null
+          host_name: string | null
           id: string
           invitee_email: string | null
+          invitee_name: string | null
           match_source: string | null
           raw_payload: Json | null
           rescheduled_from: string | null
+          routing_form_uri: string | null
           starts_at: string | null
           status: Database["public"]["Enums"]["msg_appt_status"]
           timezone: string
+          tracking: Json | null
           updated_at: string
         }
         Insert: {
@@ -4128,14 +4133,19 @@ export type Database = {
           created_at?: string
           event_name?: string | null
           external_uri: string
+          host_email?: string | null
+          host_name?: string | null
           id?: string
           invitee_email?: string | null
+          invitee_name?: string | null
           match_source?: string | null
           raw_payload?: Json | null
           rescheduled_from?: string | null
+          routing_form_uri?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["msg_appt_status"]
           timezone?: string
+          tracking?: Json | null
           updated_at?: string
         }
         Update: {
@@ -4144,14 +4154,19 @@ export type Database = {
           created_at?: string
           event_name?: string | null
           external_uri?: string
+          host_email?: string | null
+          host_name?: string | null
           id?: string
           invitee_email?: string | null
+          invitee_name?: string | null
           match_source?: string | null
           raw_payload?: Json | null
           rescheduled_from?: string | null
+          routing_form_uri?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["msg_appt_status"]
           timezone?: string
+          tracking?: Json | null
           updated_at?: string
         }
         Relationships: [
