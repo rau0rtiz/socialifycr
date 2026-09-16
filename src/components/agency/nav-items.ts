@@ -6,7 +6,8 @@ import {
   FileText,
   Mail,
   Megaphone,
-  
+  MessageSquare,
+
   Wallet,
   Database,
   Palette,
