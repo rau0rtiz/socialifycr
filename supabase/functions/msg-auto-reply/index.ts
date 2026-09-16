@@ -320,8 +320,11 @@ Deno.serve(async (req) => {
         .in('stage', ['nuevo', 'conversando', 'calificado']);
     }
 
-    // El bot responde: no marca control humano.
-    await admin.from('msg_conversations').update({ last_outbound_at: nowIso }).eq('id', conversationId);
+    // El bot responde: no marca control humano y libera el traspaso anterior.
+    await admin
+      .from('msg_conversations')
+      .update({ last_outbound_at: nowIso, human_takeover_at: null })
+      .eq('id', conversationId);
 
     // Si la persona no contesta, arranca la cadencia de seguimiento (4 h → 24 h → no interesado).
     await scheduleFirstFollowup(admin, conv, settings);
