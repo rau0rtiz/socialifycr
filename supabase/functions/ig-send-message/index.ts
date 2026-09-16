@@ -58,18 +58,21 @@ Deno.serve(async (req) => {
     if (!secret?.access_token) return json({ error: 'Instagram no está conectado' }, 400);
 
     // Enlace de agenda: la página propia (socialifycr.com/agendar, con el formulario de
-    // enrutamiento embebido) o un enlace directo de Calendly. Le pegamos etiquetas de
-    // seguimiento para amarrar la cita a esta conversación exacta.
+    // enrutamiento embebido) o un enlace directo de Calendly. Se envía LIMPIO, sin UTM:
+    // el sitio de marketing no procesa etiquetas y el enlace modificado queda raro para
+    // la persona. La atribución se hace después por las respuestas del formulario
+    // (usuario de IG, correo, nombre) en calendly-webhook.
     const CALENDLY_RE = /https?:\/\/(?:www\.)?(?:calendly\.com\/[^\s)]+|socialifycr\.com\/agendar[^\s)]*)/i;
     const linkMatch = text.match(CALENDLY_RE);
     let sentText = text;
     let taggedUrl: string | null = null;
     if (linkMatch) {
+      // Quita cualquier UTM que ya venga pegado en el texto.
       try {
         const url = new URL(linkMatch[0]);
-        url.searchParams.set('utm_source', 'socialify_chat');
-        url.searchParams.set('utm_medium', 'instagram_dm');
-        url.searchParams.set('utm_content', conversationId);
+        ['utm_source', 'utm_medium', 'utm_content', 'utm_campaign', 'utm_term'].forEach((k) =>
+          url.searchParams.delete(k),
+        );
         taggedUrl = url.toString();
         sentText = text.replace(linkMatch[0], taggedUrl);
       } catch {
