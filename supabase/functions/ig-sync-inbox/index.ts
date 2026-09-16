@@ -206,9 +206,7 @@ Deno.serve(async (req) => {
         await admin
           .from('msg_conversations')
           .update(
-            lastFromUs
-              ? { last_message_at: lastAt, last_outbound_at: lastAt }
-              : { last_message_at: lastAt, last_inbound_at: lastAt },
+            lastFromUs ? { last_outbound_at: lastAt } : { last_inbound_at: lastAt },
           )
           .eq('id', conversation.id);
       }
