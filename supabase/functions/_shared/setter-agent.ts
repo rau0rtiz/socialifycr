@@ -237,7 +237,7 @@ function formatOffers(offers: OfferRow[]) {
 }
 
 export function buildSystemPrompt(ctx: AgentContext) {
-  const askedPrice = priceAsked(ctx.history);
+  const askedPrice = priceAllowed(ctx.history);
   const customRules = (ctx.rules ?? []).filter((r) => typeof r === 'string' && r.trim().length);
 
   return `${ctx.manual}
