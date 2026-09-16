@@ -99,13 +99,18 @@ export const InboxPanel = () => {
     );
   };
 
-  const runSend = () => {
-    const body = text.trim();
+  const runSend = (override?: string) => {
+    const body = (override ?? text).trim();
     if (!selected || !body) return;
     send.mutate(
       { conversationId: selected, text: body },
       {
-        onSuccess: () => setText(''),
+        onSuccess: () => {
+          setText('');
+          if (draft && draft.status !== 'descartado' && body === (draft.edited_reply || draft.proposed_reply || '').trim()) {
+            updateDraft.mutate({ id: draft.id, patch: { status: 'enviado' } });
+          }
+        },
         onError: (e) => toast({ title: 'No se pudo enviar', description: (e as Error).message, variant: 'destructive' }),
       },
     );
@@ -268,14 +273,25 @@ export const InboxPanel = () => {
                       onSave={(t) => updateDraft.mutate({ id: draft.id, patch: { edited_reply: t, status: 'editado' } })}
                       onDiscard={() => updateDraft.mutate({ id: draft.id, patch: { status: 'descartado' } })}
                     />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mt-2 h-8 text-xs"
-                      onClick={() => setText(draft.edited_reply || draft.proposed_reply)}
-                    >
-                      Pasar al cuadro de envío
-                    </Button>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        className="h-8 gap-1.5 text-xs"
+                        disabled={send.isPending || !!stale}
+                        onClick={() => runSend(draft.edited_reply || draft.proposed_reply)}
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        Enviar borrador ahora
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => setText(draft.edited_reply || draft.proposed_reply)}
+                      >
+                        Pasar al cuadro de envío
+                      </Button>
+                    </div>
                   </div>
                 )}
 
