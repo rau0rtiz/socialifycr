@@ -8,6 +8,7 @@ import {
   ComputerObject,
   FloatingShapes,
   Hotspot,
+  LogoMark,
   MegaphoneObject,
   Platforms,
   PropsCluster,
@@ -74,6 +75,11 @@ const Scene = ({
         <Platforms />
         <PropsCluster />
         <FloatingShapes still={still} />
+
+        {/* Marca de Socialify flotando sobre la escena */}
+        <group position={[-3.15, 3.35, 0.6]} scale={1.15}>
+          <LogoMark still={still} />
+        </group>
 
         <Hotspot
           position={[-1.55, 2.15, 0.05]}
