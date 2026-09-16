@@ -99,6 +99,7 @@ export const LabPanel = () => {
           auto_result: string;
           human_verdict: string | null;
           notes: string | null;
+          reply: string | null;
           created_at: string;
           knowledge_version: number | null;
         }
