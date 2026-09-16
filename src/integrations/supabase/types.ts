@@ -6852,6 +6852,10 @@ export type Database = {
         }
         Returns: number
       }
+      msg_bump_conversation_on_inbound: {
+        Args: { _conversation_id: string; _occurred_at: string }
+        Returns: undefined
+      }
       msg_offers_fingerprint: { Args: never; Returns: string }
       msg_publish_knowledge: { Args: { p_version: number }; Returns: undefined }
       msg_save_knowledge_draft: {
