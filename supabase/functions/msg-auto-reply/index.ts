@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     // ─── El interruptor manda: solo responde solo en modo automático ───
     const { data: settings } = await admin
       .from('msg_settings')
-      .select('bot_mode, auto_send_enabled, booking_url, tone_notes')
+      .select('bot_mode, auto_send_enabled, booking_url, tone_notes, followups_enabled, followup_delay_hours')
       .eq('id', true)
       .maybeSingle();
     if (settings?.bot_mode !== 'automatico' || !settings?.auto_send_enabled) {
