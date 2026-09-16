@@ -190,6 +190,14 @@ Deno.serve(async (req) => {
     }
 
     const p = result.proposal;
+
+    // Guardarraíl: si nadie preguntó por precio y la respuesta trae montos, exige revisión humana.
+    const priceLeak = history.length > 0 && !priceAsked(history) && mentionsMoney(p.reply ?? '');
+    const needsHuman = Boolean(p.needs_human) || priceLeak;
+    const needsHumanReason = priceLeak
+      ? 'Dio precio sin que lo pidieran. Revisá la respuesta: primero hay que entender el negocio.'
+      : (p.needs_human_reason ?? null);
+
     const { data: draft, error: draftErr } = await admin
       .from('msg_drafts')
       .insert({
