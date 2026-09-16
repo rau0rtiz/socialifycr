@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FlaskConical, Play, Sparkle } from 'lucide-react';
+import { Check, FlaskConical, Play, Sparkle, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import {
   useMsgTestCases,
   useMsgTestRuns,
   useRunTests,
+  useSetHumanVerdict,
   type MsgDraft,
   type TestResult,
 } from '@/hooks/use-messaging';
@@ -39,6 +40,7 @@ export const LabPanel = () => {
   const { data: pastRuns } = useMsgTestRuns();
   const generate = useGenerateDraft();
   const runTests = useRunTests();
+  const verdict = useSetHumanVerdict();
   const { toast } = useToast();
 
   const [useDraftKnowledge, setUseDraftKnowledge] = useState(true);
@@ -92,7 +94,14 @@ export const LabPanel = () => {
   // Última corrida guardada (persiste aunque recargues la página)
   const lastRunFor = (id: string) =>
     (pastRuns ?? []).find((r) => r.test_case_id === id) as
-      | { auto_result: string; notes: string | null; created_at: string; knowledge_version: number | null }
+      | {
+          id: string;
+          auto_result: string;
+          human_verdict: string | null;
+          notes: string | null;
+          created_at: string;
+          knowledge_version: number | null;
+        }
       | undefined;
   const fmt = (iso: string) =>
     new Date(iso).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica', dateStyle: 'short', timeStyle: 'short' });
@@ -150,7 +159,8 @@ export const LabPanel = () => {
             </p>
             <p className="mt-1 text-[11px] text-muted-foreground">
               <span className="text-red-300">Crítico</span> = si ese caso falla, el bot no debería usarse (por ejemplo dar
-              precio sin que lo pidan). Abajo de cada caso queda la última vez que se corrió.
+              precio sin que lo pidan). Los de <span className="text-sky-300">revisión humana</span> no se pueden medir solos:
+              leé la nota, comprobá que eso sea cierto y marcalo Correcto o Con problema.
             </p>
           </div>
           <Button size="sm" variant="outline" className="h-9 gap-1 text-xs" disabled={runTests.isPending} onClick={run}>
@@ -214,6 +224,44 @@ export const LabPanel = () => {
                     {past.knowledge_version ? ` · manual v${past.knowledge_version}` : ''}
                     {past.notes ? ` · ${past.notes}` : ''}
                   </p>
+                )}
+                {past && (r ? r.auto_result === 'requiere_humano' : past.auto_result === 'requiere_humano') && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border/30 pt-2">
+                    <span className="text-[10px] text-muted-foreground">Tu revisión:</span>
+                    <Button
+                      size="sm"
+                      variant={past.human_verdict === 'aprobado' ? 'default' : 'outline'}
+                      className="h-7 gap-1 text-[10px]"
+                      disabled={verdict.isPending}
+                      onClick={() =>
+                        verdict.mutate({
+                          runId: past.id,
+                          verdict: past.human_verdict === 'aprobado' ? null : 'aprobado',
+                        })
+                      }
+                    >
+                      <Check className="h-3 w-3" /> Correcto
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={past.human_verdict === 'rechazado' ? 'destructive' : 'outline'}
+                      className="h-7 gap-1 text-[10px]"
+                      disabled={verdict.isPending}
+                      onClick={() =>
+                        verdict.mutate({
+                          runId: past.id,
+                          verdict: past.human_verdict === 'rechazado' ? null : 'rechazado',
+                        })
+                      }
+                    >
+                      <X className="h-3 w-3" /> Con problema
+                    </Button>
+                    {past.human_verdict && (
+                      <span className="text-[10px] text-muted-foreground">
+                        Marcado como {past.human_verdict === 'aprobado' ? 'correcto' : 'con problema'}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             );
