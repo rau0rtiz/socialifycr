@@ -31,6 +31,7 @@ const ActualizarFoto = lazy(() => import("./pages/ActualizarFoto"));
 const Funnel = lazy(() => import("./pages/Funnel"));
 const Comunicaciones = lazy(() => import("./pages/Comunicaciones"));
 const AgencyFunnels = lazy(() => import("./pages/agencia/Funnels"));
+const AgencyChats = lazy(() => import("./pages/agencia/Chats"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const AdFrameworks = lazy(() => import("./pages/AdFrameworks"));
 const AdFrameworkDetail = lazy(() => import("./pages/AdFrameworkDetail"));
@@ -305,6 +306,13 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <AgencyFunnels />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/chats" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyChats />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />

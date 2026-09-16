@@ -13,6 +13,7 @@ const ROUTE_LOADERS: Record<string, Loader> = {
   '/agencia/producciones': () => import('@/pages/Producciones'),
   '/agencia/documentacion': () => import('@/pages/Propuestas'),
   '/agencia/funnels': () => import('@/pages/agencia/Funnels'),
+  '/agencia/chats': () => import('@/pages/agencia/Chats'),
   '/agencia/base-de-datos': () => import('@/pages/agencia/BaseDeDatos'),
   '/agencia/bases-de-datos-clientes': () => import('@/pages/agencia/BasesDeDatosClientes'),
   '/agencia/comunicaciones': () => import('@/pages/Comunicaciones'),
