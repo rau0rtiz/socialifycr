@@ -63,14 +63,8 @@ Deno.serve(async (req) => {
     let revisadas = 0;
 
     do {
-      const qs = new URLSearchParams({
-        organization: orgUri,
-        count: '50',
-        min_start_time: minStart,
-        status: 'active',
-      });
-      // Traemos activas y canceladas por separado no hace falta: pedimos todas quitando el filtro.
-      qs.delete('status');
+      // Sin filtro de estado: traemos activas y canceladas.
+      const qs = new URLSearchParams({ organization: orgUri, count: '50', min_start_time: minStart });
       if (nextToken) qs.set('page_token', nextToken);
       const list = await gw(`/scheduled_events?${qs.toString()}`);
       if (!list.ok) return json({ error: 'Calendly no devolvió las citas', status: list.status, details: list.text }, 502);
