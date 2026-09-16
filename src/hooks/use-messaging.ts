@@ -632,3 +632,24 @@ export const useMsgMetrics = () =>
     },
     staleTime: 60 * 1000,
   });
+
+/** Trae a la bandeja las conversaciones que ya estaban en Instagram (no responde nada). */
+export const useSyncInstagramInbox = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (days = 5) => {
+      const { data, error } = await supabase.functions.invoke('ig-sync-inbox', { body: { days } });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error(String((data as any).error));
+      return data as { mensajes_importados?: number; conversaciones_nuevas?: number };
+    },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['msg-conversations'] });
+      qc.invalidateQueries({ queryKey: ['msg-messages'] });
+      toast.success(
+        `Bandeja sincronizada: ${res?.conversaciones_nuevas ?? 0} conversaciones nuevas, ${res?.mensajes_importados ?? 0} mensajes.`,
+      );
+    },
+    onError: (e: Error) => toast.error(e.message || 'No se pudo sincronizar la bandeja'),
+  });
+};
