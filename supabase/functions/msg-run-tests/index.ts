@@ -204,6 +204,7 @@ Deno.serve(async (req) => {
           agent_run_id: ar?.id ?? null,
           auto_result: evaluation.passed ? 'pass' : 'fail',
           notes: evaluation.failures.join(' · ') || null,
+          reply: run.proposal.reply,
           run_by: userId,
         })
         .select('id')
