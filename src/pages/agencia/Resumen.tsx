@@ -71,7 +71,10 @@ const AgencyResumen = () => {
             <LeadsOverTimeChart />
             <CurrentClientsCard />
           </div>
-          <HubRail />
+          <div className="space-y-5">
+            <HubRail />
+            <AiSwitchesCard />
+          </div>
         </div>
       </div>
     </DashboardLayout>
