@@ -169,6 +169,19 @@ export const InboxPanel = () => {
     );
   };
 
+  // Si la persona escribió algo nuevo, el borrador se reescribe solo con lo último.
+  const autoKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selected || !draft || !stale || generate.isPending) return;
+    const last = messages?.length ? messages[messages.length - 1] : null;
+    if (!last || last.direction !== 'inbound') return;
+    const key = `${selected}:${last.id}`;
+    if (autoKey.current === key) return;
+    autoKey.current = key;
+    runGenerate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, draft?.id, stale, messages?.length, generate.isPending]);
+
   const runSend = (override?: string) => {
     const body = (override ?? text).trim();
     if (!selected || !body) return;
