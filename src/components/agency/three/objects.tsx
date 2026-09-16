@@ -249,7 +249,7 @@ export const ComputerObject = () => {
 /** NOTA-MODELO: el megáfono es el segundo candidato claro a GLB (gatillo, asa
  *  curva, grill interno). Acá va con campana facetada, aros y pedestal. */
 export const MegaphoneObject = () => (
-  <group rotation={[0, -0.35, 0.25]}>
+  <group rotation={[0, 0.55, 0.2]}>
     {/* Campana: dos tramos facetados para el perfil delgado-ancho */}
     <mesh position={[0.35, 0, 0]} rotation={[0, 0, -Math.PI / 2]} castShadow receiveShadow>
       <cylinderGeometry args={[0.92, 0.5, 1.0, 14, 1, true]} />
