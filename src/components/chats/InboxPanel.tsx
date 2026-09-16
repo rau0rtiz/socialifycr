@@ -139,8 +139,6 @@ export const InboxPanel = () => {
       setSelected(filtered[0].id);
       setText('');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtered.length === 0]);
   }, [filtered, selected]);
 
   const activeConv = conversations?.find((c) => c.id === selected);
