@@ -72,3 +72,6 @@ verify_jwt = false
 
 [functions.ig-webhook]
 verify_jwt = false
+
+[functions.msg-auto-reply]
+verify_jwt = false
