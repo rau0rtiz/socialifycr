@@ -6946,6 +6946,7 @@ export type Database = {
         | "enviado"
         | "fallido"
         | "cancelado"
+        | "procesado"
       msg_offer_status: "publicado" | "pendiente" | "historico"
       msg_stage:
         | "nuevo"
@@ -7155,6 +7156,7 @@ export const Constants = {
         "enviado",
         "fallido",
         "cancelado",
+        "procesado",
       ],
       msg_offer_status: ["publicado", "pendiente", "historico"],
       msg_stage: [
