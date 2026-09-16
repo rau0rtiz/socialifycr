@@ -184,8 +184,11 @@ export const LabPanel = () => {
                     {c.is_critical && (
                       <Badge variant="outline" className="border-red-500/40 bg-red-500/10 text-red-300 text-[10px]">Crítico</Badge>
                     )}
-                    <Badge variant="outline" className={`text-[10px] ${r ? resultBadge(r.auto_result) : ''}`}>
-                      {r ? RESULT_LABEL[r.auto_result] : 'Sin correr'}
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] ${r ? resultBadge(r.auto_result) : past ? resultBadge(past.auto_result) : ''}`}
+                    >
+                      {r ? RESULT_LABEL[r.auto_result] : past ? RESULT_LABEL[past.auto_result] ?? past.auto_result : 'Sin correr'}
                     </Badge>
                   </div>
                 </div>
