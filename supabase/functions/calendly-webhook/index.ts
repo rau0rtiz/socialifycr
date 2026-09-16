@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { askModelForMatch, nameScore, type OfferCandidate } from '../_shared/appointment-match.ts';
+import { cleanHandle, digitsOnly, fetchRoutingAnswers, intakeToNotes, type Intake } from '../_shared/routing-form.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
