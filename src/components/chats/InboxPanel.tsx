@@ -608,6 +608,8 @@ const FichaBody = ({
       )}
     </div>
 
+    <IntakeSection contact={conv.msg_contacts} />
+
     <ApptsSection conversationId={conv.id} />
 
     {!!draft?.facts?.length && (
