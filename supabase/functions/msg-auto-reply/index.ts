@@ -27,9 +27,16 @@ Deno.serve(async (req) => {
   const admin = createClient(supabaseUrl, serviceKey);
 
   try {
-    // Solo llamadas internas (el receptor de Instagram) con la llave de servicio.
+    // Llamada interna (receptor de Instagram) o un miembro de la agencia probando a mano.
     const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
-    if (!jwt || jwt !== serviceKey) return json({ error: 'No autorizado' }, 401);
+    if (!jwt) return json({ error: 'No autorizado' }, 401);
+    if (jwt !== serviceKey) {
+      const { data: userData } = await admin.auth.getUser(jwt);
+      const user = userData?.user;
+      if (!user) return json({ error: 'No autorizado' }, 401);
+      const { data: isMember } = await admin.rpc('is_agency_member', { _user_id: user.id });
+      if (!isMember) return json({ error: 'Sin permiso' }, 403);
+    }
     if (!lovableKey) return json({ error: 'LOVABLE_API_KEY no está configurada' }, 500);
 
     const body = await req.json().catch(() => null);
