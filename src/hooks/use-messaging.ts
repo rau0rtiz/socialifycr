@@ -148,6 +148,34 @@ export const useMsgTestCases = () =>
     ...CACHE,
   });
 
+/** Datos que llegan del formulario de agenda (enrutamiento de Calendly). */
+export interface ContactIntake {
+  nombre?: string | null;
+  correo?: string | null;
+  instagram?: string | null;
+  whatsapp?: string | null;
+  presupuesto?: string | null;
+  etapa_negocio?: string | null;
+  reto?: string | null;
+  cuando_empezar?: string | null;
+  invierte_publicidad?: string | null;
+  como_nos_conocio?: string | null;
+  respuestas?: Array<{ question: string; answer: string }>;
+  actualizado_en?: string | null;
+}
+
+export const INTAKE_LABELS: Array<{ key: keyof ContactIntake; label: string }> = [
+  { key: 'whatsapp', label: 'WhatsApp' },
+  { key: 'correo', label: 'Correo' },
+  { key: 'instagram', label: 'Instagram' },
+  { key: 'presupuesto', label: 'Presupuesto mensual' },
+  { key: 'etapa_negocio', label: 'Etapa del negocio' },
+  { key: 'reto', label: 'Principal reto' },
+  { key: 'cuando_empezar', label: 'Cuándo quiere empezar' },
+  { key: 'invierte_publicidad', label: 'Invierte en publicidad' },
+  { key: 'como_nos_conocio', label: 'Cómo nos conoció' },
+];
+
 export interface InboxRow {
   id: string;
   channel: string;
