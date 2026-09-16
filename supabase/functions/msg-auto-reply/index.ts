@@ -289,6 +289,9 @@ Deno.serve(async (req) => {
     // El bot responde: no marca control humano.
     await admin.from('msg_conversations').update({ last_outbound_at: nowIso }).eq('id', conversationId);
 
+    // Si la persona no contesta, arranca la cadencia de seguimiento (4 h → 24 h → no interesado).
+    await scheduleFirstFollowup(admin, conv, settings);
+
     return json({ sent: true, message_id: sendResult?.message_id ?? null });
   } catch (err) {
     console.error('msg-auto-reply fatal', err);
