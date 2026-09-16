@@ -9,6 +9,7 @@ export interface OfferCandidate {
   contact_id: string | null;
   contact_name: string | null;
   contact_username: string | null;
+  contact_email?: string | null;
   offered_at: string;
   last_messages: string[];
 }

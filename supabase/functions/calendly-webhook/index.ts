@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { askModelForMatch, nameScore, type OfferCandidate } from '../_shared/appointment-match.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -236,6 +237,8 @@ Deno.serve(async (req) => {
           timezone: payload?.timezone ?? 'America/Costa_Rica',
           status: 'activa',
           match_source: matchSource,
+          match_confidence: confidence,
+          match_reason: reason,
           raw_payload: body,
         })
         .select('id')
