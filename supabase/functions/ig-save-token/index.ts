@@ -120,8 +120,3 @@ Deno.serve(async (req) => {
   }
 });
 
-function createAdmin(url: string, key: string) {
-  // Import dinámico para mantener el archivo simple.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  return new (Deno as any).npm['@supabase/supabase-js@2'].createClient(url, key);
-}
