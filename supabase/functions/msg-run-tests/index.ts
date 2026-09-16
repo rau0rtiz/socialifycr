@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
       }
 
       const checks = (inputs.checks ?? {}) as Checks;
-      const evaluation = runChecks(run.proposal, checks, history.length);
+      const evaluation = runChecks(run.proposal, checks, history.length, history);
 
       const { data: ar } = await admin
         .from('msg_agent_runs')

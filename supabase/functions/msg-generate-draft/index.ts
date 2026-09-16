@@ -1,5 +1,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { callSetterModel, type AgentContext, type HistoryMessage } from '../_shared/setter-agent.ts';
+import {
+  callSetterModel,
+  mentionsMoney,
+  priceAsked,
+  type AgentContext,
+  type HistoryMessage,
+} from '../_shared/setter-agent.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
