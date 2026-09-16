@@ -1,3 +1,4 @@
+import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 const json = (body: unknown, status = 200) =>
@@ -11,7 +12,7 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const admin = createAdmin(supabaseUrl, serviceKey);
+  const admin = createClient(supabaseUrl, serviceKey);
 
   try {
     const body = await req.json().catch(() => null);
