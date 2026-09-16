@@ -56,6 +56,22 @@ const handle = (c: InboxRow) => {
   return c.msg_contacts?.business_name || 'Sin nombre';
 };
 
+// Nombre principal: el nombre real del perfil si existe; si no, el @usuario.
+const displayName = (c: InboxRow) => {
+  const name = c.msg_contacts?.display_name;
+  if (name && !name.startsWith('@')) return name;
+  return null;
+};
+
+const label = (c: InboxRow) => displayName(c) ?? handle(c);
+
+// Línea secundaria: el @usuario cuando ya mostramos el nombre real.
+const subLabel = (c: InboxRow) => {
+  const user = c.msg_contact_identities?.username;
+  if (displayName(c) && user) return `@${user}`;
+  return null;
+};
+
 const initials = (label: string) => label.replace('@', '').slice(0, 2).toUpperCase() || '??';
 
 const hourOf = (iso: string) =>
