@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
       for (const o of offers ?? []) {
         const { data: conv } = await admin
           .from('msg_conversations')
-          .select('contact_id, msg_contacts(display_name, username, email)')
+          .select('contact_id, msg_contacts(display_name, email, business_name)')
           .eq('id', o.conversation_id)
           .maybeSingle();
         const c: any = (conv as any)?.msg_contacts ?? null;
@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
           conversation_id: o.conversation_id,
           contact_id: (conv as any)?.contact_id ?? null,
           contact_name: c?.display_name ?? null,
-          contact_username: c?.username ?? null,
+          contact_username: c?.business_name ?? null,
           contact_email: c?.email ?? null,
           offered_at: o.offered_at,
           last_messages: (msgs ?? [])
