@@ -67,21 +67,43 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (existing) return json({ received: true, ignored: 'duplicado' });
 
-      // ── Atribución ──────────────────────────────────────────────────
-      // 1) Cruce exacto: el enlace que sale del chat lleva utm_content = id de la conversación.
-      //    Funciona igual con el formulario de enrutamiento y con el calendario final
-      //    (el de Lucía o el de Raúl), porque Calendly arrastra el seguimiento.
+      // Quién atiende la cita (el enrutamiento puede mandarla al calendario de Lucía).
+      const membership = Array.isArray(scheduled?.event_memberships) ? scheduled.event_memberships[0] : null;
       const tracking = payload?.tracking ?? {};
-      const utmConv: string | null =
-        typeof tracking?.utm_content === 'string' && /^[0-9a-f-]{36}$/i.test(tracking.utm_content)
-          ? tracking.utm_content
-          : null;
+      const inviteeName: string | null = payload?.name ?? null;
+      const inviteeEmail: string | null = payload?.email ?? null;
 
+      // ── Atribución ──────────────────────────────────────────────────
+      // Ari comparte socialifycr.com/agendar (el formulario de enrutamiento va embebido),
+      // así que no siempre llega etiqueta. Cascada: etiqueta → correo → nombre → cerebro de Ari.
       let offerId: string | null = null;
       let conversationId: string | null = null;
       let contactId: string | null = null;
       let matchSource = 'sin_enlace';
+      let confidence: string | null = null;
+      let reason: string | null = null;
 
+      const convContact = async (id: string) => {
+        const { data } = await admin.from('msg_conversations').select('contact_id').eq('id', id).maybeSingle();
+        return data?.contact_id ?? null;
+      };
+      const offerForConversation = async (id: string) => {
+        const { data } = await admin
+          .from('msg_link_offers')
+          .select('id')
+          .eq('conversation_id', id)
+          .is('matched_appointment_id', null)
+          .order('offered_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        return data?.id ?? null;
+      };
+
+      // 1) Etiqueta de seguimiento (cuando el enlace se pudo taguear).
+      const utmConv: string | null =
+        typeof tracking?.utm_content === 'string' && /^[0-9a-f-]{36}$/i.test(tracking.utm_content)
+          ? tracking.utm_content
+          : null;
       if (utmConv) {
         const { data: conv } = await admin
           .from('msg_conversations')
@@ -92,44 +114,110 @@ Deno.serve(async (req) => {
           conversationId = conv.id;
           contactId = conv.contact_id;
           matchSource = 'enlace_chat';
-          const { data: byConv } = await admin
+          confidence = 'alta';
+          reason = 'El enlace compartido en el chat traía la etiqueta de esta conversación.';
+          offerId = await offerForConversation(conv.id);
+        }
+      }
+
+      // Candidatos: enlaces de agenda ofrecidos y sin cita en los últimos 21 días.
+      const since = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: offers } = conversationId
+        ? { data: [] as any[] }
+        : await admin
             .from('msg_link_offers')
-            .select('id')
-            .eq('conversation_id', conv.id)
+            .select('id, conversation_id, offered_at')
             .is('matched_appointment_id', null)
+            .gte('offered_at', since)
             .order('offered_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          offerId = byConv?.id ?? null;
-        }
-      }
+            .limit(15);
 
-      // 2) Respaldo: enlace ofrecido sin cita en los últimos 14 días (enlaces viejos sin etiqueta).
-      if (!conversationId) {
-        const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-        const { data: offer } = await admin
-          .from('msg_link_offers')
-          .select('id, conversation_id')
-          .is('matched_appointment_id', null)
-          .gte('offered_at', since)
-          .order('offered_at', { ascending: false })
-          .limit(1)
+      const candidates: OfferCandidate[] = [];
+      for (const o of offers ?? []) {
+        const { data: conv } = await admin
+          .from('msg_conversations')
+          .select('contact_id, msg_contacts(display_name, username, email)')
+          .eq('id', o.conversation_id)
           .maybeSingle();
-        if (offer) {
-          offerId = offer.id;
-          conversationId = offer.conversation_id;
+        const c: any = (conv as any)?.msg_contacts ?? null;
+        const { data: msgs } = await admin
+          .from('msg_messages')
+          .select('body, direction')
+          .eq('conversation_id', o.conversation_id)
+          .order('occurred_at', { ascending: false })
+          .limit(6);
+        candidates.push({
+          offer_id: o.id,
+          conversation_id: o.conversation_id,
+          contact_id: (conv as any)?.contact_id ?? null,
+          contact_name: c?.display_name ?? null,
+          contact_username: c?.username ?? null,
+          contact_email: c?.email ?? null,
+          offered_at: o.offered_at,
+          last_messages: (msgs ?? [])
+            .reverse()
+            .map((m: any) => `${m.direction === 'inbound' ? 'contacto' : 'nosotros'}: ${String(m.body ?? '').slice(0, 160)}`),
+        } as OfferCandidate & { contact_email: string | null });
+      }
+
+      // 2) Correo idéntico al del contacto.
+      if (!conversationId && inviteeEmail) {
+        const hit = candidates.find(
+          (c: any) => c.contact_email && String(c.contact_email).toLowerCase() === inviteeEmail.toLowerCase(),
+        );
+        if (hit) {
+          conversationId = hit.conversation_id;
+          contactId = hit.contact_id;
+          offerId = hit.offer_id;
           matchSource = 'enlace_chat';
-          const { data: conv } = await admin
-            .from('msg_conversations')
-            .select('contact_id')
-            .eq('id', offer.conversation_id)
-            .maybeSingle();
-          contactId = conv?.contact_id ?? null;
+          confidence = 'alta';
+          reason = 'El correo de quien agendó es el mismo del contacto del chat.';
         }
       }
 
-      // Quién atiende la cita (el enrutamiento puede mandarla al calendario de Lucía).
-      const membership = Array.isArray(scheduled?.event_memberships) ? scheduled.event_memberships[0] : null;
+      // 3) Nombre del invitado igual al del contacto (nombre + apellido).
+      if (!conversationId && inviteeName) {
+        const scored = candidates
+          .map((c) => ({ c, s: nameScore(inviteeName, c.contact_name) }))
+          .filter((x) => x.s >= 0.9)
+          .sort((a, b) => b.s - a.s);
+        if (scored.length === 1) {
+          conversationId = scored[0].c.conversation_id;
+          contactId = scored[0].c.contact_id;
+          offerId = scored[0].c.offer_id;
+          matchSource = 'enlace_chat';
+          confidence = 'alta';
+          reason = `El nombre de quien agendó coincide con el contacto (${scored[0].c.contact_name}).`;
+        }
+      }
+
+      // 4) Cerebro de Ari: revisa nombre, horario acordado y contexto del chat.
+      const lovableKey = Deno.env.get('LOVABLE_API_KEY');
+      if (!conversationId && candidates.length && lovableKey) {
+        const verdict = await askModelForMatch(
+          lovableKey,
+          {
+            name: inviteeName,
+            email: inviteeEmail,
+            starts_at: scheduled?.start_time ?? null,
+            event_name: scheduled?.name ?? null,
+            host_name: membership?.user_name ?? null,
+          },
+          candidates,
+        );
+        if (verdict?.conversation_id) {
+          const hit = candidates.find((c) => c.conversation_id === verdict.conversation_id)!;
+          conversationId = hit.conversation_id;
+          contactId = hit.contact_id;
+          offerId = hit.offer_id;
+          matchSource = 'enlace_chat';
+          confidence = verdict.confidence;
+          reason = verdict.reason;
+        } else if (verdict) {
+          confidence = 'baja';
+          reason = verdict.reason;
+        }
+      }
 
       const { data: appt, error: apptErr } = await admin
         .from('msg_appointments')
