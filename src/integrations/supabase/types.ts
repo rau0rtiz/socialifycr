@@ -1451,6 +1451,39 @@ export type Database = {
         }
         Relationships: []
       }
+      channel_secrets: {
+        Row: {
+          access_token: string
+          channel: Database["public"]["Enums"]["msg_channel"]
+          created_at: string
+          expires_at: string | null
+          external_account_id: string | null
+          id: string
+          token_type: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          channel: Database["public"]["Enums"]["msg_channel"]
+          created_at?: string
+          expires_at?: string | null
+          external_account_id?: string | null
+          id?: string
+          token_type?: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          channel?: Database["public"]["Enums"]["msg_channel"]
+          created_at?: string
+          expires_at?: string | null
+          external_account_id?: string | null
+          id?: string
+          token_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       class_group_members: {
         Row: {
           enrolled_at: string
