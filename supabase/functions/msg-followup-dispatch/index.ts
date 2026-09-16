@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { callSetterModel, type HistoryMessage } from '../_shared/setter-agent.ts';
 import { FOLLOWUP_RULES, cancelPendingFollowups, scheduleFollowupJob } from '../_shared/followups.ts';
+import { notifyHumanNeeded } from '../_shared/human-alert.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
