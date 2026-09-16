@@ -97,10 +97,24 @@ Deno.serve(async (req) => {
 
           if (!receivingAccountId || !senderId || !message) continue;
 
-          // Texto o adjuntos
-          const bodyText: string | null = typeof message.text === 'string' && message.text.trim() ? message.text : null;
+          // Texto o adjuntos. Sin texto, guardamos una etiqueta del adjunto (ej. audio de voz)
+          // para que el setter sepa que llegó un audio y lo derive a humano.
           const attachments = Array.isArray(message.attachments) ? message.attachments : [];
-          if (!bodyText && attachments.length === 0) continue;
+          const typeOf = (a: any) => String(a?.type ?? '').toLowerCase();
+          const attachmentLabel: string | null = attachments.length
+            ? attachments.some((a: any) => typeOf(a).includes('audio'))
+              ? '[Audio de voz]'
+              : attachments.some((a: any) => typeOf(a).includes('sticker'))
+                ? '[Sticker]'
+                : attachments.some((a: any) => typeOf(a).includes('image'))
+                  ? '[Imagen]'
+                  : attachments.some((a: any) => typeOf(a).includes('video'))
+                    ? '[Video]'
+                    : '[Adjunto]'
+            : null;
+          const bodyText: string | null =
+            typeof message.text === 'string' && message.text.trim() ? message.text : attachmentLabel;
+          if (!bodyText) continue;
 
           // 1. Identidad del contacto (única por canal + cuenta + emisor)
           let contactId: string | null = null;

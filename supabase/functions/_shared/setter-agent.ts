@@ -166,6 +166,13 @@ export function mentionsMoney(reply: string) {
   return /\b1[.,]?200\b|\b500\b/.test(flat);
 }
 
+const AUDIO_PATTERN = /^\[(audio|nota de voz|mensaje de voz)/i;
+
+export function audioReceived(history: HistoryMessage[]) {
+  const lastFromContact = [...history].reverse().find((m) => m.author === 'externo' || m.author === 'contacto');
+  return AUDIO_PATTERN.test((lastFromContact?.body ?? '').trim());
+}
+
 function formatOffers(offers: OfferRow[]) {
   if (!offers.length) return 'No hay precios publicados. No mencionés ningún monto.';
   return offers
@@ -198,6 +205,7 @@ REGLAS DE CONVERSACIÓN (obligatorias)
 - Si pide no ser contactada, suggested_action = marcar_no_contactar y no hagás preguntas.
 - Producción audiovisual (videos sueltos, sesiones) es un flujo separado: no la mezclés con marketing mensual ni des precios de marketing.
 - Si el mensaje es un audio o adjunto sin transcripción, no inventés su contenido.
+- Si el último mensaje del contacto es un audio de voz, derivá a un humano: needs_human = true y suggested_action = derivar_humano. No interpretés el audio ni hagás preguntas de descubrimiento.
 ${customRules.length ? customRules.map((r) => `- ${r}`).join('\n') : ''}
 
 DESCUBRIMIENTO PRIMERO
@@ -205,6 +213,14 @@ DESCUBRIMIENTO PRIMERO
 - El precio NO se ofrece por iniciativa propia. Solo lo decís si la persona lo pide textualmente (precio, cuánto cuesta, costo, tarifas, presupuesto, cotización, inversión).
 - Preguntas como "¿qué paquetes tienen?", "me interesa", "mandame info" NO son pedidos de precio: explicá el enfoque en una o dos oraciones y hacé una sola pregunta de descubrimiento, sin ningún monto, sin "desde", sin rangos.
 - Cuando sí piden precio, respondelo directo y completo, sin rodeos.
+
+${
+    audioReceived(ctx.history)
+      ? `AUDIO RECIBIDO (obligatorio)
+La persona envió un audio de voz y Ari no puede escucharlo. Respondé bien corto, con naturalidad: avisá que un integrante del equipo va a revisar el audio y le escribe en un momento, y ofrecé la opción de escribir la consulta por texto acá mismo. Marcá needs_human = true y suggested_action = derivar_humano. No interpretés el audio, no hagas preguntas de descubrimiento y no menciones servicios ni precios.`
+      : ''
+  }
+
 
 ${
     askedPrice
@@ -346,6 +362,14 @@ export function runChecks(
   if (history.length && !priceAsked(history) && mentionsMoney(reply)) {
     failures.push('Dio precio sin que lo pidieran: primero hay que entender el negocio');
   }
+
+  // Guardarraíl: si el último mensaje del contacto es un audio, siempre delegar a humano.
+  if (history.length && audioReceived(history)) {
+    if (!proposal.needs_human || proposal.suggested_action !== 'derivar_humano') {
+      failures.push('Audio de voz: hay que derivar a humano (needs_human + derivar_humano)');
+    }
+  }
+
 
 
   if (checks.max_chars && reply.length > checks.max_chars) {
