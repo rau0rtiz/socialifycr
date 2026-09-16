@@ -24,6 +24,7 @@ export const AGENCY_NAV: AgencyNavItem[] = [
   { title: 'Resumen', url: '/agencia', icon: LayoutDashboard, exact: true },
   { title: 'Clientes', url: '/agencia/clientes', icon: Users },
   { title: 'CRM', url: '/agencia/crm', icon: UserPlus },
+  { title: 'Chats', url: '/agencia/chats', icon: MessageSquare },
   { title: 'Pagos', url: '/agencia/pagos', icon: Wallet },
   { title: 'Producciones', url: '/agencia/producciones', icon: Clapperboard },
   { title: 'Documentación', url: '/agencia/documentacion', icon: FileText },
