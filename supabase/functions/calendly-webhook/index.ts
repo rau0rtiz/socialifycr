@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
       if (offerId) {
         await admin.from('msg_link_offers').update({ matched_appointment_id: appt.id }).eq('id', offerId);
       }
-      if (conversationId) {
+      if (conversationId && confidence !== 'baja') {
         // La conversación avanza a cita confirmada (si no estaba cerrada).
         await admin
           .from('msg_conversations')
