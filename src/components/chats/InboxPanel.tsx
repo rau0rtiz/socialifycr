@@ -96,6 +96,7 @@ export const InboxPanel = () => {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [text, setText] = useState('');
+  const [draftOpen, setDraftOpen] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const { data: conversations, isLoading } = useMsgConversations({
@@ -133,6 +134,11 @@ export const InboxPanel = () => {
 
   const activeConv = conversations?.find((c) => c.id === selected);
   const stale = draft ? staleReason(draft, activeConv, fingerprint) : null;
+
+  // Cada borrador nuevo arranca colapsado para no tapar el chat.
+  useEffect(() => {
+    setDraftOpen(false);
+  }, [draft?.id]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' });
