@@ -70,16 +70,7 @@ export const DashboardLayout = ({ children, style }: DashboardLayoutProps) => {
         {isAgencyHub ? <AgencySidebar /> : <Sidebar />}
         <div className="flex-1 flex flex-col min-w-0 h-full">
           {!isAgencyHub && <TopBar />}
-          {isAgencyHub && (
-            <>
-              <AgencyTopBar />
-              {/* Thumb-reachable trigger on phones */}
-              <SidebarTrigger
-                aria-label="Abrir menú"
-                className="md:hidden fixed left-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 h-12 w-12 rounded-full border border-border bg-card text-foreground shadow-lg"
-              />
-            </>
-          )}
+          {isAgencyHub && <AgencyTopBar />}
 
           <main
             className={cn(
