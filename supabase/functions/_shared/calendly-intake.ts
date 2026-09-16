@@ -1,0 +1,353 @@
+// Procesa una cita de Calendly (invitee.created) contra los chats: registra la cita,
+// la cruza con la conversación donde se ofreció el enlace y actualiza contacto y lead.
+// Lo usan el webhook (avisos en vivo) y calendly-sync (recuperar citas perdidas).
+
+import { askModelForMatch, nameScore, type OfferCandidate } from './appointment-match.ts';
+import { cleanHandle, digitsOnly, fetchRoutingAnswers, intakeToNotes, type Intake } from './routing-form.ts';
+
+export interface IntakeResult {
+  appointment_id: string | null;
+  attributed: boolean;
+  ignored?: string;
+  error?: string;
+}
+
+export const handleInviteeCanceled = async (admin: any, eventUri: string) => {
+  await admin.from('msg_appointments').update({ status: 'cancelada' }).eq('external_uri', eventUri);
+};
+
+export const handleInviteeCreated = async (admin: any, body: any): Promise<IntakeResult> => {
+  const payload = body?.payload ?? {};
+  const scheduled = payload?.scheduled_event ?? {};
+  const eventUri: string | undefined = scheduled?.uri;
+  if (!eventUri) return { appointment_id: null, attributed: false, ignored: 'sin evento' };
+
+  // Evitar duplicados
+  const { data: existing } = await admin
+    .from('msg_appointments')
+    .select('id')
+    .eq('external_uri', eventUri)
+    .maybeSingle();
+  if (existing) return { appointment_id: existing.id, attributed: false, ignored: 'duplicado' };
+
+  const membership = Array.isArray(scheduled?.event_memberships) ? scheduled.event_memberships[0] : null;
+  const tracking = payload?.tracking ?? {};
+  const submissionUri: string | null = payload?.routing_form_submission ?? null;
+  const intake: Intake | null = submissionUri ? await fetchRoutingAnswers(submissionUri) : null;
+
+  const inviteeName: string | null = payload?.name ?? intake?.nombre ?? null;
+  const inviteeEmail: string | null = payload?.email ?? intake?.correo ?? null;
+
+  // ── Atribución: etiqueta → Instagram del formulario → correo → nombre → cerebro de Ari ──
+  let offerId: string | null = null;
+  let conversationId: string | null = null;
+  let contactId: string | null = null;
+  let matchSource = 'sin_enlace';
+  let confidence: string | null = null;
+  let reason: string | null = null;
+
+  const offerForConversation = async (id: string) => {
+    const { data } = await admin
+      .from('msg_link_offers')
+      .select('id')
+      .eq('conversation_id', id)
+      .is('matched_appointment_id', null)
+      .order('offered_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data?.id ?? null;
+  };
+
+  const utmConv: string | null =
+    typeof tracking?.utm_content === 'string' && /^[0-9a-f-]{36}$/i.test(tracking.utm_content)
+      ? tracking.utm_content
+      : null;
+  if (utmConv) {
+    const { data: conv } = await admin
+      .from('msg_conversations')
+      .select('id, contact_id')
+      .eq('id', utmConv)
+      .maybeSingle();
+    if (conv) {
+      conversationId = conv.id;
+      contactId = conv.contact_id;
+      matchSource = 'enlace_chat';
+      confidence = 'alta';
+      reason = 'El enlace compartido en el chat traía la etiqueta de esta conversación.';
+      offerId = await offerForConversation(conv.id);
+    }
+  }
+
+  const formHandle = cleanHandle(intake?.instagram);
+  if (!conversationId && formHandle) {
+    const { data: ident } = await admin
+      .from('msg_contact_identities')
+      .select('contact_id, username')
+      .ilike('username', formHandle)
+      .limit(1)
+      .maybeSingle();
+    if (ident?.contact_id) {
+      const { data: conv } = await admin
+        .from('msg_conversations')
+        .select('id')
+        .eq('contact_id', ident.contact_id)
+        .order('last_inbound_at', { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+      if (conv?.id) {
+        conversationId = conv.id;
+        contactId = ident.contact_id;
+        matchSource = 'enlace_chat';
+        confidence = 'alta';
+        reason = `En el formulario puso su Instagram @${formHandle}, el mismo del chat.`;
+        offerId = await offerForConversation(conv.id);
+      }
+    }
+  }
+
+  // Candidatos: enlaces de agenda ofrecidos y sin cita en los últimos 21 días.
+  const since = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: offers } = conversationId
+    ? { data: [] as any[] }
+    : await admin
+        .from('msg_link_offers')
+        .select('id, conversation_id, offered_at')
+        .is('matched_appointment_id', null)
+        .gte('offered_at', since)
+        .order('offered_at', { ascending: false })
+        .limit(15);
+
+  const candidates: OfferCandidate[] = [];
+  for (const o of offers ?? []) {
+    const { data: conv } = await admin
+      .from('msg_conversations')
+      .select('contact_id, msg_contacts(display_name, email, business_name)')
+      .eq('id', o.conversation_id)
+      .maybeSingle();
+    const c: any = (conv as any)?.msg_contacts ?? null;
+    const { data: msgs } = await admin
+      .from('msg_messages')
+      .select('body, direction')
+      .eq('conversation_id', o.conversation_id)
+      .order('occurred_at', { ascending: false })
+      .limit(6);
+    candidates.push({
+      offer_id: o.id,
+      conversation_id: o.conversation_id,
+      contact_id: (conv as any)?.contact_id ?? null,
+      contact_name: c?.display_name ?? null,
+      contact_username: c?.business_name ?? null,
+      contact_email: c?.email ?? null,
+      offered_at: o.offered_at,
+      last_messages: (msgs ?? [])
+        .reverse()
+        .map((m: any) => `${m.direction === 'inbound' ? 'contacto' : 'nosotros'}: ${String(m.body ?? '').slice(0, 160)}`),
+    } as OfferCandidate & { contact_email: string | null });
+  }
+
+  if (!conversationId && inviteeEmail) {
+    const hit = candidates.find(
+      (c: any) => c.contact_email && String(c.contact_email).toLowerCase() === inviteeEmail.toLowerCase(),
+    );
+    if (hit) {
+      conversationId = hit.conversation_id;
+      contactId = hit.contact_id;
+      offerId = hit.offer_id;
+      matchSource = 'enlace_chat';
+      confidence = 'alta';
+      reason = 'El correo de quien agendó es el mismo del contacto del chat.';
+    }
+  }
+
+  if (!conversationId && inviteeName) {
+    const scored = candidates
+      .map((c) => ({ c, s: nameScore(inviteeName, c.contact_name) }))
+      .filter((x) => x.s >= 0.9)
+      .sort((a, b) => b.s - a.s);
+    if (scored.length === 1) {
+      conversationId = scored[0].c.conversation_id;
+      contactId = scored[0].c.contact_id;
+      offerId = scored[0].c.offer_id;
+      matchSource = 'enlace_chat';
+      confidence = 'alta';
+      reason = `El nombre de quien agendó coincide con el contacto (${scored[0].c.contact_name}).`;
+    }
+  }
+
+  const lovableKey = Deno.env.get('LOVABLE_API_KEY');
+  if (!conversationId && candidates.length && lovableKey) {
+    const verdict = await askModelForMatch(
+      lovableKey,
+      {
+        name: inviteeName,
+        email: inviteeEmail,
+        starts_at: scheduled?.start_time ?? null,
+        event_name: scheduled?.name ?? null,
+        host_name: membership?.user_name ?? null,
+      },
+      candidates,
+    );
+    if (verdict?.conversation_id) {
+      const hit = candidates.find((c) => c.conversation_id === verdict.conversation_id)!;
+      conversationId = hit.conversation_id;
+      contactId = hit.contact_id;
+      offerId = hit.offer_id;
+      matchSource = 'enlace_chat';
+      confidence = verdict.confidence;
+      reason = verdict.reason;
+    } else if (verdict) {
+      confidence = 'baja';
+      reason = verdict.reason;
+    }
+  }
+
+  const { data: appt, error: apptErr } = await admin
+    .from('msg_appointments')
+    .insert({
+      external_uri: eventUri,
+      contact_id: contactId,
+      conversation_id: conversationId,
+      event_name: scheduled?.name ?? null,
+      invitee_email: payload?.email ?? null,
+      invitee_name: payload?.name ?? null,
+      host_name: membership?.user_name ?? null,
+      host_email: membership?.user_email ?? null,
+      routing_form_uri: submissionUri,
+      routing_answers: intake ?? {},
+      tracking,
+      starts_at: scheduled?.start_time ?? null,
+      timezone: payload?.timezone ?? 'America/Costa_Rica',
+      status: scheduled?.status === 'canceled' || payload?.status === 'canceled' ? 'cancelada' : 'activa',
+      match_source: matchSource,
+      match_confidence: confidence,
+      match_reason: reason,
+      raw_payload: body,
+    })
+    .select('id')
+    .single();
+  if (apptErr) {
+    console.error('appointment insert error', apptErr);
+    return { appointment_id: null, attributed: false, error: apptErr.message };
+  }
+
+  if (offerId) {
+    await admin.from('msg_link_offers').update({ matched_appointment_id: appt.id }).eq('id', offerId);
+  }
+  if (conversationId && confidence !== 'baja') {
+    await admin
+      .from('msg_conversations')
+      .update({ stage: 'cita_confirmada', updated_at: new Date().toISOString() })
+      .eq('id', conversationId)
+      .neq('stage', 'no_interesado');
+  }
+
+  // ── Completar el perfil del contacto y pasar su lead a "agendado" ──
+  if (contactId) {
+    const { data: contact } = await admin
+      .from('msg_contacts')
+      .select('id, display_name, email, phone, business_name, intake, crm_lead_id, notes')
+      .eq('id', contactId)
+      .maybeSingle();
+    if (contact) {
+      const intakeMerged = intake ? { ...(contact.intake ?? {}), ...intake } : (contact.intake ?? null);
+      await admin
+        .from('msg_contacts')
+        .update({
+          display_name: contact.display_name ?? intake?.nombre ?? inviteeName ?? null,
+          email: contact.email ?? intake?.correo ?? inviteeEmail ?? null,
+          phone: contact.phone ?? intake?.whatsapp ?? null,
+          ...(intakeMerged ? { intake: intakeMerged } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', contact.id);
+
+      let leadId: string | null = contact.crm_lead_id ?? null;
+      if (!leadId) {
+        const phoneDigits = digitsOnly(intake?.whatsapp ?? contact.phone);
+        const filters: string[] = [];
+        const email = intake?.correo ?? contact.email ?? inviteeEmail;
+        if (email) filters.push(`email.eq.${email}`);
+        if (phoneDigits) filters.push(`phone.ilike.%${phoneDigits.slice(-8)}%`);
+        const name = intake?.nombre ?? contact.display_name ?? inviteeName;
+        if (name) filters.push(`name.ilike.${name}`);
+        if (filters.length) {
+          const { data: found } = await admin
+            .from('agency_crm_leads')
+            .select('id')
+            .or(filters.join(','))
+            .limit(1)
+            .maybeSingle();
+          if (found) {
+            leadId = found.id;
+            await admin.from('msg_contacts').update({ crm_lead_id: leadId }).eq('id', contact.id);
+          }
+        }
+      }
+      if (leadId) {
+        const { data: lead } = await admin
+          .from('agency_crm_leads')
+          .select('id, email, phone, notes, status, intake')
+          .eq('id', leadId)
+          .maybeSingle();
+        if (lead) {
+          const notes = intake ? intakeToNotes(intake) : null;
+          const keepNotes =
+            !notes || (lead.notes ?? '').includes('— Formulario de agenda —')
+              ? lead.notes
+              : [lead.notes, notes].filter(Boolean).join('\n\n');
+          await admin
+            .from('agency_crm_leads')
+            .update({
+              email: lead.email ?? intake?.correo ?? inviteeEmail ?? null,
+              phone: lead.phone ?? intake?.whatsapp ?? null,
+              notes: keepNotes,
+              ...(intake ? { intake: { ...(lead.intake ?? {}), ...intake } } : {}),
+              status: lead.status === 'cliente' || lead.status === 'perdido' ? lead.status : 'agendado',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', lead.id);
+        }
+      }
+    }
+  } else if (intake) {
+    // Cita sin chat: igual dejamos el lead en el CRM con todo el contexto del formulario.
+    const phoneDigits = digitsOnly(intake.whatsapp);
+    const filters = [
+      intake.correo ? `email.eq.${intake.correo}` : null,
+      phoneDigits ? `phone.ilike.%${phoneDigits.slice(-8)}%` : null,
+    ].filter(Boolean) as string[];
+    const { data: lead } = filters.length
+      ? await admin
+          .from('agency_crm_leads')
+          .select('id, notes, intake, status')
+          .or(filters.join(','))
+          .limit(1)
+          .maybeSingle()
+      : { data: null as any };
+    const notes = intakeToNotes(intake);
+    if (lead) {
+      await admin
+        .from('agency_crm_leads')
+        .update({
+          notes: (lead.notes ?? '').includes('— Formulario de agenda —')
+            ? lead.notes
+            : [lead.notes, notes].filter(Boolean).join('\n\n'),
+          intake: { ...(lead.intake ?? {}), ...intake },
+          status: lead.status === 'cliente' || lead.status === 'perdido' ? lead.status : 'agendado',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', lead.id);
+    } else {
+      await admin.from('agency_crm_leads').insert({
+        name: intake.nombre ?? inviteeName ?? 'Agenda sin nombre',
+        email: intake.correo ?? inviteeEmail ?? null,
+        phone: intake.whatsapp ?? null,
+        status: 'agendado',
+        notes,
+        intake,
+      });
+    }
+  }
+
+  return { appointment_id: appt.id, attributed: !!conversationId };
+};
