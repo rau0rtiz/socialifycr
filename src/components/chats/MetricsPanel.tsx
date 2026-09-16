@@ -9,8 +9,10 @@ export const MetricsPanel = () => {
   const items = [
     { label: 'Conversaciones', value: data?.conversaciones ?? 0 },
     { label: 'Calificados', value: data?.calificados ?? 0 },
-    { label: 'Enlaces enviados', value: data?.enlacesEnviados ?? 0 },
-    { label: 'Citas vinculadas', value: data?.citasVinculadas ?? 0 },
+    { label: 'Enlaces de Calendly ofrecidos', value: data?.enlacesOfrecidos ?? 0 },
+    { label: 'Citas agendadas', value: data?.citasAgendadas ?? 0 },
+    { label: 'Conversión enlace → cita', value: `${data?.tasaConversion ?? 0}%` },
+    { label: 'Citas vinculadas a un chat', value: data?.citasVinculadas ?? 0 },
     { label: 'Cancelaciones', value: data?.cancelaciones ?? 0 },
     { label: 'Atención humana', value: data?.atencionHumana ?? 0 },
     { label: 'Respuestas de IA', value: data?.ejecucionesIA ?? 0 },
@@ -28,7 +30,7 @@ export const MetricsPanel = () => {
         ))}
       </div>
       <p className="text-[11px] text-muted-foreground">
-        Los números son reales y hoy están en cero porque ningún canal está conectado. Las simulaciones no se cuentan acá.
+        Solo cuenta conversaciones reales: las simulaciones del laboratorio no aparecen acá. Las citas llegan al instante desde Calendly y se amarran al chat donde se ofreció el enlace.
       </p>
     </div>
   );
