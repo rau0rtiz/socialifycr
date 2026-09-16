@@ -126,6 +126,34 @@ Deno.serve(async (req) => {
         }
       }
 
+      // 1.b) Usuario de Instagram del formulario: la pista más fuerte del flujo real.
+      const formHandle = cleanHandle(intake?.instagram);
+      if (!conversationId && formHandle) {
+        const { data: ident } = await admin
+          .from('msg_contact_identities')
+          .select('contact_id, username')
+          .ilike('username', formHandle)
+          .limit(1)
+          .maybeSingle();
+        if (ident?.contact_id) {
+          const { data: conv } = await admin
+            .from('msg_conversations')
+            .select('id')
+            .eq('contact_id', ident.contact_id)
+            .order('last_inbound_at', { ascending: false, nullsFirst: false })
+            .limit(1)
+            .maybeSingle();
+          if (conv?.id) {
+            conversationId = conv.id;
+            contactId = ident.contact_id;
+            matchSource = 'enlace_chat';
+            confidence = 'alta';
+            reason = `En el formulario puso su Instagram @${formHandle}, el mismo del chat.`;
+            offerId = await offerForConversation(conv.id);
+          }
+        }
+      }
+
       // Candidatos: enlaces de agenda ofrecidos y sin cita en los últimos 21 días.
       const since = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
       const { data: offers } = conversationId
