@@ -102,6 +102,10 @@ export const InboxPanel = () => {
   const [selected, setSelected] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [draftOpen, setDraftOpen] = useState(false);
+  // En pantallas chicas se ve una sola cosa: lista o chat.
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
+  const [fichaOpen, setFichaOpen] = useState(false);
+  const isMobile = useIsMobile();
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const { data: conversations, isLoading } = useMsgConversations({
@@ -135,6 +139,8 @@ export const InboxPanel = () => {
       setSelected(filtered[0].id);
       setText('');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered.length === 0]);
   }, [filtered, selected]);
 
   const activeConv = conversations?.find((c) => c.id === selected);
