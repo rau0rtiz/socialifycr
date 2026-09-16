@@ -209,7 +209,7 @@ export const useMsgConversations = (filters?: { channel?: string; stage?: Stage;
     queryFn: async () => {
       let q = supabase
         .from('msg_conversations')
-        .select('id, channel, stage, intent, fit, bot_mode, unread_count, last_inbound_at, is_demo, assignee_id, version, human_takeover_at, msg_contacts(display_name, business_name, do_not_contact, avatar_url, profile_url), msg_contact_identities(username, external_id)')
+        .select('id, channel, stage, intent, fit, bot_mode, unread_count, last_inbound_at, is_demo, assignee_id, version, human_takeover_at, msg_contacts(display_name, business_name, do_not_contact, avatar_url, profile_url, email, phone, intake), msg_contact_identities(username, external_id)')
         .order('last_inbound_at', { ascending: false, nullsFirst: false })
         .limit(100);
       if (filters?.channel) q = q.eq('channel', filters.channel as never);
