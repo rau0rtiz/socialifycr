@@ -76,14 +76,14 @@ export const ConnectionsPanel = () => {
             <CalendarClock className="h-5 w-5 text-primary" />
             <div>
               <p className="text-sm font-semibold text-foreground">Calendly · confirmación de citas</p>
-              <p className="text-xs text-muted-foreground">https://socialifycr.com/agendar</p>
+              <p className="text-xs text-muted-foreground">https://calendly.com/raul-socialifycr</p>
             </div>
           </div>
-          <Badge variant="outline" className={statusClass('pendiente')}>Pendiente</Badge>
+          <Badge variant="outline" className={statusClass('conectado')}>Conectado</Badge>
         </div>
         <p className="text-xs text-muted-foreground">
-          Fase 4. Requiere revisar el plan de Calendly, permisos de webhooks y un identificador de atribución que sobreviva el
-          recorrido. Mientras no haya coincidencia comprobable, las reservas se registran sin vincular para revisión manual.
+          Cada cita agendada llega al instante y se amarra al chat donde se compartió el enlace. Las reagendas y cancelaciones
+          también se actualizan solas. Si una cita no coincide con ningún chat, queda registrada para revisión manual.
         </p>
       </div>
 
