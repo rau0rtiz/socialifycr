@@ -168,7 +168,7 @@ export const useMsgMetrics = () =>
         enlacesEnviados: count('enlace_enviado'),
         citasVinculadas: appointments.filter((a) => a.status === 'activa' && a.conversation_id).length,
         cancelaciones: appointments.filter((a) => a.status === 'cancelada').length,
-        atencionHumana: real.filter((c) => c.stage !== 'no_interesado').length === 0 ? 0 : (convs.data ?? []).filter((c) => !c.is_demo).length - real.length,
+        atencionHumana: real.filter((c) => !!c.human_takeover_at).length,
         ejecucionesIA: (runs.data ?? []).filter((r) => !r.is_simulation).length,
         fallos: (runs.data ?? []).filter((r) => r.outcome === 'error').length,
       };
