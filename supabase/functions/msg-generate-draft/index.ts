@@ -218,13 +218,13 @@ Deno.serve(async (req) => {
         ? 'Dio precio sin que lo pidieran. Revisá la respuesta: primero hay que entender el negocio.'
         : (p.needs_human_reason ?? null);
 
-    const { data: draft, error: draftErr } = await admin
-      .from('msg_drafts')
-      .insert({
+    const payloadRow = {
         conversation_id: conversationId,
         agent_run_id: run?.id ?? null,
         is_simulation: isSimulation,
         status: 'pendiente',
+        stale_reason: null,
+        edited_reply: null,
         intent: p.intent ?? 'desconocido',
         proposed_reply: p.reply,
         facts: p.facts ?? [],
