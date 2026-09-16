@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
     let conversation: any = null;
     let history: HistoryMessage[] = [];
     let contact: AgentContext['contact'] = null;
+    let appointments: NonNullable<AgentContext['appointments']> = [];
 
     if (conversationId) {
       const { data: conv, error: convErr } = await authed
@@ -81,6 +82,14 @@ Deno.serve(async (req) => {
         .eq('id', conv.contact_id)
         .maybeSingle();
       contact = c ?? null;
+
+      const { data: appts } = await admin
+        .from('msg_appointments')
+        .select('event_name, starts_at, status, host_name, invitee_name, invitee_email, match_confidence, match_source')
+        .or(`conversation_id.eq.${conversationId},contact_id.eq.${conv.contact_id}`)
+        .order('starts_at', { ascending: false })
+        .limit(5);
+      appointments = appts ?? [];
     } else {
       const rawMessages = Array.isArray(simulation.messages) ? simulation.messages.slice(0, 40) : [];
       history = rawMessages.map((m: any) => ({
@@ -141,6 +150,7 @@ Deno.serve(async (req) => {
       history,
       channel: conversation?.channel ?? 'simulacion',
       stage: conversation?.stage ?? 'nuevo',
+      appointments,
     };
 
     const result = await callSetterModel(lovableKey, ctx);

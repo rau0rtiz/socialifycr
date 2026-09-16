@@ -33,7 +33,45 @@ export type AgentContext = {
   history: HistoryMessage[];
   channel?: string | null;
   stage?: string | null;
+  appointments?: AppointmentInfo[] | null;
 };
+
+export type AppointmentInfo = {
+  event_name?: string | null;
+  starts_at?: string | null;
+  status?: string | null;
+  host_name?: string | null;
+  invitee_name?: string | null;
+  invitee_email?: string | null;
+  match_confidence?: string | null;
+  match_source?: string | null;
+};
+
+export function formatAppointments(appts?: AppointmentInfo[] | null) {
+  if (!appts || !appts.length) return null;
+  return appts
+    .map((a) => {
+      const when = a.starts_at
+        ? new Date(a.starts_at).toLocaleString('es-CR', {
+            timeZone: 'America/Costa_Rica',
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            hour: 'numeric',
+            minute: '2-digit',
+          })
+        : 'sin fecha';
+      const bits = [
+        `- ${a.event_name ?? 'Cita'}: ${when} (hora Costa Rica)`,
+        `estado ${a.status ?? 'activa'}`,
+        a.host_name ? `atiende ${a.host_name}` : null,
+        a.invitee_name ? `agendó ${a.invitee_name}` : null,
+        a.match_confidence ? `coincidencia ${a.match_confidence}` : null,
+      ].filter(Boolean);
+      return bits.join(', ');
+    })
+    .join('\n');
+}
 
 export type Proposal = {
   intent: 'marketing' | 'produccion' | 'desconocido' | 'otro';
@@ -234,6 +272,17 @@ La persona NO preguntó por precio en su último mensaje. En esta respuesta no p
 
 AGENDA
 Enlace para agendar con Lu: ${ctx.bookingUrl}
+${
+    formatAppointments(ctx.appointments)
+      ? `CITAS REGISTRADAS DE ESTE CONTACTO (datos reales del sistema)
+${formatAppointments(ctx.appointments)}
+- Si la persona dice que ya agendó o pregunta si su agenda quedó, confirmale la cita usando exactamente estos datos (día, hora y con quién es) y no le mandés otra vez el enlace.
+- Si los datos de la cita no calzan con lo que la persona dice (otro día, otra hora, otro nombre), no inventés: pedile amablemente que confirme el día y la hora, y marcá needs_human = true.
+- Si la cita aparece cancelada, decilo con naturalidad y ofrecé volver a agendar con el enlace.
+- Si la coincidencia es "baja" o "media", confirmá con una pregunta corta antes de darla por hecha.`
+      : `SIN CITAS REGISTRADAS
+- No hay ninguna cita registrada para este contacto. Si la persona dice que ya agendó, no lo confirmés: decile que lo revisás y marcá needs_human = true. Nunca inventés fechas ni horas.`
+  }
 
 HECHOS
 - Solo extraé hechos que la persona dijo explícitamente, con el índice del mensaje donde lo dijo.
