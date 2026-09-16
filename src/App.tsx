@@ -52,6 +52,7 @@ const PortalSelect = lazy(() => import("./pages/PortalSelect"));
 
 const ImageDBPinGate = lazy(() => import("./pages/ImageDB").then(m => ({ default: m.ImageDBPinGate })));
 const MetaOAuthCallback = lazy(() => import("./pages/MetaOAuthCallback").then(m => ({ default: m.MetaOAuthCallback })));
+const InstagramOAuthCallback = lazy(() => import("./pages/InstagramOAuthCallback").then(m => ({ default: m.InstagramOAuthCallback })));
 const YouTubeOAuthCallback = lazy(() => import("./pages/YouTubeOAuthCallback").then(m => ({ default: m.YouTubeOAuthCallback })));
 const TikTokOAuthCallback = lazy(() => import("./pages/TikTokOAuthCallback").then(m => ({ default: m.TikTokOAuthCallback })));
 const LinkedInOAuthCallback = lazy(() => import("./pages/LinkedInOAuthCallback").then(m => ({ default: m.LinkedInOAuthCallback })));
