@@ -128,12 +128,8 @@ Deno.serve(async (req) => {
             .eq('external_id', senderId)
             .maybeSingle();
 
-          if (existingIdentity) {
-            identityId = existingIdentity.id;
-            contactId = existingIdentity.contact_id;
-          } else {
-            // Perfil público del remitente (usuario y foto) para verlo en la bandeja.
-            let profile: { username?: string; name?: string; profile_pic?: string } = {};
+          // Perfil público del remitente (usuario y foto) para verlo en la bandeja.
+          const fetchProfile = async (): Promise<{ username?: string; name?: string; profile_pic?: string }> => {
             try {
               const { data: secret } = await admin
                 .from('channel_secrets')
@@ -142,17 +138,47 @@ Deno.serve(async (req) => {
                 .order('updated_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
-              if (secret?.access_token) {
-                const res = await fetch(
-                  `https://graph.instagram.com/v21.0/${senderId}?fields=name,username,profile_pic&access_token=${secret.access_token}`,
-                );
-                const body = await res.json().catch(() => ({}));
-                if (res.ok) profile = body ?? {};
-                else console.error('ig profile fetch error', body);
+              if (!secret?.access_token) return {};
+              const res = await fetch(
+                `https://graph.instagram.com/v21.0/${senderId}?fields=name,username,profile_pic&access_token=${secret.access_token}`,
+              );
+              const body = await res.json().catch(() => ({}));
+              if (!res.ok) {
+                console.error('ig profile fetch error', body);
+                return {};
               }
+              return body ?? {};
             } catch (e) {
               console.error('ig profile fetch failed', e);
+              return {};
             }
+          };
+
+          if (existingIdentity) {
+            identityId = existingIdentity.id;
+            contactId = existingIdentity.contact_id;
+            // Contactos viejos sin usuario/foto: los completamos.
+            if (!existingIdentity.username) {
+              const profile = await fetchProfile();
+              if (profile.username || profile.profile_pic || profile.name) {
+                await admin
+                  .from('msg_contact_identities')
+                  .update({ username: profile.username ?? null })
+                  .eq('id', existingIdentity.id);
+                await admin
+                  .from('msg_contacts')
+                  .update({
+                    display_name: profile.username ? `@${profile.username}` : (profile.name ?? null),
+                    avatar_url: profile.profile_pic ?? null,
+                    profile_url: profile.username ? `https://instagram.com/${profile.username}` : null,
+                  })
+                  .eq('id', existingIdentity.contact_id);
+              }
+            }
+          } else {
+            const profile = await fetchProfile();
+
+
 
             const { data: newContact, error: contactErr } = await admin
               .from('msg_contacts')
