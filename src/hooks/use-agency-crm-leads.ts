@@ -33,6 +33,8 @@ export interface AgencyCrmLead {
   phone: string | null;
   status: AgencyCrmStatus;
   notes: string | null;
+  /** Respuestas del formulario de agenda (Calendly). */
+  intake: Record<string, unknown> | null;
   created_by: string | null;
   assigned_to: string | null;
   created_at: string;
