@@ -86,13 +86,12 @@ export const PaymentClientDialog = ({
     setUploading(true);
     try {
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `agency-payments/logos/${Date.now()}.${ext}`;
+      const path = `payments/logos/${Date.now()}.${ext}`;
       const { error } = await supabase.storage
-        .from('content-images')
+        .from(PRIVATE_BUCKET)
         .upload(path, file, { upsert: true, contentType: file.type });
       if (error) throw error;
-      const { data } = supabase.storage.from('content-images').getPublicUrl(path);
-      set({ logo_url: data.publicUrl });
+      set({ logo_url: privateRef(path) });
       toast.success('Foto actualizada');
     } catch (e: any) {
       toast.error(e?.message || 'No se pudo subir la imagen');
