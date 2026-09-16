@@ -65,10 +65,6 @@ Deno.serve(async (req) => {
     if (!conv) return json({ error: 'Conversación no encontrada' }, 404);
     if (conv.is_demo) return json({ skipped: 'simulacion' });
     if (conv.channel !== 'instagram') return json({ skipped: 'canal_no_soportado' });
-    // Si una persona respondió, el bot se hace a un lado por 12 horas y después retoma.
-    if (conv.human_takeover_at && Date.now() - new Date(conv.human_takeover_at).getTime() < 12 * 60 * 60 * 1000) {
-      return json({ skipped: 'control_humano' });
-    }
 
 
     const identity = (conv as any).msg_contact_identities as {
@@ -99,6 +95,15 @@ Deno.serve(async (req) => {
     if (!history.length) return json({ skipped: 'sin_mensajes' });
     const last = (msgs ?? [])[msgs!.length - 1] as any;
     if (last?.direction !== 'inbound') return json({ skipped: 'ultimo_no_entrante' });
+    // Ari retoma en cuanto la persona vuelve a escribir después de la intervención humana.
+    // Solo se hace a un lado si el humano escribió y la persona todavía no contestó.
+    if (
+      conv.human_takeover_at &&
+      new Date(conv.human_takeover_at).getTime() > new Date(last.occurred_at).getTime()
+    ) {
+      return json({ skipped: 'control_humano' });
+    }
+
 
     // Manual comercial publicado (nunca el borrador en conversaciones reales).
     const { data: knowledge } = await admin
@@ -315,8 +320,11 @@ Deno.serve(async (req) => {
         .in('stage', ['nuevo', 'conversando', 'calificado']);
     }
 
-    // El bot responde: no marca control humano.
-    await admin.from('msg_conversations').update({ last_outbound_at: nowIso }).eq('id', conversationId);
+    // El bot responde: no marca control humano y libera el traspaso anterior.
+    await admin
+      .from('msg_conversations')
+      .update({ last_outbound_at: nowIso, human_takeover_at: null })
+      .eq('id', conversationId);
 
     // Si la persona no contesta, arranca la cadencia de seguimiento (4 h → 24 h → no interesado).
     await scheduleFirstFollowup(admin, conv, settings);
