@@ -157,17 +157,19 @@ Deno.serve(async (req) => {
         return json({ error: 'No se pudo registrar la cita' }, 500);
       }
 
-      if (offer) {
-        await admin.from('msg_link_offers').update({ matched_appointment_id: appt.id }).eq('id', offer.id);
+      if (offerId) {
+        await admin.from('msg_link_offers').update({ matched_appointment_id: appt.id }).eq('id', offerId);
+      }
+      if (conversationId) {
         // La conversación avanza a cita confirmada (si no estaba cerrada).
         await admin
           .from('msg_conversations')
           .update({ stage: 'cita_confirmada', updated_at: new Date().toISOString() })
-          .eq('id', offer.conversation_id)
+          .eq('id', conversationId)
           .neq('stage', 'no_interesado');
       }
 
-      return json({ received: true, appointment: appt.id, attributed: !!offer });
+      return json({ received: true, appointment: appt.id, attributed: !!conversationId, host: membership?.user_email ?? null });
     }
 
     if (event === 'invitee.canceled') {
