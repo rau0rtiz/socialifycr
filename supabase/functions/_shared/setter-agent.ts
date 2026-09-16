@@ -200,6 +200,17 @@ export function priceAsked(history: HistoryMessage[]) {
   return PRICE_PATTERNS.some((re) => re.test(body));
 }
 
+// Cuántos mensajes escribió el contacto: sirve para saber si ya hubo descubrimiento suficiente.
+export function contactTurns(history: HistoryMessage[]) {
+  return history.filter((m) => m.author === 'externo' || m.author === 'contacto').length;
+}
+
+// Ari puede tirar el rango de precio de motu propio recién cuando ya hubo descubrimiento
+// (varios turnos del contacto), o cuando lo piden textualmente.
+export function priceAllowed(history: HistoryMessage[]) {
+  return priceAsked(history) || contactTurns(history) >= 4;
+}
+
 export function mentionsMoney(reply: string) {
   const flat = normalize(reply);
   if (/(\$|usd|dolares|dolar|colones|crc|₡)/.test(flat)) return true;
