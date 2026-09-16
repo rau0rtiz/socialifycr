@@ -1,0 +1,1 @@
+ALTER TYPE msg_channel ADD VALUE IF NOT EXISTS 'calendly';
