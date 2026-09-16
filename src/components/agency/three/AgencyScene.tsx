@@ -77,7 +77,7 @@ const Scene = ({
         <FloatingShapes still={still} />
 
         {/* Marca de Socialify flotando sobre la escena */}
-        <group position={[-3.15, 3.35, 0.6]} scale={1.15}>
+        <group position={[0.1, 4.15, 1.2]} scale={1.2}>
           <LogoMark still={still} />
         </group>
 
