@@ -7,6 +7,7 @@ import {
   type AgentContext,
   type HistoryMessage,
 } from '../_shared/setter-agent.ts';
+import { buildRollingContext } from '../_shared/conversation-summary.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -60,7 +61,7 @@ Deno.serve(async (req) => {
     if (conversationId) {
       const { data: conv, error: convErr } = await authed
         .from('msg_conversations')
-        .select('id, channel, stage, version, human_takeover_at, contact_id, is_demo')
+        .select('id, channel, stage, version, human_takeover_at, contact_id, is_demo, context_summary, context_summary_at')
         .eq('id', conversationId)
         .maybeSingle();
       if (convErr) return json({ error: convErr.message }, 400);
@@ -148,7 +149,16 @@ Deno.serve(async (req) => {
       offers: offers ?? [],
       bookingUrl: settings?.booking_url ?? 'https://socialifycr.com/agendar',
       contact,
-      history,
+      ...(conversationId
+        ? await buildRollingContext(
+            admin,
+            lovableKey!,
+            conversationId,
+            history,
+            conversation?.context_summary ?? null,
+            conversation?.context_summary_at ?? null,
+          )
+        : { summary: null, history }),
       channel: conversation?.channel ?? 'simulacion',
       stage: conversation?.stage ?? 'nuevo',
       appointments,
