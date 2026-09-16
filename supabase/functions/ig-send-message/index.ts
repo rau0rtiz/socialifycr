@@ -33,6 +33,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => null);
     const conversationId = typeof body?.conversationId === 'string' ? body.conversationId : '';
     const text = typeof body?.text === 'string' ? body.text.trim() : '';
+    const author = body?.author === 'bot' ? 'bot' : 'humano';
     if (!conversationId || !text) return json({ error: 'Falta la conversación o el texto' }, 400);
     if (text.length > 950) return json({ error: 'El mensaje es demasiado largo (máximo 950 caracteres)' }, 400);
 
@@ -74,18 +75,36 @@ Deno.serve(async (req) => {
     }
 
     const nowIso = new Date().toISOString();
-    const { error: msgErr } = await admin.from('msg_messages').insert({
+    const { data: inserted, error: msgErr } = await admin.from('msg_messages').insert({
       conversation_id: conversationId,
       receiving_account_id: identity.receiving_account_id,
       external_message_id: result?.message_id ?? null,
       direction: 'outbound',
-      author: 'humano',
+      author,
       body: text,
       delivery_status: 'enviado',
       sent_by: user.id,
       occurred_at: nowIso,
-    });
+    }).select('id').single();
     if (msgErr) console.error('outbound message insert error', msgErr);
+
+    // Si el mensaje ofrece un enlace de Calendly, lo registramos para atribuir la cita.
+    const linkMatch = text.match(/https?:\/\/(?:www\.)?calendly\.com\/[^\s)]+/i);
+    if (linkMatch) {
+      await admin.from('msg_link_offers').insert({
+        conversation_id: conversationId,
+        message_id: inserted?.id ?? null,
+        url: linkMatch[0],
+        offered_by: author,
+        offered_at: nowIso,
+      });
+      // La etapa avanza a "enlace enviado" si no estaba más adelante.
+      await admin
+        .from('msg_conversations')
+        .update({ stage: 'enlace_enviado' })
+        .eq('id', conversationId)
+        .in('stage', ['nuevo', 'conversando', 'calificado']);
+    }
 
     // Respuesta humana = toma de control: los borradores del bot quedan obsoletos.
     await admin
