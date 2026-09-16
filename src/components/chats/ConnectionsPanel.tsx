@@ -50,19 +50,24 @@ export const ConnectionsPanel = () => {
             {STATUS_LABEL[(instagram?.status ?? 'pendiente') as ConnStatus]}
           </Badge>
         </div>
-        <div className="rounded-xl border border-border/40 bg-background/40 p-4 text-xs text-muted-foreground space-y-2">
-          <p className="flex items-center gap-2 text-foreground">
-            <AlertCircle className="h-3.5 w-3.5 text-amber-400" /> Todavía no hay conexión real. Para habilitarla necesito de tu lado:
-          </p>
-          <ol className="list-decimal space-y-1 pl-5">
-            <li>Una app de Meta con la cuenta profesional de Instagram autorizada.</li>
-            <li>Confirmar la ruta de autenticación (Instagram Login) y los permisos de mensajería.</li>
-            <li>Que yo publique la URL de callback y el webhook de este proyecto, y vos los pegués en Meta.</li>
-            <li>Guardar el identificador y el secreto de la app en el almacén seguro del backend (nunca en el chat).</li>
-            <li>Verificación del negocio y URLs de privacidad y eliminación de datos que Meta exija.</li>
-          </ol>
-          <p>Te doy los valores exactos cuando implementemos la fase 2. Hasta validar la conexión, este canal queda en “Pendiente”.</p>
-        </div>
+        {instagram?.status === 'conectado' ? (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-xs text-muted-foreground space-y-2">
+            <p className="flex items-center gap-2 text-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Conexión activa. Los mensajes directos entran solos al buzón.
+            </p>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>Podés responder desde el buzón y los mensajes salen a Instagram.</li>
+              <li>Ari solo escribe borradores: nunca responde ni agenda por su cuenta.</li>
+              <li>Los audios se derivan a una persona del equipo.</li>
+            </ul>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border/40 bg-background/40 p-4 text-xs text-muted-foreground space-y-2">
+            <p className="flex items-center gap-2 text-foreground">
+              <AlertCircle className="h-3.5 w-3.5 text-amber-400" /> La conexión todavía no está validada. Se activa sola cuando llegue el primer mensaje real a la cuenta.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="agency-card rounded-2xl p-5 space-y-3">
