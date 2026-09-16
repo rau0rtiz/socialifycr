@@ -190,6 +190,7 @@ export interface InboxRow {
   assignee_id: string | null;
   version: number;
   human_takeover_at: string | null;
+  contact_id: string | null;
   msg_contacts: {
     display_name: string | null;
     business_name: string | null;
