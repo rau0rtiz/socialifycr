@@ -329,10 +329,21 @@ const strip = (s: string) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 
-export function runChecks(proposal: Proposal, checks: Checks, historyLength: number) {
+export function runChecks(
+  proposal: Proposal,
+  checks: Checks,
+  historyLength: number,
+  history: HistoryMessage[] = [],
+) {
   const failures: string[] = [];
   const reply = proposal.reply ?? '';
   const flat = strip(reply);
+
+  // Guardarraíl: nunca dar precio si no lo pidieron textualmente.
+  if (history.length && !priceAsked(history) && mentionsMoney(reply)) {
+    failures.push('Dio precio sin que lo pidieran: primero hay que entender el negocio');
+  }
+
 
   if (checks.max_chars && reply.length > checks.max_chars) {
     failures.push(`Respuesta muy larga (${reply.length} caracteres, máximo ${checks.max_chars})`);
