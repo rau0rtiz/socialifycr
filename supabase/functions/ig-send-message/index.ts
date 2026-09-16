@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       external_message_id: result?.message_id ?? null,
       direction: 'outbound',
       author,
-      body: text,
+      body: sentText,
       delivery_status: 'enviado',
       sent_by: user.id,
       occurred_at: nowIso,
@@ -108,12 +108,11 @@ Deno.serve(async (req) => {
     if (msgErr) console.error('outbound message insert error', msgErr);
 
     // Si el mensaje ofrece un enlace de Calendly, lo registramos para atribuir la cita.
-    const linkMatch = text.match(/https?:\/\/(?:www\.)?calendly\.com\/[^\s)]+/i);
-    if (linkMatch) {
+    if (taggedUrl) {
       await admin.from('msg_link_offers').insert({
         conversation_id: conversationId,
         message_id: inserted?.id ?? null,
-        url: linkMatch[0],
+        url: taggedUrl,
         offered_by: author,
         offered_at: nowIso,
       });
