@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     const { data: conv } = await admin
       .from('msg_conversations')
       .select(
-        'id, channel, stage, version, human_takeover_at, contact_id, is_demo, msg_contact_identities!inner(external_id, receiving_account_id)',
+        'id, channel, stage, version, human_takeover_at, contact_id, is_demo, msg_contact_identities!inner(external_id, receiving_account_id, username)',
       )
       .eq('id', conversationId)
       .maybeSingle();
