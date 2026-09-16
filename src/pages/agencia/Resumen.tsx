@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Clapperboard, BarChart3 } from 'lucide-react';
@@ -7,6 +7,7 @@ import { CurrentClientsCard } from '@/components/agency/CurrentClientsCard';
 import { HubRail } from '@/components/agency/HubRail';
 import { AiSwitchesCard } from '@/components/agency/AiSwitchesCard';
 import { useProfile } from '@/components/dashboard/ProfileDialog';
+import { AgencyHero3D } from '@/components/agency/AgencyHero3D';
 
 const greetingForHour = (hour: number) => {
   if (hour < 12) return 'Buenos días';
@@ -14,8 +15,17 @@ const greetingForHour = (hour: number) => {
   return 'Buenas noches';
 };
 
+type ViewMode = 'clasica' | 'tres_d';
+
 const AgencyResumen = () => {
   const { data: profile } = useProfile();
+  const [view, setView] = useState<ViewMode>(
+    () => ((localStorage.getItem('agency-resumen-view') as ViewMode) ?? 'clasica'),
+  );
+
+  useEffect(() => {
+    localStorage.setItem('agency-resumen-view', view);
+  }, [view]);
 
   const greeting = useMemo(() => {
     const hour = parseInt(
@@ -33,7 +43,34 @@ const AgencyResumen = () => {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-[1600px] space-y-5">
-        {/* Hero */}
+        {/* Selector de vista */}
+        <div className="flex justify-end">
+          <div className="inline-flex rounded-full border border-border bg-card p-1">
+            {([
+              ['tres_d', 'Vista 3D'],
+              ['clasica', 'Vista clásica'],
+            ] as Array<[ViewMode, string]>).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setView(value)}
+                aria-pressed={view === value}
+                className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.14em] transition-colors ${
+                  view === value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-primary'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {view === 'tres_d' ? (
+          <AgencyHero3D greeting={greeting} onFallback={() => setView('clasica')} />
+        ) : (
+        /* Hero */
         <section className="agency-card relative overflow-hidden p-6 md:p-8">
           <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
           <div className="relative flex flex-wrap items-end justify-between gap-6">
@@ -64,6 +101,7 @@ const AgencyResumen = () => {
             </div>
           </div>
         </section>
+        )}
 
         {/* Main grid: chart + clientes | rail */}
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
