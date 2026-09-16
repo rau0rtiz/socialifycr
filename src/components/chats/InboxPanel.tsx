@@ -314,7 +314,7 @@ export const InboxPanel = () => {
                       size="icon"
                       className="h-10 w-10 shrink-0"
                       disabled={send.isPending || !text.trim()}
-                      onClick={runSend}
+                      onClick={() => runSend()}
                     >
                       <Send className="h-4 w-4" />
                     </Button>
