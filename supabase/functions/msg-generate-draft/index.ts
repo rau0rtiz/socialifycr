@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
     let conversation: any = null;
     let history: HistoryMessage[] = [];
     let contact: AgentContext['contact'] = null;
+    let appointments: NonNullable<AgentContext['appointments']> = [];
 
     if (conversationId) {
       const { data: conv, error: convErr } = await authed
