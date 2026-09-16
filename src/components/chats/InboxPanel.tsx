@@ -20,6 +20,8 @@ import {
   useSendMessage,
   useUpdateConversation,
   useUpdateDraft,
+  INTAKE_LABELS,
+  type ContactIntake,
   type InboxRow,
   type MsgDraft,
   type Stage,
@@ -632,6 +634,46 @@ const FichaBody = ({
       <MessageCircle className="mt-0.5 h-3 w-3 shrink-0" />
       El bot sigue en modo borrador: nada sale a Instagram sin que vos lo mandés.
     </p>
+  </div>
+);
+
+// Datos del formulario de agenda: completan el perfil del contacto.
+const IntakeSection = ({ contact }: { contact: InboxRow['msg_contacts'] }) => {
+  const intake = (contact?.intake ?? null) as ContactIntake | null;
+  const rows = INTAKE_LABELS
+    .map(({ key, label }) => ({ label, value: (intake?.[key] as string | null | undefined) ?? null }))
+    .filter((r) => !!r.value);
+  const email = contact?.email;
+  const phone = contact?.phone;
+  if (!rows.length && !email && !phone) return null;
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Datos del formulario de agenda
+      </p>
+      <div className="space-y-1">
+        {!rows.some((r) => r.label === 'Correo') && email && (
+          <IntakeRow label="Correo" value={email} />
+        )}
+        {!rows.some((r) => r.label === 'WhatsApp') && phone && (
+          <IntakeRow label="WhatsApp" value={phone} />
+        )}
+        {rows.map((r) => (
+          <IntakeRow
+            key={r.label}
+            label={r.label}
+            value={r.label === 'Instagram' ? `@${String(r.value).replace(/^@/, '')}` : String(r.value)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const IntakeRow = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-lg border border-border/40 bg-background/40 px-2 py-1.5">
+    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+    <p className="break-words text-[11px] text-foreground">{value}</p>
   </div>
 );
 
