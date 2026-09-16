@@ -208,6 +208,13 @@ export const LabPanel = () => {
                     {r.latency_ms} ms{r.usage?.total_tokens ? ` · ${r.usage.total_tokens} tokens` : ''} · acción {r.suggested_action}
                   </p>
                 )}
+                {!r && past && (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    Última corrida: {fmt(past.created_at)}
+                    {past.knowledge_version ? ` · manual v${past.knowledge_version}` : ''}
+                    {past.notes ? ` · ${past.notes}` : ''}
+                  </p>
+                )}
               </div>
             );
           })}
