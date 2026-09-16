@@ -40,6 +40,7 @@ export const LabPanel = () => {
   const { data: pastRuns } = useMsgTestRuns();
   const generate = useGenerateDraft();
   const runTests = useRunTests();
+  const verdict = useSetHumanVerdict();
   const { toast } = useToast();
 
   const [useDraftKnowledge, setUseDraftKnowledge] = useState(true);
