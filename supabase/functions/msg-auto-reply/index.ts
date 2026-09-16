@@ -7,6 +7,7 @@ import {
   type AgentContext,
   type HistoryMessage,
 } from '../_shared/setter-agent.ts';
+import { scheduleFirstFollowup } from '../_shared/followups.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { cancelPendingFollowups } from '../_shared/followups.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
