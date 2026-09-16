@@ -250,6 +250,17 @@ export const useMsgRealtime = (conversationId: string | null) => {
           (payload.old as { conversation_id?: string } | null)?.conversation_id;
         if (convId) qc.invalidateQueries({ queryKey: ['msg-draft', convId] });
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'msg_appointments' }, (payload) => {
+        const convId =
+          (payload.new as { conversation_id?: string } | null)?.conversation_id ??
+          (payload.old as { conversation_id?: string } | null)?.conversation_id;
+        qc.invalidateQueries({ queryKey: ['msg-metrics'] });
+        if (convId) qc.invalidateQueries({ queryKey: ['msg-appointments', convId] });
+        qc.invalidateQueries({ queryKey: ['msg-conversations'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'msg_link_offers' }, () => {
+        qc.invalidateQueries({ queryKey: ['msg-metrics'] });
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(channel);

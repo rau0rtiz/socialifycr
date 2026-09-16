@@ -170,8 +170,10 @@ export const InboxPanel = () => {
   const runSend = (override?: string) => {
     const body = (override ?? text).trim();
     if (!selected || !body) return;
+    const draftText = (draft?.edited_reply || draft?.proposed_reply || '').trim();
+    const fromDraft = !!draft && draft.status !== 'descartado' && body === draftText;
     send.mutate(
-      { conversationId: selected, text: body },
+      { conversationId: selected, text: body, author: fromDraft ? 'bot' : 'humano' },
       {
         onSuccess: () => {
           setText('');
