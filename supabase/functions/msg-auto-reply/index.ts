@@ -8,6 +8,7 @@ import {
   type HistoryMessage,
 } from '../_shared/setter-agent.ts';
 import { scheduleFirstFollowup } from '../_shared/followups.ts';
+import { notifyHumanNeeded } from '../_shared/human-alert.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
