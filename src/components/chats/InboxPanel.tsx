@@ -63,7 +63,7 @@ const displayName = (c: InboxRow) => {
   return null;
 };
 
-const label = (c: InboxRow) => displayName(c) ?? handle(c);
+const displayLabel = (c: InboxRow) => displayName(c) ?? handle(c);
 
 // Línea secundaria: el @usuario cuando ya mostramos el nombre real.
 const subLabel = (c: InboxRow) => {
@@ -117,7 +117,9 @@ export const InboxPanel = () => {
     const list = conversations ?? [];
     const q = search.trim().toLowerCase();
     if (!q) return list;
-    return list.filter((c) => handle(c).toLowerCase().includes(q));
+    return list.filter((c) =>
+      `${displayLabel(c)} ${handle(c)}`.toLowerCase().includes(q),
+    );
   }, [conversations, search]);
 
   // Siempre dejamos un chat abierto.
@@ -237,7 +239,8 @@ export const InboxPanel = () => {
         <div className="flex-1 overflow-y-auto p-2">
           {!filtered.length && <p className="p-3 text-xs text-muted-foreground">Sin resultados.</p>}
           {filtered.map((c) => {
-            const label = handle(c);
+            const nm = displayLabel(c);
+            const sub = subLabel(c);
             const active = selected === c.id;
             return (
               <button
@@ -248,18 +251,18 @@ export const InboxPanel = () => {
                 }`}
               >
                 <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarImage src={c.msg_contacts?.avatar_url ?? undefined} alt={label} />
-                  <AvatarFallback className="text-[11px]">{initials(label)}</AvatarFallback>
+                  <AvatarImage src={c.msg_contacts?.avatar_url ?? undefined} alt={nm} />
+                  <AvatarFallback className="text-[11px]">{initials(nm)}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-[13px] font-medium text-foreground">{label}</span>
+                    <span className="truncate text-[13px] font-medium text-foreground">{nm}</span>
                     {c.unread_count > 0 && (
                       <Badge className="ml-auto h-4 px-1.5 text-[10px]">{c.unread_count}</Badge>
                     )}
                   </div>
                   <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="capitalize">{c.channel}</span>
+                    {sub ? <span className="truncate">{sub}</span> : <span className="capitalize">{c.channel}</span>}
                     <span>·</span>
                     <span className="truncate">{STAGES.find((s) => s.value === c.stage)?.label}</span>
                     {c.last_inbound_at && <span className="ml-auto shrink-0">{shortHour(c.last_inbound_at)}</span>}
@@ -279,14 +282,14 @@ export const InboxPanel = () => {
           <>
             <div className="flex items-center gap-3 border-b border-border/40 p-3">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={activeConv.msg_contacts?.avatar_url ?? undefined} alt={handle(activeConv)} />
-                <AvatarFallback className="text-[11px]">{initials(handle(activeConv))}</AvatarFallback>
+                <AvatarImage src={activeConv.msg_contacts?.avatar_url ?? undefined} alt={displayLabel(activeConv)} />
+                <AvatarFallback className="text-[11px]">{initials(displayLabel(activeConv))}</AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{handle(activeConv)}</p>
+                <p className="truncate text-sm font-semibold text-foreground">{displayLabel(activeConv)}</p>
                 <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
                   <Instagram className="h-3 w-3" />
-                  <span className="capitalize">{activeConv.channel}</span>
+                  <span className="truncate">{subLabel(activeConv) ?? activeConv.channel}</span>
                 </p>
               </div>
               <Button
@@ -402,10 +405,13 @@ export const InboxPanel = () => {
           <div className="space-y-4">
             <div className="flex flex-col items-center gap-2 text-center">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={activeConv.msg_contacts?.avatar_url ?? undefined} alt={handle(activeConv)} />
-                <AvatarFallback>{initials(handle(activeConv))}</AvatarFallback>
+                <AvatarImage src={activeConv.msg_contacts?.avatar_url ?? undefined} alt={displayLabel(activeConv)} />
+                <AvatarFallback>{initials(displayLabel(activeConv))}</AvatarFallback>
               </Avatar>
-              <p className="text-sm font-semibold text-foreground">{handle(activeConv)}</p>
+              <p className="text-sm font-semibold text-foreground">{displayLabel(activeConv)}</p>
+              {subLabel(activeConv) && (
+                <p className="text-[11px] text-muted-foreground">{subLabel(activeConv)}</p>
+              )}
               {activeConv.msg_contacts?.business_name && (
                 <p className="text-[11px] text-muted-foreground">{activeConv.msg_contacts.business_name}</p>
               )}
