@@ -207,6 +207,14 @@ Deno.serve(async (req) => {
     // Si hay que derivar a humano, queda como borrador y NO se envía.
     if (needsHuman) {
       await admin.from('msg_drafts').insert(draftRow);
+      await notifyHumanNeeded({
+        conversationId,
+        contactName: contactRow?.display_name ?? null,
+        handle: identity.username ?? null,
+        reason: needsHumanReason ?? 'Ari pidió revisión humana.',
+        lastMessage: last?.body ?? null,
+        draftReply: p.reply ?? null,
+      });
       return json({ sent: false, reason: 'requiere_revision_humana' });
     }
 
