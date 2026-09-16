@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PayClient, PayDate } from '@/hooks/use-agency-payments';
 import { BillingProfilesEditor } from './BillingProfilesEditor';
+import { PRIVATE_BUCKET, privateRef, usePrivateUrls } from '@/lib/private-storage';
 
 
 export interface SystemClient { id: string; name: string; logo_url: string | null }
