@@ -154,21 +154,34 @@ Deno.serve(async (req) => {
             }
           };
 
+          // Prioridad: nombre real del perfil; si no hay, el @usuario.
+          const preferredName = (profile: { username?: string; name?: string }) =>
+            profile.name ?? (profile.username ? `@${profile.username}` : null);
+
           if (existingIdentity) {
             identityId = existingIdentity.id;
             contactId = existingIdentity.contact_id;
-            // Contactos viejos sin usuario/foto: los completamos.
-            if (!existingIdentity.username) {
+            // Contactos viejos sin usuario/foto/nombre: los completamos.
+            const { data: existingContact } = await admin
+              .from('msg_contacts')
+              .select('display_name')
+              .eq('id', existingIdentity.contact_id)
+              .maybeSingle();
+            const hasRealName =
+              !!existingContact?.display_name && !existingContact.display_name.startsWith('@');
+            if (!existingIdentity.username || !hasRealName) {
               const profile = await fetchProfile();
               if (profile.username || profile.profile_pic || profile.name) {
-                await admin
-                  .from('msg_contact_identities')
-                  .update({ username: profile.username ?? null })
-                  .eq('id', existingIdentity.id);
+                if (!existingIdentity.username && profile.username) {
+                  await admin
+                    .from('msg_contact_identities')
+                    .update({ username: profile.username })
+                    .eq('id', existingIdentity.id);
+                }
                 await admin
                   .from('msg_contacts')
                   .update({
-                    display_name: profile.username ? `@${profile.username}` : (profile.name ?? null),
+                    display_name: preferredName(profile),
                     avatar_url: profile.profile_pic ?? null,
                     profile_url: profile.username ? `https://instagram.com/${profile.username}` : null,
                   })
@@ -178,12 +191,10 @@ Deno.serve(async (req) => {
           } else {
             const profile = await fetchProfile();
 
-
-
             const { data: newContact, error: contactErr } = await admin
               .from('msg_contacts')
               .insert({
-                display_name: profile.username ? `@${profile.username}` : (profile.name ?? null),
+                display_name: preferredName(profile),
                 avatar_url: profile.profile_pic ?? null,
                 profile_url: profile.username ? `https://instagram.com/${profile.username}` : null,
               })
