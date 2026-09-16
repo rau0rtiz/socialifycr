@@ -4541,6 +4541,61 @@ export type Database = {
         }
         Relationships: []
       }
+      msg_link_offers: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          matched_appointment_id: string | null
+          message_id: string | null
+          offered_at: string
+          offered_by: Database["public"]["Enums"]["msg_author"]
+          url: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          matched_appointment_id?: string | null
+          message_id?: string | null
+          offered_at?: string
+          offered_by?: Database["public"]["Enums"]["msg_author"]
+          url: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          matched_appointment_id?: string | null
+          message_id?: string | null
+          offered_at?: string
+          offered_by?: Database["public"]["Enums"]["msg_author"]
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msg_link_offers_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "msg_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "msg_link_offers_matched_appointment_id_fkey"
+            columns: ["matched_appointment_id"]
+            isOneToOne: false
+            referencedRelation: "msg_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "msg_link_offers_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "msg_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       msg_messages: {
         Row: {
           attachments: Json
