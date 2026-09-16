@@ -503,6 +503,24 @@ export const useConversationAppointments = (conversationId: string | null) =>
     staleTime: 60 * 1000,
   });
 
+/** Últimas citas de Calendly, estén o no amarradas a un chat. */
+export const useRecentAppointments = (limit = 15) =>
+  useQuery({
+    queryKey: ['msg-appointments', 'recent', limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('msg_appointments')
+        .select(
+          'id, event_name, invitee_email, invitee_name, starts_at, status, match_source, host_name, host_email, match_confidence, match_reason, match_confirmed_at, conversation_id, created_at',
+        )
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []) as (MsgAppointment & { conversation_id: string | null; created_at: string })[];
+    },
+    staleTime: 30 * 1000,
+  });
+
 /** Confirmar o descartar a mano el cruce de una cita con este chat. */
 export const useConfirmAppointmentMatch = () => {
   const qc = useQueryClient();
