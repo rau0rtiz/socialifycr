@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { cancelPendingFollowups } from '../_shared/followups.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -298,6 +299,16 @@ Deno.serve(async (req) => {
             _conversation_id: conversation.id,
             _occurred_at: occurredAt,
           });
+
+          // La persona respondió: se cancelan los seguimientos pendientes y,
+          // si estaba marcada como no interesada, la conversación revive.
+          await cancelPendingFollowups(admin, conversation.id, 'respondio');
+          await admin
+            .from('msg_conversations')
+            .update({ stage: 'conversando', updated_at: nowIso })
+            .eq('id', conversation.id)
+            .eq('stage', 'no_interesado');
+
 
           // 3. Mensaje (idempotente por mid)
           const { error: msgErr } = await admin.from('msg_messages').upsert(

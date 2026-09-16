@@ -7,6 +7,7 @@ import {
   type AgentContext,
   type HistoryMessage,
 } from '../_shared/setter-agent.ts';
+import { scheduleFirstFollowup } from '../_shared/followups.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -46,7 +47,7 @@ Deno.serve(async (req) => {
     // ─── El interruptor manda: solo responde solo en modo automático ───
     const { data: settings } = await admin
       .from('msg_settings')
-      .select('bot_mode, auto_send_enabled, booking_url, tone_notes')
+      .select('bot_mode, auto_send_enabled, booking_url, tone_notes, followups_enabled, followup_delay_hours')
       .eq('id', true)
       .maybeSingle();
     if (settings?.bot_mode !== 'automatico' || !settings?.auto_send_enabled) {
@@ -288,6 +289,9 @@ Deno.serve(async (req) => {
 
     // El bot responde: no marca control humano.
     await admin.from('msg_conversations').update({ last_outbound_at: nowIso }).eq('id', conversationId);
+
+    // Si la persona no contesta, arranca la cadencia de seguimiento (4 h → 24 h → no interesado).
+    await scheduleFirstFollowup(admin, conv, settings);
 
     return json({ sent: true, message_id: sendResult?.message_id ?? null });
   } catch (err) {
