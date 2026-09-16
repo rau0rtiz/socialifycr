@@ -312,6 +312,21 @@ export const useUpdateConversation = () => {
   });
 };
 
+/** Marca "Ari en pausa" sobre un contacto (do_not_contact). */
+export const useUpdateContactAutomation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ contactId, paused }: { contactId: string; paused: boolean }) => {
+      const { error } = await supabase
+        .from('msg_contacts')
+        .update({ do_not_contact: paused } as never)
+        .eq('id', contactId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['msg-conversations'] }),
+  });
+};
+
 // ---------- Fase 2: borradores del setter ----------
 
 export type DraftStatus = 'pendiente' | 'editado' | 'descartado' | 'obsoleto' | 'enviado';
