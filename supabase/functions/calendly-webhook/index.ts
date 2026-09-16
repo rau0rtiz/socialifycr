@@ -294,44 +294,68 @@ Deno.serve(async (req) => {
           .neq('stage', 'no_interesado');
       }
 
-      // ── Completar el perfil del contacto y su lead en el CRM ────────
-      if (intake && contactId) {
+      // ── Completar el perfil del contacto y pasar su lead a "agendado" ──
+      if (contactId) {
         const { data: contact } = await admin
           .from('msg_contacts')
           .select('id, display_name, email, phone, business_name, intake, crm_lead_id, notes')
           .eq('id', contactId)
           .maybeSingle();
         if (contact) {
-          const merged = { ...(contact.intake ?? {}), ...intake };
+          const intakeMerged = intake ? { ...(contact.intake ?? {}), ...intake } : (contact.intake ?? null);
           await admin
             .from('msg_contacts')
             .update({
-              display_name: contact.display_name ?? intake.nombre ?? null,
-              email: contact.email ?? intake.correo ?? null,
-              phone: contact.phone ?? intake.whatsapp ?? null,
-              intake: merged,
+              display_name: contact.display_name ?? intake?.nombre ?? inviteeName ?? null,
+              email: contact.email ?? intake?.correo ?? inviteeEmail ?? null,
+              phone: contact.phone ?? intake?.whatsapp ?? null,
+              ...(intakeMerged ? { intake: intakeMerged } : {}),
               updated_at: new Date().toISOString(),
             })
             .eq('id', contact.id);
 
-          const notes = intakeToNotes(intake);
-          if (contact.crm_lead_id) {
+          // Si el contacto no tiene lead amarrado, lo buscamos por correo, WhatsApp o nombre.
+          let leadId: string | null = contact.crm_lead_id ?? null;
+          if (!leadId) {
+            const phoneDigits = digitsOnly(intake?.whatsapp ?? contact.phone);
+            const filters: string[] = [];
+            const email = intake?.correo ?? contact.email ?? inviteeEmail;
+            if (email) filters.push(`email.eq.${email}`);
+            if (phoneDigits) filters.push(`phone.ilike.%${phoneDigits.slice(-8)}%`);
+            const name = intake?.nombre ?? contact.display_name ?? inviteeName;
+            if (name) filters.push(`name.ilike.${name}`);
+            if (filters.length) {
+              const { data: found } = await admin
+                .from('agency_crm_leads')
+                .select('id')
+                .or(filters.join(','))
+                .limit(1)
+                .maybeSingle();
+              if (found) {
+                leadId = found.id;
+                await admin.from('msg_contacts').update({ crm_lead_id: leadId }).eq('id', contact.id);
+              }
+            }
+          }
+          if (leadId) {
             const { data: lead } = await admin
               .from('agency_crm_leads')
               .select('id, email, phone, notes, status, intake')
-              .eq('id', contact.crm_lead_id)
+              .eq('id', leadId)
               .maybeSingle();
             if (lead) {
-              const keepNotes = (lead.notes ?? '').includes('— Formulario de agenda —')
-                ? lead.notes
-                : [lead.notes, notes].filter(Boolean).join('\n\n');
+              const notes = intake ? intakeToNotes(intake) : null;
+              const keepNotes =
+                !notes || (lead.notes ?? '').includes('— Formulario de agenda —')
+                  ? lead.notes
+                  : [lead.notes, notes].filter(Boolean).join('\n\n');
               await admin
                 .from('agency_crm_leads')
                 .update({
-                  email: lead.email ?? intake.correo ?? null,
-                  phone: lead.phone ?? intake.whatsapp ?? null,
+                  email: lead.email ?? intake?.correo ?? inviteeEmail ?? null,
+                  phone: lead.phone ?? intake?.whatsapp ?? null,
                   notes: keepNotes,
-                  intake: { ...(lead.intake ?? {}), ...intake },
+                  ...(intake ? { intake: { ...(lead.intake ?? {}), ...intake } } : {}),
                   status: lead.status === 'cliente' || lead.status === 'perdido' ? lead.status : 'agendado',
                   updated_at: new Date().toISOString(),
                 })
