@@ -618,3 +618,41 @@ const FichaBody = ({
     </p>
   </div>
 );
+
+// Citas agendadas vinculadas a esta conversación (llegan desde Calendly).
+const ApptsSection = ({ conversationId }: { conversationId: string }) => {
+  const { data: appts } = useConversationAppointments(conversationId);
+  if (!appts?.length) return null;
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Citas</p>
+      <div className="space-y-1">
+        {appts.map((a) => (
+          <div key={a.id} className="rounded-lg border border-border/40 bg-background/40 px-2 py-1.5">
+            <div className="flex items-center gap-1.5">
+              <CalendarClock className="h-3 w-3 shrink-0 text-primary" />
+              <p className="text-[11px] font-medium text-foreground">{a.event_name ?? 'Cita'}</p>
+            </div>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              {a.starts_at
+                ? new Intl.DateTimeFormat('es-CR', {
+                    timeZone: 'America/Costa_Rica',
+                    day: 'numeric',
+                    month: 'short',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  }).format(new Date(a.starts_at))
+                : 'Sin fecha'}
+              {' · '}
+              {a.status === 'cancelada' ? 'Cancelada' : 'Activa'}
+            </p>
+            {a.invitee_email && <p className="text-[10px] text-muted-foreground">{a.invitee_email}</p>}
+            {a.match_source === 'sin_enlace' && (
+              <p className="text-[10px] text-muted-foreground">Vino directo de Calendly (sin enlace del chat).</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
