@@ -271,6 +271,14 @@ Deno.serve(async (req) => {
         needs_human: true,
         needs_human_reason: `Instagram rechazó el envío automático: ${sendResult?.error?.message ?? 'error desconocido'}`,
       });
+      await notifyHumanNeeded({
+        conversationId,
+        contactName: contactRow?.display_name ?? null,
+        handle: identity.username ?? null,
+        reason: `Instagram rechazó el envío automático: ${sendResult?.error?.message ?? 'error desconocido'}`,
+        lastMessage: last?.body ?? null,
+        draftReply: p.reply ?? null,
+      });
       return json({ sent: false, reason: 'instagram_rechazo', detail: sendResult?.error?.message ?? null });
     }
 
