@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
     if (!created.ok) return json({ error: 'Calendly rechazó la suscripción', details: created.data }, 502);
 
     // Guardar la clave de firma segura (solo backend la lee).
-    await admin.from('channel_secrets').upsert(
+    const saved = await admin.from('channel_secrets').upsert(
       {
         channel: 'calendly',
         external_account_id: 'webhook',
@@ -95,6 +95,10 @@ Deno.serve(async (req) => {
       },
       { onConflict: 'channel,external_account_id' },
     );
+    if (saved.error) {
+      console.error('calendly-setup: no se pudo guardar la clave de firma', saved.error);
+      return json({ error: 'No se pudo guardar la clave de firma', details: saved.error.message }, 500);
+    }
 
     return json({ ok: true, subscription: (created.data as any)?.resource?.uri ?? null });
   } catch (err) {

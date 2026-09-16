@@ -7025,7 +7025,7 @@ export type Database = {
       msg_appt_status: "activa" | "cancelada" | "reprogramada"
       msg_author: "bot" | "humano" | "externo"
       msg_bot_mode: "apagado" | "borrador" | "automatico"
-      msg_channel: "instagram" | "whatsapp" | "messenger"
+      msg_channel: "instagram" | "whatsapp" | "messenger" | "calendly"
       msg_conn_status:
         | "pendiente"
         | "configurando"
@@ -7234,7 +7234,7 @@ export const Constants = {
       msg_appt_status: ["activa", "cancelada", "reprogramada"],
       msg_author: ["bot", "humano", "externo"],
       msg_bot_mode: ["apagado", "borrador", "automatico"],
-      msg_channel: ["instagram", "whatsapp", "messenger"],
+      msg_channel: ["instagram", "whatsapp", "messenger", "calendly"],
       msg_conn_status: [
         "pendiente",
         "configurando",
