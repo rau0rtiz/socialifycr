@@ -648,6 +648,7 @@ export type Database = {
           created_by: string | null
           email: string | null
           id: string
+          intake: Json
           lost_at: string | null
           lost_objection: string | null
           lost_reason: string | null
@@ -673,6 +674,7 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           id?: string
+          intake?: Json
           lost_at?: string | null
           lost_objection?: string | null
           lost_reason?: string | null
@@ -698,6 +700,7 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           id?: string
+          intake?: Json
           lost_at?: string | null
           lost_objection?: string | null
           lost_reason?: string | null
@@ -4124,6 +4127,7 @@ export type Database = {
           match_source: string | null
           raw_payload: Json | null
           rescheduled_from: string | null
+          routing_answers: Json
           routing_form_uri: string | null
           starts_at: string | null
           status: Database["public"]["Enums"]["msg_appt_status"]
@@ -4149,6 +4153,7 @@ export type Database = {
           match_source?: string | null
           raw_payload?: Json | null
           rescheduled_from?: string | null
+          routing_answers?: Json
           routing_form_uri?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["msg_appt_status"]
@@ -4174,6 +4179,7 @@ export type Database = {
           match_source?: string | null
           raw_payload?: Json | null
           rescheduled_from?: string | null
+          routing_answers?: Json
           routing_form_uri?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["msg_appt_status"]
@@ -4254,6 +4260,7 @@ export type Database = {
           do_not_contact: boolean
           email: string | null
           id: string
+          intake: Json
           is_demo: boolean
           notes: string | null
           phone: string | null
@@ -4270,6 +4277,7 @@ export type Database = {
           do_not_contact?: boolean
           email?: string | null
           id?: string
+          intake?: Json
           is_demo?: boolean
           notes?: string | null
           phone?: string | null
@@ -4286,6 +4294,7 @@ export type Database = {
           do_not_contact?: boolean
           email?: string | null
           id?: string
+          intake?: Json
           is_demo?: boolean
           notes?: string | null
           phone?: string | null
