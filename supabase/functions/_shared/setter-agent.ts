@@ -272,6 +272,17 @@ La persona NO preguntó por precio en su último mensaje. En esta respuesta no p
 
 AGENDA
 Enlace para agendar con Lu: ${ctx.bookingUrl}
+${
+    formatAppointments(ctx.appointments)
+      ? `CITAS REGISTRADAS DE ESTE CONTACTO (datos reales del sistema)
+${formatAppointments(ctx.appointments)}
+- Si la persona dice que ya agendó o pregunta si su agenda quedó, confirmale la cita usando exactamente estos datos (día, hora y con quién es) y no le mandés otra vez el enlace.
+- Si los datos de la cita no calzan con lo que la persona dice (otro día, otra hora, otro nombre), no inventés: pedile amablemente que confirme el día y la hora, y marcá needs_human = true.
+- Si la cita aparece cancelada, decilo con naturalidad y ofrecé volver a agendar con el enlace.
+- Si la coincidencia es "baja" o "media", confirmá con una pregunta corta antes de darla por hecha.`
+      : `SIN CITAS REGISTRADAS
+- No hay ninguna cita registrada para este contacto. Si la persona dice que ya agendó, no lo confirmés: decile que lo revisás y marcá needs_human = true. Nunca inventés fechas ni horas.`
+  }
 
 HECHOS
 - Solo extraé hechos que la persona dijo explícitamente, con el índice del mensaje donde lo dijo.
