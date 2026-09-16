@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ChevronDown, Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ChevronDown, Inbox, Search, Sparkle, Send, Instagram, MessageCircle, ExternalLink, Radio, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,12 @@ import {
   type MsgDraft,
   type Stage,
 } from '@/hooks/use-messaging';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { DraftCard } from './DraftCard';
+
+// Alto flexible: ocupa la pantalla disponible en cualquier dispositivo.
+const PANEL_H = 'h-[max(420px,calc(100dvh-280px))]';
 
 const staleReason = (
   draft: MsgDraft,
