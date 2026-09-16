@@ -205,6 +205,28 @@ export const useMsgMessages = (conversationId: string | null) =>
     staleTime: 30 * 1000,
   });
 
+/** Envía un mensaje escrito por una persona del equipo por el canal real. */
+export const useSendMessage = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversationId, text }: { conversationId: string; text: string }) => {
+      const { data, error } = await supabase.functions.invoke('ig-send-message', {
+        body: { conversationId, text },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['msg-messages', vars.conversationId] });
+      qc.invalidateQueries({ queryKey: ['msg-conversations'] });
+      qc.invalidateQueries({ queryKey: ['msg-draft', vars.conversationId] });
+    },
+  });
+};
+
+
+
 // ---------- Fase 2: borradores del setter ----------
 
 export type DraftStatus = 'pendiente' | 'editado' | 'descartado' | 'obsoleto';
