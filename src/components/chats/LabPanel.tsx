@@ -36,6 +36,7 @@ const RESULT_LABEL: Record<string, string> = {
 
 export const LabPanel = () => {
   const { data: cases, isLoading } = useMsgTestCases();
+  const { data: pastRuns } = useMsgTestRuns();
   const generate = useGenerateDraft();
   const runTests = useRunTests();
   const { toast } = useToast();
@@ -88,6 +89,13 @@ export const LabPanel = () => {
   if (isLoading) return <Skeleton className="h-64 w-full rounded-2xl" />;
 
   const resultFor = (id: string) => results?.find((r) => r.test_case_id === id);
+  // Última corrida guardada (persiste aunque recargues la página)
+  const lastRunFor = (id: string) =>
+    (pastRuns ?? []).find((r) => r.test_case_id === id) as
+      | { auto_result: string; notes: string | null; created_at: string; knowledge_version: number | null }
+      | undefined;
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica', dateStyle: 'short', timeStyle: 'short' });
 
   return (
     <div className="space-y-4">
