@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
       history,
       channel: conv.channel,
       stage: conv.stage ?? 'nuevo',
+      appointments: appts ?? [],
     };
 
     const result = await callSetterModel(lovableKey, ctx);
