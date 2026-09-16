@@ -70,9 +70,6 @@ Deno.serve(async (req) => {
 
     // Para guardar usamos el mismo identificador que usa el receptor en vivo.
     const receivingAccountId =
-      (knownIdentities ?? [])
-        .map((r: any) => (r?.receiving_account_id ? String(r.receiving_account_id) : null))
-        .find((id: string | null) => id && id !== String(me?.id ?? '')) ??
       (secret.external_account_id ? String(secret.external_account_id) : null) ??
       (me?.id ? String(me.id) : '');
     if (!receivingAccountId) return json({ error: 'No se pudo identificar la cuenta de Instagram' }, 400);
