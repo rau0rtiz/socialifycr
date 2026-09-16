@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -11,6 +13,7 @@ import {
   useMsgOffers,
   useMsgSettings,
   usePublishKnowledge,
+  useSaveKnowledgeDraft,
   useUpdateMsgSettings,
   type BotMode,
 } from '@/hooks/use-messaging';
@@ -28,13 +31,30 @@ export const SettingsPanel = () => {
   const { data: knowledge } = useMsgKnowledge();
   const update = useUpdateMsgSettings();
   const publish = usePublishKnowledge();
+  const saveDraft = useSaveKnowledgeDraft();
   const { canManage } = useUserRole();
   const { toast } = useToast();
+
+  const [editing, setEditing] = useState(false);
+  const [manual, setManual] = useState('');
+  const [tone, setTone] = useState('');
+  const [rules, setRules] = useState('');
+
+  const latest = knowledge?.[0];
+  const currentRules = Array.isArray(latest?.rules) ? (latest.rules as string[]) : [];
+
+  const startEditing = () => {
+    setManual(latest?.manual ?? '');
+    setTone(latest?.tone_notes ?? '');
+    setRules(currentRules.join('\n'));
+    setEditing(true);
+  };
 
   const save = (patch: Parameters<typeof update.mutate>[0]) =>
     update.mutate(patch, {
       onError: (e) => toast({ title: 'No se pudo guardar', description: (e as Error).message, variant: 'destructive' }),
     });
+
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-2xl" />;
 
@@ -124,19 +144,24 @@ export const SettingsPanel = () => {
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-foreground">Manual comercial</p>
-            <p className="text-xs text-muted-foreground">Versión {knowledge?.[0]?.version ?? '—'}</p>
+            <p className="text-xs text-muted-foreground">Versión {latest?.version ?? '—'}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className={knowledge?.[0]?.is_published ? offerBadge('publicado') : offerBadge('pendiente')}>
-              {knowledge?.[0]?.is_published ? 'Publicado' : 'Borrador'}
+            <Badge variant="outline" className={latest?.is_published ? offerBadge('publicado') : offerBadge('pendiente')}>
+              {latest?.is_published ? 'Publicado' : 'Borrador'}
             </Badge>
-            {canManage && knowledge?.[0] && !knowledge[0].is_published && (
+            {canManage && !editing && (
+              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={startEditing}>
+                Editar
+              </Button>
+            )}
+            {canManage && latest && !latest.is_published && !editing && (
               <Button
                 size="sm"
                 className="h-8 text-xs"
                 disabled={publish.isPending}
                 onClick={() =>
-                  publish.mutate(knowledge[0].version, {
+                  publish.mutate(latest.version, {
                     onSuccess: () => toast({ title: 'Manual publicado', description: 'El setter ya puede usarlo en conversaciones reales.' }),
                     onError: (e) => toast({ title: 'No se pudo publicar', description: (e as Error).message, variant: 'destructive' }),
                   })
@@ -150,9 +175,88 @@ export const SettingsPanel = () => {
         <p className="text-[11px] text-muted-foreground">
           En conversaciones reales el setter solo usa una versión publicada. En el laboratorio podés probar el borrador.
         </p>
-        <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-xl border border-border/40 bg-background/40 p-4 text-xs text-muted-foreground">
-{knowledge?.[0]?.manual ?? 'Sin manual cargado.'}
-        </pre>
+
+        {editing ? (
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Manual (cómo vende Socialify)</Label>
+              <Textarea
+                value={manual}
+                onChange={(e) => setManual(e.target.value)}
+                className="min-h-[240px] font-mono text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Notas de tono</Label>
+              <Textarea
+                value={tone}
+                onChange={(e) => setTone(e.target.value)}
+                className="min-h-[70px] text-xs"
+                placeholder="Voseo costarricense, cálido y directo."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Reglas de conversación (una por línea)</Label>
+              <Textarea
+                value={rules}
+                onChange={(e) => setRules(e.target.value)}
+                className="min-h-[140px] text-xs"
+                placeholder="El precio solo se menciona si preguntan textualmente por precio."
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Cada línea se le entrega al setter como regla obligatoria.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                disabled={saveDraft.isPending || !manual.trim()}
+                onClick={() =>
+                  saveDraft.mutate(
+                    {
+                      manual,
+                      toneNotes: tone.trim(),
+                      rules: rules.split('\n').map((r) => r.trim()).filter(Boolean),
+                    },
+                    {
+                      onSuccess: (version) => {
+                        setEditing(false);
+                        toast({
+                          title: `Versión ${version} guardada en borrador`,
+                          description: 'Probala en el Laboratorio y después publicala.',
+                        });
+                      },
+                      onError: (e) =>
+                        toast({ title: 'No se pudo guardar', description: (e as Error).message, variant: 'destructive' }),
+                    },
+                  )
+                }
+              >
+                Guardar como borrador
+              </Button>
+              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setEditing(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-xl border border-border/40 bg-background/40 p-4 text-xs text-muted-foreground">
+{latest?.manual ?? 'Sin manual cargado.'}
+            </pre>
+            {!!currentRules.length && (
+              <div className="space-y-1 rounded-xl border border-border/40 bg-background/40 p-4">
+                <p className="text-xs font-semibold text-foreground">Reglas de conversación</p>
+                <ul className="list-disc space-y-1 pl-4 text-[11px] text-muted-foreground">
+                  {currentRules.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

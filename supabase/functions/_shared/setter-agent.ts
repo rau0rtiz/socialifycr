@@ -18,6 +18,7 @@ export type OfferRow = {
 export type AgentContext = {
   manual: string;
   toneNotes?: string | null;
+  rules?: string[] | null;
   examples?: unknown;
   offers: OfferRow[];
   bookingUrl: string;
@@ -127,6 +128,44 @@ const PROPOSAL_SCHEMA = {
   },
 } as const;
 
+// Detecta si la persona pidió precio textualmente en su último mensaje.
+const PRICE_PATTERNS = [
+  /\bprecio/i,
+  /\bprecios/i,
+  /cuanto (cuesta|vale|sale|es)/i,
+  /\bcosto/i,
+  /\bcuesta/i,
+  /\btarifa/i,
+  /\bpresupuesto/i,
+  /\binversion\b/i,
+  /\bcotiza/i,
+  /\bmensualidad/i,
+  /\bfee\b/i,
+  /\bvalor\b/i,
+  /\bcobr/i,
+  /\bpagar\b/i,
+  /\bpaquetes? cuesta/i,
+];
+
+const normalize = (s: string) =>
+  (s ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+export function priceAsked(history: HistoryMessage[]) {
+  const lastFromContact = [...history].reverse().find((m) => m.author === 'externo' || m.author === 'contacto');
+  const body = normalize(lastFromContact?.body ?? '');
+  if (!body) return false;
+  return PRICE_PATTERNS.some((re) => re.test(body));
+}
+
+export function mentionsMoney(reply: string) {
+  const flat = normalize(reply);
+  if (/(\$|usd|dolares|dolar|colones|crc|₡)/.test(flat)) return true;
+  return /\b1[.,]?200\b|\b500\b/.test(flat);
+}
+
 function formatOffers(offers: OfferRow[]) {
   if (!offers.length) return 'No hay precios publicados. No mencionés ningún monto.';
   return offers
@@ -140,6 +179,9 @@ function formatOffers(offers: OfferRow[]) {
 }
 
 export function buildSystemPrompt(ctx: AgentContext) {
+  const askedPrice = priceAsked(ctx.history);
+  const customRules = (ctx.rules ?? []).filter((r) => typeof r === 'string' && r.trim().length);
+
   return `${ctx.manual}
 
 TONO
@@ -156,10 +198,23 @@ REGLAS DE CONVERSACIÓN (obligatorias)
 - Si pide no ser contactada, suggested_action = marcar_no_contactar y no hagás preguntas.
 - Producción audiovisual (videos sueltos, sesiones) es un flujo separado: no la mezclés con marketing mensual ni des precios de marketing.
 - Si el mensaje es un audio o adjunto sin transcripción, no inventés su contenido.
+${customRules.length ? customRules.map((r) => `- ${r}`).join('\n') : ''}
 
-PRECIOS VIGENTES (los únicos que podés mencionar)
+DESCUBRIMIENTO PRIMERO
+- Tu trabajo inicial es entender el negocio: a qué se dedica, qué vende, qué está haciendo hoy y qué quiere lograr.
+- El precio NO se ofrece por iniciativa propia. Solo lo decís si la persona lo pide textualmente (precio, cuánto cuesta, costo, tarifas, presupuesto, cotización, inversión).
+- Preguntas como "¿qué paquetes tienen?", "me interesa", "mandame info" NO son pedidos de precio: explicá el enfoque en una o dos oraciones y hacé una sola pregunta de descubrimiento, sin ningún monto, sin "desde", sin rangos.
+- Cuando sí piden precio, respondelo directo y completo, sin rodeos.
+
+${
+    askedPrice
+      ? `PRECIOS VIGENTES (la persona SÍ preguntó por precio: podés mencionarlos)
 ${formatOffers(ctx.offers)}
-Marketing arranca desde USD 1.200 + IVA. La pauta es aparte, desde USD 500 por plataforma utilizada, pagada directo a la plataforma. Cualquier otro monto NO existe: no lo mencionés ni lo insinués.
+Marketing arranca desde USD 1.200 + IVA. La pauta es aparte, desde USD 500 por plataforma utilizada, pagada directo a la plataforma. Cualquier otro monto NO existe: no lo mencionés ni lo insinués.`
+      : `PRECIOS (referencia interna — PROHIBIDO mencionarlos en este turno)
+${formatOffers(ctx.offers)}
+La persona NO preguntó por precio en su último mensaje. En esta respuesta no podés incluir ningún monto, moneda, cifra, rango ni frase tipo "arranca desde". Si mencionás un monto, la respuesta está mal.`
+  }
 
 AGENDA
 Enlace para agendar con Lu: ${ctx.bookingUrl}
@@ -277,10 +332,21 @@ const strip = (s: string) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 
-export function runChecks(proposal: Proposal, checks: Checks, historyLength: number) {
+export function runChecks(
+  proposal: Proposal,
+  checks: Checks,
+  historyLength: number,
+  history: HistoryMessage[] = [],
+) {
   const failures: string[] = [];
   const reply = proposal.reply ?? '';
   const flat = strip(reply);
+
+  // Guardarraíl: nunca dar precio si no lo pidieron textualmente.
+  if (history.length && !priceAsked(history) && mentionsMoney(reply)) {
+    failures.push('Dio precio sin que lo pidieran: primero hay que entender el negocio');
+  }
+
 
   if (checks.max_chars && reply.length > checks.max_chars) {
     failures.push(`Respuesta muy larga (${reply.length} caracteres, máximo ${checks.max_chars})`);

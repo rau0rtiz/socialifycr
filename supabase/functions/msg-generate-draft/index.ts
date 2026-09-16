@@ -1,5 +1,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { callSetterModel, type AgentContext, type HistoryMessage } from '../_shared/setter-agent.ts';
+import {
+  callSetterModel,
+  mentionsMoney,
+  priceAsked,
+  type AgentContext,
+  type HistoryMessage,
+} from '../_shared/setter-agent.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -90,7 +96,7 @@ Deno.serve(async (req) => {
     if (isSimulation && useDraftKnowledge) {
       const { data } = await admin
         .from('msg_knowledge_versions')
-        .select('version, manual, tone_notes, examples, is_published')
+        .select('version, manual, tone_notes, rules, examples, is_published')
         .order('version', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -98,7 +104,7 @@ Deno.serve(async (req) => {
     } else {
       const { data } = await admin
         .from('msg_knowledge_versions')
-        .select('version, manual, tone_notes, examples, is_published')
+        .select('version, manual, tone_notes, rules, examples, is_published')
         .eq('is_published', true)
         .order('version', { ascending: false })
         .limit(1)
@@ -126,6 +132,7 @@ Deno.serve(async (req) => {
     const ctx: AgentContext = {
       manual: knowledge.manual,
       toneNotes: settings?.tone_notes ?? knowledge.tone_notes,
+      rules: Array.isArray(knowledge.rules) ? knowledge.rules : [],
       examples: knowledge.examples,
       offers: offers ?? [],
       bookingUrl: settings?.booking_url ?? 'https://socialifycr.com/agendar',
@@ -183,6 +190,14 @@ Deno.serve(async (req) => {
     }
 
     const p = result.proposal;
+
+    // Guardarraíl: si nadie preguntó por precio y la respuesta trae montos, exige revisión humana.
+    const priceLeak = history.length > 0 && !priceAsked(history) && mentionsMoney(p.reply ?? '');
+    const needsHuman = Boolean(p.needs_human) || priceLeak;
+    const needsHumanReason = priceLeak
+      ? 'Dio precio sin que lo pidieran. Revisá la respuesta: primero hay que entender el negocio.'
+      : (p.needs_human_reason ?? null);
+
     const { data: draft, error: draftErr } = await admin
       .from('msg_drafts')
       .insert({
@@ -195,8 +210,8 @@ Deno.serve(async (req) => {
         facts: p.facts ?? [],
         fit_signals: { fit: p.fit, ...(p.fit_signals ?? {}) },
         suggested_action: p.suggested_action ?? 'responder',
-        needs_human: Boolean(p.needs_human),
-        needs_human_reason: p.needs_human_reason ?? null,
+        needs_human: needsHuman,
+        needs_human_reason: needsHumanReason,
         model: result.model,
         knowledge_version: knowledge.version,
         knowledge_is_draft: !knowledge.is_published,
@@ -205,7 +220,7 @@ Deno.serve(async (req) => {
         conversation_version: conversation?.version ?? null,
         offers_fingerprint: (fingerprint as string) ?? null,
         human_takeover_at: conversation?.human_takeover_at ?? null,
-        validations: {},
+        validations: priceLeak ? { price_leak: true } : {},
         created_by: userId,
       })
       .select('*')

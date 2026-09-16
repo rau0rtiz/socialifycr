@@ -4437,6 +4437,7 @@ export type Database = {
           id: string
           is_published: boolean
           manual: string
+          rules: Json
           tone_notes: string | null
           updated_at: string
           version: number
@@ -4448,6 +4449,7 @@ export type Database = {
           id?: string
           is_published?: boolean
           manual: string
+          rules?: Json
           tone_notes?: string | null
           updated_at?: string
           version: number
@@ -4459,6 +4461,7 @@ export type Database = {
           id?: string
           is_published?: boolean
           manual?: string
+          rules?: Json
           tone_notes?: string | null
           updated_at?: string
           version?: number
@@ -6821,6 +6824,10 @@ export type Database = {
       }
       msg_offers_fingerprint: { Args: never; Returns: string }
       msg_publish_knowledge: { Args: { p_version: number }; Returns: undefined }
+      msg_save_knowledge_draft: {
+        Args: { p_manual: string; p_rules: Json; p_tone_notes: string }
+        Returns: number
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
