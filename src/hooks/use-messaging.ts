@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -226,6 +227,47 @@ export const useSendMessage = () => {
 };
 
 
+
+/** Escucha en vivo: mensajes, conversaciones y borradores se refrescan sin recargar. */
+export const useMsgRealtime = (conversationId: string | null) => {
+  const qc = useQueryClient();
+  useEffect(() => {
+    const channel = supabase
+      .channel('chats-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'msg_messages' }, (payload) => {
+        const convId =
+          (payload.new as { conversation_id?: string } | null)?.conversation_id ??
+          (payload.old as { conversation_id?: string } | null)?.conversation_id;
+        if (convId) qc.invalidateQueries({ queryKey: ['msg-messages', convId] });
+        qc.invalidateQueries({ queryKey: ['msg-conversations'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'msg_conversations' }, () => {
+        qc.invalidateQueries({ queryKey: ['msg-conversations'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'msg_drafts' }, (payload) => {
+        const convId =
+          (payload.new as { conversation_id?: string } | null)?.conversation_id ??
+          (payload.old as { conversation_id?: string } | null)?.conversation_id;
+        if (convId) qc.invalidateQueries({ queryKey: ['msg-draft', convId] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc, conversationId]);
+};
+
+/** Cambios manuales sobre la conversación (etapa, leídos). */
+export const useUpdateConversation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<{ stage: Stage; unread_count: number }> }) => {
+      const { error } = await supabase.from('msg_conversations').update(patch as never).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['msg-conversations'] }),
+  });
+};
 
 // ---------- Fase 2: borradores del setter ----------
 
