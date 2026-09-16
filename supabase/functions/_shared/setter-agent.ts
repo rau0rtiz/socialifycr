@@ -18,6 +18,7 @@ export type OfferRow = {
 export type AgentContext = {
   manual: string;
   toneNotes?: string | null;
+  rules?: string[] | null;
   examples?: unknown;
   offers: OfferRow[];
   bookingUrl: string;
@@ -126,6 +127,43 @@ const PROPOSAL_SCHEMA = {
     },
   },
 } as const;
+
+// Detecta si la persona pidió precio textualmente en su último mensaje.
+const PRICE_PATTERNS = [
+  /\bprecio/i,
+  /\bprecios/i,
+  /cuanto (cuesta|vale|sale|es)/i,
+  /\bcosto/i,
+  /\bcuesta/i,
+  /\btarifa/i,
+  /\bpresupuesto/i,
+  /\binversion\b/i,
+  /\bcotiza/i,
+  /\bmensualidad/i,
+  /\bfee\b/i,
+  /\bvalor\b/i,
+];
+
+const normalize = (s: string) =>
+  (s ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+export function priceAsked(history: HistoryMessage[]) {
+  const lastFromContact = [...history].reverse().find((m) => m.author === 'externo' || m.author === 'contacto');
+  const body = normalize(lastFromContact?.body ?? '');
+  if (!body) return false;
+  return PRICE_PATTERNS.some((re) => re.test(body));
+}
+
+const MONEY_RE = /(\$|usd|dolar|colones|crc|₡)|\b\d{3,4}(?:[.,]\d{3})?\s*(?:\+?\s*iva)?\b/i;
+
+export function mentionsMoney(reply: string) {
+  const flat = normalize(reply);
+  if (/(\$|usd|dolares|dolar|colones|crc|₡)/.test(flat)) return true;
+  return /\b1[.,]?200\b|\b500\b/.test(flat);
+}
 
 function formatOffers(offers: OfferRow[]) {
   if (!offers.length) return 'No hay precios publicados. No mencionés ningún monto.';
