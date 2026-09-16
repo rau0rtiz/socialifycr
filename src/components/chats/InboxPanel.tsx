@@ -216,7 +216,11 @@ export const InboxPanel = () => {
   return (
     <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)_280px]">
       {/* Columna 1: conversaciones */}
-      <div className="agency-card flex h-[620px] flex-col rounded-2xl">
+      <div
+        className={`agency-card ${PANEL_H} flex-col rounded-2xl ${
+          mobileView === 'chat' ? 'hidden lg:flex' : 'flex'
+        }`}
+      >
         <div className="space-y-2 border-b border-border/40 p-3">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -260,7 +264,7 @@ export const InboxPanel = () => {
             return (
               <button
                 key={c.id}
-                onClick={() => { setSelected(c.id); setText(''); }}
+                onClick={() => { setSelected(c.id); setText(''); setMobileView('chat'); }}
                 className={`mb-1 flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition ${
                   active ? 'bg-primary/10 ring-1 ring-primary/40' : 'hover:bg-muted/40'
                 }`}
@@ -290,7 +294,11 @@ export const InboxPanel = () => {
       </div>
 
       {/* Columna 2: chat */}
-      <div className="agency-card flex h-[620px] flex-col rounded-2xl">
+      <div
+        className={`agency-card ${PANEL_H} flex-col rounded-2xl ${
+          mobileView === 'list' ? 'hidden lg:flex' : 'flex'
+        }`}
+      >
         {!activeConv ? (
           <p className="p-4 text-xs text-muted-foreground">Elegí una conversación.</p>
         ) : (
