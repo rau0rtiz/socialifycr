@@ -226,6 +226,15 @@ const WalkingPerson = ({ config, still }: { config: WalkerConfig; still: boolean
   const rightArm = useRef<THREE.Group>(null);
   const leftLeg = useRef<THREE.Group>(null);
   const rightLeg = useRef<THREE.Group>(null);
+  const initialPosition: [number, number, number] = [
+    config.center[0] + Math.cos(config.phase) * config.radius[0],
+    0,
+    config.center[1] + Math.sin(config.phase) * config.radius[1],
+  ];
+  const initialRotation = Math.atan2(
+    -Math.sin(config.phase) * config.radius[0] * config.direction,
+    Math.cos(config.phase) * config.radius[1] * config.direction,
+  );
 
   useFrame((state, rawDelta) => {
     const dt = Math.min(rawDelta, 0.05);
@@ -271,7 +280,7 @@ const WalkingPerson = ({ config, still }: { config: WalkerConfig; still: boolean
   });
 
   return (
-    <group ref={root} scale={config.height}>
+    <group ref={root} position={initialPosition} rotation={[0, initialRotation, 0]} scale={config.height}>
       <group ref={body}>
         <Person
           member={config.member}
@@ -288,23 +297,23 @@ const WalkingPerson = ({ config, still }: { config: WalkerConfig; still: boolean
 
 const WALKERS: WalkerConfig[] = [
   {
-    member: 'lu', height: 0.72, center: [-1.35, 1.85], radius: [1.3, 0.48], speed: 0.19, phase: 0.5, direction: 1,
+    member: 'lu', height: 0.34, center: [-4.05, 1.15], radius: [0.38, 0.3], speed: 0.19, phase: 0.5, direction: 1,
     palette: { skin: '#d9a27f', top: '#d96a49', bottom: '#252323', shoes: '#eee8df', hair: '#d4b368', hairRoot: '#6f4937' },
   },
   {
-    member: 'ale', height: 0.63, center: [1.8, 2.3], radius: [1.15, 0.4], speed: 0.23, phase: 2.5, direction: -1,
+    member: 'ale', height: 0.28, center: [-3.85, -1.45], radius: [0.34, 0.26], speed: 0.23, phase: 2.5, direction: -1,
     palette: { skin: '#c98967', top: '#cf476d', bottom: '#2a9d8f', shoes: '#f0b83f', hair: '#d4b368', hairRoot: '#73503a', accent: '#f0b83f' },
   },
   {
-    member: 'naty', height: 0.74, center: [2.0, -1.65], radius: [1.15, 0.42], speed: 0.17, phase: 4.1, direction: 1,
+    member: 'naty', height: 0.35, center: [3.95, -1.4], radius: [0.38, 0.28], speed: 0.17, phase: 4.1, direction: 1,
     palette: { skin: '#bd7f62', top: '#5b766d', bottom: '#252323', shoes: '#c4b9aa', hair: '#513526' },
   },
   {
-    member: 'elena', height: 0.64, center: [-2.35, -1.45], radius: [1.0, 0.5], speed: 0.21, phase: 5.4, direction: -1,
+    member: 'elena', height: 0.29, center: [4.0, 1.55], radius: [0.34, 0.27], speed: 0.21, phase: 5.4, direction: -1,
     palette: { skin: '#a96f52', top: '#bc6c83', bottom: '#3e4542', shoes: '#e1d4c5', hair: '#3a241d' },
   },
   {
-    member: 'raul', height: 0.79, center: [0.15, 2.75], radius: [1.55, 0.35], speed: 0.16, phase: 3.4, direction: 1,
+    member: 'raul', height: 0.38, center: [-0.45, -2.25], radius: [0.55, 0.24], speed: 0.16, phase: 3.4, direction: 1,
     palette: { skin: '#bd805f', top: '#191817', bottom: '#151414', shoes: '#242221', hair: '#161413', accent: COL.orange },
   },
 ];
