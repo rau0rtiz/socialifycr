@@ -398,15 +398,15 @@ export const FloatingShapes = ({ still }: { still: boolean }) => {
     });
   });
   const items: Array<{ p: [number, number, number]; s: number; kind: 'ico' | 'tetra' | 'sphere' }> = [
-    { p: [0.4, 4.5, -0.4], s: 0.62, kind: 'ico' },
-    { p: [3.1, 1.5, 0.9], s: 0.6, kind: 'tetra' },
-    { p: [-2.1, 3.6, 0.6], s: 0.3, kind: 'tetra' },
+    { p: [0.4, 4.9, -0.4], s: 0.62, kind: 'ico' },
+    { p: [3.7, 2.35, -0.5], s: 0.38, kind: 'tetra' },
+    { p: [-2.8, 3.35, 0.2], s: 0.3, kind: 'tetra' },
     { p: [2.5, 3.4, -0.2], s: 0.26, kind: 'tetra' },
-    { p: [-1.2, 2.6, 1.3], s: 0.18, kind: 'tetra' },
+    { p: [-2.7, 2.55, -0.55], s: 0.18, kind: 'tetra' },
     { p: [1.7, 2.7, 1.1], s: 0.15, kind: 'tetra' },
     { p: [3.4, 2.6, 0.2], s: 0.14, kind: 'tetra' },
     { p: [-0.6, 3.1, 1.5], s: 0.12, kind: 'tetra' },
-    { p: [1.2, 4.1, 0.8], s: 0.1, kind: 'tetra' },
+    { p: [1.2, 4.45, 0.8], s: 0.1, kind: 'tetra' },
   ];
   return (
     <group ref={g}>
@@ -432,7 +432,7 @@ export const FloatingShapes = ({ still }: { still: boolean }) => {
   );
 };
 
-/** Esfera mate clara del frente + cuadros tipo polaroid con contenido. */
+/** Volúmenes decorativos apoyados, separados de los objetos interactivos. */
 export const PropsCluster = () => (
   <group>
     {/* Esfera grande de piedra, facetada fina */}
@@ -440,50 +440,10 @@ export const PropsCluster = () => (
       <icosahedronGeometry args={[0.62, 2]} />
       <meshStandardMaterial {...matte(COL.stone, { roughness: 0.95 })} />
     </mesh>
-    {/* Cuadro grande: foto con sol y montaña */}
-    <group position={[-1.5, 1.25, 1.2]} rotation={[0, 0.4, -0.06]}>
-      <RoundedBox args={[1.05, 1.05, 0.08]} radius={0.03} smoothness={2} castShadow>
-        <meshStandardMaterial {...matte(COL.stone, { roughness: 0.95 })} />
-      </RoundedBox>
-      <mesh position={[0, 0.03, 0.05]}>
-        <planeGeometry args={[0.85, 0.72]} />
-        <meshStandardMaterial {...matte('#3a3532')} />
-      </mesh>
-      <mesh position={[-0.12, -0.14, 0.06]}>
-        <coneGeometry args={[0.22, 0.34, 4]} />
-        <meshStandardMaterial {...matte(COL.stone, { roughness: 0.8 })} />
-      </mesh>
-      <mesh position={[0.08, -0.18, 0.06]}>
-        <coneGeometry args={[0.16, 0.24, 4]} />
-        <meshStandardMaterial {...matte('#b8b0a4')} />
-      </mesh>
-      <mesh position={[0.2, 0.18, 0.06]}>
-        <circleGeometry args={[0.09, 12]} />
-        <meshStandardMaterial {...matte(COL.stone)} />
-      </mesh>
-    </group>
-    {/* Cuadro chico: botón de play */}
-    <group position={[-0.5, 1.17, 1.35]} rotation={[0, -0.15, 0.04]}>
-      <RoundedBox args={[0.9, 0.9, 0.08]} radius={0.03} smoothness={2} castShadow>
-        <meshStandardMaterial {...matte(COL.carbonLight)} />
-      </RoundedBox>
-      <mesh position={[0, 0, 0.06]}>
-        <planeGeometry args={[0.72, 0.72]} />
-        <meshStandardMaterial {...matte(COL.carbonMid)} />
-      </mesh>
-      <mesh position={[0.05, 0, 0.07]} rotation={[0, 0, -Math.PI / 2]}>
-        <coneGeometry args={[0.2, 0.3, 3]} />
-        <meshStandardMaterial {...matte(COL.orange)} />
-      </mesh>
-    </group>
     {/* Pirámide naranja facetada de la derecha */}
     <mesh position={[2.9, 1.625, 0.9]} castShadow receiveShadow>
       <coneGeometry args={[0.52, 1.15, 4]} />
       <meshStandardMaterial {...matte(COL.orange)} />
-    </mesh>
-    <mesh position={[2.35, 1.36, 1.45]} rotation={[0, 0.6, 0]} castShadow>
-      <tetrahedronGeometry args={[0.3, 0]} />
-      <meshStandardMaterial {...matte(COL.orangeDeep)} />
     </mesh>
   </group>
 );
