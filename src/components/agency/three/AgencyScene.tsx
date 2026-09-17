@@ -13,6 +13,7 @@ import {
   Platforms,
   PropsCluster,
 } from './objects';
+import { TeamWalkers } from './TeamWalkers';
 
 export type HotspotId = 'camara' | 'computadora' | 'megafono';
 
@@ -75,6 +76,7 @@ const Scene = ({
         <Platforms />
         <PropsCluster />
         <FloatingShapes still={still} />
+         <TeamWalkers still={still} />
 
         {/* Marca de Socialify flotando sobre la escena */}
         <group position={[-2.15, 4.35, 1.6]} scale={1.25}>
