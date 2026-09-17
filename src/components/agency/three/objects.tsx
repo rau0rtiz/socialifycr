@@ -81,8 +81,8 @@ export const Platforms = () => (
       [0, 0.35, 0, 6.4, 0.7, 3.4],
       [-1.5, 1.05, -0.2, 2.6, 0.7, 2.4],
       [1.6, 0.95, 0.1, 2.4, 0.5, 2.2],
-      [0.2, 1.65, -0.6, 2.2, 0.5, 1.6],
-      [2.6, 0.875, 0.9, 1.6, 0.35, 1.4],
+      [0.9, 1.45, -0.6, 1.8, 0.5, 1.4],
+      [3, 0.875, 1.45, 1, 0.35, 0.5],
     ] as Array<[number, number, number, number, number, number]>).map(
       ([x, y, z, w, h, d], i) => (
         <RoundedBox
@@ -101,7 +101,7 @@ export const Platforms = () => (
     {/* Peldaños frontales como en la referencia */}
     {([
       [0.6, 0.12, 2.5, 3.2, 0.24, 0.8],
-      [0.9, 0.34, 2.9, 2.4, 0.22, 0.6],
+      [0.9, 0.35, 2.72, 2.4, 0.22, 0.5],
     ] as Array<[number, number, number, number, number, number]>).map(([x, y, z, w, h, d], i) => (
       <RoundedBox
         key={`step-${i}`}
@@ -441,7 +441,7 @@ export const PropsCluster = () => (
       <meshStandardMaterial {...matte(COL.stone, { roughness: 0.95 })} />
     </mesh>
     {/* Pirámide naranja facetada de la derecha */}
-    <mesh position={[2.9, 1.625, 0.9]} castShadow receiveShadow>
+    <mesh position={[3, 1.625, 1.45]} castShadow receiveShadow>
       <coneGeometry args={[0.52, 1.15, 4]} />
       <meshStandardMaterial {...matte(COL.orange)} />
     </mesh>

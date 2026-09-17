@@ -93,7 +93,7 @@ const Scene = ({
         </Hotspot>
 
         <Hotspot
-          position={[1.4, 2.05, -0.5]}
+          position={[0.9, 1.85, -0.5]}
           hovered={hovered === 'computadora'}
           onHover={(v) => onHover(v ? 'computadora' : null)}
           onActivate={() => onActivate('computadora')}
@@ -102,7 +102,7 @@ const Scene = ({
         </Hotspot>
 
         <Hotspot
-          position={[1.35, 1.05, 2]}
+          position={[1.35, 1.37, 2.3]}
           hovered={hovered === 'megafono'}
           onHover={(v) => onHover(v ? 'megafono' : null)}
           onActivate={() => onActivate('megafono')}
