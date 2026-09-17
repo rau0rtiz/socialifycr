@@ -81,8 +81,8 @@ export const Platforms = () => (
       [0, 0.35, 0, 6.4, 0.7, 3.4],
       [-1.5, 1.05, -0.2, 2.6, 0.7, 2.4],
       [1.6, 0.95, 0.1, 2.4, 0.5, 2.2],
-      [0.2, 1.55, -0.6, 2.2, 0.5, 1.6],
-      [2.6, 0.55, 0.9, 1.6, 0.35, 1.4],
+      [0.2, 1.65, -0.6, 2.2, 0.5, 1.6],
+      [2.6, 0.875, 0.9, 1.6, 0.35, 1.4],
     ] as Array<[number, number, number, number, number, number]>).map(
       ([x, y, z, w, h, d], i) => (
         <RoundedBox
@@ -436,12 +436,12 @@ export const FloatingShapes = ({ still }: { still: boolean }) => {
 export const PropsCluster = () => (
   <group>
     {/* Esfera grande de piedra, facetada fina */}
-    <mesh position={[-2.7, 0.95, 1.5]} castShadow receiveShadow>
+    <mesh position={[-2.7, 1.32, 1.5]} castShadow receiveShadow>
       <icosahedronGeometry args={[0.62, 2]} />
       <meshStandardMaterial {...matte(COL.stone, { roughness: 0.95 })} />
     </mesh>
     {/* Cuadro grande: foto con sol y montaña */}
-    <group position={[-1.5, 1.75, 1.2]} rotation={[0, 0.4, -0.06]}>
+    <group position={[-1.5, 1.25, 1.2]} rotation={[0, 0.4, -0.06]}>
       <RoundedBox args={[1.05, 1.05, 0.08]} radius={0.03} smoothness={2} castShadow>
         <meshStandardMaterial {...matte(COL.stone, { roughness: 0.95 })} />
       </RoundedBox>
@@ -463,7 +463,7 @@ export const PropsCluster = () => (
       </mesh>
     </group>
     {/* Cuadro chico: botón de play */}
-    <group position={[-0.5, 1.55, 1.35]} rotation={[0, -0.15, 0.04]}>
+    <group position={[-0.5, 1.17, 1.35]} rotation={[0, -0.15, 0.04]}>
       <RoundedBox args={[0.9, 0.9, 0.08]} radius={0.03} smoothness={2} castShadow>
         <meshStandardMaterial {...matte(COL.carbonLight)} />
       </RoundedBox>
@@ -477,11 +477,11 @@ export const PropsCluster = () => (
       </mesh>
     </group>
     {/* Pirámide naranja facetada de la derecha */}
-    <mesh position={[2.9, 0.95, 0.9]} castShadow receiveShadow>
+    <mesh position={[2.9, 1.625, 0.9]} castShadow receiveShadow>
       <coneGeometry args={[0.52, 1.15, 4]} />
       <meshStandardMaterial {...matte(COL.orange)} />
     </mesh>
-    <mesh position={[2.35, 0.62, 1.45]} rotation={[0, 0.6, 0]} castShadow>
+    <mesh position={[2.35, 1.36, 1.45]} rotation={[0, 0.6, 0]} castShadow>
       <tetrahedronGeometry args={[0.3, 0]} />
       <meshStandardMaterial {...matte(COL.orangeDeep)} />
     </mesh>
