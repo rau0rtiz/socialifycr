@@ -155,16 +155,16 @@ function buildReceiptHtml({ sheet, clientName, shots, recipientName, shareUrl }:
     const files = (s.file_names || '').split(/[,\n]/).map((f: string) => f.trim()).filter(Boolean);
     return `
       <tr>
-        <td style="padding:10px 0;border-bottom:1px dashed #d4c5a9;vertical-align:top;">
-          <div style="font-family:'Courier New',Courier,monospace;font-size:14px;color:#1a1a1a;font-weight:bold;">
+        <td style="padding:14px 0;border-bottom:1px solid #e8e8e8;vertical-align:top;">
+          <div style="font-size:15px;color:#171717;font-weight:600;line-height:1.4;">
             ${String(i + 1).padStart(2, '0')}. ${esc(name)}
           </div>
-          <div style="font-family:'Courier New',Courier,monospace;font-size:12px;color:#8b7355;margin-top:3px;">
+          <div style="font-size:12px;color:#6b6b6b;margin-top:4px;">
             ${meta.icon} ${esc(meta.label)}${platform ? ` · ${esc(platform)}` : ''}
           </div>
-          ${files.length ? `<div style="font-family:'Courier New',Courier,monospace;font-size:12px;color:#5a5248;margin-top:5px;">${files.map((f: string) => `<span style="display:inline-block;border:1px solid #d4c5a9;border-radius:4px;padding:2px 6px;margin:2px 4px 0 0;">${esc(f)}</span>`).join('')}</div>` : ''}
+          ${files.length ? `<div style="font-size:12px;color:#6b6b6b;margin-top:6px;">${files.map((f: string) => esc(f)).join(' · ')}</div>` : ''}
         </td>
-        <td style="padding:10px 0;text-align:right;vertical-align:top;font-family:'Courier New',Courier,monospace;font-size:13px;color:#1a1a1a;white-space:nowrap;">
+        <td style="padding:14px 0;text-align:right;vertical-align:top;font-size:13px;color:#171717;white-space:nowrap;">
           x1
         </td>
       </tr>`;
@@ -177,63 +177,67 @@ function buildReceiptHtml({ sheet, clientName, shots, recipientName, shareUrl }:
   });
   const totalsHtml = Object.entries(counts).map(([label, n]) => `
     <tr>
-      <td style="font-family:'Courier New',Courier,monospace;font-size:13px;color:#5a5248;padding:2px 0;">${esc(label)}</td>
-      <td style="font-family:'Courier New',Courier,monospace;font-size:13px;color:#1a1a1a;text-align:right;padding:2px 0;">${n}</td>
+      <td style="font-size:13px;color:#6b6b6b;padding:3px 0;">${esc(label)}</td>
+      <td style="font-size:13px;color:#171717;text-align:right;padding:3px 0;">${n}</td>
     </tr>`).join('');
 
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f5f0e6;font-family:'Courier New',Courier,monospace;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0e6;padding:24px 12px;">
+<body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#171717;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;padding:24px 12px;">
     <tr><td align="center">
-      <table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#fffdf8;border-radius:14px;border:1px solid #eee5d8;">
-        <tr><td style="padding:26px 24px 16px;text-align:center;border-bottom:2px dashed #d4c5a9;">
-          <div style="font-size:10px;letter-spacing:0.35em;text-transform:uppercase;color:#8b7355;">Socialify · Comprobante de entrega</div>
-          <div style="font-family:Georgia,serif;font-size:24px;color:#1a1a1a;margin-top:10px;text-transform:uppercase;letter-spacing:0.04em;">${esc(sheet.title || 'Producción')}</div>
-          <div style="font-size:12px;color:#5a5248;margin-top:8px;">${esc(clientName || '')}</div>
+      <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background:#ffffff;">
+        <tr><td style="padding:20px 20px 18px;border-bottom:1px solid #e8e8e8;">
+          <div style="font-size:12px;color:#e85d3a;font-weight:700;text-transform:uppercase;">Socialify · Recibo de entrega</div>
+          <div style="font-size:26px;color:#171717;font-weight:700;line-height:1.2;margin-top:8px;">${esc(sheet.title || 'Producción')}</div>
+          <div style="font-size:14px;color:#6b6b6b;margin-top:6px;">${esc(clientName || '')}</div>
         </td></tr>
 
-        <tr><td style="padding:14px 24px;border-bottom:1px dashed #d4c5a9;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;color:#5a5248;">
-            <tr><td style="padding:2px 0;">FOLIO</td><td style="text-align:right;color:#1a1a1a;">#${esc(folio)}</td></tr>
-            <tr><td style="padding:2px 0;">FECHA</td><td style="text-align:right;color:#1a1a1a;">${esc(formatDate(sheet.shoot_date))}</td></tr>
-            ${sheet.location ? `<tr><td style="padding:2px 0;">LOCACIÓN</td><td style="text-align:right;color:#1a1a1a;">${esc(sheet.location)}</td></tr>` : ''}
-            ${sheet.producer_name ? `<tr><td style="padding:2px 0;">RESPONSABLE</td><td style="text-align:right;color:#1a1a1a;">${esc(sheet.producer_name)}</td></tr>` : ''}
+        ${sheet.thumbnail_url ? `<tr><td style="padding:20px 20px 0;">
+          <img src="${esc(sheet.thumbnail_url)}" alt="Foto de la producción" width="480" style="display:block;width:100%;max-width:480px;height:auto;max-height:360px;object-fit:cover;border:0;border-radius:8px;" />
+        </td></tr>` : ''}
+
+        <tr><td style="padding:18px 20px;border-bottom:1px solid #e8e8e8;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;color:#6b6b6b;">
+            <tr><td style="padding:3px 0;">Folio</td><td style="text-align:right;color:#171717;">#${esc(folio)}</td></tr>
+            <tr><td style="padding:3px 0;">Fecha</td><td style="text-align:right;color:#171717;">${esc(formatDate(sheet.shoot_date))}</td></tr>
+            ${sheet.location ? `<tr><td style="padding:3px 0;">Locación</td><td style="text-align:right;color:#171717;">${esc(sheet.location)}</td></tr>` : ''}
+            ${sheet.producer_name ? `<tr><td style="padding:3px 0;">Responsable</td><td style="text-align:right;color:#171717;">${esc(sheet.producer_name)}</td></tr>` : ''}
           </table>
         </td></tr>
 
-        ${recipientName ? `<tr><td style="padding:14px 24px 0;font-size:13px;color:#1a1a1a;">Hola ${esc(recipientName)}, este es el detalle de lo grabado:</td></tr>` : ''}
+        ${recipientName ? `<tr><td style="padding:18px 20px 0;font-size:14px;color:#171717;line-height:1.5;">Hola ${esc(recipientName)}, te compartimos el detalle de lo grabado.</td></tr>` : ''}
 
-        <tr><td style="padding:8px 24px 0;">
-          <div style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#8b7355;padding-bottom:6px;border-bottom:2px solid #1a1a1a;">Detalle de piezas</div>
+        <tr><td style="padding:18px 20px 0;">
+          <div style="font-size:13px;font-weight:700;color:#171717;padding-bottom:8px;border-bottom:2px solid #171717;">Piezas grabadas</div>
           ${recorded.length === 0
-            ? `<div style="padding:24px 0;text-align:center;color:#8b7355;font-size:13px;">Sin piezas grabadas.</div>`
+            ? `<div style="padding:24px 0;text-align:center;color:#6b6b6b;font-size:13px;">Sin piezas grabadas.</div>`
             : `<table width="100%" cellpadding="0" cellspacing="0">${rows}</table>`}
         </td></tr>
 
-        <tr><td style="padding:16px 24px;border-top:2px dashed #d4c5a9;">
+        <tr><td style="padding:18px 20px;border-top:1px solid #e8e8e8;">
           <table width="100%" cellpadding="0" cellspacing="0">
             ${totalsHtml}
             <tr>
-              <td style="font-family:'Courier New',Courier,monospace;font-size:15px;color:#1a1a1a;font-weight:bold;padding-top:10px;border-top:1px solid #d4c5a9;">TOTAL PIEZAS</td>
-              <td style="font-family:'Courier New',Courier,monospace;font-size:15px;color:#d97757;font-weight:bold;text-align:right;padding-top:10px;border-top:1px solid #d4c5a9;">${recorded.length}</td>
+              <td style="font-size:15px;color:#171717;font-weight:700;padding-top:10px;border-top:1px solid #e8e8e8;">Total de piezas</td>
+              <td style="font-size:18px;color:#e85d3a;font-weight:700;text-align:right;padding-top:10px;border-top:1px solid #e8e8e8;">${recorded.length}</td>
             </tr>
           </table>
         </td></tr>
 
-        ${shareUrl ? `<tr><td style="padding:4px 24px 20px;text-align:center;">
-          <a href="${shareUrl}" style="display:inline-block;background:#e85d3a;color:#ffffff;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;font-weight:bold;letter-spacing:0.08em;text-transform:uppercase;padding:14px 26px;border-radius:999px;">Ver y compartir mi recibo</a>
-          <div style="font-size:11px;color:#8b7355;margin-top:10px;letter-spacing:0.05em;">Compartilo en tus historias</div>
+        ${shareUrl ? `<tr><td style="padding:4px 20px 22px;text-align:center;">
+          <a href="${esc(shareUrl)}" style="display:inline-block;background:#e85d3a;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 22px;border-radius:6px;">Ver y compartir mi recibo</a>
+          <div style="font-size:12px;color:#6b6b6b;margin-top:9px;">Compartilo en tus historias</div>
         </td></tr>` : ''}
 
-        ${sheet.notes ? `<tr><td style="padding:0 24px 16px;">
-          <div style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#8b7355;margin-bottom:6px;">Notas</div>
-          <div style="font-size:12px;color:#1a1a1a;white-space:pre-wrap;line-height:1.5;">${esc(sheet.notes)}</div>
+        ${sheet.notes ? `<tr><td style="padding:18px 20px;border-top:1px solid #e8e8e8;">
+          <div style="font-size:13px;font-weight:700;color:#171717;margin-bottom:6px;">Notas</div>
+          <div style="font-size:13px;color:#4a4a4a;white-space:pre-wrap;line-height:1.5;">${esc(sheet.notes)}</div>
         </td></tr>` : ''}
 
-        <tr><td style="padding:18px 24px 26px;text-align:center;border-top:2px dashed #d4c5a9;">
-          <div style="font-size:11px;color:#8b7355;letter-spacing:0.2em;text-transform:uppercase;">¡Gracias por grabar con nosotros!</div>
-          <div style="font-size:10px;color:#a89b85;margin-top:6px;">Socialify · socialifycr.com</div>
+        <tr><td style="padding:22px 20px;text-align:center;border-top:1px solid #e8e8e8;">
+          <div style="font-size:13px;color:#4a4a4a;">Gracias por grabar con nosotros.</div>
+          <div style="font-size:11px;color:#8a8a8a;margin-top:6px;">Socialify · socialifycr.com</div>
         </td></tr>
       </table>
     </td></tr>
