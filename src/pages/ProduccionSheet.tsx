@@ -38,6 +38,7 @@ import { ShareStoryDialog } from '@/components/producciones/ShareStoryDialog';
 import { buildStoryReceipt } from '@/lib/story-receipt';
 import { GenerateShotsDialog } from '@/components/producciones/GenerateShotsDialog';
 import { PieceCard } from '@/components/producciones/PieceCard';
+import { useSheetReferences } from '@/hooks/use-shot-references';
 import { SheetThumbnailUploader } from '@/components/producciones/SheetThumbnailUploader';
 
 const CONTENT_TYPES = [
@@ -633,6 +634,7 @@ export default function ProduccionSheet() {
                           <PieceCard
                             shot={shot}
                             index={shotIndex}
+                            references={refsByShot[shot.id] ?? []}
                             canDrag={canDrag}
                             canMoveUp={canDrag && shotIndex > 0}
                             canMoveDown={canDrag && shotIndex < filteredShots.length - 1}
