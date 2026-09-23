@@ -37,12 +37,19 @@ async function cuFetch(path: string, init?: RequestInit) {
   return res.json();
 }
 
-function buildDescription(shot: any, sheet: any): string {
+function buildDescription(shot: any, sheet: any, references: any[] = []): string {
   const lines: string[] = [];
   if (shot.hook) lines.push(`**⚡ Hook:** ${shot.hook}`, '');
   if (shot.script) lines.push('**📝 Guion / Copy:**', shot.script, '');
   if (shot.cta) lines.push(`**🎯 CTA:** ${shot.cta}`);
   if (shot.tech_notes) lines.push('', '**🎥 Notas técnicas:**', shot.tech_notes);
+  if (references.length) {
+    lines.push('', '**🔗 Referencias:**');
+    for (const r of references) {
+      const label = r.platform ? String(r.platform).replace(/_/g, ' ') : 'link';
+      lines.push(`- [${label}] ${r.url}${r.notes ? ` — ${r.notes}` : ''}`);
+    }
+  }
   if (shot.file_names) {
     const files = String(shot.file_names).split(/[\n,]+/).map((f: string) => f.trim()).filter(Boolean);
     if (files.length) lines.push('', '**🗂 Nombres de archivo:**', ...files.map((f: string) => `- ${f}`));
