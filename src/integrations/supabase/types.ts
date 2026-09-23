@@ -6066,6 +6066,66 @@ export type Database = {
           },
         ]
       }
+      production_shot_references: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          embed_url: string | null
+          id: string
+          notes: string | null
+          platform: string | null
+          sheet_id: string
+          shot_id: string
+          sort_order: number
+          title: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          embed_url?: string | null
+          id?: string
+          notes?: string | null
+          platform?: string | null
+          sheet_id: string
+          shot_id: string
+          sort_order?: number
+          title?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          embed_url?: string | null
+          id?: string
+          notes?: string | null
+          platform?: string | null
+          sheet_id?: string
+          shot_id?: string
+          sort_order?: number
+          title?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_shot_references_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "production_sheets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_shot_references_shot_id_fkey"
+            columns: ["shot_id"]
+            isOneToOne: false
+            referencedRelation: "production_sheet_shots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

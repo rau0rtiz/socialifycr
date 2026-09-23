@@ -37,12 +37,19 @@ async function cuFetch(path: string, init?: RequestInit) {
   return res.json();
 }
 
-function buildDescription(shot: any, sheet: any): string {
+function buildDescription(shot: any, sheet: any, references: any[] = []): string {
   const lines: string[] = [];
   if (shot.hook) lines.push(`**⚡ Hook:** ${shot.hook}`, '');
   if (shot.script) lines.push('**📝 Guion / Copy:**', shot.script, '');
   if (shot.cta) lines.push(`**🎯 CTA:** ${shot.cta}`);
   if (shot.tech_notes) lines.push('', '**🎥 Notas técnicas:**', shot.tech_notes);
+  if (references.length) {
+    lines.push('', '**🔗 Referencias:**');
+    for (const r of references) {
+      const label = r.platform ? String(r.platform).replace(/_/g, ' ') : 'link';
+      lines.push(`- [${label}] ${r.url}${r.notes ? ` — ${r.notes}` : ''}`);
+    }
+  }
   if (shot.file_names) {
     const files = String(shot.file_names).split(/[\n,]+/).map((f: string) => f.trim()).filter(Boolean);
     if (files.length) lines.push('', '**🗂 Nombres de archivo:**', ...files.map((f: string) => `- ${f}`));
@@ -132,6 +139,21 @@ Deno.serve(async (req) => {
       throw new Error('No hay piezas para enviar.');
     }
 
+    // References per shot (Instagram / TikTok / YouTube links) so ClickUp carries them.
+    const refsByShot = new Map<string, any[]>();
+    {
+      const { data: refs } = await admin
+        .from('production_shot_references')
+        .select('shot_id, url, platform, notes, sort_order')
+        .in('shot_id', recordedShots.map((s: any) => s.id))
+        .order('sort_order', { ascending: true });
+      for (const r of refs || []) {
+        const arr = refsByShot.get(r.shot_id) || [];
+        arr.push(r);
+        refsByShot.set(r.shot_id, arr);
+      }
+    }
+
     // Prefer explicit override (from per-sheet picker), fall back to the sheet's stored list, then client-level config.
     let listId: string | null = overrideListId || sheet.clickup_list_id || null;
     let listName: string | null = overrideListName || sheet.clickup_list_name || null;
@@ -186,7 +208,7 @@ Deno.serve(async (req) => {
       const platTag = PLATFORM_LABEL[shot.platform || ''] || '';
       const concept = shot.concept || shot.description || 'Pieza sin título';
       const title = `[${typeTag}${platTag ? ' · ' + platTag : ''}] ${concept}`;
-      const description = buildDescription(shot, sheet);
+      const description = buildDescription(shot, sheet, refsByShot.get(shot.id) || []);
 
       try {
         if (shot.clickup_task_id) {

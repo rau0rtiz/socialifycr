@@ -38,6 +38,7 @@ import { ShareStoryDialog } from '@/components/producciones/ShareStoryDialog';
 import { buildStoryReceipt } from '@/lib/story-receipt';
 import { GenerateShotsDialog } from '@/components/producciones/GenerateShotsDialog';
 import { PieceCard } from '@/components/producciones/PieceCard';
+import { useSheetReferences } from '@/hooks/use-shot-references';
 import { SheetThumbnailUploader } from '@/components/producciones/SheetThumbnailUploader';
 
 const CONTENT_TYPES = [
@@ -91,6 +92,15 @@ export default function ProduccionSheet() {
   const upsertShot = useUpsertChild('production_sheet_shots');
   const delShot = useDeleteChild('production_sheet_shots');
   const reorderShots = useReorderShots();
+  const { data: sheetReferences = [] } = useSheetReferences(sheetId || null);
+  const refsByShot = useMemo(() => {
+    const map: Record<string, typeof sheetReferences> = {};
+    for (const r of sheetReferences) {
+      (map[r.shot_id] ||= []).push(r);
+    }
+    return map;
+  }, [sheetReferences]);
+
 
   const [local, setLocal] = useState<Partial<ProductionSheet>>({});
   const [clientName, setClientName] = useState<string>('');
@@ -633,6 +643,7 @@ export default function ProduccionSheet() {
                           <PieceCard
                             shot={shot}
                             index={shotIndex}
+                            references={refsByShot[shot.id] ?? []}
                             canDrag={canDrag}
                             canMoveUp={canDrag && shotIndex > 0}
                             canMoveDown={canDrag && shotIndex < filteredShots.length - 1}
