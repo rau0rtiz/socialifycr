@@ -20,7 +20,22 @@ const ShotSchema = z.object({
   cta: z.string().max(200).optional().default(''),
   tech_notes: z.string().max(500).optional().default(''),
   duration_estimate: z.string().max(50).optional().default(''),
+  references: z.array(z.string().url().max(600)).max(6).optional().default([]),
 });
+
+/** Extrae links de video (IG, TikTok, YouTube, FB, Vimeo, Loom) del HTML del plan. */
+function extractReferenceLinks(html: string): string[] {
+  const urls = new Set<string>();
+  const re = /https?:\/\/[^\s"'<>()]+/gi;
+  for (const raw of html.match(re) || []) {
+    const url = raw.replace(/[),.;]+$/, '');
+    if (/(instagram\.com\/(p|reel|reels|tv)\/|tiktok\.com\/|youtube\.com\/(watch|shorts)|youtu\.be\/|facebook\.com\/(watch|reel|video)|fb\.watch\/|vimeo\.com\/\d|loom\.com\/share)/i.test(url)) {
+      urls.add(url);
+    }
+    if (urls.size >= 60) break;
+  }
+  return [...urls];
+}
 
 function stripHtml(html: string): string {
   return html
@@ -86,6 +101,7 @@ Deno.serve(async (req) => {
     if (!apiKey) return json({ error: 'LOVABLE_API_KEY not configured' }, 500);
 
     const planText = stripHtml(plan_html).slice(0, 40000);
+    const refLinks = extractReferenceLinks(plan_html);
 
     const systemPrompt = `Sos un director creativo senior. Tu tarea es LEER un plan de contenido y CONVERTIRLO en piezas concretas para una hoja de producción.
 
@@ -104,13 +120,18 @@ REGLAS ESTRICTAS:
 - cta: llamado a la acción concreto.
 - tech_notes: indicaciones técnicas si el plan las trae.
 - duration_estimate: ej "15s","30s","1:00" (si el plan no dice, estimá razonablemente).
-- Respetá el orden en que aparecen las piezas en el plan.`;
+- Respetá el orden en que aparecen las piezas en el plan.
+- "references": array de URLs (máx 6) tomadas EXCLUSIVAMENTE de la lista LINKS DE REFERENCIA que te doy. Asigná a cada pieza solo los links que el plan asocia a esa pieza (por cercanía en el texto o mención explícita). Si una pieza no tiene link asociado, devolvé [].
+- Nunca inventes URLs ni uses links que no estén en esa lista.`;
 
     const userPrompt = `CONTEXTO DE LA HOJA:
 - Marca / cliente: ${client?.name ?? 'Sin nombre'}
 - Hoja: "${sheet.title ?? ''}" ${sheet.shoot_date ? `(grabación: ${sheet.shoot_date})` : ''}
 - Locación: ${sheet.location ?? '—'}
 - Notas: ${sheet.notes ?? '—'}
+
+LINKS DE REFERENCIA ENCONTRADOS EN EL PLAN (usá solo estos para "references"):
+${refLinks.length ? refLinks.map((u) => `- ${u}`).join('\n') : '(ninguno)'}
 
 PLAN DE CONTENIDO (texto extraído del HTML):
 """
