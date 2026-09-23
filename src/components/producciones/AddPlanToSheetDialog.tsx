@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { parseReferenceUrl } from '@/lib/embed-url';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -31,6 +32,7 @@ type GeneratedShot = {
   cta: string;
   tech_notes: string;
   duration_estimate: string;
+  references?: string[];
 };
 
 interface Props {
@@ -71,6 +73,7 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
     [allSheets, clientId],
   );
 
+  const qc = useQueryClient();
   const createSheet = useCreateSheet();
   const upsertShot = useUpsertChild('production_sheet_shots');
   const delShot = useDeleteChild('production_sheet_shots');
@@ -172,22 +175,47 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
       }
       for (let i = 0; i < selected.length; i++) {
         const s = selected[i];
-        await upsertShot.mutateAsync({
-          sheet_id,
-          concept: s.concept,
-          description: s.description,
-          hook: s.hook,
-          script: s.script,
-          cta: s.cta,
-          tech_notes: s.tech_notes,
-          duration_estimate: s.duration_estimate,
-          content_type: s.content_type,
-          platform: s.platform,
-          done: false,
-          is_draft: false,
-          sort_order: base + i,
-        });
+        const { data: inserted, error: insertErr } = await supabase
+          .from('production_sheet_shots')
+          .insert({
+            sheet_id,
+            concept: s.concept,
+            description: s.description,
+            hook: s.hook,
+            script: s.script,
+            cta: s.cta,
+            tech_notes: s.tech_notes,
+            duration_estimate: s.duration_estimate,
+            content_type: s.content_type,
+            platform: s.platform,
+            done: false,
+            is_draft: false,
+            sort_order: base + i,
+          })
+          .select('id')
+          .single();
+        if (insertErr) throw insertErr;
+
+        const refs = (s.references ?? []).filter((u) => /^https?:\/\//i.test(u));
+        if (refs.length && inserted?.id) {
+          await supabase.from('production_shot_references').insert(
+            refs.map((url, j) => {
+              const parsed = parseReferenceUrl(url);
+              return {
+                sheet_id,
+                shot_id: inserted.id,
+                url,
+                platform: parsed.platform,
+                embed_url: parsed.embedUrl,
+                sort_order: j,
+              };
+            }),
+          );
+        }
       }
+      qc.invalidateQueries({ queryKey: ['production-sheet', sheet_id] });
+      qc.invalidateQueries({ queryKey: ['shot-references', sheet_id] });
+      qc.invalidateQueries({ queryKey: ['production-sheets'] });
       toast.success(`${selected.length} pieza${selected.length !== 1 ? 's' : ''} agregada${selected.length !== 1 ? 's' : ''} a la hoja.`);
       handleClose(false);
     } catch (e: any) {
@@ -330,6 +358,9 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
                         </span>
                       </div>
                       <div className="font-medium text-sm">{s.concept}</div>
+                      {!!s.references?.length && (
+                        <div className="text-xs text-primary mt-1">🔗 {s.references.length} referencia{s.references.length !== 1 ? 's' : ''} de video</div>
+                      )}
                       {s.hook && <div className="text-xs text-muted-foreground mt-1"><b>Hook:</b> {s.hook}</div>}
                       {s.description && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{s.description}</div>}
                     </div>
