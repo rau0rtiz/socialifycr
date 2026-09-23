@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import type { SheetShot } from '@/hooks/use-production-sheets';
+import type { ShotReference } from '@/hooks/use-shot-references';
+import { ShotReferences } from './ShotReferences';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
@@ -37,6 +39,7 @@ function typeMeta(t?: string | null) {
 interface PieceCardProps {
   shot: SheetShot;
   index: number;
+  references?: ShotReference[];
   onChange: (patch: Partial<SheetShot>) => void;
   onToggleRecorded: () => void;
   onDuplicate: () => void;
@@ -52,6 +55,7 @@ interface PieceCardProps {
 export function PieceCard({
   shot,
   index,
+  references = [],
   onChange,
   onToggleRecorded,
   onDuplicate,
