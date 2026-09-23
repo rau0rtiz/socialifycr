@@ -75,7 +75,6 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
 
   const qc = useQueryClient();
   const createSheet = useCreateSheet();
-  const upsertShot = useUpsertChild('production_sheet_shots');
   const delShot = useDeleteChild('production_sheet_shots');
 
   const reset = () => {
