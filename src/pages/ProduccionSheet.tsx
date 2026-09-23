@@ -92,6 +92,15 @@ export default function ProduccionSheet() {
   const upsertShot = useUpsertChild('production_sheet_shots');
   const delShot = useDeleteChild('production_sheet_shots');
   const reorderShots = useReorderShots();
+  const { data: sheetReferences = [] } = useSheetReferences(sheetId || null);
+  const refsByShot = useMemo(() => {
+    const map: Record<string, typeof sheetReferences> = {};
+    for (const r of sheetReferences) {
+      (map[r.shot_id] ||= []).push(r);
+    }
+    return map;
+  }, [sheetReferences]);
+
 
   const [local, setLocal] = useState<Partial<ProductionSheet>>({});
   const [clientName, setClientName] = useState<string>('');
