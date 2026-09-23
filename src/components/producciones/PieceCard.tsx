@@ -248,6 +248,13 @@ export function PieceCard({
           </div>
         )}
 
+        <ShotReferences
+          sheetId={shot.sheet_id}
+          shotId={shot.id}
+          references={references}
+          compact
+        />
+
         {shot.clickup_url && (
           <a
             href={shot.clickup_url}
@@ -475,6 +482,7 @@ export function PieceCard({
             className="bg-transparent border-0 text-sm resize-none px-0 focus-visible:ring-0"
           />
         </div>
+        <ShotReferences sheetId={shot.sheet_id} shotId={shot.id} references={references} />
       </div>
 
       {/* Footer actions */}
