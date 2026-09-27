@@ -88,6 +88,8 @@ export const AgencyHero3D = ({
           />
         </div>
 
+        <div className="hidden lg:block" aria-hidden />
+
         <div className="pointer-events-auto flex flex-col gap-4 self-start lg:mt-6">
           {aside}
           <HeroCard
