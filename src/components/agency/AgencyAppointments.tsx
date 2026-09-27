@@ -205,9 +205,18 @@ export const AppointmentDetailDialog = ({
                 {extraAnswers
                   .filter(
                     (r) =>
-                      !['Nombre', 'Correo electrónico', 'Número de WhatsApp', 'Usuario de IG del Negocio'].includes(
-                        r.question,
-                      ),
+                      ![
+                        'Nombre',
+                        'Correo electrónico',
+                        'Número de WhatsApp',
+                        'Usuario de IG del Negocio',
+                        '¿Cuál es su rango de presupuesto mensual para invertir en mercadeo?',
+                        '¿En qué etapa se encuentra su negocio?',
+                        '¿Cuál es su principal reto actualmente?',
+                        '¿Cuándo le gustaría empezar a trabajar con una agencia?',
+                        '¿Actualmente invierte en publicidad?',
+                        '¿Cómo escucho sobre nosotros?',
+                      ].includes(r.question),
                   )
                   .map((r, i) => (
                     <Field key={i} label={r.question} value={r.answer} />
