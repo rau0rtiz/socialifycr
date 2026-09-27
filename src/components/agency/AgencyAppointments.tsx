@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   CalendarCheck,
@@ -240,7 +241,64 @@ export const AppointmentDetailDialog = ({
   );
 };
 
-/** Lista compacta de próximas citas para el rail del dashboard. */
+const monthDay = (iso: string | null, tz?: string | null) => {
+  if (!iso) return { month: '—', day: '' };
+  try {
+    const d = new Date(iso);
+    return {
+      month: new Intl.DateTimeFormat('es-CR', {
+        month: 'short',
+        timeZone: tz || 'America/Costa_Rica',
+      }).format(d).replace('.', '').toUpperCase(),
+      day: new Intl.DateTimeFormat('es-CR', {
+        day: '2-digit',
+        timeZone: tz || 'America/Costa_Rica',
+      }).format(d),
+    };
+  } catch {
+    return { month: '—', day: '' };
+  }
+};
+
+const fmtTime = (iso: string | null, tz?: string | null) => {
+  if (!iso) return '—';
+  try {
+    return new Intl.DateTimeFormat('es-CR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: tz || 'America/Costa_Rica',
+    }).format(new Date(iso));
+  } catch {
+    return '—';
+  }
+};
+
+const initialsOf = (name: string) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+const Chip = ({ label }: { label: string }) => (
+  <span className="max-w-full truncate rounded-md bg-muted px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+    {label}
+  </span>
+);
+
+const confidenceLabel = (raw?: string | null) => {
+  if (!raw) return null;
+  const v = raw.toLowerCase();
+  if (v.includes('alta') || v.includes('high')) return 'Match alto';
+  if (v.includes('media') || v.includes('med')) return 'Match medio';
+  if (v.includes('baja') || v.includes('low')) return 'Match bajo';
+  return `Match ${raw}`;
+};
+
+/** Lista visual de próximas citas para el rail del dashboard. */
 export const UpcomingAppointmentsList = ({ limit = 5 }: { limit?: number }) => {
   const { data, isLoading } = useUpcomingAppointments();
   const [selected, setSelected] = useState<AgencyAppointment | null>(null);
@@ -262,28 +320,72 @@ export const UpcomingAppointmentsList = ({ limit = 5 }: { limit?: number }) => {
           Sin citas próximas
         </p>
       ) : (
-        items.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            onClick={() => setSelected(a)}
-            className="w-full rounded-lg bg-background/40 px-2.5 py-2 text-left transition-colors hover:bg-background/70"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="min-w-0 truncate text-xs font-medium text-foreground">
-                {a.invitee_name || a.routing_answers?.nombre || 'Sin nombre'}
-              </span>
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
-                {fmtDateTime(a.starts_at, a.timezone)}
-              </span>
-            </div>
-            <p className="truncate text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-              {a.event_name || 'Llamada'}
-              {a.host_name ? ` · ${a.host_name}` : ''}
-            </p>
-          </button>
-        ))
+        <div className="space-y-2">
+          {items.map((a) => {
+            const ra = a.routing_answers || {};
+            const md = monthDay(a.starts_at, a.timezone);
+            const host = a.host_name || '';
+            const conf = confidenceLabel(a.match_confidence);
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => setSelected(a)}
+                className="w-full rounded-xl border border-border bg-background/40 p-2.5 text-left transition-colors hover:border-primary/40 hover:bg-background/70"
+              >
+                <div className="flex gap-3">
+                  <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg border border-border bg-background/60">
+                    <span className="text-[9px] font-bold uppercase leading-none tracking-[0.1em] text-primary">
+                      {md.month}
+                    </span>
+                    <span className="font-display mt-1 text-base font-bold leading-none text-foreground">
+                      {md.day}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="min-w-0 truncate text-xs font-semibold text-foreground">
+                        {a.invitee_name || ra.nombre || 'Sin nombre'}
+                      </p>
+                      {conf && (
+                        <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-primary">
+                          {conf}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 truncate text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                      {fmtTime(a.starts_at, a.timezone)}
+                      {` · ${a.event_name || 'Llamada'}`}
+                    </p>
+                    {host && (
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[7px] font-bold text-primary">
+                          {initialsOf(host)}
+                        </span>
+                        <span className="truncate text-[10px] text-muted-foreground">
+                          con {host}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {(ra.presupuesto || ra.etapa_negocio) && (
+                  <div className="mt-2 flex flex-wrap gap-1.5 border-t border-border pt-2">
+                    {ra.presupuesto && <Chip label={ra.presupuesto} />}
+                    {ra.etapa_negocio && <Chip label={ra.etapa_negocio} />}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
       )}
+      <Link
+        to="/agencia/chats"
+        className="block rounded-lg border border-border bg-background/40 py-2 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+      >
+        Ver toda la agenda
+      </Link>
       <AppointmentDetailDialog
         appointment={selected}
         open={!!selected}
