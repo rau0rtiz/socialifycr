@@ -33,10 +33,13 @@ const supportsWebGL = () => {
 export const AgencyHero3D = ({
   greeting,
   onFallback,
+  aside,
 }: {
   greeting: string;
   /** Si el dispositivo no soporta la escena, volvemos a la vista clásica. */
   onFallback: () => void;
+  /** Panel flotante junto al hero (p. ej. Próximas citas). */
+  aside?: React.ReactNode;
 }) => {
   const navigate = useNavigate();
   const { clients, clientsLoading } = useBrand();
