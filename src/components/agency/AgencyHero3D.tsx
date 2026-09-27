@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, BarChart3, Clapperboard, FileText, MessageSquare, Users, Wallet, Zap } from 'lucide-react';
 import { useBrand } from '@/contexts/BrandContext';
@@ -33,10 +33,13 @@ const supportsWebGL = () => {
 export const AgencyHero3D = ({
   greeting,
   onFallback,
+  aside,
 }: {
   greeting: string;
   /** Si el dispositivo no soporta la escena, volvemos a la vista clásica. */
   onFallback: () => void;
+  /** Panel flotante junto al hero (p. ej. Próximas citas). */
+  aside?: React.ReactNode;
 }) => {
   const navigate = useNavigate();
   const { clients, clientsLoading } = useBrand();
@@ -88,6 +91,7 @@ export const AgencyHero3D = ({
         <div className="hidden lg:block" aria-hidden />
 
         <div className="pointer-events-auto flex flex-col gap-4 self-start lg:mt-6">
+          {aside}
           <HeroCard
             icon={<BarChart3 className="h-4 w-4" />}
             title="CRM"
