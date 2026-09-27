@@ -155,25 +155,56 @@ serve(async (req) => {
         // Toda la cuenta: solo campañas con objetivo de mensajes/engagement
         filter = `&filtering=${encodeURIComponent(JSON.stringify([{ field: 'campaign.objective', operator: 'IN', value: ['OUTCOME_ENGAGEMENT', 'MESSAGES'] }]))}`;
       }
-      const ins = await fetch(`${GRAPH}/${target}/insights?fields=${fields}&time_range=${tr}${filter}&access_token=${tok}`).then((r) => r.json());
+      const [ins, daily] = await Promise.all([
+        fetch(`${GRAPH}/${target}/insights?fields=${fields}&time_range=${tr}${filter}&access_token=${tok}`).then((r) => r.json()),
+        fetch(`${GRAPH}/${target}/insights?fields=spend&time_increment=1&limit=400&time_range=${tr}${filter}&access_token=${tok}`).then((r) => r.json()),
+      ]);
       if (ins.error) return json({ connected: true, error: ins.error.message, campaigns: campRes.data || [], adsets });
       const row = ins.data?.[0] || {};
 
-      // Agendas de Calendly en el mismo rango (hora CR)
-      const fromIso = `${since}T00:00:00-06:00`;
-      const toIso = `${until}T23:59:59-06:00`;
-      const { data: appts } = await supabase
-        .from('msg_appointments')
-        .select('id,status,conversation_id,contact_id')
-        .gte('created_at', fromIso)
-        .lte('created_at', toIso);
-      const active = (appts || []).filter((a: any) => a.status !== 'cancelada');
+      // Ventana real: solo los días en que la campaña/conjunto tuvo gasto dentro del período
+      const activeDays = (daily.data || [])
+        .filter((d: any) => Number(d.spend || 0) > 0)
+        .map((d: any) => String(d.date_start))
+        .sort();
+      const effSince = activeDays[0] || null;
+      const effUntil = activeDays[activeDays.length - 1] || null;
 
-      const { count: igConvs } = await supabase
-        .from('msg_conversations')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', fromIso)
-        .lte('created_at', toIso);
+      let appts: any[] = [];
+      let igConvs = 0;
+      if (effSince && effUntil) {
+        const fromIso = `${effSince}T00:00:00-06:00`;
+        const toIso = `${effUntil}T23:59:59-06:00`;
+        // Agendas creadas (reservadas) dentro de la ventana activa
+        const { data: a } = await supabase
+          .from('msg_appointments')
+          .select('id,status,conversation_id,contact_id,created_at')
+          .gte('created_at', fromIso)
+          .lte('created_at', toIso);
+        appts = a || [];
+
+        // Chats nuevos = primer mensaje entrante dentro de la ventana (no fecha de importación)
+        const { data: inb } = await supabase
+          .from('msg_messages')
+          .select('conversation_id,occurred_at')
+          .eq('direction', 'inbound')
+          .gte('occurred_at', fromIso)
+          .lte('occurred_at', toIso)
+          .limit(5000);
+        const ids = [...new Set((inb || []).map((m: any) => m.conversation_id))];
+        if (ids.length) {
+          const { data: prior } = await supabase
+            .from('msg_messages')
+            .select('conversation_id')
+            .eq('direction', 'inbound')
+            .lt('occurred_at', fromIso)
+            .in('conversation_id', ids)
+            .limit(5000);
+          const old = new Set((prior || []).map((m: any) => m.conversation_id));
+          igConvs = ids.filter((id) => !old.has(id)).length;
+        }
+      }
+      const active = appts.filter((a: any) => a.status !== 'cancelada');
 
       return json({
         connected: true,
