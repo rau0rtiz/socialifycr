@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
   ArrowUpRight,
+  CalendarCheck,
   Clapperboard,
   Loader2,
   UserPlus,
@@ -12,6 +13,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAgencyPayments, fmtMoney } from '@/hooks/use-agency-payments';
 import { useBrand } from '@/contexts/BrandContext';
+import { UpcomingAppointmentsList } from '@/components/agency/AgencyAppointments';
 
 const RailCard = ({
   title,
@@ -194,8 +196,16 @@ const RecentLeadsBlock = () => {
   );
 };
 
+/** Próximas citas de Calendly con detalle en popup. */
+const AppointmentsBlock = () => (
+  <RailCard title="Próximas citas" to="/agencia/chats" icon={CalendarCheck}>
+    <UpcomingAppointmentsList />
+  </RailCard>
+);
+
 export const HubRail = () => (
   <div className="space-y-4">
+    <AppointmentsBlock />
     <PaymentsBlock />
     <ProductionsBlock />
     <RecentLeadsBlock />
