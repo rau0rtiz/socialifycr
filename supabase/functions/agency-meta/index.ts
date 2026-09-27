@@ -109,6 +109,91 @@ serve(async (req) => {
       return json({ connected: true, datePreset, totals, ads });
     }
 
+    if (action === 'ig-dm-funnel') {
+      const tok = conn.access_token;
+      const since = String(body.since || '');
+      const until = String(body.until || '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(since) || !/^\d{4}-\d{2}-\d{2}$/.test(until)) {
+        return json({ error: 'since/until requeridos (YYYY-MM-DD)' }, 400);
+      }
+      const tr = encodeURIComponent(JSON.stringify({ since, until }));
+      const campaignId = body.campaignId ? String(body.campaignId) : null;
+      const adsetId = body.adsetId ? String(body.adsetId) : null;
+
+      const [accRes, campRes] = await Promise.all([
+        fetch(`${GRAPH}/${accountId}?fields=currency,name&access_token=${tok}`).then((r) => r.json()),
+        fetch(`${GRAPH}/${accountId}/campaigns?fields=id,name,status,objective&limit=200&access_token=${tok}`).then((r) => r.json()),
+      ]);
+      if (campRes.error) return json({ connected: true, error: campRes.error.message });
+      const currency: string = accRes?.currency || 'USD';
+      const toUsd = (v: number) => (currency === 'CRC' ? v / 520 : v);
+
+      let adsets: any[] = [];
+      if (campaignId) {
+        const a = await fetch(`${GRAPH}/${campaignId}/adsets?fields=id,name,status&limit=200&access_token=${tok}`).then((r) => r.json());
+        adsets = a.data || [];
+      }
+
+      const MSG_TYPES = [
+        'onsite_conversion.messaging_conversation_started_7d',
+        'onsite_conversion.total_messaging_connection',
+      ];
+      const readMsgs = (row: any) => {
+        for (const t of MSG_TYPES) {
+          const a = (row?.actions || []).find((x: any) => x.action_type === t);
+          if (a) return Number(a.value || 0);
+        }
+        return 0;
+      };
+
+      const fields = 'spend,reach,impressions,clicks,actions';
+      let target = accountId;
+      let filter = '';
+      if (adsetId) target = adsetId;
+      else if (campaignId) target = campaignId;
+      else {
+        // Toda la cuenta: solo campañas con objetivo de mensajes/engagement
+        filter = `&filtering=${encodeURIComponent(JSON.stringify([{ field: 'campaign.objective', operator: 'IN', value: ['OUTCOME_ENGAGEMENT', 'MESSAGES'] }]))}`;
+      }
+      const ins = await fetch(`${GRAPH}/${target}/insights?fields=${fields}&time_range=${tr}${filter}&access_token=${tok}`).then((r) => r.json());
+      if (ins.error) return json({ connected: true, error: ins.error.message, campaigns: campRes.data || [], adsets });
+      const row = ins.data?.[0] || {};
+
+      // Agendas de Calendly en el mismo rango (hora CR)
+      const fromIso = `${since}T00:00:00-06:00`;
+      const toIso = `${until}T23:59:59-06:00`;
+      const { data: appts } = await supabase
+        .from('msg_appointments')
+        .select('id,status,conversation_id,contact_id')
+        .gte('created_at', fromIso)
+        .lte('created_at', toIso);
+      const active = (appts || []).filter((a: any) => a.status !== 'cancelada');
+
+      const { count: igConvs } = await supabase
+        .from('msg_conversations')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', fromIso)
+        .lte('created_at', toIso);
+
+      return json({
+        connected: true,
+        currency,
+        campaigns: (campRes.data || []).map((c: any) => ({ id: c.id, name: c.name, status: c.status, objective: c.objective })),
+        adsets: adsets.map((a: any) => ({ id: a.id, name: a.name, status: a.status })),
+        totals: {
+          spendUsd: toUsd(Number(row.spend || 0)),
+          reach: Number(row.reach || 0),
+          impressions: Number(row.impressions || 0),
+          clicks: Number(row.clicks || 0),
+          messages: readMsgs(row),
+          newChats: igConvs || 0,
+          appointments: active.length,
+          appointmentsFromChat: active.filter((a: any) => a.conversation_id).length,
+          cancelled: (appts || []).length - active.length,
+        },
+      });
+    }
+
     if (action === 'ad-accounts') {
       const res = await fetch(`${GRAPH}/me/adaccounts?fields=id,name&limit=100&access_token=${conn.access_token}`);
       const data = await res.json();

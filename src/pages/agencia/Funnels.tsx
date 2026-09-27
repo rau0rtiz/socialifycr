@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Megaphone, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { IgDmFunnel } from '@/components/comunicaciones/IgDmFunnel';
+
 const AgencyLeadsContent = lazy(() => import('@/components/comunicaciones/AgencyLeadsContent'));
 
 const Loader = () => (
@@ -21,6 +23,7 @@ const Funnels = () => {
     setRefreshing(true);
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['funnels'] }),
+      queryClient.invalidateQueries({ queryKey: ['ig-dm-funnel'] }),
       queryClient.invalidateQueries({ queryKey: ['funnel-leads'] }),
       queryClient.invalidateQueries({ queryKey: ['funnel-lead-counts'] }),
     ]);
@@ -45,6 +48,8 @@ const Funnels = () => {
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> Actualizar
           </Button>
         </div>
+
+        <IgDmFunnel />
 
         <Suspense fallback={<Loader />}>
           <AgencyLeadsContent />
