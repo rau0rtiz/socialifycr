@@ -196,8 +196,16 @@ const RecentLeadsBlock = () => {
   );
 };
 
+/** Próximas citas de Calendly con detalle en popup. */
+const AppointmentsBlock = () => (
+  <RailCard title="Próximas citas" to="/agencia/chats" icon={CalendarCheck}>
+    <UpcomingAppointmentsList />
+  </RailCard>
+);
+
 export const HubRail = () => (
   <div className="space-y-4">
+    <AppointmentsBlock />
     <PaymentsBlock />
     <ProductionsBlock />
     <RecentLeadsBlock />
