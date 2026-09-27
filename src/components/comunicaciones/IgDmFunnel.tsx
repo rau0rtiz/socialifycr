@@ -13,6 +13,7 @@ interface FunnelData {
   currency?: string;
   campaigns?: { id: string; name: string; status: string; objective?: string }[];
   adsets?: { id: string; name: string; status: string }[];
+  activeWindow?: { since: string; until: string; days: number } | null;
   totals?: {
     spendUsd: number; reach: number; impressions: number; clicks: number;
     messages: number; newChats: number; appointments: number; appointmentsFromChat: number; cancelled: number;
@@ -109,6 +110,14 @@ export function IgDmFunnel() {
           </SelectContent>
         </Select>
       </div>
+
+      {data?.connected && !data.error && (
+        <p className="text-xs text-muted-foreground">
+          {data.activeWindow
+            ? `Agendas y chats contados solo del ${data.activeWindow.since} al ${data.activeWindow.until} (${data.activeWindow.days} días con la campaña activa).`
+            : 'La campaña no tuvo gasto en este período, así que no se cuentan agendas ni chats.'}
+        </p>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>

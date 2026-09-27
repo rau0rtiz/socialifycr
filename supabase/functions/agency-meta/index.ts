@@ -211,6 +211,7 @@ serve(async (req) => {
         currency,
         campaigns: (campRes.data || []).map((c: any) => ({ id: c.id, name: c.name, status: c.status, objective: c.objective })),
         adsets: adsets.map((a: any) => ({ id: a.id, name: a.name, status: a.status })),
+        activeWindow: effSince ? { since: effSince, until: effUntil, days: activeDays.length } : null,
         totals: {
           spendUsd: toUsd(Number(row.spend || 0)),
           reach: Number(row.reach || 0),
