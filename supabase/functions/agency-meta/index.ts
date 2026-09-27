@@ -153,7 +153,7 @@ serve(async (req) => {
       else if (campaignId) target = campaignId;
       else {
         // Toda la cuenta: solo campañas con objetivo de mensajes/engagement
-        filter = `&filtering=${encodeURIComponent(JSON.stringify([{ field: 'campaign.objective', operator: 'IN', value: ['OUTCOME_ENGAGEMENT', 'MESSAGES', 'OUTCOME_LEADS'] }]))}`;
+        filter = `&filtering=${encodeURIComponent(JSON.stringify([{ field: 'campaign.objective', operator: 'IN', value: ['OUTCOME_ENGAGEMENT', 'MESSAGES'] }]))}`;
       }
       const ins = await fetch(`${GRAPH}/${target}/insights?fields=${fields}&time_range=${tr}${filter}&access_token=${tok}`).then((r) => r.json());
       if (ins.error) return json({ connected: true, error: ins.error.message, campaigns: campRes.data || [], adsets });
