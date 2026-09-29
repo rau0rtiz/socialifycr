@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileBarChart, Loader2, Plus, Trash2, Upload, X, ArrowLeft, ArrowRight, Sparkles as _unused, Check } from 'lucide-react';
+import { FileBarChart, Loader2, Plus, Trash2, Upload, X, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,7 +21,6 @@ import {
 import { buildReportHtml, type ReportContent } from '@/lib/report-template';
 import { cn } from '@/lib/utils';
 
-void _unused;
 
 interface DataFile { id: string; file: File; description: string; summary?: DatasetSummary; error?: string }
 interface PlatformState { enabled: boolean; files: DataFile[]; goals: string; invoiceUrl: string }
