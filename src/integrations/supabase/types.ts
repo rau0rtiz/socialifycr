@@ -6197,6 +6197,54 @@ export type Database = {
           },
         ]
       }
+      report_builds: {
+        Row: {
+          client_id: string | null
+          computed: Json
+          config: Json
+          content: Json | null
+          created_at: string
+          created_by: string | null
+          draft: Json | null
+          id: string
+          period_end: string | null
+          period_start: string | null
+          proposal_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          computed?: Json
+          config?: Json
+          content?: Json | null
+          created_at?: string
+          created_by?: string | null
+          draft?: Json | null
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          proposal_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          computed?: Json
+          config?: Json
+          content?: Json | null
+          created_at?: string
+          created_by?: string | null
+          draft?: Json | null
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          proposal_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sale_order_items: {
         Row: {
           client_id: string
