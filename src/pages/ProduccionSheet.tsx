@@ -644,6 +644,8 @@ export default function ProduccionSheet() {
                             shot={shot}
                             index={shotIndex}
                             references={refsByShot[shot.id] ?? []}
+                            clientName={clientName}
+                            producerName={local.producer_name}
                             canDrag={canDrag}
                             canMoveUp={canDrag && shotIndex > 0}
                             canMoveDown={canDrag && shotIndex < filteredShots.length - 1}
