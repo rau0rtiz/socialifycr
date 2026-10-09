@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Clapperboard, Minus, Plus, X, Maximize2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface ClapperDialogProps {
   open: boolean;
@@ -36,48 +37,48 @@ export function ClapperDialog({ open, onOpenChange, title, clientName, producerN
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="socialify-clapper max-w-none w-screen h-[100dvh] p-0 border-0 rounded-none [&>button]:hidden">
+      <DialogContent aria-describedby={undefined} className="socialify-clapper max-w-none w-screen h-[100dvh] max-h-[100dvh] p-0 gap-0 border-0 rounded-none overflow-hidden [&>button]:hidden">
         <DialogTitle className="sr-only">Claqueta · {title}</DialogTitle>
-        <div id="socialify-clapper" className="socialify-clapper relative h-full w-full flex flex-col p-4 sm:p-8 select-none">
-          {/* Stripes */}
-          <div className="clapper-stripes h-10 sm:h-16 rounded-lg shrink-0" />
-          <div className="flex-1 mt-4 sm:mt-6 rounded-2xl border-2 clapper-border grid grid-rows-[auto_1fr_auto] overflow-hidden">
-            <div className="grid grid-cols-2 border-b-2 clapper-border text-center">
-              <div className="border-r-2 clapper-border">
-                <div className="clapper-muted text-[10px] sm:text-xs tracking-[0.3em] uppercase pt-2">Toma</div>
-                <div className="flex items-center justify-center gap-3 pb-2">
-                  <button onClick={() => setTake(t => Math.max(1, t - 1))} className="clapper-ghost p-1.5 rounded-full" aria-label="Toma anterior"><Minus className="h-5 w-5" /></button>
-                  <span className="clapper-display font-bold text-4xl sm:text-6xl tabular-nums">{take}</span>
-                  <button onClick={() => setTake(t => t + 1)} className="clapper-ghost p-1.5 rounded-full" aria-label="Siguiente toma"><Plus className="h-5 w-5" /></button>
-                </div>
-              </div>
-              <Cell label="Fecha" value={fmtDate(now)} small />
-            </div>
-            <div className="flex flex-col items-center justify-center px-4 text-center">
+        <div id="socialify-clapper" className="socialify-clapper clapper-layout select-none">
+          <div className="clapper-toolbar">
+            <div className="clapper-stripes" />
+            <Button variant="ghost" size="icon" onClick={goFull} className="clapper-ghost" aria-label="Pantalla completa" title="Pantalla completa"><Maximize2 /></Button>
+            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="clapper-ghost" aria-label="Cerrar" title="Cerrar"><X /></Button>
+          </div>
+          <div className="clapper-board">
+            <div className="clapper-brand">
               {clientLogo && (
-                <img src={clientLogo} alt={clientName || 'Logo del cliente'} className="max-h-20 sm:max-h-32 max-w-[60%] object-contain mb-4 sm:mb-6 rounded-lg bg-[#FAF8F2] p-2" />
+                <div className="clapper-logo"><img src={clientLogo} alt={clientName || 'Logo del cliente'} /></div>
               )}
-              {clientName && <div className="clapper-accent font-bold uppercase tracking-[0.2em] text-xl sm:text-4xl lg:text-5xl mb-4 sm:mb-6 break-words max-w-[95%]">{clientName}</div>}
-              <div className="clapper-display font-bold leading-tight text-3xl sm:text-5xl lg:text-7xl break-words max-w-[95%]">
+              {clientName && <div className="clapper-accent clapper-display clapper-client">{clientName}</div>}
+            </div>
+            <div className="clapper-title-area">
+              <div className="clapper-display clapper-video-title">
                 {title || 'Sin título'}
               </div>
             </div>
-            <div className="grid grid-cols-2 border-t-2 clapper-border text-center">
-              <div className="border-r-2 clapper-border py-2 px-3">
-                <div className="clapper-muted text-[10px] sm:text-xs tracking-[0.3em] uppercase">Encargado</div>
+            <div className="clapper-details">
+              <div className="clapper-cell">
+                <div className="clapper-label">Toma</div>
+                <div className="clapper-take-controls">
+                  <Button variant="ghost" size="icon" disabled={take === 1} onClick={() => setTake(t => Math.max(1, t - 1))} className="clapper-ghost" aria-label="Toma anterior" title="Toma anterior"><Minus /></Button>
+                  <span className="clapper-display clapper-value tabular-nums">{take}</span>
+                  <Button variant="ghost" size="icon" onClick={() => setTake(t => t + 1)} className="clapper-ghost" aria-label="Siguiente toma" title="Siguiente toma"><Plus /></Button>
+                </div>
+              </div>
+              <div className="clapper-cell">
+                <label htmlFor="clapper-producer" className="clapper-label">Encargado</label>
                 <input
+                  id="clapper-producer"
                   value={encargado}
                   onChange={(e) => setEncargado(e.target.value)}
                   placeholder="Nombre"
-                  className="clapper-text clapper-display w-full bg-transparent text-center font-bold text-xl sm:text-3xl outline-none"
+                  className="clapper-text clapper-display clapper-value w-full min-w-0 bg-transparent text-center outline-none"
                 />
               </div>
-              <Cell label="Hora" value={fmtTime(now)} mono />
+              <Cell label="Fecha" value={fmtDate(now)} />
+              <Cell label="Hora · Costa Rica" value={fmtTime(now)} clock />
             </div>
-          </div>
-          <div className="absolute top-6 right-6 sm:top-10 sm:right-10 flex gap-2">
-            <button onClick={goFull} className="clapper-ghost rounded-full p-2" aria-label="Pantalla completa"><Maximize2 className="h-5 w-5" /></button>
-            <button onClick={() => onOpenChange(false)} className="clapper-ghost rounded-full p-2" aria-label="Cerrar"><X className="h-5 w-5" /></button>
           </div>
         </div>
       </DialogContent>
@@ -85,11 +86,11 @@ export function ClapperDialog({ open, onOpenChange, title, clientName, producerN
   );
 }
 
-function Cell({ label, value, small, mono }: { label: string; value: string; small?: boolean; mono?: boolean }) {
+function Cell({ label, value, clock }: { label: string; value: string; clock?: boolean }) {
   return (
-    <div className="py-2 px-2">
-      <div className="clapper-muted text-[10px] sm:text-xs tracking-[0.3em] uppercase">{label}</div>
-      <div className={`clapper-display font-bold tabular-nums ${small ? 'text-lg sm:text-3xl mt-2' : 'text-4xl sm:text-6xl'} ${mono ? 'text-2xl sm:text-5xl' : ''}`}>{value}</div>
+    <div className="clapper-cell">
+      <div className="clapper-label">{label}</div>
+      <div className={`clapper-display clapper-value tabular-nums ${clock ? 'clapper-clock' : 'clapper-date'}`}>{value}</div>
     </div>
   );
 }
@@ -98,13 +99,14 @@ export function ClapperButton(props: Omit<ClapperDialogProps, 'open' | 'onOpenCh
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button
+      <Button variant="ghost" size="icon"
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-        className="text-noeval-muted hover:text-noeval-accent p-1.5 rounded-lg hover:bg-noeval-line/30 transition"
+        className="text-noeval-muted hover:text-noeval-accent h-7 w-7 rounded-lg hover:bg-noeval-line/30 transition"
         title="Claqueta para cámara"
+        aria-label="Claqueta para cámara"
       >
         <Clapperboard className="h-4 w-4" />
-      </button>
+      </Button>
       <ClapperDialog open={open} onOpenChange={setOpen} {...props} />
     </>
   );
