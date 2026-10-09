@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import type { SheetShot } from '@/hooks/use-production-sheets';
 import type { ShotReference } from '@/hooks/use-shot-references';
 import { ShotReferences } from './ShotReferences';
+import { ClapperButton } from './ClapperDialog';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
@@ -50,6 +51,8 @@ interface PieceCardProps {
   canMoveUp?: boolean;
   canMoveDown?: boolean;
   onMove?: (dir: 'up' | 'down') => void;
+  clientName?: string;
+  producerName?: string | null;
 }
 
 export function PieceCard({
@@ -66,6 +69,8 @@ export function PieceCard({
   canMoveUp = false,
   canMoveDown = false,
   onMove,
+  clientName,
+  producerName,
 }: PieceCardProps) {
   const [dragArmed, setDragArmed] = useState(false);
   const isDraft = !!shot.is_draft;
@@ -201,6 +206,7 @@ export function PieceCard({
           </div>
 
           <div className="flex items-center gap-0.5 no-print shrink-0">
+            <ClapperButton title={local.concept} pieceNumber={index + 1} clientName={clientName} producerName={producerName} />
             <button
               onClick={() => setExpanded(true)}
               className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded-lg hover:bg-noeval-line/30 transition"
@@ -367,6 +373,7 @@ export function PieceCard({
         </div>
 
         <div className="flex items-center gap-0.5 no-print shrink-0">
+            <ClapperButton title={local.concept} pieceNumber={index + 1} clientName={clientName} producerName={producerName} />
           <button
             onClick={() => setExpanded(false)}
             className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded-lg hover:bg-noeval-line/30 transition"
