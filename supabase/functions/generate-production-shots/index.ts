@@ -126,14 +126,16 @@ Generá ${shot_count} piezas de contenido siguiendo las reglas. Respondé solo c
 
     if (!anthropicRes.ok) {
       const errText = await anthropicRes.text();
-      console.error('Anthropic error', anthropicRes.status, errText);
-      const map: Record<number, string> = {
-        401: 'API key de Anthropic inválida. Revisá el secreto ANTHROPIC_API_KEY.',
-        429: 'Anthropic rate limit. Intentá en unos segundos.',
-        529: 'Anthropic está sobrecargado. Reintentá pronto.',
-        400: 'Anthropic rechazó la petición.',
-      };
-      return json({ error: map[anthropicRes.status] ?? `Anthropic error ${anthropicRes.status}`, raw: errText.slice(0, 500) }, 502);
+      let providerMessage = '';
+      try {
+        const providerError = JSON.parse(errText);
+        if (typeof providerError?.error?.message === 'string') providerMessage = providerError.error.message;
+      } catch { /* A non-JSON response must not leak raw provider output. */ }
+      console.error('Anthropic error', anthropicRes.status);
+      const message = /credit balance is too low/i.test(providerMessage)
+        ? 'La cuenta de Anthropic que usa esta herramienta no tiene saldo suficiente. Es necesario recargar esa cuenta para generar piezas. No es un problema con tus temas ni con los créditos de Lovable.'
+        : providerMessage || `Anthropic no pudo generar las piezas (error ${anthropicRes.status}).`;
+      return json({ error: message }, anthropicRes.status);
     }
 
     const data = await anthropicRes.json();

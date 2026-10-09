@@ -65,7 +65,15 @@ export function GenerateShotsDialog({ open, onOpenChange, sheetId, existingCount
       const { data, error } = await supabase.functions.invoke('generate-production-shots', {
         body: { sheet_id: sheetId, prompt: prompt.trim(), model, shot_count: count },
       });
-      if (error) throw error;
+      if (error) {
+        // FunctionsHttpError otherwise hides the useful message behind a generic status error.
+        const context = (error as { context?: unknown }).context;
+        if (context instanceof Response) {
+          const details = await context.json().catch(() => null);
+          if (typeof details?.error === 'string') throw new Error(details.error);
+        }
+        throw error;
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       const shots = (data as any)?.shots as GeneratedShot[];
       if (!Array.isArray(shots) || shots.length === 0) throw new Error('Claude no devolvió piezas.');
