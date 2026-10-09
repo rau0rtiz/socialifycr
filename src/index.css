@@ -436,7 +436,62 @@ html.agency-theme .agency-neon,
 .socialify-clapper .clapper-border { border-color: var(--clapper-line); }
 .socialify-clapper .clapper-display {
   font-family: "Space Grotesk", system-ui, sans-serif;
-  letter-spacing: -.02em;
+  letter-spacing: 0;
+}
+.socialify-clapper .clapper-layout {
+  height: 100%; width: 100%; min-height: 0;
+  display: flex; flex-direction: column; gap: 16px;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+.socialify-clapper .clapper-toolbar { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.socialify-clapper .clapper-toolbar .clapper-stripes { flex: 1; height: 40px; border-radius: 4px; }
+.socialify-clapper .clapper-board { flex: 1; min-height: 0; display: flex; flex-direction: column; border: 2px solid var(--clapper-line); border-radius: 8px; overflow-y: auto; }
+.socialify-clapper .clapper-brand { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 20px 16px; border-bottom: 1px solid var(--clapper-line); flex-shrink: 0; }
+.socialify-clapper .clapper-logo { width: 72px; height: 72px; flex-shrink: 0; border-radius: 6px; padding: 8px; background: var(--clapper-fg); display: grid; place-items: center; }
+.socialify-clapper .clapper-logo img { width: 100%; height: 100%; object-fit: contain; }
+.socialify-clapper .clapper-client { font-size: 22px; line-height: 1.2; font-weight: 700; overflow-wrap: anywhere; min-width: 0; max-width: 800px; }
+.socialify-clapper .clapper-title-area { flex: 1; display: grid; place-items: center; padding: 24px 20px; min-height: 140px; text-align: center; }
+.socialify-clapper .clapper-video-title { font-size: 30px; line-height: 1.15; font-weight: 700; overflow-wrap: anywhere; width: 100%; max-width: 1100px; }
+.socialify-clapper .clapper-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 2px solid var(--clapper-line); flex-shrink: 0; }
+.socialify-clapper .clapper-cell { min-width: 0; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; }
+.socialify-clapper .clapper-cell:nth-child(odd) { border-right: 1px solid var(--clapper-line); }
+.socialify-clapper .clapper-cell:nth-child(n+3) { border-top: 1px solid var(--clapper-line); }
+.socialify-clapper .clapper-label { color: var(--clapper-muted); font-size: 10px; line-height: 1.4; text-transform: uppercase; letter-spacing: 0; }
+.socialify-clapper .clapper-value { font-size: 24px; line-height: 1.2; font-weight: 700; }
+.socialify-clapper .clapper-date { font-size: 18px; }
+.socialify-clapper .clapper-clock { white-space: nowrap; }
+.socialify-clapper .clapper-take-controls { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+.socialify-clapper .clapper-take-controls .clapper-value { min-width: 2ch; }
+.socialify-clapper input:focus-visible { outline: 1px solid var(--clapper-accent); outline-offset: 4px; border-radius: 2px; }
+@media (min-width: 700px) {
+  .socialify-clapper .clapper-layout { padding: 24px; gap: 20px; }
+  .socialify-clapper .clapper-brand { padding: 24px; gap: 24px; }
+  .socialify-clapper .clapper-logo { width: 96px; height: 96px; padding: 12px; }
+  .socialify-clapper .clapper-client { font-size: 32px; }
+  .socialify-clapper .clapper-video-title { font-size: 48px; }
+  .socialify-clapper .clapper-title-area { padding: 32px; }
+  .socialify-clapper .clapper-details { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .socialify-clapper .clapper-cell { padding: 20px 10px; }
+  .socialify-clapper .clapper-cell:nth-child(n) { border-top: 0; border-right: 1px solid var(--clapper-line); }
+  .socialify-clapper .clapper-cell:last-child { border-right: 0; }
+  .socialify-clapper .clapper-label { font-size: 12px; }
+  .socialify-clapper .clapper-date { font-size: 20px; }
+}
+@media (min-width: 1100px) and (min-height: 700px) {
+  .socialify-clapper .clapper-layout { padding: 32px; }
+  .socialify-clapper .clapper-client { font-size: 40px; }
+  .socialify-clapper .clapper-video-title { font-size: 64px; }
+  .socialify-clapper .clapper-value { font-size: 32px; }
+  .socialify-clapper .clapper-date { font-size: 24px; }
+}
+@media (max-height: 550px) {
+  .socialify-clapper .clapper-layout { gap: 8px; padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); }
+  .socialify-clapper .clapper-brand { padding: 8px 16px; gap: 12px; }
+  .socialify-clapper .clapper-logo { width: 48px; height: 48px; padding: 4px; }
+  .socialify-clapper .clapper-client { font-size: 20px; }
+  .socialify-clapper .clapper-title-area { min-height: 80px; padding: 12px 20px; }
+  .socialify-clapper .clapper-video-title { font-size: 28px; }
+  .socialify-clapper .clapper-cell { padding: 8px; gap: 4px; }
 }
 .socialify-clapper .clapper-stripes {
   background: repeating-linear-gradient(-45deg, var(--clapper-fg) 0 28px, var(--clapper-bg) 28px 56px);
