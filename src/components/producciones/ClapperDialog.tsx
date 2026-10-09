@@ -55,7 +55,7 @@ export function ClapperDialog({ open, onOpenChange, title, clientName, producerN
             </div>
             <div className="flex flex-col items-center justify-center px-4 text-center">
               {clientLogo && (
-                <img src={clientLogo} alt={clientName || 'Logo del cliente'} className="max-h-20 sm:max-h-32 max-w-[60%] object-contain mb-4 sm:mb-6" />
+                <img src={clientLogo} alt={clientName || 'Logo del cliente'} className="max-h-20 sm:max-h-32 max-w-[60%] object-contain mb-4 sm:mb-6 rounded-lg bg-[#FAF8F2] p-2" />
               )}
               {clientName && <div className="clapper-accent font-bold uppercase tracking-[0.2em] text-xl sm:text-4xl lg:text-5xl mb-4 sm:mb-6 break-words max-w-[95%]">{clientName}</div>}
               <div className="clapper-display font-bold leading-tight text-3xl sm:text-5xl lg:text-7xl break-words max-w-[95%]">
