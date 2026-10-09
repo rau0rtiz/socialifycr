@@ -53,6 +53,7 @@ interface PieceCardProps {
   onMove?: (dir: 'up' | 'down') => void;
   clientName?: string;
   producerName?: string | null;
+  clientLogo?: string | null;
 }
 
 export function PieceCard({
@@ -71,6 +72,7 @@ export function PieceCard({
   onMove,
   clientName,
   producerName,
+  clientLogo,
 }: PieceCardProps) {
   const [dragArmed, setDragArmed] = useState(false);
   const isDraft = !!shot.is_draft;
@@ -206,7 +208,7 @@ export function PieceCard({
           </div>
 
           <div className="flex items-center gap-0.5 no-print shrink-0">
-            <ClapperButton title={local.concept} pieceNumber={index + 1} clientName={clientName} producerName={producerName} />
+            <ClapperButton title={local.concept} pieceNumber={index + 1} clientName={clientName} producerName={producerName} clientLogo={clientLogo} />
             <button
               onClick={() => setExpanded(true)}
               className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded-lg hover:bg-noeval-line/30 transition"
@@ -373,7 +375,7 @@ export function PieceCard({
         </div>
 
         <div className="flex items-center gap-0.5 no-print shrink-0">
-            <ClapperButton title={local.concept} pieceNumber={index + 1} clientName={clientName} producerName={producerName} />
+            <ClapperButton title={local.concept} pieceNumber={index + 1} clientName={clientName} producerName={producerName} clientLogo={clientLogo} />
           <button
             onClick={() => setExpanded(false)}
             className="text-noeval-muted hover:text-noeval-ink p-1.5 rounded-lg hover:bg-noeval-line/30 transition"
