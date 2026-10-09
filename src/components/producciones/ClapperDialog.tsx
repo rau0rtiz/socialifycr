@@ -6,9 +6,10 @@ interface ClapperDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   title: string;
-  pieceNumber: number;
+  pieceNumber?: number;
   clientName?: string;
   producerName?: string | null;
+  clientLogo?: string | null;
 }
 
 const fmtDate = (d: Date) =>
@@ -16,7 +17,7 @@ const fmtDate = (d: Date) =>
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString('es-CR', { timeZone: 'America/Costa_Rica', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
-export function ClapperDialog({ open, onOpenChange, title, pieceNumber, clientName, producerName }: ClapperDialogProps) {
+export function ClapperDialog({ open, onOpenChange, title, clientName, producerName, clientLogo }: ClapperDialogProps) {
   const [now, setNow] = useState(new Date());
   const [take, setTake] = useState(1);
   const [encargado, setEncargado] = useState(producerName || '');
@@ -41,9 +42,8 @@ export function ClapperDialog({ open, onOpenChange, title, pieceNumber, clientNa
           {/* Stripes */}
           <div className="clapper-stripes h-10 sm:h-16 rounded-lg shrink-0" />
           <div className="flex-1 mt-4 sm:mt-6 rounded-2xl border-2 clapper-border grid grid-rows-[auto_1fr_auto] overflow-hidden">
-            <div className="grid grid-cols-3 border-b-2 clapper-border text-center">
-              <Cell label="Pieza" value={String(pieceNumber).padStart(2, '0')} />
-              <div className="border-x-2 clapper-border">
+            <div className="grid grid-cols-2 border-b-2 clapper-border text-center">
+              <div className="border-r-2 clapper-border">
                 <div className="clapper-muted text-[10px] sm:text-xs tracking-[0.3em] uppercase pt-2">Toma</div>
                 <div className="flex items-center justify-center gap-3 pb-2">
                   <button onClick={() => setTake(t => Math.max(1, t - 1))} className="clapper-ghost p-1.5 rounded-full" aria-label="Toma anterior"><Minus className="h-5 w-5" /></button>
@@ -54,7 +54,10 @@ export function ClapperDialog({ open, onOpenChange, title, pieceNumber, clientNa
               <Cell label="Fecha" value={fmtDate(now)} small />
             </div>
             <div className="flex flex-col items-center justify-center px-4 text-center">
-              {clientName && <div className="clapper-accent text-xs sm:text-sm tracking-[0.35em] uppercase mb-3">{clientName}</div>}
+              {clientLogo && (
+                <img src={clientLogo} alt={clientName || 'Logo del cliente'} className="max-h-20 sm:max-h-32 max-w-[60%] object-contain mb-4 sm:mb-6" />
+              )}
+              {clientName && <div className="clapper-accent font-bold uppercase tracking-[0.2em] text-xl sm:text-4xl lg:text-5xl mb-4 sm:mb-6 break-words max-w-[95%]">{clientName}</div>}
               <div className="clapper-display font-bold leading-tight text-3xl sm:text-5xl lg:text-7xl break-words max-w-[95%]">
                 {title || 'Sin título'}
               </div>
