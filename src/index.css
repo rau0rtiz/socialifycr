@@ -413,6 +413,44 @@ html.agency-theme .agency-neon,
 .noeval-scope .border-noeval-line { border-color: var(--noeval-line); }
 .noeval-scope .border-noeval-accent { border-color: var(--noeval-accent); }
 
+/* ===== Claqueta de cámara =====
+   El diálogo se monta en un portal sobre <body>, fuera de .agency-shell y
+   .noeval-scope, así que necesita sus propios tokens. Fondo negro puro para
+   que la cámara lea bien el borde de la escena. */
+.socialify-clapper {
+  --clapper-bg: #000000;
+  --clapper-fg: #FAF8F2;
+  --clapper-accent: #E85D3A;
+  --clapper-muted: rgba(250, 248, 242, .62);
+  --clapper-line: rgba(250, 248, 242, .85);
+  background-color: var(--clapper-bg);
+  color: var(--clapper-fg);
+  font-family: "DM Sans", system-ui, sans-serif;
+}
+.socialify-clapper input { color: var(--clapper-fg); }
+.socialify-clapper input::placeholder { color: rgba(250, 248, 242, .35); }
+.socialify-clapper .clapper-surface { background-color: var(--clapper-bg); }
+.socialify-clapper .clapper-text { color: var(--clapper-fg); }
+.socialify-clapper .clapper-muted { color: var(--clapper-muted); }
+.socialify-clapper .clapper-accent { color: var(--clapper-accent); }
+.socialify-clapper .clapper-border { border-color: var(--clapper-line); }
+.socialify-clapper .clapper-display {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  letter-spacing: -.02em;
+}
+.socialify-clapper .clapper-stripes {
+  background: repeating-linear-gradient(-45deg, var(--clapper-fg) 0 28px, var(--clapper-bg) 28px 56px);
+}
+.socialify-clapper .clapper-ghost {
+  background: rgba(250, 248, 242, .08);
+  color: var(--clapper-fg);
+  transition: color .15s ease, background-color .15s ease;
+}
+.socialify-clapper .clapper-ghost:hover {
+  color: var(--clapper-accent);
+  background: rgba(250, 248, 242, .16);
+}
+
 /* Remap shadcn tokens inside the paper scope so default component variants
    (outline buttons, inputs, selects, cards) stay legible even when the agency
    dark theme is active on <html>. */
