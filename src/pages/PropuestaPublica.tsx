@@ -4,11 +4,28 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { renderDocumentSource } from '@/lib/jsx-document';
 
+const NOINDEX_TAG = '<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">';
+const withNoIndex = (doc: string): string =>
+  /<head[^>]*>/i.test(doc)
+    ? doc.replace(/<head[^>]*>/i, (m) => `${m}${NOINDEX_TAG}`)
+    : `${NOINDEX_TAG}${doc}`;
+
 const PropuestaPublica = () => {
   const { slug } = useParams<{ slug: string }>();
   const [state, setState] = useState<'loading' | 'ok' | 'not_found'>('loading');
   const [html, setHtml] = useState('');
   const [title, setTitle] = useState('Propuesta');
+
+  // Los documentos publicados son privados por enlace: nunca deben indexarse.
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex, nofollow, noarchive, nosnippet';
+    document.head.appendChild(meta);
+    return () => {
+      meta.remove();
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,7 +140,7 @@ const PropuestaPublica = () => {
   return (
     <iframe
       title={title}
-      srcDoc={renderDocumentSource(html, title)}
+      srcDoc={withNoIndex(renderDocumentSource(html, title))}
       sandbox="allow-same-origin allow-popups allow-forms allow-scripts"
       className="w-screen h-screen border-0 block"
     />
