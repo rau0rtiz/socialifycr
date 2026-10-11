@@ -163,7 +163,7 @@ export function GenerateShotsDialog({ open, onOpenChange, sheetId, existingCount
                   min={3}
                   max={20}
                   value={count}
-                  onChange={(e) => setCount(Math.max(3, Math.min(20, parseInt(e.target.value || '8', 10))))}
+                  onChange={(e) => setCount(Math.max(3, Math.min(30, parseInt(e.target.value || '8', 10))))}
                 />
               </div>
               <div className="space-y-1.5">

@@ -5,9 +5,9 @@ import { aiFeatureEnabled, aiDisabledResponse } from '../_shared/ai-switch.ts';
 
 const InputSchema = z.object({
   sheet_id: z.string().uuid(),
-  prompt: z.string().min(80).max(8000),
+  prompt: z.string().min(80).max(40000),
   model: z.enum(['claude-opus-4-5', 'claude-sonnet-4-5']).default('claude-opus-4-5'),
-  shot_count: z.number().int().min(3).max(20).default(8),
+  shot_count: z.number().int().min(3).max(30).default(8),
 });
 
 const ShotSchema = z.object({
@@ -16,7 +16,7 @@ const ShotSchema = z.object({
   concept: z.string().min(1).max(200),
   description: z.string().max(800).optional().default(''),
   hook: z.string().max(400).optional().default(''),
-  script: z.string().max(2000).optional().default(''),
+  script: z.string().max(6000).optional().default(''),
   cta: z.string().max(200).optional().default(''),
   tech_notes: z.string().max(500).optional().default(''),
   duration_estimate: z.string().max(50).optional().default(''),
@@ -117,7 +117,7 @@ Generá ${shot_count} piezas de contenido siguiendo las reglas. Respondé solo c
       },
       body: JSON.stringify({
         model,
-        max_tokens: 4000,
+        max_tokens: 16000,
         temperature: 0.8,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
