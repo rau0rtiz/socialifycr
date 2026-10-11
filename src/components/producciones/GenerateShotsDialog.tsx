@@ -161,7 +161,7 @@ export function GenerateShotsDialog({ open, onOpenChange, sheetId, existingCount
                   id="ai-count"
                   type="number"
                   min={3}
-                  max={20}
+                  max={30}
                   value={count}
                   onChange={(e) => setCount(Math.max(3, Math.min(30, parseInt(e.target.value || '8', 10))))}
                 />
