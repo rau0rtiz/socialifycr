@@ -108,6 +108,68 @@ Deno.serve(async (req) => {
     }
 
 
+    // Primera interacción en 24 h (texto, adjunto o audio): Ari abre siempre con la
+    // pregunta de descubrimiento #1, sin llamar a la IA.
+    {
+      const DAY = 24 * 60 * 60 * 1000;
+      let i = msgs.length - 1;
+      while (i >= 0 && (msgs[i] as any).direction === 'inbound') i--;
+      const burstStart = new Date((msgs[i + 1] as any).occurred_at).getTime();
+      const prev = i >= 0 ? new Date((msgs[i] as any).occurred_at).getTime() : null;
+      const isFirstIn24h = prev === null || burstStart - prev >= DAY;
+      if (isFirstIn24h) {
+        const { data: tok } = await admin
+          .from('channel_secrets')
+          .select('access_token')
+          .eq('channel', 'instagram')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (tok?.access_token) {
+          const first = String(contactRow?.display_name ?? '').trim().split(/\s+/)[0];
+          const greet = first && !/^@/.test(first) ? `¡Hola ${first}!` : '¡Hola!';
+          const opener = `${greet} Gracias por escribirnos. Para orientarte mejor, ¿estás buscando servicios de marketing digital o solo producción de contenido?`;
+          const r = await fetch('https://graph.instagram.com/v21.0/me/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipient: { id: identity.external_id },
+              message: { text: opener },
+              access_token: tok.access_token,
+            }),
+          });
+          const sr = await r.json().catch(() => ({}));
+          if (r.ok) {
+            const nowIso = new Date().toISOString();
+            await admin.from('msg_messages').insert({
+              conversation_id: conversationId,
+              receiving_account_id: identity.receiving_account_id,
+              external_message_id: sr?.message_id ?? null,
+              direction: 'outbound',
+              author: 'bot',
+              body: opener,
+              delivery_status: 'enviado',
+              occurred_at: nowIso,
+            });
+            await admin.from('msg_agent_runs').insert({
+              conversation_id: conversationId,
+              is_simulation: false,
+              outcome: 'ok',
+              proposal: { reply: opener },
+              validations: { auto: true, motivo: 'apertura_24h' },
+            });
+            await admin
+              .from('msg_conversations')
+              .update({ last_outbound_at: nowIso, human_takeover_at: null })
+              .eq('id', conversationId);
+            await scheduleFirstFollowup(admin, conv, settings);
+            return json({ sent: true, reason: 'apertura_24h' });
+          }
+          console.error('opener send error', sr);
+        }
+      }
+    }
+
     // Audio de voz: delegación directa y silenciosa a una persona.
     // Sin llamada a la IA, sin mensaje de "esperá un momento": se pausa Ari y se avisa por correo.
     if (audioReceived(history)) {
