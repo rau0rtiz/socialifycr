@@ -24,14 +24,13 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
   const [p, setP] = useState<Prefs>(loadPrefs);
   const [playing, setPlaying] = useState(false);
   const [showCtl, setShowCtl] = useState(true);
-  const [countdown, setCountdown] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
   const raf = useRef<number>();
   const last = useRef<number>(0);
   const acc = useRef(0);
 
   useEffect(() => { localStorage.setItem(LS, JSON.stringify(p)); }, [p]);
-  useEffect(() => { if (!open) { setPlaying(false); setCountdown(0); } }, [open]);
+  useEffect(() => { if (!open) setPlaying(false); }, [open]);
 
   // Wake lock to keep iPad screen awake
   useEffect(() => {
@@ -60,22 +59,9 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
     return () => { if (raf.current) cancelAnimationFrame(raf.current); };
   }, [playing, p.speed, p.size]);
 
-  useEffect(() => {
-    if (countdown <= 0) return;
-    const t = setTimeout(() => {
-      if (countdown === 1) { setPlaying(true); setShowCtl(false); }
-      setCountdown(c => c - 1);
-    }, 1000);
-    return () => clearTimeout(t);
-  }, [countdown]);
+  const toggle = useCallback(() => setPlaying(x => !x), []);
 
-  const toggle = useCallback(() => {
-    if (playing) { setPlaying(false); setShowCtl(true); }
-    else if (countdown) setCountdown(0);
-    else setCountdown(3);
-  }, [playing, countdown]);
-
-  const reset = () => { setPlaying(false); setCountdown(0); if (scroller.current) scroller.current.scrollTop = 0; };
+  const reset = () => { setPlaying(false); if (scroller.current) scroller.current.scrollTop = 0; };
 
   useEffect(() => {
     if (!open) return;
@@ -125,14 +111,13 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
               </div>
             </div>
             <div className="prompter-guide" />
-            {countdown > 0 && <div className="prompter-count">{countdown}</div>}
           </div>
 
           {showCtl && (
             <div className="prompter-bar" onClick={e => e.stopPropagation()}>
               <div className="prompter-row">
                 <button className="prompter-btn prompter-main" onClick={toggle} aria-label={playing ? 'Pausar' : 'Iniciar'}>
-                  {playing || countdown ? <Pause /> : <Play />}
+                  {playing ? <Pause /> : <Play />}
                 </button>
                 <button className="prompter-btn" onClick={reset} aria-label="Volver al inicio"><RotateCcw /></button>
                 <Stepper label="Velocidad" value={p.speed} onDec={() => set({ speed: Math.max(5, p.speed - 5) })} onInc={() => set({ speed: Math.min(200, p.speed + 5) })} />
