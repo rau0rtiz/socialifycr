@@ -13,6 +13,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAgencyPayments, fmtMoney } from '@/hooks/use-agency-payments';
 import { useBrand } from '@/contexts/BrandContext';
+import { useNavAccess } from '@/hooks/use-nav-access';
 import { UpcomingAppointmentsList } from '@/components/agency/AgencyAppointments';
 
 const RailCard = ({
@@ -203,10 +204,13 @@ export const AppointmentsBlock = () => (
   </RailCard>
 );
 
-export const HubRail = () => (
-  <div className="space-y-4">
-    <PaymentsBlock />
-    <ProductionsBlock />
-    <RecentLeadsBlock />
-  </div>
-);
+export const HubRail = () => {
+  const { canSee } = useNavAccess();
+  return (
+    <div className="space-y-4">
+      {canSee('/agencia/pagos') && <PaymentsBlock />}
+      <ProductionsBlock />
+      <RecentLeadsBlock />
+    </div>
+  );
+};

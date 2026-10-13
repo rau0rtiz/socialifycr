@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 're
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, BarChart3, Clapperboard, FileText, MessageSquare, Users, Wallet, Zap } from 'lucide-react';
 import { useBrand } from '@/contexts/BrandContext';
+import { useNavAccess } from '@/hooks/use-nav-access';
 import { useAgencyCrmLeads } from '@/hooks/use-agency-crm-leads';
 import type { HotspotId } from './three/AgencyScene';
 
@@ -42,6 +43,8 @@ export const AgencyHero3D = ({
   aside?: React.ReactNode;
 }) => {
   const navigate = useNavigate();
+  const { canSee } = useNavAccess();
+  const canSeePagos = canSee('/agencia/pagos');
   const { clients, clientsLoading } = useBrand();
   const { leads, isLoading: leadsLoading } = useAgencyCrmLeads();
   const [hovered, setHovered] = useState<HotspotId | null>(null);
@@ -134,13 +137,13 @@ export const AgencyHero3D = ({
                 {HOTSPOTS[id].label} <ArrowRight className="h-3 w-3" />
               </button>
             ))}
-            <button
+            {canSeePagos && <button
               type="button"
               onClick={() => navigate('/agencia/pagos')}
               className="flex items-center gap-2 rounded-xl border border-border/70 bg-card/60 px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
             >
               <Wallet className="h-3.5 w-3.5" /> Pagos <ArrowRight className="h-3 w-3" />
-            </button>
+            </button>}
           </div>
         </div>
       </div>
