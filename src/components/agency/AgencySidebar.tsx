@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { useAuth } from '@/contexts/AuthContext';
 import { AGENCY_NAV, isNavActive, type AgencyNavItem } from './nav-items';
+import { useNavAccess } from '@/hooks/use-nav-access';
 import socialifyLogo from '@/assets/socialify-wordmark.png.asset.json';
 
 export const AgencySidebar = () => {
@@ -27,6 +28,7 @@ export const AgencySidebar = () => {
   // En celular el menú se abre como panel completo: nunca en modo iconos.
   const collapsed = !isMobile && state === 'collapsed';
   const { signOut } = useAuth();
+  const { canSee } = useNavAccess();
   const [, startTransition] = useTransition();
 
   const go = (url: string) => {
@@ -106,7 +108,7 @@ export const AgencySidebar = () => {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="group-data-[collapsible=icon]/sidebar:items-stretch group-data-[collapsible=icon]/sidebar:gap-1.5">
-              {AGENCY_NAV.map((item) => {
+              {AGENCY_NAV.filter((item) => canSee(item.url)).map((item) => {
                 const active = isNavActive(item, pathname);
                 return (
                   <SidebarMenuItem

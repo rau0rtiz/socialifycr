@@ -862,6 +862,24 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_nav_access: {
+        Row: {
+          hidden_sections: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          hidden_sections?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          hidden_sections?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       agency_payment_clients: {
         Row: {
           active: boolean
