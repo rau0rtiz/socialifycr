@@ -43,6 +43,8 @@ export const AgencyHero3D = ({
   aside?: React.ReactNode;
 }) => {
   const navigate = useNavigate();
+  const { canSee } = useNavAccess();
+  const canSeePagos = canSee('/agencia/pagos');
   const { clients, clientsLoading } = useBrand();
   const { leads, isLoading: leadsLoading } = useAgencyCrmLeads();
   const [hovered, setHovered] = useState<HotspotId | null>(null);
