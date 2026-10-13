@@ -59,13 +59,7 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
     return () => { if (raf.current) cancelAnimationFrame(raf.current); };
   }, [playing, p.speed, p.size]);
 
-  const toggle = useCallback(() => {
-    setPlaying(x => {
-      const next = !x;
-      setShowCtl(!next);
-      return next;
-    });
-  }, []);
+  const toggle = useCallback(() => setPlaying(x => !x), []);
 
   const reset = () => { setPlaying(false); if (scroller.current) scroller.current.scrollTop = 0; };
 
