@@ -14,6 +14,7 @@ import type { SheetShot } from '@/hooks/use-production-sheets';
 import type { ShotReference } from '@/hooks/use-shot-references';
 import { ShotReferences } from './ShotReferences';
 import { ClapperButton } from './ClapperDialog';
+import { TeleprompterButton } from './TeleprompterDialog';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
@@ -208,6 +209,7 @@ export function PieceCard({
           </div>
 
           <div className="flex items-center gap-0.5 no-print shrink-0">
+            <TeleprompterButton title={local.concept} script={local.script} />
             <ClapperButton title={local.concept} pieceNumber={index + 1} clientName={clientName} producerName={producerName} clientLogo={clientLogo} />
             <button
               onClick={() => setExpanded(true)}
@@ -375,6 +377,7 @@ export function PieceCard({
         </div>
 
         <div className="flex items-center gap-0.5 no-print shrink-0">
+            <TeleprompterButton title={local.concept} script={local.script} />
             <ClapperButton title={local.concept} pieceNumber={index + 1} clientName={clientName} producerName={producerName} clientLogo={clientLogo} />
           <button
             onClick={() => setExpanded(false)}
