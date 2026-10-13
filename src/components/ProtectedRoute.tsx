@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/use-user-role';
+import { useNavAccess, sectionForPath } from '@/hooks/use-nav-access';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading, signOut } = useAuth();
   const { isAgency, loading: roleLoading } = useUserRole();
   const location = useLocation();
+  const { canSee, loading: navLoading } = useNavAccess();
 
   const notInternal = !!user && !loading && !roleLoading && !isAgency;
 
@@ -32,9 +34,12 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to={target} replace />;
   }
 
-  if (roleLoading) return null;
+  if (roleLoading || navLoading) return null;
 
   if (!isAgency) return <Navigate to="/auth?blocked=1" replace />;
+
+  const section = sectionForPath(location.pathname);
+  if (section && !canSee(section)) return <Navigate to="/agencia" replace />;
 
   return <>{children}</>;
 };
