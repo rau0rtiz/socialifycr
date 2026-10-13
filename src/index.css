@@ -707,3 +707,30 @@ html.agency-theme .agency-neon,
   line-height: 1.35;
 }
 .noeval-scope .prod-pad { padding: clamp(0.6rem, 5cqw, 1.25rem); }
+
+/* Teleprompter — portal output, own tokens */
+.socialify-prompter { --pr-bg:#000; --pr-fg:#fff; --pr-accent:#E85D3A; background:var(--pr-bg); color:var(--pr-fg); }
+.prompter-root { position:relative; width:100%; height:100dvh; overflow:hidden; touch-action:manipulation; -webkit-user-select:none; user-select:none; }
+.prompter-stage { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.prompter-rot { flex:none; transition:transform .25s ease; }
+.prompter-scroll { width:100%; height:100%; overflow-y:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; padding-top:env(safe-area-inset-top); }
+.prompter-scroll::-webkit-scrollbar { display:none; }
+.prompter-text { white-space:pre-wrap; font-weight:600; color:var(--pr-fg); font-family:'Space Grotesk', system-ui, sans-serif; word-break:break-word; }
+.prompter-guide { pointer-events:none; position:absolute; left:0; right:0; top:45%; height:2px; background:linear-gradient(90deg, transparent, rgba(232,93,58,.55), transparent); }
+.prompter-count { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:22vmin; font-weight:700; color:var(--pr-accent); background:rgba(0,0,0,.55); pointer-events:none; }
+.prompter-bar { position:absolute; left:50%; transform:translateX(-50%); bottom:calc(12px + env(safe-area-inset-bottom)); width:min(980px, calc(100% - 24px)); background:rgba(20,20,20,.92); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:12px; backdrop-filter:blur(10px); display:flex; flex-direction:column; gap:10px; }
+.prompter-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; }
+.prompter-btn { width:52px; height:52px; border-radius:14px; display:inline-flex; align-items:center; justify-content:center; background:rgba(255,255,255,.08); color:var(--pr-fg); border:1px solid rgba(255,255,255,.1); }
+.prompter-btn svg { width:22px; height:22px; }
+.prompter-btn.sm { width:40px; height:40px; }
+.prompter-btn.on { background:var(--pr-accent); border-color:var(--pr-accent); }
+.prompter-main { background:var(--pr-accent); border-color:var(--pr-accent); width:64px; }
+.prompter-stepper { display:flex; align-items:center; gap:4px; padding:4px; border-radius:14px; background:rgba(255,255,255,.05); }
+.prompter-stepval { display:flex; flex-direction:column; align-items:center; min-width:62px; line-height:1.1; }
+.prompter-stepval span { font-size:9px; letter-spacing:.2em; text-transform:uppercase; opacity:.6; }
+.prompter-stepval b { font-size:18px; font-variant-numeric:tabular-nums; }
+.prompter-sliders { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px 16px; }
+.prompter-slider { display:flex; flex-direction:column; gap:4px; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.65); }
+.prompter-slider input { accent-color:var(--pr-accent); width:100%; height:28px; }
+.prompter-hint { text-align:center; font-size:11px; color:rgba(255,255,255,.45); }
+@media (max-width: 640px) { .prompter-btn { width:44px; height:44px; } .prompter-main { width:52px; } .prompter-hint { display:none; } }
