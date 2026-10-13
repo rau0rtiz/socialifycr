@@ -93,8 +93,78 @@ Deno.serve(async (req) => {
           // Si stored es null, el evento ya existía → ya fue procesado antes.
           if (!stored) continue;
 
-          // Mensaje de eco = envío propio; hoy no enviamos nada, lo registramos y seguimos.
-          if (isEcho) continue;
+          // Mensaje de eco = envío propio (desde la app de Instagram o desde nuestra bandeja).
+          // Si se mandó desde la app de Instagram, lo guardamos como mensaje humano.
+          if (isEcho) {
+            try {
+              const recipientId: string | undefined = event?.recipient?.id ? String(event.recipient.id) : undefined;
+              if (!receivingAccountId || !recipientId || !message) continue;
+              const atts = Array.isArray(message.attachments) ? message.attachments : [];
+              const echoBody: string | null =
+                typeof message.text === 'string' && message.text.trim()
+                  ? message.text
+                  : atts.length ? '[Adjunto]' : null;
+              if (!echoBody) continue;
+
+              const { data: ident } = await admin
+                .from('msg_contact_identities')
+                .select('id')
+                .eq('channel', 'instagram')
+                .eq('external_id', recipientId)
+                .limit(1)
+                .maybeSingle();
+              if (!ident) continue;
+              const { data: conv } = await admin
+                .from('msg_conversations')
+                .select('id')
+                .eq('identity_id', ident.id)
+                .maybeSingle();
+              if (!conv) continue;
+
+              // Esperamos un momento: si lo mandó nuestra bandeja o Ari, ya quedó guardado.
+              await new Promise((r) => setTimeout(r, 4000));
+              const occurredAt = typeof event.timestamp === 'number' ? new Date(event.timestamp).toISOString() : new Date().toISOString();
+              if (mid) {
+                const { data: dup } = await admin
+                  .from('msg_messages').select('id').eq('external_message_id', mid).limit(1).maybeSingle();
+                if (dup) continue;
+              }
+              const since = new Date(new Date(occurredAt).getTime() - 120000).toISOString();
+              const { data: sameText } = await admin
+                .from('msg_messages')
+                .select('id')
+                .eq('conversation_id', conv.id)
+                .eq('direction', 'outbound')
+                .eq('body', echoBody)
+                .gte('occurred_at', since)
+                .limit(1)
+                .maybeSingle();
+              if (sameText) continue;
+
+              const { error: echoErr } = await admin.from('msg_messages').upsert(
+                {
+                  conversation_id: conv.id,
+                  receiving_account_id: receivingAccountId,
+                  external_message_id: mid ?? null,
+                  direction: 'outbound',
+                  author: 'humano',
+                  body: echoBody,
+                  attachments: atts,
+                  delivery_status: 'enviado',
+                  occurred_at: occurredAt,
+                },
+                { onConflict: 'receiving_account_id,external_message_id', ignoreDuplicates: true },
+              );
+              if (echoErr) console.error('echo insert error', echoErr);
+              await admin
+                .from('msg_conversations')
+                .update({ last_outbound_at: occurredAt, updated_at: new Date().toISOString() })
+                .eq('id', conv.id);
+            } catch (e) {
+              console.error('echo handling error', e);
+            }
+            continue;
+          }
 
           if (!receivingAccountId || !senderId || !message) continue;
 
