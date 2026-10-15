@@ -90,6 +90,8 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
   const [creatingList, setCreatingList] = useState(false);
   const [sending, setSending] = useState(false);
   const [assigneeId, setAssigneeId] = useState<string>('none');
+  const [createOps, setCreateOps] = useState(true);
+  const [opsAssigneeId, setOpsAssigneeId] = useState<string>('none');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -99,6 +101,8 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
       setMode('existing');
       setNewListName(sheetTitle || '');
       setAssigneeId('none');
+      setCreateOps(true);
+      setOpsAssigneeId('none');
     }
   }, [open, defaults?.spaceId, defaults?.listId, sheetTitle]);
 
@@ -241,6 +245,8 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
           space_name: selectedSpaceName,
           shot_ids: Array.from(selectedIds),
           assignee_id: assigneeId !== 'none' ? Number(assigneeId) : null,
+          create_ops_tasks: createOps,
+          ops_assignee_id: opsAssigneeId !== 'none' ? Number(opsAssigneeId) : null,
         },
       });
       if (error) throw new Error(error.message);
@@ -254,7 +260,8 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
       } else if (c === 0 && u === 0) {
         toast.error('No se creó ninguna task. Revisá que las piezas seleccionadas no hayan sido enviadas antes.');
       } else {
-        toast.success(`${c} creada(s) · ${u} actualizada(s)`);
+        const o = resp?.ops_tasks_created || 0;
+        toast.success(`${c} creada(s) · ${u} actualizada(s)${o ? ` · ${o} de producción` : ''}`);
       }
       onSent?.();
       onClose();
@@ -344,7 +351,32 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
             </div>
           )}
 
-          <Field label="Asignar a" loading={members.isFetching} disabled={!listId}>
+          <div className="border rounded-md p-3 space-y-2">
+            <label className="flex items-start gap-2 text-xs cursor-pointer">
+              <Checkbox checked={createOps} onCheckedChange={(v) => setCreateOps(!!v)} className="mt-0.5" />
+              <span>
+                <span className="font-medium">Crear también tareas de producción</span>
+                <span className="block text-muted-foreground">1. Pasar material de la memoria al servidor · 2. Confirmar calendario de producción y entregas con el cliente</span>
+              </span>
+            </label>
+            {createOps && (
+              <Field label="Asignar tareas de producción a" loading={members.isFetching} disabled={!listId}>
+                <Select value={opsAssigneeId} onValueChange={setOpsAssigneeId} disabled={!listId}>
+                  <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Sin asignar —</SelectItem>
+                    {(members.data || []).map(m => (
+                      <SelectItem key={m.id} value={String(m.id)}>
+                        {m.username}{m.email ? ` · ${m.email}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
+          </div>
+
+          <Field label="Asignar piezas de edición a" loading={members.isFetching} disabled={!listId}>
             <Select value={assigneeId} onValueChange={setAssigneeId} disabled={!listId}>
               <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
               <SelectContent>
