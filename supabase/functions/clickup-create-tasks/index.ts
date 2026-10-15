@@ -246,6 +246,34 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Extra ops tasks (once per send), with their own assignee
+    const opsCreated: any[] = [];
+    if (reqBody?.create_ops_tasks) {
+      const opsAssignee = typeof reqBody.ops_assignee_id === 'number' && Number.isFinite(reqBody.ops_assignee_id)
+        ? [reqBody.ops_assignee_id] : [];
+      const dueDate = parseClickUpDueDate(sheet.shoot_date);
+      const ctx = [
+        sheet.title ? `Hoja: ${sheet.title}` : null,
+        sheet.shoot_date ? `📅 Grabación: ${sheet.shoot_date}` : null,
+        sheet.location ? `📍 Locación: ${sheet.location}` : null,
+        `🎬 Piezas: ${recordedShots.length}`,
+      ].filter(Boolean).join('\n');
+      const opsTasks = [
+        { name: `[PRODUCCIÓN] Pasar material de la memoria al servidor${sheet.title ? ' · ' + sheet.title : ''}`, description: `Descargar todo el material grabado de las memorias y subirlo al servidor.\n\n${ctx}` },
+        { name: `[PRODUCCIÓN] Confirmar calendario de producción y entregas con el cliente${sheet.title ? ' · ' + sheet.title : ''}`, description: `Confirmar con el cliente las fechas de producción y de entrega de las piezas.\n\n${ctx}` },
+      ];
+      for (const t of opsTasks) {
+        try {
+          const payload: Record<string, unknown> = { ...t, assignees: opsAssignee };
+          if (dueDate) payload.due_date = dueDate;
+          const task = await cuFetch(`/list/${listId}/task`, { method: 'POST', body: JSON.stringify(payload) });
+          opsCreated.push({ task_id: task.id, url: task.url, name: t.name });
+        } catch (e) {
+          failed.push({ id: null, concept: t.name, error: (e as Error).message });
+        }
+      }
+    }
+
     // Update sheet status if all recorded were sent successfully
     const allSent = failed.length === 0 && recordedShots.length > 0;
     if (allSent) {
@@ -258,6 +286,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       tasks_created: created.length,
+      ops_tasks_created: opsCreated.length,
       tasks_updated: updated.length,
       tasks_failed: failed.length,
       created,
