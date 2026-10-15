@@ -101,6 +101,8 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
       setMode('existing');
       setNewListName(sheetTitle || '');
       setAssigneeId('none');
+      setCreateOps(true);
+      setOpsAssigneeId('none');
     }
   }, [open, defaults?.spaceId, defaults?.listId, sheetTitle]);
 
