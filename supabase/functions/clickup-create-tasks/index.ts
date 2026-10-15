@@ -249,8 +249,13 @@ Deno.serve(async (req) => {
     // Extra ops tasks (once per send), with their own assignee
     const opsCreated: any[] = [];
     if (reqBody?.create_ops_tasks) {
-      const opsAssignee = typeof reqBody.ops_assignee_id === 'number' && Number.isFinite(reqBody.ops_assignee_id)
-        ? [reqBody.ops_assignee_id] : [];
+      const opsA = (reqBody?.ops_assignees || {}) as Record<string, unknown>;
+      const assigneeFor = (key: string): number[] => {
+        const v = opsA[key];
+        if (typeof v === 'number' && Number.isFinite(v)) return [v];
+        return typeof reqBody.ops_assignee_id === 'number' && Number.isFinite(reqBody.ops_assignee_id)
+          ? [reqBody.ops_assignee_id] : [];
+      };
       const dueDate = parseClickUpDueDate(sheet.shoot_date);
       const ctx = [
         sheet.title ? `Hoja: ${sheet.title}` : null,
@@ -259,12 +264,12 @@ Deno.serve(async (req) => {
         `🎬 Piezas: ${recordedShots.length}`,
       ].filter(Boolean).join('\n');
       const opsTasks = [
-        { name: `[PRODUCCIÓN] Pasar material de la memoria al servidor${sheet.title ? ' · ' + sheet.title : ''}`, description: `Descargar todo el material grabado de las memorias y subirlo al servidor.\n\n${ctx}` },
-        { name: `[PRODUCCIÓN] Confirmar calendario de producción y entregas con el cliente${sheet.title ? ' · ' + sheet.title : ''}`, description: `Confirmar con el cliente las fechas de producción y de entrega de las piezas.\n\n${ctx}` },
+        { key: 'material', name: `[PRODUCCIÓN] Pasar material de la memoria al servidor${sheet.title ? ' · ' + sheet.title : ''}`, description: `Descargar todo el material grabado de las memorias y subirlo al servidor.\n\n${ctx}` },
+        { key: 'calendar', name: `[PRODUCCIÓN] Confirmar calendario de producción y entregas con el cliente${sheet.title ? ' · ' + sheet.title : ''}`, description: `Confirmar con el cliente las fechas de producción y de entrega de las piezas.\n\n${ctx}` },
       ];
       for (const t of opsTasks) {
         try {
-          const payload: Record<string, unknown> = { ...t, assignees: opsAssignee };
+          const payload: Record<string, unknown> = { name: t.name, description: t.description, assignees: assigneeFor(t.key) };
           if (dueDate) payload.due_date = dueDate;
           const task = await cuFetch(`/list/${listId}/task`, { method: 'POST', body: JSON.stringify(payload) });
           opsCreated.push({ task_id: task.id, url: task.url, name: t.name });
