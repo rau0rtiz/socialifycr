@@ -91,7 +91,8 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
   const [sending, setSending] = useState(false);
   const [assigneeId, setAssigneeId] = useState<string>('none');
   const [createOps, setCreateOps] = useState(true);
-  const [opsAssigneeId, setOpsAssigneeId] = useState<string>('none');
+  const [opsMaterialAssigneeId, setOpsMaterialAssigneeId] = useState<string>('none');
+  const [opsCalendarAssigneeId, setOpsCalendarAssigneeId] = useState<string>('none');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -102,7 +103,8 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
       setNewListName(sheetTitle || '');
       setAssigneeId('none');
       setCreateOps(true);
-      setOpsAssigneeId('none');
+      setOpsMaterialAssigneeId('none');
+      setOpsCalendarAssigneeId('none');
     }
   }, [open, defaults?.spaceId, defaults?.listId, sheetTitle]);
 
@@ -246,7 +248,10 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
           shot_ids: Array.from(selectedIds),
           assignee_id: assigneeId !== 'none' ? Number(assigneeId) : null,
           create_ops_tasks: createOps,
-          ops_assignee_id: opsAssigneeId !== 'none' ? Number(opsAssigneeId) : null,
+          ops_assignees: {
+            material: opsMaterialAssigneeId !== 'none' ? Number(opsMaterialAssigneeId) : null,
+            calendar: opsCalendarAssigneeId !== 'none' ? Number(opsCalendarAssigneeId) : null,
+          },
         },
       });
       if (error) throw new Error(error.message);
@@ -360,19 +365,34 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
               </span>
             </label>
             {createOps && (
-              <Field label="Asignar tareas de producción a" loading={members.isFetching} disabled={!listId}>
-                <Select value={opsAssigneeId} onValueChange={setOpsAssigneeId} disabled={!listId}>
-                  <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Sin asignar —</SelectItem>
-                    {(members.data || []).map(m => (
-                      <SelectItem key={m.id} value={String(m.id)}>
-                        {m.username}{m.email ? ` · ${m.email}` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="1. Material al servidor → asignar a" loading={members.isFetching} disabled={!listId}>
+                  <Select value={opsMaterialAssigneeId} onValueChange={setOpsMaterialAssigneeId} disabled={!listId}>
+                    <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Sin asignar —</SelectItem>
+                      {(members.data || []).map(m => (
+                        <SelectItem key={m.id} value={String(m.id)}>
+                          {m.username}{m.email ? ` · ${m.email}` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="2. Confirmar calendario → asignar a" loading={members.isFetching} disabled={!listId}>
+                  <Select value={opsCalendarAssigneeId} onValueChange={setOpsCalendarAssigneeId} disabled={!listId}>
+                    <SelectTrigger><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Sin asignar —</SelectItem>
+                      {(members.data || []).map(m => (
+                        <SelectItem key={m.id} value={String(m.id)}>
+                          {m.username}{m.email ? ` · ${m.email}` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
             )}
           </div>
 
