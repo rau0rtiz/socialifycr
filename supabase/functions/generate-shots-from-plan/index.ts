@@ -132,7 +132,9 @@ Máximo ${max_shots} piezas. Si hay más, devolvé {"error":"El plan excede el m
     const ranges = z.array(RangeSchema).min(1).max(max_shots).safeParse(output.pieces);
     if (!ranges.success) return json({ error: 'Los límites del plan no son válidos. No se importaron piezas parciales.' }, 422);
     try {
-      const shots = materializePieces(lines, ranges.data as PieceRange[], max_shots);
+      // Monthly navigation/overview blocks use bare numbered titles, not creative titles.
+      const pieceRanges = ranges.data.filter(range => !/^\s*\d+[.)]?\s*$/.test(lines[range[2]] ?? ''));
+      const shots = materializePieces(lines, pieceRanges as PieceRange[], max_shots);
       return json({ shots, model_used: IMPORT_MODEL }, 200);
     } catch (error) {
       return json({ error: error instanceof Error ? error.message : 'No se pudieron copiar las piezas.' }, 422);
