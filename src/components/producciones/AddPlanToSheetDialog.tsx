@@ -18,7 +18,6 @@ import { fetchProposalHtml } from '@/hooks/use-agency-proposals';
 import {
   useProductionSheets,
   useCreateSheet,
-  useUpsertChild,
   useDeleteChild,
 } from '@/hooks/use-production-sheets';
 
@@ -48,7 +47,6 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
   const [sheetMode, setSheetMode] = useState<'new' | 'existing'>('new');
   const [existingSheetId, setExistingSheetId] = useState<string>('');
   const [newSheetTitle, setNewSheetTitle] = useState<string>('');
-  const [model, setModel] = useState<string>('google/gemini-2.5-pro');
   const [replace, setReplace] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -119,21 +117,41 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
         setExistingSheetId(sheet_id);
       }
 
+      // Discard styling and scripts before AI input; preserve visible wording, line breaks and reference URLs.
+      const doc = new DOMParser().parseFromString(plan_html, 'text/html');
+      doc.querySelectorAll('script, style, head, noscript').forEach(node => node.remove());
+      const readNode = (node: Node): string => {
+        if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? '';
+        if (!(node instanceof Element)) return '';
+        if (node.tagName === 'BR') return '\n';
+        const children = Array.from(node.childNodes).map(readNode).join('');
+        const href = node.getAttribute('href') ?? node.getAttribute('src');
+        const url = href && /^https?:\/\//i.test(href) && /instagram\.com|tiktok\.com|youtube\.com|youtu\.be|vimeo\.com|loom\.com/i.test(href) && !children.includes(href) ? `\n${href}\n` : '';
+        return `${children}${url}${/^(P|DIV|LI|H[1-6]|TR|SECTION|ARTICLE|BLOCKQUOTE)$/.test(node.tagName) ? '\n' : ''}`;
+      };
+      const plan_text = readNode(doc.body).replace(/\n{3,}/g, '\n\n').trim();
+
       // 3) Call edge function
       const { data, error } = await supabase.functions.invoke('generate-shots-from-plan', {
-        body: { sheet_id, plan_html, model },
+        body: { sheet_id, plan_html, plan_text },
       });
-      if (error) throw error;
+      if (error) {
+        if (error.context instanceof Response) {
+          const detail = await error.context.json().catch(() => null);
+          if (detail?.error) throw new Error(detail.error);
+        }
+        throw error;
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       const shots = (data as any)?.shots as GeneratedShot[];
       if (!Array.isArray(shots) || shots.length === 0) {
-        throw new Error('Claude no devolvió piezas.');
+        throw new Error('No se encontraron piezas en el plan.');
       }
       setResult(shots);
       setKeep(shots.map(() => true));
       // In new-sheet mode we already created the sheet; keep it selected as existing
       if (sheetMode === 'new') setSheetMode('existing');
-      toast.success(`Claude leyó el plan y propuso ${shots.length} pieza${shots.length !== 1 ? 's' : ''}.`);
+      toast.success(`${shots.length} pieza${shots.length !== 1 ? 's' : ''} extraída${shots.length !== 1 ? 's' : ''} del plan.`);
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message ?? 'No se pudo generar.');
@@ -234,7 +252,7 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
             Agregar plan a hoja de producción
           </DialogTitle>
           <DialogDescription>
-            Claude lee el plan de contenido y crea las piezas dentro de una hoja.
+            Pasar el plan de contenido a una hoja de producción.
             {defaultClientName ? ` Cliente sugerido: ${defaultClientName}.` : ''}
           </DialogDescription>
         </DialogHeader>
@@ -292,16 +310,6 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Modelo</Label>
-                <Select value={model} onValueChange={(v) => setModel(v as any)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (mejor)</SelectItem>
-                    <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (más barato)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               {sheetMode === 'existing' && (
                 <div className="space-y-1.5">
                   <Label className="block">Reemplazar existentes</Label>
@@ -319,9 +327,9 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
               <Button variant="outline" onClick={() => handleClose(false)} disabled={loading}>Cancelar</Button>
               <Button onClick={handleGenerate} disabled={!canGenerate}>
                 {loading ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Claude está leyendo el plan…</>
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Leyendo el plan…</>
                 ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" />Generar piezas del plan</>
+                  <><Sparkles className="h-4 w-4 mr-2" />Extraer piezas del plan</>
                 )}
               </Button>
             </DialogFooter>
@@ -329,7 +337,7 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
         ) : (
           <div className="space-y-3">
             <div className="text-sm text-muted-foreground">
-              Claude extrajo <b>{result.length}</b> pieza{result.length !== 1 ? 's' : ''} del plan. Desmarcá las que no querés guardar.
+              <b>{result.length}</b> pieza{result.length !== 1 ? 's' : ''} del plan.
             </div>
             <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
               {result.map((s, i) => (
@@ -362,6 +370,7 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
                       )}
                       {s.hook && <div className="text-xs text-muted-foreground mt-1"><b>Hook:</b> {s.hook}</div>}
                       {s.description && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{s.description}</div>}
+                      {s.script && <div className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap"><b>Guion:</b> {s.script}</div>}
                     </div>
                   </div>
                 </button>
@@ -369,7 +378,7 @@ export function AddPlanToSheetDialog({ open, onOpenChange, planId, planTitle, de
             </div>
             <DialogFooter className="flex-wrap gap-2">
               <Button variant="outline" onClick={() => { setResult(null); setKeep([]); }} disabled={saving}>
-                Regenerar
+                Volver
               </Button>
               <Button onClick={handleSave} disabled={saving || keep.every((k) => !k)}>
                 {saving ? (
