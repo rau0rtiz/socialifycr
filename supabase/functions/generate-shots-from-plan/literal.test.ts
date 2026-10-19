@@ -24,6 +24,10 @@ test('preserves per-piece references', () => {
   assert.deepEqual(shots[0].references, ['https://www.instagram.com/reel/ABC/']);
   assert.deepEqual(shots[1].references, ['https://www.tiktok.com/@brand/video/123']);
 });
+test('copies scene-based scripts literally even without a Guion label', () => {
+  const [shot] = materializePieces(['Video', '00–04 s', 'Presentadora: «Hola».', 'En pantalla · Hola', 'Notas de rodaje'], [[0, 4, 0, 'reel', 'instagram', 1, 3]], 40);
+  assert.equal(shot.script, '00–04 s\nPresentadora: «Hola».\nEn pantalla · Hola');
+});
 test('rejects truncation and overlapping pieces rather than losing data', () => {
   assert.throws(() => materializePieces(['a', 'b'], [[0, 1, 0, 'reel', 'instagram'], [1, 1, 1, 'reel', 'instagram']], 40));
   assert.throws(() => materializePieces(['a', 'b'], [[0, 0, 0, 'reel', 'instagram'], [1, 1, 1, 'reel', 'instagram']], 1));

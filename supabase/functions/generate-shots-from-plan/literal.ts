@@ -1,6 +1,6 @@
 export const IMPORT_MODEL = 'google/gemini-3.1-flash-lite';
 
-export type PieceRange = [number, number, number, string, string];
+export type PieceRange = [number, number, number, string, string, (number | null)?, (number | null)?];
 
 const labels = {
   hook: /^(?:hook|gancho)\s*[:：]\s*/i,
@@ -13,7 +13,7 @@ const labels = {
 export function materializePieces(lines: string[], ranges: PieceRange[], maxShots: number) {
   if (!ranges.length || ranges.length > maxShots) throw new Error('La cantidad de piezas excede el límite. No se importó un plan parcial.');
   let lastEnd = -1;
-  return ranges.map(([start, end, title, content_type, platform]) => {
+  return ranges.map(([start, end, title, content_type, platform, scriptStart, scriptEnd]) => {
     if (![start, end, title].every(Number.isInteger) || start <= lastEnd || start < 0 || end < start || end >= lines.length || title < start || title > end) {
       throw new Error('No se pudieron identificar los límites de las ideas. No se modificó el texto.');
     }
@@ -33,6 +33,12 @@ export function materializePieces(lines: string[], ranges: PieceRange[], maxShot
       } else if (active) {
         fields[active] += `${fields[active] ? '\n' : ''}${line}`;
       }
+    }
+    if (scriptStart != null || scriptEnd != null) {
+      if (scriptStart == null || scriptEnd == null || !Number.isInteger(scriptStart) || !Number.isInteger(scriptEnd) || scriptStart < start || scriptEnd > end || scriptEnd < scriptStart) {
+        throw new Error('No se pudieron identificar los límites del guion original.');
+      }
+      fields.script = lines.slice(scriptStart, scriptEnd + 1).join('\n');
     }
     const references = [...new Set(block.join('\n').match(/https?:\/\/[^\s<>"']+/gi) ?? [])]
       .map((url) => url.replace(/[),.;]+$/, ''))
