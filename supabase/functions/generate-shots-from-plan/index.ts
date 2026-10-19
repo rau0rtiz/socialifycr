@@ -80,6 +80,8 @@ Deno.serve(async (req) => {
 Devolvé solo JSON {"pieces":[[inicio,fin,indice_titulo,tipo,plataforma,inicio_guion,fin_guion],...]}.
 Los primeros TRES valores son ENTEROS, nunca texto. Ejemplo [42,80,43,"reel","instagram",55,73].
 inicio_guion y fin_guion son índices inclusivos del guion REAL del documento (diálogo/escenas). Si NO hay guion, ambos son null. No conviertas descripción, intención o justificación en guion.
+ATENCIÓN: "Por qué este video", "Por qué en este mes", "A quién le hablamos", "Qué revisar" son estrategia, NUNCA guion. El guion real contiene diálogos y/o escenas con tiempos (por ejemplo 00–04 s, Vemos, Presentadora, En pantalla). Seleccioná solo esas escenas, terminando ANTES de Rodaje y edición, Antes de publicar o aperturas alternativas. Si solo hay una idea sin diálogo/escenas ni sección explícita Guion/Script, usá null.
+El título es el nombre creativo (por ejemplo "La auditoría prehistórica"), NO "01", NO "GUIÓN N01 · NOVIEMBRE", NO una navegación "Volver al mes". Ignorá el índice/resumen del principio: importá las piezas detalladas, no su índice.
 Los números son índices de líneas inclusivos, base 0. Una pieza por idea, todas, en orden, sin superposición.
 Inicio/fin deben incluir TODO el contenido original de esa idea (guion, notas, referencias), hasta antes de la siguiente pieza. Titulo es la línea del título original, NO un título nuevo. No incluyas introducciones generales ni cierres del documento.
 No redactes texto, no resumas, no inventes ideas ni campos.
