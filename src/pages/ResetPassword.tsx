@@ -17,21 +17,32 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const params = new URLSearchParams(window.location.search);
+  const tokenHash = params.get('token_hash');
+  const [verifying, setVerifying] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+
   useEffect(() => {
-    // Listen for the PASSWORD_RECOVERY event
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsRecovery(true);
-      }
+      if (event === 'PASSWORD_RECOVERY') setIsRecovery(true);
     });
-
-    // Check URL hash for recovery token
-    if (window.location.hash.includes('type=recovery')) {
-      setIsRecovery(true);
-    }
-
+    if (window.location.hash.includes('type=recovery')) setIsRecovery(true);
     return () => subscription.unsubscribe();
   }, []);
+
+  // The token is only consumed when the person clicks, so email scanners can't burn it.
+  const handleVerify = async () => {
+    if (!tokenHash) return;
+    setVerifying(true);
+    setLinkError(null);
+    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+    setVerifying(false);
+    if (error) {
+      setLinkError('Este enlace ya se usó o venció. Pedí uno nuevo.');
+    } else {
+      setIsRecovery(true);
+    }
+  };
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +64,8 @@ const ResetPassword = () => {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Contraseña actualizada', description: 'Ya puedes iniciar sesión con tu nueva contraseña.' });
-      navigate('/auth');
+      toast({ title: 'Contraseña creada', description: 'Ya podés entrar con tu correo y contraseña.' });
+      navigate('/agencia');
     }
   };
 
@@ -66,9 +77,22 @@ const ResetPassword = () => {
           <div className="absolute inset-0 backdrop-blur-sm bg-background/70" />
         </div>
         <Card className="w-full max-w-md relative z-10 mx-4 border-border/50 shadow-2xl bg-card/95 backdrop-blur-md">
-          <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">Enlace inválido o expirado.</p>
-            <Button className="mt-4" onClick={() => navigate('/auth')}>Ir al login</Button>
+          <CardContent className="pt-6 text-center space-y-4">
+            {tokenHash && !linkError ? (
+              <>
+                <p className="text-lg font-semibold">Creá tu contraseña</p>
+                <p className="text-muted-foreground text-sm">Tocá continuar para configurar tu acceso a Socialify.</p>
+                <Button className="w-full" onClick={handleVerify} disabled={verifying}>
+                  {verifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Continuar
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground">{linkError || 'Enlace inválido o expirado.'}</p>
+                <Button onClick={() => navigate('/auth')}>Ir al login</Button>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

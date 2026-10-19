@@ -41,7 +41,7 @@ serve(async (req) => {
         options: { redirectTo: `${APP_URL}/reset-password` },
       });
       if (error) throw error;
-      actionLink = data.properties?.action_link ?? null;
+      actionLink = data.properties?.hashed_token ? `${APP_URL}/reset-password?token_hash=${data.properties.hashed_token}&type=recovery` : null;
     } else {
       // Create user with random password and send invite link
       const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
@@ -59,7 +59,7 @@ serve(async (req) => {
         options: { redirectTo: `${APP_URL}/reset-password` },
       });
       if (error) throw error;
-      actionLink = data.properties?.action_link ?? null;
+      actionLink = data.properties?.hashed_token ? `${APP_URL}/reset-password?token_hash=${data.properties.hashed_token}&type=recovery` : null;
     }
 
     if (!userId) throw new Error("No se pudo resolver user_id");
