@@ -291,6 +291,12 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
         const o = resp?.ops_tasks_created || 0;
         toast.success(`${c} creada(s) · ${u} actualizada(s)${o ? ` · ${o} de producción` : ''}`);
       }
+      // Persist the chosen order back to the sheet so it stays for next time
+      await Promise.all(
+        orderedShots.map((s, i) =>
+          supabase.from('production_sheet_shots').update({ sort_order: i }).eq('id', s.id)
+        )
+      );
       onSent?.();
       onClose();
     } catch (e: any) {
