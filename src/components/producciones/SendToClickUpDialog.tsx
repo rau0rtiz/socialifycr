@@ -13,7 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2, Send, Plus, Link2, FileText } from 'lucide-react';
+import { Loader2, Send, Plus, Link2, FileText, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface Props {
   sheetId: string;
@@ -94,6 +94,7 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
   const [opsMaterialAssigneeId, setOpsMaterialAssigneeId] = useState<string>('none');
   const [opsCalendarAssigneeId, setOpsCalendarAssigneeId] = useState<string>('none');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [order, setOrder] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
