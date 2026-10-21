@@ -121,19 +121,27 @@ Deno.serve(async (req) => {
     if (sheetRes.error || !sheetRes.data) throw new Error('Sheet no encontrada');
     const sheet = sheetRes.data;
 
-    // If client passed explicit shot_ids, honor exactly that subset; otherwise fall back to done=true.
+    // If client passed explicit shot_ids, honor exactly that subset AND that order
+    // (the dialog lets the user set the edit order; the title gets a [N] prefix).
     let shotsQuery = admin
       .from('production_sheet_shots')
       .select('*')
       .eq('sheet_id', sheet_id)
       .order('sort_order');
-    if (Array.isArray(shot_ids) && shot_ids.length > 0) {
+    const hasExplicitOrder = Array.isArray(shot_ids) && shot_ids.length > 0;
+    if (hasExplicitOrder) {
       shotsQuery = shotsQuery.in('id', shot_ids);
     } else {
       shotsQuery = shotsQuery.eq('done', true);
     }
     const shotsRes = await shotsQuery;
-    const recordedShots = shotsRes.data || [];
+    let recordedShots = shotsRes.data || [];
+    if (hasExplicitOrder) {
+      const rank = new Map<string, number>((shot_ids as string[]).map((id, i) => [id, i]));
+      recordedShots = [...recordedShots].sort(
+        (a: any, b: any) => (rank.get(a.id) ?? 9999) - (rank.get(b.id) ?? 9999)
+      );
+    }
 
     if (recordedShots.length === 0) {
       throw new Error('No hay piezas para enviar.');
@@ -203,11 +211,13 @@ Deno.serve(async (req) => {
     const updated: any[] = [];
     const failed: any[] = [];
 
+    let shotIndex = 0;
     for (const shot of recordedShots) {
+      shotIndex += 1;
       const typeTag = TYPE_LABEL[shot.content_type || 'otro'] || 'CONTENIDO';
       const platTag = PLATFORM_LABEL[shot.platform || ''] || '';
       const concept = shot.concept || shot.description || 'Pieza sin título';
-      const title = `[${typeTag}${platTag ? ' · ' + platTag : ''}] ${concept}`;
+      const title = `[${shotIndex}] [${typeTag}${platTag ? ' · ' + platTag : ''}] ${concept}`;
       const description = buildDescription(shot, sheet, refsByShot.get(shot.id) || []);
 
       try {

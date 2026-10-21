@@ -13,7 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2, Send, Plus, Link2, FileText } from 'lucide-react';
+import { Loader2, Send, Plus, Link2, FileText, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface Props {
   sheetId: string;
@@ -94,6 +94,7 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
   const [opsMaterialAssigneeId, setOpsMaterialAssigneeId] = useState<string>('none');
   const [opsCalendarAssigneeId, setOpsCalendarAssigneeId] = useState<string>('none');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [order, setOrder] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -129,7 +130,27 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
     const done = shotsQ.data.filter(s => s.done);
     const initial = done.length > 0 ? done : shotsQ.data;
     setSelectedIds(new Set(initial.map(s => s.id)));
+    setOrder(shotsQ.data.map(s => s.id));
   }, [shotsQ.data]);
+
+  // Shots in the user's chosen edit order
+  const orderedShots = useMemo(() => {
+    const byId = new Map((shotsQ.data || []).map(s => [s.id, s]));
+    const inOrder = order.map(id => byId.get(id)).filter(Boolean) as Shot[];
+    const missing = (shotsQ.data || []).filter(s => !order.includes(s.id));
+    return [...inOrder, ...missing];
+  }, [shotsQ.data, order]);
+
+  const moveShot = (id: string, dir: -1 | 1) => {
+    setOrder(prev => {
+      const idx = prev.indexOf(id);
+      const target = idx + dir;
+      if (idx < 0 || target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  };
 
   const workspaces = useQuery<Option[]>({
     queryKey: ['cu-workspaces'],
@@ -238,6 +259,8 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
     if (selectedIds.size === 0) { toast.error('Selecciona al menos una pieza'); return; }
     setSending(true);
     try {
+      // Send selected shots in the chosen edit order
+      const orderedSelectedIds = orderedShots.filter(s => selectedIds.has(s.id)).map(s => s.id);
       const { data: resp, error } = await supabase.functions.invoke('clickup-create-tasks', {
         body: {
           sheet_id: sheetId,
@@ -245,7 +268,7 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
           list_name: selectedListName,
           space_id: spaceId,
           space_name: selectedSpaceName,
-          shot_ids: Array.from(selectedIds),
+          shot_ids: orderedSelectedIds,
           assignee_id: assigneeId !== 'none' ? Number(assigneeId) : null,
           create_ops_tasks: createOps,
           ops_assignees: {
@@ -268,6 +291,12 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
         const o = resp?.ops_tasks_created || 0;
         toast.success(`${c} creada(s) · ${u} actualizada(s)${o ? ` · ${o} de producción` : ''}`);
       }
+      // Persist the chosen order back to the sheet so it stays for next time
+      await Promise.all(
+        orderedShots.map((s, i) =>
+          supabase.from('production_sheet_shots').update({ sort_order: i }).eq('id', s.id)
+        )
+      );
       onSent?.();
       onClose();
     } catch (e: any) {
@@ -436,7 +465,7 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
                 {!shotsQ.isLoading && shots.length === 0 && (
                   <li className="p-3 text-xs text-muted-foreground">No hay piezas en esta hoja.</li>
                 )}
-                {shots.map((s) => {
+                {orderedShots.map((s, idx) => {
                   const checked = selectedIds.has(s.id);
                   const preview = buildPreviewDescription(s);
                   return (
@@ -446,6 +475,14 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
                         onCheckedChange={() => toggle(s.id)}
                         className="mt-0.5"
                       />
+                      <span
+                        className={`mt-0.5 shrink-0 h-5 min-w-5 px-1 rounded text-[10px] font-bold flex items-center justify-center ${
+                          checked ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                        }`}
+                        title="Orden de edición"
+                      >
+                        {idx + 1}
+                      </span>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-medium truncate flex items-center gap-1.5">
                           {buildTitle(s)}
@@ -460,6 +497,26 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
                             {preview}
                           </div>
                         )}
+                      </div>
+                      <div className="flex flex-col shrink-0 -my-1">
+                        <button
+                          type="button"
+                          onClick={() => moveShot(s.id, -1)}
+                          disabled={idx === 0}
+                          className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                          aria-label="Subir"
+                        >
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveShot(s.id, 1)}
+                          disabled={idx === orderedShots.length - 1}
+                          className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                          aria-label="Bajar"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </li>
                   );
