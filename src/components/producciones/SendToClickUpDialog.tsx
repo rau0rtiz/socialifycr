@@ -130,7 +130,27 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
     const done = shotsQ.data.filter(s => s.done);
     const initial = done.length > 0 ? done : shotsQ.data;
     setSelectedIds(new Set(initial.map(s => s.id)));
+    setOrder(shotsQ.data.map(s => s.id));
   }, [shotsQ.data]);
+
+  // Shots in the user's chosen edit order
+  const orderedShots = useMemo(() => {
+    const byId = new Map((shotsQ.data || []).map(s => [s.id, s]));
+    const inOrder = order.map(id => byId.get(id)).filter(Boolean) as Shot[];
+    const missing = (shotsQ.data || []).filter(s => !order.includes(s.id));
+    return [...inOrder, ...missing];
+  }, [shotsQ.data, order]);
+
+  const moveShot = (id: string, dir: -1 | 1) => {
+    setOrder(prev => {
+      const idx = prev.indexOf(id);
+      const target = idx + dir;
+      if (idx < 0 || target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  };
 
   const workspaces = useQuery<Option[]>({
     queryKey: ['cu-workspaces'],
