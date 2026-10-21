@@ -259,6 +259,8 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
     if (selectedIds.size === 0) { toast.error('Selecciona al menos una pieza'); return; }
     setSending(true);
     try {
+      // Send selected shots in the chosen edit order
+      const orderedSelectedIds = orderedShots.filter(s => selectedIds.has(s.id)).map(s => s.id);
       const { data: resp, error } = await supabase.functions.invoke('clickup-create-tasks', {
         body: {
           sheet_id: sheetId,
@@ -266,7 +268,7 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
           list_name: selectedListName,
           space_id: spaceId,
           space_name: selectedSpaceName,
-          shot_ids: Array.from(selectedIds),
+          shot_ids: orderedSelectedIds,
           assignee_id: assigneeId !== 'none' ? Number(assigneeId) : null,
           create_ops_tasks: createOps,
           ops_assignees: {
