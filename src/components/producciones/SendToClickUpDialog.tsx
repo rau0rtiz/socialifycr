@@ -465,7 +465,7 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
                 {!shotsQ.isLoading && shots.length === 0 && (
                   <li className="p-3 text-xs text-muted-foreground">No hay piezas en esta hoja.</li>
                 )}
-                {shots.map((s) => {
+                {orderedShots.map((s, idx) => {
                   const checked = selectedIds.has(s.id);
                   const preview = buildPreviewDescription(s);
                   return (
@@ -475,6 +475,14 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
                         onCheckedChange={() => toggle(s.id)}
                         className="mt-0.5"
                       />
+                      <span
+                        className={`mt-0.5 shrink-0 h-5 min-w-5 px-1 rounded text-[10px] font-bold flex items-center justify-center ${
+                          checked ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                        }`}
+                        title="Orden de edición"
+                      >
+                        {idx + 1}
+                      </span>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-medium truncate flex items-center gap-1.5">
                           {buildTitle(s)}
@@ -489,6 +497,26 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
                             {preview}
                           </div>
                         )}
+                      </div>
+                      <div className="flex flex-col shrink-0 -my-1">
+                        <button
+                          type="button"
+                          onClick={() => moveShot(s.id, -1)}
+                          disabled={idx === 0}
+                          className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                          aria-label="Subir"
+                        >
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveShot(s.id, 1)}
+                          disabled={idx === orderedShots.length - 1}
+                          className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                          aria-label="Bajar"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </li>
                   );
