@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -455,7 +454,7 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
                 {allSelected ? 'Deseleccionar todo' : 'Seleccionar todo'}
               </button>
             </div>
-            <ScrollArea className="max-h-[260px]">
+            <div className="max-h-[260px] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
               <ul className="divide-y">
                 {shotsQ.isLoading && (
                   <li className="p-3 text-xs text-muted-foreground flex items-center gap-2">
@@ -522,7 +521,7 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
                   );
                 })}
               </ul>
-            </ScrollArea>
+            </div>
           </div>
         </div>
 
