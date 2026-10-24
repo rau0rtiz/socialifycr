@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Copy, ExternalLink, ImagePlus, Inbox, Loader2, Send, Share2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -109,6 +110,7 @@ export default function Calendario() {
   };
 
   return (
+    <DashboardLayout>
     <div className="mx-auto max-w-7xl space-y-5">
       <div className="flex flex-wrap items-center gap-3">
         <div className="mr-auto">
@@ -190,6 +192,7 @@ export default function Calendario() {
         />
       )}
     </div>
+    </DashboardLayout>
   );
 }
 
