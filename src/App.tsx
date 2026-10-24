@@ -33,6 +33,8 @@ const Comunicaciones = lazy(() => import("./pages/Comunicaciones"));
 const AgencyFunnels = lazy(() => import("./pages/agencia/Funnels"));
 const AgencyChats = lazy(() => import("./pages/agencia/Chats"));
 const AgencyReportes = lazy(() => import("./pages/agencia/Reportes"));
+const AgencyCalendario = lazy(() => import("./pages/agencia/Calendario"));
+const CalendarioPublico = lazy(() => import("./pages/CalendarioPublico"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const AdFrameworks = lazy(() => import("./pages/AdFrameworks"));
 const AdFrameworkDetail = lazy(() => import("./pages/AdFrameworkDetail"));
@@ -200,6 +202,7 @@ const App = () => (
                   <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
                     <Route path="/recibo/:token" element={<ReciboPublico />} />
                   <Route path="/propuesta/:slug" element={<PropuestaPublica />} />
+                  <Route path="/calendario/:token" element={<CalendarioPublico />} />
                   <Route path="/reporte/:slug" element={<PropuestaPublica />} />
                   <Route path="/plan/:slug" element={<PropuestaPublica />} />
                   <Route path="/correo/:slug" element={<PropuestaPublica />} />
@@ -309,6 +312,13 @@ const App = () => (
                     <ProtectedRoute>
                       <RoleProtectedRoute requireAgency>
                         <AgencyFunnels />
+                      </RoleProtectedRoute>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/agencia/calendario" element={
+                    <ProtectedRoute>
+                      <RoleProtectedRoute requireAgency>
+                        <AgencyCalendario />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
