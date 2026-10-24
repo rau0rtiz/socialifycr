@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, Copy, ExternalLink, ImagePlus, Inbox, Loader2, Send, Share2, Trash2 } from 'lucide-react';
+import { Copy, ExternalLink, ImagePlus, Inbox, Loader2, Send, Share2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -200,7 +200,7 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment }: 
   const [form, setForm] = useState({ title: item.title, copy: item.copy ?? '', explanation: item.explanation ?? '', video_url: item.video_url ?? '' });
   const [note, setNote] = useState('');
   const [uploading, setUploading] = useState(false);
-  const save = (k: keyof typeof form) => { if ((item as any)[k] ?? '' !== form[k]) onUpdate({ [k]: form[k] || null } as any); };
+  const save = (k: keyof typeof form) => { if (((item as any)[k] ?? '') !== form[k]) onUpdate({ [k]: form[k] || null } as any); };
 
   const upload = async (file: File) => {
     if (file.size > 5 * 1024 * 1024) return toast.error('La imagen debe pesar menos de 5 MB');
@@ -276,4 +276,3 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment }: 
   );
 }
 
-export { CalendarDays };
