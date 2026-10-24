@@ -2541,6 +2541,161 @@ export type Database = {
           },
         ]
       }
+      content_calendar_comments: {
+        Row: {
+          author_name: string
+          author_type: string
+          body: string
+          created_at: string
+          id: string
+          item_id: string
+          kind: string
+        }
+        Insert: {
+          author_name: string
+          author_type?: string
+          body?: string
+          created_at?: string
+          id?: string
+          item_id: string
+          kind?: string
+        }
+        Update: {
+          author_name?: string
+          author_type?: string
+          body?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_calendar_comments_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "content_calendar_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_calendar_items: {
+        Row: {
+          clickup_sync_error: string | null
+          clickup_task_id: string | null
+          clickup_url: string | null
+          client_id: string
+          content_type: string | null
+          copy: string | null
+          created_at: string
+          explanation: string | null
+          id: string
+          platform: string | null
+          publish_date: string | null
+          sheet_id: string | null
+          shot_id: string | null
+          sort: number
+          status: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          clickup_sync_error?: string | null
+          clickup_task_id?: string | null
+          clickup_url?: string | null
+          client_id: string
+          content_type?: string | null
+          copy?: string | null
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          platform?: string | null
+          publish_date?: string | null
+          sheet_id?: string | null
+          shot_id?: string | null
+          sort?: number
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          clickup_sync_error?: string | null
+          clickup_task_id?: string | null
+          clickup_url?: string | null
+          client_id?: string
+          content_type?: string | null
+          copy?: string | null
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          platform?: string | null
+          publish_date?: string | null
+          sheet_id?: string | null
+          shot_id?: string | null
+          sort?: number
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_calendar_items_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_calendar_items_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "production_sheets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_calendar_items_shot_id_fkey"
+            columns: ["shot_id"]
+            isOneToOne: true
+            referencedRelation: "production_sheet_shots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_calendar_shares: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          token: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          token?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_calendar_shares_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_metadata: {
         Row: {
           client_id: string
