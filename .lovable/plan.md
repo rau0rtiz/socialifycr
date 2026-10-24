@@ -12,7 +12,8 @@
 ## Videos por enlace (Google Drive o Milanote), sin subirlos al panel
 - Cada pieza tiene un campo **"Enlace del video"**: pegás el link de Google Drive o de Milanote. El video nunca se sube a la app.
 - **Google Drive**: el video se reproduce dentro del popup (el reproductor de Drive) y, si no hay miniatura subida, se usa la vista previa de Drive como miniatura. Requisito: el archivo compartido como "Cualquier persona con el enlace puede ver".
-- **Milanote**: no permite reproducir sus videos incrustados en otra página, así que se muestra un botón **"Ver video en Milanote"** que abre el tablero en otra pestaña (la miniatura se sube aparte).
+- **Milanote**: con su opción "copiar link del video", la app revisa el enlace: si es el archivo del video, se reproduce dentro del popup; si abre el tablero, se muestra el botón **"Ver video en Milanote"** en otra pestaña.
+- **Recomendado: Google Drive** para lo que ve el cliente, porque reproduce dentro del calendario de forma confiable.
 - El cliente ve lo mismo desde su link: reproduce el video de Drive ahí mismo o abre el de Milanote.
 - No hace falta conectar cuentas: funciona solo con los enlaces compartidos.
 
