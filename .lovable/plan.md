@@ -7,7 +7,14 @@
 - **Bandeja "Por programar"** a un lado: arrastrás cada pieza al día del mes en que se publica (en celular: tocar pieza → elegir día).
 - **Vista mes a mes** muy visual: cada día muestra las miniaturas de sus piezas, con color por estado (pendiente, aprobada, con cambios). Flechas para ir al mes anterior/siguiente. En celular pasa a lista por semana/día.
 - **Detalle de pieza** (popup): miniatura grande, copy listo para publicar (editable por nosotros), explicación, plataforma, estado y el hilo de notas y correcciones.
-- **Miniaturas**: subir imagen por pieza; si la hoja ya tiene foto, se usa como respaldo.
+- **Miniaturas**: subir imagen por pieza (solo imágenes livianas); si la hoja ya tiene foto, se usa como respaldo.
+
+## Videos por enlace (Google Drive o Milanote), sin subirlos al panel
+- Cada pieza tiene un campo **"Enlace del video"**: pegás el link de Google Drive o de Milanote. El video nunca se sube a la app.
+- **Google Drive**: el video se reproduce dentro del popup (el reproductor de Drive) y, si no hay miniatura subida, se usa la vista previa de Drive como miniatura. Requisito: el archivo compartido como "Cualquier persona con el enlace puede ver".
+- **Milanote**: no permite reproducir sus videos incrustados en otra página, así que se muestra un botón **"Ver video en Milanote"** que abre el tablero en otra pestaña (la miniatura se sube aparte).
+- El cliente ve lo mismo desde su link: reproduce el video de Drive ahí mismo o abre el de Milanote.
+- No hace falta conectar cuentas: funciona solo con los enlaces compartidos.
 
 ## Link para el cliente
 - Botón **"Compartir"** genera un link público por cliente (`/calendario/<código>`), sin clave. Se puede regenerar para invalidar el anterior.
