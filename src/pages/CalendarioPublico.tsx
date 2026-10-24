@@ -117,7 +117,7 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <StatusPill status={item.status} />
-              {item.publish_date && <span className="capitalize text-muted-foreground">{dayLabel(item.publish_date)}</span>}
+              {item.publish_date && <span className="text-muted-foreground first-letter:uppercase">{dayLabel(item.publish_date)}</span>}
             </div>
             {item.explanation && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{item.explanation}</p>}
             {item.copy && (

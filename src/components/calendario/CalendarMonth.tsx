@@ -82,7 +82,7 @@ export const CalendarMonth = ({ year, month, onMonthChange, items, onOpen, onDro
         <Button variant="outline" size="icon" onClick={() => shift(-1)} aria-label="Mes anterior">
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h2 className="font-display text-xl font-semibold capitalize sm:text-2xl">{monthLabel(year, month)}</h2>
+        <h2 className="text-xl font-semibold first-letter:uppercase sm:text-2xl">{monthLabel(year, month)}</h2>
         <Button variant="outline" size="icon" onClick={() => shift(1)} aria-label="Mes siguiente">
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -144,7 +144,7 @@ export const CalendarMonth = ({ year, month, onMonthChange, items, onOpen, onDro
         )}
         {monthDays.map(({ iso }) => (
           <div key={iso}>
-            <div className={cn('mb-2 text-sm font-semibold capitalize', iso === today && 'text-primary')}>{dayLabel(iso)}</div>
+            <div className={cn('mb-2 text-sm font-semibold first-letter:uppercase', iso === today && 'text-primary')}>{dayLabel(iso)}</div>
             <div className="grid grid-cols-2 gap-2">
               {(byDay.get(iso) ?? []).map((it) => (
                 <button key={it.id} onClick={() => onOpen(it)} className="overflow-hidden rounded-xl border border-border/60 bg-card text-left">
