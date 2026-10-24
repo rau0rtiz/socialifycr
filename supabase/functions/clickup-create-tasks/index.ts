@@ -256,6 +256,38 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Mirror every sent piece into the client's publication calendar (keeps date/status/media).
+    try {
+      const createdById = new Map(created.map((c) => [c.id, c]));
+      const okShots = recordedShots.filter((s: any) => !failed.some((f) => f.id === s.id));
+      const { data: existing } = await admin
+        .from('content_calendar_items').select('id, shot_id')
+        .in('shot_id', okShots.map((s: any) => s.id));
+      const existingByShot = new Map((existing || []).map((e: any) => [e.shot_id, e.id]));
+      let i = 0;
+      for (const shot of okShots) {
+        i += 1;
+        const c = createdById.get(shot.id);
+        const fields = {
+          client_id: sheet.client_id,
+          sheet_id: sheet.id,
+          clickup_task_id: c?.task_id || shot.clickup_task_id || null,
+          clickup_url: c?.url || shot.clickup_url || null,
+          title: shot.concept || shot.description || 'Pieza sin título',
+          copy: shot.script || null,
+          explanation: [shot.hook ? `Hook: ${shot.hook}` : null, shot.cta ? `CTA: ${shot.cta}` : null, shot.notes || null].filter(Boolean).join('\n') || null,
+          platform: shot.platform || null,
+          content_type: shot.content_type || null,
+          sort: i,
+        };
+        const eid = existingByShot.get(shot.id);
+        if (eid) await admin.from('content_calendar_items').update(fields).eq('id', eid);
+        else await admin.from('content_calendar_items').insert({ ...fields, shot_id: shot.id, thumbnail_url: sheet.thumbnail_url || null });
+      }
+    } catch (e) {
+      console.error('[clickup-create-tasks] calendar sync failed', (e as Error).message);
+    }
+
     // Extra ops tasks (once per send), with their own assignee
     const opsCreated: any[] = [];
     if (reqBody?.create_ops_tasks) {
