@@ -330,7 +330,7 @@ export default function Calendario() {
       <Dialog open={!!pickDayFor} onOpenChange={(o) => !o && setPickDayFor(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>¿Qué día se publica?</DialogTitle></DialogHeader>
-          <Input type="date" autoFocus onChange={(e) => { if (pickDayFor && e.target.value) { update(pickDayFor, { publish_date: e.target.value }); setPickDayFor(null); } }} />
+          <Input type="date" autoFocus className="[color-scheme:dark]" onChange={(e) => { if (pickDayFor && e.target.value) { update(pickDayFor, { publish_date: e.target.value }); setPickDayFor(null); } }} />
           <Button variant="outline" onClick={() => { setOpenId(pickDayFor); setPickDayFor(null); }}>Ver detalle de la pieza</Button>
         </DialogContent>
       </Dialog>
@@ -438,7 +438,7 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, on
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <StatusPill status={item.status} />
-              <Input type="date" className="h-8 w-auto" value={item.publish_date ?? ''} onChange={(e) => onUpdate({ publish_date: e.target.value || null })} />
+              <Input type="date" className="h-8 w-auto [color-scheme:dark]" value={item.publish_date ?? ''} onChange={(e) => onUpdate({ publish_date: e.target.value || null })} />
               <Select value={item.status} onValueChange={(v) => onUpdate({ status: v })}>
                 <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
