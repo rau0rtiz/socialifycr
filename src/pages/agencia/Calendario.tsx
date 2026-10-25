@@ -22,6 +22,7 @@ import { CalendarHistory } from '@/components/calendario/CalendarHistory';
 import type { CalendarComment as Comment } from '@/lib/calendar-history';
 import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
 import { CreateCalendarPiece } from '@/components/calendario/CreateCalendarPiece';
+import { shouldShowCalendarPiece } from '../../../supabase/functions/_shared/calendar-clickup-rules';
 
 
 type Item = CalendarItem & { client_id: string; clickup_sync_state?: string };
@@ -136,7 +137,7 @@ export default function Calendario() {
       const { data, error } = await supabase.from('content_calendar_items').select('*')
         .eq('client_id', clientId).order('publish_date', { nullsFirst: true }).order('sort');
       if (error) throw error;
-      return data as Item[];
+      return (data ?? []).filter(shouldShowCalendarPiece) as Item[];
     },
   });
 

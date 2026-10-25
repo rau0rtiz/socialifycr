@@ -1,7 +1,7 @@
 // ClickUp create-tasks: crea una task por pieza grabada (production_sheet_shots con done=true).
 // Si la pieza ya tiene clickup_task_id, hace PUT para actualizarla.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { calendarSyncFields } from '../_shared/calendar-clickup-rules.ts';
+import { calendarSyncFields, isClickUpApproved } from '../_shared/calendar-clickup-rules.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -102,7 +102,7 @@ function parseTaskTitle(name: string) {
 
 function mapClickUpStatus(status: unknown): string {
   const s = String((status as { status?: string })?.status || '').toLowerCase();
-  if (/aprob/.test(s)) return 'aprobado';
+  if (isClickUpApproved(status as { status?: string })) return 'aprobado';
   if (/cambio|correcc|editar|revisi/.test(s)) return 'cambios';
   return 'pendiente';
 }
@@ -118,29 +118,36 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
   const loose = await cuFetch(`/space/${cfg.space_id}/list?archived=false`);
   for (const l of loose.lists || []) listIds.add(String(l.id));
 
-  const { data: existing } = await admin
+  const { data: existing, error: existingError } = await admin
     .from('content_calendar_items')
     .select('id, clickup_task_id')
     .eq('client_id', cfg.client_id)
     .not('clickup_task_id', 'is', null);
+  if (existingError) throw existingError;
   const byTask = new Map((existing || []).map((r: { id: string; clickup_task_id: string }) => [String(r.clickup_task_id), r]));
 
   let created = 0, updated = 0, skipped = 0;
   for (const listId of listIds) {
     for (let page = 0; ; page += 1) {
-      const data = await cuFetch(`/list/${listId}/task?archived=false&subtasks=false&include_closed=false&page=${page}`);
+      const data = await cuFetch(`/list/${listId}/task?archived=false&subtasks=false&include_closed=true&page=${page}`);
       const tasks = data.tasks || [];
       if (!tasks.length) break;
       for (const t of tasks) {
         const parsed = parseTaskTitle(String(t.name || ''));
         if (!parsed) { skipped += 1; continue; }
         const row = byTask.get(String(t.id));
-        const fields = calendarSyncFields(t, parsed.title);
+        const approved = isClickUpApproved(t.status);
+        const fields = { ...calendarSyncFields(t, parsed.title), clickup_approved: approved };
         if (row) {
           // Delivery dates belong exclusively to the calendar, even when unset.
           const { error } = await admin.from('content_calendar_items').update(fields).eq('id', row.id).eq('client_id', cfg.client_id);
           if (error) { console.error('[sync] update fail', t.id, error.message); skipped += 1; } else updated += 1;
         } else {
+          // Approved tasks never enter the backlog; retain existing pieces and history above.
+          if (approved || ['closed', 'done'].includes(String(t.status?.type ?? '').toLowerCase())) {
+            skipped += 1;
+            continue;
+          }
           const { error } = await admin.from('content_calendar_items').insert({
             client_id: cfg.client_id,
             clickup_task_id: String(t.id),
