@@ -15,7 +15,7 @@ import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/c
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { monthLabel, STATUS_LABEL } from '@/lib/calendar-media';
 import { DeliveryTargets } from '@/components/calendario/DeliveryTargets';
-import { deliveryProgress, deliveryType, DELIVERY_TYPES, type TargetRow } from '@/lib/calendar-targets';
+import { deliveryProgress, DELIVERY_TYPES, type TargetRow } from '@/lib/calendar-targets';
 import { calendarToday } from '@/lib/calendar-progress';
 
 interface Comment { id: string; item_id: string; author_name: string; author_type: string; kind: string; body: string; created_at: string }
