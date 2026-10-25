@@ -11,7 +11,6 @@ import {
   Wallet,
   Database,
   Palette,
-  FileBarChart,
   CalendarDays,
 } from 'lucide-react';
 
@@ -31,7 +30,6 @@ export const AGENCY_NAV: AgencyNavItem[] = [
   { title: 'Producciones', url: '/agencia/producciones', icon: Clapperboard },
   { title: 'Calendario', url: '/agencia/calendario', icon: CalendarDays },
   { title: 'Documentación', url: '/agencia/documentacion', icon: FileText },
-  { title: 'Reportes', url: '/agencia/reportes', icon: FileBarChart },
   { title: 'Funnels', url: '/agencia/funnels', icon: Megaphone },
   { title: 'Base de datos', url: '/agencia/base-de-datos', icon: Database },
   { title: 'Bases de datos de clientes', url: '/agencia/bases-de-datos-clientes', icon: Users },
