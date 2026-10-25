@@ -14,7 +14,8 @@ const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const TYPE_LABEL: Record<string, string> = {
-  reel: 'REEL', story: 'STORY', post: 'POST',
+  reel: 'REEL', story: 'STORY', post: 'POST', foto: 'FOTO',
+  carrusel: 'CARRUSEL', diseno: 'DISEÑO', correo: 'CORREO',
   tiktok: 'TIKTOK', short: 'SHORT', otro: 'CONTENIDO',
 };
 const PLATFORM_LABEL: Record<string, string> = {

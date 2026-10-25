@@ -14,8 +14,9 @@ import { toast } from 'sonner';
 import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { monthLabel, STATUS_LABEL } from '@/lib/calendar-media';
-import { CalendarProgress } from '@/components/calendario/CalendarProgress';
-import { calendarProgress, calendarToday } from '@/lib/calendar-progress';
+import { DeliveryTargets } from '@/components/calendario/DeliveryTargets';
+import { deliveryProgress, DELIVERY_TYPES, type TargetRow } from '@/lib/calendar-targets';
+import { calendarToday } from '@/lib/calendar-progress';
 
 interface Comment { id: string; item_id: string; author_name: string; author_type: string; kind: string; body: string; created_at: string }
 type Item = CalendarItem & { client_id: string };
@@ -53,26 +54,33 @@ export default function Calendario() {
     refetchOnMount: false,
     queryFn: async () => {
       const { data, error } = await supabase.from('content_calendar_items')
-        .select('id, client_id, publish_date, status').in('client_id', clientIds);
+        .select('id, client_id, publish_date, status, content_type').in('client_id', clientIds);
       if (error) throw error;
       return data ?? [];
     },
   });
-  const goalsKey = ['calendar-goals', month, clientIds];
-  const { data: goals = [] } = useQuery({
-    queryKey: goalsKey, enabled: clientIds.length > 0, staleTime: 5 * 60_000, refetchOnMount: false,
+  const targetsKey = ['calendar-targets', clientIds];
+  const { data: targets = [] } = useQuery({
+    queryKey: targetsKey, enabled: clientIds.length > 0, staleTime: 5 * 60_000, refetchOnMount: false,
     queryFn: async () => {
-      const { data, error } = await supabase.from('content_calendar_goals').select('client_id, target')
-        .eq('month', month).in('client_id', clientIds);
+      const { data, error } = await supabase.from('client_delivery_targets').select('client_id, content_type, monthly_target')
+        .in('client_id', clientIds);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as TargetRow[];
     },
   });
-  const saveGoal = async (id: string, target: number) => {
-    const { error } = await supabase.from('content_calendar_goals').upsert({ client_id: id, month, target, updated_at: new Date().toISOString() }, { onConflict: 'client_id,month' });
-    if (error) { toast.error('No se pudo guardar la meta'); throw error; }
-    await qc.invalidateQueries({ queryKey: ['calendar-goals'] });
-    toast.success('Meta mensual guardada');
+  const saveTargets = async (id: string, rows: { content_type: string; monthly_target: number }[]) => {
+    const keep = rows.map((r) => r.content_type);
+    const { error: delError } = await supabase.from('client_delivery_targets').delete().eq('client_id', id)
+      .not('content_type', 'in', `(${keep.length ? keep.join(',') : '__none__'})`);
+    if (delError) { toast.error('No se pudieron guardar las entregas'); throw delError; }
+    if (rows.length) {
+      const { error } = await supabase.from('client_delivery_targets')
+        .upsert(rows.map((r) => ({ client_id: id, ...r, updated_at: new Date().toISOString() })), { onConflict: 'client_id,content_type' });
+      if (error) { toast.error('No se pudieron guardar las entregas'); throw error; }
+    }
+    await qc.invalidateQueries({ queryKey: ['calendar-targets'] });
+    toast.success('Entregas mensuales guardadas');
   };
   const shiftMonth = (delta: number) => {
     const date = new Date(Date.UTC(ym.y, ym.m + delta, 1));
@@ -110,7 +118,7 @@ export default function Calendario() {
   useEffect(() => {
     const ch = supabase.channel(`calendar-overview-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'content_calendar_items' }, () => qc.invalidateQueries({ queryKey: ['calendar-overview'] }))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'content_calendar_goals' }, () => qc.invalidateQueries({ queryKey: ['calendar-goals'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'client_delivery_targets' }, () => qc.invalidateQueries({ queryKey: ['calendar-targets'] }))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
@@ -159,13 +167,14 @@ export default function Calendario() {
 
   if (!clientId) {
     const scheduled = overview.filter((i) => i.publish_date?.startsWith(month.slice(0, 7))).length;
-    const behind = clients.filter((c) => calendarProgress(overview.filter((i) => i.client_id === c.id), month, goals.find((g) => g.client_id === c.id)?.target ?? null, calendarToday()).pace === 'behind').length;
+    const behind = clients.filter((c) => deliveryProgress(overview.filter((i) => i.client_id === c.id), month, targets.filter((t) => t.client_id === c.id), calendarToday()).pace === 'behind').length;
+    const withTargets = new Set(targets.map((t) => t.client_id)).size;
     return <DashboardLayout><div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div><p className="mb-1 text-xs font-semibold uppercase text-primary">Publicación · {clients.length} clientes</p><h1 className="text-2xl font-semibold sm:text-3xl">Calendarios de clientes</h1></div>
         <div className="flex items-center gap-3"><Button variant="outline" size="icon" aria-label="Mes anterior" onClick={() => shiftMonth(-1)}><ChevronLeft className="h-4 w-4" /></Button><span className="min-w-36 text-center text-sm font-semibold capitalize">{monthLabel(ym.y, ym.m)}</span><Button variant="outline" size="icon" aria-label="Mes siguiente" onClick={() => shiftMonth(1)}><ChevronRight className="h-4 w-4" /></Button></div>
       </div>
-      <div className="flex flex-wrap gap-x-8 gap-y-2 border-y border-border py-4 text-sm"><span><b className="text-xl tabular-nums">{scheduled}</b> piezas programadas</span><span><b className="text-xl tabular-nums text-warning">{behind}</b> calendarios atrasados</span><span><b className="text-xl tabular-nums">{goals.length}</b> con meta definida</span></div>
+      <div className="flex flex-wrap gap-x-8 gap-y-2 border-y border-border py-4 text-sm"><span><b className="text-xl tabular-nums">{scheduled}</b> piezas programadas</span><span><b className="text-xl tabular-nums text-warning">{behind}</b> calendarios atrasados</span><span><b className="text-xl tabular-nums">{withTargets}</b> con entregas definidas</span></div>
       {clientsLoading || overviewLoading ? <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div> : clients.length === 0 ? <p className="py-12 text-center text-muted-foreground">Todavía no hay clientes con hojas de producción.</p> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {clients.map((client) => <article key={client.id} className="agency-card group flex min-h-[300px] min-w-0 flex-col overflow-hidden sm:aspect-[2/3]">
           <Button type="button" variant="ghost" className="h-auto flex-1 flex-col items-start gap-3 rounded-none p-4 text-left" onClick={() => setClientId(client.id)} aria-label={`Abrir calendario de ${client.name}`}>
@@ -177,7 +186,7 @@ export default function Calendario() {
             <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground"><CalendarDays className="h-3 w-3" />Calendario de publicación</span>
             <span className="mt-auto text-xs font-medium text-primary">Ver calendario</span>
           </Button>
-          <div className="border-t border-border bg-muted/30 p-4"><CalendarProgress dense items={overview.filter((i) => i.client_id === client.id)} month={month} target={goals.find((g) => g.client_id === client.id)?.target ?? null} onSave={(target) => saveGoal(client.id, target)} /></div>
+          <div className="border-t border-border bg-muted/30 p-4"><DeliveryTargets dense items={overview.filter((i) => i.client_id === client.id)} month={month} targets={targets.filter((t) => t.client_id === client.id)} onSave={(rows) => saveTargets(client.id, rows)} /></div>
         </article>)}
       </div>}
     </div></DashboardLayout>;
@@ -204,7 +213,7 @@ export default function Calendario() {
         <Button variant="ghost" size="sm" onClick={regenerate} disabled={!clientId}>Nuevo enlace</Button>
       </div>
 
-      <div className="border-y border-border py-4"><CalendarProgress items={items} month={month} target={goals.find((g) => g.client_id === clientId)?.target ?? null} onSave={(target) => saveGoal(clientId, target)} /></div>
+      <div className="border-y border-border py-4"><DeliveryTargets items={items} month={month} targets={targets.filter((t) => t.client_id === clientId)} onSave={(rows) => saveTargets(clientId, rows)} /></div>
 
       <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="agency-card h-fit space-y-3 p-3 lg:sticky lg:top-0">
@@ -319,6 +328,10 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment }: 
               <Select value={item.status} onValueChange={(v) => onUpdate({ status: v })}>
                 <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={item.content_type ?? 'otro'} onValueChange={(v) => onUpdate({ content_type: v })}>
+                <SelectTrigger className="h-8 w-[130px]" aria-label="Tipo de pieza"><SelectValue /></SelectTrigger>
+                <SelectContent>{DELIVERY_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.icon} {t.label}</SelectItem>)}</SelectContent>
               </Select>
               {item.clickup_url && (
                 <Button asChild variant="ghost" size="sm"><a href={item.clickup_url} target="_blank" rel="noreferrer"><ExternalLink className="mr-1 h-3.5 w-3.5" />ClickUp</a></Button>

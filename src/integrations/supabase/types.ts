@@ -1757,6 +1757,38 @@ export type Database = {
           },
         ]
       }
+      client_delivery_targets: {
+        Row: {
+          client_id: string
+          content_type: string
+          id: string
+          monthly_target: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          content_type: string
+          id?: string
+          monthly_target?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          content_type?: string
+          id?: string
+          monthly_target?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_delivery_targets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_feature_flags: {
         Row: {
           ad_sales_ranking: boolean
