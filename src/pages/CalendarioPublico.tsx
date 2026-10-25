@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
