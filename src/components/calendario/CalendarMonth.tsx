@@ -148,7 +148,7 @@ export const CalendarMonth = ({ year, month, onMonthChange, items, onOpen, onDro
             <div className={cn('mb-2 text-sm font-semibold first-letter:uppercase', iso === today && 'text-primary')}>{dayLabel(iso)}</div>
             <div className="grid grid-cols-2 gap-2">
               {(byDay.get(iso) ?? []).map((it) => (
-                <button key={it.id} onClick={() => onOpen(it)} className="overflow-hidden rounded-xl border border-border/60 bg-card text-left">
+                <button key={it.id} draggable={!!onDropItem} onDragStart={(e) => e.dataTransfer.setData('text/plain', it.id)} onClick={() => onOpen(it)} className="overflow-hidden rounded-xl border border-border/60 bg-card text-left">
                   <Thumb item={it} className="aspect-[4/5] w-full" />
                   <div className="space-y-1 p-2">
                     <div className="line-clamp-2 text-xs font-medium">{it.title}</div>

@@ -22,7 +22,7 @@ import { CalendarHistory } from '@/components/calendario/CalendarHistory';
 import type { CalendarComment as Comment } from '@/lib/calendar-history';
 import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
 import { CreateCalendarPiece } from '@/components/calendario/CreateCalendarPiece';
-import { shouldShowCalendarPiece } from '../../../supabase/functions/_shared/calendar-clickup-rules';
+import { shouldShowCalendarPiece, calendarDeliveryPatch } from '../../../supabase/functions/_shared/calendar-clickup-rules';
 
 
 type Item = CalendarItem & { client_id: string; clickup_sync_state?: string };
@@ -39,6 +39,7 @@ export default function Calendario() {
   const [configOpen, setConfigOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [backlogDragOver, setBacklogDragOver] = useState(false);
   const { data: clickupConfig } = useQuery({
     queryKey: ['clickup-config', clientId], enabled: !!clientId, staleTime: 5 * 60_000, refetchOnMount: false,
     queryFn: async () => {
@@ -183,7 +184,7 @@ export default function Calendario() {
     qc.invalidateQueries({ queryKey: ['calendar-overview'] });
   };
 
-  const unscheduled = items.filter((i) => !i.publish_date);
+  const unscheduled = items.filter((i) => !i.publish_date && shouldShowCalendarPiece(i));
   const open = items.find((i) => i.id === openId) ?? null;
   const counts = useMemo(() => {
     const inMonth = items.filter((i) => i.publish_date?.startsWith(`${ym.y}-${String(ym.m + 1).padStart(2, '0')}`));
@@ -293,7 +294,19 @@ export default function Calendario() {
       <div className="border-y border-border py-4"><DeliveryTargets items={items} month={month} targets={targets.filter((t) => t.client_id === clientId)} onSave={(rows) => saveTargets(clientId, rows)} /></div>
 
       <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="agency-card h-fit space-y-3 p-3 lg:sticky lg:top-0">
+        <aside
+          aria-label="Por programar"
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setBacklogDragOver(true); }}
+          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setBacklogDragOver(false); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setBacklogDragOver(false);
+            const id = e.dataTransfer.getData('text/plain');
+            const piece = items.find((i) => i.id === id && i.client_id === clientId);
+            if (piece?.publish_date) update(id, calendarDeliveryPatch(null));
+          }}
+          className={`agency-card h-fit space-y-3 p-3 transition-colors lg:sticky lg:top-0 ${backlogDragOver ? 'ring-2 ring-primary bg-primary/10' : ''}`}
+        >
           <div className="flex items-center gap-2 text-sm font-semibold"><Inbox className="h-4 w-4 text-primary" />Por programar ({unscheduled.length})</div>
           <p className="text-xs text-muted-foreground">Arrastrá cada pieza a su día, o tocála y elegí la fecha.</p>
           <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
@@ -322,7 +335,7 @@ export default function Calendario() {
               onMonthChange={(y, m) => setYm({ y, m })}
               items={items}
               onOpen={(i) => setOpenId(i.id)}
-              onDropItem={(id, iso) => update(id, { publish_date: iso })}
+              onDropItem={(id, iso) => update(id, calendarDeliveryPatch(iso))}
             />
           )}
         </section>

@@ -15,6 +15,10 @@ export function shouldShowCalendarPiece(item: { publish_date?: string | null; cl
   return Boolean(item.publish_date) || !item.clickup_approved;
 }
 
+export function calendarDeliveryPatch(date: string | null) {
+  return { publish_date: date };
+}
+
 // Editing deadlines in ClickUp never determine calendar delivery dates.
 export function calendarSyncFields(task: { url?: string | null; due_date?: unknown }, title: string) {
   return { title, clickup_url: task.url || null };
