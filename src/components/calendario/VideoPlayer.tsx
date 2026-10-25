@@ -1,5 +1,5 @@
 import { ExternalLink } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { videoEmbed } from '@/lib/calendar-media';
 import { CalendarThumb, type CalendarItem } from './CalendarMonth';
@@ -19,6 +19,10 @@ const PlayerFrame = ({ children, label }: { children: ReactNode; label?: string 
 /** Plays Drive/direct video inline; Milanote boards and other links open in a new tab. */
 export const VideoPlayer = ({ item }: { item: CalendarItem }) => {
   const e = videoEmbed(item.video_url);
+  // Measured intrinsic size so the player (and its frame) match the video's aspect ratio.
+  const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
+  const w = dims?.w || 9;
+  const h = dims?.h || 16;
   if (e?.kind === 'iframe')
     return (
       <PlayerFrame label={e.provider}>
@@ -29,11 +33,21 @@ export const VideoPlayer = ({ item }: { item: CalendarItem }) => {
     );
   if (e?.kind === 'video')
     return (
-      <PlayerFrame label={e.provider}>
-        <div className="flex justify-center bg-black">
-          <video src={e.src} controls playsInline className="max-h-[60dvh] w-full object-contain" />
-        </div>
-      </PlayerFrame>
+      <div className="mx-auto" style={{ width: `min(100%, calc(48dvh * ${w / h}))` }}>
+        <PlayerFrame label={e.provider}>
+          <video
+            src={e.src}
+            controls
+            playsInline
+            className="block w-full bg-black"
+            style={{ aspectRatio: `${w} / ${h}` }}
+            onLoadedMetadata={(ev) => {
+              const v = ev.currentTarget;
+              if (v.videoWidth && v.videoHeight) setDims({ w: v.videoWidth, h: v.videoHeight });
+            }}
+          />
+        </PlayerFrame>
+      </div>
     );
   return (
     <div className="space-y-2">
