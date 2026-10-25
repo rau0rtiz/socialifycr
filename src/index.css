@@ -773,6 +773,8 @@ html.agency-theme .agency-neon,
 .shared-calendar-page { height: 100dvh; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 .shared-calendar h1, .shared-calendar h2, .shared-calendar h3 { font-family: 'Space Grotesk', 'DM Sans', system-ui, sans-serif; letter-spacing: 0; }
 .shared-calendar-dialog { display: block; scroll-padding: 112px; -webkit-overflow-scrolling: touch; }
+/* The popup has its own close button inside the sticky header; hide the generic one that ends up behind it. */
+.shared-calendar-dialog > button:last-of-type { display: none; }
 .shared-calendar-dialog .socialify-player { border-radius: 6px; }
 .shared-calendar-dialog .sp-body video, .shared-calendar-dialog .sp-body iframe { max-height: 48dvh; }
 @media (max-width: 767px) {
