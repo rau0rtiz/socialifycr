@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Inbox, Loader2, MessageCircle, RefreshCw, Send, Share2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import socialifyLogo from '@/assets/socialify-wordmark.png.asset.json';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -239,11 +240,13 @@ export default function Calendario() {
     const behind = clients.filter((c) => deliveryProgress(overview.filter((i) => i.client_id === c.id), month, targets.filter((t) => t.client_id === c.id), calendarToday()).pace === 'behind').length;
     const withTargets = new Set(targets.map((t) => t.client_id)).size;
     return <DashboardLayout><div className="mx-auto max-w-7xl space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div><p className="mb-1 text-xs font-semibold uppercase text-primary">Publicación · {clients.length} clientes</p><h1 className="text-2xl font-semibold sm:text-3xl">Calendarios de clientes</h1></div>
-        <div className="flex items-center gap-3"><Button variant="outline" size="icon" aria-label="Mes anterior" onClick={() => shiftMonth(-1)}><ChevronLeft className="h-4 w-4" /></Button><span className="min-w-36 text-center text-sm font-semibold capitalize">{monthLabel(ym.y, ym.m)}</span><Button variant="outline" size="icon" aria-label="Mes siguiente" onClick={() => shiftMonth(1)}><ChevronRight className="h-4 w-4" /></Button></div>
+      <div className="flex flex-col items-center gap-2 pt-2 text-center">
+        <img src={socialifyLogo.url} alt="Socialify" className="h-5 w-auto opacity-90" />
+        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-primary">Publicación · {clients.length} clientes</p>
+        <h1 className="agency-gradient-text text-3xl font-bold tracking-tight sm:text-4xl">Calendarios de clientes</h1>
+        <div className="mt-2 flex items-center gap-3"><Button variant="outline" size="icon" aria-label="Mes anterior" onClick={() => shiftMonth(-1)}><ChevronLeft className="h-4 w-4" /></Button><span className="min-w-40 text-center text-sm font-semibold capitalize">{monthLabel(ym.y, ym.m)}</span><Button variant="outline" size="icon" aria-label="Mes siguiente" onClick={() => shiftMonth(1)}><ChevronRight className="h-4 w-4" /></Button></div>
       </div>
-      <div className="flex flex-wrap gap-x-8 gap-y-2 border-y border-border py-4 text-sm"><span><b className="text-xl tabular-nums">{scheduled}</b> piezas programadas</span><span><b className="text-xl tabular-nums text-warning">{behind}</b> calendarios atrasados</span><span><b className="text-xl tabular-nums">{withTargets}</b> con entregas definidas</span></div>
+      <div className="flex flex-wrap justify-center gap-3 border-y border-border py-4 text-sm"><span className="rounded-full border border-border bg-muted/40 px-3.5 py-1.5 text-xs"><b className="mr-1 text-base tabular-nums">{scheduled}</b>piezas programadas</span><span className="rounded-full border border-border bg-muted/40 px-3.5 py-1.5 text-xs"><b className="mr-1 text-base tabular-nums text-warning">{behind}</b>calendarios atrasados</span><span className="rounded-full border border-border bg-muted/40 px-3.5 py-1.5 text-xs"><b className="mr-1 text-base tabular-nums">{withTargets}</b>con entregas definidas</span></div>
       {clientsLoading || overviewLoading ? <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div> : clients.length === 0 ? <p className="py-12 text-center text-muted-foreground">Todavía no hay clientes con hojas de producción.</p> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {clients.map((client) => <article key={client.id} className="agency-card group flex min-h-[300px] min-w-0 flex-col overflow-hidden sm:aspect-[2/3]">
           <Button type="button" variant="ghost" className="h-auto flex-1 flex-col items-start gap-3 rounded-none p-4 text-left" onClick={() => setClientId(client.id)} aria-label={`Abrir calendario de ${client.name}`}>
