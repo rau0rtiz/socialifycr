@@ -4,6 +4,7 @@ export interface CalendarComment {
   author_name: string;
   author_type: string;
   kind: string;
+  scope?: string;
   body: string;
   created_at: string;
 }
