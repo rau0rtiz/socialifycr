@@ -50,8 +50,8 @@ export default function CalendarioPublico() {
     }
   }, [data, ym]);
 
-  if (isLoading) return <div className="flex min-h-[100dvh] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
-  if (error || !data) return <div className="flex min-h-[100dvh] items-center justify-center p-6 text-center text-muted-foreground">Este enlace no es válido o ya no está disponible.</div>;
+  if (isLoading) return <div className="shared-calendar shared-calendar-page flex items-center justify-center bg-background"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  if (error || !data) return <div className="shared-calendar shared-calendar-page flex items-center justify-center bg-background p-6 text-center text-muted-foreground">Este enlace no es válido o ya no está disponible.</div>;
 
   const open = data.items.find((i) => i.id === openId) ?? null;
   const pending = data.items.filter((i) => i.status !== 'aprobado').length;
@@ -127,6 +127,7 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
   const [coverBody, setCoverBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [validation, setValidation] = useState('');
+  const [media, setMedia] = useState<'video' | 'cover'>('video');
   const nameRef = useRef<HTMLInputElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const hasCoverReview = !!item.thumbnail_url && ['reel', 'tiktok', 'short'].includes(item.content_type ?? '');
@@ -150,26 +151,32 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="shared-calendar shared-calendar-dialog max-h-[92dvh] max-w-4xl gap-0 overflow-y-auto p-0">
-        <DialogHeader className="border-b border-border px-4 py-4 text-left sm:px-5">
+      <DialogContent className="shared-calendar shared-calendar-dialog max-h-[92dvh] w-[calc(100%-24px)] max-w-5xl gap-0 overflow-y-auto rounded-lg border-border bg-background p-0 text-foreground">
+        <DialogHeader className="sticky top-0 z-10 border-b border-border bg-background px-4 py-4 text-left sm:px-6">
+          <div className="mb-2 text-[10px] font-semibold uppercase text-primary">Socialify · Revisión de contenido</div>
           <DialogTitle className="pr-6 text-base sm:text-lg">{item.title}</DialogTitle>
         </DialogHeader>
-        <div className="p-4 sm:p-5">
-          <div className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2">
-            <div className="min-w-0">
-              <VideoPlayer item={item} />
+        <div className="p-4 sm:p-6">
+          <div className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-8">
+            <div className="min-w-0 md:sticky md:top-28">
+              {hasCoverReview && <div className="mb-4 grid grid-cols-2 gap-1 rounded-md bg-muted p-1" aria-label="Contenido a revisar">
+                <Button size="sm" variant={media === 'video' ? 'secondary' : 'ghost'} aria-pressed={media === 'video'} onClick={() => setMedia('video')}>Video <StatusPill status={item.status} /></Button>
+                <Button size="sm" variant={media === 'cover' ? 'secondary' : 'ghost'} aria-pressed={media === 'cover'} onClick={() => setMedia('cover')}>Portada <StatusPill status={item.cover_status ?? 'pendiente'} /></Button>
+              </div>}
+              {media === 'cover' && item.thumbnail_url ? <img src={item.thumbnail_url} alt="Portada del reel" className="mx-auto block max-h-[58dvh] max-w-full rounded-lg object-contain" /> : <VideoPlayer item={item} />}
             </div>
             <div className="min-w-0 space-y-4">
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <StatusPill status={item.status} />
+              <span className="font-semibold">{media === 'cover' ? 'Portada' : hasCoverReview ? 'Video' : 'Pieza'}</span>
+              <StatusPill status={media === 'cover' ? item.cover_status ?? 'pendiente' : item.status} />
               {item.publish_date && <span className="text-muted-foreground first-letter:uppercase">{dayLabel(item.publish_date)}</span>}
             </div>
             <div className="space-y-3 border-b border-border pb-4">
               <label htmlFor="calendar-review-name" className="block text-xs font-medium text-muted-foreground">Revisado por</label>
               <Input ref={nameRef} id="calendar-review-name" maxLength={80} value={name} placeholder="Tu nombre" aria-invalid={!!validation} onChange={(e) => { setName(e.target.value); setValidation(''); }} />
               {validation && <p role="alert" className="text-sm text-destructive">{validation}</p>}
-              {mode === 'changes' && <Textarea rows={4} autoFocus value={body} placeholder="¿Qué te gustaría cambiar?" onChange={(e) => setBody(e.target.value)} />}
-              <div className="grid grid-cols-2 gap-2">
+              {media === 'video' && mode === 'changes' && <Textarea rows={4} autoFocus value={body} placeholder="¿Qué te gustaría cambiar?" onChange={(e) => setBody(e.target.value)} />}
+              {media === 'video' && <div className="grid grid-cols-2 gap-2">
                 {mode === 'changes' ? (
                   <>
                     <Button variant="outline" onClick={() => setMode('idle')} disabled={busy}>Cancelar</Button>
@@ -183,15 +190,14 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                     </Button>
                   </>
                 )}
-              </div>
+              </div>}
             </div>
-            {hasCoverReview && (
+            {hasCoverReview && media === 'cover' && (
               <div className="space-y-3 border-b border-border pb-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="block text-xs font-medium text-muted-foreground">Portada del reel</span>
                   <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
                 </div>
-                <img src={item.thumbnail_url!} alt="Portada del reel" className="mx-auto block max-h-[48dvh] w-full rounded-lg border border-border object-contain" />
                 {coverMode === 'changes' && <Textarea rows={3} autoFocus value={coverBody} placeholder="¿Qué te gustaría cambiar de la portada?" onChange={(e) => setCoverBody(e.target.value)} />}
                 <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
                   {coverMode === 'changes' ? (

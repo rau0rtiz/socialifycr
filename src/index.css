@@ -745,22 +745,22 @@ html.agency-theme .agency-neon,
 
 /* Shared calendar and its portal use a stable light editorial theme. */
 .shared-calendar {
-  --background: 0 0% 98%; --foreground: 0 0% 12%;
-  --card: 0 0% 100%; --card-foreground: 0 0% 12%;
-  --popover: 0 0% 100%; --popover-foreground: 0 0% 12%;
-  --primary: 12 80% 51%; --primary-foreground: 0 0% 100%;
-  --secondary: 0 0% 94%; --secondary-foreground: 0 0% 12%;
-  --muted: 0 0% 94%; --muted-foreground: 0 0% 43%;
-  --accent: 0 0% 94%; --accent-foreground: 0 0% 12%;
-  --border: 0 0% 87%; --input: 0 0% 83%; --ring: 12 80% 51%;
-  --success: 152 65% 31%; --warning: 35 85% 35%;
-  --destructive: 0 72% 45%; color-scheme: light;
+  --background: 0 0% 13%; --foreground: 0 0% 96%;
+  --card: 0 0% 16%; --card-foreground: 0 0% 96%;
+  --popover: 0 0% 16%; --popover-foreground: 0 0% 96%;
+  --primary: 12 83% 58%; --primary-foreground: 0 0% 7%;
+  --secondary: 0 0% 24%; --secondary-foreground: 0 0% 96%;
+  --muted: 0 0% 19%; --muted-foreground: 0 0% 68%;
+  --accent: 0 0% 24%; --accent-foreground: 0 0% 96%;
+  --border: 0 0% 28%; --input: 0 0% 32%; --ring: 12 83% 58%;
+  --success: 152 60% 60%; --warning: 38 90% 65%;
+  --destructive: 0 80% 68%; color-scheme: dark;
   font-family: 'DM Sans', system-ui, sans-serif;
   letter-spacing: 0;
 }
 .shared-calendar-page { height: 100dvh; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 .shared-calendar h1, .shared-calendar h2, .shared-calendar h3 { font-family: 'Space Grotesk', 'DM Sans', system-ui, sans-serif; letter-spacing: 0; }
-.shared-calendar-dialog { display: block; scroll-padding: 20px; -webkit-overflow-scrolling: touch; }
+.shared-calendar-dialog { display: block; scroll-padding: 112px; -webkit-overflow-scrolling: touch; }
 .shared-calendar-dialog .socialify-player { border-radius: 6px; }
 .shared-calendar-dialog .sp-body video, .shared-calendar-dialog .sp-body iframe { max-height: 48dvh; }
 @media (max-width: 767px) {
