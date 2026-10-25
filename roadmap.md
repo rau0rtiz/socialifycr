@@ -1,4 +1,5 @@
 # Tasks
+- [x] Eliminar la sección Reportes del panel de agencia.
 - [x] Corregir scroll y aprobación del calendario compartido y simplificar su presentación.
 - [x] Configurar el espacio ClickUp de cada cliente desde su calendario.
 - [x] Crear piezas en calendario con lista seleccionada y sincronización automática segura.
