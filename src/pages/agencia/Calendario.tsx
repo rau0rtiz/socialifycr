@@ -152,15 +152,42 @@ export default function Calendario() {
     return { total: inMonth.length, ok: inMonth.filter((i) => i.status === 'aprobado').length, ch: inMonth.filter((i) => i.status === 'cambios').length };
   }, [items, ym]);
 
-  const share = async () => {
-    if (!clientId) return;
-    let { data } = await supabase.from('content_calendar_shares').select('token').eq('client_id', clientId).maybeSingle();
-    if (!data) ({ data } = await supabase.from('content_calendar_shares').insert({ client_id: clientId }).select('token').single());
-    if (!data) return toast.error('No se pudo crear el enlace');
+  const [shareLink, setShareLink] = useState<string | null>(null);
+
+  const prettyLink = (token: string) => {
     const origin = location.hostname.includes('lovable') || location.hostname === 'localhost' ? 'https://app.socialifycr.com' : location.origin;
-    await navigator.clipboard.writeText(`${origin}/calendario/${data.token}`).catch(() => {});
-    toast.success('Enlace del calendario copiado', { description: `${origin}/calendario/${data.token}` });
+    return `${origin}/calendario/${token}`;
   };
+  const slugToken = () => prettyCalendarToken(activeClient?.name ?? 'cliente');
+
+  const ensureShare = async (): Promise<{ token: string; renewed: boolean } | null> => {
+    if (!clientId) return null;
+    let { data } = await supabase.from('content_calendar_shares').select('token').eq('client_id', clientId).maybeSingle();
+    let renewed = false;
+    if (data && isLegacyToken(data.token)) {
+      const { error } = await supabase.from('content_calendar_shares').update({ token: slugToken() }).eq('client_id', clientId);
+      if (!error) { renewed = true; data = null; }
+    }
+    if (!data) {
+      for (let i = 0; i < 4; i++) {
+        const { data: ins, error } = await supabase.from('content_calendar_shares').insert({ client_id: clientId, token: slugToken() }).select('token').single();
+        if (!error) { data = ins; break; }
+        if ((error as any).code !== '23505') { toast.error('No se pudo crear el enlace'); return null; }
+      }
+    }
+    if (!data?.token) { toast.error('No se pudo crear el enlace'); return null; }
+    return { token: data.token, renewed };
+  };
+
+  const share = async () => {
+    const s = await ensureShare();
+    if (!s) return;
+    const link = prettyLink(s.token);
+    setShareLink(link);
+    await navigator.clipboard.writeText(link).catch(() => {});
+    toast.success(s.renewed ? 'Enlace renovado y copiado. El anterior dejó de funcionar' : 'Enlace copiado');
+  };
+
   const regenerate = async () => {
     if (!clientId || !confirm('El enlace anterior dejará de funcionar. ¿Continuar?')) return;
     await supabase.from('content_calendar_shares').delete().eq('client_id', clientId);
