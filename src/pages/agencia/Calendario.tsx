@@ -186,6 +186,7 @@ export default function Calendario() {
 
   const unscheduled = items.filter((i) => !i.publish_date && shouldShowCalendarPiece(i));
   const open = items.find((i) => i.id === openId) ?? null;
+  const pickedPiece = items.find((i) => i.id === pickDayFor) ?? null;
   const counts = useMemo(() => {
     const inMonth = items.filter((i) => i.publish_date?.startsWith(`${ym.y}-${String(ym.m + 1).padStart(2, '0')}`));
     return { total: inMonth.length, ok: inMonth.filter((i) => i.status === 'aprobado').length, ch: inMonth.filter((i) => i.status === 'cambios').length };
@@ -344,6 +345,16 @@ export default function Calendario() {
       <Dialog open={!!pickDayFor} onOpenChange={(o) => !o && setPickDayFor(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>¿Qué día se publica?</DialogTitle></DialogHeader>
+          {pickedPiece && <>
+            <p className="line-clamp-2 text-sm text-muted-foreground">{pickedPiece.title}</p>
+            <div className="space-y-1.5">
+              <Label htmlFor="backlog-piece-type">Tipo de pieza</Label>
+              <Select value={pickedPiece.content_type ?? 'otro'} onValueChange={(value) => update(pickedPiece.id, { content_type: value })}>
+                <SelectTrigger id="backlog-piece-type" aria-label="Tipo de pieza"><SelectValue /></SelectTrigger>
+                <SelectContent>{PIECE_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.icon} {t.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </>}
           <Input type="date" autoFocus className="[color-scheme:dark]" onChange={(e) => { if (pickDayFor && e.target.value) { update(pickDayFor, { publish_date: e.target.value }); setPickDayFor(null); } }} />
           <Button variant="outline" onClick={() => { setOpenId(pickDayFor); setPickDayFor(null); }}>Ver detalle de la pieza</Button>
         </DialogContent>
