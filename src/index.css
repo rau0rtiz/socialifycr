@@ -734,3 +734,11 @@ html.agency-theme .agency-neon,
 .prompter-slider input { accent-color:var(--pr-accent); width:100%; height:28px; }
 .prompter-hint { text-align:center; font-size:11px; color:rgba(255,255,255,.45); }
 @media (max-width: 640px) { .prompter-btn { width:44px; height:44px; } .prompter-main { width:52px; } .prompter-hint { display:none; } }
+
+/* Branded video player — public calendar, own tokens (page is outside agency scope) */
+.socialify-player { --sp-bg:#161616; --sp-line:#2c2c2c; --sp-fg:#faf8f5; --sp-accent:#E85D3A; background:var(--sp-bg); border:1px solid var(--sp-line); color:var(--sp-fg); }
+.socialify-player .sp-bar { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--sp-line); }
+.socialify-player .sp-dot { width:8px; height:8px; border-radius:9999px; background:var(--sp-accent); flex:none; }
+.socialify-player .sp-brand { font-family:'Space Grotesk', system-ui, sans-serif; font-size:10px; font-weight:700; letter-spacing:.28em; text-transform:uppercase; color:var(--sp-fg); }
+.socialify-player .sp-tag { margin-left:auto; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:rgba(250,248,245,.45); }
+.socialify-player .sp-body > video, .socialify-player .sp-body > iframe { display:block; }
