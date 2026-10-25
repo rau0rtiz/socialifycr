@@ -64,7 +64,7 @@ export default function CalendarioPublico() {
     <div className="shared-calendar shared-calendar-page bg-background text-foreground">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-4">
-          {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="h-12 w-12 rounded-md bg-card object-contain p-1" />}
+          {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="h-12 w-12 rounded-lg object-contain" />}
           <div className="mr-auto">
             <div className="text-[11px] uppercase tracking-normal text-primary">Calendario de publicación</div>
             <h1 className="text-xl font-semibold sm:text-2xl">{data.client?.name}</h1>
