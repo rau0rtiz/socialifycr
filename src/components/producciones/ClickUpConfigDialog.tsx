@@ -101,16 +101,12 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
     },
   });
 
-  const lists = useQuery<Option[]>({
-    queryKey: ['cu-lists', spaceId, folderId],
+  const lists = useQuery<(Option & { folder_name?: string })[]>({
+    queryKey: ['cu-all-lists', spaceId],
     enabled: open && !!spaceId,
     queryFn: async () => {
-      if (folderId) {
-        const d = await callMeta('folder_lists', { folder_id: folderId });
-        return (d.lists || []).map((l: any) => ({ id: l.id, name: l.name }));
-      }
-      const d = await callMeta('folderless_lists', { space_id: spaceId });
-      return (d.lists || []).map((l: any) => ({ id: l.id, name: l.name }));
+      const d = await callMeta('all_space_lists', { space_id: spaceId });
+      return d.lists || [];
     },
   });
 
@@ -119,9 +115,6 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
       if (!workspaceId || !spaceId || !listId) {
         throw new Error('Selecciona workspace, space y list');
       }
-      const workspaceName = workspaces.data?.find(w => w.id === workspaceId)?.name || null;
-      const spaceName = spaces.data?.find(s => s.id === spaceId)?.name || null;
-      const listName = lists.data?.find(l => l.id === listId)?.name || null;
       const parsedEmails = emails.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
       const { data, error } = await supabase.functions.invoke('calendar-clickup', { body: {
@@ -154,7 +147,7 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
             <Link2 className="h-4 w-4" /> ClickUp — {clientName}
           </DialogTitle>
           <DialogDescription>
-            Mapea esta cuenta a un Workspace → Space → List de ClickUp donde se crearán las tasks.
+            ClickUp · {clientName}
           </DialogDescription>
         </DialogHeader>
 
@@ -166,7 +159,7 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
             </div>
           </Field>
 
-          <Field label="Space" loading={spaces.isFetching} disabled={!workspaceId}>
+          <Field label="Espacio del cliente" loading={spaces.isFetching} disabled={!workspaceId}>
             <Select value={spaceId} onValueChange={(v) => { setSpaceId(v); setFolderId(''); setListId(''); }} disabled={!workspaceId}>
               <SelectTrigger><SelectValue placeholder="Selecciona space" /></SelectTrigger>
               <SelectContent>
@@ -175,21 +168,11 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
             </Select>
           </Field>
 
-          <Field label="Carpeta (opcional)" loading={folders.isFetching} disabled={!spaceId}>
-            <Select value={folderId || '__none__'} onValueChange={(v) => { setFolderId(v === '__none__' ? '' : v); setListId(''); }} disabled={!spaceId}>
-              <SelectTrigger><SelectValue placeholder="Sin carpeta" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— Sin carpeta —</SelectItem>
-                {(folders.data || []).map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </Field>
-
           <Field label="Lista predeterminada" loading={lists.isFetching} disabled={!spaceId}>
             <Select value={listId} onValueChange={setListId} disabled={!spaceId}>
               <SelectTrigger><SelectValue placeholder="Selecciona list" /></SelectTrigger>
               <SelectContent>
-                {(lists.data || []).map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
+                {(lists.data || []).map(o => <SelectItem key={o.id} value={o.id}>{o.folder_name ? `${o.folder_name} / ` : ''}{o.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </Field>
@@ -212,7 +195,7 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => save.mutate()} disabled={save.isPending}>
+          <Button onClick={() => save.mutate()} disabled={save.isPending || !spaces.data?.some(s => s.id === spaceId) || !lists.data?.some(l => l.id === listId)}>
             {save.isPending && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
             Guardar
           </Button>

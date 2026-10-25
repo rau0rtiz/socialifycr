@@ -24,7 +24,7 @@ import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDial
 import { CreateCalendarPiece } from '@/components/calendario/CreateCalendarPiece';
 
 
-type Item = CalendarItem & { client_id: string };
+type Item = CalendarItem & { client_id: string; clickup_sync_state?: string };
 
 const nowCR = () => new Date(Date.now() - 6 * 3600000);
 
@@ -314,6 +314,12 @@ export default function Calendario() {
           comments={comments.filter((c) => c.item_id === open.id)}
           onClose={() => setOpenId(null)}
           onUpdate={(p) => update(open.id, p)}
+          onRetry={async () => {
+            const { data, error } = await supabase.functions.invoke('calendar-clickup', { body: { action: 'retry', client_id: clientId, item_id: open.id } });
+            if (error || data?.error) toast.error(data?.error ?? 'No se pudo sincronizar.');
+            else toast.success('Pieza sincronizada con ClickUp');
+            qc.invalidateQueries({ queryKey: itemsKey });
+          }}
           onDelete={async () => {
             if (!confirm('¿Quitar esta pieza del calendario?')) return;
             await supabase.from('content_calendar_items').delete().eq('id', open.id);
@@ -353,13 +359,15 @@ export default function Calendario() {
   );
 }
 
-function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment }: {
+function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, onRetry }: {
   item: Item; comments: Comment[]; onClose: () => void;
   onUpdate: (p: Partial<Item>) => void; onDelete: () => void; onComment: (b: string) => Promise<void>;
+  onRetry: () => Promise<void>;
 }) {
   const [form, setForm] = useState({ title: item.title, copy: item.copy ?? '', explanation: item.explanation ?? '', video_url: item.video_url ?? '' });
   const [note, setNote] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const save = (k: keyof typeof form) => { if (((item as any)[k] ?? '') !== form[k]) onUpdate({ [k]: form[k] || null } as any); };
 
   const upload = async (file: File) => {
@@ -408,6 +416,7 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment }: 
               )}
             </div>
             {item.clickup_sync_error && <p className="rounded-md bg-warning/10 p-2 text-xs text-warning">{item.clickup_sync_error}</p>}
+            {item.clickup_sync_state === 'failed' && <Button variant="outline" size="sm" disabled={retrying} onClick={async () => { setRetrying(true); try { await onRetry(); } finally { setRetrying(false); } }}>{retrying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Reintentar ClickUp</Button>}
             <CalendarHistory comments={comments} />
             <div className="space-y-1.5"><Label>Título</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} onBlur={() => save('title')} /></div>
             <div className="space-y-1.5">
