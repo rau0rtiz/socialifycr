@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DELIVERY_TYPES } from '@/lib/calendar-targets';
+import { PIECE_TYPES } from '@/lib/calendar-targets';
 import { toast } from 'sonner';
 
 export function CreateCalendarPiece({ clientId, spaceId, spaceName, defaultListId, onClose, onCreated }: { clientId: string; spaceId: string; spaceName: string; defaultListId: string | null; onClose: () => void; onCreated: () => void }) {
@@ -47,7 +47,7 @@ export function CreateCalendarPiece({ clientId, spaceId, spaceName, defaultListI
     <p className="text-sm text-muted-foreground">ClickUp · {spaceName}</p>
     <div className="space-y-1"><Label>Título</Label><Input value={title} maxLength={255} onChange={e => setTitle(e.target.value)} /></div>
     <div className="space-y-1"><Label>Lista de ClickUp</Label><Select value={listId} onValueChange={setListId} disabled={lists.isLoading}><SelectTrigger><SelectValue placeholder="Seleccioná una lista" /></SelectTrigger><SelectContent>{lists.data?.map(l => <SelectItem key={l.id} value={l.id}>{l.folder_name ? `${l.folder_name} / ` : ''}{l.name}</SelectItem>)}</SelectContent></Select>{lists.isLoading && <Loader2 className="h-4 w-4 animate-spin" />}{lists.error && <p className="text-sm text-destructive">{lists.error.message}</p>}</div>
-    <div className="grid grid-cols-2 gap-3"><div className="space-y-1"><Label>Tipo</Label><Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{DELIVERY_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div><div className="space-y-1"><Label>Plataforma</Label><Select value={platform} onValueChange={setPlatform}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{['instagram','tiktok','youtube','facebook','linkedin','google','multi'].map(p => <SelectItem key={p} value={p}>{p === 'multi' ? 'Varias' : p}</SelectItem>)}</SelectContent></Select></div></div>
+    <div className="grid grid-cols-2 gap-3"><div className="space-y-1"><Label>Tipo</Label><Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{PIECE_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div><div className="space-y-1"><Label>Plataforma</Label><Select value={platform} onValueChange={setPlatform}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{['instagram','tiktok','youtube','facebook','linkedin','google','multi'].map(p => <SelectItem key={p} value={p}>{p === 'multi' ? 'Varias' : p}</SelectItem>)}</SelectContent></Select></div></div>
     <div className="space-y-1"><Label>Fecha de publicación</Label><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
     <div className="space-y-1"><Label>Copy / guion</Label><Textarea rows={4} maxLength={30000} value={copy} onChange={e => setCopy(e.target.value)} /></div>
     <div className="space-y-1"><Label>Explicación / notas</Label><Textarea rows={2} maxLength={10000} value={explanation} onChange={e => setExplanation(e.target.value)} /></div>
