@@ -1,4 +1,5 @@
 # Project Rules
+- Static calendar artwork uses the shared CalendarThumb with intrinsic proportions in full-width cards and review dialogs; fixed-size backlog thumbnails contain rather than crop it. Why: agency and public readers must see the same complete photo or post without video-shaped framing.
 - Shared calendars own their viewport scroll container and public piece dialogs use one native scroll container with a two-column media/review layout. Why: isolate public scrolling from PWA body locks and keep review controls beside the media instead of below a stretched grid row.
 
 - Dialogs and overlays mounted through a React portal (outside `.agency-shell` / `.noeval-scope`) must not rely on scoped theme classes; give them their own token block in `index.css` (see `.socialify-clapper`). Why: portal output escapes the scope selector, so those color utilities silently stop applying.
