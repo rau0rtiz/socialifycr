@@ -743,18 +743,22 @@ html.agency-theme .agency-neon,
 .socialify-player .sp-tag { margin-left:auto; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:rgba(250,248,245,.45); }
 .socialify-player .sp-body > video, .socialify-player .sp-body > iframe { display:block; }
 
-/* Shared calendar and its portal use a stable light editorial theme. */
+/* Shared calendar and its portal reuse the exact agency dashboard tokens
+   (Ember neon sobre negro) so the client side matches the hub look. */
 .shared-calendar {
-  --background: 0 0% 13%; --foreground: 0 0% 96%;
-  --card: 0 0% 16%; --card-foreground: 0 0% 96%;
-  --popover: 0 0% 16%; --popover-foreground: 0 0% 96%;
-  --primary: 12 83% 58%; --primary-foreground: 0 0% 7%;
-  --secondary: 0 0% 24%; --secondary-foreground: 0 0% 96%;
-  --muted: 0 0% 19%; --muted-foreground: 0 0% 68%;
-  --accent: 0 0% 24%; --accent-foreground: 0 0% 96%;
-  --border: 0 0% 28%; --input: 0 0% 32%; --ring: 12 83% 58%;
-  --success: 152 60% 60%; --warning: 38 90% 65%;
-  --destructive: 0 80% 68%; color-scheme: dark;
+  --background: 0 0% 5%; --foreground: 36 20% 96%;
+  --card: 0 0% 9%; --card-foreground: 36 20% 96%;
+  --popover: 0 0% 10%; --popover-foreground: 36 20% 96%;
+  --primary: 12 88% 60%; --primary-foreground: 0 0% 6%;
+  --secondary: 0 0% 13%; --secondary-foreground: 36 20% 96%;
+  --muted: 0 0% 13%; --muted-foreground: 36 20% 96%;
+  --accent: 0 0% 16%; --accent-foreground: 36 20% 96%;
+  --border: 0 0% 16%; --input: 0 0% 18%; --ring: 12 88% 60%;
+  --success: 152 62% 48%; --success-foreground: 0 0% 6%;
+  --warning: 38 95% 58%; --warning-foreground: 0 0% 6%;
+  --info: 200 90% 60%; --info-foreground: 0 0% 6%;
+  --destructive: 0 72% 56%; --destructive-foreground: 0 0% 100%;
+  color-scheme: dark;
   font-family: 'DM Sans', system-ui, sans-serif;
   letter-spacing: 0;
 }
