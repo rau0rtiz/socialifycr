@@ -22,7 +22,7 @@ export const VideoPlayer = ({ item }: { item: CalendarItem }) => {
   if (e?.kind === 'iframe')
     return (
       <PlayerFrame label={e.provider}>
-        <div className="aspect-[9/16] max-h-[62vh] w-full sm:aspect-video">
+        <div className="aspect-[9/16] max-h-[60dvh] w-full sm:aspect-video">
           <iframe src={e.src} className="h-full w-full" allow="autoplay; fullscreen" allowFullScreen title={item.title} />
         </div>
       </PlayerFrame>
@@ -30,13 +30,15 @@ export const VideoPlayer = ({ item }: { item: CalendarItem }) => {
   if (e?.kind === 'video')
     return (
       <PlayerFrame label={e.provider}>
-        <video src={e.src} controls playsInline className="max-h-[62vh] w-full" />
+        <div className="flex justify-center bg-black">
+          <video src={e.src} controls playsInline className="max-h-[60dvh] w-full object-contain" />
+        </div>
       </PlayerFrame>
     );
   return (
     <div className="space-y-2">
       <PlayerFrame>
-        <CalendarThumb item={item} className="max-h-[52vh] w-full" />
+        <CalendarThumb item={item} className="max-h-[50dvh] w-full" />
       </PlayerFrame>
       {e?.kind === 'link' && (
         <Button asChild variant="outline" className="w-full">
