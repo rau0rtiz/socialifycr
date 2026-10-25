@@ -195,7 +195,7 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                   </div>
                 </div>
                 {coverMode === 'changes' && <Textarea rows={3} autoFocus value={coverBody} placeholder="¿Qué te gustaría cambiar de la portada?" onChange={(e) => setCoverBody(e.target.value)} />}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
                   {coverMode === 'changes' ? (
                     <>
                       <Button variant="outline" onClick={() => setCoverMode('idle')} disabled={busy}>Cancelar</Button>
