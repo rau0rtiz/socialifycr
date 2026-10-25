@@ -20,9 +20,11 @@ import { calendarToday } from '@/lib/calendar-progress';
 import { isLegacyToken, prettyCalendarToken } from '@/lib/calendar-share';
 import { CalendarHistory } from '@/components/calendario/CalendarHistory';
 import type { CalendarComment as Comment } from '@/lib/calendar-history';
+import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
+import { CreateCalendarPiece } from '@/components/calendario/CreateCalendarPiece';
 
 
-type Item = CalendarItem & { client_id: string };
+type Item = CalendarItem & { client_id: string; clickup_sync_state?: string };
 
 const nowCR = () => new Date(Date.now() - 6 * 3600000);
 
@@ -33,6 +35,17 @@ export default function Calendario() {
   const [ym, setYm] = useState(() => ({ y: nowCR().getUTCFullYear(), m: nowCR().getUTCMonth() }));
   const [openId, setOpenId] = useState<string | null>(null);
   const [pickDayFor, setPickDayFor] = useState<string | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const { data: clickupConfig } = useQuery({
+    queryKey: ['clickup-config', clientId], enabled: !!clientId, staleTime: 5 * 60_000, refetchOnMount: false,
+    queryFn: async () => {
+      if (!clientId) return null;
+      const { data, error } = await supabase.from('client_clickup_config').select('*').eq('client_id', clientId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ['calendar-clients'],
@@ -242,7 +255,12 @@ export default function Calendario() {
           </SelectContent>
         </Select>
         <Button onClick={share} disabled={!clientId}><Share2 className="mr-2 h-4 w-4" />Compartir</Button>
+        <Button variant="outline" onClick={() => setConfigOpen(true)}>ClickUp · {clickupConfig?.space_name ?? 'Configurar espacio'}</Button>
+        <Button onClick={() => clickupConfig?.space_id ? setCreateOpen(true) : setConfigOpen(true)}>Nueva pieza</Button>
       </div>
+
+      {configOpen && <ClickUpConfigDialog key={clientId} clientId={clientId} clientName={activeClient?.name ?? 'Cliente'} open onClose={() => setConfigOpen(false)} />}
+      {createOpen && clickupConfig?.space_id && <CreateCalendarPiece key={clientId} clientId={clientId} spaceId={clickupConfig.space_id} spaceName={clickupConfig.space_name ?? 'Espacio del cliente'} defaultListId={clickupConfig.list_id} onClose={() => setCreateOpen(false)} onCreated={() => { qc.invalidateQueries({ queryKey: itemsKey }); qc.invalidateQueries({ queryKey: ['calendar-overview'] }); }} />}
 
       <div className="border-y border-border py-4"><DeliveryTargets items={items} month={month} targets={targets.filter((t) => t.client_id === clientId)} onSave={(rows) => saveTargets(clientId, rows)} /></div>
 
@@ -296,6 +314,12 @@ export default function Calendario() {
           comments={comments.filter((c) => c.item_id === open.id)}
           onClose={() => setOpenId(null)}
           onUpdate={(p) => update(open.id, p)}
+          onRetry={async () => {
+            const { data, error } = await supabase.functions.invoke('calendar-clickup', { body: { action: 'retry', client_id: clientId, item_id: open.id } });
+            if (error || data?.error) toast.error(data?.error ?? 'No se pudo sincronizar.');
+            else toast.success('Pieza sincronizada con ClickUp');
+            qc.invalidateQueries({ queryKey: itemsKey });
+          }}
           onDelete={async () => {
             if (!confirm('¿Quitar esta pieza del calendario?')) return;
             await supabase.from('content_calendar_items').delete().eq('id', open.id);
@@ -335,13 +359,15 @@ export default function Calendario() {
   );
 }
 
-function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment }: {
+function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, onRetry }: {
   item: Item; comments: Comment[]; onClose: () => void;
   onUpdate: (p: Partial<Item>) => void; onDelete: () => void; onComment: (b: string) => Promise<void>;
+  onRetry: () => Promise<void>;
 }) {
   const [form, setForm] = useState({ title: item.title, copy: item.copy ?? '', explanation: item.explanation ?? '', video_url: item.video_url ?? '' });
   const [note, setNote] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const save = (k: keyof typeof form) => { if (((item as any)[k] ?? '') !== form[k]) onUpdate({ [k]: form[k] || null } as any); };
 
   const upload = async (file: File) => {
@@ -390,6 +416,7 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment }: 
               )}
             </div>
             {item.clickup_sync_error && <p className="rounded-md bg-warning/10 p-2 text-xs text-warning">{item.clickup_sync_error}</p>}
+            {item.clickup_sync_state === 'failed' && <Button variant="outline" size="sm" disabled={retrying} onClick={async () => { setRetrying(true); try { await onRetry(); } finally { setRetrying(false); } }}>{retrying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Reintentar ClickUp</Button>}
             <CalendarHistory comments={comments} />
             <div className="space-y-1.5"><Label>Título</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} onBlur={() => save('title')} /></div>
             <div className="space-y-1.5">
