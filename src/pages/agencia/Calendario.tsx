@@ -18,9 +18,10 @@ import { DeliveryTargets } from '@/components/calendario/DeliveryTargets';
 import { deliveryProgress, DELIVERY_TYPES, type TargetRow } from '@/lib/calendar-targets';
 import { calendarToday } from '@/lib/calendar-progress';
 import { isLegacyToken, prettyCalendarToken } from '@/lib/calendar-share';
+import { CalendarHistory } from '@/components/calendario/CalendarHistory';
+import type { CalendarComment as Comment } from '@/lib/calendar-history';
 
 
-interface Comment { id: string; item_id: string; author_name: string; author_type: string; kind: string; body: string; created_at: string }
 type Item = CalendarItem & { client_id: string };
 
 const nowCR = () => new Date(Date.now() - 6 * 3600000);
@@ -109,9 +110,11 @@ export default function Calendario() {
   const { data: comments = [] } = useQuery({
     queryKey: commentsKey,
     enabled: !!clientId && items.length > 0,
+    refetchInterval: 30_000,
     queryFn: async () => {
-      const { data } = await supabase.from('content_calendar_comments').select('*')
+      const { data, error } = await supabase.from('content_calendar_comments').select('*')
         .in('item_id', items.map((i) => i.id)).order('created_at');
+      if (error) throw error;
       return (data ?? []) as Comment[];
     },
   });
@@ -387,6 +390,7 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment }: 
               )}
             </div>
             {item.clickup_sync_error && <p className="rounded-md bg-warning/10 p-2 text-xs text-warning">{item.clickup_sync_error}</p>}
+            <CalendarHistory comments={comments} />
             <div className="space-y-1.5"><Label>Título</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} onBlur={() => save('title')} /></div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between"><Label>Copy para publicar</Label>
@@ -396,16 +400,7 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment }: 
             <div className="space-y-1.5"><Label>Explicación para el cliente</Label><Textarea rows={3} value={form.explanation} onChange={(e) => setForm({ ...form, explanation: e.target.value })} onBlur={() => save('explanation')} /></div>
 
             <div className="space-y-2 border-t border-border pt-3">
-              <Label>Notas y correcciones</Label>
-              {comments.length === 0 && <p className="text-xs text-muted-foreground">Sin comentarios todavía.</p>}
-              {comments.map((c) => (
-                <div key={c.id} className={c.author_type === 'cliente' ? 'rounded-lg bg-primary/10 p-2 text-sm' : 'rounded-lg bg-muted p-2 text-sm'}>
-                  <div className="mb-0.5 text-[11px] text-muted-foreground">
-                    <b>{c.author_name}</b> · {c.kind === 'cambio' ? 'pidió cambios' : c.kind === 'aprobacion' ? 'aprobó' : 'nota'} · {new Date(c.created_at).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica', dateStyle: 'short', timeStyle: 'short' })}
-                  </div>
-                  <div className="whitespace-pre-wrap">{c.body}</div>
-                </div>
-              ))}
+              <Label>Agregar nota</Label>
               <div className="flex gap-2">
                 <Textarea rows={2} value={note} placeholder="Agregar una nota (el cliente la ve)" onChange={(e) => setNote(e.target.value)} />
                 <Button size="icon" disabled={!note.trim()} onClick={async () => { await onComment(note.trim()); setNote(''); }}><Send className="h-4 w-4" /></Button>

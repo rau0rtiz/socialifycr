@@ -11,8 +11,9 @@ import { toast } from 'sonner';
 import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { dayLabel } from '@/lib/calendar-media';
+import { CalendarHistory } from '@/components/calendario/CalendarHistory';
+import type { CalendarComment as Comment } from '@/lib/calendar-history';
 
-interface Comment { id: string; item_id: string; author_name: string; author_type: string; kind: string; body: string; created_at: string }
 interface Payload { client: { name: string; logo_url: string | null } | null; items: CalendarItem[]; comments: Comment[] }
 
 const call = async (body: Record<string, unknown>) => {
@@ -29,7 +30,7 @@ export default function CalendarioPublico() {
   const { token = '' } = useParams();
   const qc = useQueryClient();
   const key = ['public-calendar', token];
-  const { data, isLoading, error } = useQuery<Payload>({ queryKey: key, queryFn: () => call({ action: 'get', token }), retry: false });
+  const { data, isLoading, error } = useQuery<Payload>({ queryKey: key, queryFn: () => call({ action: 'get', token }), retry: false, refetchInterval: 30_000 });
   const [ym, setYm] = useState<{ y: number; m: number } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -159,24 +160,15 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                 )}
               </div>
             </div>
-            {item.explanation && <p className="order-4 whitespace-pre-wrap text-sm text-muted-foreground md:col-start-2">{item.explanation}</p>}
+            <div className="order-4 md:col-start-2"><CalendarHistory comments={comments} /></div>
+            {item.explanation && <p className="order-5 whitespace-pre-wrap text-sm text-muted-foreground md:col-start-2">{item.explanation}</p>}
             {item.copy && (
-              <div className="order-5 rounded-xl bg-muted p-3 md:col-start-2">
+              <div className="order-6 rounded-xl bg-muted p-3 md:col-start-2">
                 <div className="mb-1 flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground">
                   Copy
                   <button onClick={() => { navigator.clipboard.writeText(item.copy!); toast.success('Copiado'); }} aria-label="Copiar"><Copy className="h-3.5 w-3.5" /></button>
                 </div>
                 <p className="whitespace-pre-wrap text-sm">{item.copy}</p>
-              </div>
-            )}
-            {comments.length > 0 && (
-              <div className="order-6 space-y-2 md:col-start-2">
-                {comments.map((c) => (
-                  <div key={c.id} className={c.author_type === 'cliente' ? 'rounded-lg bg-primary/10 p-2 text-sm' : 'rounded-lg bg-muted p-2 text-sm'}>
-                    <div className="text-[11px] text-muted-foreground"><b>{c.author_name}</b> · {c.kind === 'cambio' ? 'pidió cambios' : c.kind === 'aprobacion' ? 'aprobó' : 'nota'}</div>
-                    <div className="whitespace-pre-wrap">{c.body}</div>
-                  </div>
-                ))}
               </div>
             )}
           </div>
