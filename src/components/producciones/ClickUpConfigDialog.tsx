@@ -35,8 +35,6 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
   const qc = useQueryClient();
   const [workspaceId, setWorkspaceId] = useState<string>('');
   const [spaceId, setSpaceId] = useState<string>('');
-  const [folderId, setFolderId] = useState<string>(''); // '' = sin carpeta
-  const [listId, setListId] = useState<string>('');
   const [emails, setEmails] = useState<string>('');
 
   // Existing config
@@ -58,7 +56,6 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
     if (existing) {
       setWorkspaceId(existing.workspace_id || '');
       setSpaceId(existing.space_id || '');
-      setListId(existing.list_id || '');
       setEmails((existing.default_assignee_emails || []).join(', '));
     }
   }, [existing]);
@@ -92,28 +89,10 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
     },
   });
 
-  const folders = useQuery<Option[]>({
-    queryKey: ['cu-folders', spaceId],
-    enabled: open && !!spaceId,
-    queryFn: async () => {
-      const d = await callMeta('folders', { space_id: spaceId });
-      return (d.folders || []).map((f: any) => ({ id: f.id, name: f.name }));
-    },
-  });
-
-  const lists = useQuery<(Option & { folder_name?: string })[]>({
-    queryKey: ['cu-all-lists', spaceId],
-    enabled: open && !!spaceId,
-    queryFn: async () => {
-      const d = await callMeta('all_space_lists', { space_id: spaceId });
-      return d.lists || [];
-    },
-  });
-
   const save = useMutation({
     mutationFn: async () => {
-      if (!workspaceId || !spaceId || !listId) {
-        throw new Error('Selecciona workspace, space y list');
+      if (!workspaceId || !spaceId) {
+        throw new Error('Seleccioná el espacio del cliente.');
       }
       const parsedEmails = emails.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
@@ -122,7 +101,6 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
         client_id: clientId,
         workspace_id: workspaceId,
         space_id: spaceId,
-        list_id: listId,
         default_assignee_emails: parsedEmails,
       } });
       if (error) {
@@ -160,19 +138,10 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
           </Field>
 
           <Field label="Espacio del cliente" loading={spaces.isFetching} disabled={!workspaceId}>
-            <Select value={spaceId} onValueChange={(v) => { setSpaceId(v); setFolderId(''); setListId(''); }} disabled={!workspaceId}>
-              <SelectTrigger><SelectValue placeholder="Selecciona space" /></SelectTrigger>
+            <Select value={spaceId} onValueChange={setSpaceId} disabled={!workspaceId}>
+              <SelectTrigger><SelectValue placeholder="Seleccioná el espacio" /></SelectTrigger>
               <SelectContent>
                 {(spaces.data || []).map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <Field label="Lista predeterminada" loading={lists.isFetching} disabled={!spaceId}>
-            <Select value={listId} onValueChange={setListId} disabled={!spaceId}>
-              <SelectTrigger><SelectValue placeholder="Selecciona list" /></SelectTrigger>
-              <SelectContent>
-                {(lists.data || []).map(o => <SelectItem key={o.id} value={o.id}>{o.folder_name ? `${o.folder_name} / ` : ''}{o.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </Field>
@@ -186,16 +155,16 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
               className="mt-1"
             />
             <p className="text-[11px] text-muted-foreground mt-1">
-              Deben coincidir con los emails de los miembros del List en ClickUp.
+              Deben coincidir con los emails de los miembros de ClickUp.
             </p>
           </div>
         </div>
 
-        {[workspaces.error, spaces.error, folders.error, lists.error].filter(Boolean).map((e, i) => <p key={i} className="text-sm text-destructive">{(e as Error).message}</p>)}
+        {[workspaces.error, spaces.error].filter(Boolean).map((e, i) => <p key={i} className="text-sm text-destructive">{(e as Error).message}</p>)}
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={() => save.mutate()} disabled={save.isPending || !spaces.data?.some(s => s.id === spaceId) || !lists.data?.some(l => l.id === listId)}>
+          <Button onClick={() => save.mutate()} disabled={save.isPending || !workspaceId || !spaces.data?.some(s => s.id === spaceId)}>
             {save.isPending && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
             Guardar
           </Button>

@@ -1,7 +1,7 @@
 // ClickUp create-tasks: crea una task por pieza grabada (production_sheet_shots con done=true).
 // Si la pieza ya tiene clickup_task_id, hace PUT para actualizarla.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { calendarSyncFields, isClickUpApproved } from '../_shared/calendar-clickup-rules.ts';
+import { calendarSyncFields, isClickUpApproved, calendarSpaceListIds } from '../_shared/calendar-clickup-rules.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -112,12 +112,11 @@ const json = (body: unknown, status = 200) =>
 
 async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: { client_id: string; space_id: string | null }) {
   // Every list in the client's space (foldered + folderless).
-  const listIds = new Set<string>();
+  let listIds: string[] = [];
   if (cfg.space_id) {
     const folders = await cuFetch(`/space/${cfg.space_id}/folder?archived=false`);
-    for (const f of folders.folders || []) for (const l of f.lists || []) listIds.add(String(l.id));
     const loose = await cuFetch(`/space/${cfg.space_id}/list?archived=false`);
-    for (const l of loose.lists || []) listIds.add(String(l.id));
+    listIds = calendarSpaceListIds(folders.folders || [], loose.lists || []);
   }
 
   const { data: existing, error: existingError } = await admin
