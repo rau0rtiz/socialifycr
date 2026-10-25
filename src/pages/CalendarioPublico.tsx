@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
-import { dayLabel, monthLabel } from '@/lib/calendar-media';
+import { dayLabel, monthLabel, COVER_STATUS_LABEL } from '@/lib/calendar-media';
 import { CalendarHistory } from '@/components/calendario/CalendarHistory';
 import type { CalendarComment as Comment } from '@/lib/calendar-history';
 
@@ -122,22 +122,29 @@ export default function CalendarioPublico() {
 function PieceDialog({ item, token, comments, onClose, onDone }: { item: CalendarItem; token: string; comments: Comment[]; onClose: () => void; onDone: () => void }) {
   const [name, setName] = useState(() => localStorage.getItem('cal-public-name') ?? '');
   const [mode, setMode] = useState<'idle' | 'changes'>('idle');
+  const [coverMode, setCoverMode] = useState<'idle' | 'changes'>('idle');
   const [body, setBody] = useState('');
+  const [coverBody, setCoverBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [validation, setValidation] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
+  const hasCoverReview = !!item.thumbnail_url && ['reel', 'tiktok', 'short'].includes(item.content_type ?? '');
 
-  const act = async (action: 'approve' | 'request_changes') => {
+  const act = async (action: 'approve' | 'request_changes' | 'approve_cover' | 'request_cover_changes') => {
     if (!name.trim()) { setValidation('Escribí tu nombre para registrar tu aprobación o cambios.'); nameRef.current?.focus(); return; }
     setValidation('');
-    if (action === 'request_changes' && !body.trim()) return toast.error('Contanos qué cambios necesitás');
+    const isCover = action === 'approve_cover' || action === 'request_cover_changes';
+    const text = isCover ? coverBody.trim() : body.trim();
+    if ((action === 'request_changes' || action === 'request_cover_changes') && !text)
+      return toast.error(isCover ? 'Contanos qué cambios necesitás en la portada' : 'Contanos qué cambios necesitás');
     setBusy(true);
     try {
       localStorage.setItem('cal-public-name', name.trim());
-      await call({ action, token, item_id: item.id, name: name.trim(), body: body.trim() });
-      toast.success(action === 'approve' ? '¡Pieza aprobada!' : 'Cambios enviados al equipo');
-      setBody(''); setMode('idle'); onDone();
+      await call({ action, token, item_id: item.id, name: name.trim(), body: text });
+      toast.success(action === 'approve' ? '¡Pieza aprobada!' : action === 'approve_cover' ? '¡Portada aprobada!' : 'Cambios enviados al equipo');
+      if (isCover) { setCoverBody(''); setCoverMode('idle'); } else { setBody(''); setMode('idle'); }
+      onDone();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   };
 
