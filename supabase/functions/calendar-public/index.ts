@@ -104,22 +104,29 @@ Deno.serve(async (req) => {
 
     if (b.action === 'comment') return json({ ok: true });
 
+    // A piece moves to "aprobado" in ClickUp only when everything is approved:
+    // video-type pieces (reel/tiktok/short) with a cover need both video and
+    // cover approved; pieces without a cover only need the piece approval.
+    const VIDEO_TYPES = ['reel', 'tiktok', 'short'];
+    const hasCover = VIDEO_TYPES.includes(item.content_type) && !!item.thumbnail_url;
+    const videoApproved = isCover ? item.status === 'aprobado' : isApprove;
+    const coverApproved = isCover ? isApprove : !hasCover || item.cover_status === 'aprobada';
+    const fullyApproved = isApprove && videoApproved && coverApproved;
+
     let syncError: string | null = null;
     if (item.clickup_task_id) {
-      if (isCover) {
-        // The cover is part of the same task: approvals only leave a comment,
-        // change requests also move the task back to the changes status.
-        syncError = isApprove
-          ? await commentClickUp(item.clickup_task_id,
-            `✅ ${b.name} aprobó la portada desde el calendario.${b.body ? `\n\n${b.body}` : ''}`)
-          : await syncClickUp(item.clickup_task_id, ['editar cambios', 'cambios', 'correcc', 'changes'],
-            `✏️ ${b.name} pidió cambios en la portada desde el calendario:\n\n${b.body}`);
-      } else {
-        syncError = isApprove
+      if (isApprove) {
+        const what = isCover ? 'la portada' : 'esta pieza';
+        syncError = fullyApproved
           ? await syncClickUp(item.clickup_task_id, ['aprobado', 'approved', 'aprob'],
-            `✅ ${b.name} aprobó esta pieza desde el calendario.${b.body ? `\n\n${b.body}` : ''}`)
-          : await syncClickUp(item.clickup_task_id, ['editar cambios', 'cambios', 'correcc', 'changes'],
-            `✏️ ${b.name} pidió cambios desde el calendario:\n\n${b.body}`);
+            `✅ ${b.name} aprobó ${what} desde el calendario. Pieza completamente aprobada.${b.body ? `\n\n${b.body}` : ''}`)
+          : await commentClickUp(item.clickup_task_id,
+            `✅ ${b.name} aprobó ${what} desde el calendario.${hasCover ? ' Falta aprobar ' + (isCover ? 'el video' : 'la portada') + ' para marcar la tarea como aprobada.' : ''}${b.body ? `\n\n${b.body}` : ''}`);
+      } else {
+        syncError = await syncClickUp(item.clickup_task_id, ['editar cambios', 'cambios', 'correcc', 'changes'],
+          isCover
+            ? `✏️ ${b.name} pidió cambios en la portada desde el calendario:\n\n${b.body}`
+            : `✏️ ${b.name} pidió cambios desde el calendario:\n\n${b.body}`);
       }
     }
     if (isCover) {
