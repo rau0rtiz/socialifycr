@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight, X, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import socialifyLogo from '@/assets/socialify-wordmark.png.asset.json';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
