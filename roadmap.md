@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Agregar instalación de Calendario Socialify desde enlaces de cliente con icono blanco y verificar apertura del calendario correcto.
 - [x] Configurar calendario por espacio ClickUp completo sin exigir lista; pruebas de múltiples listas y guardado/sincronización en vivo con B-Dental verificados.
 - [x] Excluir tareas aprobadas en ClickUp de «Por programar», sin borrar historial ni fechas manuales; sincronizar y verificar (7 excluidas, 379 piezas conservadas).
 - [x] Separar fechas de edición de ClickUp de las entregas manuales del calendario y probarlo.
