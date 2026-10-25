@@ -1,11 +1,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
-import { listBelongsToSpace, publicationDueDate, calendarTaskPayload } from '../_shared/calendar-clickup-rules.ts';
+import { listBelongsToSpace, publicationDueDate, calendarTaskPayload, calendarSpaceConfigFields } from '../_shared/calendar-clickup-rules.ts';
 
 const id = z.string().regex(/^\d+$/).max(40);
 const schema = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('configure'), client_id: z.string().uuid(), workspace_id: id, space_id: id, list_id: id, default_assignee_emails: z.array(z.string().email()).max(30).default([]) }),
+  z.object({ action: z.literal('configure'), client_id: z.string().uuid(), workspace_id: id, space_id: id, default_assignee_emails: z.array(z.string().email()).max(30).default([]) }),
   z.object({ action: z.literal('create'), client_id: z.string().uuid(), item_id: z.string().uuid(), list_id: id, title: z.string().trim().min(1).max(255), content_type: z.enum(['reel','story','foto','post','carrusel','diseno','correo','tiktok','short','otro']), platform: z.enum(['instagram','tiktok','youtube','facebook','linkedin','google','multi']), publish_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v => Number.isFinite(publicationDueDate(v))).nullable(), copy: z.string().max(30000).default(''), explanation: z.string().max(10000).default(''), video_url: z.union([z.literal(''), z.string().url().max(2000).refine(v => /^https?:\/\//i.test(v))]).default('') }),
   z.object({ action: z.literal('retry'), client_id: z.string().uuid(), item_id: z.string().uuid() }),
 ]);
@@ -39,11 +39,11 @@ Deno.serve(async req => {
     if (!client) return json({ error: 'Cliente no disponible.' }, 403);
     const admin = createClient(url, service);
     if (b.action === 'configure') {
-      const [spaces, list, teams] = await Promise.all([cu(`/team/${b.workspace_id}/space?archived=false`), cu(`/list/${b.list_id}`), cu('/team')]);
+      const [spaces, teams] = await Promise.all([cu(`/team/${b.workspace_id}/space?archived=false`), cu('/team')]);
       const space = spaces.spaces?.find((s: { id: string }) => String(s.id) === b.space_id);
       const workspace = teams.teams?.find((t: { id: string }) => String(t.id) === b.workspace_id);
-      if (!space || !workspace || !listBelongsToSpace(list, b.space_id)) return json({ error: 'La lista no pertenece al espacio seleccionado.' }, 400);
-      const { error } = await admin.from('client_clickup_config').upsert({ client_id: b.client_id, workspace_id: b.workspace_id, workspace_name: workspace.name, space_id: b.space_id, space_name: space.name, list_id: b.list_id, list_name: list.name, default_assignee_emails: b.default_assignee_emails }, { onConflict: 'client_id' });
+      if (!space || !workspace) return json({ error: 'El espacio no pertenece al workspace seleccionado.' }, 400);
+      const { error } = await admin.from('client_clickup_config').upsert({ client_id: b.client_id, workspace_id: b.workspace_id, workspace_name: workspace.name, ...calendarSpaceConfigFields(space), default_assignee_emails: b.default_assignee_emails }, { onConflict: 'client_id' });
       if (error) throw error;
       return json({ ok: true });
     }

@@ -2,6 +2,15 @@ export function listBelongsToSpace(list: { space?: { id?: string | number } }, s
   return String(list.space?.id ?? '') === spaceId;
 }
 
+// Production lists are discovered anew on every sync, not saved as an import filter.
+export function calendarSpaceListIds(folders: { lists?: { id: string | number }[] }[], looseLists: { id: string | number }[]) {
+  return [...new Set([...folders.flatMap(folder => folder.lists ?? []), ...looseLists].map(list => String(list.id)))];
+}
+
+export function calendarSpaceConfigFields(space: { id: string | number; name: string }) {
+  return { space_id: String(space.id), space_name: space.name, list_id: null, list_name: null };
+}
+
 export function publicationDueDate(date: string) {
   return Date.parse(`${date}T12:00:00-06:00`);
 }

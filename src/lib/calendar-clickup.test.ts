@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { listBelongsToSpace, calendarSyncFields, calendarTaskPayload, isClickUpApproved, shouldShowCalendarPiece, calendarDeliveryPatch } from '../../supabase/functions/_shared/calendar-clickup-rules';
+import { listBelongsToSpace, calendarSyncFields, calendarTaskPayload, isClickUpApproved, shouldShowCalendarPiece, calendarDeliveryPatch, calendarSpaceListIds, calendarSpaceConfigFields } from '../../supabase/functions/_shared/calendar-clickup-rules';
 
 describe('calendar ClickUp destination', () => {
+  it('configures the whole client space without a production list filter', () => {
+    expect(calendarSpaceConfigFields({ id: '123', name: 'B-Dental' })).toEqual({ space_id: '123', space_name: 'B-Dental', list_id: null, list_name: null });
+  });
+  it('includes every production list, foldered and folderless, and discovers new lists on the next sync', () => {
+    const folders = [{ lists: [{ id: 'produccion-1' }, { id: 'produccion-2' }] }, { lists: [{ id: 'produccion-3' }] }];
+    expect(calendarSpaceListIds(folders, [{ id: 'fotos' }, { id: 'produccion-1' }])).toEqual(['produccion-1', 'produccion-2', 'produccion-3', 'fotos']);
+    expect(calendarSpaceListIds([...folders, { lists: [{ id: 'produccion-4' }] }], [{ id: 'fotos' }])).toContain('produccion-4');
+    expect(calendarSpaceListIds([], [])).toEqual([]);
+  });
   it('moves pieces back to unscheduled by clearing only the delivery date', () => {
     const piece = { publish_date: '2026-10-25', status: 'cambios', cover_status: 'aprobado', title: 'Reel', due_date: '1792944000000' };
     expect({ ...piece, ...calendarDeliveryPatch(null) }).toEqual({ ...piece, publish_date: null });
