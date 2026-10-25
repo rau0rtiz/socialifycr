@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { CalendarMonth, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
+import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { dayLabel } from '@/lib/calendar-media';
 
@@ -53,6 +53,7 @@ export default function CalendarioPublico() {
 
   const open = data.items.find((i) => i.id === openId) ?? null;
   const pending = data.items.filter((i) => i.status !== 'aprobado').length;
+  const unscheduled = data.items.filter((i) => !i.publish_date);
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
@@ -73,6 +74,22 @@ export default function CalendarioPublico() {
         {ym && (
           <div className="rounded-2xl border border-border bg-card p-3 sm:p-4">
             <CalendarMonth year={ym.y} month={ym.m} onMonthChange={(y, m) => setYm({ y, m })} items={data.items} onOpen={(i) => setOpenId(i.id)} />
+          </div>
+        )}
+        {unscheduled.length > 0 && (
+          <div className="mt-5">
+            <h3 className="mb-2 text-sm font-semibold">Por programar ({unscheduled.length})</h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {unscheduled.map((it) => (
+                <button key={it.id} onClick={() => setOpenId(it.id)} className="overflow-hidden rounded-xl border border-border/60 bg-card text-left">
+                  <CalendarThumb item={it} className="aspect-[4/5] w-full" />
+                  <div className="space-y-1 p-2">
+                    <div className="line-clamp-2 text-xs font-medium">{it.title}</div>
+                    <StatusPill status={it.status} />
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         )}
         <p className="mt-6 text-center text-xs text-muted-foreground">Socialify</p>
