@@ -1,4 +1,5 @@
 # Project Rules
+- Shared calendars own their viewport scroll container and public piece dialogs use one native scroll container with a two-column media/review layout. Why: isolate public scrolling from PWA body locks and keep review controls beside the media instead of below a stretched grid row.
 
 - Dialogs and overlays mounted through a React portal (outside `.agency-shell` / `.noeval-scope`) must not rely on scoped theme classes; give them their own token block in `index.css` (see `.socialify-clapper`). Why: portal output escapes the scope selector, so those color utilities silently stop applying.
 - Documentation-to-production import asks AI only for source-line ranges and classifications; server code copies original text, never AI-authored prose. Why: avoids rewriting and minimizes output tokens while keeping unlabelled source details.
