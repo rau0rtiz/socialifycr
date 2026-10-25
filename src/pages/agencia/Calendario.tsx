@@ -54,7 +54,7 @@ export default function Calendario() {
     refetchOnMount: false,
     queryFn: async () => {
       const { data, error } = await supabase.from('content_calendar_items')
-        .select('id, client_id, publish_date, status').in('client_id', clientIds);
+        .select('id, client_id, publish_date, status, content_type').in('client_id', clientIds);
       if (error) throw error;
       return data ?? [];
     },
@@ -328,6 +328,10 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment }: 
               <Select value={item.status} onValueChange={(v) => onUpdate({ status: v })}>
                 <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={item.content_type ?? 'otro'} onValueChange={(v) => onUpdate({ content_type: v })}>
+                <SelectTrigger className="h-8 w-[130px]" aria-label="Tipo de pieza"><SelectValue /></SelectTrigger>
+                <SelectContent>{DELIVERY_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.icon} {t.label}</SelectItem>)}</SelectContent>
               </Select>
               {item.clickup_url && (
                 <Button asChild variant="ghost" size="sm"><a href={item.clickup_url} target="_blank" rel="noreferrer"><ExternalLink className="mr-1 h-3.5 w-3.5" />ClickUp</a></Button>
