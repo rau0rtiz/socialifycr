@@ -2582,6 +2582,7 @@ export type Database = {
           id: string
           item_id: string
           kind: string
+          scope: string
         }
         Insert: {
           author_name: string
@@ -2591,6 +2592,7 @@ export type Database = {
           id?: string
           item_id: string
           kind?: string
+          scope?: string
         }
         Update: {
           author_name?: string
@@ -2600,6 +2602,7 @@ export type Database = {
           id?: string
           item_id?: string
           kind?: string
+          scope?: string
         }
         Relationships: [
           {
@@ -2654,6 +2657,7 @@ export type Database = {
           client_id: string
           content_type: string | null
           copy: string | null
+          cover_status: string
           created_at: string
           explanation: string | null
           id: string
@@ -2678,6 +2682,7 @@ export type Database = {
           client_id: string
           content_type?: string | null
           copy?: string | null
+          cover_status?: string
           created_at?: string
           explanation?: string | null
           id?: string
@@ -2702,6 +2707,7 @@ export type Database = {
           client_id?: string
           content_type?: string | null
           copy?: string | null
+          cover_status?: string
           created_at?: string
           explanation?: string | null
           id?: string

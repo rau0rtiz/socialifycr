@@ -43,6 +43,13 @@
       "when": 1792900803779,
       "tag": "0005_calendar_thumbnails_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792901790988,
+      "tag": "0006_calendar_cover_review",
+      "breakpoints": true
     }
   ]
 }
