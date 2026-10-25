@@ -374,7 +374,7 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, on
     if (file.size > 5 * 1024 * 1024) return toast.error('La imagen debe pesar menos de 5 MB');
     setUploading(true);
     const path = `calendar/${item.client_id}/${item.id}-${Date.now()}.${file.name.split('.').pop() || 'jpg'}`;
-    const { error } = await supabase.storage.from('content-images').upload(path, file, { upsert: true });
+    const { error } = await supabase.storage.from('content-images').upload(path, file);
     if (error) { setUploading(false); return toast.error('No se pudo subir la miniatura'); }
     onUpdate({ thumbnail_url: supabase.storage.from('content-images').getPublicUrl(path).data.publicUrl });
     setUploading(false);
