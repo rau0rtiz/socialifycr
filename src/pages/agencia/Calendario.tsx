@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Inbox, Loader2, MessageCircle, Send, Share2, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Inbox, Loader2, MessageCircle, RefreshCw, Send, Share2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +37,7 @@ export default function Calendario() {
   const [pickDayFor, setPickDayFor] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const { data: clickupConfig } = useQuery({
     queryKey: ['clickup-config', clientId], enabled: !!clientId, staleTime: 5 * 60_000, refetchOnMount: false,
     queryFn: async () => {
@@ -105,6 +106,26 @@ export default function Calendario() {
   const activeClient = clients.find((c) => c.id === clientId);
 
   const itemsKey = ['calendar-items', clientId];
+  const syncFromClickUp = async () => {
+    if (!clientId || syncing) return;
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('clickup-create-tasks', {
+        body: { action: 'sync_calendar', client_id: clientId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const r = data?.results?.[0];
+      if (r?.error) throw new Error(r.error);
+      toast.success(r ? `Sincronizado: ${r.created} nuevas, ${r.updated} actualizadas` : 'Sincronización completa');
+      qc.invalidateQueries({ queryKey: itemsKey });
+      qc.invalidateQueries({ queryKey: ['calendar-overview'] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'No se pudo sincronizar con ClickUp');
+    } finally {
+      setSyncing(false);
+    }
+  };
   const { data: items = [], isLoading } = useQuery({
     queryKey: itemsKey,
     enabled: !!clientId,
@@ -256,6 +277,12 @@ export default function Calendario() {
         </Select>
         <Button onClick={share} disabled={!clientId}><Share2 className="mr-2 h-4 w-4" />Compartir</Button>
         <Button variant="outline" onClick={() => setConfigOpen(true)}>ClickUp · {clickupConfig?.space_name ?? 'Configurar espacio'}</Button>
+        {clickupConfig?.space_id && (
+          <Button variant="outline" onClick={syncFromClickUp} disabled={syncing}>
+            {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Sincronizar
+          </Button>
+        )}
         <Button onClick={() => clickupConfig?.space_id ? setCreateOpen(true) : setConfigOpen(true)}>Nueva pieza</Button>
       </div>
 
