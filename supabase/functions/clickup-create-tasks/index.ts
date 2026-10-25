@@ -75,6 +75,124 @@ function parseClickUpDueDate(value: unknown): number | undefined {
   return Number.isFinite(timestamp) && timestamp > 0 ? timestamp : undefined;
 }
 
+// ---------- ClickUp → calendar sync (tasks become calendar pieces) ----------
+
+const TAG_TYPE: Record<string, string> = {
+  REEL: 'reel', STORY: 'story', POST: 'post', FOTO: 'foto',
+  CARRUSEL: 'carrusel', 'DISEÑO': 'diseno', DISENO: 'diseno',
+  CORREO: 'correo', TIKTOK: 'tiktok', SHORT: 'short', CONTENIDO: 'otro',
+};
+const TAG_PLATFORM: Record<string, string> = {
+  IG: 'instagram', TT: 'tiktok', YT: 'youtube', LI: 'linkedin', MULTI: 'multi',
+};
+
+// Parses "[3] [REEL · IG] Título" → { contentType, platform, title }.
+// Returns null for untagged tasks and ops tasks ([PRODUCCIÓN] …) — those are not content pieces.
+function parseTaskTitle(name: string) {
+  const m = name.match(/^(?:\[\d+\]\s*)?\[([A-ZÑ]+)(?:\s*·\s*([A-Z]+))?\]\s*(.+)$/);
+  if (!m) return null;
+  if (m[1] === 'PRODUCCIÓN' || m[1] === 'PRODUCCION') return null;
+  return {
+    contentType: TAG_TYPE[m[1]] ?? 'otro',
+    platform: m[2] ? (TAG_PLATFORM[m[2]] ?? null) : null,
+    title: m[3].trim() || name,
+  };
+}
+
+// ClickUp due dates we set are noon Costa Rica; convert ms → CR calendar date.
+function crDate(ms: number): string | null {
+  if (!Number.isFinite(ms) || ms <= 0) return null;
+  return new Date(ms - 6 * 3600000).toISOString().slice(0, 10);
+}
+
+function mapClickUpStatus(status: unknown): string {
+  const s = String((status as { status?: string })?.status || '').toLowerCase();
+  if (/aprob/.test(s)) return 'aprobado';
+  if (/cambio|correcc|editar|revisi/.test(s)) return 'cambios';
+  return 'pendiente';
+}
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: { client_id: string; space_id: string }) {
+  // Every list in the client's space (foldered + folderless).
+  const listIds = new Set<string>();
+  const folders = await cuFetch(`/space/${cfg.space_id}/folder?archived=false`);
+  for (const f of folders.folders || []) for (const l of f.lists || []) listIds.add(String(l.id));
+  const loose = await cuFetch(`/space/${cfg.space_id}/list?archived=false`);
+  for (const l of loose.lists || []) listIds.add(String(l.id));
+
+  const { data: existing } = await admin
+    .from('content_calendar_items')
+    .select('id, clickup_task_id, publish_date')
+    .eq('client_id', cfg.client_id)
+    .not('clickup_task_id', 'is', null);
+  const byTask = new Map((existing || []).map((r: { id: string; clickup_task_id: string; publish_date: string | null }) => [String(r.clickup_task_id), r]));
+
+  let created = 0, updated = 0, skipped = 0;
+  for (const listId of listIds) {
+    for (let page = 0; ; page += 1) {
+      const data = await cuFetch(`/list/${listId}/task?archived=false&subtasks=false&include_closed=false&page=${page}`);
+      const tasks = data.tasks || [];
+      if (!tasks.length) break;
+      for (const t of tasks) {
+        const parsed = parseTaskTitle(String(t.name || ''));
+        if (!parsed) { skipped += 1; continue; }
+        const publishDate = t.due_date ? crDate(Number(t.due_date)) : null;
+        const row = byTask.get(String(t.id));
+        if (row) {
+          // ClickUp is source of truth for title; only fill the date if the piece has none
+          // (a date set in the calendar wins over the task's due date).
+          const fields: Record<string, unknown> = { title: parsed.title, clickup_url: t.url || null };
+          if (!row.publish_date && publishDate) fields.publish_date = publishDate;
+          const { error } = await admin.from('content_calendar_items').update(fields).eq('id', row.id);
+          if (error) { console.error('[sync] update fail', t.id, error.message); skipped += 1; } else updated += 1;
+        } else {
+          const { error } = await admin.from('content_calendar_items').insert({
+            client_id: cfg.client_id,
+            clickup_task_id: String(t.id),
+            clickup_url: t.url || null,
+            clickup_list_id: listId,
+            clickup_space_id: cfg.space_id,
+            clickup_sync_state: 'synced',
+            title: parsed.title,
+            content_type: parsed.contentType,
+            platform: parsed.platform,
+            publish_date: publishDate,
+            status: mapClickUpStatus(t.status),
+          });
+          if (error) { console.error('[sync] insert fail', t.id, error.message); skipped += 1; } else created += 1;
+        }
+      }
+      if (tasks.length < 100) break;
+    }
+  }
+  return { client_id: cfg.client_id, created, updated, skipped };
+}
+
+async function syncCalendar(reqBody: { client_id?: string }) {
+  const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  let q = admin.from('client_clickup_config').select('client_id, space_id').not('space_id', 'is', null);
+  if (reqBody?.client_id) q = q.eq('client_id', reqBody.client_id);
+  const { data: configs, error } = await q;
+  if (error) throw error;
+  if (!configs?.length) {
+    if (reqBody?.client_id) throw new Error('Este cliente no tiene un espacio de ClickUp configurado.');
+    return json({ success: true, results: [] });
+  }
+  const results: unknown[] = [];
+  for (const cfg of configs) {
+    try {
+      results.push(await syncClientCalendar(admin, cfg));
+    } catch (e) {
+      console.error('[sync] client fail', cfg.client_id, (e as Error).message);
+      results.push({ client_id: cfg.client_id, error: (e as Error).message });
+    }
+  }
+  return json({ success: true, results });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
