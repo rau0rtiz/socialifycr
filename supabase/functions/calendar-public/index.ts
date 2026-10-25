@@ -39,7 +39,10 @@ async function syncClickUp(taskId: string, hints: string[], comment: string): Pr
     const task = await cu(`/task/${taskId}`);
     const list = await cu(`/list/${task.list?.id}`);
     const statuses: string[] = (list.statuses || []).map((s: any) => String(s.status));
-    const match = statuses.find((s) => hints.some((h) => s.toLowerCase().includes(h)));
+    const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    // Prefer an exact status (e.g. "aprobado") over partial matches like "pre-aprobación".
+    const match = statuses.find((s) => hints.some((h) => norm(s) === norm(h)))
+      || statuses.find((s) => hints.some((h) => norm(s).includes(norm(h))));
     if (!match) return `La lista de ClickUp no tiene un estado "${hints[0]}". Crealo para que la tarea cambie sola.`;
     await cu(`/task/${taskId}`, { method: 'PUT', body: JSON.stringify({ status: match }) });
     return null;
