@@ -14,25 +14,26 @@ export interface CalendarItem {
   video_url: string | null;
   publish_date: string | null;
   status: string;
+  cover_status?: string | null;
   sort: number;
   clickup_url?: string | null;
   clickup_sync_error?: string | null;
 }
 
 export const statusDot = (s: string) =>
-  s === 'aprobado' ? 'bg-success' : s === 'cambios' ? 'bg-warning' : 'bg-muted-foreground/50';
+  s === 'aprobado' || s === 'aprobada' ? 'bg-success' : s === 'cambios' ? 'bg-warning' : 'bg-muted-foreground/50';
 
-export const StatusPill = ({ status }: { status: string }) => (
+export const StatusPill = ({ status, labels }: { status: string; labels?: Record<string, string> }) => (
   <span
     className={cn(
       'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium',
-      status === 'aprobado' && 'bg-success/15 text-success',
+      (status === 'aprobado' || status === 'aprobada') && 'bg-success/15 text-success',
       status === 'cambios' && 'bg-warning/15 text-warning',
       status === 'pendiente' && 'bg-muted text-muted-foreground',
     )}
   >
     <span className={cn('h-1.5 w-1.5 rounded-full', statusDot(status))} />
-    {STATUS_LABEL[status] ?? status}
+    {labels?.[status] ?? STATUS_LABEL[status] ?? status}
   </span>
 );
 

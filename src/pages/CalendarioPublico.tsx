@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
-import { dayLabel, monthLabel } from '@/lib/calendar-media';
+import { dayLabel, monthLabel, COVER_STATUS_LABEL } from '@/lib/calendar-media';
 import { CalendarHistory } from '@/components/calendario/CalendarHistory';
 import type { CalendarComment as Comment } from '@/lib/calendar-history';
 
@@ -122,22 +122,29 @@ export default function CalendarioPublico() {
 function PieceDialog({ item, token, comments, onClose, onDone }: { item: CalendarItem; token: string; comments: Comment[]; onClose: () => void; onDone: () => void }) {
   const [name, setName] = useState(() => localStorage.getItem('cal-public-name') ?? '');
   const [mode, setMode] = useState<'idle' | 'changes'>('idle');
+  const [coverMode, setCoverMode] = useState<'idle' | 'changes'>('idle');
   const [body, setBody] = useState('');
+  const [coverBody, setCoverBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [validation, setValidation] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
+  const hasCoverReview = !!item.thumbnail_url && ['reel', 'tiktok', 'short'].includes(item.content_type ?? '');
 
-  const act = async (action: 'approve' | 'request_changes') => {
+  const act = async (action: 'approve' | 'request_changes' | 'approve_cover' | 'request_cover_changes') => {
     if (!name.trim()) { setValidation('Escribí tu nombre para registrar tu aprobación o cambios.'); nameRef.current?.focus(); return; }
     setValidation('');
-    if (action === 'request_changes' && !body.trim()) return toast.error('Contanos qué cambios necesitás');
+    const isCover = action === 'approve_cover' || action === 'request_cover_changes';
+    const text = isCover ? coverBody.trim() : body.trim();
+    if ((action === 'request_changes' || action === 'request_cover_changes') && !text)
+      return toast.error(isCover ? 'Contanos qué cambios necesitás en la portada' : 'Contanos qué cambios necesitás');
     setBusy(true);
     try {
       localStorage.setItem('cal-public-name', name.trim());
-      await call({ action, token, item_id: item.id, name: name.trim(), body: body.trim() });
-      toast.success(action === 'approve' ? '¡Pieza aprobada!' : 'Cambios enviados al equipo');
-      setBody(''); setMode('idle'); onDone();
+      await call({ action, token, item_id: item.id, name: name.trim(), body: text });
+      toast.success(action === 'approve' ? '¡Pieza aprobada!' : action === 'approve_cover' ? '¡Portada aprobada!' : 'Cambios enviados al equipo');
+      if (isCover) { setCoverBody(''); setCoverMode('idle'); } else { setBody(''); setMode('idle'); }
+      onDone();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   };
 
@@ -149,8 +156,14 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
         </DialogHeader>
         <div className="p-4 sm:p-5">
           <div className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2">
-            <div className="min-w-0">
+            <div className="min-w-0 space-y-4">
               <VideoPlayer item={item} />
+              {hasCoverReview && (
+                <figure className="space-y-1.5">
+                  <figcaption className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Portada del reel</figcaption>
+                  <img src={item.thumbnail_url!} alt="Portada del reel" className="w-full max-w-[240px] rounded-lg border border-border object-cover" />
+                </figure>
+              )}
             </div>
             <div className="min-w-0 space-y-4">
             <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -178,6 +191,30 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                 )}
               </div>
             </div>
+            {hasCoverReview && (
+              <div className="space-y-3 border-b border-border pb-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">Portada</span>
+                  <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
+                </div>
+                {coverMode === 'changes' && <Textarea rows={3} autoFocus value={coverBody} placeholder="¿Qué te gustaría cambiar de la portada?" onChange={(e) => setCoverBody(e.target.value)} />}
+                <div className="grid grid-cols-2 gap-2">
+                  {coverMode === 'changes' ? (
+                    <>
+                      <Button variant="outline" onClick={() => setCoverMode('idle')} disabled={busy}>Cancelar</Button>
+                      <Button onClick={() => act('request_cover_changes')} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enviar cambios'}</Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" onClick={() => setCoverMode('changes')} disabled={busy}><PencilLine className="mr-2 h-4 w-4" />Cambios en portada</Button>
+                      <Button variant={item.cover_status === 'aprobada' ? 'outline' : 'default'} onClick={() => act('approve_cover')} disabled={busy}>
+                        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="mr-2 h-4 w-4" />{item.cover_status === 'aprobada' ? 'Portada aprobada' : 'Aprobar portada'}</>}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
             <div ref={historyRef} className="border-b border-border pb-4"><CalendarHistory comments={comments} /></div>
             {item.explanation && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{item.explanation}</p>}
             {item.copy && (

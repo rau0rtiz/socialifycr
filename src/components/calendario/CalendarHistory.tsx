@@ -19,7 +19,7 @@ export function CalendarHistory({ comments }: { comments: CalendarComment[] }) {
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="break-words text-sm"><strong>{c.author_name}</strong><span className="text-muted-foreground"> · {c.author_type === 'agencia' ? 'Socialify' : 'Cliente'}</span></div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                    <span className="font-medium">{c.kind === 'cambio' ? 'Pidió cambios' : c.kind === 'aprobacion' ? 'Aprobó la pieza' : 'Dejó una nota'}</span>
+                    <span className="font-medium">{c.kind === 'cambio' ? (c.scope === 'portada' ? 'Pidió cambios en la portada' : 'Pidió cambios') : c.kind === 'aprobacion' ? (c.scope === 'portada' ? 'Aprobó la portada' : 'Aprobó la pieza') : c.scope === 'portada' ? 'Dejó una nota sobre la portada' : 'Dejó una nota'}</span>
                     <time dateTime={c.created_at} className="text-muted-foreground">{calendarHistoryTime(c.created_at)} · Costa Rica</time>
                   </div>
                   <p className="whitespace-pre-wrap break-words text-sm">{c.body}</p>

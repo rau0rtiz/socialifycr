@@ -34,6 +34,12 @@ export const STATUS_LABEL: Record<string, string> = {
   cambios: 'Con cambios',
 };
 
+export const COVER_STATUS_LABEL: Record<string, string> = {
+  pendiente: 'Portada pendiente',
+  aprobada: 'Portada aprobada',
+  cambios: 'Portada con cambios',
+};
+
 /** Monday-first grid of ISO dates (YYYY-MM-DD) covering the month. */
 export const monthGrid = (year: number, month: number): { iso: string; inMonth: boolean }[] => {
   const first = new Date(Date.UTC(year, month, 1));
