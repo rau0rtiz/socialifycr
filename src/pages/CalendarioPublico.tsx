@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight, X, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,12 @@ export default function CalendarioPublico() {
   const { token = '' } = useParams();
   const qc = useQueryClient();
   const key = ['public-calendar', token];
-  const { data, isLoading, error } = useQuery<Payload>({ queryKey: key, queryFn: () => call({ action: 'get', token }), retry: false, refetchInterval: 30_000 });
+  const { data, isLoading, error, refetch, isFetching } = useQuery<Payload>({ queryKey: key, queryFn: () => call({ action: 'get', token }), retry: false, refetchInterval: 30_000 });
+  const refresh = async () => {
+    const res = await refetch();
+    if (res.isError) toast.error('No se pudo actualizar. Probá de nuevo.');
+    else toast.success('Calendario actualizado');
+  };
   const [ym, setYm] = useState<{ y: number; m: number } | null>(null);
   const [view, setView] = useState<'pieces' | 'calendar'>('calendar');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -66,10 +71,13 @@ export default function CalendarioPublico() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-4">
           {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="h-12 w-12 rounded-lg object-contain" />}
-          <div className="mr-auto">
+          <div className="mr-auto min-w-0">
             <div className="text-[11px] uppercase tracking-normal text-primary">Calendario de publicación</div>
-            <h1 className="text-xl font-semibold sm:text-2xl">{data.client?.name}</h1>
+            <h1 className="truncate text-xl font-semibold sm:text-2xl">{data.client?.name}</h1>
           </div>
+          <Button variant="outline" size="icon" aria-label="Actualizar calendario" onClick={refresh} disabled={isFetching} className="h-11 w-11 shrink-0 md:hidden">
+            <RefreshCw className={isFetching ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
+          </Button>
           <div className="shrink-0 text-right text-xs text-muted-foreground">
             {data.items.length} piezas<br />{pending} por revisar
           </div>
