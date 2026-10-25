@@ -86,7 +86,7 @@ export default function CalendarioPublico() {
             <Button size="sm" variant={view === 'calendar' ? 'default' : 'ghost'} onClick={() => setView('calendar')}><CalendarDays className="mr-2 h-4 w-4" />Calendario</Button>
           </div>
         </div>
-        {view === 'calendar' && ym && <CalendarMonth year={ym.y} month={ym.m} onMonthChange={(y, m) => setYm({ y, m })} items={data.items} onOpen={(i) => setOpenId(i.id)} />}
+        {view === 'calendar' && ym && <CalendarMonth mobileMonthGrid year={ym.y} month={ym.m} onMonthChange={(y, m) => setYm({ y, m })} items={data.items} onOpen={(i) => setOpenId(i.id)} />}
         {(view === 'pieces' || unscheduled.length > 0) && (
           <section className={view === 'calendar' ? 'mt-8' : ''}>
             <h3 className="mb-4 text-sm font-medium text-muted-foreground">{view === 'calendar' ? 'Por programar' : `${shown.length} piezas · ${pending} por revisar`}</h3>

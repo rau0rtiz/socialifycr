@@ -64,11 +64,12 @@ interface Props {
   /** Agency only: drop a piece on a day. */
   onDropItem?: (itemId: string, iso: string) => void;
   onDayClick?: (iso: string) => void;
+  mobileMonthGrid?: boolean;
 }
 
 const WEEK = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-export const CalendarMonth = ({ year, month, onMonthChange, items, onOpen, onDropItem, onDayClick }: Props) => {
+export const CalendarMonth = ({ year, month, onMonthChange, items, onOpen, onDropItem, onDayClick, mobileMonthGrid = false }: Props) => {
   const grid = monthGrid(year, month);
   const byDay = new Map<string, CalendarItem[]>();
   for (const it of items) {
@@ -97,11 +98,11 @@ export const CalendarMonth = ({ year, month, onMonthChange, items, onOpen, onDro
       </div>
 
       {/* Desktop / tablet: month grid */}
-      <div className="hidden md:block">
-        <div className="grid grid-cols-7 gap-1.5 pb-1.5 text-center text-[11px] uppercase tracking-widest text-muted-foreground">
+      <div className={mobileMonthGrid ? 'block' : 'hidden md:block'}>
+        <div className="grid grid-cols-7 gap-1 pb-1.5 text-center text-[11px] uppercase tracking-normal text-muted-foreground md:gap-1.5">
           {WEEK.map((w) => <div key={w}>{w}</div>)}
         </div>
-        <div className="grid grid-cols-7 gap-1.5">
+        <div className="grid grid-cols-7 gap-1 md:gap-1.5" aria-label="Calendario mensual">
           {grid.map(({ iso, inMonth }) => {
             const list = byDay.get(iso) ?? [];
             return (
@@ -112,6 +113,7 @@ export const CalendarMonth = ({ year, month, onMonthChange, items, onOpen, onDro
                 onClick={onDayClick ? () => onDayClick(iso) : undefined}
                 className={cn(
                   'min-h-[118px] rounded-xl border border-border/60 bg-card/60 p-1.5 transition-colors',
+                  mobileMonthGrid && 'min-w-0 min-h-[82px] rounded-md p-0.5 md:min-h-[118px] md:p-1.5',
                   !inMonth && 'opacity-40',
                   iso === today && 'border-primary/70',
                   onDropItem && 'hover:border-primary/50',
@@ -122,19 +124,21 @@ export const CalendarMonth = ({ year, month, onMonthChange, items, onOpen, onDro
                 </div>
                 <div className="space-y-1">
                   {list.map((it) => (
-                    <button
+                    <Button
                       key={it.id}
+                      variant="ghost"
+                      aria-label={`${it.title} · ${dayLabel(iso)}`}
                       draggable={!!onDropItem}
                       onDragStart={(e) => e.dataTransfer.setData('text/plain', it.id)}
                       onClick={(e) => { e.stopPropagation(); onOpen(it); }}
-                      className="group block w-full overflow-hidden rounded-lg border border-border/60 bg-background text-left transition hover:border-primary/60"
+                      className="group block h-auto w-full min-w-0 overflow-hidden whitespace-normal rounded-md border border-border/60 bg-background p-0 text-left transition hover:border-primary/60"
                     >
                       <div className="relative">
-                        <Thumb item={it} className="aspect-[4/3] w-full" />
+                        <Thumb item={it} className={mobileMonthGrid ? 'aspect-[4/3] w-full max-md:!aspect-square max-md:!h-auto max-md:object-contain' : 'aspect-[4/3] w-full'} />
                         <span className={cn('absolute right-1 top-1 h-2 w-2 rounded-full ring-2 ring-background', statusDot(it.status))} />
                       </div>
-                      <div className="line-clamp-2 px-1.5 py-1 text-[11px] leading-tight">{it.title}</div>
-                    </button>
+                      <div className={cn('line-clamp-2 px-1.5 py-1 text-[11px] leading-tight', mobileMonthGrid && 'max-md:hidden')}>{it.title}</div>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -144,7 +148,7 @@ export const CalendarMonth = ({ year, month, onMonthChange, items, onOpen, onDro
       </div>
 
       {/* Phone: agenda list by day */}
-      <div className="space-y-4 md:hidden">
+      <div className={mobileMonthGrid ? 'hidden' : 'space-y-4 md:hidden'}>
         {monthDays.length === 0 && (
           <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
             No hay piezas programadas este mes.
