@@ -15,6 +15,13 @@
       "when": 1792878384282,
       "tag": "0001_content_calendar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792897974271,
+      "tag": "0002_calendar_monthly_targets",
+      "breakpoints": true
     }
   ]
 }

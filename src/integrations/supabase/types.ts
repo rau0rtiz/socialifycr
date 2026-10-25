@@ -2579,6 +2579,38 @@ export type Database = {
           },
         ]
       }
+      content_calendar_goals: {
+        Row: {
+          client_id: string
+          id: string
+          month: string
+          target: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          month: string
+          target: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          month?: string
+          target?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_calendar_goals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_calendar_items: {
         Row: {
           clickup_sync_error: string | null
