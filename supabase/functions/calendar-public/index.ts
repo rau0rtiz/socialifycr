@@ -49,6 +49,18 @@ async function syncClickUp(taskId: string, hints: string[], comment: string): Pr
   }
 }
 
+/** Leaves a comment on the task without moving its status. Returns an error text or null. */
+async function commentClickUp(taskId: string, comment: string): Promise<string | null> {
+  if (!CLICKUP_TOKEN) return 'ClickUp no está configurado.';
+  try {
+    await cu(`/task/${taskId}/comment`, { method: 'POST', body: JSON.stringify({ comment_text: comment, notify_all: true }) });
+    return null;
+  } catch (e) {
+    console.error('[calendar-public] clickup', (e as Error).message);
+    return (e as Error).message.slice(0, 300);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
@@ -97,7 +109,7 @@ Deno.serve(async (req) => {
         // The cover is part of the same task: approvals only leave a comment,
         // change requests also move the task back to the changes status.
         syncError = isApprove
-          ? await syncClickUp(item.clickup_task_id, ['aprobado', 'approved', 'aprob'],
+          ? await commentClickUp(item.clickup_task_id,
             `✅ ${b.name} aprobó la portada desde el calendario.${b.body ? `\n\n${b.body}` : ''}`)
           : await syncClickUp(item.clickup_task_id, ['editar cambios', 'cambios', 'correcc', 'changes'],
             `✏️ ${b.name} pidió cambios en la portada desde el calendario:\n\n${b.body}`);
