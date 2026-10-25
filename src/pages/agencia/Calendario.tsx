@@ -167,13 +167,14 @@ export default function Calendario() {
 
   if (!clientId) {
     const scheduled = overview.filter((i) => i.publish_date?.startsWith(month.slice(0, 7))).length;
-    const behind = clients.filter((c) => calendarProgress(overview.filter((i) => i.client_id === c.id), month, goals.find((g) => g.client_id === c.id)?.target ?? null, calendarToday()).pace === 'behind').length;
+    const behind = clients.filter((c) => deliveryProgress(overview.filter((i) => i.client_id === c.id), month, targets.filter((t) => t.client_id === c.id), calendarToday()).pace === 'behind').length;
+    const withTargets = new Set(targets.map((t) => t.client_id)).size;
     return <DashboardLayout><div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div><p className="mb-1 text-xs font-semibold uppercase text-primary">Publicación · {clients.length} clientes</p><h1 className="text-2xl font-semibold sm:text-3xl">Calendarios de clientes</h1></div>
         <div className="flex items-center gap-3"><Button variant="outline" size="icon" aria-label="Mes anterior" onClick={() => shiftMonth(-1)}><ChevronLeft className="h-4 w-4" /></Button><span className="min-w-36 text-center text-sm font-semibold capitalize">{monthLabel(ym.y, ym.m)}</span><Button variant="outline" size="icon" aria-label="Mes siguiente" onClick={() => shiftMonth(1)}><ChevronRight className="h-4 w-4" /></Button></div>
       </div>
-      <div className="flex flex-wrap gap-x-8 gap-y-2 border-y border-border py-4 text-sm"><span><b className="text-xl tabular-nums">{scheduled}</b> piezas programadas</span><span><b className="text-xl tabular-nums text-warning">{behind}</b> calendarios atrasados</span><span><b className="text-xl tabular-nums">{goals.length}</b> con meta definida</span></div>
+      <div className="flex flex-wrap gap-x-8 gap-y-2 border-y border-border py-4 text-sm"><span><b className="text-xl tabular-nums">{scheduled}</b> piezas programadas</span><span><b className="text-xl tabular-nums text-warning">{behind}</b> calendarios atrasados</span><span><b className="text-xl tabular-nums">{withTargets}</b> con entregas definidas</span></div>
       {clientsLoading || overviewLoading ? <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div> : clients.length === 0 ? <p className="py-12 text-center text-muted-foreground">Todavía no hay clientes con hojas de producción.</p> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {clients.map((client) => <article key={client.id} className="agency-card group flex min-h-[300px] min-w-0 flex-col overflow-hidden sm:aspect-[2/3]">
           <Button type="button" variant="ghost" className="h-auto flex-1 flex-col items-start gap-3 rounded-none p-4 text-left" onClick={() => setClientId(client.id)} aria-label={`Abrir calendario de ${client.name}`}>
@@ -185,7 +186,7 @@ export default function Calendario() {
             <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground"><CalendarDays className="h-3 w-3" />Calendario de publicación</span>
             <span className="mt-auto text-xs font-medium text-primary">Ver calendario</span>
           </Button>
-          <div className="border-t border-border bg-muted/30 p-4"><CalendarProgress dense items={overview.filter((i) => i.client_id === client.id)} month={month} target={goals.find((g) => g.client_id === client.id)?.target ?? null} onSave={(target) => saveGoal(client.id, target)} /></div>
+          <div className="border-t border-border bg-muted/30 p-4"><DeliveryTargets dense items={overview.filter((i) => i.client_id === client.id)} month={month} targets={targets.filter((t) => t.client_id === client.id)} onSave={(rows) => saveTargets(client.id, rows)} /></div>
         </article>)}
       </div>}
     </div></DashboardLayout>;
@@ -212,7 +213,7 @@ export default function Calendario() {
         <Button variant="ghost" size="sm" onClick={regenerate} disabled={!clientId}>Nuevo enlace</Button>
       </div>
 
-      <div className="border-y border-border py-4"><CalendarProgress items={items} month={month} target={goals.find((g) => g.client_id === clientId)?.target ?? null} onSave={(target) => saveGoal(clientId, target)} /></div>
+      <div className="border-y border-border py-4"><DeliveryTargets items={items} month={month} targets={targets.filter((t) => t.client_id === clientId)} onSave={(rows) => saveTargets(clientId, rows)} /></div>
 
       <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="agency-card h-fit space-y-3 p-3 lg:sticky lg:top-0">
