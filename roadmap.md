@@ -1,5 +1,5 @@
 # Tasks
-- [ ] Configurar calendario por espacio ClickUp completo, sin exigir lista, y verificar importación de todas sus listas.
+- [x] Configurar calendario por espacio ClickUp completo sin exigir lista; pruebas de múltiples listas y guardado/sincronización en vivo con B-Dental verificados.
 - [x] Excluir tareas aprobadas en ClickUp de «Por programar», sin borrar historial ni fechas manuales; sincronizar y verificar (7 excluidas, 379 piezas conservadas).
 - [x] Separar fechas de edición de ClickUp de las entregas manuales del calendario y probarlo.
 - [x] Quitar todas las fechas actuales conservando piezas e historial; verificar «Por programar».
