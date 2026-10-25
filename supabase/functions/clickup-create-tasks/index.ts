@@ -1,6 +1,7 @@
 // ClickUp create-tasks: crea una task por pieza grabada (production_sheet_shots con done=true).
 // Si la pieza ya tiene clickup_task_id, hace PUT para actualizarla.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { calendarSyncFields } from '../_shared/calendar-clickup-rules.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -99,12 +100,6 @@ function parseTaskTitle(name: string) {
   };
 }
 
-// ClickUp due dates we set are noon Costa Rica; convert ms → CR calendar date.
-function crDate(ms: number): string | null {
-  if (!Number.isFinite(ms) || ms <= 0) return null;
-  return new Date(ms - 6 * 3600000).toISOString().slice(0, 10);
-}
-
 function mapClickUpStatus(status: unknown): string {
   const s = String((status as { status?: string })?.status || '').toLowerCase();
   if (/aprob/.test(s)) return 'aprobado';
@@ -125,10 +120,10 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
 
   const { data: existing } = await admin
     .from('content_calendar_items')
-    .select('id, clickup_task_id, publish_date')
+    .select('id, clickup_task_id')
     .eq('client_id', cfg.client_id)
     .not('clickup_task_id', 'is', null);
-  const byTask = new Map((existing || []).map((r: { id: string; clickup_task_id: string; publish_date: string | null }) => [String(r.clickup_task_id), r]));
+  const byTask = new Map((existing || []).map((r: { id: string; clickup_task_id: string }) => [String(r.clickup_task_id), r]));
 
   let created = 0, updated = 0, skipped = 0;
   for (const listId of listIds) {
@@ -139,27 +134,23 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
       for (const t of tasks) {
         const parsed = parseTaskTitle(String(t.name || ''));
         if (!parsed) { skipped += 1; continue; }
-        const publishDate = t.due_date ? crDate(Number(t.due_date)) : null;
         const row = byTask.get(String(t.id));
+        const fields = calendarSyncFields(t, parsed.title);
         if (row) {
-          // ClickUp is source of truth for title; only fill the date if the piece has none
-          // (a date set in the calendar wins over the task's due date).
-          const fields: Record<string, unknown> = { title: parsed.title, clickup_url: t.url || null };
-          if (!row.publish_date && publishDate) fields.publish_date = publishDate;
-          const { error } = await admin.from('content_calendar_items').update(fields).eq('id', row.id);
+          // Delivery dates belong exclusively to the calendar, even when unset.
+          const { error } = await admin.from('content_calendar_items').update(fields).eq('id', row.id).eq('client_id', cfg.client_id);
           if (error) { console.error('[sync] update fail', t.id, error.message); skipped += 1; } else updated += 1;
         } else {
           const { error } = await admin.from('content_calendar_items').insert({
             client_id: cfg.client_id,
             clickup_task_id: String(t.id),
-            clickup_url: t.url || null,
+            ...fields,
             clickup_list_id: listId,
             clickup_space_id: cfg.space_id,
             clickup_sync_state: 'synced',
-            title: parsed.title,
             content_type: parsed.contentType,
             platform: parsed.platform,
-            publish_date: publishDate,
+            publish_date: null,
             status: mapClickUpStatus(t.status),
           });
           if (error) { console.error('[sync] insert fail', t.id, error.message); skipped += 1; } else created += 1;

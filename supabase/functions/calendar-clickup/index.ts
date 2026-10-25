@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
-import { listBelongsToSpace, publicationDueDate } from '../_shared/calendar-clickup-rules.ts';
+import { listBelongsToSpace, publicationDueDate, calendarTaskPayload } from '../_shared/calendar-clickup-rules.ts';
 
 const id = z.string().regex(/^\d+$/).max(40);
 const schema = z.discriminatedUnion('action', [
@@ -68,7 +68,7 @@ Deno.serve(async req => {
     if (!claimed) return json({ saved: true, item_id: item.id, error: 'La sincronización está en curso o requiere revisión. No se creará otra tarea.' });
     let task;
     try {
-      task = await cu(`/list/${listId}/task`, { method: 'POST', body: JSON.stringify({ name: `[${item.content_type?.toUpperCase() ?? 'CONTENIDO'}] ${item.title}`, markdown_description: [item.copy, item.explanation, item.video_url, `Calendario Socialify · ${item.id}`].filter(Boolean).join('\n\n'), ...(item.publish_date ? { due_date: publicationDueDate(item.publish_date), due_date_time: false } : {}) }) });
+      task = await cu(`/list/${listId}/task`, { method: 'POST', body: JSON.stringify(calendarTaskPayload(item)) });
     } catch (e) {
       const safeRetry = e instanceof ClickUpError && e.status >= 400 && e.status < 500;
       await admin.from('content_calendar_items').update({ clickup_sync_state: safeRetry ? 'failed' : 'syncing', clickup_sync_error: safeRetry ? (e as Error).message : 'ClickUp no confirmó la creación. Revisar la lista antes de reintentar para evitar duplicados.' }).eq('id', item.id).eq('client_id', b.client_id);
