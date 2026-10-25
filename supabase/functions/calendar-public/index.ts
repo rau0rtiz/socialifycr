@@ -13,7 +13,7 @@ const json = (b: unknown, status = 200) =>
 const Body = z.discriminatedUnion('action', [
   z.object({ action: z.literal('get'), token: z.string().min(8).max(80) }),
   z.object({
-    action: z.enum(['approve', 'request_changes', 'comment']),
+    action: z.enum(['approve', 'request_changes', 'comment', 'approve_cover', 'request_cover_changes']),
     token: z.string().min(8).max(80),
     item_id: z.string().uuid(),
     name: z.string().trim().min(1).max(80),
@@ -63,12 +63,12 @@ Deno.serve(async (req) => {
       const [{ data: client }, { data: items }] = await Promise.all([
         admin.from('clients').select('name, logo_url').eq('id', share.client_id).maybeSingle(),
         admin.from('content_calendar_items')
-          .select('id, title, copy, explanation, platform, content_type, thumbnail_url, video_url, publish_date, status, sort')
+          .select('id, title, copy, explanation, platform, content_type, thumbnail_url, video_url, publish_date, status, cover_status, sort')
           .eq('client_id', share.client_id).order('publish_date', { nullsFirst: false }).order('sort'),
       ]);
       const ids = (items || []).map((i) => i.id);
       const { data: comments } = ids.length
-        ? await admin.from('content_calendar_comments').select('id, item_id, author_name, author_type, kind, body, created_at')
+        ? await admin.from('content_calendar_comments').select('id, item_id, author_name, author_type, kind, scope, body, created_at')
           .in('item_id', ids).order('created_at')
         : { data: [] };
       return json({ client, items: items || [], comments: comments || [] });
@@ -77,25 +77,44 @@ Deno.serve(async (req) => {
     const { data: item } = await admin.from('content_calendar_items')
       .select('id, client_id, title, clickup_task_id').eq('id', b.item_id).maybeSingle();
     if (!item || item.client_id !== share.client_id) return json({ error: 'Pieza no encontrada' }, 404);
-    if (b.action === 'request_changes' && !b.body) return json({ error: 'Escribí qué cambios necesitás' }, 400);
+    if ((b.action === 'request_changes' || b.action === 'request_cover_changes') && !b.body)
+      return json({ error: 'Escribí qué cambios necesitás' }, 400);
 
-    const kind = b.action === 'approve' ? 'aprobacion' : b.action === 'request_changes' ? 'cambio' : 'nota';
+    const isCover = b.action === 'approve_cover' || b.action === 'request_cover_changes';
+    const scope = isCover ? 'portada' : 'video';
+    const isApprove = b.action === 'approve' || b.action === 'approve_cover';
+    const kind = isApprove ? 'aprobacion' : b.action === 'comment' ? 'nota' : 'cambio';
     await admin.from('content_calendar_comments').insert({
-      item_id: item.id, author_name: b.name, author_type: 'cliente', kind,
-      body: b.body || (kind === 'aprobacion' ? 'Aprobado' : ''),
+      item_id: item.id, author_name: b.name, author_type: 'cliente', kind, scope,
+      body: b.body || (kind === 'aprobacion' ? (isCover ? 'Aprobó la portada' : 'Aprobado') : ''),
     });
 
     if (b.action === 'comment') return json({ ok: true });
 
-    const status = b.action === 'approve' ? 'aprobado' : 'cambios';
     let syncError: string | null = null;
     if (item.clickup_task_id) {
-      syncError = b.action === 'approve'
-        ? await syncClickUp(item.clickup_task_id, ['aprobado', 'approved', 'aprob'],
-          `✅ ${b.name} aprobó esta pieza desde el calendario.${b.body ? `\n\n${b.body}` : ''}`)
-        : await syncClickUp(item.clickup_task_id, ['editar cambios', 'cambios', 'correcc', 'changes'],
-          `✏️ ${b.name} pidió cambios desde el calendario:\n\n${b.body}`);
+      if (isCover) {
+        // The cover is part of the same task: approvals only leave a comment,
+        // change requests also move the task back to the changes status.
+        syncError = isApprove
+          ? await syncClickUp(item.clickup_task_id, ['aprobado', 'approved', 'aprob'],
+            `✅ ${b.name} aprobó la portada desde el calendario.${b.body ? `\n\n${b.body}` : ''}`)
+          : await syncClickUp(item.clickup_task_id, ['editar cambios', 'cambios', 'correcc', 'changes'],
+            `✏️ ${b.name} pidió cambios en la portada desde el calendario:\n\n${b.body}`);
+      } else {
+        syncError = isApprove
+          ? await syncClickUp(item.clickup_task_id, ['aprobado', 'approved', 'aprob'],
+            `✅ ${b.name} aprobó esta pieza desde el calendario.${b.body ? `\n\n${b.body}` : ''}`)
+          : await syncClickUp(item.clickup_task_id, ['editar cambios', 'cambios', 'correcc', 'changes'],
+            `✏️ ${b.name} pidió cambios desde el calendario:\n\n${b.body}`);
+      }
     }
+    if (isCover) {
+      const cover_status = isApprove ? 'aprobada' : 'cambios';
+      await admin.from('content_calendar_items').update({ cover_status, clickup_sync_error: syncError }).eq('id', item.id);
+      return json({ ok: true, cover_status });
+    }
+    const status = isApprove ? 'aprobado' : 'cambios';
     await admin.from('content_calendar_items').update({ status, clickup_sync_error: syncError }).eq('id', item.id);
     return json({ ok: true, status });
   } catch (e) {
