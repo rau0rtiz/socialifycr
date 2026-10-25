@@ -167,7 +167,7 @@ export default function Calendario() {
       </div>
       <div className="flex flex-wrap gap-x-8 gap-y-2 border-y border-border py-4 text-sm"><span><b className="text-xl tabular-nums">{scheduled}</b> piezas programadas</span><span><b className="text-xl tabular-nums text-warning">{behind}</b> calendarios atrasados</span><span><b className="text-xl tabular-nums">{goals.length}</b> con meta definida</span></div>
       {clientsLoading || overviewLoading ? <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div> : clients.length === 0 ? <p className="py-12 text-center text-muted-foreground">Todavía no hay clientes con hojas de producción.</p> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {clients.map((client) => <article key={client.id} className="agency-card group flex aspect-[2/3] min-w-0 flex-col overflow-hidden">
+        {clients.map((client) => <article key={client.id} className="agency-card group flex min-h-[300px] min-w-0 flex-col overflow-hidden sm:aspect-[2/3]">
           <Button type="button" variant="ghost" className="h-auto flex-1 flex-col items-start gap-3 rounded-none p-4 text-left" onClick={() => setClientId(client.id)} aria-label={`Abrir calendario de ${client.name}`}>
             <div className="flex w-full items-start justify-between gap-3">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-background">{client.logo_url ? <img src={client.logo_url} alt="" className="h-full w-full object-contain p-1.5" /> : <Building2 className="h-6 w-6 text-muted-foreground" />}</div>
