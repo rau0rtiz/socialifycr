@@ -79,7 +79,6 @@ export default function CalendarioPublico() {
           </div>
           <div className="mt-4 flex items-center gap-3">
             <div className="mr-auto min-w-0 text-xs text-muted-foreground">{data.items.length} piezas · {pending} por revisar</div>
-
             <Button variant="outline" size="icon" aria-label="Actualizar calendario" onClick={refresh} disabled={isFetching} className="h-11 w-11 shrink-0 md:hidden">
               <RefreshCw className={isFetching ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
             </Button>
