@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Copy, ExternalLink, ImagePlus, Inbox, Loader2, Send, Share2, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Inbox, Loader2, Send, Share2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
-import { STATUS_LABEL } from '@/lib/calendar-media';
+import { monthLabel, STATUS_LABEL } from '@/lib/calendar-media';
+import { CalendarProgress } from '@/components/calendario/CalendarProgress';
+import { calendarProgress, calendarToday } from '@/lib/calendar-progress';
 
 interface Comment { id: string; item_id: string; author_name: string; author_type: string; kind: string; body: string; created_at: string }
 type Item = CalendarItem & { client_id: string };
@@ -23,34 +25,71 @@ const nowCR = () => new Date(Date.now() - 6 * 3600000);
 export default function Calendario() {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const [clientId, setClientId] = useState<string | null>(() => localStorage.getItem('cal-client'));
+  const [clientId, setClientId] = useState<string | null>(null);
   const [ym, setYm] = useState(() => ({ y: nowCR().getUTCFullYear(), m: nowCR().getUTCMonth() }));
   const [openId, setOpenId] = useState<string | null>(null);
   const [pickDayFor, setPickDayFor] = useState<string | null>(null);
 
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ['calendar-clients'],
     staleTime: 5 * 60_000,
+    refetchOnMount: false,
     queryFn: async () => {
-      const { data } = await supabase.from('production_sheets').select('client_id, clients(id, name, logo_url)');
+      const { data, error } = await supabase.from('production_sheets').select('client_id, clients(id, name, logo_url)');
+      if (error) throw error;
       const map = new Map<string, { id: string; name: string; logo_url: string | null }>();
       for (const r of (data ?? []) as any[]) if (r.clients) map.set(r.clients.id, r.clients);
       return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
     },
   });
 
-  useEffect(() => {
-    if (!clientId && clients[0]) setClientId(clients[0].id);
-  }, [clients, clientId]);
-  useEffect(() => { if (clientId) localStorage.setItem('cal-client', clientId); }, [clientId]);
+  const month = `${ym.y}-${String(ym.m + 1).padStart(2, '0')}-01`;
+  const clientIds = clients.map((c) => c.id);
+  const overviewKey = ['calendar-overview', clientIds];
+  const { data: overview = [], isLoading: overviewLoading } = useQuery({
+    queryKey: overviewKey,
+    enabled: clientIds.length > 0,
+    staleTime: 5 * 60_000,
+    refetchOnMount: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('content_calendar_items')
+        .select('id, client_id, publish_date, status').in('client_id', clientIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const goalsKey = ['calendar-goals', month, clientIds];
+  const { data: goals = [] } = useQuery({
+    queryKey: goalsKey, enabled: clientIds.length > 0, staleTime: 5 * 60_000, refetchOnMount: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('content_calendar_goals').select('client_id, target')
+        .eq('month', month).in('client_id', clientIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const saveGoal = async (id: string, target: number) => {
+    const { error } = await supabase.from('content_calendar_goals').upsert({ client_id: id, month, target, updated_at: new Date().toISOString() }, { onConflict: 'client_id,month' });
+    if (error) { toast.error('No se pudo guardar la meta'); throw error; }
+    await qc.invalidateQueries({ queryKey: ['calendar-goals'] });
+    toast.success('Meta mensual guardada');
+  };
+  const shiftMonth = (delta: number) => {
+    const date = new Date(Date.UTC(ym.y, ym.m + delta, 1));
+    setYm({ y: date.getUTCFullYear(), m: date.getUTCMonth() });
+  };
+  const activeClient = clients.find((c) => c.id === clientId);
 
   const itemsKey = ['calendar-items', clientId];
   const { data: items = [], isLoading } = useQuery({
     queryKey: itemsKey,
     enabled: !!clientId,
+    staleTime: 5 * 60_000,
+    refetchOnMount: false,
     queryFn: async () => {
+      if (!clientId) return [];
       const { data, error } = await supabase.from('content_calendar_items').select('*')
-        .eq('client_id', clientId!).order('publish_date', { nullsFirst: true }).order('sort');
+        .eq('client_id', clientId).order('publish_date', { nullsFirst: true }).order('sort');
       if (error) throw error;
       return data as Item[];
     },
@@ -69,6 +108,13 @@ export default function Calendario() {
 
   // Live updates when the client approves or asks for changes.
   useEffect(() => {
+    const ch = supabase.channel(`calendar-overview-${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'content_calendar_items' }, () => qc.invalidateQueries({ queryKey: ['calendar-overview'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'content_calendar_goals' }, () => qc.invalidateQueries({ queryKey: ['calendar-goals'] }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
+  useEffect(() => {
     if (!clientId) return;
     const ch = supabase
       .channel(`cal-${clientId}-${Math.random().toString(36).slice(2)}`)
@@ -82,9 +128,11 @@ export default function Calendario() {
   }, [clientId]);
 
   const update = async (id: string, patch: Partial<Item>) => {
+    if (!clientId) return;
     qc.setQueryData<Item[]>(itemsKey, (old) => old?.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-    const { error } = await supabase.from('content_calendar_items').update(patch as any).eq('id', id);
+    const { error } = await supabase.from('content_calendar_items').update(patch as any).eq('id', id).eq('client_id', clientId);
     if (error) { toast.error('No se pudo guardar'); qc.invalidateQueries({ queryKey: itemsKey }); }
+    qc.invalidateQueries({ queryKey: ['calendar-overview'] });
   };
 
   const unscheduled = items.filter((i) => !i.publish_date);
@@ -109,12 +157,35 @@ export default function Calendario() {
     await share();
   };
 
+  if (!clientId) {
+    const scheduled = overview.filter((i) => i.publish_date?.startsWith(month.slice(0, 7))).length;
+    const behind = clients.filter((c) => calendarProgress(overview.filter((i) => i.client_id === c.id), month, goals.find((g) => g.client_id === c.id)?.target ?? null, calendarToday()).pace === 'behind').length;
+    return <DashboardLayout><div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div><p className="mb-1 text-xs font-semibold uppercase text-primary">Publicación · {clients.length} clientes</p><h1 className="text-2xl font-semibold sm:text-3xl">Calendarios de clientes</h1></div>
+        <div className="flex items-center gap-3"><Button variant="outline" size="icon" aria-label="Mes anterior" onClick={() => shiftMonth(-1)}><ChevronLeft className="h-4 w-4" /></Button><span className="min-w-36 text-center text-sm font-semibold capitalize">{monthLabel(ym.y, ym.m)}</span><Button variant="outline" size="icon" aria-label="Mes siguiente" onClick={() => shiftMonth(1)}><ChevronRight className="h-4 w-4" /></Button></div>
+      </div>
+      <div className="flex flex-wrap gap-x-8 gap-y-2 border-y border-border py-4 text-sm"><span><b className="text-xl tabular-nums">{scheduled}</b> piezas programadas</span><span><b className="text-xl tabular-nums text-warning">{behind}</b> calendarios atrasados</span><span><b className="text-xl tabular-nums">{goals.length}</b> con meta definida</span></div>
+      {clientsLoading || overviewLoading ? <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div> : clients.length === 0 ? <p className="py-12 text-center text-muted-foreground">Todavía no hay clientes con hojas de producción.</p> : <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        {clients.map((client) => <article key={client.id} className="agency-card flex min-w-0 flex-col overflow-hidden">
+          <Button variant="ghost" className="h-auto w-full justify-start gap-4 rounded-none border-b border-border bg-muted/30 p-5 text-left" onClick={() => setClientId(client.id)} aria-label={`Abrir calendario de ${client.name}`}>
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-background">{client.logo_url ? <img src={client.logo_url} alt="" className="h-full w-full object-contain p-2" /> : <Building2 className="h-7 w-7 text-muted-foreground" />}</div>
+            <div className="min-w-0 flex-1"><h2 className="whitespace-normal break-words text-lg font-semibold leading-tight">{client.name}</h2><span className="mt-1 flex items-center gap-1 text-xs font-normal text-muted-foreground"><CalendarDays className="h-3 w-3" />Calendario de publicación</span></div><ArrowUpRight className="h-4 w-4 shrink-0 text-primary" />
+          </Button>
+          <div className="flex-1 p-5"><CalendarProgress items={overview.filter((i) => i.client_id === client.id)} month={month} target={goals.find((g) => g.client_id === client.id)?.target ?? null} onSave={(target) => saveGoal(client.id, target)} /></div>
+          <Button variant="ghost" className="mx-5 mb-4 justify-between text-primary" onClick={() => setClientId(client.id)}>Ver calendario<ArrowUpRight className="h-4 w-4" /></Button>
+        </article>)}
+      </div>}
+    </div></DashboardLayout>;
+  }
+
   return (
     <DashboardLayout>
     <div className="mx-auto max-w-7xl space-y-5">
+      <Button variant="ghost" size="sm" onClick={() => { setClientId(null); setOpenId(null); setPickDayFor(null); qc.invalidateQueries({ queryKey: ['calendar-overview'] }); }}><ArrowLeft className="mr-2 h-4 w-4" />Todos los clientes</Button>
       <div className="flex flex-wrap items-center gap-3">
         <div className="mr-auto">
-          <h1 className="text-2xl font-semibold">Calendario de publicación</h1>
+          <div className="flex items-center gap-3">{activeClient?.logo_url && <img src={activeClient.logo_url} alt="" className="h-12 w-12 rounded-lg border border-border bg-card object-contain p-1" />}<h1 className="text-2xl font-semibold">{activeClient?.name ?? 'Calendario de publicación'}</h1></div>
           <p className="text-sm text-muted-foreground">
             {counts.total} piezas este mes · {counts.ok} aprobadas · {counts.ch} con cambios
           </p>
@@ -128,6 +199,8 @@ export default function Calendario() {
         <Button onClick={share} disabled={!clientId}><Share2 className="mr-2 h-4 w-4" />Compartir</Button>
         <Button variant="ghost" size="sm" onClick={regenerate} disabled={!clientId}>Nuevo enlace</Button>
       </div>
+
+      <div className="border-y border-border py-4"><CalendarProgress items={items} month={month} target={goals.find((g) => g.client_id === clientId)?.target ?? null} onSave={(target) => saveGoal(clientId, target)} /></div>
 
       <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="agency-card h-fit space-y-3 p-3 lg:sticky lg:top-0">
@@ -182,6 +255,7 @@ export default function Calendario() {
           onDelete={async () => {
             if (!confirm('¿Quitar esta pieza del calendario?')) return;
             await supabase.from('content_calendar_items').delete().eq('id', open.id);
+            qc.invalidateQueries({ queryKey: ['calendar-overview'] });
             setOpenId(null); qc.invalidateQueries({ queryKey: itemsKey });
           }}
           onComment={async (body) => {

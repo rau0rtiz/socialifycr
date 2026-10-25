@@ -21,7 +21,7 @@ export function CalendarProgress({ items, month, target, onSave }: {
     </div>
     {editing ? <form className="flex items-center gap-2" onSubmit={async (e) => {
       e.preventDefault(); if (!validCalendarTarget(Number(value))) return;
-      setSaving(true); try { await onSave(Number(value)); setEditing(false); } finally { setSaving(false); }
+      setSaving(true); try { await onSave(Number(value)); setEditing(false); } catch { /* The parent displays the save error. */ } finally { setSaving(false); }
     }}>
       <Input aria-label="Piezas por mes" type="number" min={1} max={10000} step={1} value={value} onChange={(e) => setValue(e.target.value)} className="h-9 w-24" autoFocus />
       <Button type="submit" size="icon" variant="outline" className="h-9 w-9" aria-label="Guardar meta" disabled={saving || !validCalendarTarget(Number(value))}><Check className="h-4 w-4" /></Button>
@@ -31,7 +31,7 @@ export function CalendarProgress({ items, month, target, onSave }: {
       <span className="text-xs text-muted-foreground">programadas</span>
       <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" title="Editar meta mensual" aria-label="Editar meta mensual" onClick={() => setEditing(true)}><Pencil className="h-3.5 w-3.5" /></Button>
     </div>}
-    <div className="grid h-2 grid-cols-20 gap-0.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Cobertura mensual" aria-valuenow={p.percent} aria-valuemin={0} aria-valuemax={100}>
+    <div className="grid h-2 grid-cols-[repeat(20,minmax(0,1fr))] gap-0.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Cobertura mensual" aria-valuenow={p.percent} aria-valuemin={0} aria-valuemax={100}>
       {Array.from({ length: 20 }, (_, n) => <div key={n} className={cn('h-2', n < Math.ceil(p.percent / 5) ? 'bg-primary' : 'bg-muted')} />)}
     </div>
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
