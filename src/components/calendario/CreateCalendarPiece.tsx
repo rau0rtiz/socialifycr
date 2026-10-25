@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DELIVERY_TYPES } from '@/lib/calendar-targets';
+import { PIECE_TYPES } from '@/lib/calendar-targets';
 import { toast } from 'sonner';
 
 export function CreateCalendarPiece({ clientId, spaceId, spaceName, defaultListId, onClose, onCreated }: { clientId: string; spaceId: string; spaceName: string; defaultListId: string | null; onClose: () => void; onCreated: () => void }) {

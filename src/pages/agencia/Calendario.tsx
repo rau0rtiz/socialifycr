@@ -15,7 +15,7 @@ import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/c
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { monthLabel, STATUS_LABEL } from '@/lib/calendar-media';
 import { DeliveryTargets } from '@/components/calendario/DeliveryTargets';
-import { deliveryProgress, DELIVERY_TYPES, type TargetRow } from '@/lib/calendar-targets';
+import { deliveryProgress, PIECE_TYPES, type TargetRow } from '@/lib/calendar-targets';
 import { calendarToday } from '@/lib/calendar-progress';
 import { isLegacyToken, prettyCalendarToken } from '@/lib/calendar-share';
 import { CalendarHistory } from '@/components/calendario/CalendarHistory';
