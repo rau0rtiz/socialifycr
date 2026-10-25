@@ -1,6 +1,6 @@
 /** Video links (Google Drive / Milanote / direct files) are never uploaded; we only embed or link. */
 export type VideoEmbed =
-  | { kind: 'iframe'; src: string; provider: 'drive' }
+  | { kind: 'iframe'; src: string; provider: 'drive'; direct: string }
   | { kind: 'video'; src: string; provider: 'archivo' | 'milanote' }
   | { kind: 'link'; src: string; provider: 'milanote' | 'otro' };
 
@@ -15,7 +15,9 @@ export const videoEmbed = (raw?: string | null): VideoEmbed | null => {
   const url = raw?.trim();
   if (!url || !/^https?:\/\//i.test(url)) return null;
   const id = driveFileId(url);
-  if (id) return { kind: 'iframe', src: `https://drive.google.com/file/d/${id}/preview`, provider: 'drive' };
+    // `direct` lets the browser play the file itself (controls under the video);
+    // `src` is Drive's own embed, whose toolbar sits on top, kept only as fallback.
+    if (id) return { kind: 'iframe', src: `https://drive.google.com/file/d/${id}/preview`, direct: `https://drive.google.com/uc?export=download&id=${id}`, provider: 'drive' };
   const milanote = /milanote/i.test(url);
   if (isVideoFile(url)) return { kind: 'video', src: url, provider: milanote ? 'milanote' : 'archivo' };
   return { kind: 'link', src: url, provider: milanote ? 'milanote' : 'otro' };

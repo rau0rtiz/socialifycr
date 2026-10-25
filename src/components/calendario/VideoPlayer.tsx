@@ -4,17 +4,45 @@ import { Button } from '@/components/ui/button';
 import { videoEmbed } from '@/lib/calendar-media';
 import { CalendarThumb, type CalendarItem } from './CalendarMonth';
 
-/** Socialify-branded frame around any playable media. */
+/** Socialify-branded frame around any playable media. The label strip sits under the media
+ *  so nothing but the video itself touches the top edge. */
 const PlayerFrame = ({ children, label }: { children: ReactNode; label?: string }) => (
   <div className="socialify-player overflow-hidden rounded-xl">
+    <div className="sp-body">{children}</div>
     <div className="sp-bar">
       <span className="sp-dot" />
       <span className="sp-brand">Socialify</span>
       {label && <span className="sp-tag">{label}</span>}
     </div>
-    <div className="sp-body">{children}</div>
   </div>
 );
+
+/** Drive's own embed puts its toolbar (download, fullscreen, …) on top of the video, so we
+ *  ask the browser to play the file directly — that keeps every control under the picture —
+ *  and only fall back to Drive's embed when the file cannot be streamed that way. */
+const DriveVideo = ({ direct, preview, provider }: { direct: string; preview: string; provider: string }) => {
+  const [directFailed, setDirectFailed] = useState(false);
+  if (directFailed)
+    return (
+      <PlayerFrame label={provider}>
+        <div className="aspect-[9/16] max-h-[60dvh] w-full sm:aspect-video">
+          <iframe src={preview} className="h-full w-full" allow="autoplay; fullscreen" allowFullScreen title="Video de Drive" />
+        </div>
+      </PlayerFrame>
+    );
+  return (
+    <PlayerFrame label={provider}>
+      <video
+        src={direct}
+        controls
+        playsInline
+        preload="metadata"
+        className="block max-h-[60dvh] w-full bg-black"
+        onError={() => setDirectFailed(true)}
+      />
+    </PlayerFrame>
+  );
+};
 
 /** Plays Drive/direct video inline; Milanote boards and other links open in a new tab. */
 export const VideoPlayer = ({ item }: { item: CalendarItem }) => {
@@ -27,14 +55,7 @@ export const VideoPlayer = ({ item }: { item: CalendarItem }) => {
   if (item.thumbnail_url && !['reel', 'tiktok', 'short', 'story'].includes(item.content_type ?? '')) {
     return <CalendarThumb item={item} className="mx-auto block h-auto max-h-[50dvh] w-auto max-w-full rounded-lg" />;
   }
-  if (e?.kind === 'iframe')
-    return (
-      <PlayerFrame label={e.provider}>
-        <div className="aspect-[9/16] max-h-[60dvh] w-full sm:aspect-video">
-          <iframe src={e.src} className="h-full w-full" allow="autoplay; fullscreen" allowFullScreen title={item.title} />
-        </div>
-      </PlayerFrame>
-    );
+  if (e?.kind === 'iframe') return <DriveVideo direct={e.direct} preview={e.src} provider={e.provider} />;
   if (e?.kind === 'video')
     return (
       <div className="mx-auto" style={{ width: `min(100%, calc(48dvh * ${w / h}))` }}>
