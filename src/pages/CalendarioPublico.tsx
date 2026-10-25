@@ -156,8 +156,14 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
         </DialogHeader>
         <div className="p-4 sm:p-5">
           <div className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2">
-            <div className="min-w-0">
+            <div className="min-w-0 space-y-4">
               <VideoPlayer item={item} />
+              {hasCoverReview && (
+                <figure className="space-y-1.5">
+                  <figcaption className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Portada del reel</figcaption>
+                  <img src={item.thumbnail_url!} alt="Portada del reel" className="w-full max-w-[240px] rounded-lg border border-border object-cover" />
+                </figure>
+              )}
             </div>
             <div className="min-w-0 space-y-4">
             <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -185,6 +191,30 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                 )}
               </div>
             </div>
+            {hasCoverReview && (
+              <div className="space-y-3 border-b border-border pb-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">Portada</span>
+                  <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
+                </div>
+                {coverMode === 'changes' && <Textarea rows={3} autoFocus value={coverBody} placeholder="¿Qué te gustaría cambiar de la portada?" onChange={(e) => setCoverBody(e.target.value)} />}
+                <div className="grid grid-cols-2 gap-2">
+                  {coverMode === 'changes' ? (
+                    <>
+                      <Button variant="outline" onClick={() => setCoverMode('idle')} disabled={busy}>Cancelar</Button>
+                      <Button onClick={() => act('request_cover_changes')} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enviar cambios'}</Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" onClick={() => setCoverMode('changes')} disabled={busy}><PencilLine className="mr-2 h-4 w-4" />Cambios en portada</Button>
+                      <Button variant={item.cover_status === 'aprobada' ? 'outline' : 'default'} onClick={() => act('approve_cover')} disabled={busy}>
+                        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="mr-2 h-4 w-4" />{item.cover_status === 'aprobada' ? 'Portada aprobada' : 'Aprobar portada'}</>}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
             <div ref={historyRef} className="border-b border-border pb-4"><CalendarHistory comments={comments} /></div>
             {item.explanation && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{item.explanation}</p>}
             {item.copy && (
