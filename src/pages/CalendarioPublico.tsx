@@ -74,10 +74,10 @@ export default function CalendarioPublico() {
           <div className="flex flex-col items-center gap-1 text-center">
             <img src={socialifyLogo.url} alt="Socialify" className="h-5 w-auto sm:h-6" />
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.35em] text-primary">Calendario de publicación</p>
-            <h1 className="agency-gradient-text mt-1 text-2xl font-bold tracking-tight sm:text-3xl">{data.client?.name}</h1>
+            {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="mt-4 h-20 w-auto max-w-[62vw] rounded-2xl object-contain sm:h-24 sm:max-w-sm" />}
+            <h1 className="agency-gradient-text mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{data.client?.name}</h1>
           </div>
           <div className="mt-4 flex items-center gap-3">
-            {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="h-9 w-9 shrink-0 rounded-lg object-contain" />}
             <div className="mr-auto min-w-0 text-xs text-muted-foreground">{data.items.length} piezas · {pending} por revisar</div>
             <Button variant="outline" size="icon" aria-label="Actualizar calendario" onClick={refresh} disabled={isFetching} className="h-11 w-11 shrink-0 md:hidden">
               <RefreshCw className={isFetching ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
