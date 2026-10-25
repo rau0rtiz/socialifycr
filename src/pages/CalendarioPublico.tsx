@@ -154,9 +154,18 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="shared-calendar shared-calendar-dialog max-h-[92dvh] w-[calc(100%-24px)] max-w-5xl gap-0 overflow-y-auto rounded-lg border-border bg-background p-0 text-foreground">
-        <DialogHeader className="sticky top-0 z-10 border-b border-border bg-background px-4 py-4 text-left sm:px-6">
-          <div className="mb-2 text-[10px] font-semibold uppercase text-primary">Socialify · Revisión de contenido</div>
-          <DialogTitle className="pr-6 text-base sm:text-lg">{item.title}</DialogTitle>
+        <DialogHeader className="sticky top-0 z-10 border-b border-border bg-background px-4 py-3 text-left sm:px-6 sm:py-4">
+          <div className="flex items-start gap-3">
+            <div className="min-w-0">
+              <div className="mb-2 text-[10px] font-semibold uppercase text-primary">Socialify · Revisión de contenido</div>
+              <DialogTitle className="text-base sm:text-lg">{item.title}</DialogTitle>
+            </div>
+            <DialogClose asChild>
+              <Button variant="outline" size="icon" aria-label="Cerrar" className="ml-auto h-11 w-11 shrink-0 rounded-full border-border bg-secondary text-foreground hover:bg-accent sm:h-9 sm:w-9">
+                <X className="h-5 w-5" />
+              </Button>
+            </DialogClose>
+          </div>
         </DialogHeader>
         <div className="p-4 sm:p-6">
           <div className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-8">
