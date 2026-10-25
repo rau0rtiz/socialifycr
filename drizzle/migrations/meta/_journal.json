@@ -57,6 +57,13 @@
       "when": 1792902314553,
       "tag": "0007_deprecate_report_builds",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792903497355,
+      "tag": "0008_calendar_clickup_approved",
+      "breakpoints": true
     }
   ]
 }

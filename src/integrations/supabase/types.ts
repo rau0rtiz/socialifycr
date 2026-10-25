@@ -2648,6 +2648,7 @@ export type Database = {
       }
       content_calendar_items: {
         Row: {
+          clickup_approved: boolean
           clickup_list_id: string | null
           clickup_space_id: string | null
           clickup_sync_error: string | null
@@ -2673,6 +2674,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          clickup_approved?: boolean
           clickup_list_id?: string | null
           clickup_space_id?: string | null
           clickup_sync_error?: string | null
@@ -2698,6 +2700,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          clickup_approved?: boolean
           clickup_list_id?: string | null
           clickup_space_id?: string | null
           clickup_sync_error?: string | null
