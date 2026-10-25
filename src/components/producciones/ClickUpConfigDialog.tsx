@@ -124,17 +124,19 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
       const listName = lists.data?.find(l => l.id === listId)?.name || null;
       const parsedEmails = emails.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 
-      const { error } = await supabase.from('client_clickup_config').upsert({
+      const { data, error } = await supabase.functions.invoke('calendar-clickup', { body: {
+        action: 'configure',
         client_id: clientId,
         workspace_id: workspaceId,
-        workspace_name: workspaceName,
         space_id: spaceId,
-        space_name: spaceName,
         list_id: listId,
-        list_name: listName,
         default_assignee_emails: parsedEmails,
-      });
-      if (error) throw error;
+      } });
+      if (error) {
+        const details = await (error as any).context?.json().catch(() => null);
+        throw new Error(details?.error || error.message);
+      }
+      if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['clickup-config', clientId] });
@@ -146,7 +148,7 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link2 className="h-4 w-4" /> ClickUp — {clientName}
@@ -183,7 +185,7 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
             </Select>
           </Field>
 
-          <Field label="List" loading={lists.isFetching} disabled={!spaceId}>
+          <Field label="Lista predeterminada" loading={lists.isFetching} disabled={!spaceId}>
             <Select value={listId} onValueChange={setListId} disabled={!spaceId}>
               <SelectTrigger><SelectValue placeholder="Selecciona list" /></SelectTrigger>
               <SelectContent>
@@ -205,6 +207,8 @@ export function ClickUpConfigDialog({ clientId, clientName, open, onClose }: Pro
             </p>
           </div>
         </div>
+
+        {[workspaces.error, spaces.error, folders.error, lists.error].filter(Boolean).map((e, i) => <p key={i} className="text-sm text-destructive">{(e as Error).message}</p>)}
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>

@@ -20,6 +20,8 @@ import { calendarToday } from '@/lib/calendar-progress';
 import { isLegacyToken, prettyCalendarToken } from '@/lib/calendar-share';
 import { CalendarHistory } from '@/components/calendario/CalendarHistory';
 import type { CalendarComment as Comment } from '@/lib/calendar-history';
+import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
+import { CreateCalendarPiece } from '@/components/calendario/CreateCalendarPiece';
 
 
 type Item = CalendarItem & { client_id: string };
@@ -33,6 +35,17 @@ export default function Calendario() {
   const [ym, setYm] = useState(() => ({ y: nowCR().getUTCFullYear(), m: nowCR().getUTCMonth() }));
   const [openId, setOpenId] = useState<string | null>(null);
   const [pickDayFor, setPickDayFor] = useState<string | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const { data: clickupConfig } = useQuery({
+    queryKey: ['clickup-config', clientId], enabled: !!clientId, staleTime: 5 * 60_000, refetchOnMount: false,
+    queryFn: async () => {
+      if (!clientId) return null;
+      const { data, error } = await supabase.from('client_clickup_config').select('*').eq('client_id', clientId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ['calendar-clients'],
@@ -242,7 +255,12 @@ export default function Calendario() {
           </SelectContent>
         </Select>
         <Button onClick={share} disabled={!clientId}><Share2 className="mr-2 h-4 w-4" />Compartir</Button>
+        <Button variant="outline" onClick={() => setConfigOpen(true)}>ClickUp · {clickupConfig?.space_name ?? 'Configurar espacio'}</Button>
+        <Button onClick={() => clickupConfig?.space_id ? setCreateOpen(true) : setConfigOpen(true)}>Nueva pieza</Button>
       </div>
+
+      {configOpen && <ClickUpConfigDialog key={clientId} clientId={clientId} clientName={activeClient?.name ?? 'Cliente'} open onClose={() => setConfigOpen(false)} />}
+      {createOpen && clickupConfig?.space_id && <CreateCalendarPiece key={clientId} clientId={clientId} spaceId={clickupConfig.space_id} spaceName={clickupConfig.space_name ?? 'Espacio del cliente'} defaultListId={clickupConfig.list_id} onClose={() => setCreateOpen(false)} onCreated={() => { qc.invalidateQueries({ queryKey: itemsKey }); qc.invalidateQueries({ queryKey: ['calendar-overview'] }); }} />}
 
       <div className="border-y border-border py-4"><DeliveryTargets items={items} month={month} targets={targets.filter((t) => t.client_id === clientId)} onSave={(rows) => saveTargets(clientId, rows)} /></div>
 
