@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Inbox, Loader2, Send, Share2, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Inbox, Loader2, MessageCircle, Send, Share2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +17,8 @@ import { monthLabel, STATUS_LABEL } from '@/lib/calendar-media';
 import { DeliveryTargets } from '@/components/calendario/DeliveryTargets';
 import { deliveryProgress, DELIVERY_TYPES, type TargetRow } from '@/lib/calendar-targets';
 import { calendarToday } from '@/lib/calendar-progress';
+import { isLegacyToken, prettyCalendarToken } from '@/lib/calendar-share';
+
 
 interface Comment { id: string; item_id: string; author_name: string; author_type: string; kind: string; body: string; created_at: string }
 type Item = CalendarItem & { client_id: string };
