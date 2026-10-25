@@ -132,15 +132,20 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
   // Legacy production exports may have no configured space. Only inspect their already-linked tasks.
   if (!cfg.space_id) {
     const rows = [...byTask.values()];
-    for (let offset = 0; offset < rows.length; offset += 3) {
-      await Promise.all(rows.slice(offset, offset + 3).map(async (row) => {
+    for (const row of rows) {
+      // Stay below ClickUp's shared request limit. Missing legacy tasks must not block siblings.
+      await new Promise((resolve) => setTimeout(resolve, 750));
+      try {
         const task = await cuFetch(`/task/${row.clickup_task_id}`);
         const { error } = await admin.from('content_calendar_items')
           .update({ clickup_approved: isClickUpApproved(task.status) })
           .eq('id', row.id).eq('client_id', cfg.client_id);
         if (error) throw error;
         updated += 1;
-      }));
+      } catch (e) {
+        if (String((e as Error).message).includes('→ 404:')) { skipped += 1; continue; }
+        throw e;
+      }
     }
     return { client_id: cfg.client_id, created, updated, skipped };
   }
