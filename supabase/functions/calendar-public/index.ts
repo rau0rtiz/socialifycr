@@ -87,7 +87,8 @@ Deno.serve(async (req) => {
     }
 
     const { data: item } = await admin.from('content_calendar_items')
-      .select('id, client_id, title, clickup_task_id').eq('id', b.item_id).maybeSingle();
+      .select('id, client_id, title, clickup_task_id, content_type, status, cover_status, thumbnail_url')
+      .eq('id', b.item_id).maybeSingle();
     if (!item || item.client_id !== share.client_id) return json({ error: 'Pieza no encontrada' }, 404);
     if ((b.action === 'request_changes' || b.action === 'request_cover_changes') && !b.body)
       return json({ error: 'Escribí qué cambios necesitás' }, 400);
