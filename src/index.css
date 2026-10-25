@@ -765,4 +765,5 @@ html.agency-theme .agency-neon,
 .shared-calendar-dialog .sp-body video, .shared-calendar-dialog .sp-body iframe { max-height: 48dvh; }
 @media (max-width: 767px) {
   .shared-calendar-dialog { max-height: calc(100dvh - 24px); }
+  .shared-calendar-dialog img[alt="Portada del reel"] { max-height: 40dvh; }
 }
