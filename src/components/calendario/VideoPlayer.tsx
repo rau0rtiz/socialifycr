@@ -23,6 +23,10 @@ export const VideoPlayer = ({ item }: { item: CalendarItem }) => {
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
   const w = dims?.w || 9;
   const h = dims?.h || 16;
+  // Static artwork uses its intrinsic dimensions, without a video-shaped frame.
+  if (item.thumbnail_url && !['reel', 'tiktok', 'short', 'story'].includes(item.content_type ?? '')) {
+    return <CalendarThumb item={item} className="mx-auto block h-auto max-h-[50dvh] w-auto max-w-full rounded-lg" />;
+  }
   if (e?.kind === 'iframe')
     return (
       <PlayerFrame label={e.provider}>
@@ -52,7 +56,7 @@ export const VideoPlayer = ({ item }: { item: CalendarItem }) => {
   return (
     <div className="space-y-2">
       <PlayerFrame>
-        <CalendarThumb item={item} className="max-h-[50dvh] w-full" />
+        <CalendarThumb item={item} className="mx-auto block h-auto max-h-[50dvh] w-auto max-w-full" />
       </PlayerFrame>
       {e?.kind === 'link' && (
         <Button asChild variant="outline" className="w-full">

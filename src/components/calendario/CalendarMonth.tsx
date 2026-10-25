@@ -39,8 +39,15 @@ export const StatusPill = ({ status, labels }: { status: string; labels?: Record
 
 const Thumb = ({ item, className }: { item: CalendarItem; className?: string }) => {
   const src = itemThumb(item.thumbnail_url, item.video_url);
+  const isImagePiece = !['reel', 'tiktok', 'short', 'story'].includes(item.content_type ?? '');
   return src ? (
-    <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" className={cn('object-cover', className)} />
+    <img
+      src={src}
+      alt={item.title}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      className={cn('block object-cover', className, isImagePiece && 'object-contain', isImagePiece && className?.includes('w-full') && 'aspect-auto h-auto')}
+    />
   ) : (
     <div className={cn('flex items-center justify-center bg-muted text-muted-foreground', className)}>
       <Film className="h-4 w-4" />
