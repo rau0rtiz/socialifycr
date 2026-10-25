@@ -159,7 +159,7 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
             </div>
             <div className="space-y-3 border-b border-border pb-4">
               <label htmlFor="calendar-review-name" className="block text-xs font-medium text-muted-foreground">Revisado por</label>
-              <Input ref={nameRef} id="calendar-review-name" maxLength={120} value={name} placeholder="Tu nombre" aria-invalid={!!validation} onChange={(e) => { setName(e.target.value); setValidation(''); }} />
+              <Input ref={nameRef} id="calendar-review-name" maxLength={80} value={name} placeholder="Tu nombre" aria-invalid={!!validation} onChange={(e) => { setName(e.target.value); setValidation(''); }} />
               {validation && <p role="alert" className="text-sm text-destructive">{validation}</p>}
               {mode === 'changes' && <Textarea rows={4} autoFocus value={body} placeholder="¿Qué te gustaría cambiar?" onChange={(e) => setBody(e.target.value)} />}
               <div className="grid grid-cols-2 gap-2">
