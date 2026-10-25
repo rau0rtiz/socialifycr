@@ -1,0 +1,1 @@
+COMMENT ON TABLE public.report_builds IS 'DEPRECATED: la sección Reportes fue eliminada de la app; esta tabla ya no se usa y se puede borrar cuando se autorice un cambio destructivo.';
