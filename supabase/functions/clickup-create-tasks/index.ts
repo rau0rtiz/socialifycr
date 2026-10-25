@@ -1,7 +1,7 @@
 // ClickUp create-tasks: crea una task por pieza grabada (production_sheet_shots con done=true).
 // Si la pieza ya tiene clickup_task_id, hace PUT para actualizarla.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { calendarSyncFields } from '../_shared/calendar-clickup-rules.ts';
+import { calendarSyncFields, isClickUpApproved } from '../_shared/calendar-clickup-rules.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -102,7 +102,7 @@ function parseTaskTitle(name: string) {
 
 function mapClickUpStatus(status: unknown): string {
   const s = String((status as { status?: string })?.status || '').toLowerCase();
-  if (/aprob/.test(s)) return 'aprobado';
+  if (isClickUpApproved(status as { status?: string })) return 'aprobado';
   if (/cambio|correcc|editar|revisi/.test(s)) return 'cambios';
   return 'pendiente';
 }
@@ -110,37 +110,66 @@ function mapClickUpStatus(status: unknown): string {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: { client_id: string; space_id: string }) {
+async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: { client_id: string; space_id: string | null }) {
   // Every list in the client's space (foldered + folderless).
   const listIds = new Set<string>();
-  const folders = await cuFetch(`/space/${cfg.space_id}/folder?archived=false`);
-  for (const f of folders.folders || []) for (const l of f.lists || []) listIds.add(String(l.id));
-  const loose = await cuFetch(`/space/${cfg.space_id}/list?archived=false`);
-  for (const l of loose.lists || []) listIds.add(String(l.id));
+  if (cfg.space_id) {
+    const folders = await cuFetch(`/space/${cfg.space_id}/folder?archived=false`);
+    for (const f of folders.folders || []) for (const l of f.lists || []) listIds.add(String(l.id));
+    const loose = await cuFetch(`/space/${cfg.space_id}/list?archived=false`);
+    for (const l of loose.lists || []) listIds.add(String(l.id));
+  }
 
-  const { data: existing } = await admin
+  const { data: existing, error: existingError } = await admin
     .from('content_calendar_items')
     .select('id, clickup_task_id')
     .eq('client_id', cfg.client_id)
     .not('clickup_task_id', 'is', null);
+  if (existingError) throw existingError;
   const byTask = new Map((existing || []).map((r: { id: string; clickup_task_id: string }) => [String(r.clickup_task_id), r]));
 
   let created = 0, updated = 0, skipped = 0;
+  // Legacy production exports may have no configured space. Only inspect their already-linked tasks.
+  if (!cfg.space_id) {
+    const rows = [...byTask.values()];
+    for (const row of rows) {
+      // Stay below ClickUp's shared request limit. Missing legacy tasks must not block siblings.
+      await new Promise((resolve) => setTimeout(resolve, 750));
+      try {
+        const task = await cuFetch(`/task/${row.clickup_task_id}`);
+        const { error } = await admin.from('content_calendar_items')
+          .update({ clickup_approved: isClickUpApproved(task.status) })
+          .eq('id', row.id).eq('client_id', cfg.client_id);
+        if (error) throw error;
+        updated += 1;
+      } catch (e) {
+        if (String((e as Error).message).includes('→ 404:')) { skipped += 1; continue; }
+        throw e;
+      }
+    }
+    return { client_id: cfg.client_id, created, updated, skipped };
+  }
   for (const listId of listIds) {
     for (let page = 0; ; page += 1) {
-      const data = await cuFetch(`/list/${listId}/task?archived=false&subtasks=false&include_closed=false&page=${page}`);
+      const data = await cuFetch(`/list/${listId}/task?archived=false&subtasks=false&include_closed=true&page=${page}`);
       const tasks = data.tasks || [];
       if (!tasks.length) break;
       for (const t of tasks) {
         const parsed = parseTaskTitle(String(t.name || ''));
         if (!parsed) { skipped += 1; continue; }
         const row = byTask.get(String(t.id));
-        const fields = calendarSyncFields(t, parsed.title);
+        const approved = isClickUpApproved(t.status);
+        const fields = { ...calendarSyncFields(t, parsed.title), clickup_approved: approved };
         if (row) {
           // Delivery dates belong exclusively to the calendar, even when unset.
           const { error } = await admin.from('content_calendar_items').update(fields).eq('id', row.id).eq('client_id', cfg.client_id);
           if (error) { console.error('[sync] update fail', t.id, error.message); skipped += 1; } else updated += 1;
         } else {
+          // Approved tasks never enter the backlog; retain existing pieces and history above.
+          if (approved || ['closed', 'done'].includes(String(t.status?.type ?? '').toLowerCase())) {
+            skipped += 1;
+            continue;
+          }
           const { error } = await admin.from('content_calendar_items').insert({
             client_id: cfg.client_id,
             clickup_task_id: String(t.id),
@@ -166,8 +195,16 @@ async function syncCalendar(reqBody: { client_id?: string }) {
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   let q = admin.from('client_clickup_config').select('client_id, space_id').not('space_id', 'is', null);
   if (reqBody?.client_id) q = q.eq('client_id', reqBody.client_id);
-  const { data: configs, error } = await q;
+  const { data: configured, error } = await q;
   if (error) throw error;
+  let linkedQuery = admin.from('content_calendar_items').select('client_id').not('clickup_task_id', 'is', null);
+  if (reqBody?.client_id) linkedQuery = linkedQuery.eq('client_id', reqBody.client_id);
+  const { data: linked, error: linkedError } = await linkedQuery;
+  if (linkedError) throw linkedError;
+  const configMap = new Map<string, { client_id: string; space_id: string | null }>();
+  for (const cfg of configured || []) configMap.set(cfg.client_id, cfg);
+  for (const row of linked || []) if (!configMap.has(row.client_id)) configMap.set(row.client_id, { client_id: row.client_id, space_id: null });
+  const configs = [...configMap.values()];
   if (!configs?.length) {
     if (reqBody?.client_id) throw new Error('Este cliente no tiene un espacio de ClickUp configurado.');
     return json({ success: true, results: [] });

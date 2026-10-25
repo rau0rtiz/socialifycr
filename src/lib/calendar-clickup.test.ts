@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { listBelongsToSpace, calendarSyncFields, calendarTaskPayload } from '../../supabase/functions/_shared/calendar-clickup-rules';
+import { listBelongsToSpace, calendarSyncFields, calendarTaskPayload, isClickUpApproved, shouldShowCalendarPiece } from '../../supabase/functions/_shared/calendar-clickup-rules';
 
 describe('calendar ClickUp destination', () => {
+  it('excludes ClickUp-approved pieces only from unscheduled pieces', () => {
+    expect(isClickUpApproved({ status: 'APROBADO' })).toBe(true);
+    expect(isClickUpApproved({ status: 'aprobada' })).toBe(true);
+    expect(isClickUpApproved({ status: 'pre-aprobación' })).toBe(false);
+    expect(isClickUpApproved({ status: 'no aprobado' })).toBe(false);
+    expect(shouldShowCalendarPiece({ publish_date: null, clickup_approved: true })).toBe(false);
+    expect(shouldShowCalendarPiece({ publish_date: '2026-10-25', clickup_approved: true })).toBe(true);
+    expect(shouldShowCalendarPiece({ publish_date: null, clickup_approved: false })).toBe(true);
+  });
   it('rejects lists from another client space and missing space data', () => {
     expect(listBelongsToSpace({ space: { id: 'cliente-a' } }, 'cliente-a')).toBe(true);
     expect(listBelongsToSpace({ space: { id: 'cliente-b' } }, 'cliente-a')).toBe(false);

@@ -3,6 +3,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
+import { shouldShowCalendarPiece } from '../_shared/calendar-clickup-rules.ts';
 
 const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 const CLICKUP_TOKEN = Deno.env.get('CLICKUP_API_TOKEN');
@@ -75,12 +76,14 @@ Deno.serve(async (req) => {
     if (!share) return json({ error: 'Enlace inválido o vencido' }, 404);
 
     if (b.action === 'get') {
-      const [{ data: client }, { data: items }] = await Promise.all([
+      const [{ data: client }, { data: allItems, error: itemsError }] = await Promise.all([
         admin.from('clients').select('name, logo_url').eq('id', share.client_id).maybeSingle(),
         admin.from('content_calendar_items')
-          .select('id, title, copy, explanation, platform, content_type, thumbnail_url, video_url, publish_date, status, cover_status, sort')
+          .select('id, title, copy, explanation, platform, content_type, thumbnail_url, video_url, publish_date, status, cover_status, sort, clickup_approved')
           .eq('client_id', share.client_id).order('publish_date', { nullsFirst: false }).order('sort'),
       ]);
+      if (itemsError) throw itemsError;
+      const items = (allItems || []).filter(shouldShowCalendarPiece);
       const ids = (items || []).map((i) => i.id);
       const { data: comments } = ids.length
         ? await admin.from('content_calendar_comments').select('id, item_id, author_name, author_type, kind, scope, body, created_at')

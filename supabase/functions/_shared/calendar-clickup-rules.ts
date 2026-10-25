@@ -6,6 +6,15 @@ export function publicationDueDate(date: string) {
   return Date.parse(`${date}T12:00:00-06:00`);
 }
 
+export function isClickUpApproved(status: { status?: string } | null | undefined) {
+  const name = (status?.status ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return /^(aprobado|aprobada|approved)$/.test(name);
+}
+
+export function shouldShowCalendarPiece(item: { publish_date?: string | null; clickup_approved?: boolean }) {
+  return Boolean(item.publish_date) || !item.clickup_approved;
+}
+
 // Editing deadlines in ClickUp never determine calendar delivery dates.
 export function calendarSyncFields(task: { url?: string | null; due_date?: unknown }, title: string) {
   return { title, clickup_url: task.url || null };

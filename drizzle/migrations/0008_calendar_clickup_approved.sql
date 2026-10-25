@@ -1,0 +1,2 @@
+ALTER TABLE public.content_calendar_items ADD COLUMN clickup_approved boolean NOT NULL DEFAULT false;
+COMMENT ON COLUMN public.content_calendar_items.clickup_approved IS 'Last observed approval in ClickUp; excludes unscheduled pieces without altering calendar review status or history.';
