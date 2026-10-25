@@ -110,36 +110,20 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[92dvh] max-w-4xl overflow-y-auto">
-        <DialogHeader><DialogTitle className="pr-6">{item.title}</DialogTitle></DialogHeader>
-        <div className="grid gap-5 md:grid-cols-2">
-          <VideoPlayer item={item} />
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2 text-sm">
+      <DialogContent className="flex max-h-[92dvh] max-w-4xl flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="shrink-0 border-b border-border px-4 py-3 sm:px-5">
+          <DialogTitle className="pr-6 text-base sm:text-lg">{item.title}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5" style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex flex-col gap-4 md:grid md:grid-cols-2 md:items-start md:gap-5">
+            <div className="order-1 md:col-start-1 md:row-start-1">
+              <VideoPlayer item={item} />
+            </div>
+            <div className="order-2 flex flex-wrap items-center gap-2 text-sm md:col-start-2">
               <StatusPill status={item.status} />
               {item.publish_date && <span className="text-muted-foreground first-letter:uppercase">{dayLabel(item.publish_date)}</span>}
             </div>
-            {item.explanation && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{item.explanation}</p>}
-            {item.copy && (
-              <div className="rounded-xl bg-muted p-3">
-                <div className="mb-1 flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground">
-                  Copy
-                  <button onClick={() => { navigator.clipboard.writeText(item.copy!); toast.success('Copiado'); }} aria-label="Copiar"><Copy className="h-3.5 w-3.5" /></button>
-                </div>
-                <p className="whitespace-pre-wrap text-sm">{item.copy}</p>
-              </div>
-            )}
-            {comments.length > 0 && (
-              <div className="space-y-2">
-                {comments.map((c) => (
-                  <div key={c.id} className={c.author_type === 'cliente' ? 'rounded-lg bg-primary/10 p-2 text-sm' : 'rounded-lg bg-muted p-2 text-sm'}>
-                    <div className="text-[11px] text-muted-foreground"><b>{c.author_name}</b> · {c.kind === 'cambio' ? 'pidió cambios' : c.kind === 'aprobacion' ? 'aprobó' : 'nota'}</div>
-                    <div className="whitespace-pre-wrap">{c.body}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="space-y-2 border-t border-border pt-3">
+            <div className="order-3 space-y-2 rounded-xl border border-border bg-card p-3 md:col-start-2">
               <Input value={name} placeholder="Tu nombre" onChange={(e) => setName(e.target.value)} />
               {mode === 'changes' && <Textarea rows={4} autoFocus value={body} placeholder="¿Qué te gustaría cambiar?" onChange={(e) => setBody(e.target.value)} />}
               <div className="grid grid-cols-2 gap-2">
@@ -158,6 +142,26 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                 )}
               </div>
             </div>
+            {item.explanation && <p className="order-4 whitespace-pre-wrap text-sm text-muted-foreground md:col-start-2">{item.explanation}</p>}
+            {item.copy && (
+              <div className="order-5 rounded-xl bg-muted p-3 md:col-start-2">
+                <div className="mb-1 flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground">
+                  Copy
+                  <button onClick={() => { navigator.clipboard.writeText(item.copy!); toast.success('Copiado'); }} aria-label="Copiar"><Copy className="h-3.5 w-3.5" /></button>
+                </div>
+                <p className="whitespace-pre-wrap text-sm">{item.copy}</p>
+              </div>
+            )}
+            {comments.length > 0 && (
+              <div className="order-6 space-y-2 md:col-start-2">
+                {comments.map((c) => (
+                  <div key={c.id} className={c.author_type === 'cliente' ? 'rounded-lg bg-primary/10 p-2 text-sm' : 'rounded-lg bg-muted p-2 text-sm'}>
+                    <div className="text-[11px] text-muted-foreground"><b>{c.author_name}</b> · {c.kind === 'cambio' ? 'pidió cambios' : c.kind === 'aprobacion' ? 'aprobó' : 'nota'}</div>
+                    <div className="whitespace-pre-wrap">{c.body}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
