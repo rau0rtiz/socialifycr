@@ -185,7 +185,7 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                 ) : (
                   <>
                     <Button variant="outline" onClick={() => setMode('changes')} disabled={busy}><PencilLine className="mr-2 h-4 w-4" />Pedir cambios</Button>
-                    <Button onClick={() => item.status === 'aprobado' ? historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) : act('approve')} disabled={busy}>
+                    <Button variant={item.status === 'aprobado' ? 'secondary' : 'default'} className={item.status === 'aprobado' ? 'text-muted-foreground' : ''} onClick={() => item.status === 'aprobado' ? historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) : act('approve')} disabled={busy}>
                       {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="mr-2 h-4 w-4" />{item.status === 'aprobado' ? 'Aprobada' : 'Aprobar'}</>}
                     </Button>
                   </>
@@ -208,7 +208,7 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                   ) : (
                     <>
                       <Button variant="outline" onClick={() => setCoverMode('changes')} disabled={busy}><PencilLine className="mr-2 h-4 w-4" />Cambios en portada</Button>
-                      <Button variant={item.cover_status === 'aprobada' ? 'outline' : 'default'} onClick={() => act('approve_cover')} disabled={busy}>
+                      <Button variant={item.cover_status === 'aprobada' ? 'secondary' : 'default'} className={item.cover_status === 'aprobada' ? 'text-muted-foreground' : ''} onClick={() => act('approve_cover')} disabled={busy}>
                         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="mr-2 h-4 w-4" />{item.cover_status === 'aprobada' ? 'Portada aprobada' : 'Aprobar portada'}</>}
                       </Button>
                     </>
