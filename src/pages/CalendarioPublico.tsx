@@ -12,6 +12,7 @@ import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/c
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { dayLabel, monthLabel, COVER_STATUS_LABEL } from '@/lib/calendar-media';
 import { CalendarHistory } from '@/components/calendario/CalendarHistory';
+import { CalendarInstall } from '@/components/calendario/CalendarInstall';
 import type { CalendarComment as Comment } from '@/lib/calendar-history';
 
 interface Payload { client: { name: string; logo_url: string | null } | null; items: CalendarItem[]; comments: Comment[] }
@@ -85,6 +86,7 @@ export default function CalendarioPublico() {
             <Button size="sm" variant={view === 'pieces' ? 'default' : 'ghost'} onClick={() => setView('pieces')}><LayoutGrid className="mr-2 h-4 w-4" />Piezas</Button>
             <Button size="sm" variant={view === 'calendar' ? 'default' : 'ghost'} onClick={() => setView('calendar')}><CalendarDays className="mr-2 h-4 w-4" />Calendario</Button>
           </div>
+          <CalendarInstall token={token} />
         </div>
         {view === 'calendar' && ym && <CalendarMonth mobileMonthGrid year={ym.y} month={ym.m} onMonthChange={(y, m) => setYm({ y, m })} items={data.items} onOpen={(i) => setOpenId(i.id)} />}
         {(view === 'pieces' || unscheduled.length > 0) && (

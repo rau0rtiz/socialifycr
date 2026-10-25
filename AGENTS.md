@@ -1,4 +1,5 @@
 # Project Rules
+- Client calendar installability is manifest-only, with a public metadata-only calendar-manifest endpoint providing token-specific IDs/start URLs and calendar-only Apple head tags; do not register an app-shell service worker. Why: installed shortcuts must reopen the correct client calendar without caching stale previews or affecting agency branding.
 - Static calendar artwork uses the shared CalendarThumb with intrinsic proportions in full-width cards and review dialogs; fixed-size backlog thumbnails contain rather than crop it. Why: agency and public readers must see the same complete photo or post without video-shaped framing.
 - Shared calendars own their viewport scroll container and public piece dialogs use one native scroll container with a two-column media/review layout. Why: isolate public scrolling from PWA body locks and keep review controls beside the media instead of below a stretched grid row.
 - CalendarMonth enables its compact mobile month grid through an explicit public-view prop; agency mobile layouts keep their existing agenda. Why: isolate public presentation changes from internal scheduling workflows.
