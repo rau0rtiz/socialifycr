@@ -172,7 +172,7 @@ export default function Calendario() {
             {client.logo_url ? <img src={client.logo_url} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" /> : <div className="flex h-full w-full items-center justify-center bg-muted"><Building2 className="h-10 w-10 text-muted-foreground" /></div>}
             <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/10" />
           </button>
-          <div className="relative z-10 mt-auto space-y-2 p-3">
+          <div className="pointer-events-none relative z-10 mt-auto space-y-2 p-3">
             <div className="flex items-start justify-between gap-2"><h2 className="line-clamp-2 text-lg font-semibold leading-tight">{client.name}</h2><ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" /></div>
             <div className="rounded-xl bg-background/85 p-3 backdrop-blur-md"><CalendarProgress dense items={overview.filter((i) => i.client_id === client.id)} month={month} target={goals.find((g) => g.client_id === client.id)?.target ?? null} onSave={(target) => saveGoal(client.id, target)} /></div>
           </div>

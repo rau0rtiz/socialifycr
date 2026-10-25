@@ -19,7 +19,7 @@ export function CalendarProgress({ items, month, target, onSave, dense = false }
       <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Target className="h-3.5 w-3.5" />{dense ? 'Meta' : 'Meta mensual'}</span>
       <span className={cn('rounded-full px-2 py-1 text-[11px] font-medium', p.pace === 'behind' ? 'bg-warning/15 text-warning' : p.pace === 'on-track' ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground')}>{pace}</span>
     </div>
-    {editing ? <form className="flex items-center gap-2" onSubmit={async (e) => {
+    {editing ? <form className="pointer-events-auto flex items-center gap-2" onSubmit={async (e) => {
       e.preventDefault(); if (!validCalendarTarget(Number(value))) return;
       setSaving(true); try { await onSave(Number(value)); setEditing(false); } catch { /* The parent displays the save error. */ } finally { setSaving(false); }
     }}>
@@ -29,7 +29,7 @@ export function CalendarProgress({ items, month, target, onSave, dense = false }
     </form> : <div className="flex items-baseline gap-2">
       <span className={dense ? 'text-2xl font-semibold tabular-nums' : 'text-3xl font-semibold tabular-nums'}>{p.scheduled}<span className="text-base font-normal text-muted-foreground"> / {target ?? '—'}</span></span>
       {!dense && <span className="text-xs text-muted-foreground">programadas</span>}
-      <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" title="Editar meta mensual" aria-label="Editar meta mensual" onClick={() => setEditing(true)}><Pencil className="h-3.5 w-3.5" /></Button>
+      <Button variant="ghost" size="icon" className="pointer-events-auto ml-auto h-8 w-8" title="Editar meta mensual" aria-label="Editar meta mensual" onClick={() => setEditing(true)}><Pencil className="h-3.5 w-3.5" /></Button>
     </div>}
     <div className="grid h-2 grid-cols-[repeat(20,minmax(0,1fr))] gap-0.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Cobertura mensual" aria-valuenow={p.percent} aria-valuemin={0} aria-valuemax={100}>
       {Array.from({ length: 20 }, (_, n) => <div key={n} className={cn('h-2', n < Math.ceil(p.percent / 5) ? 'bg-primary' : 'bg-muted')} />)}
