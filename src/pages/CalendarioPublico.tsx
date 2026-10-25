@@ -156,14 +156,8 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
         </DialogHeader>
         <div className="p-4 sm:p-5">
           <div className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2">
-            <div className="min-w-0 space-y-4">
+            <div className="min-w-0">
               <VideoPlayer item={item} />
-              {hasCoverReview && (
-                <figure className="space-y-1.5">
-                  <figcaption className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Portada del reel</figcaption>
-                  <img src={item.thumbnail_url!} alt="Portada del reel" className="w-full max-w-[240px] rounded-lg border border-border object-cover" />
-                </figure>
-              )}
             </div>
             <div className="min-w-0 space-y-4">
             <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -193,12 +187,15 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
             </div>
             {hasCoverReview && (
               <div className="space-y-3 border-b border-border pb-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">Portada</span>
-                  <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
+                <div className="flex items-center gap-3">
+                  <img src={item.thumbnail_url!} alt="Portada del reel" className="h-20 w-14 shrink-0 rounded-md border border-border object-cover" />
+                  <div className="space-y-1">
+                    <span className="block text-xs font-medium text-muted-foreground">Portada del reel</span>
+                    <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
+                  </div>
                 </div>
                 {coverMode === 'changes' && <Textarea rows={3} autoFocus value={coverBody} placeholder="¿Qué te gustaría cambiar de la portada?" onChange={(e) => setCoverBody(e.target.value)} />}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
                   {coverMode === 'changes' ? (
                     <>
                       <Button variant="outline" onClick={() => setCoverMode('idle')} disabled={busy}>Cancelar</Button>
