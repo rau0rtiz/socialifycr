@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
-import { monthLabel, STATUS_LABEL } from '@/lib/calendar-media';
+import { monthLabel, STATUS_LABEL, COVER_STATUS_LABEL } from '@/lib/calendar-media';
 import { DeliveryTargets } from '@/components/calendario/DeliveryTargets';
 import { deliveryProgress, PIECE_TYPES, type TargetRow } from '@/lib/calendar-targets';
 import { calendarToday } from '@/lib/calendar-progress';
@@ -397,6 +397,15 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, on
               {item.thumbnail_url ? 'Cambiar miniatura' : 'Subir miniatura'}
               <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
             </label>
+            {item.thumbnail_url && ['reel', 'tiktok', 'short'].includes(item.content_type ?? '') && (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-2">
+                <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
+                <Select value={item.cover_status ?? 'pendiente'} onValueChange={(v) => onUpdate({ cover_status: v } as any)}>
+                  <SelectTrigger className="h-8 w-[170px]" aria-label="Estado de la portada"><SelectValue /></SelectTrigger>
+                  <SelectContent>{Object.entries(COVER_STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
