@@ -247,7 +247,7 @@ export default function Calendario() {
         {clients.map((client) => <article key={client.id} className="agency-card group flex min-h-[300px] min-w-0 flex-col overflow-hidden sm:aspect-[2/3]">
           <Button type="button" variant="ghost" className="h-auto flex-1 flex-col items-start gap-3 rounded-none p-4 text-left" onClick={() => setClientId(client.id)} aria-label={`Abrir calendario de ${client.name}`}>
             <div className="flex w-full items-start justify-between gap-3">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-background">{client.logo_url ? <img src={client.logo_url} alt="" className="h-full w-full object-contain p-1.5" /> : <Building2 className="h-6 w-6 text-muted-foreground" />}</div>
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl">{client.logo_url ? <img src={client.logo_url} alt="" className="h-full w-full rounded-xl object-contain" /> : <Building2 className="h-6 w-6 text-muted-foreground" />}</div>
               <ArrowUpRight className="h-4 w-4 shrink-0 text-primary" />
             </div>
             <h2 className="line-clamp-2 text-lg font-semibold leading-tight">{client.name}</h2>
@@ -266,7 +266,7 @@ export default function Calendario() {
       <Button variant="ghost" size="sm" onClick={() => { setClientId(null); setOpenId(null); setPickDayFor(null); qc.invalidateQueries({ queryKey: ['calendar-overview'] }); }}><ArrowLeft className="mr-2 h-4 w-4" />Todos los clientes</Button>
       <div className="flex flex-wrap items-center gap-3">
         <div className="mr-auto">
-          <div className="flex items-center gap-3">{activeClient?.logo_url && <img src={activeClient.logo_url} alt="" className="h-12 w-12 rounded-lg border border-border bg-card object-contain p-1" />}<h1 className="text-2xl font-semibold">{activeClient?.name ?? 'Calendario de publicación'}</h1></div>
+          <div className="flex items-center gap-3">{activeClient?.logo_url && <img src={activeClient.logo_url} alt="" className="h-12 w-12 rounded-lg object-contain" />}<h1 className="text-2xl font-semibold">{activeClient?.name ?? 'Calendario de publicación'}</h1></div>
           <p className="text-sm text-muted-foreground">
             {counts.total} piezas este mes · {counts.ok} aprobadas · {counts.ch} con cambios
           </p>
@@ -379,7 +379,7 @@ export default function Calendario() {
         <DialogContent className="max-w-lg gap-3">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {activeClient?.logo_url ? <img src={activeClient.logo_url} alt="" className="h-7 w-7 rounded-md border border-border bg-background object-contain p-0.5" /> : <Share2 className="h-4 w-4 text-primary" />}
+              {activeClient?.logo_url ? <img src={activeClient.logo_url} alt="" className="h-7 w-7 rounded-md object-contain" /> : <Share2 className="h-4 w-4 text-primary" />}
               Compartir calendario
             </DialogTitle>
           </DialogHeader>
