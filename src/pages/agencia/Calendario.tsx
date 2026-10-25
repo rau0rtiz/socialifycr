@@ -239,7 +239,6 @@ export default function Calendario() {
           </SelectContent>
         </Select>
         <Button onClick={share} disabled={!clientId}><Share2 className="mr-2 h-4 w-4" />Compartir</Button>
-        <Button variant="ghost" size="sm" onClick={regenerate} disabled={!clientId}>Nuevo enlace</Button>
       </div>
 
       <div className="border-y border-border py-4"><DeliveryTargets items={items} month={month} targets={targets.filter((t) => t.client_id === clientId)} onSave={(rows) => saveTargets(clientId, rows)} /></div>
@@ -307,6 +306,27 @@ export default function Calendario() {
           }}
         />
       )}
+
+      <Dialog open={!!shareLink} onOpenChange={(o) => !o && setShareLink(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {activeClient?.logo_url ? <img src={activeClient.logo_url} alt="" className="h-7 w-7 rounded-md border border-border bg-background object-contain p-0.5" /> : <Share2 className="h-4 w-4 text-primary" />}
+              Compartir calendario
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Cualquiera con este enlace ve el calendario de {activeClient?.name ?? 'este cliente'} sin entrar a la app.</p>
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+            <span className="min-w-0 flex-1 truncate font-mono text-xs" title={shareLink ?? ''}>{shareLink}</span>
+            <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" aria-label="Copiar enlace" onClick={() => { if (shareLink) { navigator.clipboard.writeText(shareLink); toast.success('Enlace copiado'); } }}><Copy className="h-3.5 w-3.5" /></Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="outline" size="sm"><a href={shareLink ?? '#'} target="_blank" rel="noreferrer"><ExternalLink className="mr-2 h-3.5 w-3.5" />Abrir</a></Button>
+            <Button asChild variant="outline" size="sm"><a href={`https://wa.me/?text=${encodeURIComponent(`Calendario de ${activeClient?.name ?? 'publicación'}: ${shareLink ?? ''}`)}`} target="_blank" rel="noreferrer"><MessageCircle className="mr-2 h-3.5 w-3.5" />WhatsApp</a></Button>
+            <Button variant="ghost" size="sm" className="ml-auto" onClick={regenerate}>Nuevo enlace</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
     </DashboardLayout>
   );
