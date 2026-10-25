@@ -309,7 +309,8 @@ html.agency-theme .agency-card:hover,
 }
 /* Ember gradient headline, defined here so components stay token-clean */
 .agency-shell .agency-gradient-text,
-html.agency-theme .agency-gradient-text {
+html.agency-theme .agency-gradient-text,
+.shared-calendar .agency-gradient-text {
   background: linear-gradient(115deg, hsl(12 88% 62%) 0%, hsl(28 90% 60%) 55%, hsl(38 95% 62%) 100%);
   -webkit-background-clip: text;
   background-clip: text;
