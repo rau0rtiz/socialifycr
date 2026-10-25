@@ -257,6 +257,12 @@ export default function Calendario() {
         </Select>
         <Button onClick={share} disabled={!clientId}><Share2 className="mr-2 h-4 w-4" />Compartir</Button>
         <Button variant="outline" onClick={() => setConfigOpen(true)}>ClickUp · {clickupConfig?.space_name ?? 'Configurar espacio'}</Button>
+        {clickupConfig?.space_id && (
+          <Button variant="outline" onClick={syncFromClickUp} disabled={syncing}>
+            {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Sincronizar
+          </Button>
+        )}
         <Button onClick={() => clickupConfig?.space_id ? setCreateOpen(true) : setConfigOpen(true)}>Nueva pieza</Button>
       </div>
 
