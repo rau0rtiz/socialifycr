@@ -2645,7 +2645,10 @@ export type Database = {
       }
       content_calendar_items: {
         Row: {
+          clickup_list_id: string | null
+          clickup_space_id: string | null
           clickup_sync_error: string | null
+          clickup_sync_state: string
           clickup_task_id: string | null
           clickup_url: string | null
           client_id: string
@@ -2666,7 +2669,10 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          clickup_list_id?: string | null
+          clickup_space_id?: string | null
           clickup_sync_error?: string | null
+          clickup_sync_state?: string
           clickup_task_id?: string | null
           clickup_url?: string | null
           client_id: string
@@ -2687,7 +2693,10 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          clickup_list_id?: string | null
+          clickup_space_id?: string | null
           clickup_sync_error?: string | null
+          clickup_sync_state?: string
           clickup_task_id?: string | null
           clickup_url?: string | null
           client_id?: string
@@ -7218,6 +7227,10 @@ export type Database = {
         }[]
       }
       can_manage_ad_frameworks: { Args: { _user_id: string }; Returns: boolean }
+      claim_calendar_clickup_sync: {
+        Args: { p_client_id: string; p_item_id: string }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
