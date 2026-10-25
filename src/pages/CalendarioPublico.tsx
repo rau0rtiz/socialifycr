@@ -187,13 +187,11 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
             </div>
             {hasCoverReview && (
               <div className="space-y-3 border-b border-border pb-4">
-                <div className="flex items-center gap-3">
-                  <img src={item.thumbnail_url!} alt="Portada del reel" className="h-20 w-14 shrink-0 rounded-md border border-border object-cover" />
-                  <div className="space-y-1">
-                    <span className="block text-xs font-medium text-muted-foreground">Portada del reel</span>
-                    <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
-                  </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="block text-xs font-medium text-muted-foreground">Portada del reel</span>
+                  <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
                 </div>
+                <img src={item.thumbnail_url!} alt="Portada del reel" className="mx-auto block max-h-[70dvh] w-full rounded-lg border border-border object-contain" />
                 {coverMode === 'changes' && <Textarea rows={3} autoFocus value={coverBody} placeholder="¿Qué te gustaría cambiar de la portada?" onChange={(e) => setCoverBody(e.target.value)} />}
                 <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
                   {coverMode === 'changes' ? (
