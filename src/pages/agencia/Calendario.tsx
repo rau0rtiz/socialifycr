@@ -22,7 +22,7 @@ import { CalendarHistory } from '@/components/calendario/CalendarHistory';
 import type { CalendarComment as Comment } from '@/lib/calendar-history';
 import { ClickUpConfigDialog } from '@/components/producciones/ClickUpConfigDialog';
 import { CreateCalendarPiece } from '@/components/calendario/CreateCalendarPiece';
-import { shouldShowCalendarPiece } from '../../../supabase/functions/_shared/calendar-clickup-rules';
+import { shouldShowCalendarPiece, calendarDeliveryPatch } from '../../../supabase/functions/_shared/calendar-clickup-rules';
 
 
 type Item = CalendarItem & { client_id: string; clickup_sync_state?: string };
@@ -303,7 +303,7 @@ export default function Calendario() {
             setBacklogDragOver(false);
             const id = e.dataTransfer.getData('text/plain');
             const piece = items.find((i) => i.id === id && i.client_id === clientId);
-            if (piece?.publish_date) update(id, { publish_date: null });
+            if (piece?.publish_date) update(id, calendarDeliveryPatch(null));
           }}
           className={`agency-card h-fit space-y-3 p-3 transition-colors lg:sticky lg:top-0 ${backlogDragOver ? 'ring-2 ring-primary bg-primary/10' : ''}`}
         >
@@ -335,7 +335,7 @@ export default function Calendario() {
               onMonthChange={(y, m) => setYm({ y, m })}
               items={items}
               onOpen={(i) => setOpenId(i.id)}
-              onDropItem={(id, iso) => update(id, { publish_date: iso })}
+              onDropItem={(id, iso) => update(id, calendarDeliveryPatch(iso))}
             />
           )}
         </section>

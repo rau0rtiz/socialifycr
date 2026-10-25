@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { listBelongsToSpace, calendarSyncFields, calendarTaskPayload, isClickUpApproved, shouldShowCalendarPiece } from '../../supabase/functions/_shared/calendar-clickup-rules';
+import { listBelongsToSpace, calendarSyncFields, calendarTaskPayload, isClickUpApproved, shouldShowCalendarPiece, calendarDeliveryPatch } from '../../supabase/functions/_shared/calendar-clickup-rules';
 
 describe('calendar ClickUp destination', () => {
+  it('moves pieces back to unscheduled by clearing only the delivery date', () => {
+    const piece = { publish_date: '2026-10-25', status: 'cambios', cover_status: 'aprobado', title: 'Reel', due_date: '1792944000000' };
+    expect({ ...piece, ...calendarDeliveryPatch(null) }).toEqual({ ...piece, publish_date: null });
+    expect(calendarDeliveryPatch('2026-10-26')).toEqual({ publish_date: '2026-10-26' });
+  });
   it('excludes ClickUp-approved pieces only from unscheduled pieces', () => {
     expect(isClickUpApproved({ status: 'APROBADO' })).toBe(true);
     expect(isClickUpApproved({ status: 'aprobada' })).toBe(true);
