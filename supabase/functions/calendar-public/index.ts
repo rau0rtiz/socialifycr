@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         admin.from('clients').select('name, logo_url').eq('id', share.client_id).maybeSingle(),
         admin.from('content_calendar_items')
           .select('id, title, copy, explanation, platform, content_type, thumbnail_url, video_url, publish_date, status, sort')
-          .eq('client_id', share.client_id).not('publish_date', 'is', null).order('publish_date').order('sort'),
+          .eq('client_id', share.client_id).order('publish_date', { nullsFirst: false }).order('sort'),
       ]);
       const ids = (items || []).map((i) => i.id);
       const { data: comments } = ids.length
