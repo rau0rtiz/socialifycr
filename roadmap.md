@@ -1,6 +1,6 @@
 # Tasks
-- [ ] Separar fechas de edición de ClickUp de las entregas manuales del calendario y probarlo.
-- [ ] Quitar todas las fechas actuales conservando piezas e historial; verificar «Por programar».
+- [x] Separar fechas de edición de ClickUp de las entregas manuales del calendario y probarlo.
+- [x] Quitar todas las fechas actuales conservando piezas e historial; verificar «Por programar».
 - [x] Eliminar la sección Reportes del panel de agencia.
 - [x] Corregir scroll y aprobación del calendario compartido y simplificar su presentación.
 - [x] Configurar el espacio ClickUp de cada cliente desde su calendario.
