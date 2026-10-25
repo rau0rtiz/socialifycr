@@ -14,8 +14,9 @@ import { toast } from 'sonner';
 import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { monthLabel, STATUS_LABEL } from '@/lib/calendar-media';
-import { CalendarProgress } from '@/components/calendario/CalendarProgress';
-import { calendarProgress, calendarToday } from '@/lib/calendar-progress';
+import { DeliveryTargets } from '@/components/calendario/DeliveryTargets';
+import { deliveryProgress, deliveryType, DELIVERY_TYPES, type TargetRow } from '@/lib/calendar-targets';
+import { calendarToday } from '@/lib/calendar-progress';
 
 interface Comment { id: string; item_id: string; author_name: string; author_type: string; kind: string; body: string; created_at: string }
 type Item = CalendarItem & { client_id: string };
@@ -58,21 +59,28 @@ export default function Calendario() {
       return data ?? [];
     },
   });
-  const goalsKey = ['calendar-goals', month, clientIds];
-  const { data: goals = [] } = useQuery({
-    queryKey: goalsKey, enabled: clientIds.length > 0, staleTime: 5 * 60_000, refetchOnMount: false,
+  const targetsKey = ['calendar-targets', clientIds];
+  const { data: targets = [] } = useQuery({
+    queryKey: targetsKey, enabled: clientIds.length > 0, staleTime: 5 * 60_000, refetchOnMount: false,
     queryFn: async () => {
-      const { data, error } = await supabase.from('content_calendar_goals').select('client_id, target')
-        .eq('month', month).in('client_id', clientIds);
+      const { data, error } = await supabase.from('client_delivery_targets').select('client_id, content_type, monthly_target')
+        .in('client_id', clientIds);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as TargetRow[];
     },
   });
-  const saveGoal = async (id: string, target: number) => {
-    const { error } = await supabase.from('content_calendar_goals').upsert({ client_id: id, month, target, updated_at: new Date().toISOString() }, { onConflict: 'client_id,month' });
-    if (error) { toast.error('No se pudo guardar la meta'); throw error; }
-    await qc.invalidateQueries({ queryKey: ['calendar-goals'] });
-    toast.success('Meta mensual guardada');
+  const saveTargets = async (id: string, rows: { content_type: string; monthly_target: number }[]) => {
+    const keep = rows.map((r) => r.content_type);
+    const { error: delError } = await supabase.from('client_delivery_targets').delete().eq('client_id', id)
+      .not('content_type', 'in', `(${keep.length ? keep.join(',') : '__none__'})`);
+    if (delError) { toast.error('No se pudieron guardar las entregas'); throw delError; }
+    if (rows.length) {
+      const { error } = await supabase.from('client_delivery_targets')
+        .upsert(rows.map((r) => ({ client_id: id, ...r, updated_at: new Date().toISOString() })), { onConflict: 'client_id,content_type' });
+      if (error) { toast.error('No se pudieron guardar las entregas'); throw error; }
+    }
+    await qc.invalidateQueries({ queryKey: ['calendar-targets'] });
+    toast.success('Entregas mensuales guardadas');
   };
   const shiftMonth = (delta: number) => {
     const date = new Date(Date.UTC(ym.y, ym.m + delta, 1));
@@ -110,7 +118,7 @@ export default function Calendario() {
   useEffect(() => {
     const ch = supabase.channel(`calendar-overview-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'content_calendar_items' }, () => qc.invalidateQueries({ queryKey: ['calendar-overview'] }))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'content_calendar_goals' }, () => qc.invalidateQueries({ queryKey: ['calendar-goals'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'client_delivery_targets' }, () => qc.invalidateQueries({ queryKey: ['calendar-targets'] }))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
