@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Inbox, Loader2, Send, Share2, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Inbox, Loader2, MessageCircle, Send, Share2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +17,8 @@ import { monthLabel, STATUS_LABEL } from '@/lib/calendar-media';
 import { DeliveryTargets } from '@/components/calendario/DeliveryTargets';
 import { deliveryProgress, DELIVERY_TYPES, type TargetRow } from '@/lib/calendar-targets';
 import { calendarToday } from '@/lib/calendar-progress';
+import { isLegacyToken, prettyCalendarToken } from '@/lib/calendar-share';
+
 
 interface Comment { id: string; item_id: string; author_name: string; author_type: string; kind: string; body: string; created_at: string }
 type Item = CalendarItem & { client_id: string };
@@ -150,15 +152,42 @@ export default function Calendario() {
     return { total: inMonth.length, ok: inMonth.filter((i) => i.status === 'aprobado').length, ch: inMonth.filter((i) => i.status === 'cambios').length };
   }, [items, ym]);
 
-  const share = async () => {
-    if (!clientId) return;
-    let { data } = await supabase.from('content_calendar_shares').select('token').eq('client_id', clientId).maybeSingle();
-    if (!data) ({ data } = await supabase.from('content_calendar_shares').insert({ client_id: clientId }).select('token').single());
-    if (!data) return toast.error('No se pudo crear el enlace');
+  const [shareLink, setShareLink] = useState<string | null>(null);
+
+  const prettyLink = (token: string) => {
     const origin = location.hostname.includes('lovable') || location.hostname === 'localhost' ? 'https://app.socialifycr.com' : location.origin;
-    await navigator.clipboard.writeText(`${origin}/calendario/${data.token}`).catch(() => {});
-    toast.success('Enlace del calendario copiado', { description: `${origin}/calendario/${data.token}` });
+    return `${origin}/calendario/${token}`;
   };
+  const slugToken = () => prettyCalendarToken(activeClient?.name ?? 'cliente');
+
+  const ensureShare = async (): Promise<{ token: string; renewed: boolean } | null> => {
+    if (!clientId) return null;
+    let { data } = await supabase.from('content_calendar_shares').select('token').eq('client_id', clientId).maybeSingle();
+    let renewed = false;
+    if (data && isLegacyToken(data.token)) {
+      const { error } = await supabase.from('content_calendar_shares').update({ token: slugToken() }).eq('client_id', clientId);
+      if (!error) { renewed = true; data = null; }
+    }
+    if (!data) {
+      for (let i = 0; i < 4; i++) {
+        const { data: ins, error } = await supabase.from('content_calendar_shares').insert({ client_id: clientId, token: slugToken() }).select('token').single();
+        if (!error) { data = ins; break; }
+        if ((error as any).code !== '23505') { toast.error('No se pudo crear el enlace'); return null; }
+      }
+    }
+    if (!data?.token) { toast.error('No se pudo crear el enlace'); return null; }
+    return { token: data.token, renewed };
+  };
+
+  const share = async () => {
+    const s = await ensureShare();
+    if (!s) return;
+    const link = prettyLink(s.token);
+    setShareLink(link);
+    await navigator.clipboard.writeText(link).catch(() => {});
+    toast.success(s.renewed ? 'Enlace renovado y copiado. El anterior dejó de funcionar' : 'Enlace copiado');
+  };
+
   const regenerate = async () => {
     if (!clientId || !confirm('El enlace anterior dejará de funcionar. ¿Continuar?')) return;
     await supabase.from('content_calendar_shares').delete().eq('client_id', clientId);
@@ -210,7 +239,6 @@ export default function Calendario() {
           </SelectContent>
         </Select>
         <Button onClick={share} disabled={!clientId}><Share2 className="mr-2 h-4 w-4" />Compartir</Button>
-        <Button variant="ghost" size="sm" onClick={regenerate} disabled={!clientId}>Nuevo enlace</Button>
       </div>
 
       <div className="border-y border-border py-4"><DeliveryTargets items={items} month={month} targets={targets.filter((t) => t.client_id === clientId)} onSave={(rows) => saveTargets(clientId, rows)} /></div>
@@ -278,6 +306,27 @@ export default function Calendario() {
           }}
         />
       )}
+
+      <Dialog open={!!shareLink} onOpenChange={(o) => !o && setShareLink(null)}>
+        <DialogContent className="max-w-lg gap-3">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {activeClient?.logo_url ? <img src={activeClient.logo_url} alt="" className="h-7 w-7 rounded-md border border-border bg-background object-contain p-0.5" /> : <Share2 className="h-4 w-4 text-primary" />}
+              Compartir calendario
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Cualquiera con este enlace ve el calendario de {activeClient?.name ?? 'este cliente'} sin entrar a la app.</p>
+          <div className="flex w-full min-w-0 items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+            <span className="min-w-0 flex-1 truncate font-mono text-xs" title={shareLink ?? ''}>{shareLink}</span>
+            <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" aria-label="Copiar enlace" onClick={() => { if (shareLink) { navigator.clipboard.writeText(shareLink); toast.success('Enlace copiado'); } }}><Copy className="h-3.5 w-3.5" /></Button>
+          </div>
+          <div className="grid w-full grid-cols-3 gap-2">
+            <Button asChild variant="outline" size="sm"><a href={shareLink ?? '#'} target="_blank" rel="noreferrer"><ExternalLink className="mr-1.5 h-3.5 w-3.5" />Abrir</a></Button>
+            <Button asChild variant="outline" size="sm"><a href={`https://wa.me/?text=${encodeURIComponent(`Calendario de ${activeClient?.name ?? 'publicación'}: ${shareLink ?? ''}`)}`} target="_blank" rel="noreferrer"><MessageCircle className="mr-1.5 h-3.5 w-3.5" />WhatsApp</a></Button>
+            <Button variant="outline" size="sm" onClick={regenerate}>Nuevo enlace</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
     </DashboardLayout>
   );
