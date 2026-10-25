@@ -32,7 +32,7 @@ export default function CalendarioPublico() {
   const key = ['public-calendar', token];
   const { data, isLoading, error } = useQuery<Payload>({ queryKey: key, queryFn: () => call({ action: 'get', token }), retry: false, refetchInterval: 30_000 });
   const [ym, setYm] = useState<{ y: number; m: number } | null>(null);
-  const [view, setView] = useState<'pieces' | 'calendar'>('pieces');
+  const [view, setView] = useState<'pieces' | 'calendar'>('calendar');
   const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
