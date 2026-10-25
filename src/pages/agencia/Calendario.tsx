@@ -106,6 +106,26 @@ export default function Calendario() {
   const activeClient = clients.find((c) => c.id === clientId);
 
   const itemsKey = ['calendar-items', clientId];
+  const syncFromClickUp = async () => {
+    if (!clientId || syncing) return;
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('clickup-create-tasks', {
+        body: { action: 'sync_calendar', client_id: clientId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const r = data?.results?.[0];
+      if (r?.error) throw new Error(r.error);
+      toast.success(r ? `Sincronizado: ${r.created} nuevas, ${r.updated} actualizadas` : 'Sincronización completa');
+      qc.invalidateQueries({ queryKey: itemsKey });
+      qc.invalidateQueries({ queryKey: ['calendar-overview'] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'No se pudo sincronizar con ClickUp');
+    } finally {
+      setSyncing(false);
+    }
+  };
   const { data: items = [], isLoading } = useQuery({
     queryKey: itemsKey,
     enabled: !!clientId,
