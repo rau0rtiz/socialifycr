@@ -199,29 +199,34 @@ Deno.serve(async (req) => {
   try {
     if (!CLICKUP_TOKEN) throw new Error('CLICKUP_API_TOKEN no configurado');
 
+    const reqBody = await req.json();
+    const isSync = reqBody?.action === 'sync_calendar';
+
+    // Auth: agency member JWT, or the shared sync secret (hourly cron, no user session).
+    let authorized = false;
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (authHeader?.startsWith('Bearer ')) {
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: claims } = await userClient.auth.getClaims(authHeader.replace('Bearer ', ''));
+      if (claims?.claims?.sub) {
+        const { data: isAgency } = await userClient.rpc('is_agency_member', { _user_id: claims.claims.sub });
+        authorized = !!isAgency;
+      }
+    }
+    if (!authorized && isSync) {
+      const secret = Deno.env.get('CALENDAR_SYNC_SECRET');
+      if (secret && req.headers.get('x-sync-secret') === secret) authorized = true;
+    }
+    if (!authorized) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: claims } = await userClient.auth.getClaims(authHeader.replace('Bearer ', ''));
-    if (!claims?.claims?.sub) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const { data: isAgency } = await userClient.rpc('is_agency_member', { _user_id: claims.claims.sub });
-    if (!isAgency) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const reqBody = await req.json();
+    if (isSync) return await syncCalendar(reqBody);
+
     const {
       sheet_id,
       list_id: overrideListId,
