@@ -23,6 +23,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Socialify DB" />
+    <script>
+      // Set home-screen metadata before rendering, only for shared calendars.
+      if (/^\/calendario\/[^/]+\/?$/.test(window.location.pathname)) {
+        document.querySelector('link[rel="apple-touch-icon"]').href = '/calendar-apple-icon.png';
+        document.querySelector('link[rel="icon"]').href = '/calendar-icon-192.png';
+        document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'Calendario Socialify';
+        document.querySelector('meta[name="theme-color"]').content = '#0d0d0d';
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Bebas+Neue&family=Oswald:wght@700&family=Poppins:wght@700;900&family=Anton&family=Barlow+Condensed:wght@800&family=Raleway:wght@900&display=swap" rel="stylesheet">
