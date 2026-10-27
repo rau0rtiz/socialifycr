@@ -1,7 +1,7 @@
 // ClickUp create-tasks: crea una task por pieza grabada (production_sheet_shots con done=true).
 // Si la pieza ya tiene clickup_task_id, hace PUT para actualizarla.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { calendarSyncFields, isClickUpApproved, isClickUpCalendarExcluded, calendarSpaceListIds, parseCalendarTaskTitle } from '../_shared/calendar-clickup-rules.ts';
+import { calendarSyncFields, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, calendarSpaceListIds, parseCalendarTaskTitle } from '../_shared/calendar-clickup-rules.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +23,12 @@ const PLATFORM_LABEL: Record<string, string> = {
   instagram: 'IG', tiktok: 'TT', youtube: 'YT', linkedin: 'LI', multi: 'MULTI',
 };
 
+class ClickUpError extends Error {
+  constructor(public status: number, public details: string, path: string) {
+    super(`ClickUp ${path} → ${status}: ${details}`);
+  }
+}
+
 async function cuFetch(path: string, init?: RequestInit) {
   const res = await fetch(`https://api.clickup.com/api/v2${path}`, {
     ...init,
@@ -34,7 +40,7 @@ async function cuFetch(path: string, init?: RequestInit) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`ClickUp ${path} → ${res.status}: ${text}`);
+    throw new ClickUpError(res.status, text, path);
   }
   return res.json();
 }
@@ -110,26 +116,33 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
   if (existingError) throw existingError;
   const byTask = new Map((existing || []).map((r: { id: string; clickup_task_id: string }) => [String(r.clickup_task_id), r]));
 
-  let created = 0, updated = 0, skipped = 0;
+  let created = 0, updated = 0, skipped = 0, deleted = 0;
+  const refreshLinkedTask = async (row: { id: string; clickup_task_id: string }) => {
+    await new Promise((resolve) => setTimeout(resolve, 750));
+    let task;
+    try {
+      task = await cuFetch(`/task/${row.clickup_task_id}`);
+    } catch (e) {
+      if (!(e instanceof ClickUpError) || !isClickUpTaskDeleted(e.status, e.details)) throw e;
+      const { error } = await admin.from('content_calendar_items').delete()
+        .eq('id', row.id).eq('client_id', cfg.client_id).eq('clickup_task_id', row.clickup_task_id);
+      if (error) throw error;
+      deleted += 1;
+      return;
+    }
+    const { error } = await admin.from('content_calendar_items')
+      .update({ clickup_approved: isClickUpCalendarExcluded(task.status) })
+      .eq('id', row.id).eq('client_id', cfg.client_id);
+    if (error) throw error;
+    updated += 1;
+  };
   // Legacy production exports may have no configured space. Only inspect their already-linked tasks.
   if (!cfg.space_id) {
     const rows = [...byTask.values()];
     for (const row of rows) {
-      // Stay below ClickUp's shared request limit. Missing legacy tasks must not block siblings.
-      await new Promise((resolve) => setTimeout(resolve, 750));
-      try {
-        const task = await cuFetch(`/task/${row.clickup_task_id}`);
-        const { error } = await admin.from('content_calendar_items')
-          .update({ clickup_approved: isClickUpCalendarExcluded(task.status) })
-          .eq('id', row.id).eq('client_id', cfg.client_id);
-        if (error) throw error;
-        updated += 1;
-      } catch (e) {
-        if (String((e as Error).message).includes('→ 404:')) { skipped += 1; continue; }
-        throw e;
-      }
+      await refreshLinkedTask(row);
     }
-    return { client_id: cfg.client_id, created, updated, skipped };
+    return { client_id: cfg.client_id, created, updated, skipped, deleted };
   }
   const seenTasks = new Set<string>();
   const statusCounts: Record<string, number> = {};
@@ -177,7 +190,12 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
       if (data.last_page === true) break;
     }
   }
-  return { client_id: cfg.client_id, created, updated, skipped, status_counts: statusCounts };
+  // Only reconcile after every list/page has been fetched successfully. Tasks can be
+  // archived or moved, so verify each missing linked task directly before deleting.
+  for (const row of byTask.values()) {
+    if (!seenTasks.has(row.clickup_task_id)) await refreshLinkedTask(row);
+  }
+  return { client_id: cfg.client_id, created, updated, skipped, deleted, status_counts: statusCounts };
 }
 
 async function syncCalendar(reqBody: { client_id?: string }) {
