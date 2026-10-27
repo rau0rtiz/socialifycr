@@ -120,7 +120,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
   let datesUnavailable = 0;
   const approvalFields = async (task: any, dated: boolean) => {
     if (!isClickUpCalendarExcluded(task.status)) return {};
-    let patch = calendarFinalStatusPatch(task);
+    let patch = calendarFinalStatusPatch(task, null, dated ? 'preserve' : null);
     if (!dated && !('publish_date' in patch)) {
       try {
         const history = await cuFetch(`/task/${task.id}/time_in_status`);

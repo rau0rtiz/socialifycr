@@ -10,6 +10,9 @@ describe('calendar ClickUp destination', () => {
     expect(calendarFinalStatusPatch({ status: { status: 'aprobado', type: 'custom' } })).toEqual({ status: 'aprobado' });
     expect(calendarFinalStatusPatch({ status: { status: 'editar', type: 'custom' } })).toEqual({});
   });
+  it('preserves a manually assigned delivery date when ClickUp marks the task final', () => {
+    expect(calendarFinalStatusPatch({ status: { status: 'subido', type: 'closed' }, date_closed: String(Date.parse('2026-10-26T18:00:00Z')) }, null, '2026-11-02')).toEqual({ status: 'aprobado' });
+  });
   it('deletes the calendar piece when ClickUp confirms VIDEITO PRUEBA no longer exists', () => {
     expect(isClickUpTaskDeleted(404, JSON.stringify({ err: 'Task not found, deleted', ECODE: 'ITEM_013' }))).toBe(true);
   });
@@ -35,7 +38,7 @@ describe('calendar ClickUp destination', () => {
     expect({ ...piece, ...calendarDeliveryPatch(null) }).toEqual({ ...piece, publish_date: null });
     expect(calendarDeliveryPatch('2026-10-26')).toEqual({ publish_date: '2026-10-26' });
   });
-  it('excludes ClickUp-approved pieces from both calendars without changing saved dates', () => {
+  it('hides only pieces explicitly flagged as non-content operations', () => {
     expect(isClickUpApproved({ status: 'APROBADO' })).toBe(true);
     expect(isClickUpApproved({ status: 'aprobada' })).toBe(true);
     expect(isClickUpApproved({ status: 'pre-aprobación' })).toBe(false);

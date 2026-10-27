@@ -25,13 +25,13 @@ export function isClickUpCalendarExcluded(status: { status?: string } | null | u
   return isClickUpApproved(status) || /^(subida|subida a milanote|subido|aprobado\s*&\s*milanote)$/.test(name);
 }
 
-export function calendarFinalStatusPatch(task: { status?: { status?: string; type?: string }; date_closed?: string | null; date_done?: string | null }, since?: string | number | null) {
+export function calendarFinalStatusPatch(task: { status?: { status?: string; type?: string }; date_closed?: string | null; date_done?: string | null }, since?: string | number | null, existingDate?: string | null) {
   if (!isClickUpCalendarExcluded(task.status)) return {};
   const value = since ?? (task.status?.type === 'closed' ? task.date_closed : task.status?.type === 'done' ? task.date_done : null);
   const timestamp = value ? Number(value) : NaN;
   const date = Number.isFinite(timestamp) && timestamp > 0
     ? new Date(timestamp - 6 * 3600000).toISOString().slice(0, 10) : null;
-  return { status: 'aprobado', ...(date ? { publish_date: date } : {}) };
+  return { status: 'aprobado', ...(!existingDate && date ? { publish_date: date } : {}) };
 }
 
 // A missing list entry or a permissions/network failure is not proof of deletion.
