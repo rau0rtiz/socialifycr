@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Eliminar piezas vinculadas cuando ClickUp confirme que su tarea ya no existe; comprobar VIDEITO PRUEBA de B-Dental.
 - [x] Corregir importación de todas las listas y tareas del espacio; verificado en cinco clientes y sin duplicados en segunda sincronización.
 - [x] Aplicar las cinco exclusiones confirmadas, actualizar todos los calendarios vinculados y verificar agencia y enlace público con B-Dental; 17 pruebas correctas, fechas e historial conservados.
 - [x] Agregar instalación de Calendario Socialify con icono blanco; verificados manifiesto por cliente, pasos en móvil y botón de instalación. Instalación real en dispositivo pendiente de publicar.
