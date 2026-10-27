@@ -132,6 +132,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
     return { client_id: cfg.client_id, created, updated, skipped };
   }
   const seenTasks = new Set<string>();
+  const statusCounts: Record<string, number> = {};
   for (const listId of listIds) {
     for (let page = 0; ; page += 1) {
       const data = await cuFetch(`/list/${listId}/task?archived=false&subtasks=true&include_timl=true&include_closed=true&page=${page}`);
@@ -140,6 +141,8 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
       for (const t of tasks) {
         if (seenTasks.has(String(t.id))) continue;
         seenTasks.add(String(t.id));
+        const statusName = String(t.status?.status ?? '');
+        statusCounts[statusName] = (statusCounts[statusName] ?? 0) + 1;
         const row = byTask.get(String(t.id));
         const parsed = parseCalendarTaskTitle(String(t.name || ''));
         const excluded = isClickUpCalendarExcluded(t.status) || !parsed;
@@ -174,7 +177,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
       if (data.last_page === true) break;
     }
   }
-  return { client_id: cfg.client_id, created, updated, skipped };
+  return { client_id: cfg.client_id, created, updated, skipped, status_counts: statusCounts };
 }
 
 async function syncCalendar(reqBody: { client_id?: string }) {
