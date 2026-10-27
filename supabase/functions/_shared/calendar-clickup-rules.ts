@@ -22,7 +22,7 @@ export function isClickUpApproved(status: { status?: string } | null | undefined
 
 export function isClickUpCalendarExcluded(status: { status?: string } | null | undefined) {
   const name = (status?.status ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
-  return isClickUpApproved(status) || /^(subida|subida a milanote)$/.test(name);
+  return isClickUpApproved(status) || /^(subida|subida a milanote|subido|aprobado\s*&\s*milanote)$/.test(name);
 }
 
 const calendarTypes: Record<string, string> = {
