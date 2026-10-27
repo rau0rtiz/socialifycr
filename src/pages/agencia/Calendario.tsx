@@ -73,9 +73,9 @@ export default function Calendario() {
     refetchOnMount: false,
     queryFn: async () => {
       const { data, error } = await supabase.from('content_calendar_items')
-        .select('id, client_id, publish_date, status, content_type').in('client_id', clientIds);
+        .select('id, client_id, publish_date, status, content_type, clickup_approved').in('client_id', clientIds);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).filter(shouldShowCalendarPiece);
     },
   });
   const targetsKey = ['calendar-targets', clientIds];

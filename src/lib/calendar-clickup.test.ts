@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { listBelongsToSpace, calendarSyncFields, calendarTaskPayload, isClickUpApproved, shouldShowCalendarPiece, calendarDeliveryPatch, calendarSpaceListIds, calendarSpaceConfigFields } from '../../supabase/functions/_shared/calendar-clickup-rules';
+import { listBelongsToSpace, calendarSyncFields, calendarTaskPayload, isClickUpApproved, isClickUpCalendarExcluded, parseCalendarTaskTitle, shouldShowCalendarPiece, calendarDeliveryPatch, calendarSpaceListIds, calendarSpaceConfigFields } from '../../supabase/functions/_shared/calendar-clickup-rules';
 
 describe('calendar ClickUp destination', () => {
   it('configures the whole client space without a production list filter', () => {
@@ -16,14 +16,25 @@ describe('calendar ClickUp destination', () => {
     expect({ ...piece, ...calendarDeliveryPatch(null) }).toEqual({ ...piece, publish_date: null });
     expect(calendarDeliveryPatch('2026-10-26')).toEqual({ publish_date: '2026-10-26' });
   });
-  it('excludes ClickUp-approved pieces only from unscheduled pieces', () => {
+  it('excludes ClickUp-approved pieces from both calendars without changing saved dates', () => {
     expect(isClickUpApproved({ status: 'APROBADO' })).toBe(true);
     expect(isClickUpApproved({ status: 'aprobada' })).toBe(true);
     expect(isClickUpApproved({ status: 'pre-aprobación' })).toBe(false);
     expect(isClickUpApproved({ status: 'no aprobado' })).toBe(false);
     expect(shouldShowCalendarPiece({ publish_date: null, clickup_approved: true })).toBe(false);
-    expect(shouldShowCalendarPiece({ publish_date: '2026-10-25', clickup_approved: true })).toBe(true);
+    expect(shouldShowCalendarPiece({ publish_date: '2026-10-25', clickup_approved: true })).toBe(false);
     expect(shouldShowCalendarPiece({ publish_date: null, clickup_approved: false })).toBe(true);
+  });
+  it.each(['Aprobado', 'subida', 'subida a Milanote'])('excludes the confirmed ClickUp status %s', (status) => {
+    expect(isClickUpCalendarExcluded({ status })).toBe(true);
+  });
+  it.each(['en edición', 'pre-aprobación', 'no aprobado', 'por grabar'])('includes every other status %s', (status) => {
+    expect(isClickUpCalendarExcluded({ status })).toBe(false);
+  });
+  it('imports untagged tasks from the client space and retains tagged types', () => {
+    expect(parseCalendarTaskTitle('Video nuevo de octubre')).toEqual({ title: 'Video nuevo de octubre', contentType: 'otro', platform: null });
+    expect(parseCalendarTaskTitle('[3] [REEL · IG] Nuevo video')).toEqual({ title: 'Nuevo video', contentType: 'reel', platform: 'instagram' });
+    expect(parseCalendarTaskTitle('[PRODUCCIÓN] Pasar material al servidor')).toBeNull();
   });
   it('rejects lists from another client space and missing space data', () => {
     expect(listBelongsToSpace({ space: { id: 'cliente-a' } }, 'cliente-a')).toBe(true);

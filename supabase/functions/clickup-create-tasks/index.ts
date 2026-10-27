@@ -1,7 +1,7 @@
 // ClickUp create-tasks: crea una task por pieza grabada (production_sheet_shots con done=true).
 // Si la pieza ya tiene clickup_task_id, hace PUT para actualizarla.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { calendarSyncFields, isClickUpApproved, calendarSpaceListIds } from '../_shared/calendar-clickup-rules.ts';
+import { calendarSyncFields, isClickUpApproved, isClickUpCalendarExcluded, calendarSpaceListIds, parseCalendarTaskTitle } from '../_shared/calendar-clickup-rules.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -78,28 +78,6 @@ function parseClickUpDueDate(value: unknown): number | undefined {
 
 // ---------- ClickUp → calendar sync (tasks become calendar pieces) ----------
 
-const TAG_TYPE: Record<string, string> = {
-  REEL: 'reel', STORY: 'story', POST: 'post', FOTO: 'foto',
-  CARRUSEL: 'carrusel', 'DISEÑO': 'diseno', DISENO: 'diseno',
-  CORREO: 'correo', TIKTOK: 'tiktok', SHORT: 'short', CONTENIDO: 'otro',
-};
-const TAG_PLATFORM: Record<string, string> = {
-  IG: 'instagram', TT: 'tiktok', YT: 'youtube', LI: 'linkedin', MULTI: 'multi',
-};
-
-// Parses "[3] [REEL · IG] Título" → { contentType, platform, title }.
-// Returns null for untagged tasks and ops tasks ([PRODUCCIÓN] …) — those are not content pieces.
-function parseTaskTitle(name: string) {
-  const m = name.match(/^(?:\[\d+\]\s*)?\[([A-ZÑ]+)(?:\s*·\s*([A-Z]+))?\]\s*(.+)$/);
-  if (!m) return null;
-  if (m[1] === 'PRODUCCIÓN' || m[1] === 'PRODUCCION') return null;
-  return {
-    contentType: TAG_TYPE[m[1]] ?? 'otro',
-    platform: m[2] ? (TAG_PLATFORM[m[2]] ?? null) : null,
-    title: m[3].trim() || name,
-  };
-}
-
 function mapClickUpStatus(status: unknown): string {
   const s = String((status as { status?: string })?.status || '').toLowerCase();
   if (isClickUpApproved(status as { status?: string })) return 'aprobado';
@@ -116,7 +94,12 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
   if (cfg.space_id) {
     const folders = await cuFetch(`/space/${cfg.space_id}/folder?archived=false`);
     const loose = await cuFetch(`/space/${cfg.space_id}/list?archived=false`);
-    listIds = calendarSpaceListIds(folders.folders || [], loose.lists || []);
+    const folderLists = [];
+    for (const folder of folders.folders || []) {
+      const lists = await cuFetch(`/folder/${folder.id}/list?archived=false`);
+      folderLists.push({ lists: lists.lists || [] });
+    }
+    listIds = calendarSpaceListIds(folderLists, loose.lists || []);
   }
 
   const { data: existing, error: existingError } = await admin
@@ -137,7 +120,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
       try {
         const task = await cuFetch(`/task/${row.clickup_task_id}`);
         const { error } = await admin.from('content_calendar_items')
-          .update({ clickup_approved: isClickUpApproved(task.status) })
+          .update({ clickup_approved: isClickUpCalendarExcluded(task.status) })
           .eq('id', row.id).eq('client_id', cfg.client_id);
         if (error) throw error;
         updated += 1;
@@ -148,24 +131,30 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
     }
     return { client_id: cfg.client_id, created, updated, skipped };
   }
+  const seenTasks = new Set<string>();
+  const statusCounts: Record<string, number> = {};
   for (const listId of listIds) {
     for (let page = 0; ; page += 1) {
-      const data = await cuFetch(`/list/${listId}/task?archived=false&subtasks=false&include_closed=true&page=${page}`);
+      const data = await cuFetch(`/list/${listId}/task?archived=false&subtasks=true&include_timl=true&include_closed=true&page=${page}`);
       const tasks = data.tasks || [];
       if (!tasks.length) break;
       for (const t of tasks) {
-        const parsed = parseTaskTitle(String(t.name || ''));
-        if (!parsed) { skipped += 1; continue; }
+        if (seenTasks.has(String(t.id))) continue;
+        seenTasks.add(String(t.id));
+        const statusName = String(t.status?.status ?? '');
+        statusCounts[statusName] = (statusCounts[statusName] ?? 0) + 1;
         const row = byTask.get(String(t.id));
-        const approved = isClickUpApproved(t.status);
-        const fields = { ...calendarSyncFields(t, parsed.title), clickup_approved: approved };
+        const parsed = parseCalendarTaskTitle(String(t.name || ''));
+        const excluded = isClickUpCalendarExcluded(t.status) || !parsed;
+        const fields = { ...calendarSyncFields(t, parsed?.title ?? String(t.name || '')), clickup_approved: excluded };
         if (row) {
           // Delivery dates belong exclusively to the calendar, even when unset.
           const { error } = await admin.from('content_calendar_items').update(fields).eq('id', row.id).eq('client_id', cfg.client_id);
-          if (error) { console.error('[sync] update fail', t.id, error.message); skipped += 1; } else updated += 1;
+          if (error) throw new Error(`No se pudo actualizar ${t.id}: ${error.message}`);
+          updated += 1;
         } else {
           // Approved tasks never enter the backlog; retain existing pieces and history above.
-          if (approved || ['closed', 'done'].includes(String(t.status?.type ?? '').toLowerCase())) {
+          if (excluded || !parsed) {
             skipped += 1;
             continue;
           }
@@ -181,13 +170,14 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
             publish_date: null,
             status: mapClickUpStatus(t.status),
           });
-          if (error) { console.error('[sync] insert fail', t.id, error.message); skipped += 1; } else created += 1;
+          if (error) throw new Error(`No se pudo importar ${t.id}: ${error.message}`);
+          created += 1;
         }
       }
-      if (tasks.length < 100) break;
+      if (data.last_page === true) break;
     }
   }
-  return { client_id: cfg.client_id, created, updated, skipped };
+  return { client_id: cfg.client_id, created, updated, skipped, status_counts: statusCounts };
 }
 
 async function syncCalendar(reqBody: { client_id?: string }) {
