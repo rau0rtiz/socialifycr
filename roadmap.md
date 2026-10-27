@@ -1,5 +1,6 @@
 # Tasks
-- [ ] Corregir sincronización de todas las tareas del espacio y excluir aprobado, subida y subida a Milanote; verificar con ClickUp real.
+- [x] Corregir importación de todas las listas y tareas del espacio; verificado en cinco clientes y sin duplicados en segunda sincronización.
+- [ ] Confirmar equivalencia de estados reales «subido» y «aprobado & milanote» con los estados excluidos solicitados; pendiente de respuesta de Raúl.
 - [x] Agregar instalación de Calendario Socialify con icono blanco; verificados manifiesto por cliente, pasos en móvil y botón de instalación. Instalación real en dispositivo pendiente de publicar.
 - [x] Configurar calendario por espacio ClickUp completo sin exigir lista; pruebas de múltiples listas y guardado/sincronización en vivo con B-Dental verificados.
 - [x] Excluir tareas aprobadas en ClickUp de «Por programar», sin borrar historial ni fechas manuales; sincronizar y verificar (7 excluidas, 379 piezas conservadas).
