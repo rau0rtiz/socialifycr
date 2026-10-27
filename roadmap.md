@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Conservar piezas finales visibles y aprobadas; programar pendientes con fecha real del cambio de estado ClickUp sin sobrescribir fechas manuales; verificar.
 - [x] Eliminar piezas vinculadas cuando ClickUp confirme que su tarea ya no existe; VIDEITO PRUEBA y FOTO 2 eliminadas al sincronizar B-Dental, ausencia comprobada en agencia y enlace público; 23 pruebas correctas.
 - [x] Corregir importación de todas las listas y tareas del espacio; verificado en cinco clientes y sin duplicados en segunda sincronización.
 - [x] Aplicar las cinco exclusiones confirmadas, actualizar todos los calendarios vinculados y verificar agencia y enlace público con B-Dental; 17 pruebas correctas, fechas e historial conservados.
