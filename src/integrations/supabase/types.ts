@@ -2348,6 +2348,7 @@ export type Database = {
           accent_color: string | null
           ai_context: string | null
           banner_url: string | null
+          calendar_history_imported_at: string | null
           created_at: string | null
           default_campaign_goal: string | null
           default_instant_form_seller_id: string | null
@@ -2364,6 +2365,7 @@ export type Database = {
           accent_color?: string | null
           ai_context?: string | null
           banner_url?: string | null
+          calendar_history_imported_at?: string | null
           created_at?: string | null
           default_campaign_goal?: string | null
           default_instant_form_seller_id?: string | null
@@ -2380,6 +2382,7 @@ export type Database = {
           accent_color?: string | null
           ai_context?: string | null
           banner_url?: string | null
+          calendar_history_imported_at?: string | null
           created_at?: string | null
           default_campaign_goal?: string | null
           default_instant_form_seller_id?: string | null
