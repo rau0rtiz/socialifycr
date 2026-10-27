@@ -20,8 +20,31 @@ export function isClickUpApproved(status: { status?: string } | null | undefined
   return /^(aprobado|aprobada|approved)$/.test(name);
 }
 
+export function isClickUpCalendarExcluded(status: { status?: string } | null | undefined) {
+  const name = (status?.status ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
+  return isClickUpApproved(status) || /^(subida|subida a milanote)$/.test(name);
+}
+
+const calendarTypes: Record<string, string> = {
+  REEL: 'reel', STORY: 'story', POST: 'post', FOTO: 'foto',
+  CARRUSEL: 'carrusel', 'DISEÑO': 'diseno', DISENO: 'diseno', CORREO: 'correo',
+  TIKTOK: 'tiktok', SHORT: 'short', CONTENIDO: 'otro',
+};
+const calendarPlatforms: Record<string, string> = { IG: 'instagram', TT: 'tiktok', YT: 'youtube', LI: 'linkedin', MULTI: 'multi' };
+
+export function parseCalendarTaskTitle(name: string) {
+  if (/^(?:\[\d+\]\s*)?\[PRODUCCI[ÓO]N\]/i.test(name)) return null;
+  const match = name.match(/^(?:\[\d+\]\s*)?\[([A-ZÑ]+)(?:\s*·\s*([A-Z]+))?\]\s*(.+)$/i);
+  if (!match) return { contentType: 'otro', platform: null, title: name.trim() };
+  return {
+    contentType: calendarTypes[match[1].toUpperCase()] ?? 'otro',
+    platform: match[2] ? (calendarPlatforms[match[2].toUpperCase()] ?? null) : null,
+    title: match[3].trim() || name,
+  };
+}
+
 export function shouldShowCalendarPiece(item: { publish_date?: string | null; clickup_approved?: boolean }) {
-  return Boolean(item.publish_date) || !item.clickup_approved;
+  return !item.clickup_approved;
 }
 
 export function calendarDeliveryPatch(date: string | null) {
