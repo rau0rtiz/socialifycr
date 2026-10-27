@@ -116,15 +116,23 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
   if (existingError) throw existingError;
   const byTask = new Map((existing || []).map((r: { id: string; clickup_task_id: string; publish_date: string | null }) => [String(r.clickup_task_id), r]));
 
+  // Claim once per client before any writes: concurrent runs and interrupted imports
+  // must never reapply historical dates over later PM scheduling decisions.
+  const { data: claimed, error: claimError } = await admin.from('clients')
+    .update({ calendar_history_imported_at: new Date().toISOString() })
+    .eq('id', cfg.client_id).is('calendar_history_imported_at', null).select('id');
+  if (claimError) throw claimError;
+  const initialHistoryImport = Boolean(claimed?.length);
+
   let created = 0, updated = 0, skipped = 0, deleted = 0;
   let datesUnavailable = 0;
   const approvalFields = async (task: any, dated: boolean) => {
     if (!isClickUpCalendarExcluded(task.status)) return {};
-    let patch = calendarFinalStatusPatch(task, null, dated ? 'preserve' : null);
-    if (!dated && !('publish_date' in patch)) {
+    let patch = calendarFinalStatusPatch(task, null, dated ? 'preserve' : null, initialHistoryImport);
+    if (initialHistoryImport && !dated && !('publish_date' in patch)) {
       try {
         const history = await cuFetch(`/task/${task.id}/time_in_status`);
-        patch = calendarFinalStatusPatch(task, history.current_status?.total_time?.since ?? history.current_total?.since);
+        patch = calendarFinalStatusPatch(task, history.current_status?.total_time?.since ?? history.current_total?.since, null, initialHistoryImport);
       } catch (e) {
         console.warn('[sync] status date unavailable', task.id, (e as Error).message);
       }
@@ -192,7 +200,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
           await updateLinked(row, t, fields);
           updated += 1;
         } else {
-          // Final tasks remain visible and use their verified completion date if unscheduled.
+          // Final tasks remain visible; historical dating is restricted to the first import.
           if (excluded || !parsed) {
             skipped += 1;
             continue;

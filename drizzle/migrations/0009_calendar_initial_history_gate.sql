@@ -1,0 +1,3 @@
+ALTER TABLE public.clients ADD COLUMN calendar_history_imported_at timestamptz;
+COMMENT ON COLUMN public.clients.calendar_history_imported_at IS 'One-time historical date import claim. Non-null permanently disables automatic publication dates on ClickUp sync; set before processing to fail closed on interrupted syncs.';
+UPDATE public.clients c SET calendar_history_imported_at = now() WHERE EXISTS (SELECT 1 FROM public.content_calendar_items i WHERE i.client_id = c.id) OR EXISTS (SELECT 1 FROM public.client_clickup_config cfg WHERE cfg.client_id = c.id);

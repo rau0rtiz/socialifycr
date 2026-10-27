@@ -2,16 +2,27 @@ import { describe, expect, it } from 'vitest';
 import { listBelongsToSpace, calendarFinalStatusPatch, calendarSyncFields, calendarTaskPayload, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, parseCalendarTaskTitle, shouldShowCalendarPiece, calendarDeliveryPatch, calendarSpaceListIds, calendarSpaceConfigFields } from '../../supabase/functions/_shared/calendar-clickup-rules';
 
 describe('calendar ClickUp destination', () => {
-  it('marks final pieces approved and schedules on the actual completion date in Costa Rica', () => {
-    expect(calendarFinalStatusPatch({ status: { status: 'subido', type: 'closed' }, date_closed: String(Date.parse('2026-10-26T03:00:00Z')) })).toEqual({ status: 'aprobado', publish_date: '2026-10-25' });
-    expect(calendarFinalStatusPatch({ status: { status: 'aprobado & milanote', type: 'done' }, date_done: String(Date.parse('2026-10-26T18:00:00Z')) })).toEqual({ status: 'aprobado', publish_date: '2026-10-26' });
+  it('dates historical final pieces only during the initial client import in Costa Rica', () => {
+    expect(calendarFinalStatusPatch({ status: { status: 'subido', type: 'closed' }, date_closed: String(Date.parse('2026-10-26T03:00:00Z')) }, null, null, true)).toEqual({ status: 'aprobado', publish_date: '2026-10-25' });
+    expect(calendarFinalStatusPatch({ status: { status: 'aprobado & milanote', type: 'done' }, date_done: String(Date.parse('2026-10-26T18:00:00Z')) }, null, null, true)).toEqual({ status: 'aprobado', publish_date: '2026-10-26' });
+  });
+  it('never assigns a date when an unscheduled piece becomes approved after initial import', () => {
+    expect(calendarFinalStatusPatch({ status: { status: 'aprobado', type: 'done' }, date_done: String(Date.parse('2026-10-27T18:00:00Z')) }, null, null, false)).toEqual({ status: 'aprobado' });
+  });
+  it('never restores a date after Ale returns an approved piece to backlog', () => {
+    const piece = { publish_date: '2026-10-29', status: 'pendiente' };
+    const backlog = { ...piece, ...calendarDeliveryPatch(null) };
+    const patch = calendarFinalStatusPatch({ status: { status: 'subida a milanote', type: 'closed' }, date_closed: String(Date.parse('2026-10-27T18:00:00Z')) }, null, backlog.publish_date);
+    expect({ ...backlog, ...patch }).toEqual({ publish_date: null, status: 'aprobado' });
   });
   it('does not invent completion dates or treat editing dates as approval dates', () => {
     expect(calendarFinalStatusPatch({ status: { status: 'aprobado', type: 'custom' } })).toEqual({ status: 'aprobado' });
     expect(calendarFinalStatusPatch({ status: { status: 'editar', type: 'custom' } })).toEqual({});
   });
   it('preserves a manually assigned delivery date when ClickUp marks the task final', () => {
-    expect(calendarFinalStatusPatch({ status: { status: 'subido', type: 'closed' }, date_closed: String(Date.parse('2026-10-26T18:00:00Z')) }, null, '2026-11-02')).toEqual({ status: 'aprobado' });
+    const task = { status: { status: 'subido', type: 'closed' }, date_closed: String(Date.parse('2026-10-26T18:00:00Z')) };
+    expect(calendarFinalStatusPatch(task, null, '2026-11-02', true)).toEqual({ status: 'aprobado' });
+    expect({ publish_date: '2026-11-02', sort: 4, ...calendarFinalStatusPatch(task, null, '2026-11-02') }).toEqual({ publish_date: '2026-11-02', sort: 4, status: 'aprobado' });
   });
   it('deletes the calendar piece when ClickUp confirms VIDEITO PRUEBA no longer exists', () => {
     expect(isClickUpTaskDeleted(404, JSON.stringify({ err: 'Task not found, deleted', ECODE: 'ITEM_013' }))).toBe(true);
