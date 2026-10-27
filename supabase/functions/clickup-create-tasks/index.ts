@@ -1,7 +1,7 @@
 // ClickUp create-tasks: crea una task por pieza grabada (production_sheet_shots con done=true).
 // Si la pieza ya tiene clickup_task_id, hace PUT para actualizarla.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { calendarSyncFields, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, calendarSpaceListIds, parseCalendarTaskTitle } from '../_shared/calendar-clickup-rules.ts';
+import { calendarSyncFields, calendarFinalStatusPatch, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, calendarSpaceListIds, parseCalendarTaskTitle } from '../_shared/calendar-clickup-rules.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -110,14 +110,40 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
 
   const { data: existing, error: existingError } = await admin
     .from('content_calendar_items')
-    .select('id, clickup_task_id')
+    .select('id, clickup_task_id, publish_date')
     .eq('client_id', cfg.client_id)
     .not('clickup_task_id', 'is', null);
   if (existingError) throw existingError;
-  const byTask = new Map((existing || []).map((r: { id: string; clickup_task_id: string }) => [String(r.clickup_task_id), r]));
+  const byTask = new Map((existing || []).map((r: { id: string; clickup_task_id: string; publish_date: string | null }) => [String(r.clickup_task_id), r]));
 
   let created = 0, updated = 0, skipped = 0, deleted = 0;
-  const refreshLinkedTask = async (row: { id: string; clickup_task_id: string }) => {
+  let datesUnavailable = 0;
+  const approvalFields = async (task: any, dated: boolean) => {
+    if (!isClickUpCalendarExcluded(task.status)) return {};
+    let patch = calendarFinalStatusPatch(task);
+    if (!dated && !('publish_date' in patch)) {
+      try {
+        const history = await cuFetch(`/task/${task.id}/time_in_status`);
+        patch = calendarFinalStatusPatch(task, history.current_status?.total_time?.since);
+      } catch (e) {
+        console.warn('[sync] status date unavailable', task.id, (e as Error).message);
+      }
+      if (!('publish_date' in patch)) datesUnavailable += 1;
+    }
+    return patch;
+  };
+  const updateLinked = async (row: { id: string; publish_date: string | null }, task: any, fields: Record<string, unknown>) => {
+    const { publish_date, ...approval } = await approvalFields(task, Boolean(row.publish_date)) as { publish_date?: string; status?: string };
+    const { error } = await admin.from('content_calendar_items').update({ ...fields, ...approval })
+      .eq('id', row.id).eq('client_id', cfg.client_id);
+    if (error) throw error;
+    if (!row.publish_date && publish_date) {
+      const { error: dateError } = await admin.from('content_calendar_items').update({ publish_date })
+        .eq('id', row.id).eq('client_id', cfg.client_id).is('publish_date', null);
+      if (dateError) throw dateError;
+    }
+  };
+  const refreshLinkedTask = async (row: { id: string; clickup_task_id: string; publish_date: string | null }) => {
     await new Promise((resolve) => setTimeout(resolve, 750));
     let task;
     try {
@@ -130,10 +156,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
       deleted += 1;
       return;
     }
-    const { error } = await admin.from('content_calendar_items')
-      .update({ clickup_approved: isClickUpCalendarExcluded(task.status) })
-      .eq('id', row.id).eq('client_id', cfg.client_id);
-    if (error) throw error;
+    await updateLinked(row, task, { clickup_approved: !parseCalendarTaskTitle(String(task.name || '')) });
     updated += 1;
   };
   // Legacy production exports may have no configured space. Only inspect their already-linked tasks.
@@ -142,7 +165,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
     for (const row of rows) {
       await refreshLinkedTask(row);
     }
-    return { client_id: cfg.client_id, created, updated, skipped, deleted };
+    return { client_id: cfg.client_id, created, updated, skipped, deleted, dates_unavailable: datesUnavailable };
   }
   const seenTasks = new Set<string>();
   const statusCounts: Record<string, number> = {};
@@ -158,15 +181,13 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
         statusCounts[statusName] = (statusCounts[statusName] ?? 0) + 1;
         const row = byTask.get(String(t.id));
         const parsed = parseCalendarTaskTitle(String(t.name || ''));
-        const excluded = isClickUpCalendarExcluded(t.status) || !parsed;
+        const excluded = !parsed;
         const fields = { ...calendarSyncFields(t, parsed?.title ?? String(t.name || '')), clickup_approved: excluded };
         if (row) {
-          // Delivery dates belong exclusively to the calendar, even when unset.
-          const { error } = await admin.from('content_calendar_items').update(fields).eq('id', row.id).eq('client_id', cfg.client_id);
-          if (error) throw new Error(`No se pudo actualizar ${t.id}: ${error.message}`);
+          await updateLinked(row, t, fields);
           updated += 1;
         } else {
-          // Approved tasks never enter the backlog; retain existing pieces and history above.
+          // Final tasks remain visible and use their verified completion date if unscheduled.
           if (excluded || !parsed) {
             skipped += 1;
             continue;
@@ -182,6 +203,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
             platform: parsed.platform,
             publish_date: null,
             status: mapClickUpStatus(t.status),
+            ...await approvalFields(t, false),
           });
           if (error) throw new Error(`No se pudo importar ${t.id}: ${error.message}`);
           created += 1;
@@ -195,7 +217,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
   for (const row of byTask.values()) {
     if (!seenTasks.has(row.clickup_task_id)) await refreshLinkedTask(row);
   }
-  return { client_id: cfg.client_id, created, updated, skipped, deleted, status_counts: statusCounts };
+  return { client_id: cfg.client_id, created, updated, skipped, deleted, dates_unavailable: datesUnavailable, status_counts: statusCounts };
 }
 
 async function syncCalendar(reqBody: { client_id?: string }) {
