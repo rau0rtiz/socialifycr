@@ -25,7 +25,7 @@ describe('calendar ClickUp destination', () => {
     expect(shouldShowCalendarPiece({ publish_date: '2026-10-25', clickup_approved: true })).toBe(false);
     expect(shouldShowCalendarPiece({ publish_date: null, clickup_approved: false })).toBe(true);
   });
-  it.each(['Aprobado', 'subida', 'subida a Milanote'])('excludes the confirmed ClickUp status %s', (status) => {
+  it.each(['Aprobado', 'subida', 'subida a Milanote', 'subido', 'aprobado & milanote'])('excludes the confirmed ClickUp status %s', (status) => {
     expect(isClickUpCalendarExcluded({ status })).toBe(true);
   });
   it.each(['en edición', 'pre-aprobación', 'no aprobado', 'por grabar'])('includes every other status %s', (status) => {
