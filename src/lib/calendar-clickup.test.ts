@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { listBelongsToSpace, calendarSyncFields, calendarTaskPayload, isClickUpApproved, isClickUpCalendarExcluded, parseCalendarTaskTitle, shouldShowCalendarPiece, calendarDeliveryPatch, calendarSpaceListIds, calendarSpaceConfigFields } from '../../supabase/functions/_shared/calendar-clickup-rules';
+import { listBelongsToSpace, calendarSyncFields, calendarTaskPayload, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, parseCalendarTaskTitle, shouldShowCalendarPiece, calendarDeliveryPatch, calendarSpaceListIds, calendarSpaceConfigFields } from '../../supabase/functions/_shared/calendar-clickup-rules';
 
 describe('calendar ClickUp destination', () => {
+  it('deletes the calendar piece when ClickUp confirms VIDEITO PRUEBA no longer exists', () => {
+    expect(isClickUpTaskDeleted(404, JSON.stringify({ err: 'Task not found, deleted', ECODE: 'ITEM_013' }))).toBe(true);
+  });
+  it.each([401, 403, 429, 500])('never deletes calendar pieces on ClickUp error %s', (status) => {
+    expect(isClickUpTaskDeleted(status, JSON.stringify({ err: 'Task not found, deleted', ECODE: 'ITEM_013' }))).toBe(false);
+  });
+  it('never treats a missing list, unavailable task permission, or invalid body as confirmed deletion', () => {
+    expect(isClickUpTaskDeleted(404, JSON.stringify({ err: 'List not found', ECODE: 'ITEM_013' }))).toBe(false);
+    expect(isClickUpTaskDeleted(404, JSON.stringify({ err: 'Task not found', ECODE: 'ACCESS_DENIED' }))).toBe(false);
+    expect(isClickUpTaskDeleted(404, 'Not found')).toBe(false);
+  });
   it('configures the whole client space without a production list filter', () => {
     expect(calendarSpaceConfigFields({ id: '123', name: 'B-Dental' })).toEqual({ space_id: '123', space_name: 'B-Dental', list_id: null, list_name: null });
   });

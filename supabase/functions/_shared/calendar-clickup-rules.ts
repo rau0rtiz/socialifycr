@@ -25,6 +25,17 @@ export function isClickUpCalendarExcluded(status: { status?: string } | null | u
   return isClickUpApproved(status) || /^(subida|subida a milanote|subido|aprobado\s*&\s*milanote)$/.test(name);
 }
 
+// A missing list entry or a permissions/network failure is not proof of deletion.
+export function isClickUpTaskDeleted(status: number, details: string) {
+  if (status !== 404) return false;
+  try {
+    const body = JSON.parse(details);
+    return body.ECODE === 'ITEM_013' && /^task not found(?:, deleted)?$/i.test(String(body.err ?? '').trim());
+  } catch {
+    return false;
+  }
+}
+
 const calendarTypes: Record<string, string> = {
   REEL: 'reel', STORY: 'story', POST: 'post', FOTO: 'foto',
   CARRUSEL: 'carrusel', 'DISEÑO': 'diseno', DISENO: 'diseno', CORREO: 'correo',
