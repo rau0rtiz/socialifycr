@@ -124,7 +124,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
     if (!dated && !('publish_date' in patch)) {
       try {
         const history = await cuFetch(`/task/${task.id}/time_in_status`);
-        patch = calendarFinalStatusPatch(task, history.current_status?.total_time?.since);
+        patch = calendarFinalStatusPatch(task, history.current_status?.total_time?.since ?? history.current_total?.since);
       } catch (e) {
         console.warn('[sync] status date unavailable', task.id, (e as Error).message);
       }
@@ -149,6 +149,11 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
     try {
       task = await cuFetch(`/task/${row.clickup_task_id}`);
     } catch (e) {
+      if (e instanceof ClickUpError && e.status === 404 && !isClickUpTaskDeleted(e.status, e.details)) {
+        console.warn('[sync] unverifiable missing task retained', row.clickup_task_id, e.details);
+        skipped += 1;
+        return;
+      }
       if (!(e instanceof ClickUpError) || !isClickUpTaskDeleted(e.status, e.details)) throw e;
       const { error } = await admin.from('content_calendar_items').delete()
         .eq('id', row.id).eq('client_id', cfg.client_id).eq('clickup_task_id', row.clickup_task_id);
