@@ -81,7 +81,7 @@ async function callMeta(action: string, params: Record<string, any> = {}) {
   return data;
 }
 
-export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClose, onSent }: Props) {
+export function SendToClickUpDialog({ sheetId, sheetTitle, clientName, defaults, open, onClose, onSent }: Props) {
   const [workspaceId, setWorkspaceId] = useState<string>('');
   const [spaceId, setSpaceId] = useState<string>(defaults?.spaceId || '');
   const [listId, setListId] = useState<string>(defaults?.listId || '');

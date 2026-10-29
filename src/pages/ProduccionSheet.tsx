@@ -893,6 +893,7 @@ export default function ProduccionSheet() {
           <SendToClickUpDialog
             sheetId={sheetId}
             sheetTitle={data.sheet.title || ''}
+            clientName={clientName}
             defaults={{
               spaceId: data.sheet.clickup_space_id,
               spaceName: data.sheet.clickup_space_name,
