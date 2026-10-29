@@ -17,6 +17,7 @@ import { Loader2, Send, Plus, Link2, FileText, ChevronUp, ChevronDown } from 'lu
 interface Props {
   sheetId: string;
   sheetTitle: string;
+  clientName?: string;
   defaults?: {
     spaceId?: string | null;
     spaceName?: string | null;
@@ -80,7 +81,7 @@ async function callMeta(action: string, params: Record<string, any> = {}) {
   return data;
 }
 
-export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClose, onSent }: Props) {
+export function SendToClickUpDialog({ sheetId, sheetTitle, clientName, defaults, open, onClose, onSent }: Props) {
   const [workspaceId, setWorkspaceId] = useState<string>('');
   const [spaceId, setSpaceId] = useState<string>(defaults?.spaceId || '');
   const [listId, setListId] = useState<string>(defaults?.listId || '');
@@ -174,9 +175,22 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
     enabled: open && !!workspaceId,
     queryFn: async () => {
       const d = await callMeta('spaces', { team_id: workspaceId });
-      return (d.spaces || []).map((s: any) => ({ id: s.id, name: s.name }));
+      return (d.spaces || [])
+        .map((s: any) => ({ id: s.id, name: s.name }))
+        .sort((a: Option, b: Option) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
     },
   });
+
+  const [spaceSearch, setSpaceSearch] = useState('');
+  // Auto-pick the client's own space by name when the sheet has none saved.
+  useEffect(() => {
+    if (!open || spaceId || !clientName || !spaces.data?.length) return;
+    const norm = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const c = norm(clientName);
+    const hit = spaces.data.find(s => norm(s.name) === c)
+      || spaces.data.find(s => { const n = norm(s.name); return n.length > 3 && (c.includes(n) || n.includes(c)); });
+    if (hit) setSpaceId(hit.id);
+  }, [open, spaceId, clientName, spaces.data]);
 
   const lists = useQuery<Option[]>({
     queryKey: ['cu-all-lists', spaceId],
@@ -331,8 +345,18 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, defaults, open, onClo
             <Field label="Space" loading={spaces.isFetching} disabled={!workspaceId}>
               <Select value={spaceId} onValueChange={(v) => { setSpaceId(v); setListId(''); }} disabled={!workspaceId}>
                 <SelectTrigger><SelectValue placeholder="Selecciona space" /></SelectTrigger>
-                <SelectContent>
-                  {(spaces.data || []).map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
+                <SelectContent className="max-h-72">
+                  <div className="p-1" onKeyDown={(e) => e.stopPropagation()}>
+                    <Input
+                      value={spaceSearch}
+                      onChange={(e) => setSpaceSearch(e.target.value)}
+                      placeholder="Buscar space…"
+                      className="h-8"
+                    />
+                  </div>
+                  {(spaces.data || [])
+                    .filter(o => !spaceSearch || o.name.toLowerCase().includes(spaceSearch.toLowerCase()) || o.id === spaceId)
+                    .map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
