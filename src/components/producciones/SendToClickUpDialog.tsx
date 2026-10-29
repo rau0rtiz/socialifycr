@@ -163,6 +163,11 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, clientName, defaults,
     },
   });
 
+  // Fallback to the SOCIALIFY workspace so spaces still load if the workspace lookup fails.
+  useEffect(() => {
+    if (open && !workspaceId && workspaces.isError) setWorkspaceId('9011721900');
+  }, [open, workspaceId, workspaces.isError]);
+
   useEffect(() => {
     if (!workspaceId && workspaces.data && workspaces.data.length > 0) {
       const sf = workspaces.data.find(w => /socialify/i.test(w.name)) || workspaces.data[0];
@@ -340,6 +345,15 @@ export function SendToClickUpDialog({ sheetId, sheetTitle, clientName, defaults,
               <div className="h-10 px-3 rounded-md border bg-muted/40 flex items-center text-sm">
                 <span className="truncate">{workspaces.data?.find(w => w.id === workspaceId)?.name || 'SOCIALIFY'}</span>
               </div>
+              {(workspaces.isError || spaces.isError) && (
+                <button
+                  type="button"
+                  className="mt-1 text-xs text-destructive underline"
+                  onClick={() => { workspaces.refetch(); spaces.refetch(); }}
+                >
+                  No se pudo cargar ClickUp · Reintentar
+                </button>
+              )}
             </Field>
 
             <Field label="Space" loading={spaces.isFetching} disabled={!workspaceId}>
