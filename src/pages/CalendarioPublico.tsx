@@ -213,13 +213,13 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
               </div> : <div className="mb-4"><StatusChip status={item.status} /></div>}
               {media === 'cover' && item.thumbnail_url ? <img src={item.thumbnail_url} alt="Portada del reel" className="mx-auto block max-h-[58dvh] max-w-full rounded-lg object-contain" /> : (item.video_url || ['foto', 'post', 'carrusel', 'diseno'].includes(item.content_type ?? '') ? <VideoPlayer item={item} /> : <div className="flex aspect-[9/16] max-h-[50dvh] w-full items-center justify-center rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">El video todavía está en preparación. Cuando esté listo, podrás verlo aquí.</div>)}
             </div>
-            <div className="min-w-0 space-y-4 pb-24 md:pb-0">
+            <div className="min-w-0 space-y-4">
             <div className="space-y-3 border-b border-border pb-4">
               <label htmlFor="calendar-review-name" className="block text-xs font-medium text-muted-foreground">Revisado por</label>
               <Input ref={nameRef} id="calendar-review-name" maxLength={80} value={name} placeholder="Tu nombre" aria-invalid={!!validation} onChange={(e) => { setName(e.target.value); setValidation(''); }} />
               {validation && <p role="alert" className="text-sm text-destructive">{validation}</p>}
               {media === 'video' && mode === 'changes' && <Textarea rows={4} autoFocus value={body} placeholder="¿Qué te gustaría cambiar?" onChange={(e) => setBody(e.target.value)} />}
-              {media === 'video' && <div className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-2 gap-2 border-t border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:border-0 md:bg-transparent md:p-0">
+              {media === 'video' && <div className="sticky bottom-0 z-20 -mx-4 grid grid-cols-2 gap-2 border-t border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
                 {mode === 'changes' ? (
                   <>
                     <Button variant="outline" onClick={() => setMode('idle')} disabled={busy}>Cancelar</Button>
@@ -242,7 +242,7 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                   <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
                 </div>
                 {coverMode === 'changes' && <Textarea rows={3} autoFocus value={coverBody} placeholder="¿Qué te gustaría cambiar de la portada?" onChange={(e) => setCoverBody(e.target.value)} />}
-                <div className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-2 gap-2 border-t border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:border-0 md:bg-transparent md:p-0">
+                <div className="sticky bottom-0 z-20 -mx-4 grid grid-cols-2 gap-2 border-t border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
                   {coverMode === 'changes' ? (
                     <>
                       <Button variant="outline" onClick={() => setCoverMode('idle')} disabled={busy}>Cancelar</Button>
