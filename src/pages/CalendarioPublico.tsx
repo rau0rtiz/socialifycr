@@ -61,62 +61,81 @@ export default function CalendarioPublico() {
   if (error || !data) return <div className="shared-calendar shared-calendar-page flex items-center justify-center bg-background p-6 text-center text-muted-foreground">Este enlace no es válido o ya no está disponible.</div>;
 
   const open = data.items.find((i) => i.id === openId) ?? null;
-  const pending = data.items.filter((i) => i.status !== 'aprobado').length;
+  const pendingItems = data.items.filter(needsReview);
+  const pending = pendingItems.length;
   const unscheduled = data.items.filter((i) => !i.publish_date);
 
   const monthItems = data.items.filter(i => i.publish_date?.startsWith(`${ym?.y}-${String((ym?.m ?? 0) + 1).padStart(2, '0')}`));
   const shown = [...monthItems, ...unscheduled];
-  const shift = (delta: number) => { if (!ym) return; const d = new Date(Date.UTC(ym.y, ym.m + delta, 1)); setYm({ y: d.getUTCFullYear(), m: d.getUTCMonth() }); };
+  const shift = (delta: number) => { if (!ym) return; const d = new Date(Date.UTC(ym.y, ym.m + delta, 1)); setYm({ y: d.getUTCFullYear(), m: d.getUTCMonth() }); setDay(null); };
+  const dayItems = day ? data.items.filter((i) => i.publish_date === day) : [];
+  const segBtn = (active: boolean) => `flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold ${active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`;
   return (
     <div className="shared-calendar shared-calendar-page bg-background text-foreground">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto max-w-6xl px-4 py-5 sm:py-6">
-          <div className="flex flex-col items-center gap-1 text-center">
-            <img src={socialifyLogo.url} alt="Socialify" className="h-5 w-auto sm:h-6" />
-            <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.35em] text-primary">Calendario de publicación</p>
-            {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="mt-4 h-20 w-auto max-w-[62vw] rounded-2xl object-contain sm:h-24 sm:max-w-sm" />}
-            <h1 className="agency-gradient-text mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{data.client?.name}</h1>
+      <header className="mx-auto max-w-6xl px-4 pt-5">
+        <div className="flex items-center justify-center"><img src={socialifyLogo.url} alt="Socialify" className="h-5 w-auto" /></div>
+        <div className="mt-4 flex items-center gap-3">
+          {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="h-14 w-14 shrink-0 rounded-xl object-contain sm:h-16 sm:w-16" />}
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">{data.client?.name}</h1>
+            <p className="text-sm text-muted-foreground">Calendario de publicación</p>
           </div>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="mr-auto min-w-0 text-xs text-muted-foreground">{data.items.length} piezas · {pending} por revisar</div>
-            <Button variant="outline" size="icon" aria-label="Actualizar calendario" onClick={refresh} disabled={isFetching} className="h-11 w-11 shrink-0 md:hidden">
-              <RefreshCw className={isFetching ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
-            </Button>
-          </div>
+          <Button variant="outline" size="icon" aria-label="Actualizar calendario" onClick={refresh} disabled={isFetching} className="h-11 w-11 shrink-0 rounded-xl">
+            <RefreshCw className={isFetching ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
+          </Button>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-3 py-5 sm:px-4">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="icon" aria-label="Mes anterior" onClick={() => shift(-1)}><ChevronLeft className="h-4 w-4" /></Button>
-            <h2 className="text-lg font-semibold first-letter:uppercase">{ym && monthLabel(ym.y, ym.m)}</h2>
-            <Button variant="outline" size="icon" aria-label="Mes siguiente" onClick={() => shift(1)}><ChevronRight className="h-4 w-4" /></Button>
-          </div>
-          <div className="flex gap-1" aria-label="Vista">
-            <Button size="sm" variant={view === 'pieces' ? 'default' : 'ghost'} onClick={() => setView('pieces')}><LayoutGrid className="mr-2 h-4 w-4" />Piezas</Button>
-            <Button size="sm" variant={view === 'calendar' ? 'default' : 'ghost'} onClick={() => setView('calendar')}><CalendarDays className="mr-2 h-4 w-4" />Calendario</Button>
-          </div>
-          <CalendarInstall token={token} />
-        </div>
-        {view === 'calendar' && ym && <CalendarMonth mobileMonthGrid year={ym.y} month={ym.m} onMonthChange={(y, m) => setYm({ y, m })} items={data.items} onOpen={(i) => setOpenId(i.id)} />}
-        {(view === 'pieces' || unscheduled.length > 0) && (
-          <section className={view === 'calendar' ? 'mt-8' : ''}>
-            <h3 className="mb-4 text-sm font-medium text-muted-foreground">{view === 'calendar' ? 'Por programar' : `${shown.length} piezas · ${pending} por revisar`}</h3>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {(view === 'calendar' ? unscheduled : shown).map(it => (
-                <Button key={it.id} variant="ghost" onClick={() => setOpenId(it.id)} className="group block h-auto min-w-0 overflow-hidden rounded-lg border border-border bg-card p-0 text-left whitespace-normal hover:bg-card">
-                  <CalendarThumb item={it} className="aspect-[3/4] w-full" />
-                  <div className="space-y-2 p-3">
-                    <StatusPill status={it.status} />
-                    <div className="line-clamp-2 min-h-10 text-sm font-semibold">{it.title}</div>
-                    <div className="text-xs text-muted-foreground">{it.publish_date ? dayLabel(it.publish_date) : 'Por programar'}</div>
-                  </div>
-                </Button>
-              ))}
-            </div>
+      <main className="mx-auto max-w-6xl px-3 pb-10 pt-4 sm:px-4">
+        {view === 'review' ? (
+          <section>
+            <button type="button" onClick={() => setView('calendar')} aria-label="Volver al calendario" className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl"><ChevronLeft className="h-6 w-6" /></button>
+            <h2 className="mt-1 text-2xl font-bold">Por revisar</h2>
+            <p className="mb-4 text-sm text-muted-foreground">{pending} {pending === 1 ? 'pieza pendiente' : 'piezas pendientes'}</p>
+            {pending === 0 ? (
+              <div className="rounded-2xl border border-border bg-card p-8 text-center">
+                <p className="text-lg font-semibold">¡Todo al día!</p>
+                <p className="mt-1 text-sm text-muted-foreground">No tenés publicaciones pendientes de revisión.</p>
+                <Button className="mt-4" onClick={() => setView('calendar')}>Volver al calendario</Button>
+              </div>
+            ) : <div className="grid gap-3 md:grid-cols-2">{pendingItems.map((it) => <PieceCard key={it.id} item={it} onOpen={() => setOpenId(it.id)} />)}</div>}
           </section>
-        )}
-        <p className="mt-6 text-center text-xs text-muted-foreground">Socialify</p>
+        ) : <>
+          <div className="grid grid-cols-2 gap-1 rounded-2xl border border-border bg-card p-1" aria-label="Vista">
+            <button type="button" className={segBtn(view === 'calendar')} aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}><CalendarDays className="h-4 w-4" />Calendario</button>
+            <button type="button" className={segBtn(view === 'pieces')} aria-pressed={view === 'pieces'} onClick={() => setView('pieces')}><LayoutGrid className="h-4 w-4" />Piezas</button>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm"><Layers className="h-4 w-4 text-muted-foreground" /><b>{data.items.length}</b> piezas</div>
+            <button type="button" onClick={() => setView('review')} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-primary/40 bg-primary/15 px-3 text-sm font-semibold text-primary">
+              <Clock className="h-4 w-4" />{pending} por revisar<ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-2">
+            <Button variant="outline" size="icon" aria-label="Mes anterior" className="h-11 w-11 rounded-xl" onClick={() => shift(-1)}><ChevronLeft className="h-4 w-4" /></Button>
+            <h2 className="text-lg font-semibold first-letter:uppercase">{ym && monthLabel(ym.y, ym.m)}</h2>
+            <Button variant="outline" size="icon" aria-label="Mes siguiente" className="h-11 w-11 rounded-xl" onClick={() => shift(1)}><ChevronRight className="h-4 w-4" /></Button>
+          </div>
+          <div className="mt-4">
+            {view === 'calendar' && ym && <>
+              <PublicMonthGrid year={ym.y} month={ym.m} items={data.items} selected={day} onSelect={setDay} onOpen={(i) => setOpenId(i.id)} />
+              {day && dayItems.length > 0 && (
+                <section className="mt-5">
+                  <h3 className="mb-3 text-sm font-semibold first-letter:uppercase">Publicaciones del {dayLabel(day)}</h3>
+                  <div className="grid gap-3 md:grid-cols-2">{dayItems.map((it) => <PieceCard key={it.id} item={it} onOpen={() => setOpenId(it.id)} />)}</div>
+                </section>
+              )}
+            </>}
+            {(view === 'pieces' || unscheduled.length > 0) && (
+              <section className={view === 'calendar' ? 'mt-8' : ''}>
+                <h3 className="mb-3 text-sm font-medium text-muted-foreground">{view === 'calendar' ? 'Por programar' : `${shown.length} piezas este mes`}</h3>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {(view === 'calendar' ? unscheduled : shown).map(it => <PieceCard key={it.id} item={it} onOpen={() => setOpenId(it.id)} />)}
+                </div>
+              </section>
+            )}
+          </div>
+          <div className="mt-8 flex justify-center"><CalendarInstall token={token} /></div>
+        </>}
       </main>
       {open && (
         <PieceDialog
