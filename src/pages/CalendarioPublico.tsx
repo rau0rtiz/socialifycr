@@ -102,11 +102,11 @@ export default function CalendarioPublico() {
             ) : <div className="grid gap-3 md:grid-cols-2">{pendingItems.map((it) => <PieceCard key={it.id} item={it} onOpen={() => setOpenId(it.id)} />)}</div>}
           </section>
         ) : <>
-          <div className="grid grid-cols-2 gap-1 rounded-2xl border border-border bg-card p-1" aria-label="Vista">
+          <div className="mx-auto grid max-w-md grid-cols-2 gap-1 rounded-2xl border border-border bg-card p-1" aria-label="Vista">
             <button type="button" className={segBtn(view === 'calendar')} aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}><CalendarDays className="h-4 w-4" />Calendario</button>
             <button type="button" className={segBtn(view === 'pieces')} aria-pressed={view === 'pieces'} onClick={() => setView('pieces')}><LayoutGrid className="h-4 w-4" />Piezas</button>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mx-auto mt-3 grid max-w-md grid-cols-2 gap-2">
             <div className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm"><Layers className="h-4 w-4 text-muted-foreground" /><b>{data.items.length}</b> piezas</div>
             <button type="button" onClick={() => setView('review')} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-primary/40 bg-primary/15 px-3 text-sm font-semibold text-primary">
               <Clock className="h-4 w-4" />{pending} por revisar<ChevronRight className="h-4 w-4" />
