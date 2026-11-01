@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight, X, RefreshCw } from 'lucide-react';
+import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight, X, RefreshCw, Layers, Clock } from 'lucide-react';
+import { PieceCard, PublicMonthGrid, needsReview, StatusChip, typeMeta } from '@/components/calendario-publico/PublicPieces';
 import { supabase } from '@/integrations/supabase/client';
 import socialifyLogo from '@/assets/socialify-wordmark.png.asset.json';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
+import { StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { dayLabel, monthLabel, COVER_STATUS_LABEL } from '@/lib/calendar-media';
 import { CalendarHistory } from '@/components/calendario/CalendarHistory';
@@ -39,8 +40,9 @@ export default function CalendarioPublico() {
     else toast.success('Calendario actualizado');
   };
   const [ym, setYm] = useState<{ y: number; m: number } | null>(null);
-  const [view, setView] = useState<'pieces' | 'calendar'>('calendar');
+  const [view, setView] = useState<'pieces' | 'calendar' | 'review'>('calendar');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [day, setDay] = useState<string | null>(null);
 
   useEffect(() => {
     let m = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
@@ -61,62 +63,81 @@ export default function CalendarioPublico() {
   if (error || !data) return <div className="shared-calendar shared-calendar-page flex items-center justify-center bg-background p-6 text-center text-muted-foreground">Este enlace no es válido o ya no está disponible.</div>;
 
   const open = data.items.find((i) => i.id === openId) ?? null;
-  const pending = data.items.filter((i) => i.status !== 'aprobado').length;
+  const pendingItems = data.items.filter(needsReview);
+  const pending = pendingItems.length;
   const unscheduled = data.items.filter((i) => !i.publish_date);
 
   const monthItems = data.items.filter(i => i.publish_date?.startsWith(`${ym?.y}-${String((ym?.m ?? 0) + 1).padStart(2, '0')}`));
   const shown = [...monthItems, ...unscheduled];
-  const shift = (delta: number) => { if (!ym) return; const d = new Date(Date.UTC(ym.y, ym.m + delta, 1)); setYm({ y: d.getUTCFullYear(), m: d.getUTCMonth() }); };
+  const shift = (delta: number) => { if (!ym) return; const d = new Date(Date.UTC(ym.y, ym.m + delta, 1)); setYm({ y: d.getUTCFullYear(), m: d.getUTCMonth() }); setDay(null); };
+  const dayItems = day ? data.items.filter((i) => i.publish_date === day) : [];
+  const segBtn = (active: boolean) => `flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold ${active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`;
   return (
     <div className="shared-calendar shared-calendar-page bg-background text-foreground">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto max-w-6xl px-4 py-5 sm:py-6">
-          <div className="flex flex-col items-center gap-1 text-center">
-            <img src={socialifyLogo.url} alt="Socialify" className="h-5 w-auto sm:h-6" />
-            <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.35em] text-primary">Calendario de publicación</p>
-            {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="mt-4 h-20 w-auto max-w-[62vw] rounded-2xl object-contain sm:h-24 sm:max-w-sm" />}
-            <h1 className="agency-gradient-text mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{data.client?.name}</h1>
+      <header className="mx-auto max-w-6xl px-4 pt-5">
+        <div className="flex items-center justify-center"><img src={socialifyLogo.url} alt="Socialify" className="h-5 w-auto" /></div>
+        <div className="mt-4 flex items-center gap-3">
+          {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="h-14 w-14 shrink-0 rounded-xl object-contain sm:h-16 sm:w-16" />}
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">{data.client?.name}</h1>
+            <p className="text-sm text-muted-foreground">Calendario de publicación</p>
           </div>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="mr-auto min-w-0 text-xs text-muted-foreground">{data.items.length} piezas · {pending} por revisar</div>
-            <Button variant="outline" size="icon" aria-label="Actualizar calendario" onClick={refresh} disabled={isFetching} className="h-11 w-11 shrink-0 md:hidden">
-              <RefreshCw className={isFetching ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
-            </Button>
-          </div>
+          <Button variant="outline" size="icon" aria-label="Actualizar calendario" onClick={refresh} disabled={isFetching} className="h-11 w-11 shrink-0 rounded-xl">
+            <RefreshCw className={isFetching ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
+          </Button>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-3 py-5 sm:px-4">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="icon" aria-label="Mes anterior" onClick={() => shift(-1)}><ChevronLeft className="h-4 w-4" /></Button>
-            <h2 className="text-lg font-semibold first-letter:uppercase">{ym && monthLabel(ym.y, ym.m)}</h2>
-            <Button variant="outline" size="icon" aria-label="Mes siguiente" onClick={() => shift(1)}><ChevronRight className="h-4 w-4" /></Button>
-          </div>
-          <div className="flex gap-1" aria-label="Vista">
-            <Button size="sm" variant={view === 'pieces' ? 'default' : 'ghost'} onClick={() => setView('pieces')}><LayoutGrid className="mr-2 h-4 w-4" />Piezas</Button>
-            <Button size="sm" variant={view === 'calendar' ? 'default' : 'ghost'} onClick={() => setView('calendar')}><CalendarDays className="mr-2 h-4 w-4" />Calendario</Button>
-          </div>
-          <CalendarInstall token={token} />
-        </div>
-        {view === 'calendar' && ym && <CalendarMonth mobileMonthGrid year={ym.y} month={ym.m} onMonthChange={(y, m) => setYm({ y, m })} items={data.items} onOpen={(i) => setOpenId(i.id)} />}
-        {(view === 'pieces' || unscheduled.length > 0) && (
-          <section className={view === 'calendar' ? 'mt-8' : ''}>
-            <h3 className="mb-4 text-sm font-medium text-muted-foreground">{view === 'calendar' ? 'Por programar' : `${shown.length} piezas · ${pending} por revisar`}</h3>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {(view === 'calendar' ? unscheduled : shown).map(it => (
-                <Button key={it.id} variant="ghost" onClick={() => setOpenId(it.id)} className="group block h-auto min-w-0 overflow-hidden rounded-lg border border-border bg-card p-0 text-left whitespace-normal hover:bg-card">
-                  <CalendarThumb item={it} className="aspect-[3/4] w-full" />
-                  <div className="space-y-2 p-3">
-                    <StatusPill status={it.status} />
-                    <div className="line-clamp-2 min-h-10 text-sm font-semibold">{it.title}</div>
-                    <div className="text-xs text-muted-foreground">{it.publish_date ? dayLabel(it.publish_date) : 'Por programar'}</div>
-                  </div>
-                </Button>
-              ))}
-            </div>
+      <main className="mx-auto max-w-6xl px-3 pb-10 pt-4 sm:px-4">
+        {view === 'review' ? (
+          <section>
+            <button type="button" onClick={() => setView('calendar')} aria-label="Volver al calendario" className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl"><ChevronLeft className="h-6 w-6" /></button>
+            <h2 className="mt-1 text-2xl font-bold">Por revisar</h2>
+            <p className="mb-4 text-sm text-muted-foreground">{pending} {pending === 1 ? 'pieza pendiente' : 'piezas pendientes'}</p>
+            {pending === 0 ? (
+              <div className="rounded-2xl border border-border bg-card p-8 text-center">
+                <p className="text-lg font-semibold">¡Todo al día!</p>
+                <p className="mt-1 text-sm text-muted-foreground">No tenés publicaciones pendientes de revisión.</p>
+                <Button className="mt-4" onClick={() => setView('calendar')}>Volver al calendario</Button>
+              </div>
+            ) : <div className="grid gap-3 md:grid-cols-2">{pendingItems.map((it) => <PieceCard key={it.id} item={it} onOpen={() => setOpenId(it.id)} />)}</div>}
           </section>
-        )}
-        <p className="mt-6 text-center text-xs text-muted-foreground">Socialify</p>
+        ) : <>
+          <div className="mx-auto grid max-w-md grid-cols-2 gap-1 rounded-2xl border border-border bg-card p-1" aria-label="Vista">
+            <button type="button" className={segBtn(view === 'calendar')} aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}><CalendarDays className="h-4 w-4" />Calendario</button>
+            <button type="button" className={segBtn(view === 'pieces')} aria-pressed={view === 'pieces'} onClick={() => setView('pieces')}><LayoutGrid className="h-4 w-4" />Piezas</button>
+          </div>
+          <div className="mx-auto mt-3 grid max-w-md grid-cols-2 gap-2">
+            <div className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 text-sm"><Layers className="h-4 w-4 text-muted-foreground" /><b>{data.items.length}</b> piezas</div>
+            <button type="button" onClick={() => setView('review')} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-primary/40 bg-primary/15 px-3 text-sm font-semibold text-primary">
+              <Clock className="h-4 w-4" />{pending} por revisar<ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-2">
+            <Button variant="outline" size="icon" aria-label="Mes anterior" className="h-11 w-11 rounded-xl" onClick={() => shift(-1)}><ChevronLeft className="h-4 w-4" /></Button>
+            <h2 className="text-lg font-semibold first-letter:uppercase">{ym && monthLabel(ym.y, ym.m)}</h2>
+            <Button variant="outline" size="icon" aria-label="Mes siguiente" className="h-11 w-11 rounded-xl" onClick={() => shift(1)}><ChevronRight className="h-4 w-4" /></Button>
+          </div>
+          <div className="mt-4">
+            {view === 'calendar' && ym && <>
+              <PublicMonthGrid year={ym.y} month={ym.m} items={data.items} selected={day} onSelect={setDay} onOpen={(i) => setOpenId(i.id)} />
+              {day && dayItems.length > 0 && (
+                <section className="mt-5">
+                  <h3 className="mb-3 text-sm font-semibold first-letter:uppercase">Publicaciones del {dayLabel(day)}</h3>
+                  <div className="grid gap-3 md:grid-cols-2">{dayItems.map((it) => <PieceCard key={it.id} item={it} onOpen={() => setOpenId(it.id)} />)}</div>
+                </section>
+              )}
+            </>}
+            {(view === 'pieces' || unscheduled.length > 0) && (
+              <section className={view === 'calendar' ? 'mt-8' : ''}>
+                <h3 className="mb-3 text-sm font-medium text-muted-foreground">{view === 'calendar' ? 'Por programar' : `${shown.length} piezas este mes`}</h3>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {(view === 'calendar' ? unscheduled : shown).map(it => <PieceCard key={it.id} item={it} onOpen={() => setOpenId(it.id)} />)}
+                </div>
+              </section>
+            )}
+          </div>
+          <div className="mt-8 flex justify-center"><CalendarInstall token={token} /></div>
+        </>}
       </main>
       {open && (
         <PieceDialog
@@ -163,12 +184,15 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="shared-calendar shared-calendar-dialog max-h-[92dvh] w-[calc(100%-24px)] max-w-5xl gap-0 overflow-y-auto rounded-lg border-border bg-background p-0 text-foreground">
+      <DialogContent className="shared-calendar shared-calendar-dialog h-[100dvh] max-h-[100dvh] w-full max-w-5xl gap-0 overflow-y-auto rounded-none border-border bg-background p-0 text-foreground sm:h-auto sm:max-h-[92dvh] sm:w-[calc(100%-24px)] sm:rounded-2xl">
         <DialogHeader className="sticky top-0 z-10 border-b border-border bg-background px-4 py-3 text-left sm:px-6 sm:py-4">
           <div className="flex items-start gap-3">
             <div className="min-w-0">
-              <div className="mb-2 text-[10px] font-semibold uppercase text-primary">Socialify · Revisión de contenido</div>
-              <DialogTitle className="text-base sm:text-lg">{item.title}</DialogTitle>
+              <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                {(() => { const Icon = typeMeta(item.content_type).icon; return <Icon className="h-3.5 w-3.5" />; })()}
+                {typeMeta(item.content_type).label}{item.publish_date && <span className="text-muted-foreground"> · {dayLabel(item.publish_date)}</span>}
+              </div>
+              <DialogTitle className="text-lg font-bold sm:text-xl">{item.title}</DialogTitle>
             </div>
             <DialogClose asChild>
               <Button variant="outline" size="icon" aria-label="Cerrar" className="ml-auto h-11 w-11 shrink-0 rounded-full border-border bg-secondary text-foreground hover:bg-accent sm:h-9 sm:w-9">
@@ -180,24 +204,22 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
         <div className="p-4 sm:p-6">
           <div className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-8">
             <div className="min-w-0 md:sticky md:top-28">
-              {hasCoverReview && <div className="mb-4 grid grid-cols-2 gap-1 rounded-md bg-muted p-1" aria-label="Contenido a revisar">
-                <Button size="sm" variant={media === 'video' ? 'secondary' : 'ghost'} aria-pressed={media === 'video'} onClick={() => setMedia('video')}>Video <StatusPill status={item.status} /></Button>
-                <Button size="sm" variant={media === 'cover' ? 'secondary' : 'ghost'} aria-pressed={media === 'cover'} onClick={() => setMedia('cover')}>Portada <StatusPill status={item.cover_status ?? 'pendiente'} /></Button>
-              </div>}
-              {media === 'cover' && item.thumbnail_url ? <img src={item.thumbnail_url} alt="Portada del reel" className="mx-auto block max-h-[58dvh] max-w-full rounded-lg object-contain" /> : <VideoPlayer item={item} />}
+              {hasCoverReview ? <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl border border-border bg-card p-1" aria-label="Contenido a revisar">
+                {([['video', 'Video', item.status], ['cover', 'Portada', item.cover_status ?? 'pendiente']] as const).map(([k, l, s]) => (
+                  <button key={k} type="button" aria-pressed={media === k} onClick={() => setMedia(k)} className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-sm font-semibold ${media === k ? 'bg-secondary ring-1 ring-primary' : ''}`}>
+                    {l}<StatusChip status={s} label={k === 'cover' ? COVER_STATUS_LABEL[s] : undefined} />
+                  </button>
+                ))}
+              </div> : <div className="mb-4"><StatusChip status={item.status} /></div>}
+              {media === 'cover' && item.thumbnail_url ? <img src={item.thumbnail_url} alt="Portada del reel" className="mx-auto block max-h-[58dvh] max-w-full rounded-lg object-contain" /> : (item.video_url || ['foto', 'post', 'carrusel', 'diseno'].includes(item.content_type ?? '') ? <VideoPlayer item={item} /> : <div className="flex aspect-[9/16] max-h-[50dvh] w-full items-center justify-center rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">El video todavía está en preparación. Cuando esté listo, podrás verlo aquí.</div>)}
             </div>
             <div className="min-w-0 space-y-4">
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="font-semibold">{media === 'cover' ? 'Portada' : hasCoverReview ? 'Video' : 'Pieza'}</span>
-              <StatusPill status={media === 'cover' ? item.cover_status ?? 'pendiente' : item.status} />
-              {item.publish_date && <span className="text-muted-foreground first-letter:uppercase">{dayLabel(item.publish_date)}</span>}
-            </div>
             <div className="space-y-3 border-b border-border pb-4">
               <label htmlFor="calendar-review-name" className="block text-xs font-medium text-muted-foreground">Revisado por</label>
               <Input ref={nameRef} id="calendar-review-name" maxLength={80} value={name} placeholder="Tu nombre" aria-invalid={!!validation} onChange={(e) => { setName(e.target.value); setValidation(''); }} />
               {validation && <p role="alert" className="text-sm text-destructive">{validation}</p>}
               {media === 'video' && mode === 'changes' && <Textarea rows={4} autoFocus value={body} placeholder="¿Qué te gustaría cambiar?" onChange={(e) => setBody(e.target.value)} />}
-              {media === 'video' && <div className="grid grid-cols-2 gap-2">
+              {media === 'video' && <div className="sticky bottom-0 z-20 -mx-4 grid grid-cols-2 gap-2 border-t border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
                 {mode === 'changes' ? (
                   <>
                     <Button variant="outline" onClick={() => setMode('idle')} disabled={busy}>Cancelar</Button>
@@ -220,7 +242,7 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                   <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
                 </div>
                 {coverMode === 'changes' && <Textarea rows={3} autoFocus value={coverBody} placeholder="¿Qué te gustaría cambiar de la portada?" onChange={(e) => setCoverBody(e.target.value)} />}
-                <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+                <div className="sticky bottom-0 z-20 -mx-4 grid grid-cols-2 gap-2 border-t border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
                   {coverMode === 'changes' ? (
                     <>
                       <Button variant="outline" onClick={() => setCoverMode('idle')} disabled={busy}>Cancelar</Button>
