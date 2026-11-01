@@ -204,24 +204,22 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
         <div className="p-4 sm:p-6">
           <div className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:gap-8">
             <div className="min-w-0 md:sticky md:top-28">
-              {hasCoverReview && <div className="mb-4 grid grid-cols-2 gap-1 rounded-md bg-muted p-1" aria-label="Contenido a revisar">
-                <Button size="sm" variant={media === 'video' ? 'secondary' : 'ghost'} aria-pressed={media === 'video'} onClick={() => setMedia('video')}>Video <StatusPill status={item.status} /></Button>
-                <Button size="sm" variant={media === 'cover' ? 'secondary' : 'ghost'} aria-pressed={media === 'cover'} onClick={() => setMedia('cover')}>Portada <StatusPill status={item.cover_status ?? 'pendiente'} /></Button>
-              </div>}
-              {media === 'cover' && item.thumbnail_url ? <img src={item.thumbnail_url} alt="Portada del reel" className="mx-auto block max-h-[58dvh] max-w-full rounded-lg object-contain" /> : <VideoPlayer item={item} />}
+              {hasCoverReview ? <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl border border-border bg-card p-1" aria-label="Contenido a revisar">
+                {([['video', 'Video', item.status], ['cover', 'Portada', item.cover_status ?? 'pendiente']] as const).map(([k, l, s]) => (
+                  <button key={k} type="button" aria-pressed={media === k} onClick={() => setMedia(k)} className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-sm font-semibold ${media === k ? 'bg-secondary ring-1 ring-primary' : ''}`}>
+                    {l}<StatusChip status={s} label={k === 'cover' ? COVER_STATUS_LABEL[s] : undefined} />
+                  </button>
+                ))}
+              </div> : <div className="mb-4"><StatusChip status={item.status} /></div>}
+              {media === 'cover' && item.thumbnail_url ? <img src={item.thumbnail_url} alt="Portada del reel" className="mx-auto block max-h-[58dvh] max-w-full rounded-lg object-contain" /> : (item.video_url || ['foto', 'post', 'carrusel', 'diseno'].includes(item.content_type ?? '') ? <VideoPlayer item={item} /> : <div className="flex aspect-[9/16] max-h-[50dvh] w-full items-center justify-center rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">El video todavía está en preparación. Cuando esté listo, podrás verlo aquí.</div>)}
             </div>
-            <div className="min-w-0 space-y-4">
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="font-semibold">{media === 'cover' ? 'Portada' : hasCoverReview ? 'Video' : 'Pieza'}</span>
-              <StatusPill status={media === 'cover' ? item.cover_status ?? 'pendiente' : item.status} />
-              {item.publish_date && <span className="text-muted-foreground first-letter:uppercase">{dayLabel(item.publish_date)}</span>}
-            </div>
+            <div className="min-w-0 space-y-4 pb-24 md:pb-0">
             <div className="space-y-3 border-b border-border pb-4">
               <label htmlFor="calendar-review-name" className="block text-xs font-medium text-muted-foreground">Revisado por</label>
               <Input ref={nameRef} id="calendar-review-name" maxLength={80} value={name} placeholder="Tu nombre" aria-invalid={!!validation} onChange={(e) => { setName(e.target.value); setValidation(''); }} />
               {validation && <p role="alert" className="text-sm text-destructive">{validation}</p>}
               {media === 'video' && mode === 'changes' && <Textarea rows={4} autoFocus value={body} placeholder="¿Qué te gustaría cambiar?" onChange={(e) => setBody(e.target.value)} />}
-              {media === 'video' && <div className="grid grid-cols-2 gap-2">
+              {media === 'video' && <div className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-2 gap-2 border-t border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:border-0 md:bg-transparent md:p-0">
                 {mode === 'changes' ? (
                   <>
                     <Button variant="outline" onClick={() => setMode('idle')} disabled={busy}>Cancelar</Button>
