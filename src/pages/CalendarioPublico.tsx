@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight, X, RefreshCw } from 'lucide-react';
+import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight, X, RefreshCw, Layers, Clock } from 'lucide-react';
+import { PieceCard, PublicMonthGrid, needsReview, StatusChip, typeMeta } from '@/components/calendario-publico/PublicPieces';
 import { supabase } from '@/integrations/supabase/client';
 import socialifyLogo from '@/assets/socialify-wordmark.png.asset.json';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
+import { StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { dayLabel, monthLabel, COVER_STATUS_LABEL } from '@/lib/calendar-media';
 import { CalendarHistory } from '@/components/calendario/CalendarHistory';
@@ -39,8 +40,9 @@ export default function CalendarioPublico() {
     else toast.success('Calendario actualizado');
   };
   const [ym, setYm] = useState<{ y: number; m: number } | null>(null);
-  const [view, setView] = useState<'pieces' | 'calendar'>('calendar');
+  const [view, setView] = useState<'pieces' | 'calendar' | 'review'>('calendar');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [day, setDay] = useState<string | null>(null);
 
   useEffect(() => {
     let m = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
