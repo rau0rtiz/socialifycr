@@ -184,12 +184,15 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="shared-calendar shared-calendar-dialog max-h-[92dvh] w-[calc(100%-24px)] max-w-5xl gap-0 overflow-y-auto rounded-lg border-border bg-background p-0 text-foreground">
+      <DialogContent className="shared-calendar shared-calendar-dialog h-[100dvh] max-h-[100dvh] w-full max-w-5xl gap-0 overflow-y-auto rounded-none border-border bg-background p-0 text-foreground sm:h-auto sm:max-h-[92dvh] sm:w-[calc(100%-24px)] sm:rounded-2xl">
         <DialogHeader className="sticky top-0 z-10 border-b border-border bg-background px-4 py-3 text-left sm:px-6 sm:py-4">
           <div className="flex items-start gap-3">
             <div className="min-w-0">
-              <div className="mb-2 text-[10px] font-semibold uppercase text-primary">Socialify · Revisión de contenido</div>
-              <DialogTitle className="text-base sm:text-lg">{item.title}</DialogTitle>
+              <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                {(() => { const Icon = typeMeta(item.content_type).icon; return <Icon className="h-3.5 w-3.5" />; })()}
+                {typeMeta(item.content_type).label}{item.publish_date && <span className="text-muted-foreground"> · {dayLabel(item.publish_date)}</span>}
+              </div>
+              <DialogTitle className="text-lg font-bold sm:text-xl">{item.title}</DialogTitle>
             </div>
             <DialogClose asChild>
               <Button variant="outline" size="icon" aria-label="Cerrar" className="ml-auto h-11 w-11 shrink-0 rounded-full border-border bg-secondary text-foreground hover:bg-accent sm:h-9 sm:w-9">
