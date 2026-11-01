@@ -242,7 +242,7 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                   <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />
                 </div>
                 {coverMode === 'changes' && <Textarea rows={3} autoFocus value={coverBody} placeholder="¿Qué te gustaría cambiar de la portada?" onChange={(e) => setCoverBody(e.target.value)} />}
-                <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+                <div className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-2 gap-2 border-t border-border bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:border-0 md:bg-transparent md:p-0">
                   {coverMode === 'changes' ? (
                     <>
                       <Button variant="outline" onClick={() => setCoverMode('idle')} disabled={busy}>Cancelar</Button>
