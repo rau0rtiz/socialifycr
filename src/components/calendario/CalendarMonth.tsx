@@ -18,12 +18,15 @@ export interface CalendarItem {
   sort: number;
   clickup_url?: string | null;
   clickup_sync_error?: string | null;
+  clickup_status?: string | null;
+  clickup_task_id?: string | null;
+  clickup_status_color?: string | null;
 }
 
 export const statusDot = (s: string) =>
   s === 'aprobado' || s === 'aprobada' ? 'bg-success' : s === 'cambios' ? 'bg-warning' : 'bg-muted-foreground/50';
 
-export const StatusPill = ({ status, labels }: { status: string; labels?: Record<string, string> }) => (
+export const StatusPill = ({ status, labels, name, color }: { status: string; labels?: Record<string, string>; name?: string | null; color?: string | null }) => (
   <span
     className={cn(
       'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium',
@@ -32,8 +35,8 @@ export const StatusPill = ({ status, labels }: { status: string; labels?: Record
       status === 'pendiente' && 'bg-muted text-muted-foreground',
     )}
   >
-    <span className={cn('h-1.5 w-1.5 rounded-full', statusDot(status))} />
-    {labels?.[status] ?? STATUS_LABEL[status] ?? status}
+    <span className={cn('h-1.5 w-1.5 rounded-full', statusDot(status))} style={color ? { backgroundColor: color } : undefined} />
+    {name ? <span className="uppercase">{name}</span> : labels?.[status] ?? STATUS_LABEL[status] ?? status}
   </span>
 );
 
@@ -163,7 +166,7 @@ export const CalendarMonth = ({ year, month, onMonthChange, items, onOpen, onDro
                   <Thumb item={it} className="aspect-[4/5] w-full" />
                   <div className="space-y-1 p-2">
                     <div className="line-clamp-2 text-xs font-medium">{it.title}</div>
-                    <StatusPill status={it.status} />
+                    <StatusPill status={it.status} name={it.clickup_status} color={it.clickup_status_color} />
                   </div>
                 </button>
               ))}

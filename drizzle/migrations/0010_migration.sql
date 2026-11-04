@@ -1,0 +1,1 @@
+ALTER TABLE public.content_calendar_items ADD COLUMN IF NOT EXISTS clickup_status text, ADD COLUMN IF NOT EXISTS clickup_status_color text;

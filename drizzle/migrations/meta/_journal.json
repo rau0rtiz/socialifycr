@@ -71,6 +71,13 @@
       "when": 1793119221544,
       "tag": "0009_calendar_initial_history_gate",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793809024294,
+      "tag": "0010_migration",
+      "breakpoints": true
     }
   ]
 }

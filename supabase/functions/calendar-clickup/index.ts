@@ -1,13 +1,15 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
-import { listBelongsToSpace, publicationDueDate, calendarTaskPayload, calendarSpaceConfigFields } from '../_shared/calendar-clickup-rules.ts';
+import { listBelongsToSpace, publicationDueDate, calendarTaskPayload, calendarSpaceConfigFields, clickUpStatusFields, isClickUpCalendarExcluded } from '../_shared/calendar-clickup-rules.ts';
 
 const id = z.string().regex(/^\d+$/).max(40);
 const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('configure'), client_id: z.string().uuid(), workspace_id: id, space_id: id, default_assignee_emails: z.array(z.string().email()).max(30).default([]) }),
   z.object({ action: z.literal('create'), client_id: z.string().uuid(), item_id: z.string().uuid(), list_id: id, title: z.string().trim().min(1).max(255), content_type: z.enum(['reel','story','foto','post','carrusel','diseno','correo','tiktok','short','otro']), platform: z.enum(['instagram','tiktok','youtube','facebook','linkedin','google','multi']), publish_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v => Number.isFinite(publicationDueDate(v))).nullable(), copy: z.string().max(30000).default(''), explanation: z.string().max(10000).default(''), video_url: z.union([z.literal(''), z.string().url().max(2000).refine(v => /^https?:\/\//i.test(v))]).default('') }),
   z.object({ action: z.literal('retry'), client_id: z.string().uuid(), item_id: z.string().uuid() }),
+  z.object({ action: z.literal('statuses'), client_id: z.string().uuid(), item_id: z.string().uuid() }),
+  z.object({ action: z.literal('set_status'), client_id: z.string().uuid(), item_id: z.string().uuid(), status: z.string().trim().min(1).max(100) }),
 ]);
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -47,6 +49,22 @@ Deno.serve(async req => {
       if (error) throw error;
       return json({ ok: true });
     }
+    if (b.action === 'statuses' || b.action === 'set_status') {
+      const { data: row } = await admin.from('content_calendar_items').select('id, clickup_task_id').eq('id', b.item_id).eq('client_id', b.client_id).maybeSingle();
+      if (!row?.clickup_task_id) return json({ error: 'Esta pieza no está vinculada a una tarea de ClickUp.' }, 400);
+      const task = await cu(`/task/${row.clickup_task_id}`);
+      const list = await cu(`/list/${task.list?.id}`);
+      const statuses = (list.statuses || []).map((s: { status: string; color?: string }) => ({ status: String(s.status), color: s.color ?? null }));
+      if (b.action === 'statuses') return json({ statuses, current: task.status?.status ?? null });
+      const target = statuses.find((s: { status: string }) => s.status === b.status);
+      if (!target) return json({ error: 'Ese estado no existe en la lista de ClickUp.' }, 400);
+      await cu(`/task/${row.clickup_task_id}`, { method: 'PUT', body: JSON.stringify({ status: target.status }) });
+      const n = target.status.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const status = isClickUpCalendarExcluded(target) ? 'aprobado' : /cambio|correcc/.test(n) ? 'cambios' : 'pendiente';
+      const { error } = await admin.from('content_calendar_items').update({ ...clickUpStatusFields(target), status, clickup_sync_error: null }).eq('id', row.id).eq('client_id', b.client_id);
+      if (error) throw error;
+      return json({ ok: true, status, clickup_status: target.status, clickup_status_color: target.color });
+    }
     const { data: cfg } = await admin.from('client_clickup_config').select('*').eq('client_id', b.client_id).maybeSingle();
     if (!cfg?.space_id) return json({ error: 'Primero configurá el espacio de ClickUp de este cliente.' }, 400);
     let { data: item } = await admin.from('content_calendar_items').select('*').eq('id', b.item_id).eq('client_id', b.client_id).maybeSingle();
@@ -74,7 +92,7 @@ Deno.serve(async req => {
       await admin.from('content_calendar_items').update({ clickup_sync_state: safeRetry ? 'failed' : 'syncing', clickup_sync_error: safeRetry ? (e as Error).message : 'ClickUp no confirmó la creación. Revisar la lista antes de reintentar para evitar duplicados.' }).eq('id', item.id).eq('client_id', b.client_id);
       return json({ saved: true, item_id: item.id, error: safeRetry ? (e as Error).message : 'La pieza se guardó. ClickUp requiere revisión antes de reintentar.' });
     }
-    const { error: saveError } = await admin.from('content_calendar_items').update({ clickup_task_id: task.id, clickup_url: task.url, clickup_sync_state: 'synced', clickup_sync_error: null }).eq('id', item.id).eq('client_id', b.client_id);
+    const { error: saveError } = await admin.from('content_calendar_items').update({ clickup_task_id: task.id, clickup_url: task.url, ...clickUpStatusFields(task.status), clickup_sync_state: 'synced', clickup_sync_error: null }).eq('id', item.id).eq('client_id', b.client_id);
     if (saveError) return json({ saved: true, item_id: item.id, error: 'La tarea se creó en ClickUp, pero falta guardar su vínculo. No vuelvas a crearla.', task_url: task.url });
     return json({ ok: true, item_id: item.id, task_url: task.url });
   } catch (e) { return json({ error: (e as Error).message }, 400); }

@@ -2654,6 +2654,8 @@ export type Database = {
           clickup_approved: boolean
           clickup_list_id: string | null
           clickup_space_id: string | null
+          clickup_status: string | null
+          clickup_status_color: string | null
           clickup_sync_error: string | null
           clickup_sync_state: string
           clickup_task_id: string | null
@@ -2680,6 +2682,8 @@ export type Database = {
           clickup_approved?: boolean
           clickup_list_id?: string | null
           clickup_space_id?: string | null
+          clickup_status?: string | null
+          clickup_status_color?: string | null
           clickup_sync_error?: string | null
           clickup_sync_state?: string
           clickup_task_id?: string | null
@@ -2706,6 +2710,8 @@ export type Database = {
           clickup_approved?: boolean
           clickup_list_id?: string | null
           clickup_space_id?: string | null
+          clickup_status?: string | null
+          clickup_status_color?: string | null
           clickup_sync_error?: string | null
           clickup_sync_state?: string
           clickup_task_id?: string | null

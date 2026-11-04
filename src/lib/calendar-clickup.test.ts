@@ -94,3 +94,13 @@ describe('calendar approval follows ClickUp', () => {
     expect(calendarApprovalAwaitingCover({ content_type: 'foto', thumbnail_url: 'x', cover_status: 'pendiente' }, true)).toBe(false);
   });
 });
+
+import { clickUpStatusFields } from '../../supabase/functions/_shared/calendar-clickup-rules';
+describe('clickUpStatusFields', () => {
+  it('mirrors the exact ClickUp status name and color', () => {
+    expect(clickUpStatusFields({ status: 'enviado al cliente', color: '#ff7800' })).toEqual({ clickup_status: 'enviado al cliente', clickup_status_color: '#ff7800' });
+  });
+  it('leaves fields untouched when ClickUp sends no status', () => {
+    expect(clickUpStatusFields(null)).toEqual({});
+  });
+});

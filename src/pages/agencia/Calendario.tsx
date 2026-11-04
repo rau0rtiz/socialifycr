@@ -366,6 +366,7 @@ export default function Calendario() {
           comments={comments.filter((c) => c.item_id === open.id)}
           onClose={() => setOpenId(null)}
           onUpdate={(p) => update(open.id, p)}
+          onRefresh={() => qc.invalidateQueries({ queryKey: itemsKey })}
           onRetry={async () => {
             const { data, error } = await supabase.functions.invoke('calendar-clickup', { body: { action: 'retry', client_id: clientId, item_id: open.id } });
             if (error || data?.error) toast.error(data?.error ?? 'No se pudo sincronizar.');
@@ -411,8 +412,8 @@ export default function Calendario() {
   );
 }
 
-function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, onRetry }: {
-  item: Item; comments: Comment[]; onClose: () => void;
+function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, onRetry, onRefresh }: {
+  item: Item; comments: Comment[]; onClose: () => void; onRefresh: () => void;
   onUpdate: (p: Partial<Item>) => void; onDelete: () => void; onComment: (b: string) => Promise<void>;
   onRetry: () => Promise<void>;
 }) {
@@ -420,6 +421,26 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, on
   const [note, setNote] = useState('');
   const [uploading, setUploading] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [settingStatus, setSettingStatus] = useState(false);
+  // ClickUp is the source of status names: list the task's own statuses so both sides match.
+  const cuStatuses = useQuery({
+    queryKey: ['calendar-clickup-statuses', item.id],
+    enabled: !!item.clickup_task_id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('calendar-clickup', { body: { action: 'statuses', client_id: item.client_id, item_id: item.id } });
+      if (error || data?.error) throw new Error(data?.error ?? 'No se pudieron leer los estados');
+      return data.statuses as { status: string; color: string | null }[];
+    },
+  });
+  const setClickUpStatus = async (status: string) => {
+    setSettingStatus(true);
+    const { data, error } = await supabase.functions.invoke('calendar-clickup', { body: { action: 'set_status', client_id: item.client_id, item_id: item.id, status } });
+    setSettingStatus(false);
+    if (error || data?.error) return toast.error(data?.error ?? 'No se pudo cambiar el estado en ClickUp');
+    toast.success(`Estado en ClickUp: ${status}`);
+    onRefresh();
+  };
   const save = (k: keyof typeof form) => { if (((item as any)[k] ?? '') !== form[k]) onUpdate({ [k]: form[k] || null } as any); };
 
   const upload = async (file: File) => {
@@ -462,12 +483,21 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, on
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <StatusPill status={item.status} />
+              <StatusPill status={item.status} name={item.clickup_status} color={item.clickup_status_color} />
               <Input type="date" className="h-8 w-auto [color-scheme:dark]" value={item.publish_date ?? ''} onChange={(e) => onUpdate({ publish_date: e.target.value || null })} />
-              <Select value={item.status} onValueChange={(v) => onUpdate({ status: v })}>
-                <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
-                <SelectContent>{Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-              </Select>
+              {item.clickup_task_id && cuStatuses.data ? (
+                <Select value={item.clickup_status ?? undefined} onValueChange={setClickUpStatus} disabled={settingStatus}>
+                  <SelectTrigger className="h-8 w-[190px] uppercase" aria-label="Estado en ClickUp"><SelectValue placeholder="Estado ClickUp" /></SelectTrigger>
+                  <SelectContent>{cuStatuses.data.map((s) => <SelectItem key={s.status} value={s.status} className="uppercase"><span className="mr-2 inline-block h-2 w-2 rounded-full" style={s.color ? { backgroundColor: s.color } : undefined} />{s.status}</SelectItem>)}</SelectContent>
+                </Select>
+              ) : item.clickup_task_id ? (
+                <span className="text-xs text-muted-foreground">{cuStatuses.isError ? 'No se pudieron leer los estados de ClickUp' : 'Cargando estados…'}</span>
+              ) : (
+                <Select value={item.status} onValueChange={(v) => onUpdate({ status: v })}>
+                  <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>{Object.entries(STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                </Select>
+              )}
               <Select value={item.content_type ?? 'otro'} onValueChange={(v) => onUpdate({ content_type: v })}>
                 <SelectTrigger className="h-8 w-[130px]" aria-label="Tipo de pieza"><SelectValue /></SelectTrigger>
                 <SelectContent>{PIECE_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.icon} {t.label}</SelectItem>)}</SelectContent>

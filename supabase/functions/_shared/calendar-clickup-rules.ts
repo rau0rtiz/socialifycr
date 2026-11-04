@@ -74,8 +74,14 @@ export function calendarDeliveryPatch(date: string | null) {
 }
 
 // Editing deadlines in ClickUp never determine calendar delivery dates.
-export function calendarSyncFields(task: { url?: string | null; due_date?: unknown }, title: string) {
-  return { title, clickup_url: task.url || null };
+export function calendarSyncFields(task: { url?: string | null; due_date?: unknown; status?: { status?: string; color?: string } | null }, title: string) {
+  return { title, clickup_url: task.url || null, ...clickUpStatusFields(task.status) };
+}
+
+/** Exact ClickUp status name/color mirrored onto calendar pieces so both sides read the same label. */
+export function clickUpStatusFields(status: { status?: string; color?: string } | null | undefined) {
+  if (!status?.status) return {};
+  return { clickup_status: String(status.status), clickup_status_color: status.color ? String(status.color) : null };
 }
 
 export function calendarTaskPayload(item: {

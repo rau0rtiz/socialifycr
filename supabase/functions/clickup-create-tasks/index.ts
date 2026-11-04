@@ -1,7 +1,7 @@
 // ClickUp create-tasks: crea una task por pieza grabada (production_sheet_shots con done=true).
 // Si la pieza ya tiene clickup_task_id, hace PUT para actualizarla.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { calendarSyncFields, calendarFinalStatusPatch, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, calendarSpaceListIds, parseCalendarTaskTitle, calendarApprovalAwaitingCover } from '../_shared/calendar-clickup-rules.ts';
+import { calendarSyncFields, calendarFinalStatusPatch, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, calendarSpaceListIds, parseCalendarTaskTitle, calendarApprovalAwaitingCover, clickUpStatusFields } from '../_shared/calendar-clickup-rules.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -183,7 +183,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
       deleted += 1;
       return;
     }
-    await updateLinked(row, task, { clickup_approved: !parseCalendarTaskTitle(String(task.name || '')) });
+    await updateLinked(row, task, { clickup_approved: !parseCalendarTaskTitle(String(task.name || '')), ...clickUpStatusFields(task.status) });
     updated += 1;
   };
   // Legacy production exports may have no configured space. Only inspect their already-linked tasks.

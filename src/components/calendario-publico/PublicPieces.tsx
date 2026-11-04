@@ -36,9 +36,9 @@ export function TypeBadge({ type, className }: { type: string | null; className?
   return <span className={cn('inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide', className)}><Icon className="h-3.5 w-3.5 text-primary" aria-hidden />{m.label}</span>;
 }
 
-export function StatusChip({ status, label }: { status: string | null | undefined; label?: string }) {
+export function StatusChip({ status, label, color }: { status: string | null | undefined; label?: string | null; color?: string | null }) {
   const m = statusMeta(status);
-  return <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium', m.cls)}><span className={cn('h-1.5 w-1.5 rounded-full', m.dot)} />{label ?? m.label}</span>;
+  return <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium', m.cls, label && 'uppercase')}><span className={cn('h-1.5 w-1.5 rounded-full', m.dot)} style={color ? { backgroundColor: color } : undefined} />{label || m.label}</span>;
 }
 
 /** Preview uploaded by the agency with a type label on top; typographic fallback when there is none. */
@@ -68,7 +68,7 @@ export function PieceCard({ item, onOpen }: { item: CalendarItem; onOpen: () => 
         <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug">{item.title}</h3>
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground first-letter:uppercase"><CalendarDays className="h-3.5 w-3.5" />{item.publish_date ? dayLabel(item.publish_date) : 'Por programar'}</p>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
-          <StatusChip status={item.status} />
+          <StatusChip status={item.status} label={item.clickup_status} color={item.clickup_status_color} />
           <button type="button" onClick={onOpen} className={cn('inline-flex min-h-11 items-center gap-1 rounded-xl px-4 text-sm font-semibold', review ? 'bg-primary text-primary-foreground' : 'border border-border bg-secondary text-foreground')}>
             {review ? 'Revisar' : 'Ver pieza'}<ChevronRight className="h-4 w-4" />
           </button>
@@ -98,7 +98,7 @@ export function PublicMonthGrid({ year, month, items, selected, onSelect, onOpen
         {cells.map((iso, idx) => {
           if (!iso) return <div key={idx} className="min-h-14 sm:min-h-28" />;
           const list = byDay(iso); const sel = selected === iso;
-          const label = list.length ? `${Number(iso.slice(8))}: ${list.map((i) => `${typeMeta(i.content_type).label} ${i.title}, ${statusMeta(i.status).label}`).join('; ')}` : undefined;
+          const label = list.length ? `${Number(iso.slice(8))}: ${list.map((i) => `${typeMeta(i.content_type).label} ${i.title}, ${i.clickup_status || statusMeta(i.status).label}`).join('; ')}` : undefined;
           return (
             <div key={iso} role={list.length ? 'button' : undefined} tabIndex={list.length ? 0 : -1} aria-label={label} aria-pressed={list.length ? sel : undefined}
               onClick={() => list.length && onSelect(iso)} onKeyDown={(e) => { if (list.length && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(iso); } }}
@@ -120,7 +120,7 @@ export function PublicMonthGrid({ year, month, items, selected, onSelect, onOpen
                       {i.thumbnail_url && <img src={i.thumbnail_url} alt="" loading="lazy" className="mb-1 aspect-[4/5] w-full rounded object-cover" />}
                       <TypeBadge type={i.content_type} className="text-[9px]" />
                       <div className="mt-0.5 line-clamp-2 text-[11px] font-medium leading-tight">{i.title}</div>
-                      <div className="mt-1"><StatusChip status={i.status} /></div>
+                      <div className="mt-1"><StatusChip status={i.status} label={i.clickup_status} color={i.clickup_status_color} /></div>
                     </button>
                   ))}
                   {list.length > 2 && <span className="text-[10px] font-semibold text-muted-foreground">+{list.length - 2} más</span>}

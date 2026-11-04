@@ -46,6 +46,8 @@ async function syncClickUp(taskId: string, hints: string[], comment: string): Pr
       || statuses.find((s) => hints.some((h) => norm(s).includes(norm(h))));
     if (!match) return `La lista de ClickUp no tiene un estado "${hints[0]}". Crealo para que la tarea cambie sola.`;
     await cu(`/task/${taskId}`, { method: 'PUT', body: JSON.stringify({ status: match }) });
+    const color = (list.statuses || []).find((s: any) => String(s.status) === match)?.color ?? null;
+    await admin.from('content_calendar_items').update({ clickup_status: match, clickup_status_color: color }).eq('clickup_task_id', taskId);
     return null;
   } catch (e) {
     console.error('[calendar-public] clickup', (e as Error).message);
@@ -79,7 +81,7 @@ Deno.serve(async (req) => {
       const [{ data: client }, { data: allItems, error: itemsError }] = await Promise.all([
         admin.from('clients').select('name, logo_url').eq('id', share.client_id).maybeSingle(),
         admin.from('content_calendar_items')
-          .select('id, title, copy, explanation, platform, content_type, thumbnail_url, video_url, publish_date, status, cover_status, sort, clickup_approved')
+          .select('id, title, copy, explanation, platform, content_type, thumbnail_url, video_url, publish_date, status, cover_status, sort, clickup_approved, clickup_status, clickup_status_color')
           .eq('client_id', share.client_id).order('publish_date', { nullsFirst: false }).order('sort'),
       ]);
       if (itemsError) throw itemsError;
