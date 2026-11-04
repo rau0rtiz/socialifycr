@@ -1,4 +1,5 @@
 # Tasks
+- [x] Filtrar la Documentación por cliente y por nombre de documento, con buscador sin acentos ni mayúsculas, conteos por pestaña, estado vacío y limpieza de filtros; 12 pruebas correctas y verificado en pantalla (134 → 7 al buscar «CALMA», 1 al filtrar Aurum Studio).
 - [x] Limitar fechas históricas a la primera carga por cliente; calendarios existentes protegidos, 28 pruebas correctas y sincronización de B-Dental desde la interfaz comprobada con fechas y orden idénticos antes/después.
 - [x] Conservar finales visibles y aprobadas; programar pendientes con fechas verificadas de finalización sin cambiar fechas manuales; calendarios sincronizados y B-Dental verificado en agencia y público, 26 pruebas correctas. Sin fecha verificable se conserva pendiente de programar.
 - [x] Eliminar piezas vinculadas cuando ClickUp confirme que su tarea ya no existe; VIDEITO PRUEBA y FOTO 2 eliminadas al sincronizar B-Dental, ausencia comprobada en agencia y enlace público; 23 pruebas correctas.

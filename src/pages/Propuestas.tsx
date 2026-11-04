@@ -34,10 +34,11 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { renderDocumentSource } from '@/lib/jsx-document';
-import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3, ClipboardList, Sparkles, Inbox, ListChecks } from 'lucide-react';
+import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3, ClipboardList, Sparkles, Inbox, ListChecks, Search, X } from 'lucide-react';
 import FormResponsesDialog from '@/components/propuestas/FormResponsesDialog';
 import { useFormResponseCounts } from '@/hooks/use-form-responses';
 import { buildFormDocument } from '@/lib/form-runtime';
+import { filterDocuments, clientOptionsOf } from '@/lib/document-filters';
 import cuestionarioCursoTemplate from '@/templates/cuestionario-curso.html?raw';
 import cuestionarioCursoV2Template from '@/templates/cuestionario-curso-v2.html?raw';
 
@@ -122,6 +123,8 @@ const Propuestas = () => {
   const deleteMut = useDeleteAgencyProposal();
 
   const [kindFilter, setKindFilter] = useState<'all' | ProposalKind>('all');
+  const [search, setSearch] = useState('');
+  const [clientFilter, setClientFilter] = useState<string>('all');
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<AgencyProposalListItem | null>(null);
@@ -401,19 +404,32 @@ const Propuestas = () => {
     };
   }, [previewTarget]);
 
-  const sorted = useMemo(
-    () => (kindFilter === 'all' ? proposals : proposals.filter((p) => ((p.kind as ProposalKind) || 'proposal') === kindFilter)),
-    [proposals, kindFilter],
+  const clientOptions = useMemo(() => clientOptionsOf(proposals, clientsList), [proposals, clientsList]);
+
+  const visible = useMemo(
+    () => filterDocuments(proposals, { search, clientKey: clientFilter }),
+    [proposals, search, clientFilter],
   );
 
+  const sorted = useMemo(
+    () => filterDocuments(visible, { kind: kindFilter }),
+    [visible, kindFilter],
+  );
+
+  const filtersActive = search.trim() !== '' || clientFilter !== 'all';
+  const clearFilters = () => {
+    setSearch('');
+    setClientFilter('all');
+  };
+
   const counts = useMemo(() => {
-    const c: Record<'all' | ProposalKind, number> = { all: proposals.length, proposal: 0, report: 0, content_plan: 0, form: 0, email: 0 };
-    for (const p of proposals) {
+    const c: Record<'all' | ProposalKind, number> = { all: visible.length, proposal: 0, report: 0, content_plan: 0, form: 0, email: 0 };
+    for (const p of visible) {
       const k = ((p.kind as ProposalKind) || 'proposal');
       c[k] = (c[k] || 0) + 1;
     }
     return c;
-  }, [proposals]);
+  }, [visible]);
 
   return (
     <DashboardLayout>
@@ -454,6 +470,47 @@ const Propuestas = () => {
           publicBaseUrl={PUBLIC_BASE_URL}
         />
 
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1 sm:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar documento por nombre…"
+              aria-label="Buscar documento por nombre"
+              className="pl-9 pr-9"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Limpiar búsqueda"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <Select value={clientFilter} onValueChange={setClientFilter}>
+            <SelectTrigger className="w-full sm:w-64" aria-label="Filtrar por cliente">
+              <SelectValue placeholder="Todos los clientes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los clientes</SelectItem>
+              {clientOptions.map((c) => (
+                <SelectItem key={c.key} value={c.key}>
+                  {c.label} ({c.count})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {filtersActive && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1.5 w-fit">
+              <X className="h-3.5 w-3.5" /> Limpiar filtros
+            </Button>
+          )}
+        </div>
+
         <Tabs value={kindFilter} onValueChange={(v) => setKindFilter(v as 'all' | ProposalKind)}>
           <TabsList>
             <TabsTrigger value="all">Todo ({counts.all})</TabsTrigger>
@@ -484,8 +541,20 @@ const Propuestas = () => {
           <Card>
             <CardContent className="py-16 text-center text-muted-foreground">
               <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="font-medium text-foreground">Todavía no hay {kindFilter === 'report' ? 'reportes' : kindFilter === 'proposal' ? 'propuestas' : kindFilter === 'content_plan' ? 'planes de contenido' : 'nada acá'}</p>
-              <p className="text-sm mt-1">Creá tu primer {kindFilter === 'report' ? 'reporte' : kindFilter === 'content_plan' ? 'plan de contenido' : 'propuesta'} pegando el HTML.</p>
+              {filtersActive ? (
+                <>
+                  <p className="font-medium text-foreground">No encontramos documentos con esos filtros</p>
+                  <p className="text-sm mt-1">Probá con otro nombre o quitá el filtro de cliente.</p>
+                  <Button variant="outline" size="sm" className="mt-4 gap-1.5" onClick={clearFilters}>
+                    <X className="h-3.5 w-3.5" /> Limpiar filtros
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium text-foreground">Todavía no hay {kindFilter === 'report' ? 'reportes' : kindFilter === 'proposal' ? 'propuestas' : kindFilter === 'content_plan' ? 'planes de contenido' : 'nada acá'}</p>
+                  <p className="text-sm mt-1">Creá tu primer {kindFilter === 'report' ? 'reporte' : kindFilter === 'content_plan' ? 'plan de contenido' : 'propuesta'} pegando el HTML.</p>
+                </>
+              )}
             </CardContent>
           </Card>
         ) : (
