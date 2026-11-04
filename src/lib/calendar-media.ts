@@ -23,6 +23,14 @@ export const videoEmbed = (raw?: string | null): VideoEmbed | null => {
   return { kind: 'link', src: url, provider: milanote ? 'milanote' : 'otro' };
 };
 
+/** Piece types whose deliverable is a moving picture; everything else is a static image. */
+export const VIDEO_MEDIA_TYPES = ['reel', 'tiktok', 'short', 'story'];
+
+/** True when the piece's own uploaded image is the thing the client should look at (photo,
+ *  post, carousel, or an untagged ClickUp task that carries a photo). */
+export const isStaticArtwork = (contentType?: string | null, thumbnailUrl?: string | null): boolean =>
+  !!thumbnailUrl && !VIDEO_MEDIA_TYPES.includes(contentType ?? '');
+
 /** Thumbnail to show: uploaded image first, then Drive's preview of the video. */
 export const itemThumb = (thumb?: string | null, video?: string | null): string | null => {
   if (thumb) return thumb;

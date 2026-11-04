@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Film } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { itemThumb, monthGrid, monthLabel, dayLabel, STATUS_LABEL } from '@/lib/calendar-media';
+import { itemThumb, monthGrid, monthLabel, dayLabel, STATUS_LABEL, VIDEO_MEDIA_TYPES } from '@/lib/calendar-media';
 
 export interface CalendarItem {
   id: string;
@@ -39,7 +39,7 @@ export const StatusPill = ({ status, labels }: { status: string; labels?: Record
 
 const Thumb = ({ item, className }: { item: CalendarItem; className?: string }) => {
   const src = itemThumb(item.thumbnail_url, item.video_url);
-  const isImagePiece = !['reel', 'tiktok', 'short', 'story'].includes(item.content_type ?? '');
+  const isImagePiece = !VIDEO_MEDIA_TYPES.includes(item.content_type ?? '');
   return src ? (
     <img
       src={src}
