@@ -84,6 +84,15 @@ function parseClickUpDueDate(value: unknown): number | undefined {
 
 // ---------- ClickUp → calendar sync (tasks become calendar pieces) ----------
 
+// Resolves a status name of the destination list (exact match first, then partial); cached per list.
+const listStatusCache = new Map<string, Promise<string[]>>();
+async function listStatus(listId: string, wanted: string): Promise<string | null> {
+  if (!listStatusCache.has(listId)) listStatusCache.set(listId, cuFetch(`/list/${listId}`).then((l: any) => (l.statuses || []).map((s: any) => String(s.status))).catch(() => []));
+  const names = await listStatusCache.get(listId)!;
+  const n = (v: string) => v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  return names.find((x) => n(x) === n(wanted)) ?? names.find((x) => n(x).includes(n(wanted))) ?? null;
+}
+
 function mapClickUpStatus(status: unknown): string {
   const s = String((status as { status?: string })?.status || '').toLowerCase();
   if (isClickUpApproved(status as { status?: string })) return 'aprobado';
@@ -445,6 +454,8 @@ Deno.serve(async (req) => {
             assignees,
           };
           if (dueDate) payload.due_date = dueDate;
+          const editStatus = await listStatus(listId, 'editar');
+          if (editStatus) payload.status = editStatus;
 
           const task = await cuFetch(`/list/${listId}/task`, {
             method: 'POST',
@@ -521,6 +532,7 @@ Deno.serve(async (req) => {
         try {
           const payload: Record<string, unknown> = { name: t.name, description: t.description, assignees: assigneeFor(t.key) };
           if (dueDate) payload.due_date = dueDate;
+          if (t.key === 'calendar') { const q = await listStatus(listId, 'cola'); if (q) payload.status = q; }
           const task = await cuFetch(`/list/${listId}/task`, { method: 'POST', body: JSON.stringify(payload) });
           opsCreated.push({ task_id: task.id, url: task.url, name: t.name });
         } catch (e) {
