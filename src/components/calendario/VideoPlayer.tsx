@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { videoEmbed } from '@/lib/calendar-media';
 import { CalendarThumb, type CalendarItem } from './CalendarMonth';
+import { CarouselViewer } from './Carousel';
 
 /** Socialify-branded frame around any playable media. The label strip sits under the media
  *  so nothing but the video itself touches the top edge. */
@@ -51,6 +52,7 @@ export const VideoPlayer = ({ item }: { item: CalendarItem }) => {
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
   const w = dims?.w || 9;
   const h = dims?.h || 16;
+  if ((item.carousel_urls?.length ?? 0) > 1) return <CarouselViewer urls={item.carousel_urls!} />;
   // Static artwork uses its intrinsic dimensions, without a video-shaped frame.
   if (item.thumbnail_url && !['reel', 'tiktok', 'short', 'story'].includes(item.content_type ?? '')) {
     return <CalendarThumb item={item} className="mx-auto block h-auto max-h-[50dvh] w-auto max-w-full rounded-lg" />;

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { CarouselEditor } from '@/components/calendario/Carousel';
 import { CalendarMonth, CalendarThumb, StatusPill, type CalendarItem } from '@/components/calendario/CalendarMonth';
 import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { monthLabel, STATUS_LABEL, COVER_STATUS_LABEL } from '@/lib/calendar-media';
@@ -453,6 +454,16 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, on
     setUploading(false);
   };
 
+  const uploadSlide = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name} pesa más de 5 MB`); return null; }
+    const path = `calendar/${item.client_id}/${item.id}-slide-${crypto.randomUUID()}.${file.name.split('.').pop() || 'jpg'}`;
+    const { error } = await supabase.storage.from('content-images').upload(path, file);
+    if (error) { toast.error(`No se pudo subir ${file.name}`); return null; }
+    return supabase.storage.from('content-images').getPublicUrl(path).data.publicUrl;
+  };
+  // The first slide doubles as the card preview so clients recognise the carousel.
+  const setSlides = (next: string[]) => onUpdate({ carousel_urls: next, thumbnail_url: next[0] ?? null } as any);
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[92dvh] max-w-4xl overflow-y-auto">
@@ -465,11 +476,12 @@ function ItemDialog({ item, comments, onClose, onUpdate, onDelete, onComment, on
               <Input value={form.video_url} placeholder="https://drive.google.com/file/d/…" onChange={(e) => setForm({ ...form, video_url: e.target.value })} onBlur={() => save('video_url')} />
               <p className="text-[11px] text-muted-foreground">En Drive, compartilo como "Cualquier persona con el enlace".</p>
             </div>
+            {item.content_type === 'carrusel' ? <CarouselEditor urls={item.carousel_urls ?? []} onChange={setSlides} upload={uploadSlide} /> :
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border p-2 text-sm text-muted-foreground hover:border-primary/60">
               {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
               {item.thumbnail_url ? 'Cambiar miniatura' : 'Subir miniatura'}
               <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
-            </label>
+            </label>}
             {item.thumbnail_url && ['reel', 'tiktok', 'short'].includes(item.content_type ?? '') && (
               <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-2">
                 <StatusPill status={item.cover_status ?? 'pendiente'} labels={COVER_STATUS_LABEL} />

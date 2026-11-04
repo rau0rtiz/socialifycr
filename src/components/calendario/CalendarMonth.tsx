@@ -21,6 +21,7 @@ export interface CalendarItem {
   clickup_status?: string | null;
   clickup_task_id?: string | null;
   clickup_status_color?: string | null;
+  carousel_urls?: string[] | null;
 }
 
 export const statusDot = (s: string) =>

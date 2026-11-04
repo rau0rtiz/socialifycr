@@ -211,7 +211,7 @@ function PieceDialog({ item, token, comments, onClose, onDone }: { item: Calenda
                   </button>
                 ))}
               </div> : <div className="mb-4"><StatusChip status={item.status} label={item.clickup_status} color={item.clickup_status_color} /></div>}
-              {media === 'cover' && item.thumbnail_url ? <img src={item.thumbnail_url} alt="Portada del reel" className="mx-auto block max-h-[58dvh] max-w-full rounded-lg object-contain" /> : (isStaticArtwork(item.content_type, item.thumbnail_url) || item.video_url ? <VideoPlayer item={item} /> : <div className="flex aspect-[9/16] max-h-[50dvh] w-full items-center justify-center rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">El video todavía está en preparación. Cuando esté listo, podrás verlo aquí.</div>)}
+              {media === 'cover' && item.thumbnail_url ? <img src={item.thumbnail_url} alt="Portada del reel" className="mx-auto block max-h-[58dvh] max-w-full rounded-lg object-contain" /> : (isStaticArtwork(item.content_type, item.thumbnail_url) || (item.carousel_urls?.length ?? 0) > 1 || item.video_url ? <VideoPlayer item={item} /> : <div className="flex aspect-[9/16] max-h-[50dvh] w-full items-center justify-center rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">El video todavía está en preparación. Cuando esté listo, podrás verlo aquí.</div>)}
             </div>
             <div className="min-w-0 space-y-4">
             <div className="space-y-3 border-b border-border pb-4">

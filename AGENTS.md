@@ -20,3 +20,4 @@
 - Public calendar cards and day cells show the agency-uploaded `thumbnail_url` with a type label (typographic placeholder when absent); production-sheet exports never copy the sheet photo into calendar items. Why: clients must identify which piece is which without misleading inherited images.
 
 - Calendar pieces mirror the exact ClickUp status name/color (`clickup_status`, `clickup_status_color`) set by sync, client review and the agency status picker (`calendar-clickup` set_status writes ClickUp first); the internal `status` stays for approval logic. Why: both calendars must read the same label as ClickUp, whichever side changed it.
+- Carousel pieces store ordered slide URLs in `content_calendar_items.carousel_urls`; the first slide is mirrored into `thumbnail_url` for cards, and both calendars render slides through the shared VideoPlayer/CarouselViewer. Why: clients review every slide in the agency's intended order.

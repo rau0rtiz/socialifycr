@@ -1,0 +1,1 @@
+ALTER TABLE public.content_calendar_items ADD COLUMN IF NOT EXISTS carousel_urls text[] NOT NULL DEFAULT '{}';
