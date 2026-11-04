@@ -88,3 +88,8 @@ export function calendarTaskPayload(item: {
     markdown_description: [item.copy, item.explanation, item.video_url, `Calendario Socialify · ${item.id}`].filter(Boolean).join('\n\n'),
   };
 }
+// A client may approve a reel's video before its cover; ClickUp stays unapproved until both are.
+export function calendarApprovalAwaitingCover(item: { content_type?: string | null; thumbnail_url?: string | null; cover_status?: string | null }, clientApprovedVideo: boolean) {
+  const hasCover = ['reel', 'tiktok', 'short'].includes(String(item.content_type)) && !!item.thumbnail_url;
+  return clientApprovedVideo && hasCover && item.cover_status !== 'aprobada';
+}

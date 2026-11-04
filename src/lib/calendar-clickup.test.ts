@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { listBelongsToSpace, calendarFinalStatusPatch, calendarSyncFields, calendarTaskPayload, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, parseCalendarTaskTitle, shouldShowCalendarPiece, calendarDeliveryPatch, calendarSpaceListIds, calendarSpaceConfigFields } from '../../supabase/functions/_shared/calendar-clickup-rules';
+import { listBelongsToSpace, calendarFinalStatusPatch, calendarSyncFields, calendarTaskPayload, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, parseCalendarTaskTitle, shouldShowCalendarPiece, calendarDeliveryPatch, calendarSpaceListIds, calendarSpaceConfigFields, calendarApprovalAwaitingCover } from '../../supabase/functions/_shared/calendar-clickup-rules';
 
 describe('calendar ClickUp destination', () => {
   it('dates historical final pieces only during the initial client import in Costa Rica', () => {
@@ -85,5 +85,12 @@ describe('calendar ClickUp destination', () => {
     expect(task).not.toHaveProperty('due_date');
     expect(task).not.toHaveProperty('start_date');
     expect(task.name).toBe('[REEL] Reel');
+  });
+});
+describe('calendar approval follows ClickUp', () => {
+  it('keeps only a client video approval that is waiting for its cover', () => {
+    expect(calendarApprovalAwaitingCover({ content_type: 'reel', thumbnail_url: 'x', cover_status: 'pendiente' }, true)).toBe(true);
+    expect(calendarApprovalAwaitingCover({ content_type: 'reel', thumbnail_url: 'x', cover_status: 'pendiente' }, false)).toBe(false);
+    expect(calendarApprovalAwaitingCover({ content_type: 'foto', thumbnail_url: 'x', cover_status: 'pendiente' }, true)).toBe(false);
   });
 });

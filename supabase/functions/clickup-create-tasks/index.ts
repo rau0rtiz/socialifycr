@@ -1,7 +1,7 @@
 // ClickUp create-tasks: crea una task por pieza grabada (production_sheet_shots con done=true).
 // Si la pieza ya tiene clickup_task_id, hace PUT para actualizarla.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { calendarSyncFields, calendarFinalStatusPatch, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, calendarSpaceListIds, parseCalendarTaskTitle } from '../_shared/calendar-clickup-rules.ts';
+import { calendarSyncFields, calendarFinalStatusPatch, isClickUpApproved, isClickUpCalendarExcluded, isClickUpTaskDeleted, calendarSpaceListIds, parseCalendarTaskTitle, calendarApprovalAwaitingCover } from '../_shared/calendar-clickup-rules.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -110,10 +110,19 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
 
   const { data: existing, error: existingError } = await admin
     .from('content_calendar_items')
-    .select('id, clickup_task_id, publish_date')
+    .select('id, clickup_task_id, publish_date, status, cover_status, content_type, thumbnail_url')
     .eq('client_id', cfg.client_id)
     .not('clickup_task_id', 'is', null);
   if (existingError) throw existingError;
+  // Client video approvals awaiting the cover are the only calendar approval ClickUp doesn't reflect yet.
+  const existingIds = (existing || []).map((r: { id: string }) => r.id);
+  const videoApprovedIds = new Set<string>();
+  for (let i = 0; i < existingIds.length; i += 200) {
+    const { data: approvals, error: approvalsError } = await admin.from('content_calendar_comments')
+      .select('item_id').in('item_id', existingIds.slice(i, i + 200)).eq('kind', 'aprobacion').eq('scope', 'video');
+    if (approvalsError) throw approvalsError;
+    for (const a of approvals || []) videoApprovedIds.add(String(a.item_id));
+  }
   const byTask = new Map((existing || []).map((r: { id: string; clickup_task_id: string; publish_date: string | null }) => [String(r.clickup_task_id), r]));
 
   // Claim once per client before any writes: concurrent runs and interrupted imports
@@ -140,8 +149,13 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
     }
     return patch;
   };
-  const updateLinked = async (row: { id: string; publish_date: string | null }, task: any, fields: Record<string, unknown>) => {
+  const updateLinked = async (row: any, task: any, fields: Record<string, unknown>) => {
     const { publish_date, ...approval } = await approvalFields(task, Boolean(row.publish_date)) as { publish_date?: string; status?: string };
+    // ClickUp is the source of truth: a calendar "aprobado" without a final ClickUp status is reverted.
+    if (!approval.status && row.status === 'aprobado'
+      && !calendarApprovalAwaitingCover(row, videoApprovedIds.has(String(row.id)))) {
+      approval.status = 'pendiente';
+    }
     const { error } = await admin.from('content_calendar_items').update({ ...fields, ...approval })
       .eq('id', row.id).eq('client_id', cfg.client_id);
     if (error) throw error;
@@ -151,7 +165,7 @@ async function syncClientCalendar(admin: ReturnType<typeof createClient>, cfg: {
       if (dateError) throw dateError;
     }
   };
-  const refreshLinkedTask = async (row: { id: string; clickup_task_id: string; publish_date: string | null }) => {
+  const refreshLinkedTask = async (row: any) => {
     await new Promise((resolve) => setTimeout(resolve, 750));
     let task;
     try {
