@@ -41,9 +41,15 @@ export function StatusChip({ status, label }: { status: string | null | undefine
   return <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium', m.cls)}><span className={cn('h-1.5 w-1.5 rounded-full', m.dot)} />{label ?? m.label}</span>;
 }
 
-/** Typographic placeholder: stored thumbnails may be inherited from production sheets, so cards never rely on them. */
+/** Preview uploaded by the agency with a type label on top; typographic fallback when there is none. */
 export function TypePlaceholder({ item, className }: { item: CalendarItem; className?: string }) {
   const m = typeMeta(item.content_type); const Icon = m.icon;
+  if (item.thumbnail_url) return (
+    <div className={cn('relative overflow-hidden rounded-lg border border-border bg-secondary', className)}>
+      <img src={item.thumbnail_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+      <span className="absolute left-1 top-1 inline-flex items-center gap-1 rounded-md bg-background/85 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-foreground"><Icon className="h-3 w-3 text-primary" />{m.short}</span>
+    </div>
+  );
   return (
     <div className={cn('flex flex-col items-center justify-center gap-1.5 rounded-lg border border-border bg-secondary text-center', className)} aria-hidden>
       <Icon className="h-6 w-6 text-primary" />
@@ -101,7 +107,7 @@ export function PublicMonthGrid({ year, month, items, selected, onSelect, onOpen
               {list.length > 0 && <>
                 {/* Mobile: icon + short label + status dot */}
                 <div className="mt-0.5 flex flex-1 flex-col items-center justify-center gap-0.5 sm:hidden">
-                  {(() => { const m = typeMeta(list[0].content_type); const Icon = m.icon; return <><Icon className="h-4 w-4 text-primary" /><span className="max-w-full truncate text-[8px] font-bold leading-none">{m.short}</span></>; })()}
+                  {(() => { const m = typeMeta(list[0].content_type); const Icon = m.icon; return <>{list[0].thumbnail_url ? <img src={list[0].thumbnail_url} alt="" loading="lazy" className="h-7 w-6 rounded object-cover" /> : <Icon className="h-4 w-4 text-primary" />}<span className="max-w-full truncate text-[8px] font-bold leading-none">{m.short}</span></>; })()}
                   <span className="flex items-center gap-0.5">
                     <span className={cn('h-1.5 w-1.5 rounded-full', statusMeta(list[0].status).dot)} />
                     {list.length > 1 && <span className="text-[9px] font-semibold text-muted-foreground">+{list.length - 1}</span>}
@@ -111,6 +117,7 @@ export function PublicMonthGrid({ year, month, items, selected, onSelect, onOpen
                 <div className="mt-1 hidden flex-col gap-1 sm:flex">
                   {list.slice(0, 2).map((i) => (
                     <button key={i.id} type="button" onClick={(e) => { e.stopPropagation(); onOpen(i); }} className="rounded-md bg-secondary p-1.5 text-left hover:bg-accent">
+                      {i.thumbnail_url && <img src={i.thumbnail_url} alt="" loading="lazy" className="mb-1 aspect-[4/5] w-full rounded object-cover" />}
                       <TypeBadge type={i.content_type} className="text-[9px]" />
                       <div className="mt-0.5 line-clamp-2 text-[11px] font-medium leading-tight">{i.title}</div>
                       <div className="mt-1"><StatusChip status={i.status} /></div>

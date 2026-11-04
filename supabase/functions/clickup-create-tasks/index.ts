@@ -476,7 +476,7 @@ Deno.serve(async (req) => {
         };
         const eid = existingByShot.get(shot.id);
         if (eid) await admin.from('content_calendar_items').update(fields).eq('id', eid);
-        else await admin.from('content_calendar_items').insert({ ...fields, shot_id: shot.id, thumbnail_url: sheet.thumbnail_url || null });
+        else await admin.from('content_calendar_items').insert({ ...fields, shot_id: shot.id });
       }
     } catch (e) {
       console.error('[clickup-create-tasks] calendar sync failed', (e as Error).message);
