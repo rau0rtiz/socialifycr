@@ -532,7 +532,8 @@ Deno.serve(async (req) => {
         try {
           const payload: Record<string, unknown> = { name: t.name, description: t.description, assignees: assigneeFor(t.key) };
           if (dueDate) payload.due_date = dueDate;
-          if (t.key === 'calendar') { const q = await listStatus(listId, 'cola'); if (q) payload.status = q; }
+          const q = t.key === 'calendar' ? await listStatus(listId, 'cola') : (await listStatus(listId, 'subir al servidor')) ?? (await listStatus(listId, 'servidor'));
+          if (q) payload.status = q;
           const task = await cuFetch(`/list/${listId}/task`, { method: 'POST', body: JSON.stringify(payload) });
           opsCreated.push({ task_id: task.id, url: task.url, name: t.name });
         } catch (e) {
