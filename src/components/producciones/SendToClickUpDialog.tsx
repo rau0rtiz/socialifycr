@@ -73,9 +73,13 @@ function buildPreviewDescription(s: Shot): string {
 }
 
 async function callMeta(action: string, params: Record<string, any> = {}) {
-  const { data, error } = await supabase.functions.invoke('clickup-meta', {
-    body: { action, ...params },
-  });
+  const invoke = () => supabase.functions.invoke('clickup-meta', { body: { action, ...params } });
+  let { data, error } = await invoke();
+  if (error) {
+    // Expired sessions on long-open tabs return 401: refresh once and retry.
+    await supabase.auth.refreshSession().catch(() => null);
+    ({ data, error } = await invoke());
+  }
   if (error) throw new Error(error.message);
   if (data?.error) throw new Error(data.error);
   return data;
