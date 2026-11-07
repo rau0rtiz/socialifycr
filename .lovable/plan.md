@@ -40,7 +40,7 @@ Cada cliente tiene campañas distintas (compras, e-commerce, mensajes, leads, vi
 - Si no se define meta, se muestra solo el resultado sin barra.
 
 ## Lo que ven ustedes por dentro (configuración)
-En `/agencia/calendario`, junto al botón del enlace del cliente, un nuevo panel **"Dashboard del cliente"** con:
+Una sección nueva en el menú lateral, **"Dashboards de clientes"** (`/agencia/dashboards-clientes`), con permiso propio en "Quién ve qué". Arriba, la lista de clientes con estado de conexión de Meta, metas del mes y botón para copiar el enlace; al entrar a un cliente se configura:
 
 1. **Cuenta publicitaria**: lista desplegable con las cuentas a las que tiene acceso la conexión de Meta de la agencia (la app de Meta que ya usamos). Se elige una o varias por cliente.
 2. **Qué campañas mostrar**: todas, o solo las marcadas (así no se ven pruebas ni campañas internas).
@@ -60,7 +60,7 @@ En `/agencia/calendario`, junto al botón del enlace del cliente, un nuevo panel
 - Nueva tabla agency-only `client_dashboard_settings` (client_id único, ad_account_ids, campaign_ids visibles, overrides de resultado por campaña, currency, tabs, lead_list_enabled), `client_campaign_goals` (client_id, mes, result_type, target, max_cost, min_roas; único por cliente+mes+tipo) y `client_dashboard_snapshots` (client_id, period, payload jsonb, fetched_at). RLS solo agencia.
 - `calendar-public` gana la acción `dashboard` (token → client_id → snapshot), devolviendo solo agregados; nunca tokens ni IDs internos.
 - Nueva función `client-dashboard-sync`: usa `agency_meta_connection` + acciones existentes de `meta-api` (`campaigns`, `campaign-insights`, `daily-insights`, `ads`) y cuenta leads desde `instant_form_leads`, mensajes IG `msg_*` y citas Calendly del cliente. Cron horario.
-- Frontend: pestañas en `CalendarioPublico.tsx` con componentes nuevos en `src/components/calendario-publico/` (KpiCards, CampaignCards, LeadsFunnel); panel de configuración en agencia.
+- Frontend: pestañas en `CalendarioPublico.tsx` con componentes nuevos en `src/components/calendario-publico/` (KpiCards, CampaignCards, LeadsFunnel); página nueva `src/pages/agencia/DashboardsClientes.tsx`, entrada en `nav-items.ts`, ruta en `App.tsx` y permiso en el panel de accesos.
 - Reglas en `AGENTS.md`; pruebas para costo por resultado, selección de resultado por objetivo y filtro de campañas visibles.
 
 ## Por confirmar antes de construir
