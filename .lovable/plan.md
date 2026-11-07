@@ -24,12 +24,28 @@ Así no revivimos el portal viejo con login (ese sigue archivado): es el enlace 
 
 **Resumen arriba de todo** (opcional por cliente): piezas del mes aprobadas vs. meta de entregas + inversión y resultados del mes.
 
+## Metas variables por cliente y por campaña
+Cada cliente tiene campañas distintas (compras, e-commerce, mensajes, leads, visitas, alcance), así que el dashboard no tiene números fijos: se arma según el objetivo de cada campaña.
+
+| Tipo de campaña | Resultado principal | Costo que se muestra | Extra |
+| --- | --- | --- | --- |
+| Compras / e-commerce | Compras | Costo por compra | Valor vendido y retorno (ROAS) si Meta lo registra |
+| Mensajes (IG / WhatsApp / Messenger) | Conversaciones iniciadas | Costo por conversación | Citas agendadas si tiene Calendly |
+| Leads (formulario o web) | Leads | Costo por lead | Leads por fuente |
+| Tráfico | Visitas a la página | Costo por visita | Clics en el enlace |
+| Alcance / reconocimiento | Personas alcanzadas | Costo por mil | Frecuencia |
+
+- Si un cliente tiene varias campañas de distinto tipo, cada tarjeta de campaña muestra su propio resultado, y arriba se ven los totales agrupados por tipo (por ejemplo "18 compras" y "64 conversaciones"), nunca sumados entre sí.
+- **Metas del mes por cliente**: ustedes definen la meta de cada resultado (por ejemplo 30 compras, ROAS 3, 80 conversaciones o costo por lead máximo ₡2.000) y el cliente ve una barra de avance contra esa meta.
+- Si no se define meta, se muestra solo el resultado sin barra.
+
 ## Lo que ven ustedes por dentro (configuración)
 En `/agencia/calendario`, junto al botón del enlace del cliente, un nuevo panel **"Dashboard del cliente"** con:
 
 1. **Cuenta publicitaria**: lista desplegable con las cuentas a las que tiene acceso la conexión de Meta de la agencia (la app de Meta que ya usamos). Se elige una o varias por cliente.
 2. **Qué campañas mostrar**: todas, o solo las marcadas (así no se ven pruebas ni campañas internas).
-3. **Qué cuenta como resultado**: automático según objetivo, o fijarlo (mensajes, leads, compras, visitas).
+3. **Qué cuenta como resultado**: se detecta solo por campaña según su objetivo; se puede corregir por campaña (compras, conversaciones, leads, visitas, alcance).
+4. **Metas del mes**: una fila por tipo de resultado del cliente, con meta de cantidad y, opcional, costo máximo o ROAS mínimo.
 4. **Moneda que ve el cliente**: USD o CRC (usa la conversión 520 ya acordada).
 5. **Pestañas visibles**: prender/apagar Campañas, Leads y el resumen.
 6. **Estado de la conexión**: verde si Meta responde, rojo con "Reconectar Meta" si el permiso venció, y la fecha de la última actualización.
@@ -41,7 +57,7 @@ En `/agencia/calendario`, junto al botón del enlace del cliente, un nuevo panel
 - Si Meta falla, el cliente ve los últimos números guardados con "Actualizado hace X" en vez de un error.
 
 ## Detalles técnicos
-- Nueva tabla agency-only `client_dashboard_settings` (client_id único, ad_account_ids, campaign_ids visibles, result_mode, currency, tabs, lead_list_enabled) y `client_dashboard_snapshots` (client_id, period, payload jsonb, fetched_at). RLS solo agencia.
+- Nueva tabla agency-only `client_dashboard_settings` (client_id único, ad_account_ids, campaign_ids visibles, overrides de resultado por campaña, currency, tabs, lead_list_enabled), `client_campaign_goals` (client_id, mes, result_type, target, max_cost, min_roas; único por cliente+mes+tipo) y `client_dashboard_snapshots` (client_id, period, payload jsonb, fetched_at). RLS solo agencia.
 - `calendar-public` gana la acción `dashboard` (token → client_id → snapshot), devolviendo solo agregados; nunca tokens ni IDs internos.
 - Nueva función `client-dashboard-sync`: usa `agency_meta_connection` + acciones existentes de `meta-api` (`campaigns`, `campaign-insights`, `daily-insights`, `ads`) y cuenta leads desde `instant_form_leads`, mensajes IG `msg_*` y citas Calendly del cliente. Cron horario.
 - Frontend: pestañas en `CalendarioPublico.tsx` con componentes nuevos en `src/components/calendario-publico/` (KpiCards, CampaignCards, LeadsFunnel); panel de configuración en agencia.
