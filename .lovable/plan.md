@@ -11,10 +11,15 @@ Así no revivimos el portal viejo con login (ese sigue archivado): es el enlace 
 
 ## Lo que ve el cliente
 
-**Campañas** (período: este mes / mes pasado / últimos 7 o 30 días)
+**Período**: selector arriba con Hoy, Ayer, Últimos 7 días, Este mes, Mes pasado y **rango personalizado** (calendario de inicio y fin). Gráfico con vista por día, semana o mes. Todo el dashboard (campañas, anuncios y leads) usa el mismo período.
+
+**Campañas**
 - 4 números grandes: **Inversión**, **Personas alcanzadas**, **Resultados** (mensajes, leads o compras según el objetivo de la campaña) y **Costo por resultado**, cada uno con la flecha de cambio contra el período anterior.
 - Gráfico simple de resultados por día.
 - Tarjetas por campaña activa: nombre, estado (en circulación / pausada), inversión, resultados, costo por resultado y el anuncio que mejor rinde con su miniatura.
+- **Anuncios**: al tocar una campaña se abre un popup con todos sus anuncios ordenados del mejor al peor según el resultado de esa campaña, con medalla para el top 3. Cada anuncio muestra miniatura, resultados, costo por resultado y, si es video, su retención.
+- Al tocar un anuncio se abre su detalle: el video o imagen, el texto, las métricas del período y la curva de retención. En celular los popups ocupan toda la pantalla y se cierran con X.
+- Sección **"Mejores anuncios"** en el resumen: los 3 mejores de todas las campañas, cada uno comparado dentro de su propio tipo de resultado.
 - Una línea en palabras: "Este mes tu campaña generó 42 conversaciones a ₡1.850 cada una".
 
 **Leads**
@@ -33,7 +38,10 @@ Cada cliente tiene campañas distintas (compras, e-commerce, mensajes, leads, vi
 | Mensajes (IG / WhatsApp / Messenger) | Conversaciones iniciadas | Costo por conversación | Citas agendadas si tiene Calendly |
 | Leads (formulario o web) | Leads | Costo por lead | Leads por fuente |
 | Tráfico | Visitas a la página | Costo por visita | Clics en el enlace |
-| Alcance / reconocimiento | Personas alcanzadas | Costo por mil | Frecuencia |
+| Tráfico a perfil (seguidores) | Visitas al perfil y seguidores ganados en el período | Costo por seguidor (estimado) | Crecimiento de seguidores de IG en el mismo rango |
+| Alcance / reconocimiento | Personas alcanzadas | Costo por mil | Frecuencia y **retención del video**: reproducciones al 25/50/75/100 %, tiempo promedio visto y ThruPlays |
+
+Nota: Meta no atribuye seguidores directamente a un anuncio; se muestra el crecimiento de la cuenta en las mismas fechas, marcado como estimado.
 
 - Si un cliente tiene varias campañas de distinto tipo, cada tarjeta de campaña muestra su propio resultado, y arriba se ven los totales agrupados por tipo (por ejemplo "18 compras" y "64 conversaciones"), nunca sumados entre sí.
 - **Metas del mes por cliente**: ustedes definen la meta de cada resultado (por ejemplo 30 compras, ROAS 3, 80 conversaciones o costo por lead máximo ₡2.000) y el cliente ve una barra de avance contra esa meta.
@@ -53,12 +61,14 @@ Una sección nueva en el menú lateral, **"Dashboards de clientes"** (`/agencia/
 
 ## Cómo se mantiene conectado
 - El cliente nunca toca Meta: los datos se piden desde el servidor con la conexión de la agencia; el enlace solo muestra números.
+- Los períodos fijos (hoy, 7 días, mes, mes pasado) se guardan listos; un rango personalizado se pide a Meta al momento y se guarda 1 hora para no repetir.
 - Se guarda una "foto" de los números cada hora (y al abrir el panel si pasó más de una hora), así carga rápido y no gasta el límite de Meta.
 - Si Meta falla, el cliente ve los últimos números guardados con "Actualizado hace X" en vez de un error.
 
 ## Detalles técnicos
 - Nueva tabla agency-only `client_dashboard_settings` (client_id único, ad_account_ids, campaign_ids visibles, overrides de resultado por campaña, currency, tabs, lead_list_enabled), `client_campaign_goals` (client_id, mes, result_type, target, max_cost, min_roas; único por cliente+mes+tipo) y `client_dashboard_snapshots` (client_id, period, payload jsonb, fetched_at). RLS solo agencia.
 - `calendar-public` gana la acción `dashboard` (token → client_id → snapshot), devolviendo solo agregados; nunca tokens ni IDs internos.
+- Insights a nivel `ad` con `video_p25/50/75/100_watched_actions`, `video_avg_time_watched_actions`, `video_thruplay_watched_actions`; seguidores desde `follower_count` diario de IG; `time_range` para rangos personalizados (validado, máximo 13 meses).
 - Nueva función `client-dashboard-sync`: usa `agency_meta_connection` + acciones existentes de `meta-api` (`campaigns`, `campaign-insights`, `daily-insights`, `ads`) y cuenta leads desde `instant_form_leads`, mensajes IG `msg_*` y citas Calendly del cliente. Cron horario.
 - Frontend: pestañas en `CalendarioPublico.tsx` con componentes nuevos en `src/components/calendario-publico/` (KpiCards, CampaignCards, LeadsFunnel); página nueva `src/pages/agencia/DashboardsClientes.tsx`, entrada en `nav-items.ts`, ruta en `App.tsx` y permiso en el panel de accesos.
 - Reglas en `AGENTS.md`; pruebas para costo por resultado, selección de resultado por objetivo y filtro de campañas visibles.
