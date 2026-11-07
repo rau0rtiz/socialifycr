@@ -13,7 +13,7 @@ import { presetRange, RANGE_LABEL, type RangePreset } from '@/lib/dashboard-rang
 
 export type DashSection = 'campanas' | 'cuentas' | 'leads';
 type Metrics = { spend: number; reach: number; impressions: number; frequency: number; results: number; cost_per_result: number | null; purchase_value: number; roas: number | null; link_clicks: number; video: null | { plays: number; p25: number; p50: number; p75: number; p100: number; thruplays: number; avg_seconds: number } };
-type Ad = { id: string; name: string; campaign_id: string; result_type: string; metrics: Metrics; thumbnail?: string | null; body?: string | null; title?: string | null; is_video?: boolean };
+type Ad = { id: string; name: string; campaign_id: string; result_type: string; metrics: Metrics; thumbnail?: string | null; video_url?: string | null; preview_url?: string | null; body?: string | null; title?: string | null; is_video?: boolean };
 export interface DashboardData {
   configured: boolean; currency?: string; fetched_at?: string; stale?: boolean; errors?: string[];
   totals?: { result_type: string; label: { many: string; cost: string }; spend: number; reach: number; results: number; cost_per_result: number | null; roas: number | null; purchase_value: number; previous: { spend: number; reach: number; results: number } | null; goal: { target: number | null; max_cost: number | null; min_roas: number | null } | null }[];
@@ -276,7 +276,7 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
               <DialogClose asChild><Button variant="outline" size="icon" aria-label="Cerrar" className="ml-auto h-11 w-11 shrink-0 rounded-full sm:h-9 sm:w-9"><X className="h-5 w-5" /></Button></DialogClose>
             </DialogHeader>
             <div className="grid gap-5 p-4 sm:p-6 md:grid-cols-2">
-              <div>{ad.thumbnail ? <img src={ad.thumbnail} alt="" className="mx-auto max-h-[55dvh] w-full rounded-xl object-contain" /> : <div className="flex aspect-square items-center justify-center rounded-xl bg-secondary text-sm text-muted-foreground">Sin vista previa</div>}
+              <div><AdPlayback key={ad.id} ad={ad} />
                 {ad.title && <p className="mt-3 font-semibold">{ad.title}</p>}{ad.body && <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{ad.body}</p>}</div>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -291,6 +291,17 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
       )}
     </div>
   );
+}
+
+function AdPlayback({ ad }: { ad: Ad }) {
+  const [failed, setFailed] = useState(false);
+  return <>
+    {ad.video_url && !failed ? <video controls playsInline preload="metadata" poster={ad.thumbnail || undefined} src={ad.video_url} aria-label={`Video del anuncio: ${ad.name}`} onError={() => setFailed(true)} className="mx-auto max-h-[55dvh] w-full rounded-lg bg-secondary object-contain" />
+      : ad.preview_url ? <iframe src={ad.preview_url} title={`Reproducir anuncio: ${ad.name}`} allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowFullScreen className="h-[65dvh] min-h-96 w-full rounded-lg border-0 bg-secondary" />
+        : ad.thumbnail ? <img src={ad.thumbnail} alt={ad.name} className="mx-auto max-h-[55dvh] w-full rounded-lg object-contain" />
+        : <div className="flex aspect-square items-center justify-center rounded-lg bg-secondary text-sm text-muted-foreground">Sin vista previa</div>}
+    {ad.is_video && (!ad.video_url || failed) && !ad.preview_url && <p className="mt-2 text-xs text-muted-foreground">Meta no permite reproducir este video en este momento.</p>}
+  </>;
 }
 
 function AdTile({ ad, rank, money, onOpen }: { ad: Ad; rank: number; money: (n: number | null) => string; onOpen: () => void }) {

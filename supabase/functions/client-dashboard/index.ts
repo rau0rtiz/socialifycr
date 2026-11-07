@@ -175,6 +175,13 @@ async function buildDashboard(clientId: string, since: string, until: string, se
       const det = await graph('', { ids: ranked.map((a) => a.id).join(','), fields: 'creative{id,thumbnail_url,image_url,body,title,object_type,video_id}' }, conn.access_token);
       const creativeIds = [...new Set(ranked.map((a) => det?.[a.id]?.creative?.id).filter(Boolean))];
       let previews: any = {};
+      const videoIds = [...new Set(ranked.map((a) => det?.[a.id]?.creative?.video_id).filter(Boolean))];
+      let videos: any = {};
+      if (videoIds.length) {
+        try {
+          videos = await graph('', { ids: videoIds.join(','), fields: 'source' }, conn.access_token);
+        } catch (e) { console.error('[client-dashboard] video previews', (e as Error).message); }
+      }
       if (creativeIds.length) {
         try {
           // Size parameters belong to the creative node, not its enclosing ad.
@@ -184,8 +191,18 @@ async function buildDashboard(clientId: string, since: string, until: string, se
       for (const a of ranked) {
         const cr = det?.[a.id]?.creative;
         const preview = previews?.[cr?.id];
-        if (cr) Object.assign(a, { thumbnail: preview?.image_url || cr.image_url || preview?.thumbnail_url || cr.thumbnail_url || null, body: cr.body || null, title: cr.title || null, is_video: !!cr.video_id });
+        if (cr) Object.assign(a, { thumbnail: preview?.image_url || cr.image_url || preview?.thumbnail_url || cr.thumbnail_url || null, video_url: videos?.[cr.video_id]?.source || null, body: cr.body || null, title: cr.title || null, is_video: !!cr.video_id });
       }
+      await Promise.all(ranked.filter((a) => a.is_video && !a.video_url).map(async (a) => {
+        try {
+          const result = await graph(`${a.id}/previews`, { ad_format: 'MOBILE_FEED_STANDARD' }, conn.access_token);
+          const src = result.data?.[0]?.body?.match(/src=["']([^"']+)["']/)?.[1]?.replace(/&amp;/g, '&');
+          if (src) {
+            const url = new URL(src);
+            if (url.protocol === 'https:' && (url.hostname === 'facebook.com' || url.hostname.endsWith('.facebook.com'))) a.preview_url = url.href;
+          }
+        } catch (e) { console.error('[client-dashboard] ad playback preview', (e as Error).message); }
+      }));
     } catch (e) { console.error('[client-dashboard] creatives', (e as Error).message); }
   }
 
@@ -310,7 +327,7 @@ async function cachedDashboard(clientId: string, since: string, until: string, r
   const conn = await agencyConn();
   const settings = stored && conn ? await scopedSettings(stored, conn.access_token) : stored ? { ...stored, ad_account_ids: [] } : null;
   if (!settings) return { configured: false, tabs: tabsOf(null) };
-  const key = `preview-v3_${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
+  const key = `video-v5_${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
   const { data: snap } = await admin.from('client_dashboard_snapshots').select('payload, fetched_at').eq('client_id', clientId).eq('cache_key', key).maybeSingle();
   const fresh = snap && Date.now() - new Date(snap.fetched_at).getTime() < CACHE_MS && new Date(snap.fetched_at) > new Date(settings.updated_at);
   if (fresh && !refresh) return { configured: true, ...snap.payload, fetched_at: snap.fetched_at };
