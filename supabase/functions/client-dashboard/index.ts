@@ -200,17 +200,41 @@ async function buildDashboard(clientId: string, since: string, until: string, se
     };
   });
 
-  // Followers of connected Instagram / Facebook accounts.
+  // Discover social accounts from the client's portfolio, not only legacy OAuth connections.
   const accounts: any[] = [];
   if (settings.show_accounts) {
     const { data: pcs } = await admin.from('platform_connections')
       .select('access_token, refresh_token, instagram_account_id, platform_page_id').eq('client_id', clientId).eq('platform', 'meta').eq('status', 'active');
+    const socialConnections = [...(pcs || [])];
+    if (conn && settings.business_id) {
+      const pages = new Map<string, any>();
+      for (const edge of ['owned_pages', 'client_pages']) {
+        try {
+          const rows = await graphAll(`${settings.business_id}/${edge}`, { fields: 'id,name' }, conn.access_token, 100);
+          for (const page of rows) pages.set(page.id, page);
+        } catch (e) { console.error('[client-dashboard] portfolio pages', edge, (e as Error).message); }
+      }
+      for (const page of pages.values()) {
+        let tok = conn.access_token;
+        let igId: string | null = null;
+        try {
+          const detail = await graph(page.id, { fields: 'access_token,instagram_business_account{id}' }, conn.access_token);
+          tok = detail.access_token || tok;
+          igId = detail.instagram_business_account?.id || null;
+        } catch {
+          try {
+            const detail = await graph(page.id, { fields: 'instagram_business_account{id}' }, conn.access_token);
+            igId = detail.instagram_business_account?.id || null;
+          } catch (e) { console.error('[client-dashboard] portfolio instagram', (e as Error).message); }
+        }
+        socialConnections.unshift({ platform_page_id: page.id, instagram_account_id: igId, access_token: tok, refresh_token: null });
+      }
+    }
     const seen = new Set<string>();
-    for (const pc of pcs || []) {
+    for (const pc of socialConnections) {
       const tok = pc.refresh_token || pc.access_token;
       if (!tok) continue;
       if (pc.instagram_account_id && !seen.has(pc.instagram_account_id)) {
-        seen.add(pc.instagram_account_id);
         try {
           const ig = await graph(pc.instagram_account_id, { fields: 'username,name,followers_count,profile_picture_url' }, tok);
           let series: { date: string; value: number }[] = [];
@@ -224,14 +248,15 @@ async function buildDashboard(clientId: string, since: string, until: string, se
           } catch { /* growth optional */ }
           accounts.push({ platform: 'instagram', name: ig.name || ig.username, handle: ig.username ? `@${ig.username}` : null, picture: ig.profile_picture_url || null,
             followers: ig.followers_count ?? null, gained: series.length ? series.reduce((a, b) => a + b.value, 0) : null, series });
+          seen.add(pc.instagram_account_id);
         } catch (e) { console.error('[client-dashboard] ig', (e as Error).message); }
       }
       if (pc.platform_page_id && !seen.has(pc.platform_page_id)) {
-        seen.add(pc.platform_page_id);
         try {
           const pg = await graph(pc.platform_page_id, { fields: 'name,followers_count,fan_count,picture{url}' }, tok);
           accounts.push({ platform: 'facebook', name: pg.name, handle: null, picture: pg.picture?.data?.url || null,
             followers: pg.followers_count ?? pg.fan_count ?? null, gained: null, series: [] });
+          seen.add(pc.platform_page_id);
         } catch (e) { console.error('[client-dashboard] page', (e as Error).message); }
       }
     }
@@ -276,7 +301,7 @@ async function cachedDashboard(clientId: string, since: string, until: string, r
   const conn = await agencyConn();
   const settings = stored && conn ? await scopedSettings(stored, conn.access_token) : stored ? { ...stored, ad_account_ids: [] } : null;
   if (!settings) return { configured: false, tabs: tabsOf(null) };
-  const key = `${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
+  const key = `social-v2_${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
   const { data: snap } = await admin.from('client_dashboard_snapshots').select('payload, fetched_at').eq('client_id', clientId).eq('cache_key', key).maybeSingle();
   const fresh = snap && Date.now() - new Date(snap.fetched_at).getTime() < CACHE_MS && new Date(snap.fetched_at) > new Date(settings.updated_at);
   if (fresh && !refresh) return { configured: true, ...snap.payload, fetched_at: snap.fetched_at };
