@@ -3,6 +3,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
+import { portfolioAccounts, selectedPortfolioAccounts } from '../_shared/dashboard-portfolio.ts';
 import {
   currencyRate, isCampaignVisible, metricsFor, previousRange, rankAds, resultTypeFor, RESULT_LABEL, type ResultType,
 } from '../_shared/dashboard-metrics.ts';
@@ -19,7 +20,13 @@ const Range = { since: Day, until: Day, refresh: z.boolean().optional() };
 const Body = z.discriminatedUnion('action', [
   z.object({ action: z.literal('public'), token: z.string().min(8).max(80), ...Range }),
   z.object({ action: z.literal('preview'), client_id: z.string().uuid(), ...Range }),
-  z.object({ action: z.literal('ad_accounts') }),
+  z.object({ action: z.literal('businesses') }),
+  z.object({ action: z.literal('ad_accounts'), client_id: z.string().uuid(), business_id: z.string().regex(/^\d+$/).optional() }),
+  z.object({ action: z.literal('save_settings'), client_id: z.string().uuid(), settings: z.object({
+    business_id: z.string().regex(/^\d+$/), ad_account_ids: z.array(z.string()),
+    visible_campaign_ids: z.array(z.string()).nullable(), result_overrides: z.record(z.string()),
+    currency: z.enum(['USD', 'CRC']), show_campaigns: z.boolean(), show_accounts: z.boolean(), show_leads: z.boolean(), show_lead_names: z.boolean(),
+  }) }),
   z.object({ action: z.literal('campaigns'), client_id: z.string().uuid() }),
   z.object({ action: z.literal('public_config'), token: z.string().min(8).max(80) }),
 ]);
@@ -50,6 +57,32 @@ async function agencyConn() {
   const { data } = await admin.from('agency_meta_connection').select('access_token, token_expires_at')
     .order('updated_at', { ascending: false }).limit(1).maybeSingle();
   return data?.access_token ? data : null;
+}
+
+async function businessAccounts(businessId: string, token: string) {
+  const fields = 'id,name,currency,account_status';
+  const [owned, shared] = await Promise.all([
+    graphAll(`${businessId}/owned_ad_accounts`, { fields }, token, 100),
+    graphAll(`${businessId}/client_ad_accounts`, { fields }, token, 100),
+  ]);
+  return portfolioAccounts(owned, shared);
+}
+
+async function resolvePortfolio(settings: any, token: string) {
+  if (settings.business_id) return settings.business_id;
+  // Existing setups: infer only when all selected accounts have the same verified owner.
+  if (!settings.ad_account_ids?.length) return null;
+  const owners = await Promise.all(settings.ad_account_ids.map(async (id: string) => {
+    const a = await graph(id.startsWith('act_') ? id : `act_${id}`, { fields: 'business{id,name}' }, token);
+    return a.business?.id || null;
+  }));
+  return owners.every((id) => id && id === owners[0]) ? owners[0] : null;
+}
+
+async function scopedSettings(settings: any, token: string) {
+  const businessId = await resolvePortfolio(settings, token);
+  const allowed = businessId ? await businessAccounts(businessId, token) : [];
+  return { ...settings, business_id: businessId, ad_account_ids: selectedPortfolioAccounts(settings.ad_account_ids || [], allowed) };
 }
 
 async function requireAgency(req: Request) {
@@ -239,9 +272,11 @@ async function buildDashboard(clientId: string, since: string, until: string, se
 }
 
 async function cachedDashboard(clientId: string, since: string, until: string, refresh?: boolean) {
-  const { data: settings } = await admin.from('client_dashboard_settings').select('*').eq('client_id', clientId).maybeSingle();
+  const { data: stored } = await admin.from('client_dashboard_settings').select('*').eq('client_id', clientId).maybeSingle();
+  const conn = await agencyConn();
+  const settings = stored && conn ? await scopedSettings(stored, conn.access_token) : stored ? { ...stored, ad_account_ids: [] } : null;
   if (!settings) return { configured: false, tabs: tabsOf(null) };
-  const key = `${since}_${until}`;
+  const key = `${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
   const { data: snap } = await admin.from('client_dashboard_snapshots').select('payload, fetched_at').eq('client_id', clientId).eq('cache_key', key).maybeSingle();
   const fresh = snap && Date.now() - new Date(snap.fetched_at).getTime() < CACHE_MS && new Date(snap.fetched_at) > new Date(settings.updated_at);
   if (fresh && !refresh) return { configured: true, ...snap.payload, fetched_at: snap.fetched_at };
@@ -289,14 +324,31 @@ Deno.serve(async (req) => {
       return json(await cachedDashboard(b.client_id, b.since, b.until, b.refresh));
     }
     if (!conn) return json({ connected: false, items: [] });
-    if (b.action === 'ad_accounts') {
+    if (b.action === 'businesses') {
       try {
-        const items = await graphAll('me/adaccounts', { fields: 'id,name,currency,account_status' }, conn.access_token);
+        const items = await graphAll('me/businesses', { fields: 'id,name' }, conn.access_token, 100);
         return json({ connected: true, token_expires_at: conn.token_expires_at, items });
       } catch (e) { return json({ connected: false, error: (e as Error).message, items: [] }); }
     }
+    if (b.action === 'ad_accounts') {
+      try {
+        const { data: settings } = await admin.from('client_dashboard_settings').select('*').eq('client_id', b.client_id).maybeSingle();
+        const businessId = b.business_id || (settings ? await resolvePortfolio(settings, conn.access_token) : null);
+        const items = businessId ? await businessAccounts(businessId, conn.access_token) : [];
+        return json({ connected: true, business_id: businessId, items });
+      } catch { return json({ connected: false, error: 'No se pudieron cargar las cuentas del portafolio.', items: [] }); }
+    }
+    if (b.action === 'save_settings') {
+      const allowed = await businessAccounts(b.settings.business_id, conn.access_token);
+      const selected = selectedPortfolioAccounts(b.settings.ad_account_ids, allowed);
+      if (selected.length !== b.settings.ad_account_ids.length) return json({ error: 'Hay cuentas que no pertenecen al portafolio seleccionado.' }, 400);
+      const { error } = await admin.from('client_dashboard_settings').upsert({ client_id: b.client_id, ...b.settings, updated_at: new Date().toISOString() });
+      if (error) throw error;
+      return json({ saved: true });
+    }
     // campaigns
-    const { data: s } = await admin.from('client_dashboard_settings').select('ad_account_ids').eq('client_id', b.client_id).maybeSingle();
+    const { data: stored } = await admin.from('client_dashboard_settings').select('*').eq('client_id', b.client_id).maybeSingle();
+    const s = stored ? await scopedSettings(stored, conn.access_token) : null;
     const items: any[] = [];
     for (const raw of s?.ad_account_ids || []) {
       const act = raw.startsWith('act_') ? raw : `act_${raw}`;

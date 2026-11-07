@@ -280,6 +280,36 @@ html.agency-theme,
   background-color: hsl(var(--background));
 }
 
+.agency-shell .agency-results-theme,
+.agency-results-theme {
+  --background: 0 0% 5%;
+  --foreground: 36 20% 96%;
+  --card: 0 0% 9%;
+  --card-foreground: 36 20% 96%;
+  --popover: 0 0% 10%;
+  --popover-foreground: 36 20% 96%;
+  --primary: 12 88% 60%;
+  --primary-foreground: 0 0% 6%;
+  --secondary: 0 0% 13%;
+  --secondary-foreground: 36 20% 96%;
+  --muted: 0 0% 13%;
+  --muted-foreground: 0 0% 65%;
+  --accent: 0 0% 16%;
+  --accent-foreground: 36 20% 96%;
+  --border: 0 0% 18%;
+  --input: 0 0% 18%;
+  --ring: 12 88% 60%;
+  color-scheme: dark;
+}
+
+.agency-results-theme .tabular-nums,
+.agency-results-theme h1,
+.agency-results-theme h2,
+.agency-results-theme h3 {
+  font-family: "Space Grotesk", "DM Sans", sans-serif;
+  letter-spacing: 0;
+}
+
 /* Space Grotesk for every heading / numeric display inside the agency hub */
 .agency-shell h1,
 .agency-shell h2,

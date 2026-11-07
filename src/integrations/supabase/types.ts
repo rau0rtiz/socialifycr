@@ -1801,6 +1801,7 @@ export type Database = {
       client_dashboard_settings: {
         Row: {
           ad_account_ids: string[]
+          business_id: string | null
           client_id: string
           currency: string
           result_overrides: Json
@@ -1813,6 +1814,7 @@ export type Database = {
         }
         Insert: {
           ad_account_ids?: string[]
+          business_id?: string | null
           client_id: string
           currency?: string
           result_overrides?: Json
@@ -1825,6 +1827,7 @@ export type Database = {
         }
         Update: {
           ad_account_ids?: string[]
+          business_id?: string | null
           client_id?: string
           currency?: string
           result_overrides?: Json

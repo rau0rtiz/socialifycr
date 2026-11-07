@@ -1,4 +1,5 @@
 # Tasks
+- [x] Limitar cuentas al portafolio comercial por cliente y separar Dashboard/Configuración en agencia; 11 pruebas correctas, Maracuyá guardado con su portafolio, cuenta ajena rechazada (400), resultados públicos y popup verificados, móvil sin desbordamiento.
 - [x] Cambiar el cliente demo de resultados a Maracuyá Jewels con su cuenta Maracuya - ADS; verificar campañas en el enlace de cliente y quitar la configuración piloto de Peptiva sin tocar su calendario.
 - [x] Filtrar la Documentación por cliente y por nombre de documento, con buscador sin acentos ni mayúsculas, conteos por pestaña, estado vacío y limpieza de filtros; 12 pruebas correctas y verificado en pantalla (134 → 7 al buscar «CALMA», 1 al filtrar Aurum Studio).
 - [x] Limitar fechas históricas a la primera carga por cliente; calendarios existentes protegidos, 28 pruebas correctas y sincronización de B-Dental desde la interfaz comprobada con fechas y orden idénticos antes/después.

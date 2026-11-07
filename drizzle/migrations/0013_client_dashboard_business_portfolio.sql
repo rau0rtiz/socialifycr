@@ -1,0 +1,2 @@
+ALTER TABLE public.client_dashboard_settings ADD COLUMN IF NOT EXISTS business_id text;
+COMMENT ON COLUMN public.client_dashboard_settings.business_id IS 'Meta business portfolio restricting all selected advertising accounts for this client.';
