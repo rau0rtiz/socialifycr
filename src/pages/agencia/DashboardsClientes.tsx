@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BarChart3, Copy, ExternalLink, Loader2, RefreshCw, Save, Settings2, Search, Building2 } from 'lucide-react';
+import { BarChart3, Copy, ExternalLink, Loader2, RefreshCw, Save, Settings2, Search, Building2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +30,7 @@ export default function DashboardsClientes() {
   const [clientId, setClientId] = useState<string | null>(null);
   const [form, setForm] = useState<Settings>(EMPTY);
   const [goals, setGoals] = useState<Record<string, Goal>>({});
+  const [goalsOpen, setGoalsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<'dashboard' | 'setup'>('dashboard');
   const [search, setSearch] = useState('');
@@ -72,6 +73,7 @@ export default function DashboardsClientes() {
 
   useEffect(() => {
     if (!saved) return;
+    setGoalsOpen(false);
     setForm(saved.s ? { ...EMPTY, ...(saved.s as any), result_overrides: (saved.s.result_overrides as any) ?? {} } : EMPTY);
     setGoals(Object.fromEntries(saved.g.map((g: any) => [g.result_type, { target: g.target?.toString() ?? '', max_cost: g.max_cost?.toString() ?? '', min_roas: g.min_roas?.toString() ?? '' }])));
   }, [saved]);
@@ -223,9 +225,11 @@ export default function DashboardsClientes() {
               </section>
 
               <section className={box}>
-                <h3 className="mb-1 font-semibold">4. Metas de este mes</h3>
-                <p className="mb-3 text-xs text-muted-foreground">Solo llená los tipos de resultado que usa este cliente. Montos en la moneda elegida.</p>
-                <div className="grid gap-2">
+                <Button variant="ghost" className="h-auto w-full justify-between px-0 py-2" aria-expanded={goalsOpen} aria-controls="optional-campaign-goals" onClick={() => setGoalsOpen((open) => !open)}>
+                  <span className="flex items-center gap-2">Metas de este mes <span className="text-xs font-normal text-muted-foreground">Opcional</span></span>
+                  <ChevronDown className={`transition-transform ${goalsOpen ? 'rotate-180' : ''}`} />
+                </Button>
+                {goalsOpen && <div id="optional-campaign-goals" className="mt-3 grid gap-2">
                   <div className="hidden grid-cols-[1fr_repeat(3,110px)] gap-2 text-xs text-muted-foreground sm:grid"><span /><span>Cantidad</span><span>Costo máx.</span><span>ROAS mín.</span></div>
                   {RESULT_TYPES.map(([t, l]) => {
                     const g = goals[t] ?? { target: '', max_cost: '', min_roas: '' };
@@ -239,7 +243,7 @@ export default function DashboardsClientes() {
                       </div>
                     );
                   })}
-                </div>
+                </div>}
               </section>
 
               </div>
