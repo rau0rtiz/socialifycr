@@ -38,10 +38,8 @@ Cada cliente tiene campañas distintas (compras, e-commerce, mensajes, leads, vi
 | Mensajes (IG / WhatsApp / Messenger) | Conversaciones iniciadas | Costo por conversación | Citas agendadas si tiene Calendly |
 | Leads (formulario o web) | Leads | Costo por lead | Leads por fuente |
 | Tráfico | Visitas a la página | Costo por visita | Clics en el enlace |
-| Tráfico a perfil (seguidores) | Visitas al perfil y seguidores ganados en el período | Costo por seguidor (estimado) | Crecimiento de seguidores de IG en el mismo rango |
 | Alcance / reconocimiento | Personas alcanzadas | Costo por mil | Frecuencia y **retención del video**: reproducciones al 25/50/75/100 %, tiempo promedio visto y ThruPlays |
 
-Nota: Meta no atribuye seguidores directamente a un anuncio; se muestra el crecimiento de la cuenta en las mismas fechas, marcado como estimado.
 
 - Si un cliente tiene varias campañas de distinto tipo, cada tarjeta de campaña muestra su propio resultado, y arriba se ven los totales agrupados por tipo (por ejemplo "18 compras" y "64 conversaciones"), nunca sumados entre sí.
 - **Metas del mes por cliente**: ustedes definen la meta de cada resultado (por ejemplo 30 compras, ROAS 3, 80 conversaciones o costo por lead máximo ₡2.000) y el cliente ve una barra de avance contra esa meta.
@@ -68,7 +66,7 @@ Una sección nueva en el menú lateral, **"Dashboards de clientes"** (`/agencia/
 ## Detalles técnicos
 - Nueva tabla agency-only `client_dashboard_settings` (client_id único, ad_account_ids, campaign_ids visibles, overrides de resultado por campaña, currency, tabs, lead_list_enabled), `client_campaign_goals` (client_id, mes, result_type, target, max_cost, min_roas; único por cliente+mes+tipo) y `client_dashboard_snapshots` (client_id, period, payload jsonb, fetched_at). RLS solo agencia.
 - `calendar-public` gana la acción `dashboard` (token → client_id → snapshot), devolviendo solo agregados; nunca tokens ni IDs internos.
-- Insights a nivel `ad` con `video_p25/50/75/100_watched_actions`, `video_avg_time_watched_actions`, `video_thruplay_watched_actions`; seguidores desde `follower_count` diario de IG; `time_range` para rangos personalizados (validado, máximo 13 meses).
+- Insights a nivel `ad` con `video_p25/50/75/100_watched_actions`, `video_avg_time_watched_actions`, `video_thruplay_watched_actions`; `time_range` para rangos personalizados (validado, máximo 13 meses).
 - Nueva función `client-dashboard-sync`: usa `agency_meta_connection` + acciones existentes de `meta-api` (`campaigns`, `campaign-insights`, `daily-insights`, `ads`) y cuenta leads desde `instant_form_leads`, mensajes IG `msg_*` y citas Calendly del cliente. Cron horario.
 - Frontend: pestañas en `CalendarioPublico.tsx` con componentes nuevos en `src/components/calendario-publico/` (KpiCards, CampaignCards, LeadsFunnel); página nueva `src/pages/agencia/DashboardsClientes.tsx`, entrada en `nav-items.ts`, ruta en `App.tsx` y permiso en el panel de accesos.
 - Reglas en `AGENTS.md`; pruebas para costo por resultado, selección de resultado por objetivo y filtro de campañas visibles.
