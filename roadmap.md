@@ -1,4 +1,5 @@
 # Tasks
+- [x] Vista cliente en scroll: seguidores, calendario y campañas; calendario completo y popup de campaña verificados en desktop/móvil sin desbordamiento, 13 pruebas correctas. Maracuyá aún no tiene cuentas sociales conectadas para mostrar seguidores.
 - [x] Limitar cuentas al portafolio comercial por cliente y separar Dashboard/Configuración en agencia; 11 pruebas correctas, Maracuyá guardado con su portafolio, cuenta ajena rechazada (400), resultados públicos y popup verificados, móvil sin desbordamiento.
 - [x] Cambiar el cliente demo de resultados a Maracuyá Jewels con su cuenta Maracuya - ADS; verificar campañas en el enlace de cliente y quitar la configuración piloto de Peptiva sin tocar su calendario.
 - [x] Filtrar la Documentación por cliente y por nombre de documento, con buscador sin acentos ni mayúsculas, conteos por pestaña, estado vacío y limpieza de filtros; 12 pruebas correctas y verificado en pantalla (134 → 7 al buscar «CALMA», 1 al filtrar Aurum Studio).

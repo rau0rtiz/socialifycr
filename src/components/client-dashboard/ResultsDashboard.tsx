@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -60,8 +60,8 @@ function Retention({ v }: { v: NonNullable<Metrics['video']> }) {
   );
 }
 
-export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName = '' }: {
-  section: DashSection; cacheKey: unknown[]; dialogClassName?: string;
+export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName = '', calendar, enabledSections }: {
+  section: DashSection | 'overview'; calendar?: ReactNode; enabledSections?: { accounts: boolean; campaigns: boolean; leads: boolean }; cacheKey: unknown[]; dialogClassName?: string;
   fetcher: (r: { since: string; until: string }) => Promise<DashboardData>;
 }) {
   const [preset, setPreset] = useState<RangePreset>('this_month');
@@ -132,7 +132,32 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
         : error || !data ? <div className={`${card} text-center text-sm text-muted-foreground`}>No se pudieron cargar los resultados. Probá de nuevo en un rato.</div>
         : !data.configured ? <div className={`${card} text-center text-sm text-muted-foreground`}>Este panel todavía no está configurado.</div>
         : <>
-          {section === 'campanas' && <>
+          {(section === 'cuentas' || (section === 'overview' && enabledSections?.accounts)) && <section className="space-y-4" aria-label="Seguidores"><h2 className="text-xl font-bold">Seguidores</h2>{(
+            (data.accounts ?? []).length === 0 ? <div className={`${card} text-center text-sm text-muted-foreground`}>No hay cuentas de Instagram o Facebook conectadas.</div> :
+            <div className="grid gap-3 md:grid-cols-2">
+              {(data.accounts ?? []).map((a) => {
+                const Icon = a.platform === 'instagram' ? Instagram : Facebook;
+                return (
+                  <section key={`${a.platform}-${a.name}`} className={card}>
+                    <div className="flex items-center gap-3">
+                      {a.picture ? <img src={a.picture} alt="" className="h-12 w-12 rounded-full object-cover" /> : <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary"><Icon className="h-5 w-5" /></div>}
+                      <div className="min-w-0"><p className="flex items-center gap-1.5 truncate font-semibold"><Icon className="h-4 w-4 text-primary" />{a.name}</p>{a.handle && <p className="text-xs text-muted-foreground">{a.handle}</p>}</div>
+                    </div>
+                    <div className="mt-4 flex items-end justify-between">
+                      <div><p className="text-xs text-muted-foreground">Seguidores</p><p className="text-3xl font-bold tabular-nums">{a.followers != null ? int(a.followers) : '—'}</p></div>
+                      {a.gained != null && <p className={`text-sm font-semibold ${a.gained >= 0 ? 'text-primary' : 'text-destructive'}`}>{a.gained >= 0 ? '+' : ''}{int(a.gained)} en el período</p>}
+                    </div>
+                    {a.series.length > 1 && <div className="mt-3 h-20"><ResponsiveContainer width="100%" height="100%"><BarChart data={a.series}><Bar dataKey="value" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} /><Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12 }} labelFormatter={(l, p) => String(p?.[0]?.payload?.date ?? '')} formatter={(v) => [`${v} nuevos`, '']} /></BarChart></ResponsiveContainer></div>}
+                  </section>
+                );
+              })}
+            </div>
+          )}</section>}
+
+
+          {section === 'overview' && calendar}
+          {(section === 'campanas' || (section === 'overview' && enabledSections?.campaigns)) && <>
+            {section === 'overview' && <h2 className="border-t border-border pt-8 text-xl font-bold">Desempeño de campañas</h2>}
             {(data.totals ?? []).length === 0 ? <div className={`${card} text-center text-sm text-muted-foreground`}>No hubo campañas con inversión en este período.</div> : <>
               {(data.totals ?? []).map((t) => {
                 const L = LABEL[t.result_type];
@@ -148,7 +173,7 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
                         {t.roas != null && <p className="text-xs font-semibold text-primary">ROAS {t.roas.toFixed(1)}× · vendido {money(t.purchase_value)}</p>}</div>
                     </div>
                     {goalPct != null && <div className="mt-4">
-                      <div className="mb-1 flex justify-between text-xs"><span className="text-muted-foreground">Meta del mes</span><span className="font-semibold">{int(t.results)} / {int(t.goal!.target!)}</span></div>
+                      <div className="mb-1 flex justify-between text-xs"><span className="text-muted-foreground">Meta del mes</span><span className="font-semibold">{int(t.results)} / {int(t.goal?.target ?? 0)}</span></div>
                       <div className="h-2.5 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary" style={{ width: `${goalPct}%` }} /></div>
                       {(t.goal?.max_cost || t.goal?.min_roas) && <p className="mt-1 text-xs text-muted-foreground">{t.goal.max_cost ? `Costo objetivo: máx. ${money(t.goal.max_cost)}` : ''}{t.goal.max_cost && t.goal.min_roas ? ' · ' : ''}{t.goal.min_roas ? `ROAS objetivo: ${t.goal.min_roas}×` : ''}</p>}
                     </div>}
@@ -205,29 +230,7 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
             {!!data.errors?.length && <p className="text-xs text-muted-foreground">Algunos datos de Meta no se pudieron leer en este momento.</p>}
           </>}
 
-          {section === 'cuentas' && (
-            (data.accounts ?? []).length === 0 ? <div className={`${card} text-center text-sm text-muted-foreground`}>No hay cuentas de Instagram o Facebook conectadas.</div> :
-            <div className="grid gap-3 md:grid-cols-2">
-              {(data.accounts ?? []).map((a) => {
-                const Icon = a.platform === 'instagram' ? Instagram : Facebook;
-                return (
-                  <section key={`${a.platform}-${a.name}`} className={card}>
-                    <div className="flex items-center gap-3">
-                      {a.picture ? <img src={a.picture} alt="" className="h-12 w-12 rounded-full object-cover" /> : <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary"><Icon className="h-5 w-5" /></div>}
-                      <div className="min-w-0"><p className="flex items-center gap-1.5 truncate font-semibold"><Icon className="h-4 w-4 text-primary" />{a.name}</p>{a.handle && <p className="text-xs text-muted-foreground">{a.handle}</p>}</div>
-                    </div>
-                    <div className="mt-4 flex items-end justify-between">
-                      <div><p className="text-xs text-muted-foreground">Seguidores</p><p className="text-3xl font-bold tabular-nums">{a.followers != null ? int(a.followers) : '—'}</p></div>
-                      {a.gained != null && <p className={`text-sm font-semibold ${a.gained >= 0 ? 'text-primary' : 'text-destructive'}`}>{a.gained >= 0 ? '+' : ''}{int(a.gained)} en el período</p>}
-                    </div>
-                    {a.series.length > 1 && <div className="mt-3 h-20"><ResponsiveContainer width="100%" height="100%"><BarChart data={a.series}><Bar dataKey="value" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} /><Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12 }} labelFormatter={(l, p) => String(p?.[0]?.payload?.date ?? '')} formatter={(v) => [`${v} nuevos`, '']} /></BarChart></ResponsiveContainer></div>}
-                  </section>
-                );
-              })}
-            </div>
-          )}
-
-          {section === 'leads' && (() => {
+          {(section === 'leads' || (section === 'overview' && enabledSections?.leads)) && (() => {
             const L = data.leads;
             const reach = (data.totals ?? []).reduce((s, t) => s + t.reach, 0);
             const contacts = (data.totals ?? []).filter((t) => ['messages', 'leads'].includes(t.result_type)).reduce((s, t) => s + t.results, 0);

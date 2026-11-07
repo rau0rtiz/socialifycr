@@ -15,7 +15,7 @@ import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { dayLabel, monthLabel, COVER_STATUS_LABEL, isStaticArtwork } from '@/lib/calendar-media';
 import { CalendarHistory } from '@/components/calendario/CalendarHistory';
 import { CalendarInstall } from '@/components/calendario/CalendarInstall';
-import { ResultsDashboard, type DashSection } from '@/components/client-dashboard/ResultsDashboard';
+import { ResultsDashboard } from '@/components/client-dashboard/ResultsDashboard';
 import type { CalendarComment as Comment } from '@/lib/calendar-history';
 
 interface Payload { client: { name: string; logo_url: string | null } | null; items: CalendarItem[]; comments: Comment[] }
@@ -44,9 +44,8 @@ export default function CalendarioPublico() {
     queryKey: ['public-dashboard-config', token], retry: false, staleTime: 5 * 60_000,
     queryFn: async () => { const { data, error } = await supabase.functions.invoke('client-dashboard', { body: { action: 'public_config', token } }); if (error) throw error; return data; },
   });
-  const sections = ([['calendario', 'Calendario', true], ['campanas', 'Campañas', !!dashCfg?.tabs.campaigns], ['cuentas', 'Cuentas', !!dashCfg?.tabs.accounts], ['leads', 'Leads', !!dashCfg?.tabs.leads]] as const).filter((s) => s[2]);
-  const [section, setSection] = useState<string>(() => new URLSearchParams(window.location.search).get('tab') ?? 'calendario');
-  const activeSection = sections.some((s) => s[0] === section) ? section : 'calendario';
+  const hasDashboard = !!(dashCfg?.tabs.accounts || dashCfg?.tabs.campaigns || dashCfg?.tabs.leads);
+  const [pageView, setPageView] = useState<'overview' | 'calendar'>(() => new URLSearchParams(window.location.search).get('tab') === 'calendario' ? 'calendar' : 'overview');
   const [ym, setYm] = useState<{ y: number; m: number } | null>(null);
   const [view, setView] = useState<'pieces' | 'calendar' | 'review'>('calendar');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -88,7 +87,7 @@ export default function CalendarioPublico() {
           {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="h-14 w-14 shrink-0 rounded-xl object-contain sm:h-16 sm:w-16" />}
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">{data.client?.name}</h1>
-            <p className="text-sm text-muted-foreground">Calendario de publicación</p>
+            <p className="text-sm text-muted-foreground">{hasDashboard ? 'Resultados y publicaciones' : 'Calendario de publicación'}</p>
           </div>
           <Button variant="outline" size="icon" aria-label="Actualizar calendario" onClick={refresh} disabled={isFetching} className="h-11 w-11 shrink-0 rounded-xl">
             <RefreshCw className={isFetching ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
@@ -96,13 +95,16 @@ export default function CalendarioPublico() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-3 pb-10 pt-4 sm:px-4">
-        {sections.length > 1 && (
-          <nav aria-label="Secciones" className="mb-4 flex gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-1">
-            {sections.map(([k, l]) => <button key={k} type="button" aria-pressed={activeSection === k} onClick={() => setSection(k)} className={`min-h-11 flex-1 whitespace-nowrap rounded-xl px-3 text-sm font-semibold ${activeSection === k ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>{l}</button>)}
-          </nav>
-        )}
-        {activeSection !== 'calendario' ? (
-          <ResultsDashboard section={activeSection as DashSection} cacheKey={['public-dashboard', token]} dialogClassName="shared-calendar shared-calendar-dialog"
+        {hasDashboard && pageView === 'calendar' && <Button variant="outline" className="mb-5" onClick={() => setPageView('overview')}><ChevronLeft />Volver al resumen</Button>}
+        {hasDashboard && pageView === 'overview' ? (
+          <ResultsDashboard section="overview" enabledSections={dashCfg?.tabs} cacheKey={['public-dashboard', token]} dialogClassName="shared-calendar shared-calendar-dialog"
+            calendar={<section className="space-y-4 border-t border-border py-8" aria-label="Calendario de publicación">
+              <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-bold">Calendario de publicación</h2><Button variant="outline" onClick={() => { setPageView('calendar'); setView('calendar'); }}><CalendarDays />Calendario completo</Button></div>
+              <div className="flex items-center justify-between gap-2"><Button variant="ghost" size="icon" aria-label="Mes anterior" onClick={() => shift(-1)}><ChevronLeft /></Button><h3 className="text-lg font-semibold first-letter:uppercase">{ym && monthLabel(ym.y, ym.m)}</h3><Button variant="ghost" size="icon" aria-label="Mes siguiente" onClick={() => shift(1)}><ChevronRight /></Button></div>
+              {ym && <PublicMonthGrid year={ym.y} month={ym.m} items={data.items} selected={day} onSelect={setDay} onOpen={(i) => setOpenId(i.id)} />}
+              {day && dayItems.length > 0 && <div className="grid gap-3 md:grid-cols-2">{dayItems.map((it) => <PieceCard key={it.id} item={it} onOpen={() => setOpenId(it.id)} />)}</div>}
+              {pending > 0 && <Button variant="secondary" onClick={() => { setPageView('calendar'); setView('review'); }}><Clock />{pending} por revisar<ChevronRight /></Button>}
+            </section>}
             fetcher={async (r) => { const { data, error } = await supabase.functions.invoke('client-dashboard', { body: { action: 'public', token, ...r } }); if (error) throw error; return data; }} />
         ) : view === 'review' ? (
           <section>
