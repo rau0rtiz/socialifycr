@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { presetRange, RANGE_LABEL, type RangePreset } from '@/lib/dashboard-range';
 import { campaignAds } from '@/lib/campaign-ads';
+import { AdVideoPlayer } from './AdVideoPlayer';
 
 export type DashSection = 'campanas' | 'cuentas' | 'leads';
 type Metrics = { spend: number; reach: number; impressions: number; frequency: number; results: number; cost_per_result: number | null; purchase_value: number; roas: number | null; link_clicks: number; video: null | { plays: number; p25: number; p50: number; p75: number; p100: number; thruplays: number; avg_seconds: number } };
@@ -266,11 +267,10 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
 function AdPlayback({ ad }: { ad: Ad }) {
   const [failed, setFailed] = useState(false);
   return <>
-    {ad.video_url && !failed ? <video controls playsInline preload="metadata" poster={ad.thumbnail || undefined} src={ad.video_url} aria-label={`Video del anuncio: ${ad.name}`} onError={() => setFailed(true)} className="mx-auto max-h-[55dvh] w-full rounded-lg bg-secondary object-contain" />
-      : ad.preview_url ? <iframe src={ad.preview_url} title={`Reproducir anuncio: ${ad.name}`} allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowFullScreen className="h-[65dvh] min-h-96 w-full rounded-lg border-0 bg-secondary" />
+    {ad.video_url && !failed ? <AdVideoPlayer src={ad.video_url} poster={ad.thumbnail || undefined} name={ad.name} onError={() => setFailed(true)} />
         : ad.thumbnail ? <img src={ad.thumbnail} alt={ad.name} className="mx-auto max-h-[55dvh] w-full rounded-lg object-contain" />
         : <div className="flex aspect-square items-center justify-center rounded-lg bg-secondary text-sm text-muted-foreground">Sin vista previa</div>}
-    {ad.is_video && (!ad.video_url || failed) && !ad.preview_url && <p className="mt-2 text-xs text-muted-foreground">Meta no permite reproducir este video en este momento.</p>}
+    {ad.is_video && (!ad.video_url || failed) && <div className="mt-3 space-y-2"><p className="text-xs text-muted-foreground">El video original no está disponible para reproducir aquí.</p>{ad.preview_url && <Button asChild variant="outline" className="w-full"><a href={ad.preview_url} target="_blank" rel="noreferrer">Ver anuncio en Facebook</a></Button>}</div>}
   </>;
 }
 

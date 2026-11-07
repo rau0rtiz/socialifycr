@@ -5,6 +5,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
 import { portfolioAccounts, selectedPortfolioAccounts } from '../_shared/dashboard-portfolio.ts';
 import { adThumbnail } from '../_shared/dashboard-thumbnail.ts';
+import { creativePageId, creativeVideoId, directVideoSource } from '../_shared/dashboard-video.ts';
 import {
   currencyRate, isCampaignVisible, metricsFor, previousRange, rankAds, resultTypeFor, RESULT_LABEL, type ResultType,
 } from '../_shared/dashboard-metrics.ts';
@@ -173,10 +174,10 @@ async function buildDashboard(clientId: string, since: string, until: string, se
   const ranked = rankAds(ads).slice(0, 40);
   if (conn && ranked.length) {
     try {
-      const det = await graph('', { ids: ranked.map((a) => a.id).join(','), fields: 'creative{id,thumbnail_url,image_url,body,title,object_type,video_id}' }, conn.access_token);
+      const det = await graph('', { ids: ranked.map((a) => a.id).join(','), fields: 'creative{id,thumbnail_url,image_url,body,title,object_type,video_id,object_story_spec,effective_object_story_id}' }, conn.access_token);
       const creativeIds = [...new Set(ranked.map((a) => det?.[a.id]?.creative?.id).filter(Boolean))];
       let previews: any = {};
-      const videoIds = [...new Set(ranked.map((a) => det?.[a.id]?.creative?.video_id).filter(Boolean))];
+      const videoIds = [...new Set(ranked.map((a) => creativeVideoId(det?.[a.id]?.creative || {})).filter(Boolean))];
       let videos: any = {};
       if (videoIds.length) {
         try {
@@ -192,8 +193,22 @@ async function buildDashboard(clientId: string, since: string, until: string, se
       for (const a of ranked) {
         const cr = det?.[a.id]?.creative;
         const preview = previews?.[cr?.id];
-        if (cr) Object.assign(a, { thumbnail: adThumbnail(cr, preview), video_url: videos?.[cr.video_id]?.source || null, body: cr.body || null, title: cr.title || null, is_video: !!cr.video_id });
+        const videoId = creativeVideoId(cr || {});
+        if (cr) Object.assign(a, { thumbnail: adThumbnail(cr, preview), video_url: directVideoSource(videos?.[videoId || '']?.source), body: cr.body || null, title: cr.title || null, is_video: !!videoId });
       }
+      // Page-owned videos can require the owning Page token rather than the agency user token.
+      // Tokens never leave the function; only the same creative's validated media URL is returned.
+      const pageTokens = new Map<string, Promise<string | null>>();
+      await Promise.all(ranked.filter((a) => a.is_video && !a.video_url).map(async (a) => {
+        const cr = det?.[a.id]?.creative;
+        const videoId = creativeVideoId(cr || {});
+        const pageId = creativePageId(cr || {});
+        if (!videoId || !pageId) return;
+        if (!pageTokens.has(pageId)) pageTokens.set(pageId, graph(pageId, { fields: 'access_token' }, conn.access_token).then((p) => p.access_token || null).catch(() => null));
+        const token = await pageTokens.get(pageId);
+        if (!token) return;
+        try { const v = await graph(videoId, { fields: 'source' }, token); a.video_url = directVideoSource(v.source); } catch { /* Use same-ad preview link when direct access is denied. */ }
+      }));
       await Promise.all(ranked.filter((a) => a.is_video && !a.video_url).map(async (a) => {
         try {
           const result = await graph(`${a.id}/previews`, { ad_format: 'MOBILE_FEED_STANDARD' }, conn.access_token);
@@ -328,7 +343,7 @@ async function cachedDashboard(clientId: string, since: string, until: string, r
   const conn = await agencyConn();
   const settings = stored && conn ? await scopedSettings(stored, conn.access_token) : stored ? { ...stored, ad_account_ids: [] } : null;
   if (!settings) return { configured: false, tabs: tabsOf(null) };
-  const key = `creative-thumb-v6_${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
+  const key = `creative-video-v7_${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
   const { data: snap } = await admin.from('client_dashboard_snapshots').select('payload, fetched_at').eq('client_id', clientId).eq('cache_key', key).maybeSingle();
   const fresh = snap && Date.now() - new Date(snap.fetched_at).getTime() < CACHE_MS && new Date(snap.fetched_at) > new Date(settings.updated_at);
   if (fresh && !refresh) return { configured: true, ...snap.payload, fetched_at: snap.fetched_at };
