@@ -22,6 +22,10 @@ Así no revivimos el portal viejo con login (ese sigue archivado): es el enlace 
 - Sección **"Mejores anuncios"** en el resumen: los 3 mejores de todas las campañas, cada uno comparado dentro de su propio tipo de resultado.
 - Una línea en palabras: "Este mes tu campaña generó 42 conversaciones a ₡1.850 cada una".
 
+**Cuentas** (seguidores, aparte de las campañas)
+- Por cada cuenta de Instagram y página de Facebook del cliente conectada en el portafolio comercial: foto, nombre, seguidores actuales y cuántos ganó o perdió en el período elegido, con un gráfico pequeño de su evolución, como en la versión inicial del dashboard.
+- No se atribuyen a ningún anuncio; es solo el crecimiento de la cuenta.
+
 **Leads**
 - Total del período y por fuente (formulario de Meta, mensajes de Instagram, citas de Calendly).
 - Mini embudo: alcance → mensajes/leads → citas.
