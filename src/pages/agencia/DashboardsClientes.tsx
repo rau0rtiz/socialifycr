@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ResultsDashboard, type DashSection } from '@/components/client-dashboard/ResultsDashboard';
 import { prettyCalendarToken } from '@/lib/calendar-share';
 import { crToday } from '@/lib/dashboard-range';
+import { clientPortfolioOptions } from '../../../supabase/functions/_shared/dashboard-portfolio';
 
 const RESULT_TYPES = [['purchase', 'Compras'], ['messages', 'Conversaciones'], ['leads', 'Leads'], ['traffic', 'Visitas'], ['reach', 'Alcance']] as const;
 type Settings = { business_id: string | null; ad_account_ids: string[]; visible_campaign_ids: string[] | null; result_overrides: Record<string, string>; currency: string; show_campaigns: boolean; show_accounts: boolean; show_leads: boolean; show_lead_names: boolean };
@@ -46,7 +47,6 @@ export default function DashboardsClientes() {
     },
   });
   const { data: businesses, isLoading: businessLoading } = useQuery({ queryKey: ['dash-businesses'], staleTime: 5 * 60_000, queryFn: () => invoke({ action: 'businesses' }) });
-  const { data: accounts, isLoading: accLoading } = useQuery({ queryKey: ['dash-ad-accounts', clientId, form.business_id], enabled: !!clientId, staleTime: 5 * 60_000, queryFn: () => invoke({ action: 'ad_accounts', client_id: clientId, ...(form.business_id ? { business_id: form.business_id } : {}) }) });
   const { data: saved } = useQuery({
     queryKey: ['dash-settings', clientId], enabled: !!clientId,
     queryFn: async () => {
@@ -58,6 +58,13 @@ export default function DashboardsClientes() {
       return { s, g: g ?? [] };
     },
   });
+  const portfolioId = form.business_id || saved?.s?.business_id || null;
+  const { data: accounts, isLoading: accLoading } = useQuery({
+    queryKey: ['dash-ad-accounts', clientId, portfolioId], enabled: !!clientId && !!saved,
+    staleTime: 5 * 60_000,
+    queryFn: () => invoke({ action: 'ad_accounts', client_id: clientId, ...(portfolioId ? { business_id: portfolioId } : {}) }),
+  });
+  const portfolioOptions = clientPortfolioOptions<{ id: string; name: string }>(businesses?.items ?? [], saved?.s?.business_id || portfolioId || accounts?.business_id);
   const { data: campaigns, isFetching: campLoading } = useQuery({
     queryKey: ['dash-campaigns', clientId, saved?.s?.ad_account_ids?.join(',')], enabled: !!clientId && (saved?.s?.ad_account_ids?.length ?? 0) > 0,
     staleTime: 5 * 60_000, queryFn: () => invoke({ action: 'campaigns', client_id: clientId }),
@@ -163,12 +170,12 @@ export default function DashboardsClientes() {
                   <h3 className="mb-3 flex items-center gap-2 font-semibold"><Building2 className="h-4 w-4 text-primary" />Portafolio comercial</h3>
                   <Select value={form.business_id || ''} onValueChange={(id) => setForm({ ...form, business_id: id, ad_account_ids: [], visible_campaign_ids: null, result_overrides: {} })}>
                     <SelectTrigger aria-label="Portafolio comercial"><SelectValue placeholder="Seleccionar portafolio" /></SelectTrigger>
-                    <SelectContent>{(businesses?.items ?? []).map((b: any) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
+                    <SelectContent className="agency-results-theme">{portfolioOptions.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
                   </Select>
                   <h4 className="mb-2 mt-5 text-sm font-semibold">Cuentas publicitarias</h4>
                   {accLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                   {!accLoading && (accounts?.items ?? []).length === 0 && <p className="text-sm text-muted-foreground">{accounts?.error || (form.business_id ? 'Sin cuentas publicitarias disponibles en este portafolio.' : 'Seleccioná un portafolio comercial.')}</p>}
-                  <div className="max-h-56 space-y-1 overflow-y-auto">
+                  <div className="max-h-56 space-y-1 overflow-y-auto" aria-label="Cuentas publicitarias del portafolio">
                     {(accounts?.items ?? []).map((a: any) => (
                       <label key={a.id} className="flex items-center gap-2 rounded-lg px-1 py-1 text-sm">
                         <Checkbox checked={form.ad_account_ids.includes(a.id)} onCheckedChange={(v) => setForm({ ...form, ad_account_ids: v ? [...form.ad_account_ids, a.id] : form.ad_account_ids.filter((x) => x !== a.id) })} />

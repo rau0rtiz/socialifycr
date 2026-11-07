@@ -6,3 +6,7 @@ export function selectedPortfolioAccounts(selected: string[], allowed: { id: str
   const ids = new Set(allowed.map((a) => a.id.replace(/^act_/, '')));
   return selected.filter((id) => ids.has(id.replace(/^act_/, '')));
 }
+
+export function clientPortfolioOptions<T extends { id: string }>(portfolios: T[], assignedId: string | null | undefined): T[] {
+  return assignedId ? portfolios.filter((p) => p.id === assignedId) : portfolios;
+}
