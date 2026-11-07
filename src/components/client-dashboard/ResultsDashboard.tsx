@@ -146,33 +146,33 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
           {section === 'overview' && calendar}
           {(section === 'campanas' || (section === 'overview' && enabledSections?.campaigns)) && <>
             {section === 'overview' && <h2 className="border-t border-border pt-8 text-xl font-bold">Desempeño de campañas</h2>}
-            {(data.totals ?? []).length === 0 ? <div className={`${card} text-center text-sm text-muted-foreground`}>No hubo campañas con inversión en este período.</div> : <>
-              {(data.totals ?? []).map((t) => {
-                const L = LABEL[t.result_type];
-                const goalPct = t.goal?.target ? Math.min(100, pct(t.results, t.goal.target)) : null;
-                return (
-                  <section key={t.result_type} className={card}>
-                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Campañas de {L.many.toLowerCase()}</h3>
-                    <div className={`grid grid-cols-2 gap-3 ${t.result_type === 'purchase' ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
-                      {t.result_type === 'purchase' && <>
-                        <div className="min-w-0"><p className="text-xs text-muted-foreground">Monto total vendido</p><p className="break-words text-2xl font-bold tabular-nums text-foreground">{money(t.purchase_value)}</p><p className="text-xs text-muted-foreground">Atribuido por Meta</p></div>
-                        <div><p className="text-xs text-muted-foreground">ROAS</p><p className="text-2xl font-bold tabular-nums text-foreground">{t.roas != null ? `${t.roas.toFixed(2)}×` : '—'}</p></div>
-                      </>}
-                      <div><p className="text-xs text-muted-foreground">Inversión</p><p className="text-2xl font-bold tabular-nums">{money(t.spend)}</p><Delta now={t.spend} prev={t.previous?.spend} /></div>
-                      <div><p className="text-xs text-muted-foreground">Personas alcanzadas</p><p className="text-2xl font-bold tabular-nums">{int(t.reach)}</p><Delta now={t.reach} prev={t.previous?.reach} /></div>
-                      <div><p className="text-xs text-muted-foreground">{L.many}</p><p className="text-2xl font-bold tabular-nums">{int(t.results)}</p><Delta now={t.results} prev={t.previous?.results} /></div>
-                      <div><p className="text-xs text-muted-foreground">{L.cost}</p><p className="text-2xl font-bold tabular-nums">{costOf(t.result_type, t.cost_per_result)}</p></div>
-                    </div>
-                    {goalPct != null && <div className="mt-4">
-                      <div className="mb-1 flex justify-between text-xs"><span className="text-muted-foreground">Meta del mes</span><span className="font-semibold">{int(t.results)} / {int(t.goal?.target ?? 0)}</span></div>
-                      <div className="h-2.5 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary" style={{ width: `${goalPct}%` }} /></div>
-                      {(t.goal?.max_cost || t.goal?.min_roas) && <p className="mt-1 text-xs text-muted-foreground">{t.goal.max_cost ? `Costo objetivo: máx. ${money(t.goal.max_cost)}` : ''}{t.goal.max_cost && t.goal.min_roas ? ' · ' : ''}{t.goal.min_roas ? `ROAS objetivo: ${t.goal.min_roas}×` : ''}</p>}
-                    </div>}
-                    {t.result_type !== 'reach' && t.results > 0 && <p className="mt-3 text-sm">En este período tus campañas generaron <b>{int(t.results)} {L.many.toLowerCase()}</b> a <b>{money(t.cost_per_result)}</b> cada una.</p>}
-                  </section>
-                );
-              })}
-
+            {(data.campaigns ?? []).length === 0 ? <div className={`${card} text-center text-sm text-muted-foreground`}>No hubo campañas con inversión en este período.</div> : <>
+              <section>
+                <h3 className="mb-3 text-sm font-semibold">Campañas</h3>
+                <div className="space-y-8">
+                  {(data.campaigns ?? []).map((c) => {
+                    const bestAds = campaignAds(data.ads ?? [], c.id).slice(0, 3);
+                    return (
+                      <section key={c.id} aria-label={`Campaña: ${c.name}`} className="space-y-4 border-t border-border pt-5">
+                        <div className="agency-card agency-glow space-y-4 p-4 sm:p-6">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2"><span className={`h-2 w-2 shrink-0 rounded-full ${c.active ? 'bg-primary' : 'bg-muted-foreground'}`} /><span className="text-xs text-muted-foreground">{c.active ? 'En circulación' : 'Pausada'} · {LABEL[c.result_type].many}</span></div>
+                          <h4 className="mt-1 break-words text-lg font-semibold">{c.name}</h4>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => setCampaignId(c.id)} className="min-h-11 shrink-0">Ver campaña</Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                          {[...(c.result_type === 'purchase' ? [['Monto total vendido', money(c.metrics.purchase_value)], ['ROAS', c.metrics.roas != null ? `${c.metrics.roas.toFixed(2)}×` : '—']] : []), ['Inversión', money(c.metrics.spend)], ['Alcance', int(c.metrics.reach)], [LABEL[c.result_type].many, int(c.metrics.results)], [LABEL[c.result_type].cost, costOf(c.result_type, c.metrics.cost_per_result)]].map(([label, value]) => <div key={label} className="min-w-0 py-2"><p className="text-xs text-muted-foreground">{label}</p><p className="break-words text-2xl font-bold tabular-nums text-foreground">{value}</p></div>)}
+                        </div>
+                        </div>
+                        <h5 className="text-sm font-semibold">Mejores anuncios</h5>
+                        {bestAds.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{bestAds.map((a, i) => <AdTile key={a.id} ad={a} rank={i} money={money} onOpen={() => setAdId(a.id)} />)}</div> : <p className="text-sm text-muted-foreground">Sin anuncios con datos en este período.</p>}
+                      </section>
+                    );
+                  })}
+                </div>
+              </section>
               {chart.length > 1 && <section className={card}>
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold">Resultados en el tiempo</h3>
@@ -190,30 +190,6 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
                 </div>
               </section>}
 
-              <section>
-                <h3 className="mb-3 text-sm font-semibold">Campañas</h3>
-                <div className="space-y-8">
-                  {(data.campaigns ?? []).map((c) => {
-                    const bestAds = campaignAds(data.ads ?? [], c.id).slice(0, 3);
-                    return (
-                      <section key={c.id} aria-label={`Campaña: ${c.name}`} className="space-y-4 border-t border-border pt-5">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2"><span className={`h-2 w-2 shrink-0 rounded-full ${c.active ? 'bg-primary' : 'bg-muted-foreground'}`} /><span className="text-xs text-muted-foreground">{c.active ? 'En circulación' : 'Pausada'} · {LABEL[c.result_type].many}</span></div>
-                          <h4 className="mt-1 break-words text-lg font-semibold">{c.name}</h4>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => setCampaignId(c.id)} className="min-h-11 shrink-0">Ver campaña</Button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                          {[...(c.result_type === 'purchase' ? [['Monto total vendido', money(c.metrics.purchase_value)], ['ROAS', c.metrics.roas != null ? `${c.metrics.roas.toFixed(2)}×` : '—']] : []), ['Inversión', money(c.metrics.spend)], ['Alcance', int(c.metrics.reach)], [LABEL[c.result_type].many, int(c.metrics.results)], [LABEL[c.result_type].cost, costOf(c.result_type, c.metrics.cost_per_result)]].map(([label, value]) => <div key={label} className="min-w-0 py-2"><p className="text-xs text-muted-foreground">{label}</p><p className="break-words text-lg font-bold tabular-nums">{value}</p></div>)}
-                        </div>
-                        <h5 className="text-sm font-semibold">Mejores anuncios</h5>
-                        {bestAds.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{bestAds.map((a, i) => <AdTile key={a.id} ad={a} rank={i} money={money} onOpen={() => setAdId(a.id)} />)}</div> : <p className="text-sm text-muted-foreground">Sin anuncios con datos en este período.</p>}
-                      </section>
-                    );
-                  })}
-                </div>
-              </section>
             </>}
             {!!data.errors?.length && <p className="text-xs text-muted-foreground">Algunos datos de Meta no se pudieron leer en este momento.</p>}
           </>}
