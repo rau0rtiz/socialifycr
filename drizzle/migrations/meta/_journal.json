@@ -85,6 +85,13 @@
       "when": 1793809550943,
       "tag": "0011_calendar_carousel_slides",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794088028980,
+      "tag": "0012_client_dashboard",
+      "breakpoints": true
     }
   ]
 }

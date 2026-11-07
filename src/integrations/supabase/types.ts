@@ -1637,6 +1637,47 @@ export type Database = {
           },
         ]
       }
+      client_campaign_goals: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          max_cost: number | null
+          min_roas: number | null
+          month: string
+          result_type: string
+          target: number | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          max_cost?: number | null
+          min_roas?: number | null
+          month: string
+          result_type: string
+          target?: number | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          max_cost?: number | null
+          min_roas?: number | null
+          month?: string
+          result_type?: string
+          target?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_campaign_goals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_clickup_config: {
         Row: {
           client_id: string
@@ -1750,6 +1791,82 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "client_competitors_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_dashboard_settings: {
+        Row: {
+          ad_account_ids: string[]
+          client_id: string
+          currency: string
+          result_overrides: Json
+          show_accounts: boolean
+          show_campaigns: boolean
+          show_lead_names: boolean
+          show_leads: boolean
+          updated_at: string
+          visible_campaign_ids: string[] | null
+        }
+        Insert: {
+          ad_account_ids?: string[]
+          client_id: string
+          currency?: string
+          result_overrides?: Json
+          show_accounts?: boolean
+          show_campaigns?: boolean
+          show_lead_names?: boolean
+          show_leads?: boolean
+          updated_at?: string
+          visible_campaign_ids?: string[] | null
+        }
+        Update: {
+          ad_account_ids?: string[]
+          client_id?: string
+          currency?: string
+          result_overrides?: Json
+          show_accounts?: boolean
+          show_campaigns?: boolean
+          show_lead_names?: boolean
+          show_leads?: boolean
+          updated_at?: string
+          visible_campaign_ids?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_dashboard_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_dashboard_snapshots: {
+        Row: {
+          cache_key: string
+          client_id: string
+          fetched_at: string
+          payload: Json
+        }
+        Insert: {
+          cache_key: string
+          client_id: string
+          fetched_at?: string
+          payload: Json
+        }
+        Update: {
+          cache_key?: string
+          client_id?: string
+          fetched_at?: string
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_dashboard_snapshots_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"

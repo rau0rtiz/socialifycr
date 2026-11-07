@@ -12,6 +12,7 @@ import {
   Database,
   Palette,
   CalendarDays,
+  BarChart3,
 } from 'lucide-react';
 
 export interface AgencyNavItem {
@@ -29,6 +30,7 @@ export const AGENCY_NAV: AgencyNavItem[] = [
   { title: 'Pagos', url: '/agencia/pagos', icon: Wallet },
   { title: 'Producciones', url: '/agencia/producciones', icon: Clapperboard },
   { title: 'Calendario', url: '/agencia/calendario', icon: CalendarDays },
+  { title: 'Dashboards de clientes', url: '/agencia/dashboards-clientes', icon: BarChart3 },
   { title: 'Documentación', url: '/agencia/documentacion', icon: FileText },
   { title: 'Funnels', url: '/agencia/funnels', icon: Megaphone },
   { title: 'Base de datos', url: '/agencia/base-de-datos', icon: Database },

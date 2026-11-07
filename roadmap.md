@@ -20,4 +20,4 @@
 - [x] Add client calendar cards and persistent monthly targets with pace indicators.
 - [x] Test calendar progress rules and verify client selection and target saving live.
 - [x] Make Documentation → Production a literal, low-token Lovable AI import.
-- [x] Verify extraction rules and the authenticated import flow.
+- [x] Verify extraction rules and the authenticated import flow.- [x] Dashboard de resultados del cliente (campañas Meta, cuentas, leads) en el enlace del calendario + sección de configuración

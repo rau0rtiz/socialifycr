@@ -15,6 +15,7 @@ import { VideoPlayer } from '@/components/calendario/VideoPlayer';
 import { dayLabel, monthLabel, COVER_STATUS_LABEL, isStaticArtwork } from '@/lib/calendar-media';
 import { CalendarHistory } from '@/components/calendario/CalendarHistory';
 import { CalendarInstall } from '@/components/calendario/CalendarInstall';
+import { ResultsDashboard, type DashSection } from '@/components/client-dashboard/ResultsDashboard';
 import type { CalendarComment as Comment } from '@/lib/calendar-history';
 
 interface Payload { client: { name: string; logo_url: string | null } | null; items: CalendarItem[]; comments: Comment[] }
@@ -39,6 +40,13 @@ export default function CalendarioPublico() {
     if (res.isError) toast.error('No se pudo actualizar. Probá de nuevo.');
     else toast.success('Calendario actualizado');
   };
+  const { data: dashCfg } = useQuery<{ tabs: { campaigns: boolean; accounts: boolean; leads: boolean } }>({
+    queryKey: ['public-dashboard-config', token], retry: false, staleTime: 5 * 60_000,
+    queryFn: async () => { const { data, error } = await supabase.functions.invoke('client-dashboard', { body: { action: 'public_config', token } }); if (error) throw error; return data; },
+  });
+  const sections = ([['calendario', 'Calendario', true], ['campanas', 'Campañas', !!dashCfg?.tabs.campaigns], ['cuentas', 'Cuentas', !!dashCfg?.tabs.accounts], ['leads', 'Leads', !!dashCfg?.tabs.leads]] as const).filter((s) => s[2]);
+  const [section, setSection] = useState<string>(() => new URLSearchParams(window.location.search).get('tab') ?? 'calendario');
+  const activeSection = sections.some((s) => s[0] === section) ? section : 'calendario';
   const [ym, setYm] = useState<{ y: number; m: number } | null>(null);
   const [view, setView] = useState<'pieces' | 'calendar' | 'review'>('calendar');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -88,7 +96,15 @@ export default function CalendarioPublico() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-3 pb-10 pt-4 sm:px-4">
-        {view === 'review' ? (
+        {sections.length > 1 && (
+          <nav aria-label="Secciones" className="mb-4 flex gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-1">
+            {sections.map(([k, l]) => <button key={k} type="button" aria-pressed={activeSection === k} onClick={() => setSection(k)} className={`min-h-11 flex-1 whitespace-nowrap rounded-xl px-3 text-sm font-semibold ${activeSection === k ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>{l}</button>)}
+          </nav>
+        )}
+        {activeSection !== 'calendario' ? (
+          <ResultsDashboard section={activeSection as DashSection} cacheKey={['public-dashboard', token]} dialogClassName="shared-calendar shared-calendar-dialog"
+            fetcher={async (r) => { const { data, error } = await supabase.functions.invoke('client-dashboard', { body: { action: 'public', token, ...r } }); if (error) throw error; return data; }} />
+        ) : view === 'review' ? (
           <section>
             <button type="button" onClick={() => setView('calendar')} aria-label="Volver al calendario" className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl"><ChevronLeft className="h-6 w-6" /></button>
             <h2 className="mt-1 text-2xl font-bold">Por revisar</h2>
