@@ -4,6 +4,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
 import { portfolioAccounts, selectedPortfolioAccounts } from '../_shared/dashboard-portfolio.ts';
+import { adThumbnail } from '../_shared/dashboard-thumbnail.ts';
 import {
   currencyRate, isCampaignVisible, metricsFor, previousRange, rankAds, resultTypeFor, RESULT_LABEL, type ResultType,
 } from '../_shared/dashboard-metrics.ts';
@@ -191,7 +192,7 @@ async function buildDashboard(clientId: string, since: string, until: string, se
       for (const a of ranked) {
         const cr = det?.[a.id]?.creative;
         const preview = previews?.[cr?.id];
-        if (cr) Object.assign(a, { thumbnail: preview?.image_url || cr.image_url || preview?.thumbnail_url || cr.thumbnail_url || null, video_url: videos?.[cr.video_id]?.source || null, body: cr.body || null, title: cr.title || null, is_video: !!cr.video_id });
+        if (cr) Object.assign(a, { thumbnail: adThumbnail(cr, preview), video_url: videos?.[cr.video_id]?.source || null, body: cr.body || null, title: cr.title || null, is_video: !!cr.video_id });
       }
       await Promise.all(ranked.filter((a) => a.is_video && !a.video_url).map(async (a) => {
         try {
@@ -327,7 +328,7 @@ async function cachedDashboard(clientId: string, since: string, until: string, r
   const conn = await agencyConn();
   const settings = stored && conn ? await scopedSettings(stored, conn.access_token) : stored ? { ...stored, ad_account_ids: [] } : null;
   if (!settings) return { configured: false, tabs: tabsOf(null) };
-  const key = `video-v5_${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
+  const key = `creative-thumb-v6_${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
   const { data: snap } = await admin.from('client_dashboard_snapshots').select('payload, fetched_at').eq('client_id', clientId).eq('cache_key', key).maybeSingle();
   const fresh = snap && Date.now() - new Date(snap.fetched_at).getTime() < CACHE_MS && new Date(snap.fetched_at) > new Date(settings.updated_at);
   if (fresh && !refresh) return { configured: true, ...snap.payload, fetched_at: snap.fetched_at };
