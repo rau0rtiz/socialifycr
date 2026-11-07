@@ -10,6 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { presetRange, RANGE_LABEL, type RangePreset } from '@/lib/dashboard-range';
+import { campaignAds } from '@/lib/campaign-ads';
 
 export type DashSection = 'campanas' | 'cuentas' | 'leads';
 type Metrics = { spend: number; reach: number; impressions: number; frequency: number; results: number; cost_per_result: number | null; purchase_value: number; roas: number | null; link_clicks: number; video: null | { plays: number; p25: number; p50: number; p75: number; p100: number; thruplays: number; avg_seconds: number } };
@@ -98,14 +99,8 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
 
   const types = [...new Set((data?.totals ?? []).map((t) => t.result_type))];
   const camp = data?.campaigns?.find((c) => c.id === campaignId) ?? null;
-  const campAds = (data?.ads ?? []).filter((a) => a.campaign_id === campaignId);
+  const campAds = campaignAds(data?.ads ?? [], campaignId ?? '');
   const ad = data?.ads?.find((a) => a.id === adId) ?? null;
-  const topAds = (() => {
-    const out: Ad[] = []; const seen = new Set<string>();
-    for (const a of data?.ads ?? []) if (a.metrics.results > 0 && !seen.has(a.result_type)) { out.push(a); seen.add(a.result_type); }
-    for (const a of data?.ads ?? []) if (out.length < 3 && a.metrics.results > 0 && !out.includes(a)) out.push(a);
-    return out.slice(0, 3);
-  })();
 
   const card = compact ? 'rounded-lg border border-border bg-card p-3 sm:p-4' : 'rounded-2xl border border-border bg-card p-4';
   return (
@@ -195,33 +190,26 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
                 </div>
               </section>}
 
-              {topAds.length > 0 && <section>
-                <h3 className="mb-3 text-sm font-semibold">Mejores anuncios</h3>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">{topAds.map((a, i) => <AdTile key={a.id} ad={a} rank={i} money={money} onOpen={() => setAdId(a.id)} />)}</div>
-              </section>}
-
               <section>
                 <h3 className="mb-3 text-sm font-semibold">Campañas</h3>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-8">
                   {(data.campaigns ?? []).map((c) => {
-                    const best = (data.ads ?? []).find((a) => a.campaign_id === c.id);
+                    const bestAds = campaignAds(data.ads ?? [], c.id).slice(0, 3);
                     return (
-                      <button key={c.id} type="button" onClick={() => setCampaignId(c.id)} className={`${card} flex gap-3 text-left transition hover:border-primary/60`}>
-                        {best?.thumbnail ? <img src={best.thumbnail} alt="" className="h-20 w-16 shrink-0 rounded-lg object-cover" /> : <div className="h-20 w-16 shrink-0 rounded-lg bg-secondary" />}
+                      <section key={c.id} aria-label={`Campaña: ${c.name}`} className="space-y-4 border-t border-border pt-5">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2"><span className={`h-2 w-2 shrink-0 rounded-full ${c.active ? 'bg-primary' : 'bg-muted-foreground'}`} /><span className="text-xs text-muted-foreground">{c.active ? 'En circulación' : 'Pausada'} · {LABEL[c.result_type].many}</span></div>
-                          <p className="mt-1 truncate font-semibold">{c.name}</p>
-                          <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                            <div><p className="text-muted-foreground">Inversión</p><p className="font-semibold tabular-nums">{money(c.metrics.spend)}</p></div>
-                            <div><p className="text-muted-foreground">{LABEL[c.result_type].many}</p><p className="font-semibold tabular-nums">{int(c.metrics.results)}</p></div>
-                            <div><p className="text-muted-foreground">Costo</p><p className="font-semibold tabular-nums">{costOf(c.result_type, c.metrics.cost_per_result)}</p></div>
-                          </div>
-                          {c.result_type === 'purchase' && <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-2 text-xs">
-                            <div className="min-w-0"><p className="text-muted-foreground">Monto total vendido</p><p className="break-words font-bold tabular-nums text-primary">{money(c.metrics.purchase_value)}</p></div>
-                            <div><p className="text-muted-foreground">ROAS</p><p className="font-bold tabular-nums text-primary">{c.metrics.roas != null ? `${c.metrics.roas.toFixed(2)}×` : '—'}</p></div>
-                          </div>}
+                          <h4 className="mt-1 break-words text-lg font-semibold">{c.name}</h4>
                         </div>
-                      </button>
+                        <Button variant="outline" size="sm" onClick={() => setCampaignId(c.id)} className="min-h-11 shrink-0">Ver campaña</Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                          {[...(c.result_type === 'purchase' ? [['Monto total vendido', money(c.metrics.purchase_value)], ['ROAS', c.metrics.roas != null ? `${c.metrics.roas.toFixed(2)}×` : '—']] : []), ['Inversión', money(c.metrics.spend)], ['Alcance', int(c.metrics.reach)], [LABEL[c.result_type].many, int(c.metrics.results)], [LABEL[c.result_type].cost, costOf(c.result_type, c.metrics.cost_per_result)]].map(([label, value]) => <div key={label} className="min-w-0 py-2"><p className="text-xs text-muted-foreground">{label}</p><p className="break-words text-lg font-bold tabular-nums">{value}</p></div>)}
+                        </div>
+                        <h5 className="text-sm font-semibold">Mejores anuncios</h5>
+                        {bestAds.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{bestAds.map((a, i) => <AdTile key={a.id} ad={a} rank={i} money={money} onOpen={() => setAdId(a.id)} />)}</div> : <p className="text-sm text-muted-foreground">Sin anuncios con datos en este período.</p>}
+                      </section>
                     );
                   })}
                 </div>
