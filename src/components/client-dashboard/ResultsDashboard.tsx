@@ -59,7 +59,8 @@ function Retention({ v }: { v: NonNullable<Metrics['video']> }) {
   );
 }
 
-export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName = '', calendar, enabledSections }: {
+export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName = '', calendar, enabledSections, hideRange = false, compact = false }: {
+  hideRange?: boolean; compact?: boolean;
   section: DashSection | 'overview'; calendar?: ReactNode; enabledSections?: { accounts: boolean; campaigns: boolean; leads: boolean }; cacheKey: unknown[]; dialogClassName?: string;
   fetcher: (r: { since: string; until: string }) => Promise<DashboardData>;
 }) {
@@ -106,18 +107,18 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
     return out.slice(0, 3);
   })();
 
-  const card = 'rounded-2xl border border-border bg-card p-4';
+  const card = compact ? 'rounded-lg border border-border bg-card p-3 sm:p-4' : 'rounded-2xl border border-border bg-card p-4';
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className={compact ? 'space-y-3 sm:space-y-5' : 'space-y-5'}>
+      {!hideRange && <><div className={compact ? 'grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-2' : 'flex flex-wrap items-center gap-2'}>
         {(['today', 'yesterday', 'last_7d', 'this_month', 'last_month'] as const).map((p) => (
-          <button key={p} type="button" onClick={() => setPreset(p)} className={`min-h-10 rounded-full border px-3 text-sm font-medium ${preset === p ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground'}`}>{RANGE_LABEL[p]}</button>
+          <Button key={p} variant="outline" type="button" onClick={() => setPreset(p)} className={`min-h-11 rounded-lg px-2 text-xs sm:px-3 sm:text-sm ${preset === p ? 'border-primary bg-primary text-primary-foreground hover:bg-primary' : 'border-border bg-card text-muted-foreground'}`}>{RANGE_LABEL[p]}</Button>
         ))}
         <Popover>
           <PopoverTrigger asChild>
-            <button type="button" className={`inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-sm font-medium ${preset === 'custom' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground'}`}>
+            <Button variant="outline" type="button" className={`inline-flex h-auto min-h-11 items-center gap-1.5 whitespace-normal rounded-lg px-2 text-xs sm:px-3 sm:text-sm ${preset === 'custom' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground'}`}>
               <CalendarRange className="h-4 w-4" />{preset === 'custom' && custom?.from ? `${format(custom.from, 'd MMM', { locale: es })} – ${format(custom.to ?? custom.from, 'd MMM yyyy', { locale: es })}` : 'Personalizado'}
-            </button>
+            </Button>
           </PopoverTrigger>
           <PopoverContent className={`w-auto p-0 ${dialogClassName}`} align="start">
             <Calendar mode="range" numberOfMonths={1} locale={es} selected={custom} disabled={{ after: new Date() }}
@@ -125,7 +126,7 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
           </PopoverContent>
         </Popover>
       </div>
-      <p className="text-xs text-muted-foreground">{range.since === range.until ? range.since : `${range.since} → ${range.until}`}{data?.fetched_at && ` · actualizado ${new Date(data.fetched_at).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' })}`}{data?.stale && ' · mostrando los últimos datos guardados'}</p>
+      <p className="text-xs text-muted-foreground">{range.since === range.until ? range.since : `${range.since} → ${range.until}`}{data?.fetched_at && ` · actualizado ${new Date(data.fetched_at).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' })}`}{data?.stale && ' · mostrando los últimos datos guardados'}</p></>}
 
       {isLoading ? <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         : error || !data ? <div className={`${card} text-center text-sm text-muted-foreground`}>No se pudieron cargar los resultados. Probá de nuevo en un rato.</div>
@@ -193,7 +194,7 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
 
               {topAds.length > 0 && <section>
                 <h3 className="mb-3 text-sm font-semibold">Mejores anuncios</h3>
-                <div className="grid gap-3 sm:grid-cols-3">{topAds.map((a, i) => <AdTile key={a.id} ad={a} rank={i} money={money} onOpen={() => setAdId(a.id)} />)}</div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">{topAds.map((a, i) => <AdTile key={a.id} ad={a} rank={i} money={money} onOpen={() => setAdId(a.id)} />)}</div>
               </section>}
 
               <section>
@@ -298,15 +299,15 @@ function AdTile({ ad, rank, money, onOpen }: { ad: Ad; rank: number; money: (n: 
       <div className="flex aspect-[4/5] items-center justify-center overflow-hidden bg-muted/30">
         {ad.thumbnail ? <img src={ad.thumbnail} alt={ad.title || ad.name} loading="lazy" decoding="async" className="h-full w-full object-contain" /> : <PlayCircle className="h-10 w-10 text-muted-foreground" />}
       </div>
-      <div className="space-y-3 border-t border-border p-4">
+      <div className="space-y-3 border-t border-border p-2.5 sm:p-4">
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="inline-flex items-center gap-1.5 font-semibold text-primary"><Medal className="h-4 w-4" />#{rank + 1}</span>
           <span className="inline-flex items-center gap-1.5 text-muted-foreground">{ad.is_video && <PlayCircle className="h-3.5 w-3.5" />}{ad.is_video ? 'Video' : 'Anuncio'}</span>
         </div>
         <p className="line-clamp-2 min-h-10 break-words text-sm font-semibold leading-5">{ad.name}</p>
-        <div className="grid grid-cols-2 gap-3 border-t border-border pt-3">
+        <div className="grid gap-2 border-t border-border pt-3 sm:grid-cols-2 sm:gap-3">
           <div><p className="text-lg font-bold tabular-nums">{int(ad.metrics.results)}</p><p className="text-xs text-muted-foreground">{LABEL[ad.result_type].many}</p></div>
-          <div className="text-right"><p className="text-lg font-bold tabular-nums">{money(ad.metrics.cost_per_result)}</p><p className="text-xs text-muted-foreground">{LABEL[ad.result_type].cost}</p></div>
+          <div className="sm:text-right"><p className="text-lg font-bold tabular-nums">{money(ad.metrics.cost_per_result)}</p><p className="text-xs text-muted-foreground">{LABEL[ad.result_type].cost}</p></div>
         </div>
         {ad.metrics.video && <p className="text-xs text-muted-foreground"><Users className="mr-1 inline h-3 w-3" />{pct(ad.metrics.video.p100, ad.metrics.video.plays || ad.metrics.video.p25)}% lo vio completo</p>}
       </div>

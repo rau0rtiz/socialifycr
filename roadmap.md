@@ -1,4 +1,5 @@
 # Tasks
+- [x] Reemplazar scroll público por entrada Calendario/Campañas, Atrás y distribución compacta móvil; ambas secciones, popup de anuncio y regreso verificados en B-Dental, sin desbordamiento móvil.
 - [x] Mejores anuncios: miniaturas Meta de 1080×1350 en vez de 64×64, sin recortes, tarjetas limpias; B-Dental verificado en desktop/móvil y popup, 8 pruebas correctas.
 - [x] Leer seguidores desde páginas propias/compartidas del portafolio conectado, además de conexiones anteriores; B-Dental verificado con Instagram 1214 y Facebook 474, 13 pruebas correctas.
 - [x] Vista cliente en scroll: seguidores, calendario y campañas; calendario completo y popup de campaña verificados en desktop/móvil sin desbordamiento, 13 pruebas correctas. Maracuyá aún no tiene cuentas sociales conectadas para mostrar seguidores.

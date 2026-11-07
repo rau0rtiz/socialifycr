@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight, X, RefreshCw, Layers, Clock } from 'lucide-react';
+import { Check, Copy, Loader2, PencilLine, CalendarDays, LayoutGrid, ChevronLeft, ChevronRight, X, RefreshCw, Layers, Clock, BarChart3, ArrowUpRight } from 'lucide-react';
 import { PieceCard, PublicMonthGrid, needsReview, StatusChip, typeMeta } from '@/components/calendario-publico/PublicPieces';
 import { supabase } from '@/integrations/supabase/client';
 import socialifyLogo from '@/assets/socialify-wordmark.png.asset.json';
@@ -45,7 +45,12 @@ export default function CalendarioPublico() {
     queryFn: async () => { const { data, error } = await supabase.functions.invoke('client-dashboard', { body: { action: 'public_config', token } }); if (error) throw error; return data; },
   });
   const hasDashboard = !!(dashCfg?.tabs.accounts || dashCfg?.tabs.campaigns || dashCfg?.tabs.leads);
-  const [pageView, setPageView] = useState<'overview' | 'calendar'>(() => new URLSearchParams(window.location.search).get('tab') === 'calendario' ? 'calendar' : 'overview');
+  const [pageView, setPageView] = useState<'home' | 'calendar' | 'campaigns'>(() => new URLSearchParams(window.location.search).get('tab') === 'calendario' ? 'calendar' : 'home');
+  const pageRef = useRef<HTMLDivElement>(null);
+  const navigateSection = (next: 'home' | 'calendar' | 'campaigns') => {
+    setPageView(next);
+    pageRef.current?.scrollTo({ top: 0 });
+  };
   const [ym, setYm] = useState<{ y: number; m: number } | null>(null);
   const [view, setView] = useState<'pieces' | 'calendar' | 'review'>('calendar');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -80,7 +85,7 @@ export default function CalendarioPublico() {
   const dayItems = day ? data.items.filter((i) => i.publish_date === day) : [];
   const segBtn = (active: boolean) => `flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold ${active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`;
   return (
-    <div className="shared-calendar shared-calendar-page bg-background text-foreground">
+    <div ref={pageRef} className="shared-calendar shared-calendar-page bg-background text-foreground">
       <header className="mx-auto max-w-6xl px-4 pt-5">
         <div className="flex items-center justify-center"><img src={socialifyLogo.url} alt="Socialify" className="h-5 w-auto" /></div>
         <div className="mt-4 flex items-center gap-3">
@@ -95,16 +100,24 @@ export default function CalendarioPublico() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-3 pb-10 pt-4 sm:px-4">
-        {hasDashboard && pageView === 'calendar' && <Button variant="outline" className="mb-5" onClick={() => setPageView('overview')}><ChevronLeft />Volver al resumen</Button>}
-        {hasDashboard && pageView === 'overview' ? (
-          <ResultsDashboard section="overview" enabledSections={dashCfg?.tabs} cacheKey={['public-dashboard', token]} dialogClassName="shared-calendar shared-calendar-dialog"
-            calendar={<section className="space-y-4 border-t border-border py-8" aria-label="Calendario de publicación">
-              <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-bold">Calendario de publicación</h2><Button variant="outline" onClick={() => { setPageView('calendar'); setView('calendar'); }}><CalendarDays />Calendario completo</Button></div>
-              <div className="flex items-center justify-between gap-2"><Button variant="ghost" size="icon" aria-label="Mes anterior" onClick={() => shift(-1)}><ChevronLeft /></Button><h3 className="text-lg font-semibold first-letter:uppercase">{ym && monthLabel(ym.y, ym.m)}</h3><Button variant="ghost" size="icon" aria-label="Mes siguiente" onClick={() => shift(1)}><ChevronRight /></Button></div>
-              {ym && <PublicMonthGrid year={ym.y} month={ym.m} items={data.items} selected={day} onSelect={setDay} onOpen={(i) => setOpenId(i.id)} />}
-              {day && dayItems.length > 0 && <div className="grid gap-3 md:grid-cols-2">{dayItems.map((it) => <PieceCard key={it.id} item={it} onOpen={() => setOpenId(it.id)} />)}</div>}
-              {pending > 0 && <Button variant="secondary" onClick={() => { setPageView('calendar'); setView('review'); }}><Clock />{pending} por revisar<ChevronRight /></Button>}
-            </section>}
+        {hasDashboard && pageView !== 'home' && <div className="mb-4 flex items-center gap-3"><Button variant="outline" className="min-h-11" onClick={() => navigateSection('home')}><ChevronLeft />Atrás</Button><h2 className="text-lg font-semibold">{pageView === 'calendar' ? 'Calendario' : 'Campañas'}</h2></div>}
+        {hasDashboard && pageView === 'home' ? (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-3" aria-label="Secciones del dashboard">
+              <Button variant="outline" onClick={() => { navigateSection('calendar'); setView('calendar'); }} className="flex h-auto min-h-36 flex-col items-start justify-between rounded-lg bg-card p-4 text-left sm:min-h-44 sm:p-6">
+                <CalendarDays className="h-7 w-7 text-primary" />
+                <span className="flex w-full items-center justify-between gap-2 text-base font-semibold">Calendario<ArrowUpRight className="h-4 w-4" /></span>
+              </Button>
+              <Button variant="outline" onClick={() => navigateSection('campaigns')} disabled={!dashCfg?.tabs.campaigns} className="flex h-auto min-h-36 flex-col items-start justify-between rounded-lg bg-card p-4 text-left sm:min-h-44 sm:p-6">
+                <BarChart3 className="h-7 w-7 text-primary" />
+                <span className="flex w-full items-center justify-between gap-2 text-base font-semibold">Campañas<ArrowUpRight className="h-4 w-4" /></span>
+              </Button>
+            </div>
+            {dashCfg?.tabs.accounts && <ResultsDashboard section="cuentas" hideRange compact cacheKey={['public-dashboard', token]} dialogClassName="shared-calendar shared-calendar-dialog"
+              fetcher={async (r) => { const { data, error } = await supabase.functions.invoke('client-dashboard', { body: { action: 'public', token, ...r } }); if (error) throw error; return data; }} />}
+          </div>
+        ) : hasDashboard && pageView === 'campaigns' ? (
+          <ResultsDashboard section="campanas" compact cacheKey={['public-dashboard', token]} dialogClassName="shared-calendar shared-calendar-dialog"
             fetcher={async (r) => { const { data, error } = await supabase.functions.invoke('client-dashboard', { body: { action: 'public', token, ...r } }); if (error) throw error; return data; }} />
         ) : view === 'review' ? (
           <section>
