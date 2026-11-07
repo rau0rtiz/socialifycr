@@ -158,12 +158,15 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
                 return (
                   <section key={t.result_type} className={card}>
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Campañas de {L.many.toLowerCase()}</h3>
-                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    <div className={`grid grid-cols-2 gap-3 ${t.result_type === 'purchase' ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
+                      {t.result_type === 'purchase' && <>
+                        <div className="min-w-0"><p className="text-xs text-muted-foreground">Monto total vendido</p><p className="break-words text-2xl font-bold tabular-nums text-primary">{money(t.purchase_value)}</p><p className="text-xs text-muted-foreground">Atribuido por Meta</p></div>
+                        <div><p className="text-xs text-muted-foreground">ROAS</p><p className="text-2xl font-bold tabular-nums text-primary">{t.roas != null ? `${t.roas.toFixed(2)}×` : '—'}</p></div>
+                      </>}
                       <div><p className="text-xs text-muted-foreground">Inversión</p><p className="text-2xl font-bold tabular-nums">{money(t.spend)}</p><Delta now={t.spend} prev={t.previous?.spend} /></div>
                       <div><p className="text-xs text-muted-foreground">Personas alcanzadas</p><p className="text-2xl font-bold tabular-nums">{int(t.reach)}</p><Delta now={t.reach} prev={t.previous?.reach} /></div>
                       <div><p className="text-xs text-muted-foreground">{L.many}</p><p className="text-2xl font-bold tabular-nums">{int(t.results)}</p><Delta now={t.results} prev={t.previous?.results} /></div>
-                      <div><p className="text-xs text-muted-foreground">{L.cost}</p><p className="text-2xl font-bold tabular-nums">{costOf(t.result_type, t.cost_per_result)}</p>
-                        {t.roas != null && <p className="text-xs font-semibold text-primary">ROAS {t.roas.toFixed(1)}× · vendido {money(t.purchase_value)}</p>}</div>
+                      <div><p className="text-xs text-muted-foreground">{L.cost}</p><p className="text-2xl font-bold tabular-nums">{costOf(t.result_type, t.cost_per_result)}</p></div>
                     </div>
                     {goalPct != null && <div className="mt-4">
                       <div className="mb-1 flex justify-between text-xs"><span className="text-muted-foreground">Meta del mes</span><span className="font-semibold">{int(t.results)} / {int(t.goal?.target ?? 0)}</span></div>
@@ -213,6 +216,10 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
                             <div><p className="text-muted-foreground">{LABEL[c.result_type].many}</p><p className="font-semibold tabular-nums">{int(c.metrics.results)}</p></div>
                             <div><p className="text-muted-foreground">Costo</p><p className="font-semibold tabular-nums">{costOf(c.result_type, c.metrics.cost_per_result)}</p></div>
                           </div>
+                          {c.result_type === 'purchase' && <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-2 text-xs">
+                            <div className="min-w-0"><p className="text-muted-foreground">Monto total vendido</p><p className="break-words font-bold tabular-nums text-primary">{money(c.metrics.purchase_value)}</p></div>
+                            <div><p className="text-muted-foreground">ROAS</p><p className="font-bold tabular-nums text-primary">{c.metrics.roas != null ? `${c.metrics.roas.toFixed(2)}×` : '—'}</p></div>
+                          </div>}
                         </div>
                       </button>
                     );
@@ -258,7 +265,7 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
             </DialogHeader>
             <div className="space-y-4 p-4 sm:p-6">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {[['Inversión', money(camp.metrics.spend)], ['Alcance', int(camp.metrics.reach)], [LABEL[camp.result_type].many, int(camp.metrics.results)], [LABEL[camp.result_type].cost, costOf(camp.result_type, camp.metrics.cost_per_result)]].map(([l, v]) => <div key={l} className={card}><p className="text-xs text-muted-foreground">{l}</p><p className="text-xl font-bold tabular-nums">{v}</p></div>)}
+                {[...(camp.result_type === 'purchase' ? [['Monto total vendido', money(camp.metrics.purchase_value)], ['ROAS', camp.metrics.roas != null ? `${camp.metrics.roas.toFixed(2)}×` : '—']] : []), ['Inversión', money(camp.metrics.spend)], ['Alcance', int(camp.metrics.reach)], [LABEL[camp.result_type].many, int(camp.metrics.results)], [LABEL[camp.result_type].cost, costOf(camp.result_type, camp.metrics.cost_per_result)]].map(([l, v]) => <div key={l} className={card}><p className="text-xs text-muted-foreground">{l}</p><p className="break-words text-xl font-bold tabular-nums">{v}</p></div>)}
               </div>
               {camp.metrics.video && <section className={card}><h4 className="mb-2 text-sm font-semibold">Retención del video</h4><Retention v={camp.metrics.video} /></section>}
               <h4 className="text-sm font-semibold">Anuncios, del mejor al peor</h4>
@@ -280,9 +287,8 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
                 {ad.title && <p className="mt-3 font-semibold">{ad.title}</p>}{ad.body && <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{ad.body}</p>}</div>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  {[['Inversión', money(ad.metrics.spend)], ['Alcance', int(ad.metrics.reach)], [LABEL[ad.result_type].many, int(ad.metrics.results)], [LABEL[ad.result_type].cost, costOf(ad.result_type, ad.metrics.cost_per_result)], ['Frecuencia', ad.metrics.frequency.toFixed(1)], ['Clics al enlace', int(ad.metrics.link_clicks)]].map(([l, v]) => <div key={l} className={card}><p className="text-xs text-muted-foreground">{l}</p><p className="text-lg font-bold tabular-nums">{v}</p></div>)}
+                  {[...(ad.result_type === 'purchase' ? [['Monto total vendido', money(ad.metrics.purchase_value)], ['ROAS', ad.metrics.roas != null ? `${ad.metrics.roas.toFixed(2)}×` : '—']] : []), ['Inversión', money(ad.metrics.spend)], ['Alcance', int(ad.metrics.reach)], [LABEL[ad.result_type].many, int(ad.metrics.results)], [LABEL[ad.result_type].cost, costOf(ad.result_type, ad.metrics.cost_per_result)], ['Frecuencia', ad.metrics.frequency.toFixed(1)], ['Clics al enlace', int(ad.metrics.link_clicks)]].map(([l, v]) => <div key={l} className={card}><p className="text-xs text-muted-foreground">{l}</p><p className="break-words text-lg font-bold tabular-nums">{v}</p></div>)}
                 </div>
-                {ad.metrics.roas != null && <p className="text-sm font-semibold text-primary">ROAS {ad.metrics.roas.toFixed(1)}×</p>}
                 {ad.metrics.video && <section className={card}><h4 className="mb-2 text-sm font-semibold">Retención</h4><Retention v={ad.metrics.video} /></section>}
               </div>
             </div>

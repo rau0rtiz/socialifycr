@@ -1,4 +1,5 @@
 # Tasks
+- [x] Destacar ROAS y monto total vendido para e-commerce en resumen, campañas y detalles; Maracuyá verificada con $1,303 y ROAS 9.94×, vista pública móvil sin desbordamiento y 8 pruebas correctas.
 - [x] Reproducción en popup de anuncios: video directo cuando Meta lo entrega, vista previa oficial alternativa e imagen si no hay acceso. B-Dental reprodujo video real (720px, tiempo avanzando); Meta puede mostrar aviso de cookies en su vista.
 - [x] Reemplazar scroll público por entrada Calendario/Campañas, Atrás y distribución compacta móvil; ambas secciones, popup de anuncio y regreso verificados en B-Dental, sin desbordamiento móvil.
 - [x] Mejores anuncios: miniaturas Meta de 1080×1350 en vez de 64×64, sin recortes, tarjetas limpias; B-Dental verificado en desktop/móvil y popup, 8 pruebas correctas.
