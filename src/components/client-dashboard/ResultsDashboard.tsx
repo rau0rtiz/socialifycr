@@ -155,8 +155,8 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Campañas de {L.many.toLowerCase()}</h3>
                     <div className={`grid grid-cols-2 gap-3 ${t.result_type === 'purchase' ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
                       {t.result_type === 'purchase' && <>
-                        <div className="min-w-0"><p className="text-xs text-muted-foreground">Monto total vendido</p><p className="break-words text-2xl font-bold tabular-nums text-primary">{money(t.purchase_value)}</p><p className="text-xs text-muted-foreground">Atribuido por Meta</p></div>
-                        <div><p className="text-xs text-muted-foreground">ROAS</p><p className="text-2xl font-bold tabular-nums text-primary">{t.roas != null ? `${t.roas.toFixed(2)}×` : '—'}</p></div>
+                        <div className="min-w-0"><p className="text-xs text-muted-foreground">Monto total vendido</p><p className="break-words text-2xl font-bold tabular-nums text-foreground">{money(t.purchase_value)}</p><p className="text-xs text-muted-foreground">Atribuido por Meta</p></div>
+                        <div><p className="text-xs text-muted-foreground">ROAS</p><p className="text-2xl font-bold tabular-nums text-foreground">{t.roas != null ? `${t.roas.toFixed(2)}×` : '—'}</p></div>
                       </>}
                       <div><p className="text-xs text-muted-foreground">Inversión</p><p className="text-2xl font-bold tabular-nums">{money(t.spend)}</p><Delta now={t.spend} prev={t.previous?.spend} /></div>
                       <div><p className="text-xs text-muted-foreground">Personas alcanzadas</p><p className="text-2xl font-bold tabular-nums">{int(t.reach)}</p><Delta now={t.reach} prev={t.previous?.reach} /></div>
@@ -306,7 +306,7 @@ function AdTile({ ad, rank, money, onOpen }: { ad: Ad; rank: number; money: (n: 
       </div>
       <div className="space-y-3 border-t border-border p-2.5 sm:p-4">
         <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="inline-flex items-center gap-1.5 font-semibold text-primary"><Medal className="h-4 w-4" />#{rank + 1}</span>
+          <span className="inline-flex items-center gap-1.5 font-semibold text-foreground"><Medal className="h-4 w-4 text-primary" />#{rank + 1}</span>
           <span className="inline-flex items-center gap-1.5 text-muted-foreground">{ad.is_video && <PlayCircle className="h-3.5 w-3.5" />}{ad.is_video ? 'Video' : 'Anuncio'}</span>
         </div>
         <p className="line-clamp-2 min-h-10 break-words text-sm font-semibold leading-5">{ad.name}</p>
