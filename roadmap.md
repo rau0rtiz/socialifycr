@@ -1,4 +1,5 @@
 # Tasks
+- [x] Mejores anuncios: miniaturas Meta de 1080×1350 en vez de 64×64, sin recortes, tarjetas limpias; B-Dental verificado en desktop/móvil y popup, 8 pruebas correctas.
 - [x] Leer seguidores desde páginas propias/compartidas del portafolio conectado, además de conexiones anteriores; B-Dental verificado con Instagram 1214 y Facebook 474, 13 pruebas correctas.
 - [x] Vista cliente en scroll: seguidores, calendario y campañas; calendario completo y popup de campaña verificados en desktop/móvil sin desbordamiento, 13 pruebas correctas. Maracuyá aún no tiene cuentas sociales conectadas para mostrar seguidores.
 - [x] Limitar cuentas al portafolio comercial por cliente y separar Dashboard/Configuración en agencia; 11 pruebas correctas, Maracuyá guardado con su portafolio, cuenta ajena rechazada (400), resultados públicos y popup verificados, móvil sin desbordamiento.

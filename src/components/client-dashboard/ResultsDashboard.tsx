@@ -302,17 +302,22 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
 
 function AdTile({ ad, rank, money, onOpen }: { ad: Ad; rank: number; money: (n: number | null) => string; onOpen: () => void }) {
   return (
-    <button type="button" onClick={onOpen} className="group overflow-hidden rounded-2xl border border-border bg-card text-left transition hover:border-primary/60">
-      <div className="relative aspect-[4/5] bg-secondary">
-        {ad.thumbnail && <img src={ad.thumbnail} alt="" className="h-full w-full object-cover" />}
-        {rank < 3 && <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground"><Medal className="h-3.5 w-3.5" />#{rank + 1}</span>}
-        {ad.is_video && <PlayCircle className="absolute bottom-2 right-2 h-6 w-6 text-primary-foreground drop-shadow" />}
+    <Button variant="ghost" type="button" onClick={onOpen} aria-label={`Ver anuncio: ${ad.name}`} className="group block h-auto w-full overflow-hidden rounded-lg border border-border bg-card p-0 text-left font-normal whitespace-normal transition hover:border-primary/60 hover:bg-card">
+      <div className="flex aspect-[4/5] items-center justify-center overflow-hidden bg-muted/30">
+        {ad.thumbnail ? <img src={ad.thumbnail} alt={ad.title || ad.name} loading="lazy" decoding="async" className="h-full w-full object-contain" /> : <PlayCircle className="h-10 w-10 text-muted-foreground" />}
       </div>
-      <div className="p-3">
-        <p className="truncate text-sm font-semibold">{ad.name}</p>
-        <p className="mt-1 text-xs text-muted-foreground"><b className="text-foreground">{Math.round(ad.metrics.results).toLocaleString('es-CR')}</b> {LABEL[ad.result_type].many.toLowerCase()} · {money(ad.metrics.cost_per_result)}</p>
-        {ad.metrics.video && <p className="mt-0.5 text-xs text-muted-foreground"><Users className="mr-1 inline h-3 w-3" />{pct(ad.metrics.video.p100, ad.metrics.video.plays || ad.metrics.video.p25)}% lo vio completo</p>}
+      <div className="space-y-3 border-t border-border p-4">
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-primary"><Medal className="h-4 w-4" />#{rank + 1}</span>
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">{ad.is_video && <PlayCircle className="h-3.5 w-3.5" />}{ad.is_video ? 'Video' : 'Anuncio'}</span>
+        </div>
+        <p className="line-clamp-2 min-h-10 break-words text-sm font-semibold leading-5">{ad.name}</p>
+        <div className="grid grid-cols-2 gap-3 border-t border-border pt-3">
+          <div><p className="text-lg font-bold tabular-nums">{int(ad.metrics.results)}</p><p className="text-xs text-muted-foreground">{LABEL[ad.result_type].many}</p></div>
+          <div className="text-right"><p className="text-lg font-bold tabular-nums">{money(ad.metrics.cost_per_result)}</p><p className="text-xs text-muted-foreground">{LABEL[ad.result_type].cost}</p></div>
+        </div>
+        {ad.metrics.video && <p className="text-xs text-muted-foreground"><Users className="mr-1 inline h-3 w-3" />{pct(ad.metrics.video.p100, ad.metrics.video.plays || ad.metrics.video.p25)}% lo vio completo</p>}
       </div>
-    </button>
+    </Button>
   );
 }

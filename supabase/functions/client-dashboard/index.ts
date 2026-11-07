@@ -172,10 +172,19 @@ async function buildDashboard(clientId: string, since: string, until: string, se
   const ranked = rankAds(ads).slice(0, 40);
   if (conn && ranked.length) {
     try {
-      const det = await graph('', { ids: ranked.map((a) => a.id).join(','), fields: 'creative{thumbnail_url,image_url,body,title,object_type,video_id}', thumbnail_width: '640', thumbnail_height: '800' }, conn.access_token);
+      const det = await graph('', { ids: ranked.map((a) => a.id).join(','), fields: 'creative{id,thumbnail_url,image_url,body,title,object_type,video_id}' }, conn.access_token);
+      const creativeIds = [...new Set(ranked.map((a) => det?.[a.id]?.creative?.id).filter(Boolean))];
+      let previews: any = {};
+      if (creativeIds.length) {
+        try {
+          // Size parameters belong to the creative node, not its enclosing ad.
+          previews = await graph('', { ids: creativeIds.join(','), fields: 'thumbnail_url,image_url', thumbnail_width: '1080', thumbnail_height: '1350' }, conn.access_token);
+        } catch (e) { console.error('[client-dashboard] large previews', (e as Error).message); }
+      }
       for (const a of ranked) {
         const cr = det?.[a.id]?.creative;
-        if (cr) Object.assign(a, { thumbnail: cr.image_url || cr.thumbnail_url || null, body: cr.body || null, title: cr.title || null, is_video: !!cr.video_id });
+        const preview = previews?.[cr?.id];
+        if (cr) Object.assign(a, { thumbnail: preview?.image_url || cr.image_url || preview?.thumbnail_url || cr.thumbnail_url || null, body: cr.body || null, title: cr.title || null, is_video: !!cr.video_id });
       }
     } catch (e) { console.error('[client-dashboard] creatives', (e as Error).message); }
   }
@@ -301,7 +310,7 @@ async function cachedDashboard(clientId: string, since: string, until: string, r
   const conn = await agencyConn();
   const settings = stored && conn ? await scopedSettings(stored, conn.access_token) : stored ? { ...stored, ad_account_ids: [] } : null;
   if (!settings) return { configured: false, tabs: tabsOf(null) };
-  const key = `social-v2_${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
+  const key = `preview-v3_${since}_${until}_${settings.business_id || 'none'}_${settings.ad_account_ids.slice().sort().join(',')}`;
   const { data: snap } = await admin.from('client_dashboard_snapshots').select('payload, fetched_at').eq('client_id', clientId).eq('cache_key', key).maybeSingle();
   const fresh = snap && Date.now() - new Date(snap.fetched_at).getTime() < CACHE_MS && new Date(snap.fetched_at) > new Date(settings.updated_at);
   if (fresh && !refresh) return { configured: true, ...snap.payload, fetched_at: snap.fetched_at };
