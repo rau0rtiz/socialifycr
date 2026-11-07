@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { DateRange } from 'react-day-picker';
-import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ArrowDownRight, ArrowUpRight, CalendarRange, Instagram, Facebook, Loader2, Medal, PlayCircle, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -133,21 +133,14 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
         : <>
           {(section === 'cuentas' || (section === 'overview' && enabledSections?.accounts)) && <section className="space-y-4" aria-label="Seguidores"><h2 className="text-xl font-bold">Seguidores</h2>{(
             (data.accounts ?? []).length === 0 ? <div className={`${card} text-center text-sm text-muted-foreground`}>No hay cuentas de Instagram o Facebook conectadas.</div> :
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="flex flex-wrap items-center gap-x-12 gap-y-6 py-4">
               {(data.accounts ?? []).map((a) => {
                 const Icon = a.platform === 'instagram' ? Instagram : Facebook;
                 return (
-                  <section key={`${a.platform}-${a.name}`} className={card}>
-                    <div className="flex items-center gap-3">
-                      {a.picture ? <img src={a.picture} alt="" className="h-12 w-12 rounded-full object-cover" /> : <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary"><Icon className="h-5 w-5" /></div>}
-                      <div className="min-w-0"><p className="flex items-center gap-1.5 truncate font-semibold"><Icon className="h-4 w-4 text-primary" />{a.name}</p>{a.handle && <p className="text-xs text-muted-foreground">{a.handle}</p>}</div>
-                    </div>
-                    <div className="mt-4 flex items-end justify-between">
-                      <div><p className="text-xs text-muted-foreground">Seguidores</p><p className="text-3xl font-bold tabular-nums">{a.followers != null ? int(a.followers) : '—'}</p></div>
-                      {a.gained != null && <p className={`text-sm font-semibold ${a.gained >= 0 ? 'text-primary' : 'text-destructive'}`}>{a.gained >= 0 ? '+' : ''}{int(a.gained)} en el período</p>}
-                    </div>
-                    {a.series.length > 1 && <div className="mt-3 h-20"><ResponsiveContainer width="100%" height="100%"><BarChart data={a.series}><Bar dataKey="value" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} /><Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12 }} labelFormatter={(l, p) => String(p?.[0]?.payload?.date ?? '')} formatter={(v) => [`${v} nuevos`, '']} /></BarChart></ResponsiveContainer></div>}
-                  </section>
+                  <div key={`${a.platform}-${a.name}`} className="flex items-center gap-4" aria-label={`${a.platform === 'instagram' ? 'Instagram' : 'Facebook'}: ${a.followers != null ? int(a.followers) : 'sin datos'} seguidores`}>
+                    <Icon className="h-9 w-9 shrink-0 text-foreground" aria-hidden="true" />
+                    <p className="text-3xl font-bold tabular-nums">{a.followers != null ? int(a.followers) : '—'}</p>
+                  </div>
                 );
               })}
             </div>
