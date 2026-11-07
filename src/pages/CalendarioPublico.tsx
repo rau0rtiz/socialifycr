@@ -99,18 +99,18 @@ export default function CalendarioPublico() {
           </Button>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-3 pb-10 pt-4 sm:px-4">
+      <main className="mx-auto max-w-6xl px-5 pb-10 pt-5 sm:px-8 sm:pt-7">
         {hasDashboard && pageView !== 'home' && <div className="mb-4 flex items-center gap-3"><Button variant="outline" className="min-h-11" onClick={() => navigateSection('home')}><ChevronLeft />Atrás</Button><h2 className="text-lg font-semibold">{pageView === 'calendar' ? 'Calendario' : 'Campañas'}</h2></div>}
         {hasDashboard && pageView === 'home' ? (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-3" aria-label="Secciones del dashboard">
-              <Button variant="outline" onClick={() => { navigateSection('calendar'); setView('calendar'); }} className="flex h-auto min-h-36 flex-col items-start justify-between rounded-lg bg-card p-4 text-left sm:min-h-44 sm:p-6">
+          <div className="mx-auto max-w-3xl space-y-7">
+            <div className="grid grid-cols-2 gap-4" aria-label="Secciones del dashboard">
+              <Button variant="outline" onClick={() => { navigateSection('calendar'); setView('calendar'); }} className="flex h-auto min-h-36 flex-col items-center justify-center gap-5 rounded-lg bg-card p-4 text-center sm:min-h-44 sm:p-6">
                 <CalendarDays className="h-7 w-7 text-primary" />
-                <span className="flex w-full items-center justify-between gap-2 text-base font-semibold">Calendario<ArrowUpRight className="h-4 w-4" /></span>
+                <span className="flex items-center justify-center gap-2 text-base font-semibold">Calendario<ArrowUpRight className="h-4 w-4" /></span>
               </Button>
-              <Button variant="outline" onClick={() => navigateSection('campaigns')} disabled={!dashCfg?.tabs.campaigns} className="flex h-auto min-h-36 flex-col items-start justify-between rounded-lg bg-card p-4 text-left sm:min-h-44 sm:p-6">
+              <Button variant="outline" onClick={() => navigateSection('campaigns')} disabled={!dashCfg?.tabs.campaigns} className="flex h-auto min-h-36 flex-col items-center justify-center gap-5 rounded-lg bg-card p-4 text-center sm:min-h-44 sm:p-6">
                 <BarChart3 className="h-7 w-7 text-primary" />
-                <span className="flex w-full items-center justify-between gap-2 text-base font-semibold">Campañas<ArrowUpRight className="h-4 w-4" /></span>
+                <span className="flex items-center justify-center gap-2 text-base font-semibold">Campañas<ArrowUpRight className="h-4 w-4" /></span>
               </Button>
             </div>
             {dashCfg?.tabs.accounts && <ResultsDashboard section="cuentas" hideRange compact cacheKey={['public-dashboard', token]} dialogClassName="shared-calendar shared-calendar-dialog"

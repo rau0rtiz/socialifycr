@@ -132,15 +132,15 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
         : error || !data ? <div className={`${card} text-center text-sm text-muted-foreground`}>No se pudieron cargar los resultados. Probá de nuevo en un rato.</div>
         : !data.configured ? <div className={`${card} text-center text-sm text-muted-foreground`}>Este panel todavía no está configurado.</div>
         : <>
-          {(section === 'cuentas' || (section === 'overview' && enabledSections?.accounts)) && <section className="space-y-4" aria-label="Seguidores"><h2 className="text-xl font-bold">Seguidores</h2>{(
+          {(section === 'cuentas' || (section === 'overview' && enabledSections?.accounts)) && <section className="mx-auto w-full max-w-3xl space-y-5 py-3 text-center sm:py-5" aria-label="Seguidores"><h2 className="text-xl font-bold sm:text-2xl">Seguidores</h2>{(
             (data.accounts ?? []).length === 0 ? <div className={`${card} text-center text-sm text-muted-foreground`}>No hay cuentas de Instagram o Facebook conectadas.</div> :
-            <div className="flex flex-wrap items-center gap-x-12 gap-y-6 py-4">
+            <div className="grid grid-cols-2 gap-4 px-1 sm:gap-6 sm:px-3">
               {(data.accounts ?? []).map((a) => {
                 const Icon = a.platform === 'instagram' ? Instagram : Facebook;
                 return (
-                  <div key={`${a.platform}-${a.name}`} className="flex items-center gap-4" aria-label={`${a.platform === 'instagram' ? 'Instagram' : 'Facebook'}: ${a.followers != null ? int(a.followers) : 'sin datos'} seguidores`}>
-                    <Icon className="h-9 w-9 shrink-0 text-foreground" aria-hidden="true" />
-                    <p className="text-3xl font-bold tabular-nums">{a.followers != null ? int(a.followers) : '—'}</p>
+                  <div key={`${a.platform}-${a.name}`} className="dashboard-follower-tile flex min-h-36 min-w-0 flex-col items-center justify-center gap-4 rounded-lg px-3 py-6 sm:min-h-48 sm:gap-5 sm:px-6 sm:py-8" aria-label={`${a.platform === 'instagram' ? 'Instagram' : 'Facebook'}: ${a.followers != null ? int(a.followers) : 'sin datos'} seguidores`}>
+                    <Icon className="h-8 w-8 shrink-0 text-primary sm:h-10 sm:w-10" strokeWidth={1.6} aria-hidden="true" />
+                    <p className="max-w-full break-words text-2xl font-bold leading-none tabular-nums text-foreground sm:text-4xl">{a.followers != null ? int(a.followers) : '—'}</p>
                   </div>
                 );
               })}

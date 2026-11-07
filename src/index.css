@@ -285,6 +285,15 @@ html.agency-theme,
   color: hsl(var(--dashboard-decrease));
 }
 
+.dashboard-follower-tile {
+  --follower-surface: var(--card);
+  --follower-border: var(--primary);
+  --follower-glow: 0 0 16px -5px hsl(var(--primary) / 0.24), inset 0 0 20px -12px hsl(var(--primary) / 0.12);
+  background: hsl(var(--follower-surface));
+  border: 1px solid hsl(var(--follower-border) / 0.5);
+  box-shadow: var(--follower-glow);
+}
+
 .agency-shell .agency-results-theme,
 .agency-results-theme {
   --background: 0 0% 5%;
