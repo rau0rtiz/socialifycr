@@ -34,13 +34,12 @@ const LABEL: Record<string, { many: string; cost: string; color: string }> = {
 const int = (n: number) => Math.round(n).toLocaleString('es-CR');
 const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 100) : 0);
 
-function Delta({ now, prev, invert }: { now: number; prev?: number | null; invert?: boolean }) {
+function Delta({ now, prev }: { now: number; prev?: number | null }) {
   if (!prev) return null;
   const d = ((now - prev) / prev) * 100;
   if (!Number.isFinite(d) || Math.abs(d) < 0.5) return <span className="text-xs text-muted-foreground">igual que antes</span>;
-  const good = invert ? d < 0 : d > 0;
   const Icon = d > 0 ? ArrowUpRight : ArrowDownRight;
-  return <span className={`inline-flex items-center text-xs font-semibold ${good ? 'text-primary' : 'text-destructive'}`}><Icon className="h-3.5 w-3.5" />{Math.abs(Math.round(d))}%</span>;
+  return <span className={`inline-flex items-center text-xs font-semibold ${d > 0 ? 'text-success' : 'dashboard-delta-down'}`}><Icon className="h-3.5 w-3.5" />{Math.abs(Math.round(d))}%</span>;
 }
 
 function Retention({ v }: { v: NonNullable<Metrics['video']> }) {

@@ -37,6 +37,7 @@
 
     --success: 142 71% 42%;
     --success-foreground: 0 0% 100%;
+    --dashboard-decrease: 0 0% 100%;
     --warning: 38 95% 52%;
     --warning-foreground: 0 0% 13%;
     --info: 212 92% 50%;
@@ -278,6 +279,10 @@ html.agency-theme,
 }
 .agency-shell main {
   background-color: hsl(var(--background));
+}
+
+.dashboard-delta-down {
+  color: hsl(var(--dashboard-decrease));
 }
 
 .agency-shell .agency-results-theme,
