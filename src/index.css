@@ -340,6 +340,7 @@ html.agency-theme [data-agency-display],
 
 /* Elevated dark surfaces across the whole hub */
 html.agency-theme .agency-card,
+.shared-calendar .agency-card,
 .agency-shell .agency-card {
   background-color: hsl(var(--card));
   border: 1px solid hsl(var(--border));
@@ -347,6 +348,7 @@ html.agency-theme .agency-card,
   transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 html.agency-theme .agency-card:hover,
+.shared-calendar .agency-card:hover,
 .agency-shell .agency-card:hover {
   border-color: hsl(var(--primary) / 0.5);
   box-shadow: 0 0 0 1px hsl(var(--primary) / 0.15), 0 18px 40px -28px hsl(var(--primary) / 0.55);
@@ -361,11 +363,13 @@ html.agency-theme .agency-gradient-text,
   color: transparent;
 }
 html.agency-theme .agency-glow,
+.shared-calendar .agency-glow,
 .agency-shell .agency-glow {
   box-shadow: 0 0 24px -6px hsl(var(--primary) / 0.45);
 }
 /* Neon halo for active / emphasised chips and icons */
 html.agency-theme .agency-neon,
+.shared-calendar .agency-neon,
 .agency-shell .agency-neon {
   box-shadow: 0 0 0 1px hsl(var(--primary) / 0.35), 0 0 18px -2px hsl(var(--primary) / 0.35);
 }

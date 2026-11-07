@@ -102,7 +102,7 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
   const campAds = campaignAds(data?.ads ?? [], campaignId ?? '');
   const ad = data?.ads?.find((a) => a.id === adId) ?? null;
 
-  const card = compact ? 'rounded-lg border border-border bg-card p-3 sm:p-4' : 'rounded-2xl border border-border bg-card p-4';
+  const card = compact ? 'agency-card border border-primary/20 bg-card p-4 sm:p-5' : 'agency-card rounded-2xl border border-border bg-card p-5';
   return (
     <div className={compact ? 'space-y-3 sm:space-y-5' : 'space-y-5'}>
       {!hideRange && <><div className={compact ? 'grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-2' : 'flex flex-wrap items-center gap-2'}>
@@ -133,7 +133,7 @@ export function ResultsDashboard({ section, fetcher, cacheKey, dialogClassName =
               {(data.accounts ?? []).map((a) => {
                 const Icon = a.platform === 'instagram' ? Instagram : Facebook;
                 return (
-                  <div key={`${a.platform}-${a.name}`} className="dashboard-follower-tile flex min-h-36 min-w-0 flex-col items-center justify-center gap-4 rounded-lg px-3 py-6 sm:min-h-48 sm:gap-5 sm:px-6 sm:py-8" aria-label={`${a.platform === 'instagram' ? 'Instagram' : 'Facebook'}: ${a.followers != null ? int(a.followers) : 'sin datos'} seguidores`}>
+                  <div key={`${a.platform}-${a.name}`} className="dashboard-follower-tile flex min-h-36 min-w-0 flex-col items-center justify-center gap-4 rounded-2xl px-3 py-6 sm:min-h-48 sm:gap-5 sm:px-6 sm:py-8" aria-label={`${a.platform === 'instagram' ? 'Instagram' : 'Facebook'}: ${a.followers != null ? int(a.followers) : 'sin datos'} seguidores`}>
                     <Icon className="h-8 w-8 shrink-0 text-primary sm:h-10 sm:w-10" strokeWidth={1.6} aria-hidden="true" />
                     <p className="max-w-full break-words text-2xl font-bold leading-none tabular-nums text-foreground sm:text-4xl">{a.followers != null ? int(a.followers) : '—'}</p>
                   </div>
@@ -300,7 +300,7 @@ function AdPlayback({ ad }: { ad: Ad }) {
 
 function AdTile({ ad, rank, money, onOpen }: { ad: Ad; rank: number; money: (n: number | null) => string; onOpen: () => void }) {
   return (
-    <Button variant="ghost" type="button" onClick={onOpen} aria-label={`Ver anuncio: ${ad.name}`} className="group block h-auto w-full overflow-hidden rounded-lg border border-border bg-card p-0 text-left font-normal whitespace-normal transition hover:border-primary/60 hover:bg-card">
+    <Button variant="ghost" type="button" onClick={onOpen} aria-label={`Ver anuncio: ${ad.name}`} className="agency-card group block h-auto w-full overflow-hidden border border-primary/20 bg-card p-0 text-left font-normal whitespace-normal transition hover:border-primary/60 hover:bg-card">
       <div className="flex aspect-[4/5] items-center justify-center overflow-hidden bg-muted/30">
         {ad.thumbnail ? <img src={ad.thumbnail} alt={ad.title || ad.name} loading="lazy" decoding="async" className="h-full w-full object-contain" /> : <PlayCircle className="h-10 w-10 text-muted-foreground" />}
       </div>

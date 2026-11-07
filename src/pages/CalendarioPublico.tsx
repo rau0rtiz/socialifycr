@@ -86,15 +86,15 @@ export default function CalendarioPublico() {
   const segBtn = (active: boolean) => `flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold ${active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`;
   return (
     <div ref={pageRef} className="shared-calendar shared-calendar-page bg-background text-foreground">
-      <header className="mx-auto max-w-6xl px-4 pt-5">
-        <div className="flex items-center justify-center"><img src={socialifyLogo.url} alt="Socialify" className="h-5 w-auto" /></div>
-        <div className="mt-4 flex items-center gap-3">
+      <header className="mx-auto max-w-6xl px-5 pt-7 sm:px-8 sm:pt-9">
+        <div className="flex items-center justify-center"><img src={socialifyLogo.url} alt="Socialify" className="h-6 w-auto" /></div>
+        <div className={hasDashboard ? 'relative mx-auto mt-7 flex max-w-3xl flex-col items-center gap-3 px-12 text-center' : 'mt-4 flex items-center gap-3'}>
           {data.client?.logo_url && <img src={data.client.logo_url} alt="" className="h-14 w-14 shrink-0 rounded-xl object-contain sm:h-16 sm:w-16" />}
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">{data.client?.name}</h1>
-            <p className="text-sm text-muted-foreground">{hasDashboard ? 'Resultados y publicaciones' : 'Calendario de publicación'}</p>
+            <h1 className={`break-words text-xl font-bold sm:text-3xl ${hasDashboard ? 'agency-gradient-text' : ''}`}>{data.client?.name}</h1>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{hasDashboard ? 'Resultados y publicaciones' : 'Calendario de publicación'}</p>
           </div>
-          <Button variant="outline" size="icon" aria-label="Actualizar calendario" onClick={refresh} disabled={isFetching} className="h-11 w-11 shrink-0 rounded-xl">
+          <Button variant="outline" size="icon" aria-label="Actualizar calendario" onClick={refresh} disabled={isFetching} className={`h-11 w-11 shrink-0 rounded-xl ${hasDashboard ? 'absolute right-0 top-0 border-primary/30 text-primary' : ''}`}>
             <RefreshCw className={isFetching ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
           </Button>
         </div>
@@ -104,12 +104,12 @@ export default function CalendarioPublico() {
         {hasDashboard && pageView === 'home' ? (
           <div className="mx-auto max-w-3xl space-y-7">
             <div className="grid grid-cols-2 gap-4" aria-label="Secciones del dashboard">
-              <Button variant="outline" onClick={() => { navigateSection('calendar'); setView('calendar'); }} className="flex h-auto min-h-36 flex-col items-center justify-center gap-5 rounded-lg bg-card p-4 text-center sm:min-h-44 sm:p-6">
-                <CalendarDays className="h-7 w-7 text-primary" />
+              <Button variant="outline" onClick={() => { navigateSection('calendar'); setView('calendar'); }} className="agency-card agency-glow flex h-auto min-h-40 flex-col items-center justify-center gap-5 border-primary/40 bg-card p-5 text-center sm:min-h-52 sm:p-8">
+                <span className="agency-neon flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary"><CalendarDays className="h-7 w-7" /></span>
                 <span className="flex items-center justify-center gap-2 text-base font-semibold">Calendario<ArrowUpRight className="h-4 w-4" /></span>
               </Button>
-              <Button variant="outline" onClick={() => navigateSection('campaigns')} disabled={!dashCfg?.tabs.campaigns} className="flex h-auto min-h-36 flex-col items-center justify-center gap-5 rounded-lg bg-card p-4 text-center sm:min-h-44 sm:p-6">
-                <BarChart3 className="h-7 w-7 text-primary" />
+              <Button variant="outline" onClick={() => navigateSection('campaigns')} disabled={!dashCfg?.tabs.campaigns} className="agency-card agency-glow flex h-auto min-h-40 flex-col items-center justify-center gap-5 border-primary/40 bg-card p-5 text-center sm:min-h-52 sm:p-8">
+                <span className="agency-neon flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary"><BarChart3 className="h-7 w-7" /></span>
                 <span className="flex items-center justify-center gap-2 text-base font-semibold">Campañas<ArrowUpRight className="h-4 w-4" /></span>
               </Button>
             </div>

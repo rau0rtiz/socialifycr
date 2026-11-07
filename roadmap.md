@@ -1,4 +1,5 @@
 # Tasks
+- [x] Unificar estilo cliente con tarjetas, halos y títulos neón de agencia; entrada verificada a 1280/390/360px, dos campañas y diálogos funcionales, sin desbordamiento móvil.
 - [x] Mostrar métricas y mejores anuncios por campaña, sin ranking general; dos campañas reales de B-Dental verificadas en desktop/móvil con detalles funcionales, prueba de tres campañas correcta.
 - [x] Centrar seguidores en tarjetas neón y pulir entrada pública con márgenes cómodos; Maracuyá verificada a 1280, 390 y 360px, sin desbordamiento y con navegación intacta.
 - [x] Priorizar la miniatura real de cada anuncio sobre su imagen fuente y renovar caché; función desplegada, miniatura Meta de Malva Earrings verificada a 1080×1350 y 11 pruebas correctas.
