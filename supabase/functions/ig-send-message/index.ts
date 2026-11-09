@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     if (!res.ok) {
       console.error('ig send error', result);
       const detail = result?.error?.message ?? 'Instagram rechazó el envío';
-      return json({ error: detail }, 400);
+      return json({ error: detail, code: result?.error?.code, error_subcode: result?.error?.error_subcode }, 400);
     }
 
     const nowIso = new Date().toISOString();

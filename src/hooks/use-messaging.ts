@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { sendChatMessage } from '@/lib/chat-send';
 
 /** Módulo Chats (setter de IA) — Fase 1: lectura de configuración y bandeja. */
 
@@ -245,12 +246,7 @@ export const useSendMessage = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ conversationId, text, author }: { conversationId: string; text: string; author?: 'humano' | 'bot' }) => {
-      const { data, error } = await supabase.functions.invoke('ig-send-message', {
-        body: { conversationId, text, author },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      return data;
+      return sendChatMessage(supabase, { conversationId, text, author });
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['msg-messages', vars.conversationId] });
