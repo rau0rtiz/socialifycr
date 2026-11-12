@@ -99,6 +99,13 @@
       "when": 1794089897441,
       "tag": "0013_client_dashboard_business_portfolio",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794513266808,
+      "tag": "0014_harden_email_queue_and_funnel_leads",
+      "breakpoints": true
     }
   ]
 }
