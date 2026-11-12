@@ -1,0 +1,3 @@
+
+# Rules
+- ClickUp→calendar sync lives in `clickup-create-tasks` as action `sync_calendar` (agency JWT or `x-sync-secret` header; hourly cron). It discovers foldered and folderless lists, all task pages, subtasks and multiple-list tasks; untagged tasks import as `otro`, only production ops are hidden. Final tasks are approved; verified historical dates apply only to the once-per-client import atomically claimed via `clients.calendar_history_imported_at` before writes (interrupted imports fail closed). Existing calendars are migrated as already imported. Ordinary sync never assigns or restores dates; initial writes are null-only and never use editing deadlines or date_updated. Why: preserve the PM's scheduling and prevent concurrent/retried sync from undoing it.
