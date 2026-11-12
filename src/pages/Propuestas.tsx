@@ -35,6 +35,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { renderDocumentSource } from '@/lib/jsx-document';
 import { FileText, Plus, Link as LinkIcon, Mail, Pencil, Trash2, ExternalLink, Copy, Loader2, Eye, EyeOff, Info, Package as PackageIcon, User as UserIcon, DollarSign, Monitor, Code2, BarChart3, ClipboardList, Sparkles, Inbox, ListChecks, Search, X } from 'lucide-react';
+import ContentPlanEditor from '@/components/propuestas/ContentPlanEditor';
+import { ContentPlanData, emptyPlan, parseContentPlan, buildContentPlanHtml } from '@/lib/content-plan';
 import FormResponsesDialog from '@/components/propuestas/FormResponsesDialog';
 import { useFormResponseCounts } from '@/hooks/use-form-responses';
 import { buildFormDocument } from '@/lib/form-runtime';
@@ -166,6 +168,7 @@ const Propuestas = () => {
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [previewLoading, setPreviewLoading] = useState(false);
   const [editorPreview, setEditorPreview] = useState(false);
+  const [planData, setPlanData] = useState<ContentPlanData | null>(null);
   const [editorHtmlLoading, setEditorHtmlLoading] = useState(false);
 
 
@@ -225,6 +228,7 @@ const Propuestas = () => {
     setTemplateId('cuestionario-curso-v2');
     setIsPublished(true);
     setKind(initialKind);
+    setPlanData(initialKind === 'content_plan' ? emptyPlan() : null);
     setEditorPreview(false);
     setEditorOpen(true);
   };
@@ -240,6 +244,7 @@ const Propuestas = () => {
     setClientId((p as any).client_id || '');
     setClientName(p.client_name || '');
     setHtml('');
+    setPlanData(null);
     setIsPublished(p.is_published);
     setKind((p.kind as ProposalKind) || 'proposal');
     setEditorPreview(false);
@@ -248,6 +253,7 @@ const Propuestas = () => {
     try {
       const content = await fetchProposalHtml(p.id);
       setHtml(content);
+      setPlanData(p.kind === 'content_plan' ? parseContentPlan(content) : null);
     } catch (err) {
       console.error(err);
       toast.error('No se pudo cargar el HTML');
@@ -266,13 +272,15 @@ const Propuestas = () => {
     try {
       const matched = clientsList.find((c) => c.id === clientId);
       const resolvedName = matched?.name || clientName.trim() || null;
+      const structured = kind === 'content_plan' && planData;
+      const finalHtml = structured ? buildContentPlanHtml(planData, title.trim(), resolvedName || '') : html;
       if (editing) {
         await updateMut.mutateAsync({
           id: editing.id,
           title: title.trim(),
           client_id: clientId || null,
           client_name: resolvedName,
-          html_content: html,
+          html_content: finalHtml,
           is_published: isPublished,
           kind,
         });
@@ -282,7 +290,7 @@ const Propuestas = () => {
           title: title.trim(),
           client_id: clientId || null,
           client_name: resolvedName,
-          html_content: html,
+          html_content: finalHtml,
           is_published: isPublished,
           kind,
         });
@@ -689,7 +697,7 @@ const Propuestas = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Tipo</Label>
-                  <Select value={kind} onValueChange={(v) => setKind(v as ProposalKind)}>
+                  <Select value={kind} onValueChange={(v) => { setKind(v as ProposalKind); if (v === 'content_plan' && !html.trim() && !planData) setPlanData(emptyPlan()); }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="proposal">Propuesta</SelectItem>
@@ -750,6 +758,28 @@ const Propuestas = () => {
                   </p>
                 </div>
               )}
+              {kind === 'content_plan' && (
+                <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/30 p-2.5 text-sm">
+                  <span className="text-muted-foreground">{planData ? 'Formato fijo de plan de contenido' : 'Modo HTML libre'}</span>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => {
+                    if (planData) { setHtml(buildContentPlanHtml(planData, title, clientsList.find((c) => c.id === clientId)?.name || clientName)); setPlanData(null); }
+                    else { setPlanData(parseContentPlan(html) ?? emptyPlan()); }
+                  }}>{planData ? 'Usar HTML libre' : 'Usar formato fijo'}</Button>
+                </div>
+              )}
+              {kind === 'content_plan' && planData ? (
+                editorPreview ? (
+                  <div className="space-y-2">
+                    <Button type="button" size="sm" variant="outline" onClick={() => setEditorPreview(false)}><Code2 className="h-3.5 w-3.5 mr-1.5" /> Volver a editar</Button>
+                    <iframe title="Vista previa plan" srcDoc={buildContentPlanHtml(planData, title || 'Plan de contenido', clientsList.find((c) => c.id === clientId)?.name || clientName)} sandbox="allow-same-origin allow-popups" className="w-full h-[60dvh] rounded-md border bg-white" />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Button type="button" size="sm" variant="outline" onClick={() => setEditorPreview(true)}><Monitor className="h-3.5 w-3.5 mr-1.5" /> Vista previa</Button>
+                    <ContentPlanEditor value={planData} onChange={setPlanData} />
+                  </div>
+                )
+              ) : (
               <div className="space-y-2">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <Label>HTML o JSX</Label>
@@ -792,6 +822,7 @@ const Propuestas = () => {
                   />
                 )}
               </div>
+              )}
               <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
                 <div className="min-w-0">
                   <Label className="text-sm">Publicada</Label>
