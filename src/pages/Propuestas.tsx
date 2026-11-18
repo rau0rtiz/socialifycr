@@ -768,17 +768,8 @@ const Propuestas = () => {
                 </div>
               )}
               {kind === 'content_plan' && planData ? (
-                editorPreview ? (
-                  <div className="space-y-2">
-                    <Button type="button" size="sm" variant="outline" onClick={() => setEditorPreview(false)}><Code2 className="h-3.5 w-3.5 mr-1.5" /> Volver a editar</Button>
-                    <iframe title="Vista previa plan" srcDoc={buildContentPlanHtml(planData, title || 'Plan de contenido', clientsList.find((c) => c.id === clientId)?.name || clientName)} sandbox="allow-same-origin allow-popups" className="w-full h-[60dvh] rounded-md border bg-white" />
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Button type="button" size="sm" variant="outline" onClick={() => setEditorPreview(true)}><Monitor className="h-3.5 w-3.5 mr-1.5" /> Vista previa</Button>
-                    <ContentPlanEditor value={planData} onChange={setPlanData} />
-                  </div>
-                )
+                <ContentPlanEditor value={planData} onChange={setPlanData} title={title}
+                  clientName={clientsList.find((c) => c.id === clientId)?.name || clientName} />
               ) : (
               <div className="space-y-2">
                 <div className="flex items-center justify-between flex-wrap gap-2">

@@ -75,3 +75,6 @@ verify_jwt = false
 
 [functions.msg-auto-reply]
 verify_jwt = false
+
+[functions.resolve-reference-urls]
+verify_jwt = false
