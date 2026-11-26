@@ -890,13 +890,24 @@ html.agency-theme .agency-neon,
 
 /* Ari voice assistant — portal-free but outside theme scopes, so it carries its own tokens. */
 .ari-assistant { --ari-ink: 24 10% 10%; --ari-paper: 40 33% 97%; --ari-accent: 14 100% 57%; color: hsl(var(--ari-ink)); }
-.ari-panel { background: hsl(var(--ari-paper) / 0.92); backdrop-filter: blur(20px) saturate(170%); border: 1px solid hsl(0 0% 100% / 0.7); box-shadow: 0 20px 50px -12px hsl(var(--ari-accent) / 0.35); }
-.ari-panel-head, .ari-panel-foot { border-color: hsl(var(--ari-ink) / 0.08); }
-.ari-panel-head { border-bottom-width: 1px; } .ari-panel-foot { border-top-width: 1px; }
-.ari-bubble-user { background: hsl(var(--ari-accent)); color: hsl(0 0% 100%); padding: .5rem .75rem; border-radius: 1rem 1rem .25rem 1rem; }
-.ari-bubble-bot { background: hsl(var(--ari-ink) / 0.06); padding: .5rem .75rem; border-radius: 1rem 1rem 1rem .25rem; }
-.ari-input { background: hsl(0 0% 100% / 0.8); border: 1px solid hsl(var(--ari-ink) / 0.1); color: hsl(var(--ari-ink)); }
+.ari-overlay { --ari-ink: 0 0% 98%; color: hsl(var(--ari-ink)); background: hsl(24 12% 6% / 0.72); backdrop-filter: blur(34px) saturate(180%); -webkit-backdrop-filter: blur(34px) saturate(180%); animation: ari-in .28s ease-out; overflow: hidden; }
+@keyframes ari-in { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: none; } }
+.ari-aura { position: absolute; inset: -20%; pointer-events: none; background: radial-gradient(40% 35% at 20% 100%, hsl(14 100% 57% / .55), transparent 70%), radial-gradient(35% 30% at 85% 95%, hsl(330 90% 60% / .35), transparent 70%), radial-gradient(30% 30% at 55% 110%, hsl(38 100% 60% / .45), transparent 70%), radial-gradient(30% 25% at 80% 0%, hsl(14 100% 57% / .18), transparent 70%); filter: blur(30px); animation: ari-drift 9s ease-in-out infinite alternate; }
+@keyframes ari-drift { to { transform: translate3d(3%, -4%, 0) rotate(6deg); } }
+.ari-overlay::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 0 0 2px hsl(14 100% 60% / .35), inset 0 0 60px hsl(14 100% 57% / .25); }
+.ari-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 600; letter-spacing: -0.02em; background: linear-gradient(90deg, #FFB38A, hsl(var(--ari-accent)), #FF6FA8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ari-chip { font-size: .75rem; font-weight: 600; padding: .4rem .8rem; border-radius: 999px; background: hsl(0 0% 100% / .08); border: 1px solid hsl(0 0% 100% / .14); }
+.ari-muted { color: hsl(0 0% 100% / .6); }
+.ari-glass-btn { background: hsl(0 0% 100% / .08); border: 1px solid hsl(0 0% 100% / .16); box-shadow: inset 0 1px 0 hsl(0 0% 100% / .18); color: hsl(var(--ari-ink)); transition: background .2s; }
+.ari-glass-btn:hover { background: hsl(0 0% 100% / .16); }
+.ari-bubble-user { background: linear-gradient(135deg, #FF8A5C, hsl(var(--ari-accent))); color: hsl(0 0% 100%); padding: .65rem 1rem; border-radius: 1.25rem 1.25rem .35rem 1.25rem; box-shadow: 0 8px 24px -10px hsl(var(--ari-accent) / .8); }
+.ari-bubble-bot { background: hsl(0 0% 100% / .09); border: 1px solid hsl(0 0% 100% / .14); box-shadow: inset 0 1px 0 hsl(0 0% 100% / .15); padding: .65rem 1rem; border-radius: 1.25rem 1.25rem 1.25rem .35rem; }
+.ari-copy { background: hsl(0 0% 0% / .28); border: 1px solid hsl(0 0% 100% / .12); color: hsl(var(--ari-ink)); }
+.ari-copy-btn { background: hsl(0 0% 100%); color: hsl(24 10% 10%); }
+.ari-composer { background: hsl(0 0% 100% / .09); border: 1px solid hsl(0 0% 100% / .18); box-shadow: inset 0 1px 0 hsl(0 0% 100% / .18); }
+.ari-composer input::placeholder { color: hsl(0 0% 100% / .5); }
 .ari-send { background: hsl(var(--ari-accent)); color: hsl(0 0% 100%); }
+.ari-orb.ari-orb-big { box-shadow: 0 0 0 6px hsl(var(--ari-accent) / .18), 0 0 60px 6px hsl(var(--ari-accent) / .55); }
 .ari-orb { color: hsl(0 0% 100%); background: radial-gradient(circle at 30% 30%, #FF9A6B, hsl(var(--ari-accent)) 55%, #B8321C); box-shadow: 0 0 0 4px hsl(var(--ari-accent) / 0.18), 0 10px 30px -6px hsl(var(--ari-accent) / 0.7); transition: transform .2s; }
 .ari-orb:active { transform: scale(.94); }
 .ari-orb-live { animation: ari-pulse 1.2s ease-in-out infinite; }

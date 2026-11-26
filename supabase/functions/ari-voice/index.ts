@@ -29,6 +29,8 @@ const tools = [
     parameters: { type: 'object', properties: { on: { type: 'boolean' } }, required: ['on'] } } },
   { type: 'function', function: { name: 'get_calendar_link', description: 'Obtener el link del calendario compartido de un cliente.',
     parameters: { type: 'object', properties: { client_id: { type: 'string' } }, required: ['client_id'] } } },
+  { type: 'function', function: { name: 'show_copy_text', description: 'Mostrar en pantalla un texto listo para copiar y enviar (mensaje, caption, correo, respuesta). Usalo siempre que pidan algo para copiar, mandar o pegar.',
+    parameters: { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] } } },
   { type: 'function', function: { name: 'list_recent_sheets', description: 'Listar hojas de producción recientes (opcional por cliente).',
     parameters: { type: 'object', properties: { client_id: { type: 'string' } } } } },
 ];
@@ -82,6 +84,7 @@ Elegí el cliente por nombre aproximado; si es ambiguo, preguntá. Para "crea un
     const messages: any[] = [{ role: 'system', content: system }, ...history, { role: 'user', content: text }];
     let navigateTo: string | null = null;
     let link: string | null = null;
+    let copyText: string | null = null;
     const done: string[] = [];
 
     const run = async (name: string, a: any): Promise<unknown> => {
@@ -108,6 +111,7 @@ Elegí el cliente por nombre aproximado; si es ambiguo, preguntá. Para "crea un
         if (!data) { const r = await db.from('content_calendar_shares').insert({ client_id: a.client_id, token: slugToken() } as any).select('token').single(); if (r.error) return { error: r.error.message }; data = r.data; }
         link = `${APP_URL}/calendario/${(data as any).token}`; return { ok: true, url: link, note: 'El link se muestra en pantalla; no lo leas completo.' };
       }
+      if (name === 'show_copy_text') { copyText = String(a.text ?? '').slice(0, 4000) || null; return { ok: true, note: 'El texto ya está en pantalla para copiar; no lo leas, solo decí que está listo.' }; }
       if (name === 'list_recent_sheets') {
         let q = db.from('production_sheets').select('id, title, client_id, updated_at').order('updated_at', { ascending: false }).limit(8);
         if (a.client_id) q = q.eq('client_id', a.client_id);
@@ -147,7 +151,7 @@ Elegí el cliente por nombre aproximado; si es ambiguo, preguntá. Para "crea un
       if (t.ok) audioB64 = encodeBase64(new Uint8Array(await t.arrayBuffer()));
       else console.error(`TTS [${t.status}] ${await t.text()}`);
     }
-    return json({ transcript: text, reply, audio: audioB64, navigate: navigateTo, link, invalidate: done });
+    return json({ transcript: text, reply, audio: audioB64, navigate: navigateTo, link, copy: copyText, invalidate: done });
   } catch (e) {
     console.error('ari-voice failed', e);
     return json({ error: 'Algo falló, probá de nuevo.' }, 500);
