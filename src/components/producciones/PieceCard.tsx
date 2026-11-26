@@ -51,6 +51,8 @@ interface PieceCardProps {
   onDelete: () => void;
   canDrag?: boolean;
   dragHandleProps?: ButtonHTMLAttributes<HTMLButtonElement>;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
   onMove?: (dir: 'up' | 'down') => void;
@@ -69,6 +71,8 @@ export function PieceCard({
   onDelete,
   canDrag = false,
   dragHandleProps,
+  onDragStart,
+  onDragEnd,
   canMoveUp = false,
   canMoveDown = false,
   onMove,
@@ -79,6 +83,7 @@ export function PieceCard({
   const isDraft = !!shot.is_draft;
   const [expanded, setExpanded] = useState(isDraft);
   const [editScript, setEditScript] = useState(false);
+  const [dragArmed, setDragArmed] = useState(false);
   const meta = typeMeta(shot.content_type);
   const platformLabel = PLATFORMS.find(p => p.value === shot.platform)?.label;
 

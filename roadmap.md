@@ -1,4 +1,5 @@
 # Tasks
+- [x] Corregir las referencias faltantes del arrastre en ambas vistas de PieceCard; compilación correcta y 3 pruebas de orden aprobadas.
 - [ ] Corregir el reordenamiento de piezas con dedo y Apple Pencil en iPad y verificar el orden guardado.
 - [ ] Adaptar la barra de filtros y acciones de hojas de producción a pantallas estrechas sin cortes ni texto deformado.
 - [x] Chats: identificado rechazo de Instagram por plazo de respuesta vencido; aviso real y renovación única ante 401, sin reintentar políticas ni borrar texto; 5 pruebas y sesión de Raúl verificadas sin enviar a clientes.
