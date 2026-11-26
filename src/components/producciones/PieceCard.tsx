@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ButtonHTMLAttributes } from 'react';
 import {
   Check, Copy, Trash2, ChevronDown, ChevronUp, Pencil, Lock,
   GripVertical, ArrowUp, ArrowDown, ExternalLink, Sparkles,
@@ -50,8 +50,7 @@ interface PieceCardProps {
   onDuplicate: () => void;
   onDelete: () => void;
   canDrag?: boolean;
-  onDragStart?: () => void;
-  onDragEnd?: () => void;
+  dragHandleProps?: ButtonHTMLAttributes<HTMLButtonElement>;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
   onMove?: (dir: 'up' | 'down') => void;
@@ -69,8 +68,7 @@ export function PieceCard({
   onDuplicate,
   onDelete,
   canDrag = false,
-  onDragStart,
-  onDragEnd,
+  dragHandleProps,
   canMoveUp = false,
   canMoveDown = false,
   onMove,
@@ -78,7 +76,6 @@ export function PieceCard({
   producerName,
   clientLogo,
 }: PieceCardProps) {
-  const [dragArmed, setDragArmed] = useState(false);
   const isDraft = !!shot.is_draft;
   const [expanded, setExpanded] = useState(isDraft);
   const [editScript, setEditScript] = useState(false);

@@ -1,4 +1,6 @@
 # Tasks
+- [ ] Corregir el reordenamiento de piezas con dedo y Apple Pencil en iPad y verificar el orden guardado.
+- [ ] Adaptar la barra de filtros y acciones de hojas de producción a pantallas estrechas sin cortes ni texto deformado.
 - [x] Chats: identificado rechazo de Instagram por plazo de respuesta vencido; aviso real y renovación única ante 401, sin reintentar políticas ni borrar texto; 5 pruebas y sesión de Raúl verificadas sin enviar a clientes.
 - [x] Reproducir videos originales de anuncios en player Socialify sin embed oscuro; cuatro fuentes reales de B-Dental disponibles, reproducción 720×1280, pausa/avance/sonido y móvil verificados; enlace externo cuando la fuente no está disponible, 9 pruebas correctas.
 - [x] Unificar estilo cliente con tarjetas, halos y títulos neón de agencia; entrada verificada a 1280/390/360px, dos campañas y diálogos funcionales, sin desbordamiento móvil.
