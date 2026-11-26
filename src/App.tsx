@@ -1,3 +1,4 @@
+import { AriVoiceAssistant } from '@/components/ari/AriVoiceAssistant';
 import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -156,6 +157,7 @@ const App = () => (
             <BrandProvider>
               <Toaster />
               <Sonner />
+              <AriVoiceAssistant />
               <ChunkLoadErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
                   {getHostMode() === 'producciones' ? (

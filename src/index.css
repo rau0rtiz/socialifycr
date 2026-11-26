@@ -887,3 +887,17 @@ html.agency-theme .agency-neon,
 .production-photo-story-client { font-size: 38px; font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; margin-bottom: 22px; }
 .production-photo-story-title { font-size: 76px; font-weight: 700; line-height: 1.12; overflow-wrap: anywhere; }
 .production-photo-story-date { font-size: 34px; line-height: 1.3; margin-top: 28px; }
+
+/* Ari voice assistant — portal-free but outside theme scopes, so it carries its own tokens. */
+.ari-assistant { --ari-ink: 24 10% 10%; --ari-paper: 40 33% 97%; --ari-accent: 14 100% 57%; color: hsl(var(--ari-ink)); }
+.ari-panel { background: hsl(var(--ari-paper) / 0.92); backdrop-filter: blur(20px) saturate(170%); border: 1px solid hsl(0 0% 100% / 0.7); box-shadow: 0 20px 50px -12px hsl(var(--ari-accent) / 0.35); }
+.ari-panel-head, .ari-panel-foot { border-color: hsl(var(--ari-ink) / 0.08); }
+.ari-panel-head { border-bottom-width: 1px; } .ari-panel-foot { border-top-width: 1px; }
+.ari-bubble-user { background: hsl(var(--ari-accent)); color: hsl(0 0% 100%); padding: .5rem .75rem; border-radius: 1rem 1rem .25rem 1rem; }
+.ari-bubble-bot { background: hsl(var(--ari-ink) / 0.06); padding: .5rem .75rem; border-radius: 1rem 1rem 1rem .25rem; }
+.ari-input { background: hsl(0 0% 100% / 0.8); border: 1px solid hsl(var(--ari-ink) / 0.1); color: hsl(var(--ari-ink)); }
+.ari-send { background: hsl(var(--ari-accent)); color: hsl(0 0% 100%); }
+.ari-orb { color: hsl(0 0% 100%); background: radial-gradient(circle at 30% 30%, #FF9A6B, hsl(var(--ari-accent)) 55%, #B8321C); box-shadow: 0 0 0 4px hsl(var(--ari-accent) / 0.18), 0 10px 30px -6px hsl(var(--ari-accent) / 0.7); transition: transform .2s; }
+.ari-orb:active { transform: scale(.94); }
+.ari-orb-live { animation: ari-pulse 1.2s ease-in-out infinite; }
+@keyframes ari-pulse { 0%,100% { box-shadow: 0 0 0 4px hsl(var(--ari-accent) / 0.25), 0 0 0 0 hsl(var(--ari-accent) / 0.5); } 50% { box-shadow: 0 0 0 4px hsl(var(--ari-accent) / 0.25), 0 0 0 16px hsl(var(--ari-accent) / 0); } }
