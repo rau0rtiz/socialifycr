@@ -15,6 +15,8 @@ import type { ShotReference } from '@/hooks/use-shot-references';
 import { ShotReferences } from './ShotReferences';
 import { ClapperButton } from './ClapperDialog';
 import { TeleprompterButton } from './TeleprompterDialog';
+import { TechnicalNoteRecorder } from './TechnicalNoteRecorder';
+import { appendTechnicalTranscript } from '@/lib/technical-note-transcript';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
@@ -487,6 +489,13 @@ export function PieceCard({
             placeholder="Cámara, ángulos, wardrobe, props, locación específica…"
             rows={2}
             className="bg-transparent border-0 text-sm resize-none px-0 focus-visible:ring-0"
+          />
+          <TechnicalNoteRecorder
+            shotId={shot.id}
+            sheetId={shot.sheet_id}
+            onTranscript={(text) => setLocal(current => ({
+              ...current, tech_notes: appendTechnicalTranscript(current.tech_notes, text),
+            }))}
           />
         </div>
         <div className="bg-noeval-cream/50 rounded-xl p-3 border border-noeval-line/60">

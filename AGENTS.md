@@ -27,3 +27,4 @@
 - Public dashboards open a Calendar/Campaigns section chooser with Back navigation; followers use a range-free compact view at entry, agency keeps section tabs. Why: separate public workflows without changing agency configuration.
 - Social followers discover owned/client pages and linked Instagram from the selected portfolio using server-side agency/Page tokens, with legacy connections as fallback. Why: portfolio-connected clients need no separate legacy OAuth setup.
 - Structured content plans embed their data as JSON inside `html_content` (`src/lib/content-plan.ts`). Why: no schema/RPC change; old HTML plans still work.
+- Production-note audio is transient; transcribe through an authenticated, agency-only function with caller RLS and append text to the selected piece's existing notes. Why: preserve notes and isolate client data without storing audio.
