@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ScrollText, X, Maximize2, Play, Pause, RotateCcw, FlipHorizontal, FlipVertical,
-  RotateCw, Minus, Plus, Settings2,
+  RotateCw, Minus, Plus, Settings2, Smartphone,
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { newRoomId, openRoom, type RemoteCmd } from '@/lib/prompter-remote';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 interface Props {
@@ -60,6 +62,39 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
   }, [playing, p.speed, p.size]);
 
   const toggle = useCallback(() => setPlaying(x => !x), []);
+
+  // ---- Remote control (another device via QR, live over Realtime broadcast)
+  const [room] = useState(newRoomId);
+  const [showQr, setShowQr] = useState(false);
+  const [remotes, setRemotes] = useState(0);
+  const chRef = useRef<ReturnType<typeof openRoom>>();
+  const stateRef = useRef({ playing, ...p, title });
+  stateRef.current = { playing, ...p, title };
+  const remoteUrl = `${window.location.origin}/prompter-remoto/${room}`;
+
+  useEffect(() => {
+    if (!open) return;
+    const c = openRoom(room);
+    const push = () => { const s = stateRef.current; c.send({ type: 'broadcast', event: 'state', payload: { playing: s.playing, speed: s.speed, size: s.size, mirrorX: s.mirrorX, mirrorY: s.mirrorY, title: s.title } }); };
+    c.on('broadcast', { event: 'cmd' }, ({ payload }) => {
+      const m = payload as RemoteCmd;
+      if (m.a === 'hello') { setRemotes(n => n + 1); setShowQr(false); }
+      else if (m.a === 'toggle') setPlaying(x => !x);
+      else if (m.a === 'reset') { setPlaying(false); if (scroller.current) scroller.current.scrollTop = 0; }
+      else if (m.a === 'speed') setP(x => ({ ...x, speed: Math.min(200, Math.max(5, x.speed + m.d)) }));
+      else if (m.a === 'size') setP(x => ({ ...x, size: Math.min(160, Math.max(24, x.size + m.d)) }));
+      else if (m.a === 'mirrorX') setP(x => ({ ...x, mirrorX: !x.mirrorX }));
+      else if (m.a === 'mirrorY') setP(x => ({ ...x, mirrorY: !x.mirrorY }));
+      else if (m.a === 'nudge') scroller.current?.scrollBy({ top: m.d * (scroller.current.clientHeight * 0.25), behavior: 'smooth' });
+      setTimeout(push, 30);
+    }).subscribe();
+    chRef.current = c;
+    return () => { c.unsubscribe(); chRef.current = undefined; };
+  }, [open, room]);
+
+  useEffect(() => {
+    chRef.current?.send({ type: 'broadcast', event: 'state', payload: { playing, speed: p.speed, size: p.size, mirrorX: p.mirrorX, mirrorY: p.mirrorY, title } });
+  }, [playing, p.speed, p.size, p.mirrorX, p.mirrorY, title]);
 
   const reset = () => { setPlaying(false); if (scroller.current) scroller.current.scrollTop = 0; };
 
@@ -125,6 +160,7 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
                 <button className={`prompter-btn ${p.mirrorX ? 'on' : ''}`} onClick={() => set({ mirrorX: !p.mirrorX })} aria-label="Espejo horizontal"><FlipHorizontal /></button>
                 <button className={`prompter-btn ${p.mirrorY ? 'on' : ''}`} onClick={() => set({ mirrorY: !p.mirrorY })} aria-label="Espejo vertical"><FlipVertical /></button>
                 <button className={`prompter-btn ${p.rotate ? 'on' : ''}`} onClick={() => set({ rotate: (p.rotate + 90) % 360 })} aria-label="Rotar"><RotateCw /></button>
+                <button className={`prompter-btn ${remotes ? 'on' : ''}`} onClick={() => setShowQr(true)} aria-label="Controlar desde otro dispositivo"><Smartphone /></button>
                 <button className="prompter-btn" onClick={goFull} aria-label="Pantalla completa"><Maximize2 /></button>
                 <button className="prompter-btn" onClick={() => onOpenChange(false)} aria-label="Cerrar"><X /></button>
               </div>
@@ -135,6 +171,18 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
                 <Slider label="Interlineado" min={1} max={2.2} step={0.05} value={p.line} onChange={v => set({ line: v })} />
               </div>
               <div className="prompter-hint"><Settings2 className="inline h-3 w-3" /> Tocá el texto para ocultar/mostrar controles · Espacio = play/pausa</div>
+            </div>
+          )}
+
+          {showQr && (
+            <div className="prompter-bar" onClick={() => setShowQr(false)} style={{ inset: 0, left: 0, transform: 'none', width: '100%', borderRadius: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+              <div onClick={e => e.stopPropagation()} style={{ background: 'hsl(0 0% 100%)', padding: 16, borderRadius: 16 }}>
+                <QRCodeSVG value={remoteUrl} size={240} />
+              </div>
+              <div className="prompter-hint" style={{ textAlign: 'center', maxWidth: 320 }}>
+                Escaneá con el celular para controlar este teleprompter. Se conecta solo y los controles responden al instante.
+              </div>
+              <button className="prompter-btn" onClick={() => setShowQr(false)} aria-label="Cerrar"><X /></button>
             </div>
           )}
         </div>

@@ -42,6 +42,7 @@ const AdCampaignCanvas = lazy(() => import("./pages/AdCampaignCanvas"));
 const AgencyCRM = lazy(() => import("./pages/AgencyCRM"));
 const Producciones = lazy(() => import("./pages/Producciones"));
 const ProduccionSheet = lazy(() => import("./pages/ProduccionSheet"));
+const PrompterRemoto = lazy(() => import("./pages/PrompterRemoto"));
 const ProduccionPublica = lazy(() => import("./pages/ProduccionPublica"));
 const ReciboPublico = lazy(() => import("./pages/ReciboPublico"));
 const Propuestas = lazy(() => import("./pages/Propuestas"));
@@ -169,6 +170,7 @@ const App = () => (
                     <Route path="/oauth/linkedin/callback" element={<LinkedInOAuthCallback />} />
                     <Route path="/oauth/instagram/callback" element={<InstagramOAuthCallback />} />
                     <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
+                  <Route path="/prompter-remoto/:room" element={<PrompterRemoto />} />
                     <Route path="/recibo/:token" element={<ReciboPublico />} />
                     <Route path="/privacidad" element={<Privacy />} />
                     <Route path="/terminos" element={<Terms />} />
@@ -200,6 +202,7 @@ const App = () => (
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/invitacion/:token" element={<Invitacion />} />
                   <Route path="/produccion-publica/:token" element={<ProduccionPublica />} />
+                  <Route path="/prompter-remoto/:room" element={<PrompterRemoto />} />
                     <Route path="/recibo/:token" element={<ReciboPublico />} />
                   <Route path="/propuesta/:slug" element={<PropuestaPublica />} />
                   <Route path="/calendario/:token" element={<CalendarioPublico />} />
