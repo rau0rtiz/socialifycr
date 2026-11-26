@@ -10,12 +10,15 @@ export interface StoryReceiptData {
   title: string;
   clientName: string;
   clientLogo?: string | null;
+  /** Sheet photo, shown 9:16 next to the title. */
+  photoUrl?: string | null;
   dateLabel: string;
   pieces: StoryPiece[];
   folio: string;
 }
 
 const MAX_PIECES = 12;
+const MAX_PIECES_WITH_PHOTO = 6;
 
 const THEMES = {
   light: {
@@ -44,7 +47,7 @@ export type StoryTheme = keyof typeof THEMES;
 export const StoryReceiptCard = forwardRef<HTMLDivElement, { data: StoryReceiptData; theme?: StoryTheme }>(
   ({ data, theme = 'light' }, ref) => {
     const t = THEMES[theme];
-    const shown = data.pieces.slice(0, MAX_PIECES);
+    const shown = data.pieces.slice(0, data.photoUrl ? MAX_PIECES_WITH_PHOTO : MAX_PIECES);
     const rest = data.pieces.length - shown.length;
 
     const dots = (
@@ -117,10 +120,41 @@ export const StoryReceiptCard = forwardRef<HTMLDivElement, { data: StoryReceiptD
             </div>
           </div>
 
-          <div style={{ fontSize: 74, lineHeight: 1.05, color: t.ink, fontWeight: 700, letterSpacing: -1 }}>
-            {data.title}
-          </div>
-          <div style={{ fontSize: 30, color: t.muted, marginTop: 18 }}>{data.dateLabel}</div>
+          {data.photoUrl ? (
+            <div style={{ display: 'flex', gap: 36, alignItems: 'flex-end' }}>
+              <div
+                style={{
+                  width: 270,
+                  height: 480,
+                  flexShrink: 0,
+                  borderRadius: 32,
+                  overflow: 'hidden',
+                  border: `2px solid ${t.line}`,
+                  background: t.line,
+                }}
+              >
+                <img
+                  src={data.photoUrl}
+                  crossOrigin="anonymous"
+                  alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+              </div>
+              <div style={{ minWidth: 0, flex: 1, paddingBottom: 8 }}>
+                <div style={{ fontSize: 62, lineHeight: 1.05, color: t.ink, fontWeight: 700, letterSpacing: -1, wordBreak: 'break-word' }}>
+                  {data.title}
+                </div>
+                <div style={{ fontSize: 28, color: t.muted, marginTop: 18 }}>{data.dateLabel}</div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 74, lineHeight: 1.05, color: t.ink, fontWeight: 700, letterSpacing: -1 }}>
+                {data.title}
+              </div>
+              <div style={{ fontSize: 30, color: t.muted, marginTop: 18 }}>{data.dateLabel}</div>
+            </>
+          )}
 
           <div style={{ margin: '40px 0 34px' }}>{dots}</div>
 

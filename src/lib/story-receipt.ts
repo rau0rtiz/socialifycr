@@ -26,6 +26,7 @@ export function buildStoryReceipt(args: {
   shootDate?: string | null;
   clientName?: string | null;
   clientLogo?: string | null;
+  photoUrl?: string | null;
   shots: ShotLike[];
 }): StoryReceiptData {
   const recorded = args.shots
@@ -55,6 +56,7 @@ export function buildStoryReceipt(args: {
     title: args.title?.trim() || 'Producción',
     clientName: args.clientName || '',
     clientLogo: args.clientLogo || null,
+    photoUrl: args.photoUrl || null,
     dateLabel,
     pieces,
     folio: String(args.sheetId).replace(/-/g, '').slice(0, 8).toUpperCase(),

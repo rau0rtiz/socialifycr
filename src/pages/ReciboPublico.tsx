@@ -29,6 +29,7 @@ export default function ReciboPublico() {
       shootDate: data.sheet.shoot_date,
       clientName: data.client?.name,
       clientLogo: data.client?.logo_url,
+      photoUrl: data.sheet.thumbnail_url,
       shots: data.shots || [],
     });
   }, [data]);

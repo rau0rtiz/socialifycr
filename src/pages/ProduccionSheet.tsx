@@ -430,7 +430,7 @@ export default function ProduccionSheet() {
                 {/* Portada + título */}
                 <div className="mt-4 flex gap-4 sm:gap-6 items-start">
                   <div className="shrink-0 no-print">
-                    <div className="w-20 sm:w-28 md:w-32 aspect-[4/5] rounded-xl overflow-hidden border border-noeval-line bg-noeval-slate relative group">
+                    <div className="w-20 sm:w-28 md:w-32 aspect-[9/16] rounded-xl overflow-hidden border border-noeval-line bg-noeval-slate relative group">
                       {local.thumbnail_url ? (
                         <img src={local.thumbnail_url} alt="Portada" className="absolute inset-0 w-full h-full object-cover" />
                       ) : (
@@ -950,6 +950,7 @@ export default function ProduccionSheet() {
               shootDate: local.shoot_date,
               clientName,
               clientLogo,
+              photoUrl: local.thumbnail_url,
               shots: shots as any,
             })}
           />

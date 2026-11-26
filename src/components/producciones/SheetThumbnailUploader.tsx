@@ -13,7 +13,35 @@ interface Props {
   variant?: 'compact' | 'full';
 }
 
-const MAX_MB = 8;
+const MAX_MB = 15;
+
+/** Center-crops any image to 9:16 (max 1080x1920) and returns a JPEG. */
+async function cropTo916(file: File): Promise<Blob> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error('No se pudo leer la imagen'));
+      i.src = url;
+    });
+    const W = img.naturalWidth, H = img.naturalHeight;
+    const target = 9 / 16;
+    let sw = W, sh = H;
+    if (W / H > target) sw = Math.round(H * target); else sh = Math.round(W / target);
+    const sx = Math.round((W - sw) / 2), sy = Math.round((H - sh) / 2);
+    const outW = Math.min(1080, sw), outH = Math.round(outW * 16 / 9);
+    const canvas = document.createElement('canvas');
+    canvas.width = outW; canvas.height = outH;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+    return await new Promise<Blob>((res, rej) =>
+      canvas.toBlob((b) => (b ? res(b) : rej(new Error('No se pudo recortar la imagen'))), 'image/jpeg', 0.88),
+    );
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 export function SheetThumbnailUploader({
   sheetId, clientId, currentUrl, className, variant = 'full',
@@ -35,11 +63,11 @@ export function SheetThumbnailUploader({
     }
     setUploading(true);
     try {
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `${clientId}/production-sheets/${sheetId}/${Date.now()}.${ext}`;
+      const cropped = await cropTo916(file);
+      const path = `${clientId}/production-sheets/${sheetId}/${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage
         .from('content-images')
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, cropped, { upsert: true, contentType: 'image/jpeg' });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('content-images').getPublicUrl(path);
       await update.mutateAsync({ id: sheetId, thumbnail_url: pub.publicUrl } as any);
