@@ -8,6 +8,7 @@ import { HubRail, AppointmentsBlock } from '@/components/agency/HubRail';
 import { AiSwitchesCard } from '@/components/agency/AiSwitchesCard';
 import { useProfile } from '@/components/dashboard/ProfileDialog';
 import { AgencyHero3D } from '@/components/agency/AgencyHero3D';
+import { RefreshButton } from '@/components/common/RefreshButton';
 
 const greetingForHour = (hour: number) => {
   if (hour < 12) return 'Buenos días';
@@ -44,8 +45,9 @@ const AgencyResumen = () => {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-[1600px] space-y-5">
-        {/* Selector de vista */}
-        <div className="flex justify-end">
+        {/* Selector de vista + refrescar */}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <RefreshButton title="Refrescar el panel" />
           <div className="inline-flex rounded-full border border-border bg-card p-1">
             {([
               ['tres_d', 'Vista 3D'],

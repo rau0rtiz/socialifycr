@@ -42,6 +42,7 @@ import { PieceCard } from '@/components/producciones/PieceCard';
 import { TeleprompterDialog, PrompterScriptsContext } from '@/components/producciones/TeleprompterDialog';
 import { useSheetReferences } from '@/hooks/use-shot-references';
 import { SheetThumbnailUploader } from '@/components/producciones/SheetThumbnailUploader';
+import { RefreshButton } from '@/components/common/RefreshButton';
 
 const CONTENT_TYPES = [
   { value: 'reel', label: 'Reel', icon: '🎬' },
@@ -105,7 +106,6 @@ export default function ProduccionSheet() {
 
 
   const [local, setLocal] = useState<Partial<ProductionSheet>>({});
-  const [clientName, setClientName] = useState<string>('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'recorded'>('all');
   const [dragShotId, setDragShotId] = useState<string | null>(null);
   const [dropBeforeShotId, setDropBeforeShotId] = useState<string | null>(null);
@@ -118,7 +118,6 @@ export default function ProduccionSheet() {
   const [clickupOpen, setClickupOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
-  const [clientLogo, setClientLogo] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
 
 
@@ -174,12 +173,24 @@ export default function ProduccionSheet() {
 
   useEffect(() => { if (data?.sheet) setLocal(data.sheet); }, [data?.sheet]);
 
-  // Load client name
-  useEffect(() => {
-    if (!data?.sheet?.client_id) return;
-    supabase.from('clients').select('name, logo_url').eq('id', data.sheet.client_id).maybeSingle()
-      .then(({ data: c }) => { setClientName(c?.name || ''); setClientLogo((c as any)?.logo_url || null); });
-  }, [data?.sheet?.client_id]);
+  // Cliente de la hoja (nombre + logo). Es una consulta, no un fetch suelto,
+  // para que el botón Refrescar la cubra junto con el resto de los datos.
+  const { data: clientInfo } = useQuery({
+    queryKey: ['produccion-sheet-client', data?.sheet?.client_id],
+    enabled: !!data?.sheet?.client_id,
+    queryFn: async () => {
+      const { data: c, error } = await supabase
+        .from('clients')
+        .select('name, logo_url')
+        .eq('id', data!.sheet.client_id)
+        .maybeSingle();
+      if (error) throw error;
+      return (c as { name: string; logo_url: string | null } | null) ?? null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const clientName = clientInfo?.name || '';
+  const clientLogo = clientInfo?.logo_url || null;
 
   // Clientes disponibles para reasignar la hoja
   const { data: allClients } = useQuery({
@@ -604,6 +615,7 @@ export default function ProduccionSheet() {
                     >
                       <Printer className="h-3.5 w-3.5" /> <span className="hidden lg:inline">PDF</span>
                     </button>
+                    <RefreshButton variant="noeval" title="Refrescar esta hoja" />
                   </div>
                 </div>
 

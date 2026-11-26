@@ -18,7 +18,7 @@ import {
 import {
   ArrowLeft, Plus, Folder, Search, Trash2, FileText, Film,
   Calendar, MapPin, User as UserIcon, Loader2, ImagePlus,
-  LayoutGrid, List, GripVertical,
+  LayoutGrid, List, GripVertical, RefreshCw,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -33,6 +33,7 @@ import {
   useMoveSheet, useMoveFolder,
 } from '@/hooks/use-production-folders';
 import { SheetThumbnailUploader } from '@/components/producciones/SheetThumbnailUploader';
+import { useRefreshAll } from '@/components/common/RefreshButton';
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
   draft: 'Borrador',
@@ -75,6 +76,7 @@ export default function Producciones() {
   const { data: sheets = [], isLoading } = useProductionSheets();
   const { data: clients = [], refetch: refetchClients } = useClients();
   const { data: folders = [] } = useProductionFolders(clientFilter);
+  const { busy: refreshing, refresh } = useRefreshAll();
   const createFolder = useCreateFolder();
   const deleteFolder = useDeleteFolder();
   const renameFolder = useRenameFolder();
@@ -239,12 +241,22 @@ export default function Producciones() {
                   Drive de hojas de producción por cliente. Guarda, edita, asigna equipo y envía a ClickUp cuando esté listo.
                 </p>
               </div>
-              <Button
-                onClick={() => setCreating(true)}
-                className="bg-noeval-cream text-noeval-ink hover:bg-white shrink-0 w-full lg:w-auto"
-              >
-                <Plus className="h-4 w-4 mr-1.5" /> Nuevo sheet
-              </Button>
+              <div className="flex w-full shrink-0 items-center gap-2 lg:w-auto">
+                <Button
+                  variant="outline"
+                  onClick={refresh}
+                  disabled={refreshing}
+                  className="flex-1 border-noeval-line bg-noeval-surface/70 text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream lg:flex-none"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-1.5 ${refreshing ? 'animate-spin' : ''}`} /> Refrescar
+                </Button>
+                <Button
+                  onClick={() => setCreating(true)}
+                  className="flex-1 bg-noeval-cream text-noeval-ink hover:bg-white lg:flex-none"
+                >
+                  <Plus className="h-4 w-4 mr-1.5" /> Nuevo sheet
+                </Button>
+              </div>
             </div>
           </div>
 

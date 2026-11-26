@@ -1,4 +1,5 @@
 # Tasks
+- [x] Botón Refrescar en hoja de producción, drive de Producciones y panel de agencia; verificado con Raúl a 1280 y 390px, aviso «Datos actualizados» tras el toque y datos recargados sin recargar la página.
 - [x] ElevenLabs conectado; grabación, reproducción y transcripción en notas técnicas por pieza; conserva texto previo, 3 pruebas correctas y flujo real grabado/transcrito/guardado/reabierto con Raúl en pieza temporal eliminada.
 - [x] Corregir las referencias faltantes del arrastre en ambas vistas de PieceCard; compilación correcta y 3 pruebas de orden aprobadas.
 - [ ] Corregir el reordenamiento de piezas con dedo y Apple Pencil en iPad y verificar el orden guardado.
