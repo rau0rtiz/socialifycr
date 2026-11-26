@@ -839,6 +839,7 @@ export default function ProduccionSheet() {
                               )}
                             </div>
                             <div className="font-serif text-lg text-noeval-ink mt-1">{s.concept || s.description || '(sin concepto)'}</div>
+                            {s.concept && s.description && s.description !== s.concept && <div className="text-sm text-noeval-ink whitespace-pre-wrap mt-1">{s.description}</div>}
                             {s.hook && <div className="text-sm text-noeval-muted mt-1"><strong className="text-noeval-ink">Hook:</strong> {s.hook}</div>}
                             {s.script && (
                               <div className="mt-2 pt-2 border-t border-noeval-line/60">

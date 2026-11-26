@@ -47,6 +47,7 @@ async function cuFetch(path: string, init?: RequestInit) {
 
 function buildDescription(shot: any, sheet: any, references: any[] = []): string {
   const lines: string[] = [];
+  if (shot.concept && shot.description && shot.description !== shot.concept) lines.push('**Descripción:**', shot.description, '');
   if (shot.hook) lines.push(`**⚡ Hook:** ${shot.hook}`, '');
   if (shot.script) lines.push('**📝 Guion / Copy:**', shot.script, '');
   if (shot.cta) lines.push(`**🎯 CTA:** ${shot.cta}`);

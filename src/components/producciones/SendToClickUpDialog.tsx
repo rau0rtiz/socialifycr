@@ -64,6 +64,7 @@ function buildTitle(s: Shot): string {
 
 function buildPreviewDescription(s: Shot): string {
   const lines: string[] = [];
+  if (s.concept && s.description && s.description !== s.concept) lines.push(`Descripción: ${s.description}`);
   if (s.hook) lines.push(`⚡ Hook: ${s.hook}`);
   if (s.script) lines.push(`📝 ${s.script}`);
   if (s.cta) lines.push(`🎯 CTA: ${s.cta}`);

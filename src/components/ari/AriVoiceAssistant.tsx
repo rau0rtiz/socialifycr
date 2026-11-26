@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from '@/components/ui/button';
+import ReactMarkdown from 'react-markdown';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Mic, Square, X, Send, Loader2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { readAriEvents } from '@/lib/ari-stream';
 import { useAuth } from '@/contexts/AuthContext';
 
-type Msg = { role: 'user' | 'assistant'; content: string; link?: string | null; copy?: string | null };
+type Msg = { id?: string; context?: string; pending?: boolean; role: 'user' | 'assistant'; content: string; link?: string | null; copy?: string | null };
 const FN_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/ari-voice`;
 
 /** Floating "Ari" voice assistant, visible on every agency page. */
@@ -20,6 +22,8 @@ export function AriVoiceAssistant() {
   const [open, setOpen] = useState(false);
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState('Pensando…');
+  const sendingRef = useRef(false);
   const [text, setText] = useState('');
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const rec = useRef<MediaRecorder | null>(null);
@@ -91,32 +95,51 @@ export function AriVoiceAssistant() {
   if (!visible) return null;
 
   const send = async (payload: { audio?: Blob; text?: string }) => {
+    if(sendingRef.current) return;
+    sendingRef.current=true;
     setBusy(true);
+    setPhase(payload.audio ? 'Transcribiendo…' : 'Revisando el pedido…');
+    const userId=crypto.randomUUID();
+    const history=msgs.filter(m=>!m.pending).map(({role,content,context})=>({role,content:content+(context ? '\nResultados verificados de herramientas: '+context : '')}));
+    setMsgs(m=>[...m,{id:userId,role:'user',content:payload.text ?? 'Audio enviado · transcribiendo…',pending:!!payload.audio}]);
+    const results:unknown[]=[];
+    const invalidate=(keys?:string[])=>keys?.forEach(k=>{
+      if(k==='sheets') qc.invalidateQueries({queryKey:['production-sheets']});
+      else if(k.startsWith('sheet:')) qc.invalidateQueries({queryKey:['production-sheet',k.slice(6)]});
+      else qc.invalidateQueries();
+    });
     try {
-      const { data: s } = await supabase.auth.getSession();
-      const fd = new FormData();
-      if (payload.audio) fd.append('audio', new File([payload.audio], 'ari.webm', { type: payload.audio.type || 'audio/webm' }));
-      if (payload.text) fd.append('text', payload.text);
-      fd.append('path', pathname);
-      fd.append('history', JSON.stringify(msgs.slice(-8).map(({ role, content }) => ({ role, content }))));
-      const r = await fetch(FN_URL, { method: 'POST', headers: { Authorization: `Bearer ${s.session?.access_token ?? ''}` }, body: fd });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) { if (data.transcript) setMsgs(m => [...m, { role: 'user', content: data.transcript }]); throw new Error(data.error || 'Ari no respondió'); }
-      setMsgs(m => [...m, { role: 'user', content: data.transcript }, { role: 'assistant', content: data.reply, link: data.link, copy: data.copy }]);
-      if (data.audio && openRef.current) {
-        audioEl.current?.pause();
-        audioEl.current = new Audio(`data:audio/mpeg;base64,${data.audio}`);
-        audioEl.current.play().catch(() => {});
-      }
-      (data.invalidate as string[] | undefined)?.forEach(k => {
-        if (k === 'sheets') qc.invalidateQueries({ queryKey: ['production-sheets'] });
-        else if (k.startsWith('sheet:')) qc.invalidateQueries({ queryKey: ['production-sheet', k.slice(6)] });
-        else qc.invalidateQueries();
+      const {data:s}=await supabase.auth.getSession();
+      const fd=new FormData();
+      if(payload.audio)fd.append('audio',new File([payload.audio],'ari.webm',{type:payload.audio.type || 'audio/webm'}));
+      if(payload.text)fd.append('text',payload.text);
+      fd.append('path',pathname);fd.append('history',JSON.stringify(history));
+      const response=await fetch(FN_URL,{method:'POST',headers:{Authorization:`Bearer ${s.session?.access_token ?? ''}`},body:fd});
+      if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error || 'Ari no respondió');}
+      if(!response.body)throw new Error('No se recibió respuesta de Ari');
+      await readAriEvents(response.body,event=>{
+        if(event.type==='transcript'){
+          setMsgs(m=>m.map(msg=>msg.id===userId?{...msg,content:event.text,pending:false}:msg));
+          setPhase('Revisando el pedido…');
+        } else if(event.type==='intent') {
+          setMsgs(m=>[...m,{role:'assistant',content:event.text}]);setPhase('Aplicando cambios…');
+        } else if(event.type==='tool_result') {
+          results.push({name:event.name,result:event.result});invalidate(event.invalidate);
+        } else if(event.type==='reply') {
+          setMsgs(m=>[...m,{role:'assistant',content:event.text,link:event.link,copy:event.copy,context:JSON.stringify(results)}]);
+          invalidate(event.invalidate);
+          if(event.navigate && event.navigate!==pathname)navigate(event.navigate);
+          setPhase('Preparando la voz…');
+        } else if(event.type==='audio' && openRef.current) {
+          audioEl.current?.pause();audioEl.current=new Audio(`data:audio/mpeg;base64,${event.audio}`);audioEl.current.play().catch(()=>{});
+        } else if(event.type==='error') {
+          invalidate(event.invalidate);setMsgs(m=>[...m,{role:'assistant',content:event.error,context:JSON.stringify(results)}]);toast.error(event.error);
+        }
       });
-      if (data.navigate && data.navigate !== pathname) navigate(data.navigate);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Ari no respondió');
-    } finally { setBusy(false); }
+    } catch(e) {
+      const message=e instanceof Error?e.message:'Ari no respondió';
+      setMsgs(m=>[...m,{role:'assistant',content:message,context:JSON.stringify(results)}]);toast.error(message);
+    } finally {setBusy(false);sendingRef.current=false;}
   };
 
   const toggleRec = async () => {
@@ -145,7 +168,7 @@ export function AriVoiceAssistant() {
     } catch { toast.error('Necesito permiso del micrófono para escucharte.'); }
   };
 
-  const status = recording ? 'Te escucho…' : busy ? 'Pensando…' : 'Tocá para hablar';
+  const status = recording ? 'Te escucho…' : busy ? phase : 'Tocá para hablar';
   return (
     <div className="ari-assistant print:hidden">
       {!open && (
@@ -176,7 +199,7 @@ export function AriVoiceAssistant() {
               {msgs.map((m, i) => (
                 <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
                   <div className={`${m.role === 'user' ? 'ari-bubble-user' : 'ari-bubble-bot'} min-w-0 max-w-[90%] break-words text-[15px] leading-relaxed`}>
-                    <div className="whitespace-pre-wrap">{m.content}</div>
+                    {m.role === 'assistant' ? <div className="space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:underline"><ReactMarkdown>{m.content}</ReactMarkdown></div> : <div className="whitespace-pre-wrap">{m.content}</div>}
                     {m.copy && (
                       <div className="ari-copy h-auto whitespace-normal mt-3 rounded-2xl p-3">
                         <div className="whitespace-pre-wrap text-sm select-text">{m.copy}</div>

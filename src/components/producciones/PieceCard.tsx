@@ -91,6 +91,7 @@ export function PieceCard({
 
   const [local, setLocal] = useState({
     concept: shot.concept || shot.description || '',
+    description: shot.concept ? shot.description || '' : '',
     script: shot.script || '',
     hook: shot.hook || '',
     cta: shot.cta || '',
@@ -101,21 +102,23 @@ export function PieceCard({
   useEffect(() => {
     setLocal({
       concept: shot.concept || shot.description || '',
+    description: shot.concept ? shot.description || '' : '',
       script: shot.script || '',
       hook: shot.hook || '',
       cta: shot.cta || '',
       tech_notes: shot.tech_notes || '',
       file_names: shot.file_names || '',
     });
-  }, [shot.id]);
+  }, [shot.id, shot.concept, shot.description, shot.script, shot.hook, shot.cta, shot.tech_notes, shot.file_names]);
 
   useEffect(() => {
     const t = setTimeout(() => {
       const patch: any = {};
       if (local.concept !== (shot.concept || shot.description || '')) {
         patch.concept = local.concept;
-        patch.description = local.concept;
+
       }
+      if (local.description !== (shot.concept ? shot.description || '' : '')) patch.description = local.description;
       if (local.script !== (shot.script || '')) patch.script = local.script;
       if (local.hook !== (shot.hook || '')) patch.hook = local.hook;
       if (local.cta !== (shot.cta || '')) patch.cta = local.cta;
@@ -459,6 +462,10 @@ export function PieceCard({
         )}
       </div>
 
+      <div className="mb-4">
+        <Label className="text-[10px] tracking-[0.3em] uppercase text-noeval-muted mb-1.5 block">Descripción del video</Label>
+        <Textarea aria-label="Descripción del video" value={local.description} onChange={e => setLocal({ ...local, description: e.target.value })} rows={2} placeholder="Qué se ve y qué sucede en la pieza…" className="bg-noeval-cream border-noeval-line text-sm rounded-xl" />
+      </div>
       {/* Hook, CTA, Notas técnicas */}
       <div className="space-y-3 mb-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
