@@ -514,9 +514,11 @@ export default function ProduccionSheet() {
                 </div>
 
                 {/* Editorial toolbar — filters + actions */}
-                <div className="mb-4 no-print bg-noeval-surface border border-noeval-ink rounded-2xl flex flex-col md:flex-row md:items-stretch md:justify-between overflow-hidden">
+                <div className="mb-4 no-print bg-noeval-surface border border-noeval-ink rounded-2xl overflow-hidden flex flex-col">
+                  {/* Fila 1 · filtros + acción principal */}
+                  <div className="flex items-stretch border-b border-noeval-line">
                   {/* Filters as bordered pills */}
-                  <div className="flex divide-x divide-noeval-line border-b md:border-b-0 md:border-r border-noeval-line">
+                  <div className="flex min-w-0 overflow-x-auto no-scrollbar divide-x divide-noeval-line">
                     {(['all', 'pending', 'recorded'] as const).map((f) => {
                       const active = filter === f;
                       const label = f === 'all' ? `Todas · ${total}` : f === 'pending' ? `Pendientes · ${total - recorded}` : `Grabadas · ${recorded}`;
@@ -534,30 +536,42 @@ export default function ProduccionSheet() {
                     })}
                   </div>
 
-                  {/* Actions cluster */}
-                  <div className="flex divide-x divide-noeval-line">
+                    {/* Acción principal · siempre entera, nunca se encoge */}
+                    <button
+                      onClick={handleAddPiece}
+                      className="ml-auto shrink-0 flex items-center gap-1.5 px-4 sm:px-5 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest whitespace-nowrap bg-noeval-accent text-white hover:bg-noeval-ink transition"
+                    >
+                      <Plus className="h-3.5 w-3.5" strokeWidth={3} /> Nueva pieza
+                    </button>
+                  </div>
+
+                  {/* Fila 2 · utilidades (una sola línea, desliza si aprieta) */}
+                  <div className="flex overflow-x-auto no-scrollbar divide-x divide-noeval-line">
                     <button
                       onClick={() => setPrompterOpen(true)}
                       disabled={prompterItems.length === 0}
-                      className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-accent hover:text-white transition disabled:opacity-40"
+                      className="flex flex-1 shrink-0 justify-center items-center gap-1.5 px-2.5 sm:px-3 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest whitespace-nowrap text-noeval-ink hover:bg-noeval-accent hover:text-white transition disabled:opacity-40"
                       title="Activar teleprompter"
+                      aria-label="Teleprompter"
                     >
-                      <PrompterIcon className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Teleprompter</span>
+                      <PrompterIcon className="h-3.5 w-3.5" /> <span className="hidden lg:inline">Teleprompter</span>
                     </button>
                     <button
                       onClick={() => setAiOpen(true)}
-                      className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-accent hover:text-white transition"
+                      className="flex flex-1 shrink-0 justify-center items-center gap-1.5 px-2.5 sm:px-3 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest whitespace-nowrap text-noeval-ink hover:bg-noeval-accent hover:text-white transition"
                       title="Generar piezas con IA"
+                      aria-label="Generar piezas con IA"
                     >
-                      <Sparkles className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Generar IA</span><span className="sm:hidden">IA</span>
+                      <Sparkles className="h-3.5 w-3.5" /> <span className="hidden lg:inline">Generar IA</span>
                     </button>
                     <button
                       onClick={handleSendClickUp}
                       disabled={recordedShots.length === 0 && !sheetSent}
-                      className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-noeval-ink"
+                      className="flex flex-1 shrink-0 justify-center items-center gap-1.5 px-2.5 sm:px-3 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest whitespace-nowrap text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-noeval-ink"
                       title={sheetSent ? 'Reenviar a ClickUp' : 'Enviar grabadas a ClickUp'}
+                      aria-label="Enviar a ClickUp"
                     >
-                      <Send className="h-3.5 w-3.5" /> <span className="hidden sm:inline">ClickUp</span>
+                      <Send className="h-3.5 w-3.5" /> <span className="hidden lg:inline">ClickUp</span>
                       {pendingToSend > 0 && (
                         <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-noeval-accent text-white text-[9px] font-bold">
                           {pendingToSend}
@@ -567,31 +581,28 @@ export default function ProduccionSheet() {
                     <button
                       onClick={() => setEmailOpen(true)}
                       disabled={recordedShots.length === 0}
-                      className="hidden sm:flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-noeval-ink"
+                      className="hidden sm:flex flex-1 shrink-0 justify-center items-center gap-1.5 px-2.5 sm:px-3 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest whitespace-nowrap text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-noeval-ink"
                       title="Enviar resumen por correo"
+                      aria-label="Enviar resumen por correo"
                     >
-                      <Mail className="h-3.5 w-3.5" /> Correo
+                      <Mail className="h-3.5 w-3.5" /> <span className="hidden lg:inline">Correo</span>
                     </button>
                     <button
                       onClick={() => setStoryOpen(true)}
                       disabled={recordedShots.length === 0}
-                      className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-noeval-ink"
+                      className="flex flex-1 shrink-0 justify-center items-center gap-1.5 px-2.5 sm:px-3 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest whitespace-nowrap text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-noeval-ink"
                       title="Compartir recibo como historia"
+                      aria-label="Compartir recibo como historia"
                     >
-                      <Share2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Historia</span>
+                      <Share2 className="h-3.5 w-3.5" /> <span className="hidden lg:inline">Historia</span>
                     </button>
                     <button
                       onClick={() => window.print()}
-                      className="hidden sm:flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition"
+                      className="hidden sm:flex flex-1 shrink-0 justify-center items-center gap-1.5 px-2.5 sm:px-3 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest whitespace-nowrap text-noeval-ink hover:bg-noeval-ink hover:text-noeval-cream transition"
                       title="Imprimir / PDF"
+                      aria-label="Imprimir o guardar como PDF"
                     >
-                      <Printer className="h-3.5 w-3.5" /> PDF
-                    </button>
-                    <button
-                      onClick={handleAddPiece}
-                      className="flex items-center gap-1.5 px-3 sm:px-5 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest bg-noeval-accent text-white hover:bg-noeval-ink transition"
-                    >
-                      <Plus className="h-3.5 w-3.5" strokeWidth={3} /> Nueva pieza
+                      <Printer className="h-3.5 w-3.5" /> <span className="hidden lg:inline">PDF</span>
                     </button>
                   </div>
                 </div>
