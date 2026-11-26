@@ -865,3 +865,25 @@ html.agency-theme .agency-neon,
   box-shadow: 0 0 18px -4px rgba(232,93,58,.45);
 }
 .noeval-glass button { transition: all .2s ease; }
+
+/* Self-contained tokens: story exports render outside the agency shell. */
+.production-photo-story {
+  --story-bg: #1a1a1a;
+  --story-fg: #ffffff;
+  --story-shadow: rgba(0,0,0,.55);
+  --story-shade: linear-gradient(to bottom, transparent 36%, rgba(0,0,0,.12) 55%, rgba(0,0,0,.78) 100%);
+  position: relative;
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  background: var(--story-bg);
+  color: var(--story-fg);
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0;
+}
+.production-photo-story-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.production-photo-story-shade { position: absolute; inset: 0; background: var(--story-shade); }
+.production-photo-story-caption { position: absolute; left: 80px; right: 80px; bottom: 220px; text-shadow: 0 2px 16px var(--story-shadow); }
+.production-photo-story-client { font-size: 38px; font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; margin-bottom: 22px; }
+.production-photo-story-title { font-size: 76px; font-weight: 700; line-height: 1.12; overflow-wrap: anywhere; }
+.production-photo-story-date { font-size: 34px; line-height: 1.3; margin-top: 28px; }

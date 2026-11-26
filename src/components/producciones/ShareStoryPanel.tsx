@@ -72,7 +72,7 @@ export function ShareStoryPanel({ data, compact = false }: { data: StoryReceiptD
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-center gap-2">
+      {!data.photoUrl && <div className="mt-4 flex items-center justify-center gap-2">
         {(['light', 'dark'] as StoryTheme[]).map((t) => (
           <button
             key={t}
@@ -87,7 +87,7 @@ export function ShareStoryPanel({ data, compact = false }: { data: StoryReceiptD
             {t === 'light' ? 'Papel' : 'Studio'}
           </button>
         ))}
-      </div>
+      </div>}
 
       <div className="mt-4 flex flex-col sm:flex-row items-stretch justify-center gap-2">
         <button
