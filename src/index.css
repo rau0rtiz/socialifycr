@@ -773,7 +773,14 @@ html.agency-theme .agency-neon,
 .prompter-scroll { width:100%; height:100%; overflow-y:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; padding-top:env(safe-area-inset-top); }
 .prompter-scroll::-webkit-scrollbar { display:none; }
 .prompter-text { white-space:pre-wrap; font-weight:600; color:var(--pr-fg); font-family:'Space Grotesk', system-ui, sans-serif; word-break:break-word; }
-.prompter-guide { pointer-events:none; position:absolute; left:0; right:0; top:45%; height:2px; background:linear-gradient(90deg, transparent, rgba(232,93,58,.55), transparent); }
+.prompter-guide { pointer-events:none; position:absolute; left:0; right:0; top:45%; background:rgba(232,93,58,.22); border-top:2px solid rgba(232,93,58,.7); border-bottom:2px solid rgba(232,93,58,.7); }
+.prompter-pick select { flex:1; min-width:0; max-width:560px; height:40px; border-radius:12px; background:rgba(255,255,255,.08); color:var(--pr-fg); border:1px solid rgba(255,255,255,.12); padding:0 10px; font-size:14px; }
+.prompter-pick select option { background:#141414; color:#fff; }
+.prompter-btn:disabled { opacity:.35; }
+.prompter-mini { position:relative; height:38vh; border-radius:18px; overflow:hidden; border:1px solid rgba(255,255,255,.12); background:#000; }
+.prompter-mini-scroll { position:absolute; inset:0; overflow-y:auto; scrollbar-width:none; padding:0 14px; touch-action:pan-y; }
+.prompter-mini-scroll::-webkit-scrollbar { display:none; }
+.prompter-mini .prompter-guide { top:45%; }
 .prompter-count { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:22vmin; font-weight:700; color:var(--pr-accent); background:rgba(0,0,0,.55); pointer-events:none; }
 .prompter-bar { position:absolute; left:50%; transform:translateX(-50%); bottom:calc(12px + env(safe-area-inset-bottom)); width:min(980px, calc(100% - 24px)); background:rgba(20,20,20,.92); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:12px; backdrop-filter:blur(10px); display:flex; flex-direction:column; gap:10px; }
 .prompter-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; }

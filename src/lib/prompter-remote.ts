@@ -1,9 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export type RemoteState = { playing: boolean; speed: number; size: number; mirrorX: boolean; mirrorY: boolean; title: string };
+export type RemoteState = { playing: boolean; speed: number; size: number; mirrorX: boolean; mirrorY: boolean; line?: number; title: string; idx?: number; titles?: string[]; script?: string };
 export type RemoteCmd =
   | { a: 'toggle' } | { a: 'reset' } | { a: 'speed'; d: number } | { a: 'size'; d: number }
-  | { a: 'nudge'; d: number } | { a: 'mirrorX' } | { a: 'mirrorY' } | { a: 'hello' };
+  | { a: 'nudge'; d: number } | { a: 'mirrorX' } | { a: 'mirrorY' } | { a: 'hello' }
+  | { a: 'seek'; f: number } | { a: 'select'; i: number };
 
 export function newRoomId() {
   const b = crypto.getRandomValues(new Uint8Array(16));

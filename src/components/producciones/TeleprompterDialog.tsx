@@ -1,17 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   ScrollText, X, Maximize2, Play, Pause, RotateCcw, FlipHorizontal, FlipVertical,
-  RotateCw, Minus, Plus, Settings2, Smartphone,
+  RotateCw, Minus, Plus, Settings2, Smartphone, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { newRoomId, openRoom, type RemoteCmd } from '@/lib/prompter-remote';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
+export type PrompterItem = { id: string; title: string; script: string };
+/** Scripts of the whole production sheet, so the prompter can switch pieces without closing. */
+export const PrompterScriptsContext = createContext<PrompterItem[]>([]);
+
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  title: string;
-  script: string;
+  items: PrompterItem[];
+  initialIndex?: number;
 }
 
 const LS = 'socialify-teleprompter-prefs';
@@ -22,7 +26,11 @@ function loadPrefs(): Prefs {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(LS) || '{}') }; } catch { return DEFAULTS; }
 }
 
-export function TeleprompterDialog({ open, onOpenChange, title, script }: Props) {
+export function TeleprompterDialog({ open, onOpenChange, items, initialIndex = 0 }: Props) {
+  const [idx, setIdx] = useState(Math.max(0, Math.min(initialIndex, items.length - 1)));
+  const cur = items[idx] || { id: '', title: '', script: '' };
+  const title = cur.title || `Pieza ${idx + 1}`;
+  const script = cur.script;
   const [p, setP] = useState<Prefs>(loadPrefs);
   const [playing, setPlaying] = useState(false);
   const [showCtl, setShowCtl] = useState(true);
@@ -68,14 +76,18 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
   const [showQr, setShowQr] = useState(false);
   const [remotes, setRemotes] = useState(0);
   const chRef = useRef<ReturnType<typeof openRoom>>();
-  const stateRef = useRef({ playing, ...p, title });
-  stateRef.current = { playing, ...p, title };
+  const titles = items.map((it, i) => it.title || `Pieza ${i + 1}`);
+  const mkState = () => ({ playing, speed: p.speed, size: p.size, mirrorX: p.mirrorX, mirrorY: p.mirrorY, line: p.line, title, idx, titles, script: script?.trim() || '' });
+  const stateRef = useRef(mkState());
+  stateRef.current = mkState();
+  const itemsRef = useRef(items); itemsRef.current = items;
+  const remoteHold = useRef(0);
   const remoteUrl = `${window.location.origin}/prompter-remoto/${room}`;
 
   useEffect(() => {
     if (!open) return;
     const c = openRoom(room);
-    const push = () => { const s = stateRef.current; c.send({ type: 'broadcast', event: 'state', payload: { playing: s.playing, speed: s.speed, size: s.size, mirrorX: s.mirrorX, mirrorY: s.mirrorY, title: s.title } }); };
+    const push = () => { c.send({ type: 'broadcast', event: 'state', payload: stateRef.current }); };
     c.on('broadcast', { event: 'cmd' }, ({ payload }) => {
       const m = payload as RemoteCmd;
       if (m.a === 'hello') { setRemotes(n => n + 1); setShowQr(false); }
@@ -86,6 +98,8 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
       else if (m.a === 'mirrorX') setP(x => ({ ...x, mirrorX: !x.mirrorX }));
       else if (m.a === 'mirrorY') setP(x => ({ ...x, mirrorY: !x.mirrorY }));
       else if (m.a === 'nudge') scroller.current?.scrollBy({ top: m.d * (scroller.current.clientHeight * 0.25), behavior: 'smooth' });
+      else if (m.a === 'seek') { const el = scroller.current; if (el) { remoteHold.current = performance.now(); el.scrollTop = m.f * Math.max(0, el.scrollHeight - el.clientHeight); } return; }
+      else if (m.a === 'select') { if (m.i >= 0 && m.i < itemsRef.current.length) selectIdx(m.i); }
       setTimeout(push, 30);
     }).subscribe();
     chRef.current = c;
@@ -93,10 +107,22 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
   }, [open, room]);
 
   useEffect(() => {
-    chRef.current?.send({ type: 'broadcast', event: 'state', payload: { playing, speed: p.speed, size: p.size, mirrorX: p.mirrorX, mirrorY: p.mirrorY, title } });
-  }, [playing, p.speed, p.size, p.mirrorX, p.mirrorY, title]);
+    chRef.current?.send({ type: 'broadcast', event: 'state', payload: stateRef.current });
+  }, [playing, p.speed, p.size, p.mirrorX, p.mirrorY, p.line, title, idx, script]);
+
+  // Live scroll position for the phone's mini view (throttled; skipped while the phone is dragging)
+  const lastPos = useRef(0);
+  const onScroll = () => {
+    const el = scroller.current; const now = performance.now();
+    if (!el || now - lastPos.current < 80 || now - remoteHold.current < 300) return;
+    lastPos.current = now;
+    const max = el.scrollHeight - el.clientHeight;
+    chRef.current?.send({ type: 'broadcast', event: 'pos', payload: { f: max > 0 ? el.scrollTop / max : 0 } });
+  };
 
   const reset = () => { setPlaying(false); if (scroller.current) scroller.current.scrollTop = 0; };
+  function selectIdx(i: number) { setPlaying(false); setIdx(i); acc.current = 0; requestAnimationFrame(() => { if (scroller.current) scroller.current.scrollTop = 0; }); }
+  const multi = items.length > 1;
 
   useEffect(() => {
     if (!open) return;
@@ -136,6 +162,7 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
                 ref={scroller}
                 className="prompter-scroll"
                 onClick={() => setShowCtl(s => !s)}
+                onScroll={onScroll}
                 style={{ paddingLeft: `${p.margin}%`, paddingRight: `${p.margin}%` }}
               >
                 <div style={{ height: '45%' }} />
@@ -145,11 +172,20 @@ export function TeleprompterDialog({ open, onOpenChange, title, script }: Props)
                 <div style={{ height: '90%' }} />
               </div>
             </div>
-            <div className="prompter-guide" />
+            <div className="prompter-guide" style={{ height: p.size * p.line }} />
           </div>
 
           {showCtl && (
             <div className="prompter-bar" onClick={e => e.stopPropagation()}>
+              {multi && (
+                <div className="prompter-row prompter-pick">
+                  <button className="prompter-btn sm" disabled={idx === 0} onClick={() => selectIdx(idx - 1)} aria-label="Guion anterior"><ChevronLeft /></button>
+                  <select value={idx} onChange={e => selectIdx(Number(e.target.value))} aria-label="Elegir guion">
+                    {titles.map((t, i) => <option key={items[i].id || i} value={i}>{String(i + 1).padStart(2, '0')} · {t}{items[i].script?.trim() ? '' : ' (sin guion)'}</option>)}
+                  </select>
+                  <button className="prompter-btn sm" disabled={idx === items.length - 1} onClick={() => selectIdx(idx + 1)} aria-label="Guion siguiente"><ChevronRight /></button>
+                </div>
+              )}
               <div className="prompter-row">
                 <button className="prompter-btn prompter-main" onClick={toggle} aria-label={playing ? 'Pausar' : 'Iniciar'}>
                   {playing ? <Pause /> : <Play />}
@@ -210,8 +246,12 @@ function Slider({ label, min, max, step = 1, value, onChange }: { label: string;
   );
 }
 
-export function TeleprompterButton({ title, script }: { title: string; script: string }) {
+export function TeleprompterButton({ id, title, script }: { id?: string; title: string; script: string }) {
   const [open, setOpen] = useState(false);
+  const all = useContext(PrompterScriptsContext);
+  const found = id ? all.findIndex(x => x.id === id) : -1;
+  // Use the card's live (possibly unsaved) text for its own piece
+  const items = found >= 0 ? all.map((x, i) => (i === found ? { ...x, title, script } : x)) : [{ id: id || 'one', title, script }];
   return (
     <>
       <button
@@ -222,7 +262,7 @@ export function TeleprompterButton({ title, script }: { title: string; script: s
       >
         <ScrollText className="h-4 w-4" />
       </button>
-      {open && <TeleprompterDialog open={open} onOpenChange={setOpen} title={title} script={script} />}
+      {open && <TeleprompterDialog open={open} onOpenChange={setOpen} items={items} initialIndex={Math.max(0, found)} />}
     </>
   );
 }

@@ -10,6 +10,7 @@ import {
   ArrowLeft, Plus, Trash2, Send, Check, Copy, Printer, ExternalLink, Loader2,
   Sparkles, Share2, Globe, Mail,
   
+  ScrollText as PrompterIcon,
 } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -38,6 +39,7 @@ import { ShareStoryDialog } from '@/components/producciones/ShareStoryDialog';
 import { buildStoryReceipt } from '@/lib/story-receipt';
 import { GenerateShotsDialog } from '@/components/producciones/GenerateShotsDialog';
 import { PieceCard } from '@/components/producciones/PieceCard';
+import { TeleprompterDialog, PrompterScriptsContext } from '@/components/producciones/TeleprompterDialog';
 import { useSheetReferences } from '@/hooks/use-shot-references';
 import { SheetThumbnailUploader } from '@/components/producciones/SheetThumbnailUploader';
 
@@ -219,6 +221,8 @@ export default function ProduccionSheet() {
   }, [local]);
 
   const shots = data?.shots || [];
+  const [prompterOpen, setPrompterOpen] = useState(false);
+  const prompterItems = useMemo(() => shots.filter(s => !pendingDeleteIds.has(s.id)).map(s => ({ id: s.id, title: s.concept || s.description || '', script: s.script || '' })), [shots, pendingDeleteIds]);
   const visibleShots = useMemo(() => shots.filter(s => !pendingDeleteIds.has(s.id)), [shots, pendingDeleteIds]);
   const total = visibleShots.length;
   const recorded = visibleShots.filter(s => s.done).length;
@@ -533,6 +537,14 @@ export default function ProduccionSheet() {
                   {/* Actions cluster */}
                   <div className="flex divide-x divide-noeval-line">
                     <button
+                      onClick={() => setPrompterOpen(true)}
+                      disabled={prompterItems.length === 0}
+                      className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-accent hover:text-white transition disabled:opacity-40"
+                      title="Activar teleprompter"
+                    >
+                      <PrompterIcon className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Teleprompter</span>
+                    </button>
+                    <button
                       onClick={() => setAiOpen(true)}
                       className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-noeval-ink hover:bg-noeval-accent hover:text-white transition"
                       title="Generar piezas con IA"
@@ -598,6 +610,7 @@ export default function ProduccionSheet() {
                     </p>
                   </button>
                 ) : (
+                  <PrompterScriptsContext.Provider value={prompterItems}>
                   <div className="flex flex-col gap-4">
                     {filter !== 'all' && (
                       <div className="col-span-full text-[10px] tracking-[0.25em] uppercase text-noeval-muted/70">
@@ -689,7 +702,9 @@ export default function ProduccionSheet() {
                       </div>
                     )}
                   </div>
+                  </PrompterScriptsContext.Provider>
                 )}
+                {prompterOpen && <TeleprompterDialog open={prompterOpen} onOpenChange={setPrompterOpen} items={prompterItems} />}
               </section>
 
               {/* NOTAS GENERALES (editable, no se imprime) */}

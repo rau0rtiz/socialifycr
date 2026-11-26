@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Play, Pause, RotateCcw, Minus, Plus, ChevronUp, ChevronDown, FlipHorizontal, FlipVertical } from 'lucide-react';
+import { Play, Pause, RotateCcw, Minus, Plus, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, FlipHorizontal, FlipVertical } from 'lucide-react';
 import { openRoom, type RemoteCmd, type RemoteState } from '@/lib/prompter-remote';
 
 export default function PrompterRemoto() {
@@ -8,10 +8,18 @@ export default function PrompterRemoto() {
   const ch = useRef<ReturnType<typeof openRoom>>();
   const [st, setSt] = useState<RemoteState | null>(null);
   const [live, setLive] = useState(false);
+  const mini = useRef<HTMLDivElement>(null);
+  const touching = useRef(0);
+  const lastSeek = useRef(0);
 
   useEffect(() => {
     const c = openRoom(room);
     c.on('broadcast', { event: 'state' }, ({ payload }) => setSt(payload as RemoteState))
+      .on('broadcast', { event: 'pos' }, ({ payload }) => {
+        const el = mini.current;
+        if (!el || touching.current || performance.now() - lastSeek.current < 400) return;
+        el.scrollTop = (payload as { f: number }).f * Math.max(0, el.scrollHeight - el.clientHeight);
+      })
       .subscribe(s => {
         setLive(s === 'SUBSCRIBED');
         if (s === 'SUBSCRIBED') c.send({ type: 'broadcast', event: 'cmd', payload: { a: 'hello' } });
@@ -26,12 +34,44 @@ export default function PrompterRemoto() {
     ch.current?.send({ type: 'broadcast', event: 'cmd', payload });
   };
 
+  const onMiniScroll = () => {
+    const el = mini.current; const now = performance.now();
+    if (!el || !touching.current || now - lastSeek.current < 50) return;
+    lastSeek.current = now;
+    const max = el.scrollHeight - el.clientHeight;
+    ch.current?.send({ type: 'broadcast', event: 'cmd', payload: { a: 'seek', f: max > 0 ? el.scrollTop / max : 0 } });
+  };
+  const hold = () => { touching.current = 1; };
+  const release = () => { setTimeout(() => { onMiniScroll(); touching.current = 0; }, 250); };
+  const titles = st?.titles || [];
+  const miniSize = st ? Math.max(14, Math.round(st.size * 0.32)) : 20;
+
   return (
     <div className="socialify-prompter prompter-root" style={{ minHeight: '100dvh', height: 'auto', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, padding: 20, userSelect: 'none' }}>
       <div className="prompter-hint" style={{ textAlign: 'center' }}>
         {live ? (st ? `Conectado · ${st.title}` : 'Conectado · esperando el teleprompter…') : 'Conectando…'}
       </div>
-      <button className="prompter-btn prompter-main" style={{ width: '100%', height: '32vh', borderRadius: 24 }} onClick={() => send({ a: 'toggle' })} aria-label="Iniciar o pausar">
+      {titles.length > 1 && (
+        <div className="prompter-row prompter-pick" style={{ flexWrap: 'nowrap' }}>
+          <button className="prompter-btn" disabled={!st?.idx} onClick={() => send({ a: 'select', i: (st?.idx ?? 0) - 1 })} aria-label="Guion anterior"><ChevronLeft /></button>
+          <select value={st?.idx ?? 0} onChange={e => send({ a: 'select', i: Number(e.target.value) })} aria-label="Elegir guion" style={{ height: 52 }}>
+            {titles.map((t, i) => <option key={i} value={i}>{String(i + 1).padStart(2, '0')} · {t}</option>)}
+          </select>
+          <button className="prompter-btn" disabled={(st?.idx ?? 0) >= titles.length - 1} onClick={() => send({ a: 'select', i: (st?.idx ?? 0) + 1 })} aria-label="Guion siguiente"><ChevronRight /></button>
+        </div>
+      )}
+      <div className="prompter-mini">
+        <div ref={mini} className="prompter-mini-scroll" onScroll={onMiniScroll}
+          onTouchStart={hold} onTouchEnd={release} onTouchCancel={release}
+          onPointerDown={hold} onPointerUp={release} onWheel={() => { hold(); release(); }}>
+          <div style={{ height: '45%' }} />
+          <div className="prompter-text" style={{ fontSize: miniSize, lineHeight: st?.line ?? 1.35 }}>{st?.script || 'Esperando el guion…'}</div>
+          <div style={{ height: '90%' }} />
+        </div>
+        <div className="prompter-guide" style={{ height: miniSize * (st?.line ?? 1.35) }} />
+      </div>
+      <div className="prompter-hint" style={{ textAlign: 'center', display: 'block' }}>Deslizá el texto para mover el teleprompter</div>
+      <button className="prompter-btn prompter-main" style={{ width: '100%', height: '18vh', borderRadius: 24 }} onClick={() => send({ a: 'toggle' })} aria-label="Iniciar o pausar">
         {st?.playing ? <Pause style={{ width: 72, height: 72 }} /> : <Play style={{ width: 72, height: 72 }} />}
       </button>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
