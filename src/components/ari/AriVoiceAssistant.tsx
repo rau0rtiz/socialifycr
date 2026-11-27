@@ -113,7 +113,7 @@ export function AriVoiceAssistant() {
       const fd=new FormData();
       if(payload.audio)fd.append('audio',new File([payload.audio],'ari.webm',{type:payload.audio.type || 'audio/webm'}));
       if(payload.text)fd.append('text',payload.text);
-      fd.append('path',pathname);fd.append('history',JSON.stringify(history));
+      fd.append('stream','1');fd.append('path',pathname);fd.append('history',JSON.stringify(history));
       const response=await fetch(FN_URL,{method:'POST',headers:{Authorization:`Bearer ${s.session?.access_token ?? ''}`},body:fd});
       if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error || 'Ari no respondió');}
       if(!response.body)throw new Error('No se recibió respuesta de Ari');

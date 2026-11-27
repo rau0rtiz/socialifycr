@@ -252,6 +252,21 @@ Para planes/documentación y dashboards puedes abrir su sección, no crearlos to
         } finally {controller.close();}
       }
     });
+    if (form.get('stream') !== '1') {
+      // Older installed/published clients expect a single JSON reply.
+      const raw = await new Response(stream).text();
+      const out: Record<string, unknown> = { transcript: text, invalidate: [] };
+      let failed: string | null = null;
+      for (const l of raw.split('\n')) {
+        if (!l.trim()) continue;
+        const ev = JSON.parse(l);
+        if (ev.type === 'reply') Object.assign(out, { reply: ev.text, link: ev.link, copy: ev.copy, navigate: ev.navigate, invalidate: ev.invalidate ?? [] });
+        else if (ev.type === 'audio') out.audio = ev.audio;
+        else if (ev.type === 'error') { failed = ev.error; out.invalidate = ev.invalidate ?? []; }
+      }
+      if (failed) return json({ ...out, error: failed }, 500);
+      return json(out);
+    }
     return new Response(stream,{headers:{...corsHeaders,'Content-Type':'application/x-ndjson','Cache-Control':'no-cache'}});
   } catch(e) {
     console.error('ari-voice failed',e);
